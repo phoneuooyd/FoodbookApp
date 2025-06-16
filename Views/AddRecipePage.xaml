@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:Foodbook.Models"
+             x:Class="Foodbook.Views.AddRecipePage"
+             Title="Dodaj przepis">
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="16">
+
+            <HorizontalStackLayout>
+                <Button Text="Recznie"
+                        Command="{Binding SetManualModeCommand}" />
+                <Button Text="Z linku"
+                        Command="{Binding SetImportModeCommand}" />
+            </HorizontalStackLayout>
+
+            <!-- Tryb importu -->
+            <StackLayout IsVisible="{Binding IsImportMode}">
+                <Entry Placeholder="Wklej link do przepisu" Text="{Binding ImportUrl}" />
+                <Button Text="Importuj przepis" Command="{Binding ImportRecipeCommand}" />
+                <Label Text="{Binding ImportStatus}" TextColor="Gray" FontSize="12" />
+            </StackLayout>
+
+            <!-- Tryb reczny -->    
+            <StackLayout IsVisible="{Binding IsManualMode}">
+                <Entry Placeholder="Nazwa przepisu" Text="{Binding Name}" />
+                <Editor Placeholder="Opis" Text="{Binding Description}" AutoSize="TextChanges" />
+                <Entry Placeholder="Kalorie" Keyboard="Numeric" Text="{Binding Calories}" />
+                <Entry Placeholder="Bialko" Keyboard="Numeric" Text="{Binding Protein}" />
+                <Entry Placeholder="Tluszcze" Keyboard="Numeric" Text="{Binding Fat}" />
+                <Entry Placeholder="Weglowodany" Keyboard="Numeric" Text="{Binding Carbs}" />
+
+                <Label Text="Skladniki:" FontAttributes="Bold" />
+                <CollectionView ItemsSource="{Binding Ingredients}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <HorizontalStackLayout Spacing="6">
+                                <Entry Placeholder="Nazwa" Text="{Binding Name}" WidthRequest="120" />
+                                <Entry Placeholder="Ilosc" Keyboard="Numeric" Text="{Binding Quantity}" WidthRequest="60" />
+                                <Picker Title="Jednostka"
+                                        ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}"
+                                        SelectedItem="{Binding Unit}"
+                                        WidthRequest="100" />
+                                <Button Text="Usun"
+                                        Command="{Binding BindingContext.RemoveIngredientCommand, Source={x:Reference ThisPage}}"
+                                        CommandParameter="{Binding .}" />
+                            </HorizontalStackLayout>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+                <Button Text="Dodaj skladnik" Command="{Binding AddIngredientCommand}" />
+            </StackLayout>
+
+            <Button Text="Zapisz przepis" Command="{Binding SaveRecipeCommand}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

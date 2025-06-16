@@ -1,4 +1,7 @@
-﻿namespace FoodbookApp
+﻿using Microsoft.Maui;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace FoodbookApp
 {
     public partial class App : Application
     {

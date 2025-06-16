@@ -3,7 +3,6 @@
     x:Class="FoodbookApp.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:FoodbookApp"
     xmlns:views="clr-namespace:Foodbook.Views"
     Title="FoodbookApp">
 
@@ -22,4 +21,8 @@
             ContentTemplate="{DataTemplate views:ShoppingListPage}" />
     </TabBar>
 
+    <!-- Rejestracja trasy do AddRecipePage -->
+    <ShellContent
+        Route="AddRecipePage"
+        ContentTemplate="{DataTemplate views:AddRecipePage}" />
 </Shell>

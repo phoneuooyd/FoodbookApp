@@ -4,8 +4,18 @@
              x:Class="Foodbook.Views.RecipesPage"
              Title="Recipes">
     <StackLayout>
-        <Label Text="Recipes Page" 
-               VerticalOptions="CenterAndExpand" 
-               HorizontalOptions="Center" />
+        <Button Text="Dodaj przepis" Clicked="OnAddRecipeClicked" Margin="10"/>
+        <CollectionView ItemsSource="{Binding Recipes}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Margin="5" Padding="10">
+                        <VerticalStackLayout>
+                            <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="18"/>
+                            <Label Text="{Binding Description}" FontSize="14" LineBreakMode="TailTruncation"/>
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
     </StackLayout>
 </ContentPage>
