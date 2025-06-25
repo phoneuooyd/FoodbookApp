@@ -1,5 +1,9 @@
 using Foodbook.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Maui.Storage;
+using System.IO;
+using System.Text.Json;
+using System.Linq;
 
 namespace Foodbook.Data
 {
@@ -12,187 +16,37 @@ namespace Foodbook.Data
 
             var recipe = new Recipe
             {
-                Name = "Prosta sa³atka",
-                Description = "Przyk³adowa sa³atka.",
+                Name = "Prosta saÅ‚atka",
+                Description = "PrzykÅ‚adowa saÅ‚atka.",
                 Calories = 150,
                 Protein = 3,
                 Fat = 7,
                 Carbs = 18,
                 Ingredients = new List<Ingredient>
                 {
-                    new Ingredient { Name = "Sa³ata", Quantity = 100, Unit = Unit.Gram },
+                    new Ingredient { Name = "SaÅ‚ata", Quantity = 100, Unit = Unit.Gram },
                     new Ingredient { Name = "Pomidor", Quantity = 50, Unit = Unit.Gram }
                 }
             };
-            // Seed 200 najpopularniejszych sk³adników po polsku (jeœli nie istniej¹)
+            // Seed popular ingredients from embedded JSON (if not already added)
             if (!await context.Ingredients.AnyAsync(i => i.RecipeId == 0))
             {
-                var popularIngredients = new List<Ingredient>
-                {
-                    new Ingredient { Name = "Jajka", Quantity = 0, Unit = Unit.Piece },
-                    new Ingredient { Name = "Mleko", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Mas³o", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Cukier", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Sól", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "M¹ka", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Pierœ z kurczaka", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Oliwa z oliwek", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Czosnek", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Cebula", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Pomidor", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Ziemniak", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Marchew", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Ser ¿ó³ty", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Ry¿", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Makaron", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Wo³owina", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Wieprzowina", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Ryba", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Jab³ko", Quantity = 0, Unit = Unit.Piece },
-                    new Ingredient { Name = "Banan", Quantity = 0, Unit = Unit.Piece },
-                    new Ingredient { Name = "Pomarañcza", Quantity = 0, Unit = Unit.Piece },
-                    new Ingredient { Name = "Cytryna", Quantity = 0, Unit = Unit.Piece },
-                    new Ingredient { Name = "Papryka", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Ogórek", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Sa³ata", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Szpinak", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Broku³", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Kalafior", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Pieczarka", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Jogurt", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Œmietana", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Boczek", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Szynka", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Kie³basa", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Indyk", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Olej", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "£osoœ", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Tuñczyk", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Chleb", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Bu³ka", Quantity = 0, Unit = Unit.Piece },
-                    new Ingredient { Name = "Bagietka", Quantity = 0, Unit = Unit.Piece },
-                    new Ingredient { Name = "Kukurydza", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Groszek", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Fasola", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Soczewica", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Ciecierzyca", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Dynia", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Cukinia", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Bak³a¿an", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Awokado", Quantity = 0, Unit = Unit.Piece },
-                    new Ingredient { Name = "Ananas", Quantity = 0, Unit = Unit.Piece },
-                    new Ingredient { Name = "Truskawka", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Borówka", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Malina", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Winogrono", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Arbuz", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Melon", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Kiwi", Quantity = 0, Unit = Unit.Piece },
-                    new Ingredient { Name = "Mango", Quantity = 0, Unit = Unit.Piece },
-                    new Ingredient { Name = "Kokos", Quantity = 0, Unit = Unit.Piece },
-                    new Ingredient { Name = "Orzech w³oski", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Orzech laskowy", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Migda³y", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Orzech ziemny", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Nerkowce", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Pistacje", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Pestki s³onecznika", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Pestki dyni", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Sezam", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Nasiona chia", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Miód", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "D¿em", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Ketchup", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Majonez", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Musztarda", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Ocet", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Sos sojowy", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Sos Worcestershire", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Tabasco", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Curry", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Papryka s³odka", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Oregano", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Bazylia", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Tymianek", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Rozmaryn", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Koperek", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Pietruszka", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Szczypiorek", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Miêta", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Cynamon", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Ga³ka muszkato³owa", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "GoŸdziki", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Imbir", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Kardamon", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Wanilia", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Czekolada", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Kakao", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Kawa", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Herbata", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Sok", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Woda", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Napój gazowany", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Wino", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Piwo", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Wódka", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Rum", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Whisky", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Brandy", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Szampan", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Lody", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Ciasto", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Ciasteczko", Quantity = 0, Unit = Unit.Piece },
-                    new Ingredient { Name = "Tarta", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Naleœnik", Quantity = 0, Unit = Unit.Piece },
-                    new Ingredient { Name = "Gofr", Quantity = 0, Unit = Unit.Piece },
-                    new Ingredient { Name = "P¹czek", Quantity = 0, Unit = Unit.Piece },
-                    new Ingredient { Name = "Rogal", Quantity = 0, Unit = Unit.Piece },
-                    new Ingredient { Name = "Bajgiel", Quantity = 0, Unit = Unit.Piece },
-                    new Ingredient { Name = "Muffin", Quantity = 0, Unit = Unit.Piece },
-                    new Ingredient { Name = "Ciasto na pizzê", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Sos pomidorowy", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Mozzarella", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Parmezan", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Feta", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Ser pleœniowy", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Ser kozi", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Ricotta", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Twaróg", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Serek œmietankowy", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Œmietana kwaœna", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Tofu", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Tempeh", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Seitan", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Mleko sojowe", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Mleko migda³owe", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Mleko kokosowe", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Mleko owsiane", Quantity = 0, Unit = Unit.Milliliter },
-                    new Ingredient { Name = "Syrop klonowy", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Melasa", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Syrop z agawy", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Komosa ry¿owa", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Kuskus", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Jêczmieñ", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Gryka", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Proso", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Polenta", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Sago", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Tapioka", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Makaron ry¿owy", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Makaron udon", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Makaron soba", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Makaron ramen", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "P³aty lasagne", Quantity = 0, Unit = Unit.Gram },
-                    new Ingredient { Name = "Tortilla", Quantity = 0, Unit = Unit.Piece },
-                    new Ingredient { Name = "Chleb pita", Quantity = 0, Unit = Unit.Piece },
-                    new Ingredient { Name = "Pita", Quantity = 0, Unit = Unit.Piece },
-                };
+                var popularIngredients = await LoadPopularIngredientsAsync();
                 context.Ingredients.AddRange(popularIngredients);
             }
 
             
             context.Recipes.Add(recipe);
             await context.SaveChangesAsync();
+        }
+
+        private static async Task<List<Ingredient>> LoadPopularIngredientsAsync()
+        {
+            using var stream = await FileSystem.OpenAppPackageFileAsync("Data/ingredients.json");
+            using var reader = new StreamReader(stream);
+            var json = await reader.ReadToEndAsync();
+            var names = JsonSerializer.Deserialize<List<string>>(json) ?? new();
+            return names.Select(n => new Ingredient { Name = n, Quantity = 0, Unit = Unit.Gram }).ToList();
         }
     }
 }
