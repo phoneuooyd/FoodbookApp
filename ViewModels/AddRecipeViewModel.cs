@@ -62,10 +62,10 @@ namespace Foodbook.ViewModels
         private readonly IRecipeService _recipeService;
         private readonly RecipeImporter _importer;
 
-        public AddRecipeViewModel(IRecipeService recipeService)
+        public AddRecipeViewModel(IRecipeService recipeService, RecipeImporter importer)
         {
             _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
-            _importer = new RecipeImporter();
+            _importer = importer ?? throw new ArgumentNullException(nameof(importer));
 
             AddIngredientCommand = new Command(AddIngredient);
             RemoveIngredientCommand = new Command<Ingredient>(RemoveIngredient);
@@ -114,7 +114,7 @@ namespace Foodbook.ViewModels
 
         private async Task SaveRecipeAsync()
         {
-            // Ustaw RecipeId = 0 dla wszystkich sk³adników (nowy przepis, nie powi¹zany z innym)
+            // Ustaw RecipeId = 0 dla wszystkich skÅ‚adnikÃ³w (nowy przepis, nie powiÄ…zany z innym)
             foreach (var ing in Ingredients)
                 ing.RecipeId = 0;
 
@@ -129,13 +129,13 @@ namespace Foodbook.ViewModels
                 Ingredients = Ingredients.ToList()
             };
 
-            // Walidacja: nie zapisuj pustych przepisów
+            // Walidacja: nie zapisuj pustych przepisÃ³w
             if (string.IsNullOrWhiteSpace(recipe.Name) || recipe.Ingredients.Count == 0)
                 return;
 
             await _recipeService.AddRecipeAsync(recipe);
 
-            // (Opcjonalnie) Wyczyœæ formularz po zapisie
+            // (Opcjonalnie) WyczyÅ›Ä‡ formularz po zapisie
             Name = Description = Calories = Protein = Fat = Carbs = string.Empty;
             Ingredients.Clear();
             ImportUrl = string.Empty;
