@@ -34,6 +34,7 @@ namespace FoodbookApp
             // 🔧 Rejestracja serwisów i VM
             builder.Services.AddScoped<IRecipeService, RecipeService>();
             builder.Services.AddScoped<RecipeViewModel>();
+            builder.Services.AddScoped<AddRecipeViewModel>();
 
             // 🧭 Rejestracja widoków (Pages), jeśli używasz DI do ich tworzenia
             builder.Services.AddScoped<RecipesPage>();
