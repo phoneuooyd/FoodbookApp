@@ -33,17 +33,27 @@ namespace FoodbookApp
 
             // 🔧 Rejestracja serwisów i VM
             builder.Services.AddScoped<IRecipeService, RecipeService>();
+            builder.Services.AddScoped<IPlannerService, PlannerService>();
+            builder.Services.AddScoped<IShoppingListService, ShoppingListService>();
+
             builder.Services.AddScoped<RecipeViewModel>();
             builder.Services.AddScoped<AddRecipeViewModel>();
+            builder.Services.AddScoped<PlannerViewModel>();
+            builder.Services.AddScoped<ShoppingListViewModel>();
+
             builder.Services.AddHttpClient<RecipeImporter>();
 
             // 🧭 Rejestracja widoków (Pages), jeśli używasz DI do ich tworzenia
             builder.Services.AddScoped<RecipesPage>();
             builder.Services.AddScoped<AddRecipePage>();
+            builder.Services.AddScoped<PlannerPage>();
+            builder.Services.AddScoped<ShoppingListPage>();
 
             // 🧠 Rejestracja routów do Shell (opcjonalne, jeśli używasz Shell)
             Routing.RegisterRoute(nameof(RecipesPage), typeof(RecipesPage));
             Routing.RegisterRoute(nameof(AddRecipePage), typeof(AddRecipePage));
+            Routing.RegisterRoute(nameof(PlannerPage), typeof(PlannerPage));
+            Routing.RegisterRoute(nameof(ShoppingListPage), typeof(ShoppingListPage));
 
             // ✨ Build aplikacji
             var app = builder.Build();
