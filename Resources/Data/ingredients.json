@@ -1,1 +1,1415 @@
-["Jajka","Mleko","Masło","Cukier","Sól","Mąka","Pierś z kurczaka","Oliwa z oliwek","Czosnek","Cebula","Pomidor","Ziemniak","Marchew","Ser żółty","Ryż","Makaron","Wołowina","Wieprzowina","Ryba","Jabłko","Banan","Pomarańcza","Cytryna","Papryka","Ogórek","Sałata","Szpinak","Brokuł","Kalafior","Pieczarka","Jogurt","Śmietana","Boczek","Szynka","Kiełbasa","Indyk","Olej","Łosoś","Tuńczyk","Chleb","Bułka","Bagietka","Kukurydza","Groszek","Fasola","Soczewica","Ciecierzyca","Dynia","Cukinia","Bakłażan","Awokado","Ananas","Truskawka","Borówka","Malina","Winogrono","Arbuz","Melon","Kiwi","Mango","Kokos","Orzech włoski","Orzech laskowy","Migdały","Orzech ziemny","Nerkowce","Pistacje","Pestki słonecznika","Pestki dyni","Sezam","Nasiona chia","Miód","Dżem","Ketchup","Majonez","Musztarda","Ocet","Sos sojowy","Sos Worcestershire","Tabasco","Curry","Papryka słodka","Oregano","Bazylia","Tymianek","Rozmaryn","Koperek","Pietruszka","Szczypiorek","Mięta","Cynamon","Gałka muszkatołowa","Goździki","Imbir","Kardamon","Wanilia","Czekolada","Kakao","Kawa","Herbata","Sok","Woda","Napój gazowany","Wino","Piwo","Wódka","Rum","Whisky","Brandy","Szampan","Lody","Ciasto","Ciasteczko","Tarta","Naleśnik","Gofr","Pączek","Rogal","Bajgiel","Muffin","Ciasto na pizzę","Sos pomidorowy","Mozzarella","Parmezan","Feta","Ser pleśniowy","Ser kozi","Ricotta","Twaróg","Serek śmietankowy","Śmietana kwaśna","Tofu","Tempeh","Seitan","Mleko sojowe","Mleko migdałowe","Mleko kokosowe","Mleko owsiane","Syrop klonowy","Melasa","Syrop z agawy","Komosa ryżowa","Kuskus","Jęczmień","Gryka","Proso","Polenta","Sago","Tapioka","Makaron ryżowy","Makaron udon","Makaron soba","Makaron ramen","Płaty lasagne","Tortilla","Chleb pita","Pita"]
+[
+  {
+    "name": "Jajka",
+    "calories": 155,
+    "protein": 13,
+    "fat": 11,
+    "carbs": 1,
+    "amount": 1,
+    "unit": "Piece"
+  },
+  {
+    "name": "Mleko",
+    "calories": 150,
+    "protein": 7,
+    "fat": 8,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Milliliter"
+  },
+  {
+    "name": "Masło",
+    "calories": 150,
+    "protein": 7,
+    "fat": 8,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Cukier",
+    "calories": 100,
+    "protein": 2,
+    "fat": 2,
+    "carbs": 10,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Sól",
+    "calories": 100,
+    "protein": 2,
+    "fat": 2,
+    "carbs": 10,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Mąka",
+    "calories": 100,
+    "protein": 2,
+    "fat": 2,
+    "carbs": 10,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Pierś z kurczaka",
+    "calories": 200,
+    "protein": 26,
+    "fat": 10,
+    "carbs": 0,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Oliwa z oliwek",
+    "calories": 100,
+    "protein": 2,
+    "fat": 2,
+    "carbs": 10,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Czosnek",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Cebula",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Pomidor",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Ziemniak",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Marchew",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Ser żółty",
+    "calories": 150,
+    "protein": 7,
+    "fat": 8,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Ryż",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Makaron",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Wołowina",
+    "calories": 200,
+    "protein": 26,
+    "fat": 10,
+    "carbs": 0,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Wieprzowina",
+    "calories": 200,
+    "protein": 26,
+    "fat": 10,
+    "carbs": 0,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Ryba",
+    "calories": 200,
+    "protein": 22,
+    "fat": 12,
+    "carbs": 0,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Jabłko",
+    "calories": 50,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 13,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Banan",
+    "calories": 50,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 13,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Pomarańcza",
+    "calories": 50,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 13,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Cytryna",
+    "calories": 50,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 13,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Papryka",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Ogórek",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Sałata",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Szpinak",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Brokuł",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Kalafior",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Pieczarka",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Jogurt",
+    "calories": 150,
+    "protein": 7,
+    "fat": 8,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Śmietana",
+    "calories": 150,
+    "protein": 7,
+    "fat": 8,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Boczek",
+    "calories": 200,
+    "protein": 26,
+    "fat": 10,
+    "carbs": 0,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Szynka",
+    "calories": 200,
+    "protein": 26,
+    "fat": 10,
+    "carbs": 0,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Kiełbasa",
+    "calories": 200,
+    "protein": 26,
+    "fat": 10,
+    "carbs": 0,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Indyk",
+    "calories": 200,
+    "protein": 26,
+    "fat": 10,
+    "carbs": 0,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Olej",
+    "calories": 100,
+    "protein": 2,
+    "fat": 2,
+    "carbs": 10,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Łosoś",
+    "calories": 200,
+    "protein": 22,
+    "fat": 12,
+    "carbs": 0,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Tuńczyk",
+    "calories": 200,
+    "protein": 22,
+    "fat": 12,
+    "carbs": 0,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Chleb",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Bułka",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Bagietka",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Kukurydza",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Groszek",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Fasola",
+    "calories": 140,
+    "protein": 9,
+    "fat": 1,
+    "carbs": 25,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Soczewica",
+    "calories": 140,
+    "protein": 9,
+    "fat": 1,
+    "carbs": 25,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Ciecierzyca",
+    "calories": 140,
+    "protein": 9,
+    "fat": 1,
+    "carbs": 25,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Dynia",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Cukinia",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Bakłażan",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Awokado",
+    "calories": 50,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 13,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Ananas",
+    "calories": 50,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 13,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Truskawka",
+    "calories": 50,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 13,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Borówka",
+    "calories": 50,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 13,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Malina",
+    "calories": 50,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 13,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Winogrono",
+    "calories": 250,
+    "protein": 0,
+    "fat": 0,
+    "carbs": 0,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Arbuz",
+    "calories": 50,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 13,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Melon",
+    "calories": 50,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 13,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Kiwi",
+    "calories": 50,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 13,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Mango",
+    "calories": 50,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 13,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Kokos",
+    "calories": 50,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 13,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Orzech włoski",
+    "calories": 600,
+    "protein": 20,
+    "fat": 50,
+    "carbs": 20,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Orzech laskowy",
+    "calories": 600,
+    "protein": 20,
+    "fat": 50,
+    "carbs": 20,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Migdały",
+    "calories": 600,
+    "protein": 20,
+    "fat": 50,
+    "carbs": 20,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Orzech ziemny",
+    "calories": 600,
+    "protein": 20,
+    "fat": 50,
+    "carbs": 20,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Nerkowce",
+    "calories": 600,
+    "protein": 20,
+    "fat": 50,
+    "carbs": 20,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Pistacje",
+    "calories": 600,
+    "protein": 20,
+    "fat": 50,
+    "carbs": 20,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Pestki słonecznika",
+    "calories": 600,
+    "protein": 20,
+    "fat": 50,
+    "carbs": 20,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Pestki dyni",
+    "calories": 600,
+    "protein": 20,
+    "fat": 50,
+    "carbs": 20,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Sezam",
+    "calories": 600,
+    "protein": 20,
+    "fat": 50,
+    "carbs": 20,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Nasiona chia",
+    "calories": 600,
+    "protein": 20,
+    "fat": 50,
+    "carbs": 20,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Miód",
+    "calories": 100,
+    "protein": 2,
+    "fat": 2,
+    "carbs": 10,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Dżem",
+    "calories": 350,
+    "protein": 4,
+    "fat": 20,
+    "carbs": 50,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Ketchup",
+    "calories": 150,
+    "protein": 1,
+    "fat": 10,
+    "carbs": 15,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Majonez",
+    "calories": 150,
+    "protein": 1,
+    "fat": 10,
+    "carbs": 15,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Musztarda",
+    "calories": 150,
+    "protein": 1,
+    "fat": 10,
+    "carbs": 15,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Ocet",
+    "calories": 150,
+    "protein": 1,
+    "fat": 10,
+    "carbs": 15,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Sos sojowy",
+    "calories": 150,
+    "protein": 1,
+    "fat": 10,
+    "carbs": 15,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Sos Worcestershire",
+    "calories": 150,
+    "protein": 1,
+    "fat": 10,
+    "carbs": 15,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Tabasco",
+    "calories": 150,
+    "protein": 1,
+    "fat": 10,
+    "carbs": 15,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Curry",
+    "calories": 100,
+    "protein": 2,
+    "fat": 2,
+    "carbs": 10,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Papryka słodka",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Oregano",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Bazylia",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Tymianek",
+    "calories": 100,
+    "protein": 2,
+    "fat": 2,
+    "carbs": 10,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Rozmaryn",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Koperek",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Pietruszka",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Szczypiorek",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Mięta",
+    "calories": 25,
+    "protein": 1,
+    "fat": 0,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Cynamon",
+    "calories": 40,
+    "protein": 3,
+    "fat": 1,
+    "carbs": 8,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Gałka muszkatołowa",
+    "calories": 40,
+    "protein": 3,
+    "fat": 1,
+    "carbs": 8,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Goździki",
+    "calories": 40,
+    "protein": 3,
+    "fat": 1,
+    "carbs": 8,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Imbir",
+    "calories": 40,
+    "protein": 3,
+    "fat": 1,
+    "carbs": 8,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Kardamon",
+    "calories": 40,
+    "protein": 3,
+    "fat": 1,
+    "carbs": 8,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Wanilia",
+    "calories": 40,
+    "protein": 3,
+    "fat": 1,
+    "carbs": 8,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Czekolada",
+    "calories": 350,
+    "protein": 4,
+    "fat": 20,
+    "carbs": 50,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Kakao",
+    "calories": 350,
+    "protein": 4,
+    "fat": 20,
+    "carbs": 50,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Kawa",
+    "calories": 2,
+    "protein": 0,
+    "fat": 0,
+    "carbs": 0,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Herbata",
+    "calories": 0,
+    "protein": 0,
+    "fat": 0,
+    "carbs": 0,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Sok",
+    "calories": 50,
+    "protein": 0,
+    "fat": 0,
+    "carbs": 12,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Woda",
+    "calories": 0,
+    "protein": 0,
+    "fat": 0,
+    "carbs": 0,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Napój gazowany",
+    "calories": 40,
+    "protein": 0,
+    "fat": 0,
+    "carbs": 10,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Wino",
+    "calories": 250,
+    "protein": 0,
+    "fat": 0,
+    "carbs": 0,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Piwo",
+    "calories": 250,
+    "protein": 0,
+    "fat": 0,
+    "carbs": 0,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Wódka",
+    "calories": 250,
+    "protein": 0,
+    "fat": 0,
+    "carbs": 0,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Rum",
+    "calories": 250,
+    "protein": 0,
+    "fat": 0,
+    "carbs": 0,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Whisky",
+    "calories": 250,
+    "protein": 0,
+    "fat": 0,
+    "carbs": 0,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Brandy",
+    "calories": 250,
+    "protein": 0,
+    "fat": 0,
+    "carbs": 0,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Szampan",
+    "calories": 250,
+    "protein": 0,
+    "fat": 0,
+    "carbs": 0,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Lody",
+    "calories": 350,
+    "protein": 4,
+    "fat": 20,
+    "carbs": 50,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Ciasto",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Ciasteczko",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Tarta",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Naleśnik",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Gofr",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Pączek",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Rogal",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Bajgiel",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Muffin",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Ciasto na pizzę",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Sos pomidorowy",
+    "calories": 150,
+    "protein": 1,
+    "fat": 10,
+    "carbs": 15,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Mozzarella",
+    "calories": 150,
+    "protein": 7,
+    "fat": 8,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Parmezan",
+    "calories": 150,
+    "protein": 7,
+    "fat": 8,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Feta",
+    "calories": 150,
+    "protein": 7,
+    "fat": 8,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Ser pleśniowy",
+    "calories": 150,
+    "protein": 7,
+    "fat": 8,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Ser kozi",
+    "calories": 150,
+    "protein": 7,
+    "fat": 8,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Ricotta",
+    "calories": 150,
+    "protein": 7,
+    "fat": 8,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Twaróg",
+    "calories": 150,
+    "protein": 7,
+    "fat": 8,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Serek śmietankowy",
+    "calories": 150,
+    "protein": 7,
+    "fat": 8,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Śmietana kwaśna",
+    "calories": 150,
+    "protein": 7,
+    "fat": 8,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Tofu",
+    "calories": 140,
+    "protein": 9,
+    "fat": 1,
+    "carbs": 25,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Tempeh",
+    "calories": 140,
+    "protein": 9,
+    "fat": 1,
+    "carbs": 25,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Seitan",
+    "calories": 140,
+    "protein": 9,
+    "fat": 1,
+    "carbs": 25,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Mleko sojowe",
+    "calories": 150,
+    "protein": 7,
+    "fat": 8,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Mleko migdałowe",
+    "calories": 150,
+    "protein": 7,
+    "fat": 8,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Mleko kokosowe",
+    "calories": 150,
+    "protein": 7,
+    "fat": 8,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Mleko owsiane",
+    "calories": 150,
+    "protein": 7,
+    "fat": 8,
+    "carbs": 5,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Syrop klonowy",
+    "calories": 350,
+    "protein": 4,
+    "fat": 20,
+    "carbs": 50,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Melasa",
+    "calories": 350,
+    "protein": 4,
+    "fat": 20,
+    "carbs": 50,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Syrop z agawy",
+    "calories": 350,
+    "protein": 4,
+    "fat": 20,
+    "carbs": 50,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Komosa ryżowa",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Kuskus",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Jęczmień",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Gryka",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Proso",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Polenta",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Sago",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Tapioka",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Makaron ryżowy",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Makaron udon",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Makaron soba",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Makaron ramen",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Płaty lasagne",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Tortilla",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Chleb pita",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name": "Pita",
+    "calories": 350,
+    "protein": 10,
+    "fat": 2,
+    "carbs": 70,
+    "amount": 100,
+    "unit": "Gram"
+  }
+]

@@ -40,13 +40,24 @@ namespace Foodbook.Data
             await context.SaveChangesAsync();
         }
 
+        private class IngredientInfo
+        {
+            public string Name { get; set; } = string.Empty;
+            public double Calories { get; set; }
+            public double Protein { get; set; }
+            public double Fat { get; set; }
+            public double Carbs { get; set; }
+            public double Amount { get; set; }
+            public Unit Unit { get; set; }
+        }
+
         private static async Task<List<Ingredient>> LoadPopularIngredientsAsync()
         {
             using var stream = await FileSystem.OpenAppPackageFileAsync("Data/ingredients.json");
             using var reader = new StreamReader(stream);
             var json = await reader.ReadToEndAsync();
-            var names = JsonSerializer.Deserialize<List<string>>(json) ?? new();
-            return names.Select(n => new Ingredient { Name = n, Quantity = 0, Unit = Unit.Gram }).ToList();
+            var infos = JsonSerializer.Deserialize<List<IngredientInfo>>(json) ?? new();
+            return infos.Select(i => new Ingredient { Name = i.Name, Quantity = i.Amount, Unit = i.Unit }).ToList();
         }
     }
 }
