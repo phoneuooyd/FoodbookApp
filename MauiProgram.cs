@@ -4,6 +4,7 @@ using Foodbook.Data;
 using Foodbook.Services;
 using Foodbook.ViewModels;
 using Foodbook.Views; // Dodaj to, jeśli rejestrujesz Pages
+using System.Threading.Tasks;
 
 namespace FoodbookApp
 {
@@ -63,7 +64,7 @@ namespace FoodbookApp
             {
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 db.Database.EnsureCreated();
-                // Możesz też dodać SeedData.InitializeAsync(db).Wait();
+                Task.Run(async () => await SeedData.InitializeAsync(db)).Wait();
             }
 
             return app;
