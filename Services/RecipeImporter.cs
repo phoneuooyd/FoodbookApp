@@ -9,10 +9,16 @@ namespace Foodbook.Services;
 
 public class RecipeImporter
 {
+    private readonly HttpClient _httpClient;
+
+    public RecipeImporter(HttpClient httpClient)
+    {
+        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+    }
+
     public async Task<Recipe> ImportFromUrlAsync(string url)
     {
-        var httpClient = new HttpClient();
-        var html = await httpClient.GetStringAsync(url);
+        var html = await _httpClient.GetStringAsync(url);
 
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
