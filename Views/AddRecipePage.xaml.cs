@@ -8,12 +8,10 @@ namespace Foodbook.Views
     {
         public IEnumerable<Foodbook.Models.Unit> Units => Enum.GetValues(typeof(Foodbook.Models.Unit)).Cast<Foodbook.Models.Unit>();
 
-        public AddRecipePage()
+        public AddRecipePage(AddRecipeViewModel vm)
         {
             InitializeComponent();
-            BindingContext = new AddRecipeViewModel(
-                Application.Current.Handler.MauiContext.Services.GetService<IRecipeService>()
-            );
+            BindingContext = vm;
         }
     }
 }
