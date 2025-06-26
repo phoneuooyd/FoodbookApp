@@ -19,13 +19,43 @@ public class PlannerViewModel : INotifyPropertyChanged
     public ObservableCollection<PlannerDay> Days { get; } = new();
 
     private DateTime _startDate = DateTime.Today;
-    public DateTime StartDate { get => _startDate; set { _startDate = value; OnPropertyChanged(); } }
+    public DateTime StartDate
+    {
+        get => _startDate;
+        set
+        {
+            if (_startDate == value) return;
+            _startDate = value;
+            OnPropertyChanged();
+            Task.Run(async () => await LoadAsync());
+        }
+    }
 
     private DateTime _endDate = DateTime.Today.AddDays(6);
-    public DateTime EndDate { get => _endDate; set { _endDate = value; OnPropertyChanged(); } }
+    public DateTime EndDate
+    {
+        get => _endDate;
+        set
+        {
+            if (_endDate == value) return;
+            _endDate = value;
+            OnPropertyChanged();
+            Task.Run(async () => await LoadAsync());
+        }
+    }
 
     private int _mealsPerDay = 3;
-    public int MealsPerDay { get => _mealsPerDay; set { _mealsPerDay = value; OnPropertyChanged(); } }
+    public int MealsPerDay
+    {
+        get => _mealsPerDay;
+        set
+        {
+            if (_mealsPerDay == value) return;
+            _mealsPerDay = value;
+            OnPropertyChanged();
+            AdjustMealsPerDay();
+        }
+    }
 
     public ICommand AddMealCommand { get; }
     public ICommand RemoveMealCommand { get; }
@@ -64,6 +94,7 @@ public class PlannerViewModel : INotifyPropertyChanged
                 day.Meals.Add(m);
             Days.Add(day);
         }
+        AdjustMealsPerDay();
     }
 
     private void AddMeal(PlannerDay? day)
@@ -78,6 +109,17 @@ public class PlannerViewModel : INotifyPropertyChanged
         var day = Days.FirstOrDefault(d => d.Meals.Contains(meal));
         if (day != null)
             day.Meals.Remove(meal);
+    }
+
+    private void AdjustMealsPerDay()
+    {
+        foreach (var day in Days)
+        {
+            while (day.Meals.Count < MealsPerDay)
+                day.Meals.Add(new PlannedMeal { Date = day.Date, Portions = 1 });
+            while (day.Meals.Count > MealsPerDay)
+                day.Meals.RemoveAt(day.Meals.Count - 1);
+        }
     }
 
     private async Task SaveAsync()

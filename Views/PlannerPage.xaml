@@ -20,21 +20,22 @@
             <VerticalStackLayout BindableLayout.ItemsSource="{Binding Days}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate>
-                        <VerticalStackLayout>
-                            <Label Text="{Binding Date, StringFormat='{}{0:yyyy-MM-dd}'}" FontAttributes="Bold" />
-                            <StackLayout BindableLayout.ItemsSource="{Binding Meals}">
-                                <BindableLayout.ItemTemplate>
-                                    <DataTemplate>
-                                        <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
-                                            <Picker ItemsSource="{Binding Source={x:Reference ThisPage}, Path=BindingContext.Recipes}" ItemDisplayBinding="{Binding Name}" SelectedItem="{Binding Recipe}" />
-                                            <Entry Text="{Binding Portions}" Keyboard="Numeric" WidthRequest="50" />
-                                            <Button Text="-" Command="{Binding BindingContext.RemoveMealCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
-                                        </HorizontalStackLayout>
-                                    </DataTemplate>
-                                </BindableLayout.ItemTemplate>
-                            </StackLayout>
-                            <Button Text="Dodaj posiłek" Command="{Binding BindingContext.AddMealCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
-                        </VerticalStackLayout>
+                        <Frame BorderColor="LightGray" Padding="10" Margin="0,5">
+                            <VerticalStackLayout>
+                                <Label Text="{Binding Date, StringFormat='{}{0:yyyy-MM-dd}'}" FontAttributes="Bold" />
+                                <StackLayout BindableLayout.ItemsSource="{Binding Meals}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid ColumnDefinitions="0.85*,Auto" ColumnSpacing="5">
+                                                <Picker Grid.Column="0" ItemsSource="{Binding Source={x:Reference ThisPage}, Path=BindingContext.Recipes}" ItemDisplayBinding="{Binding Name}" SelectedItem="{Binding Recipe}" />
+                                                <Button Grid.Column="1" Text="✖" Command="{Binding BindingContext.RemoveMealCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" WidthRequest="30" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </StackLayout>
+                                <Button Text="+" Command="{Binding BindingContext.AddMealCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
+                            </VerticalStackLayout>
+                        </Frame>
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
             </VerticalStackLayout>
