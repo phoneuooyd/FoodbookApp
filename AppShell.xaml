@@ -33,4 +33,7 @@
     <ShellContent
         Route="MealFormPage"
         ContentTemplate="{DataTemplate views:MealFormPage}" />
+    <ShellContent
+        Route="ShoppingListDetailPage"
+        ContentTemplate="{DataTemplate views:ShoppingListDetailPage}" />
 </Shell>

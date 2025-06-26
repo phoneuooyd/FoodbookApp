@@ -17,7 +17,7 @@ namespace Foodbook.Views
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            await _viewModel.GenerateListAsync();
+            await _viewModel.LoadPlansAsync();
         }
     }
 }
