@@ -1,12 +1,23 @@
 using Microsoft.Maui.Controls;
+using Foodbook.ViewModels;
 
 namespace Foodbook.Views
 {
     public partial class PlannerPage : ContentPage
     {
-        public PlannerPage()
+        private readonly PlannerViewModel _viewModel;
+
+        public PlannerPage(PlannerViewModel viewModel)
         {
             InitializeComponent();
+            _viewModel = viewModel;
+            BindingContext = _viewModel;
+        }
+
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            await _viewModel.LoadMealsAsync(DateTime.Today.AddDays(-7), DateTime.Today.AddDays(30));
         }
     }
 }

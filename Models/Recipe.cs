@@ -12,6 +12,6 @@ namespace Foodbook.Models
         public double Fat { get; set; }
         public double Carbs { get; set; }
 
-        public List<Ingredient> Ingredients { get; set; } = new();
+        public List<Ingredient> Ingredients { get; set; } = new List<Ingredient>();
     }
 }
