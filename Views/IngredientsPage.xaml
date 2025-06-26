@@ -4,6 +4,7 @@
              x:Class="Foodbook.Views.IngredientsPage"
              x:Name="ThisPage"
              Title="Ingredients">
+
     <ScrollView>
         <VerticalStackLayout Padding="10" Spacing="10">
             <Button Text="Add Ingredient" Command="{Binding AddCommand}" />

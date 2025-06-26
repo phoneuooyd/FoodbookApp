@@ -19,7 +19,6 @@ namespace Foodbook.Models
         public double Protein { get; set; }
         public double Fat { get; set; }
         public double Carbs { get; set; }
-
         public int? RecipeId { get; set; }
         public Recipe? Recipe { get; set; }
     }
