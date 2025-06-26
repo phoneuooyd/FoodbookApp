@@ -127,11 +127,11 @@ namespace Foodbook.ViewModels
                     foreach (var ing in recipe.Ingredients)
                         Ingredients.Add(ing);
                 }
-                ImportStatus = "Zaimporotwano!";
+                ImportStatus = "Zaimportowano!";
             }
             catch
             {
-                ImportStatus = "Blad importu!";
+                ImportStatus = "Błąd importu!";
             }
         }
 

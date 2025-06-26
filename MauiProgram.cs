@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Foodbook.Data;
 using Foodbook.Services;
 using Foodbook.ViewModels;
-using Foodbook.Views; // Dodaj to, jeśli rejestrujesz Pages
+using Foodbook.Views;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection; // Dodaj tę linię na górze pliku
+using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http;
 
 namespace FoodbookApp
