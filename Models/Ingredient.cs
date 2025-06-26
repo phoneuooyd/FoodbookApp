@@ -14,7 +14,7 @@ namespace Foodbook.Models
         public double Quantity { get; set; }
         public Unit Unit { get; set; }
 
-        public int RecipeId { get; set; }
+        public int? RecipeId { get; set; }
         public Recipe? Recipe { get; set; }
     }
 }

@@ -62,11 +62,13 @@ namespace Foodbook.ViewModels
         public ICommand SetImportModeCommand { get; }
 
         private readonly IRecipeService _recipeService;
+        private readonly IIngredientService _ingredientService;
         private readonly RecipeImporter _importer;
 
-        public AddRecipeViewModel(IRecipeService recipeService, RecipeImporter importer)
+        public AddRecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService, RecipeImporter importer)
         {
             _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
+            _ingredientService = ingredientService ?? throw new ArgumentNullException(nameof(ingredientService));
             _importer = importer ?? throw new ArgumentNullException(nameof(importer));
 
             AddIngredientCommand = new Command(AddIngredient);
@@ -97,7 +99,8 @@ namespace Foodbook.ViewModels
 
         private void AddIngredient()
         {
-            Ingredients.Add(new Ingredient { Name = "", Quantity = 0, Unit = Unit.Gram });
+            var name = AvailableIngredientNames.FirstOrDefault() ?? string.Empty;
+            Ingredients.Add(new Ingredient { Name = name, Quantity = 0, Unit = Unit.Gram });
         }
 
         private void RemoveIngredient(Ingredient ingredient)
@@ -134,8 +137,6 @@ namespace Foodbook.ViewModels
 
         private async Task SaveRecipeAsync()
         {
-            foreach (var ing in Ingredients)
-                ing.RecipeId = 0;
 
             var recipe = _editingRecipe ?? new Recipe();
             recipe.Name = Name;
@@ -166,8 +167,17 @@ namespace Foodbook.ViewModels
             await Shell.Current.GoToAsync("..");
         }
 
-        // Add this property for Picker ItemsSource
+        // Dostępne jednostki i lista nazw składników
         public IEnumerable<Unit> Units { get; } = Enum.GetValues(typeof(Unit)).Cast<Unit>();
+        public ObservableCollection<string> AvailableIngredientNames { get; } = new();
+
+        public async Task LoadAvailableIngredientsAsync()
+        {
+            AvailableIngredientNames.Clear();
+            var list = await _ingredientService.GetIngredientsAsync();
+            foreach (var ing in list)
+                AvailableIngredientNames.Add(ing.Name);
+        }
 
         public event PropertyChangedEventHandler PropertyChanged;
         void OnPropertyChanged([CallerMemberName] string name = null) =>

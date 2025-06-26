@@ -11,6 +11,8 @@ namespace Foodbook.Data
     {
         public static async Task InitializeAsync(AppDbContext context)
         {
+            await SeedIngredientsAsync(context);
+
             if (await context.Recipes.AnyAsync())
                 return;
 
@@ -28,15 +30,18 @@ namespace Foodbook.Data
                     new Ingredient { Name = "Pomidor", Quantity = 50, Unit = Unit.Gram }
                 }
             };
-            // Seed popular ingredients from embedded JSON (if not already added)
-            if (!await context.Ingredients.AnyAsync(i => i.RecipeId == 0))
-            {
-                var popularIngredients = await LoadPopularIngredientsAsync();
-                context.Ingredients.AddRange(popularIngredients);
-            }
 
-            
             context.Recipes.Add(recipe);
+            await context.SaveChangesAsync();
+        }
+
+        public static async Task SeedIngredientsAsync(AppDbContext context)
+        {
+            if (await context.Ingredients.AnyAsync(i => i.RecipeId == null))
+                return;
+
+            var ingredients = await LoadPopularIngredientsAsync();
+            context.Ingredients.AddRange(ingredients);
             await context.SaveChangesAsync();
         }
 
