@@ -5,6 +5,8 @@ using Foodbook.Services;
 using Foodbook.ViewModels;
 using Foodbook.Views; // Dodaj to, jeśli rejestrujesz Pages
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection; // Dodaj tę linię na górze pliku
+using System.Net.Http;
 
 namespace FoodbookApp
 {
@@ -42,7 +44,9 @@ namespace FoodbookApp
             builder.Services.AddScoped<PlannerViewModel>();
             builder.Services.AddScoped<ShoppingListViewModel>();
 
-            builder.Services.AddHttpClient<RecipeImporter>();
+            // Rejestracja HttpClient i RecipeImporter
+            builder.Services.AddScoped<HttpClient>();
+            builder.Services.AddScoped<RecipeImporter>();
 
             // 🧭 Rejestracja widoków (Pages), jeśli używasz DI do ich tworzenia
             builder.Services.AddScoped<RecipesPage>();
