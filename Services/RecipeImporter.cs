@@ -30,10 +30,11 @@ public class RecipeImporter
         };
 
         // 1. SKŁADNIKI
-        var ingredientHeader = doc.DocumentNode.SelectSingleNode("//h3[contains(., 'Składniki')]");
+        var ingredientHeader = doc.DocumentNode.SelectSingleNode("//h3[contains(translate(.,'ABCDEFGHIJKLMNOPQRSTUVWXYZĄĆĘŁŃÓŚŹŻ','abcdefghijklmnopqrstuvwxyząćęłńóśźż'),'składniki')]");
         if (ingredientHeader != null)
         {
-            var ingredientList = ingredientHeader.SelectSingleNode("following-sibling::ul[1]");
+            // czasami lista składników jest oddzielona dodatkowymi węzłami
+            var ingredientList = ingredientHeader.SelectSingleNode("following::ul[1]");
             if (ingredientList != null)
             {
                 foreach (var li in ingredientList.SelectNodes("li"))
@@ -47,14 +48,15 @@ public class RecipeImporter
         }
 
         // 2. WARTOŚCI ODŻYWCZE
-        var nutritionHeader = doc.DocumentNode.SelectSingleNode("//h3[contains(., 'Wartości odżywcze')]");
+        var nutritionHeader = doc.DocumentNode.SelectSingleNode("//h3[contains(translate(.,'ABCDEFGHIJKLMNOPQRSTUVWXYZĄĆĘŁŃÓŚŹŻ','abcdefghijklmnopqrstuvwxyząćęłńóśźż'),'wartości odżywcze')]");
         if (nutritionHeader != null)
         {
-            var p = nutritionHeader.SelectSingleNode("following-sibling::p[1]");
+            var p = nutritionHeader.SelectSingleNode("following::p[1]");
             if (p != null)
             {
-                var lines = p.InnerHtml.Split("<br>");
-                foreach (var line in lines.Select(HtmlEntity.DeEntitize))
+                // InnerText konwertuje znaczniki <br> na nowe linie
+                var lines = HtmlEntity.DeEntitize(p.InnerText).Split('\n');
+                foreach (var line in lines)
                 {
                     var text = line.Trim();
 
