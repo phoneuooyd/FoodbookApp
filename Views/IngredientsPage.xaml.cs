@@ -2,6 +2,7 @@ using Microsoft.Maui.Controls;
 using Foodbook.ViewModels;
 using Foodbook.Data;
 using Microsoft.Extensions.DependencyInjection;
+using FoodbookApp;
 
 namespace Foodbook.Views;
 
