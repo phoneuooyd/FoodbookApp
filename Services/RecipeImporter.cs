@@ -30,18 +30,11 @@ public class RecipeImporter
         };
 
         // 1. SKŁADNIKI
-<<<<<<< CRUD
-        var ingredientHeader = doc.DocumentNode.SelectSingleNode("//h3[contains(., 'Składniki')]");
-        if (ingredientHeader != null)
-        {
-            var ingredientList = ingredientHeader.SelectSingleNode("following-sibling::ul[1]");
-=======
         var ingredientHeader = doc.DocumentNode.SelectSingleNode("//h3[contains(translate(.,'ABCDEFGHIJKLMNOPQRSTUVWXYZĄĆĘŁŃÓŚŹŻ','abcdefghijklmnopqrstuvwxyząćęłńóśźż'),'składniki')]");
         if (ingredientHeader != null)
         {
             // czasami lista składników jest oddzielona dodatkowymi węzłami
             var ingredientList = ingredientHeader.SelectSingleNode("following::ul[1]");
->>>>>>> main
             if (ingredientList != null)
             {
                 foreach (var li in ingredientList.SelectNodes("li"))
@@ -55,16 +48,6 @@ public class RecipeImporter
         }
 
         // 2. WARTOŚCI ODŻYWCZE
-<<<<<<< CRUD
-        var nutritionHeader = doc.DocumentNode.SelectSingleNode("//h3[contains(., 'Wartości odżywcze')]");
-        if (nutritionHeader != null)
-        {
-            var p = nutritionHeader.SelectSingleNode("following-sibling::p[1]");
-            if (p != null)
-            {
-                var lines = p.InnerHtml.Split("<br>");
-                foreach (var line in lines.Select(HtmlEntity.DeEntitize))
-=======
         var nutritionHeader = doc.DocumentNode.SelectSingleNode("//h3[contains(translate(.,'ABCDEFGHIJKLMNOPQRSTUVWXYZĄĆĘŁŃÓŚŹŻ','abcdefghijklmnopqrstuvwxyząćęłńóśźż'),'wartości odżywcze')]");
         if (nutritionHeader != null)
         {
@@ -74,7 +57,6 @@ public class RecipeImporter
                 // InnerText konwertuje znaczniki <br> na nowe linie
                 var lines = HtmlEntity.DeEntitize(p.InnerText).Split('\n');
                 foreach (var line in lines)
->>>>>>> main
                 {
                     var text = line.Trim();
 

@@ -3,13 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:models="clr-namespace:Foodbook.Models"
              x:Class="Foodbook.Views.AddRecipePage"
-
-             x:Name="ThisPage"
              Title="Dodaj przepis">
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="16">
-            <Button Text="Powrót" Clicked="OnBackClicked" />
-
 
             <HorizontalStackLayout>
                 <Button Text="Recznie"
@@ -39,12 +35,7 @@
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
                             <HorizontalStackLayout Spacing="6">
-
-                                <Picker Title="Nazwa"
-                                        ItemsSource="{Binding BindingContext.SavedIngredientNames, Source={x:Reference ThisPage}}"
-                                        SelectedItem="{Binding Name}"
-                                        WidthRequest="120" />
-
+                                <Entry Placeholder="Nazwa" Text="{Binding Name}" WidthRequest="120" />
                                 <Entry Placeholder="Ilosc" Keyboard="Numeric" Text="{Binding Quantity}" WidthRequest="60" />
                                 <Picker Title="Jednostka"
                                         ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}"

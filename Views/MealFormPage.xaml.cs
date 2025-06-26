@@ -1,7 +1,6 @@
 using Microsoft.Maui.Controls;
 using Foodbook.ViewModels;
-using System;
-
+using System.Threading.Tasks;
 
 namespace Foodbook.Views;
 
@@ -29,10 +28,4 @@ public partial class MealFormPage : ContentPage
                 Task.Run(async () => await ViewModel.LoadRecipesAsync());
         }
     }
-
-    private async void OnBackClicked(object sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("..");
-    }
-
 }
