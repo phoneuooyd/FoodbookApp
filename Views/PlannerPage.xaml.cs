@@ -13,5 +13,11 @@ namespace Foodbook.Views
             _viewModel = viewModel;
             BindingContext = _viewModel;
         }
+
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            await _viewModel.LoadMealsAsync(DateTime.Today.AddDays(-7), DateTime.Today.AddDays(30));
+        }
     }
 }

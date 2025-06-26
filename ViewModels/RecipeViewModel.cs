@@ -22,6 +22,13 @@ namespace Foodbook.ViewModels
         public RecipeViewModel(IRecipeService recipeService)
         {
             _recipeService = recipeService;
+            AddRecipeCommand = new Command(async () => await Shell.Current.GoToAsync(nameof(AddRecipePage)));
+            EditRecipeCommand = new Command<Recipe>(async r =>
+            {
+                if (r != null)
+                    await Shell.Current.GoToAsync($"{nameof(AddRecipePage)}?id={r.Id}");
+            });
+            DeleteRecipeCommand = new Command<Recipe>(async r => await DeleteRecipeAsync(r));
         }
 
         public async Task LoadRecipesAsync()
@@ -30,6 +37,13 @@ namespace Foodbook.ViewModels
             var recipes = await _recipeService.GetRecipesAsync();
             foreach (var recipe in recipes)
                 Recipes.Add(recipe);
+        }
+
+        private async Task DeleteRecipeAsync(Recipe? recipe)
+        {
+            if (recipe == null) return;
+            await _recipeService.DeleteRecipeAsync(recipe.Id);
+            Recipes.Remove(recipe);
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

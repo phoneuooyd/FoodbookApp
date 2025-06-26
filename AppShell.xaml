@@ -14,6 +14,9 @@
             Title="Recipes"
             ContentTemplate="{DataTemplate views:RecipesPage}" />
         <ShellContent
+            Title="Ingredients"
+            ContentTemplate="{DataTemplate views:IngredientsPage}" />
+        <ShellContent
             Title="Planner"
             ContentTemplate="{DataTemplate views:PlannerPage}" />
         <ShellContent
@@ -21,8 +24,13 @@
             ContentTemplate="{DataTemplate views:ShoppingListPage}" />
     </TabBar>
 
-    <!-- Rejestracja trasy do AddRecipePage -->
     <ShellContent
         Route="AddRecipePage"
         ContentTemplate="{DataTemplate views:AddRecipePage}" />
+    <ShellContent
+        Route="IngredientFormPage"
+        ContentTemplate="{DataTemplate views:IngredientFormPage}" />
+    <ShellContent
+        Route="MealFormPage"
+        ContentTemplate="{DataTemplate views:MealFormPage}" />
 </Shell>

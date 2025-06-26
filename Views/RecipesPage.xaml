@@ -5,13 +5,17 @@
              Title="Recipes">
     <StackLayout>
         <Button Text="Dodaj przepis" Clicked="OnAddRecipeClicked" Margin="10"/>
-        <CollectionView ItemsSource="{Binding Recipes}">
+        <CollectionView x:Name="ThisPage" ItemsSource="{Binding Recipes}">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
                     <Border Margin="5" Padding="10">
                         <VerticalStackLayout>
                             <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="18"/>
                             <Label Text="{Binding Description}" FontSize="14" LineBreakMode="TailTruncation"/>
+                            <HorizontalStackLayout Spacing="6">
+                                <Button Text="Edit" Command="{Binding BindingContext.EditRecipeCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
+                                <Button Text="Delete" Command="{Binding BindingContext.DeleteRecipeCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
+                            </HorizontalStackLayout>
                         </VerticalStackLayout>
                     </Border>
                 </DataTemplate>
