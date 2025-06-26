@@ -4,6 +4,7 @@ using Foodbook.ViewModels;
 using System.Threading.Tasks;
 using System;
 
+
 namespace Foodbook.Views
 {
     [QueryProperty(nameof(RecipeId), "id")]
@@ -19,12 +20,12 @@ namespace Foodbook.Views
             BindingContext = vm;
         }
 
+
         protected override async void OnAppearing()
         {
             base.OnAppearing();
             await ViewModel.LoadIngredientNamesAsync();
         }
-
         private int _recipeId;
         public int RecipeId
         {
@@ -41,5 +42,6 @@ namespace Foodbook.Views
         {
             await Shell.Current.GoToAsync("..");
         }
+
     }
 }

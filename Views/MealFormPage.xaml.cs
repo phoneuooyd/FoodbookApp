@@ -1,7 +1,7 @@
 using Microsoft.Maui.Controls;
 using Foodbook.ViewModels;
-using System.Threading.Tasks;
 using System;
+
 
 namespace Foodbook.Views;
 
@@ -34,4 +34,5 @@ public partial class MealFormPage : ContentPage
     {
         await Shell.Current.GoToAsync("..");
     }
+
 }

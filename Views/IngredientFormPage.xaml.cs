@@ -1,7 +1,10 @@
 using Microsoft.Maui.Controls;
 using Foodbook.ViewModels;
 using System.Threading.Tasks;
+<<<<<<< CRUD
 using System;
+=======
+>>>>>>> main
 
 namespace Foodbook.Views;
 
@@ -27,9 +30,12 @@ public partial class IngredientFormPage : ContentPage
                 Task.Run(async () => await ViewModel.LoadAsync(value));
         }
     }
+<<<<<<< CRUD
 
     private async void OnBackClicked(object sender, EventArgs e)
     {
         await Shell.Current.GoToAsync("..");
     }
+=======
+>>>>>>> main
 }

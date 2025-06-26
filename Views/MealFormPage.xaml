@@ -5,7 +5,10 @@
              x:Name="ThisPage"
              Title="Plan Meal">
     <VerticalStackLayout Padding="20" Spacing="10">
+<<<<<<< CRUD
         <Button Text="Powrót" Clicked="OnBackClicked" />
+=======
+>>>>>>> main
         <DatePicker Date="{Binding Date}" />
         <Picker Title="Recipe" ItemsSource="{Binding Recipes}" ItemDisplayBinding="{Binding Name}" SelectedItem="{Binding SelectedRecipe}" />
         <Button Text="Save" Command="{Binding SaveCommand}" />

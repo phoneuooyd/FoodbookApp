@@ -63,6 +63,7 @@ namespace Foodbook.ViewModels
 
         private readonly IRecipeService _recipeService;
         private readonly RecipeImporter _importer;
+<<<<<<< CRUD
         private readonly IIngredientService _ingredientService;
 
         public ObservableCollection<string> SavedIngredientNames { get; } = new();
@@ -72,6 +73,13 @@ namespace Foodbook.ViewModels
             _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
             _importer = importer ?? throw new ArgumentNullException(nameof(importer));
             _ingredientService = ingredientService ?? throw new ArgumentNullException(nameof(ingredientService));
+=======
+
+        public AddRecipeViewModel(IRecipeService recipeService, RecipeImporter importer)
+        {
+            _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
+            _importer = importer ?? throw new ArgumentNullException(nameof(importer));
+>>>>>>> main
 
             AddIngredientCommand = new Command(AddIngredient);
             RemoveIngredientCommand = new Command<Ingredient>(RemoveIngredient);
@@ -170,6 +178,7 @@ namespace Foodbook.ViewModels
             await Shell.Current.GoToAsync("..");
         }
 
+=
         public async Task LoadIngredientNamesAsync()
         {
             var list = await _ingredientService.GetIngredientsAsync();
@@ -178,7 +187,7 @@ namespace Foodbook.ViewModels
                 if (!string.IsNullOrWhiteSpace(ing.Name))
                     SavedIngredientNames.Add(ing.Name);
         }
-
+        
         // Add this property for Picker ItemsSource
         public IEnumerable<Unit> Units { get; } = Enum.GetValues(typeof(Unit)).Cast<Unit>();
 
