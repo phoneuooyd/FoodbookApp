@@ -23,7 +23,7 @@ namespace Foodbook.Views
 
         private async void OnAddRecipeClicked(object sender, EventArgs e)
         {
-            await Shell.Current.GoToAsync("///AddRecipePage");
+            await Shell.Current.GoToAsync(nameof(AddRecipePage));
         }
     }
 }

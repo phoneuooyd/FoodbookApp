@@ -28,4 +28,11 @@ public partial class IngredientFormPage : ContentPage
                 Task.Run(async () => await ViewModel.LoadAsync(value));
         }
     }
+
+    protected override bool OnBackButtonPressed()
+    {
+        if (ViewModel?.CancelCommand?.CanExecute(null) == true)
+            ViewModel.CancelCommand.Execute(null);
+        return true;
+    }
 }

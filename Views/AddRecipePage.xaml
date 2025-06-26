@@ -77,10 +77,6 @@
                 <Button Text="{Binding SaveButtonText}"
                         Command="{Binding SaveRecipeCommand}"
                         HeightRequest="50" />
-
-                <Button Text="Anuluj"
-                        Command="{Binding CancelCommand}"
-                        HeightRequest="50" />
             </StackLayout>
 
             <!-- Validation Message -->

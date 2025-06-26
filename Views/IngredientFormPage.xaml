@@ -96,12 +96,8 @@
             
             <!-- Action Buttons -->
             <StackLayout Spacing="10" Margin="0,20,0,0">
-                <Button Text="{Binding SaveButtonText}" 
+                <Button Text="{Binding SaveButtonText}"
                         Command="{Binding SaveCommand}"
-                        HeightRequest="50" />
-                
-                <Button Text="Anuluj" 
-                        Command="{Binding CancelCommand}"
                         HeightRequest="50" />
             </StackLayout>
             

@@ -28,4 +28,11 @@ public partial class MealFormPage : ContentPage
                 Task.Run(async () => await ViewModel.LoadRecipesAsync());
         }
     }
+
+    protected override bool OnBackButtonPressed()
+    {
+        if (ViewModel?.CancelCommand?.CanExecute(null) == true)
+            ViewModel.CancelCommand.Execute(null);
+        return true;
+    }
 }
