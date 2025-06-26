@@ -1,51 +1,115 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Foodbook.Models;
 using Foodbook.Services;
 using Microsoft.Maui.Controls;
 using Foodbook.Views;
-using Foodbook.Data;
 
-namespace Foodbook.ViewModels
+namespace Foodbook.ViewModels;
+
+public class PlannerViewModel : INotifyPropertyChanged
 {
-    public class PlannerViewModel
+    private readonly IPlannerService _plannerService;
+    private readonly IRecipeService _recipeService;
+    private readonly IShoppingListService _shoppingListService;
+
+    public ObservableCollection<Recipe> Recipes { get; } = new();
+    public ObservableCollection<PlannerDay> Days { get; } = new();
+
+    private DateTime _startDate = DateTime.Today;
+    public DateTime StartDate { get => _startDate; set { _startDate = value; OnPropertyChanged(); } }
+
+    private DateTime _endDate = DateTime.Today.AddDays(6);
+    public DateTime EndDate { get => _endDate; set { _endDate = value; OnPropertyChanged(); } }
+
+    private int _mealsPerDay = 3;
+    public int MealsPerDay { get => _mealsPerDay; set { _mealsPerDay = value; OnPropertyChanged(); } }
+
+    public ICommand AddMealCommand { get; }
+    public ICommand RemoveMealCommand { get; }
+    public ICommand SaveCommand { get; }
+    public ICommand SaveAndListCommand { get; }
+    public ICommand CancelCommand { get; }
+
+    public PlannerViewModel(IPlannerService plannerService, IRecipeService recipeService, IShoppingListService shoppingListService)
     {
-        private readonly IPlannerService _plannerService;
+        _plannerService = plannerService ?? throw new ArgumentNullException(nameof(plannerService));
+        _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
+        _shoppingListService = shoppingListService ?? throw new ArgumentNullException(nameof(shoppingListService));
 
-        public ObservableCollection<PlannedMeal> PlannedMeals { get; } = new();
+        AddMealCommand = new Command<PlannerDay>(AddMeal);
+        RemoveMealCommand = new Command<PlannedMeal>(RemoveMeal);
+        SaveCommand = new Command(async () => await SaveAsync());
+        SaveAndListCommand = new Command(async () => await SaveAndListAsync());
+        CancelCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
+    }
 
-        public ICommand AddMealCommand { get; }
-        public ICommand EditMealCommand { get; }
-        public ICommand DeleteMealCommand { get; }
+    public async Task LoadAsync()
+    {
+        Days.Clear();
+        Recipes.Clear();
 
-        public PlannerViewModel(IPlannerService plannerService)
+        var rec = await _recipeService.GetRecipesAsync();
+        foreach (var r in rec)
+            Recipes.Add(r);
+
+        var meals = await _plannerService.GetPlannedMealsAsync(StartDate, EndDate);
+
+        for (var d = StartDate.Date; d <= EndDate.Date; d = d.AddDays(1))
         {
-            _plannerService = plannerService ?? throw new ArgumentNullException(nameof(plannerService));
-
-            AddMealCommand = new Command(async () => await Shell.Current.GoToAsync(nameof(MealFormPage)));
-            EditMealCommand = new Command<PlannedMeal>(async meal =>
-            {
-                if (meal != null)
-                    await Shell.Current.GoToAsync($"{nameof(MealFormPage)}?id={meal.Id}");
-            });
-            DeleteMealCommand = new Command<PlannedMeal>(async meal => await RemoveMealAsync(meal));
-        }
-
-        public async Task LoadMealsAsync(DateTime from, DateTime to)
-        {
-            PlannedMeals.Clear();
-            var meals = await _plannerService.GetPlannedMealsAsync(from, to);
-            foreach (var meal in meals)
-                PlannedMeals.Add(meal);
-        }
-
-        private async Task RemoveMealAsync(PlannedMeal meal)
-        {
-            if (meal == null)
-                return;
-
-            await _plannerService.RemovePlannedMealAsync(meal.Id);
-            PlannedMeals.Remove(meal);
+            var day = new PlannerDay(d);
+            foreach (var m in meals.Where(m => m.Date.Date == d))
+                day.Meals.Add(m);
+            Days.Add(day);
         }
     }
+
+    private void AddMeal(PlannerDay? day)
+    {
+        if (day == null) return;
+        day.Meals.Add(new PlannedMeal { Date = day.Date, Portions = 1 });
+    }
+
+    private void RemoveMeal(PlannedMeal? meal)
+    {
+        if (meal == null) return;
+        var day = Days.FirstOrDefault(d => d.Meals.Contains(meal));
+        if (day != null)
+            day.Meals.Remove(meal);
+    }
+
+    private async Task SaveAsync()
+    {
+        var existing = await _plannerService.GetPlannedMealsAsync(StartDate, EndDate);
+        foreach (var m in existing)
+            await _plannerService.RemovePlannedMealAsync(m.Id);
+
+        foreach (var day in Days)
+        {
+            foreach (var meal in day.Meals)
+            {
+                if (meal.Recipe != null)
+                    meal.RecipeId = meal.Recipe.Id;
+                if (meal.RecipeId > 0)
+                    await _plannerService.AddPlannedMealAsync(new PlannedMeal
+                    {
+                        RecipeId = meal.RecipeId,
+                        Date = meal.Date,
+                        Portions = meal.Portions
+                    });
+            }
+        }
+    }
+
+    private async Task SaveAndListAsync()
+    {
+        await SaveAsync();
+        await Shell.Current.GoToAsync(nameof(ShoppingListPage));
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+    private void OnPropertyChanged([CallerMemberName] string? name = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }

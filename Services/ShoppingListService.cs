@@ -22,7 +22,14 @@ public class ShoppingListService : IShoppingListService
             .ToListAsync();
 
         var ingredients = meals
-            .SelectMany(pm => pm.Recipe?.Ingredients ?? Enumerable.Empty<Ingredient>());
+            .SelectMany(pm =>
+                (pm.Recipe?.Ingredients ?? Enumerable.Empty<Ingredient>())
+                .Select(i => new Ingredient
+                {
+                    Name = i.Name,
+                    Unit = i.Unit,
+                    Quantity = i.Quantity * pm.Portions
+                }));
 
         var grouped = ingredients
             .GroupBy(i => new { i.Name, i.Unit })
