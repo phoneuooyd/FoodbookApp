@@ -4,7 +4,9 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Foodbook.Models;
 using Foodbook.Services;
+using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.ApplicationModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,6 +48,9 @@ namespace Foodbook.ViewModels
 
         public ObservableCollection<Ingredient> Ingredients { get; set; } = new();
 
+        // Lista nazw składników do wyboru w formularzu
+        public ObservableCollection<string> IngredientNames { get; } = new();
+
         // Pola do importu
         public string ImportUrl { get => _importUrl; set { _importUrl = value; OnPropertyChanged(); } }
         private string _importUrl;
@@ -63,11 +68,13 @@ namespace Foodbook.ViewModels
 
         private readonly IRecipeService _recipeService;
         private readonly RecipeImporter _importer;
+        private readonly IIngredientService _ingredientService;
 
-        public AddRecipeViewModel(IRecipeService recipeService, RecipeImporter importer)
+        public AddRecipeViewModel(IRecipeService recipeService, RecipeImporter importer, IIngredientService ingredientService)
         {
             _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
             _importer = importer ?? throw new ArgumentNullException(nameof(importer));
+            _ingredientService = ingredientService ?? throw new ArgumentNullException(nameof(ingredientService));
 
             AddIngredientCommand = new Command(AddIngredient);
             RemoveIngredientCommand = new Command<Ingredient>(RemoveIngredient);
@@ -75,6 +82,20 @@ namespace Foodbook.ViewModels
             ImportRecipeCommand = new Command(async () => await ImportRecipeAsync());
             SetManualModeCommand = new Command(() => IsManualMode = true);
             SetImportModeCommand = new Command(() => IsManualMode = false);
+
+            // Wczytaj listę składników dostępnych w bazie
+            Task.Run(async () => await LoadIngredientNamesAsync());
+        }
+
+        public async Task LoadIngredientNamesAsync()
+        {
+            var list = await _ingredientService.GetIngredientsAsync();
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                IngredientNames.Clear();
+                foreach (var ing in list)
+                    IngredientNames.Add(ing.Name);
+            });
         }
 
         public async Task LoadRecipeAsync(int id)

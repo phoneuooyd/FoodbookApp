@@ -4,18 +4,24 @@
              x:Class="Foodbook.Views.IngredientsPage"
              x:Name="ThisPage"
              Title="Ingredients">
-    <VerticalStackLayout Padding="10" Spacing="10">
+    <VerticalStackLayout Padding="16" Spacing="12">
         <Button Text="Add Ingredient" Command="{Binding AddCommand}" />
         <CollectionView ItemsSource="{Binding Ingredients}">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <HorizontalStackLayout Spacing="10" Padding="5">
-                        <Label Text="{Binding Name}" />
-                        <Label Text="{Binding Quantity}" />
-                        <Label Text="{Binding Unit}" />
-                        <Button Text="Edit" Command="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
-                        <Button Text="Delete" Command="{Binding BindingContext.DeleteCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
-                    </HorizontalStackLayout>
+                    <Border StrokeThickness="1" Stroke="LightGray" Margin="0,4" Padding="10" StrokeShape="RoundRectangle 8">
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto">
+                            <VerticalStackLayout>
+                                <Label Text="{Binding Name}" FontAttributes="Bold" />
+                                <Label Text="{Binding Quantity}" FontSize="12"/>
+                                <Label Text="{Binding Unit}" FontSize="12"/>
+                            </VerticalStackLayout>
+                            <HorizontalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
+                                <Button Text="Edit" Command="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
+                                <Button Text="Delete" Command="{Binding BindingContext.DeleteCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
+                            </HorizontalStackLayout>
+                        </Grid>
+                    </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
