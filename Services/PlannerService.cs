@@ -21,9 +21,20 @@ namespace Foodbook.Services
                 .ToListAsync();
         }
 
+        public async Task<PlannedMeal?> GetPlannedMealAsync(int id)
+        {
+            return await _context.PlannedMeals.Include(pm => pm.Recipe).FirstOrDefaultAsync(pm => pm.Id == id);
+        }
+
         public async Task AddPlannedMealAsync(PlannedMeal meal)
         {
             _context.PlannedMeals.Add(meal);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdatePlannedMealAsync(PlannedMeal meal)
+        {
+            _context.PlannedMeals.Update(meal);
             await _context.SaveChangesAsync();
         }
 

@@ -13,6 +13,8 @@ namespace Foodbook.ViewModels
 {
     public class AddRecipeViewModel : INotifyPropertyChanged
     {
+        private Recipe? _editingRecipe;
+
         // Tryb: true = reczny, false = import z linku
         private bool _isManualMode = true;
         public bool IsManualMode
@@ -75,6 +77,24 @@ namespace Foodbook.ViewModels
             SetImportModeCommand = new Command(() => IsManualMode = false);
         }
 
+        public async Task LoadRecipeAsync(int id)
+        {
+            var recipe = await _recipeService.GetRecipeAsync(id);
+            if (recipe == null)
+                return;
+
+            _editingRecipe = recipe;
+            Name = recipe.Name;
+            Description = recipe.Description ?? string.Empty;
+            Calories = recipe.Calories.ToString();
+            Protein = recipe.Protein.ToString();
+            Fat = recipe.Fat.ToString();
+            Carbs = recipe.Carbs.ToString();
+            Ingredients.Clear();
+            foreach (var ing in recipe.Ingredients)
+                Ingredients.Add(new Ingredient { Id = ing.Id, Name = ing.Name, Quantity = ing.Quantity, Unit = ing.Unit, RecipeId = ing.RecipeId });
+        }
+
         private void AddIngredient()
         {
             Ingredients.Add(new Ingredient { Name = "", Quantity = 0, Unit = Unit.Gram });
@@ -114,32 +134,34 @@ namespace Foodbook.ViewModels
 
         private async Task SaveRecipeAsync()
         {
-            // Ustaw RecipeId = 0 dla wszystkich składników (nowy przepis, nie powiązany z innym)
             foreach (var ing in Ingredients)
                 ing.RecipeId = 0;
 
-            var recipe = new Recipe
-            {
-                Name = Name,
-                Description = Description,
-                Calories = double.TryParse(Calories, out var cal) ? cal : 0,
-                Protein = double.TryParse(Protein, out var prot) ? prot : 0,
-                Fat = double.TryParse(Fat, out var fat) ? fat : 0,
-                Carbs = double.TryParse(Carbs, out var carbs) ? carbs : 0,
-                Ingredients = Ingredients.ToList()
-            };
+            var recipe = _editingRecipe ?? new Recipe();
+            recipe.Name = Name;
+            recipe.Description = Description;
+            recipe.Calories = double.TryParse(Calories, out var cal) ? cal : 0;
+            recipe.Protein = double.TryParse(Protein, out var prot) ? prot : 0;
+            recipe.Fat = double.TryParse(Fat, out var fat) ? fat : 0;
+            recipe.Carbs = double.TryParse(Carbs, out var carbs) ? carbs : 0;
+            recipe.Ingredients = Ingredients.ToList();
 
             // Walidacja: nie zapisuj pustych przepisów
             if (string.IsNullOrWhiteSpace(recipe.Name) || recipe.Ingredients.Count == 0)
                 return;
 
-            await _recipeService.AddRecipeAsync(recipe);
+            if (_editingRecipe == null)
+                await _recipeService.AddRecipeAsync(recipe);
+            else
+                await _recipeService.UpdateRecipeAsync(recipe);
 
-            // (Opcjonalnie) Wyczyść formularz po zapisie
-            Name = Description = Calories = Protein = Fat = Carbs = string.Empty;
-            Ingredients.Clear();
-            ImportUrl = string.Empty;
-            ImportStatus = string.Empty;
+            if (_editingRecipe == null)
+            {
+                Name = Description = Calories = Protein = Fat = Carbs = string.Empty;
+                Ingredients.Clear();
+                ImportUrl = string.Empty;
+                ImportStatus = string.Empty;
+            }
 
             await Shell.Current.GoToAsync("..");
         }
