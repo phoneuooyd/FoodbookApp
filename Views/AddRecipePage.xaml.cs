@@ -2,6 +2,7 @@ using Microsoft.Maui.Controls;
 using Foodbook.Services;
 using Foodbook.ViewModels;
 using System.Threading.Tasks;
+using System;
 
 namespace Foodbook.Views
 {
@@ -18,6 +19,12 @@ namespace Foodbook.Views
             BindingContext = vm;
         }
 
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            await ViewModel.LoadIngredientNamesAsync();
+        }
+
         private int _recipeId;
         public int RecipeId
         {
@@ -28,6 +35,11 @@ namespace Foodbook.Views
                 if (value > 0)
                     Task.Run(async () => await ViewModel.LoadRecipeAsync(value));
             }
+        }
+
+        private async void OnBackClicked(object sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync("..");
         }
     }
 }

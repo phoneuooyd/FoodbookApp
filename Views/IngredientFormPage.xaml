@@ -5,6 +5,7 @@
              x:Name="ThisPage"
              Title="Ingredient">
     <VerticalStackLayout Padding="20" Spacing="10">
+        <Button Text="Powrót" Clicked="OnBackClicked" />
         <Entry Placeholder="Name" Text="{Binding Name}" />
         <Entry Placeholder="Quantity" Keyboard="Numeric" Text="{Binding Quantity}" />
         <Picker Title="Unit" ItemsSource="{Binding Units}" SelectedItem="{Binding SelectedUnit}" />
