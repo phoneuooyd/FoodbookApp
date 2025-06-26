@@ -18,6 +18,8 @@ public class PlannerViewModel : INotifyPropertyChanged
     public ObservableCollection<Recipe> Recipes { get; } = new();
     public ObservableCollection<PlannerDay> Days { get; } = new();
 
+    private bool _isLoading;
+
     private DateTime _startDate = DateTime.Today;
     public DateTime StartDate
     {
@@ -27,7 +29,7 @@ public class PlannerViewModel : INotifyPropertyChanged
             if (_startDate == value) return;
             _startDate = value;
             OnPropertyChanged();
-            Task.Run(async () => await LoadAsync());
+            _ = LoadAsync();
         }
     }
 
@@ -40,7 +42,7 @@ public class PlannerViewModel : INotifyPropertyChanged
             if (_endDate == value) return;
             _endDate = value;
             OnPropertyChanged();
-            Task.Run(async () => await LoadAsync());
+            _ = LoadAsync();
         }
     }
 
@@ -78,6 +80,10 @@ public class PlannerViewModel : INotifyPropertyChanged
 
     public async Task LoadAsync()
     {
+        if (_isLoading)
+            return;
+        _isLoading = true;
+
         Days.Clear();
         Recipes.Clear();
 
@@ -95,6 +101,8 @@ public class PlannerViewModel : INotifyPropertyChanged
             Days.Add(day);
         }
         AdjustMealsPerDay();
+
+        _isLoading = false;
     }
 
     private void AddMeal(PlannerDay? day)
