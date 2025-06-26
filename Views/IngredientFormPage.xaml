@@ -3,11 +3,114 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Foodbook.Views.IngredientFormPage"
              x:Name="ThisPage"
-             Title="Ingredient">
-    <VerticalStackLayout Padding="20" Spacing="10">
-        <Entry Placeholder="Name" Text="{Binding Name}" />
-        <Entry Placeholder="Quantity" Keyboard="Numeric" Text="{Binding Quantity}" />
-        <Picker Title="Unit" ItemsSource="{Binding Units}" SelectedItem="{Binding SelectedUnit}" />
-        <Button Text="Save" Command="{Binding SaveCommand}" />
-    </VerticalStackLayout>
+             Title="Składnik">
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="15">
+            
+            <!-- Header -->
+            <Label Text="{Binding Title}" 
+                   FontSize="24" 
+                   FontAttributes="Bold" 
+                   HorizontalOptions="Center"
+                   Margin="0,0,0,20" />
+            
+            <!-- Basic Information Section -->
+            <Label Text="Informacje podstawowe" 
+                   FontSize="18" 
+                   FontAttributes="Bold" 
+                   Margin="0,10,0,5" />
+            
+            <!-- Name Field -->
+            <StackLayout Spacing="5">
+                <Label Text="Nazwa składnika *" FontAttributes="Bold" />
+                <Entry Placeholder="Wprowadź nazwę składnika" 
+                       Text="{Binding Name}" 
+                       ClearButtonVisibility="WhileEditing" />
+            </StackLayout>
+            
+            <!-- Quantity Field -->
+            <StackLayout Spacing="5">
+                <Label Text="Ilość *" FontAttributes="Bold" />
+                <Entry Placeholder="Wprowadź ilość" 
+                       Keyboard="Numeric" 
+                       Text="{Binding Quantity}"
+                       ClearButtonVisibility="WhileEditing" />
+            </StackLayout>
+            
+            <!-- Unit Field -->
+            <StackLayout Spacing="5">
+                <Label Text="Jednostka *" FontAttributes="Bold" />
+                <Picker Title="Wybierz jednostkę" 
+                        ItemsSource="{Binding Units}" 
+                        SelectedItem="{Binding SelectedUnit}" />
+            </StackLayout>
+            
+            <!-- Nutritional Information Section -->
+            <Label Text="Informacje odżywcze (na określoną ilość)" 
+                   FontSize="18" 
+                   FontAttributes="Bold" 
+                   Margin="0,20,0,5" />
+            
+            <!-- Calories Field -->
+            <StackLayout Spacing="5">
+                <Label Text="Kalorie" FontAttributes="Bold" />
+                <Entry Placeholder="Wprowadź kalorie" 
+                       Keyboard="Numeric" 
+                       Text="{Binding Calories}"
+                       ClearButtonVisibility="WhileEditing" />
+            </StackLayout>
+            
+            <!-- Protein Field -->
+            <StackLayout Spacing="5">
+                <Label Text="Białko (g)" FontAttributes="Bold" />
+                <Entry Placeholder="Wprowadź ilość białka" 
+                       Keyboard="Numeric" 
+                       Text="{Binding Protein}"
+                       ClearButtonVisibility="WhileEditing" />
+            </StackLayout>
+            
+            <!-- Fat Field -->
+            <StackLayout Spacing="5">
+                <Label Text="Tłuszcze (g)" FontAttributes="Bold" />
+                <Entry Placeholder="Wprowadź ilość tłuszczów" 
+                       Keyboard="Numeric" 
+                       Text="{Binding Fat}"
+                       ClearButtonVisibility="WhileEditing" />
+            </StackLayout>
+            
+            <!-- Carbs Field -->
+            <StackLayout Spacing="5">
+                <Label Text="Węglowodany (g)" FontAttributes="Bold" />
+                <Entry Placeholder="Wprowadź ilość węglowodanów" 
+                       Keyboard="Numeric" 
+                       Text="{Binding Carbs}"
+                       ClearButtonVisibility="WhileEditing" />
+            </StackLayout>
+            
+            <!-- Recipe Info (if applicable) -->
+            <StackLayout Spacing="5" IsVisible="{Binding IsPartOfRecipe}" Margin="0,20,0,0">
+                <Label Text="Informacja" FontAttributes="Bold" />
+                <Label Text="{Binding RecipeInfo}" 
+                       FontSize="12" />
+            </StackLayout>
+            
+            <!-- Action Buttons -->
+            <StackLayout Spacing="10" Margin="0,20,0,0">
+                <Button Text="{Binding SaveButtonText}" 
+                        Command="{Binding SaveCommand}"
+                        HeightRequest="50" />
+                
+                <Button Text="Anuluj" 
+                        Command="{Binding CancelCommand}"
+                        HeightRequest="50" />
+            </StackLayout>
+            
+            <!-- Validation Message -->
+            <Label Text="{Binding ValidationMessage}" 
+                   FontSize="12"
+                   IsVisible="{Binding HasValidationError}"
+                   HorizontalTextAlignment="Center" />
+                   
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

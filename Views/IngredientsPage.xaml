@@ -4,20 +4,78 @@
              x:Class="Foodbook.Views.IngredientsPage"
              x:Name="ThisPage"
              Title="Ingredients">
-    <VerticalStackLayout Padding="10" Spacing="10">
-        <Button Text="Add Ingredient" Command="{Binding AddCommand}" />
-        <CollectionView ItemsSource="{Binding Ingredients}">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Border Margin="5" Padding="10">
-                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
-                            <Label Text="{Binding Name}" VerticalOptions="Center" />
-                            <Button Grid.Column="1" Text="Edit" Command="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
-                            <Button Grid.Column="2" Text="Delete" Command="{Binding BindingContext.DeleteCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
-                        </Grid>
-                    </Border>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-    </VerticalStackLayout>
+    <ScrollView>
+        <VerticalStackLayout Padding="10" Spacing="10">
+            <Button Text="Add Ingredient" Command="{Binding AddCommand}" />
+            <CollectionView ItemsSource="{Binding Ingredients}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="5" Padding="15" StrokeThickness="1">
+                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10" RowSpacing="5">
+                                
+                                <!-- Main ingredient info -->
+                                <StackLayout Grid.Row="0" Grid.Column="0" Spacing="2">
+                                    <Label Text="{Binding Name}" 
+                                           FontSize="16" 
+                                           FontAttributes="Bold" />
+                                    <Label FontSize="12">
+                                        <Label.Text>
+                                            <MultiBinding StringFormat="{}{0:F1} {1}">
+                                                <Binding Path="Quantity" />
+                                                <Binding Path="Unit" />
+                                            </MultiBinding>
+                                        </Label.Text>
+                                    </Label>
+                                </StackLayout>
+                                
+                                <!-- Nutritional info -->
+                                <StackLayout Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Spacing="15">
+                                    <Label FontSize="11">
+                                        <Label.Text>
+                                            <MultiBinding StringFormat="🔥 {0:F0} kcal">
+                                                <Binding Path="Calories" />
+                                            </MultiBinding>
+                                        </Label.Text>
+                                    </Label>
+                                    <Label FontSize="11">
+                                        <Label.Text>
+                                            <MultiBinding StringFormat="💪 {0:F1}g">
+                                                <Binding Path="Protein" />
+                                            </MultiBinding>
+                                        </Label.Text>
+                                    </Label>
+                                    <Label FontSize="11">
+                                        <Label.Text>
+                                            <MultiBinding StringFormat="🧈 {0:F1}g">
+                                                <Binding Path="Fat" />
+                                            </MultiBinding>
+                                        </Label.Text>
+                                    </Label>
+                                    <Label FontSize="11">
+                                        <Label.Text>
+                                            <MultiBinding StringFormat="🍞 {0:F1}g">
+                                                <Binding Path="Carbs" />
+                                            </MultiBinding>
+                                        </Label.Text>
+                                    </Label>
+                                </StackLayout>
+                                
+                                <!-- Action buttons -->
+                                <Button Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" 
+                                        Text="Edit" 
+                                        Command="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}" 
+                                        CommandParameter="{Binding .}"
+                                        FontSize="12" />
+                                <Button Grid.Row="0" Grid.RowSpan="2" Grid.Column="2" 
+                                        Text="Delete" 
+                                        Command="{Binding BindingContext.DeleteCommand, Source={x:Reference ThisPage}}" 
+                                        CommandParameter="{Binding .}"
+                                        FontSize="12" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>
