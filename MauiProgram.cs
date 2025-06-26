@@ -84,7 +84,7 @@ namespace FoodbookApp
             {
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 db.Database.EnsureCreated();
-                Task.Run(async () => await SeedData.InitializeAsync(db)).Wait();
+                SeedData.InitializeAsync(db).GetAwaiter().GetResult();
             }
 
             return app;
