@@ -62,11 +62,15 @@ namespace Foodbook.ViewModels
         public ICommand SetImportModeCommand { get; }
 
         private readonly IRecipeService _recipeService;
+        private readonly IIngredientService _ingredientService;
         private readonly RecipeImporter _importer;
 
-        public AddRecipeViewModel(IRecipeService recipeService, RecipeImporter importer)
+        public ObservableCollection<string> IngredientOptions { get; } = new();
+
+        public AddRecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService, RecipeImporter importer)
         {
             _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
+            _ingredientService = ingredientService ?? throw new ArgumentNullException(nameof(ingredientService));
             _importer = importer ?? throw new ArgumentNullException(nameof(importer));
 
             AddIngredientCommand = new Command(AddIngredient);
@@ -95,9 +99,18 @@ namespace Foodbook.ViewModels
                 Ingredients.Add(new Ingredient { Id = ing.Id, Name = ing.Name, Quantity = ing.Quantity, Unit = ing.Unit, RecipeId = ing.RecipeId });
         }
 
+        public async Task LoadIngredientOptionsAsync()
+        {
+            IngredientOptions.Clear();
+            var list = await _ingredientService.GetIngredientsAsync();
+            foreach (var ing in list)
+                IngredientOptions.Add(ing.Name);
+        }
+
         private void AddIngredient()
         {
-            Ingredients.Add(new Ingredient { Name = "", Quantity = 0, Unit = Unit.Gram });
+            var defaultName = IngredientOptions.FirstOrDefault() ?? string.Empty;
+            Ingredients.Add(new Ingredient { Name = defaultName, Quantity = 0, Unit = Unit.Gram });
         }
 
         private void RemoveIngredient(Ingredient ingredient)

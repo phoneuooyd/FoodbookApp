@@ -9,13 +9,15 @@
         <CollectionView ItemsSource="{Binding Ingredients}">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <HorizontalStackLayout Spacing="10" Padding="5">
-                        <Label Text="{Binding Name}" />
-                        <Label Text="{Binding Quantity}" />
-                        <Label Text="{Binding Unit}" />
-                        <Button Text="Edit" Command="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
-                        <Button Text="Delete" Command="{Binding BindingContext.DeleteCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
-                    </HorizontalStackLayout>
+                    <Frame Padding="8" Margin="0,4" BorderColor="LightGray" CornerRadius="8">
+                        <HorizontalStackLayout Spacing="10" Padding="5">
+                            <Label Text="{Binding Name}" />
+                            <Label Text="{Binding Quantity}" />
+                            <Label Text="{Binding Unit}" />
+                            <Button Text="Edit" Command="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
+                            <Button Text="Delete" Command="{Binding BindingContext.DeleteCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
+                        </HorizontalStackLayout>
+                    </Frame>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>

@@ -40,6 +40,16 @@ namespace Foodbook.Data
             await context.SaveChangesAsync();
         }
 
+        public static async Task SeedIngredientsAsync(AppDbContext context)
+        {
+            if (await context.Ingredients.AnyAsync(i => i.RecipeId == 0))
+                return;
+
+            var popularIngredients = await LoadPopularIngredientsAsync();
+            context.Ingredients.AddRange(popularIngredients);
+            await context.SaveChangesAsync();
+        }
+
         private class IngredientInfo
         {
             public string Name { get; set; } = string.Empty;

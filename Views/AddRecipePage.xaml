@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:models="clr-namespace:Foodbook.Models"
              x:Class="Foodbook.Views.AddRecipePage"
+             x:Name="ThisPage"
              Title="Dodaj przepis">
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="16">
@@ -21,30 +22,38 @@
                 <Label Text="{Binding ImportStatus}" TextColor="Gray" FontSize="12" />
             </StackLayout>
 
-            <!-- Tryb reczny -->    
+            <!-- Tryb reczny -->
             <StackLayout IsVisible="{Binding IsManualMode}">
-                <Entry Placeholder="Nazwa przepisu" Text="{Binding Name}" />
-                <Editor Placeholder="Opis" Text="{Binding Description}" AutoSize="TextChanges" />
-                <Entry Placeholder="Kalorie" Keyboard="Numeric" Text="{Binding Calories}" />
-                <Entry Placeholder="Bialko" Keyboard="Numeric" Text="{Binding Protein}" />
-                <Entry Placeholder="Tluszcze" Keyboard="Numeric" Text="{Binding Fat}" />
-                <Entry Placeholder="Weglowodany" Keyboard="Numeric" Text="{Binding Carbs}" />
+                <Frame Padding="10" Margin="0,4" BorderColor="LightGray" CornerRadius="8">
+                    <VerticalStackLayout Spacing="8">
+                        <Entry Placeholder="Nazwa przepisu" Text="{Binding Name}" />
+                        <Editor Placeholder="Opis" Text="{Binding Description}" AutoSize="TextChanges" />
+                        <Entry Placeholder="Kalorie" Keyboard="Numeric" Text="{Binding Calories}" />
+                        <Entry Placeholder="Bialko" Keyboard="Numeric" Text="{Binding Protein}" />
+                        <Entry Placeholder="Tluszcze" Keyboard="Numeric" Text="{Binding Fat}" />
+                        <Entry Placeholder="Weglowodany" Keyboard="Numeric" Text="{Binding Carbs}" />
+                    </VerticalStackLayout>
+                </Frame>
 
                 <Label Text="Skladniki:" FontAttributes="Bold" />
                 <CollectionView ItemsSource="{Binding Ingredients}">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <HorizontalStackLayout Spacing="6">
-                                <Entry Placeholder="Nazwa" Text="{Binding Name}" WidthRequest="120" />
-                                <Entry Placeholder="Ilosc" Keyboard="Numeric" Text="{Binding Quantity}" WidthRequest="60" />
-                                <Picker Title="Jednostka"
-                                        ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}"
-                                        SelectedItem="{Binding Unit}"
-                                        WidthRequest="100" />
-                                <Button Text="Usun"
-                                        Command="{Binding BindingContext.RemoveIngredientCommand, Source={x:Reference ThisPage}}"
-                                        CommandParameter="{Binding .}" />
-                            </HorizontalStackLayout>
+                            <Frame Padding="8" Margin="0,4" BorderColor="LightGray" CornerRadius="8">
+                                <HorizontalStackLayout Spacing="6">
+                                    <Picker Title="Składnik"
+                                            ItemsSource="{Binding BindingContext.IngredientOptions, Source={x:Reference ThisPage}}"
+                                            SelectedItem="{Binding Name}" WidthRequest="120" />
+                                    <Entry Placeholder="Ilosc" Keyboard="Numeric" Text="{Binding Quantity}" WidthRequest="60" />
+                                    <Picker Title="Jednostka"
+                                            ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}"
+                                            SelectedItem="{Binding Unit}"
+                                            WidthRequest="100" />
+                                    <Button Text="Usun"
+                                            Command="{Binding BindingContext.RemoveIngredientCommand, Source={x:Reference ThisPage}}"
+                                            CommandParameter="{Binding .}" />
+                                </HorizontalStackLayout>
+                            </Frame>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>

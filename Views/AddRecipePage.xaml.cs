@@ -29,5 +29,11 @@ namespace Foodbook.Views
                     Task.Run(async () => await ViewModel.LoadRecipeAsync(value));
             }
         }
+
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            await ViewModel.LoadIngredientOptionsAsync();
+        }
     }
 }
