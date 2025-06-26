@@ -35,18 +35,26 @@
                 <CollectionView ItemsSource="{Binding Ingredients}">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <Border StrokeThickness="1" Stroke="LightGray" Padding="6" Margin="2">
-                                <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6">
+                            <Border StrokeThickness="1"
+                                    Stroke="LightGray"
+                                    Padding="10"
+                                    Margin="0,0,0,8">
+                                <Grid ColumnDefinitions="2*,*,Auto,Auto"
+                                      ColumnSpacing="10"
+                                      VerticalOptions="Center">
                                     <Picker Title="Składnik"
                                             ItemsSource="{Binding BindingContext.AvailableIngredientNames, Source={x:Reference ThisPage}}"
-                                            SelectedItem="{Binding Name}"
-                                            WidthRequest="120" />
-                                    <Entry Grid.Column="1" Placeholder="Ilosc" Keyboard="Numeric" Text="{Binding Quantity}" WidthRequest="60" />
-                                    <Picker Grid.Column="2" Title="Jednostka"
+                                            SelectedItem="{Binding Name}" />
+                                    <Entry Grid.Column="1"
+                                           Placeholder="Ilość"
+                                           Keyboard="Numeric"
+                                           Text="{Binding Quantity}" />
+                                    <Picker Grid.Column="2"
+                                            Title="Jednostka"
                                             ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}"
-                                            SelectedItem="{Binding Unit}"
-                                            WidthRequest="100" />
-                                    <Button Grid.Column="3" Text="Usun"
+                                            SelectedItem="{Binding Unit}" />
+                                    <Button Grid.Column="3"
+                                            Text="Usuń"
                                             Command="{Binding BindingContext.RemoveIngredientCommand, Source={x:Reference ThisPage}}"
                                             CommandParameter="{Binding .}" />
                                 </Grid>
