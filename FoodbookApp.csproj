@@ -103,7 +103,9 @@
           <MauiXaml Update="Views\ShoppingListPage.xaml">
             <Generator>MSBuild:Compile</Generator>
           </MauiXaml>
-          <MauiXaml Include="Views\ShoppingListDetailPage.xaml" />
+          <MauiXaml Update="Views\ShoppingListDetailPage.xaml">
+            <Generator>MSBuild:Compile</Generator>
+          </MauiXaml>
 	</ItemGroup>
 
 </Project>
