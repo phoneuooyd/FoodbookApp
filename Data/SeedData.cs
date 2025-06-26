@@ -124,8 +124,8 @@ namespace Foodbook.Data
                     // Metoda 3: Próba tradycyjnego odczytu pliku
                     try
                     {
-                        var appDir = FileSystem.Current.OpenAppPackageFileAsync("ingredients.json").Result;
-                        using var reader = new StreamReader(appDir);
+                        using var stream = await FileSystem.Current.OpenAppPackageFileAsync("ingredients.json");
+                        using var reader = new StreamReader(stream);
                         json = await reader.ReadToEndAsync();
                     }
                     catch
