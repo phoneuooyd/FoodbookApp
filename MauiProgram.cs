@@ -39,12 +39,14 @@ namespace FoodbookApp
             builder.Services.AddScoped<IRecipeService, RecipeService>();
             builder.Services.AddScoped<IPlannerService, PlannerService>();
             builder.Services.AddScoped<IShoppingListService, ShoppingListService>();
+            builder.Services.AddScoped<IPlanService, PlanService>();
             builder.Services.AddScoped<IIngredientService, IngredientService>();
 
             builder.Services.AddScoped<RecipeViewModel>();
             builder.Services.AddScoped<AddRecipeViewModel>();
             builder.Services.AddScoped<PlannerViewModel>();
             builder.Services.AddScoped<ShoppingListViewModel>();
+            builder.Services.AddScoped<ShoppingListDetailViewModel>();
             builder.Services.AddScoped<IngredientsViewModel>();
             builder.Services.AddScoped<IngredientFormViewModel>();
             builder.Services.AddScoped<PlannedMealFormViewModel>();
@@ -61,6 +63,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<PlannerPage>();
             builder.Services.AddScoped<MealFormPage>();
             builder.Services.AddScoped<ShoppingListPage>();
+            builder.Services.AddScoped<ShoppingListDetailPage>();
 
             // 🧠 Rejestracja routów do Shell (opcjonalne, jeśli używasz Shell)
             Routing.RegisterRoute(nameof(RecipesPage), typeof(RecipesPage));
@@ -70,6 +73,7 @@ namespace FoodbookApp
             Routing.RegisterRoute(nameof(PlannerPage), typeof(PlannerPage));
             Routing.RegisterRoute(nameof(MealFormPage), typeof(MealFormPage));
             Routing.RegisterRoute(nameof(ShoppingListPage), typeof(ShoppingListPage));
+            Routing.RegisterRoute(nameof(ShoppingListDetailPage), typeof(ShoppingListDetailPage));
 
             // ✨ Build aplikacji
             var app = builder.Build();

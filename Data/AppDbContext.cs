@@ -8,6 +8,7 @@ namespace Foodbook.Data
         public DbSet<Recipe> Recipes => Set<Recipe>();
         public DbSet<Ingredient> Ingredients => Set<Ingredient>();
         public DbSet<PlannedMeal> PlannedMeals => Set<PlannedMeal>();
+        public DbSet<Plan> Plans => Set<Plan>();
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 

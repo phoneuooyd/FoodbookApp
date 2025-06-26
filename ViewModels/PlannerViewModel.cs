@@ -14,6 +14,7 @@ public class PlannerViewModel : INotifyPropertyChanged
     private readonly IPlannerService _plannerService;
     private readonly IRecipeService _recipeService;
     private readonly IShoppingListService _shoppingListService;
+    private readonly IPlanService _planService;
 
     public ObservableCollection<Recipe> Recipes { get; } = new();
     public ObservableCollection<PlannerDay> Days { get; } = new();
@@ -65,11 +66,12 @@ public class PlannerViewModel : INotifyPropertyChanged
     public ICommand SaveAndListCommand { get; }
     public ICommand CancelCommand { get; }
 
-    public PlannerViewModel(IPlannerService plannerService, IRecipeService recipeService, IShoppingListService shoppingListService)
+    public PlannerViewModel(IPlannerService plannerService, IRecipeService recipeService, IShoppingListService shoppingListService, IPlanService planService)
     {
         _plannerService = plannerService ?? throw new ArgumentNullException(nameof(plannerService));
         _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
         _shoppingListService = shoppingListService ?? throw new ArgumentNullException(nameof(shoppingListService));
+        _planService = planService ?? throw new ArgumentNullException(nameof(planService));
 
         AddMealCommand = new Command<PlannerDay>(AddMeal);
         RemoveMealCommand = new Command<PlannedMeal>(RemoveMeal);
@@ -130,8 +132,28 @@ public class PlannerViewModel : INotifyPropertyChanged
         }
     }
 
-    private async Task SaveAsync()
+    private void Reset()
     {
+        _startDate = DateTime.Today;
+        _endDate = DateTime.Today.AddDays(6);
+        OnPropertyChanged(nameof(StartDate));
+        OnPropertyChanged(nameof(EndDate));
+        MealsPerDay = 3;
+        Days.Clear();
+        _ = LoadAsync();
+    }
+
+    private async Task<Plan?> SaveAsync()
+    {
+        if (await _planService.HasOverlapAsync(StartDate, EndDate))
+        {
+            await Shell.Current.DisplayAlert("Błąd", "Plan na podane daty już istnieje.", "OK");
+            return null;
+        }
+
+        var plan = new Plan { StartDate = StartDate, EndDate = EndDate };
+        await _planService.AddPlanAsync(plan);
+
         var existing = await _plannerService.GetPlannedMealsAsync(StartDate, EndDate);
         foreach (var m in existing)
             await _plannerService.RemovePlannedMealAsync(m.Id);
@@ -151,12 +173,16 @@ public class PlannerViewModel : INotifyPropertyChanged
                     });
             }
         }
+
+        Reset();
+        return plan;
     }
 
     private async Task SaveAndListAsync()
     {
-        await SaveAsync();
-        await Shell.Current.GoToAsync(nameof(ShoppingListPage));
+        var plan = await SaveAsync();
+        if (plan != null)
+            await Shell.Current.GoToAsync($"{nameof(ShoppingListDetailPage)}?id={plan.Id}");
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
