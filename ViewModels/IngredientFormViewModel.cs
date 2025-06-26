@@ -16,10 +16,10 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     private string _name = string.Empty;
 
     public string Quantity { get => _quantity; set { _quantity = value; OnPropertyChanged(); } }
-    private string _quantity = string.Empty;
+    private string _quantity = "100";  // Default value
 
     public Unit SelectedUnit { get => _unit; set { _unit = value; OnPropertyChanged(); } }
-    private Unit _unit;
+    private Unit _unit = Unit.Gram;  // Default value
 
     public IEnumerable<Unit> Units { get; } = Enum.GetValues(typeof(Unit)).Cast<Unit>();
 
@@ -45,20 +45,47 @@ public class IngredientFormViewModel : INotifyPropertyChanged
 
     private async Task SaveAsync()
     {
+        // Don't save if the name is empty
+        if (string.IsNullOrWhiteSpace(Name))
+        {
+            await Shell.Current.DisplayAlert("B³¹d", "Nazwa sk³adnika nie mo¿e byæ pusta", "OK");
+            return;
+        }
+
         var qty = double.TryParse(Quantity, out var q) ? q : 0;
-        if (_ingredient == null)
+        
+        try
         {
-            var newIng = new Ingredient { Name = Name, Quantity = qty, Unit = SelectedUnit };
-            await _service.AddIngredientAsync(newIng);
+            if (_ingredient == null)
+            {
+                var newIng = new Ingredient 
+                { 
+                    Name = Name, 
+                    Quantity = qty, 
+                    Unit = SelectedUnit,
+                    RecipeId = null  // Explicitly set to null for standalone ingredients
+                };
+                
+                await _service.AddIngredientAsync(newIng);
+                System.Diagnostics.Debug.WriteLine($"Added new ingredient: {Name}, {qty}, {SelectedUnit}");
+            }
+            else
+            {
+                _ingredient.Name = Name;
+                _ingredient.Quantity = qty;
+                _ingredient.Unit = SelectedUnit;
+                // Preserve RecipeId
+                await _service.UpdateIngredientAsync(_ingredient);
+                System.Diagnostics.Debug.WriteLine($"Updated ingredient: {Name}, {qty}, {SelectedUnit}");
+            }
+            
+            await Shell.Current.GoToAsync("..");
         }
-        else
+        catch (Exception ex)
         {
-            _ingredient.Name = Name;
-            _ingredient.Quantity = qty;
-            _ingredient.Unit = SelectedUnit;
-            await _service.UpdateIngredientAsync(_ingredient);
+            System.Diagnostics.Debug.WriteLine($"Error saving ingredient: {ex.Message}");
+            await Shell.Current.DisplayAlert("B³¹d", $"Nie uda³o siê zapisaæ sk³adnika: {ex.Message}", "OK");
         }
-        await Shell.Current.GoToAsync("..");
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

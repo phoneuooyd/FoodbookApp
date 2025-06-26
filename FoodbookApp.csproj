@@ -55,10 +55,16 @@
 		<!-- Custom Fonts -->
 		<MauiFont Include="Resources\Fonts\*" />
 
-                <!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
-                <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
-                <!-- JSON Data -->
-                <MauiAsset Include="Resources\Data\**" LogicalName="Data/%(RecursiveDir)%(Filename)%(Extension)" />
+        <!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
+        <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+        
+        <!-- JSON Data Files -->
+        <!-- Specific include for ingredients.json with multiple logical names for flexibility -->
+        <MauiAsset Include="Resources\Data\ingredients.json" LogicalName="ingredients.json" />
+        <MauiAsset Include="Resources\Data\ingredients.json" LogicalName="Data/ingredients.json" />
+        
+        <!-- Other data files -->
+        <MauiAsset Include="Resources\Data\**" Exclude="Resources\Data\ingredients.json" LogicalName="Data/%(RecursiveDir)%(Filename)%(Extension)" />
 	</ItemGroup>
 
 	<ItemGroup>
