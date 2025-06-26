@@ -18,6 +18,12 @@ namespace Foodbook.Views
             BindingContext = vm;
         }
 
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            await ViewModel.LoadAvailableIngredientsAsync();
+        }
+
         private int _recipeId;
         public int RecipeId
         {

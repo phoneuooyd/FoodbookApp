@@ -1,6 +1,8 @@
 using Microsoft.Maui.Controls;
 using Foodbook.ViewModels;
 using System.Threading.Tasks;
+using Foodbook.Models;
+using FoodbookApp;
 
 namespace Foodbook.Views;
 

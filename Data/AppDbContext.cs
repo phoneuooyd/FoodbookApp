@@ -19,6 +19,10 @@ namespace Foodbook.Data
                 .HasForeignKey(i => i.RecipeId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<Ingredient>()
+                .Property(i => i.RecipeId)
+                .IsRequired(false);
+
             modelBuilder.Entity<PlannedMeal>()
                 .HasOne(pm => pm.Recipe)
                 .WithMany()

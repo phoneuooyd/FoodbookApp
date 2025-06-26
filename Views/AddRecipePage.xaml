@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:models="clr-namespace:Foodbook.Models"
              x:Class="Foodbook.Views.AddRecipePage"
+             x:Name="ThisPage"
              Title="Dodaj przepis">
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="16">
@@ -34,17 +35,22 @@
                 <CollectionView ItemsSource="{Binding Ingredients}">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <HorizontalStackLayout Spacing="6">
-                                <Entry Placeholder="Nazwa" Text="{Binding Name}" WidthRequest="120" />
-                                <Entry Placeholder="Ilosc" Keyboard="Numeric" Text="{Binding Quantity}" WidthRequest="60" />
-                                <Picker Title="Jednostka"
-                                        ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}"
-                                        SelectedItem="{Binding Unit}"
-                                        WidthRequest="100" />
-                                <Button Text="Usun"
-                                        Command="{Binding BindingContext.RemoveIngredientCommand, Source={x:Reference ThisPage}}"
-                                        CommandParameter="{Binding .}" />
-                            </HorizontalStackLayout>
+                            <Border StrokeThickness="1" Stroke="LightGray" Padding="6" Margin="2">
+                                <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6">
+                                    <Picker Title="Składnik"
+                                            ItemsSource="{Binding BindingContext.AvailableIngredientNames, Source={x:Reference ThisPage}}"
+                                            SelectedItem="{Binding Name}"
+                                            WidthRequest="120" />
+                                    <Entry Grid.Column="1" Placeholder="Ilosc" Keyboard="Numeric" Text="{Binding Quantity}" WidthRequest="60" />
+                                    <Picker Grid.Column="2" Title="Jednostka"
+                                            ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}"
+                                            SelectedItem="{Binding Unit}"
+                                            WidthRequest="100" />
+                                    <Button Grid.Column="3" Text="Usun"
+                                            Command="{Binding BindingContext.RemoveIngredientCommand, Source={x:Reference ThisPage}}"
+                                            CommandParameter="{Binding .}" />
+                                </Grid>
+                            </Border>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>

@@ -12,7 +12,7 @@ public class IngredientService : IIngredientService
         _context = context;
     }
 
-    public async Task<List<Ingredient>> GetIngredientsAsync() => await _context.Ingredients.Where(i => i.RecipeId == 0).ToListAsync();
+    public async Task<List<Ingredient>> GetIngredientsAsync() => await _context.Ingredients.Where(i => i.RecipeId == null).ToListAsync();
 
     public async Task<Ingredient?> GetIngredientAsync(int id) => await _context.Ingredients.FindAsync(id);
 
