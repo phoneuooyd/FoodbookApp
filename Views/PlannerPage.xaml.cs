@@ -17,7 +17,7 @@ namespace Foodbook.Views
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            await _viewModel.LoadMealsAsync(DateTime.Today.AddDays(-7), DateTime.Today.AddDays(30));
+            await _viewModel.LoadAsync();
         }
     }
 }

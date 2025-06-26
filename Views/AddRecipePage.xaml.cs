@@ -22,18 +22,22 @@ namespace Foodbook.Views
         {
             base.OnAppearing();
             await ViewModel.LoadAvailableIngredientsAsync();
+            if (RecipeId > 0)
+                await ViewModel.LoadRecipeAsync(RecipeId);
         }
 
         private int _recipeId;
         public int RecipeId
         {
             get => _recipeId;
-            set
-            {
-                _recipeId = value;
-                if (value > 0)
-                    Task.Run(async () => await ViewModel.LoadRecipeAsync(value));
-            }
+            set => _recipeId = value;
+        }
+
+        protected override bool OnBackButtonPressed()
+        {
+            if (ViewModel?.CancelCommand?.CanExecute(null) == true)
+                ViewModel.CancelCommand.Execute(null);
+            return true;
         }
     }
 }

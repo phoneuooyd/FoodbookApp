@@ -52,8 +52,12 @@ public class IngredientService : IIngredientService
                 existingIngredient.Name = ingredient.Name;
                 existingIngredient.Quantity = ingredient.Quantity;
                 existingIngredient.Unit = ingredient.Unit;
+                existingIngredient.Calories = ingredient.Calories;
+                existingIngredient.Protein = ingredient.Protein;
+                existingIngredient.Fat = ingredient.Fat;
+                existingIngredient.Carbs = ingredient.Carbs;
                 // RecipeId stays the same
-                
+
                 await _context.SaveChangesAsync();
                 System.Diagnostics.Debug.WriteLine($"Updated ingredient: {ingredient.Name}, ID: {ingredient.Id}");
             }

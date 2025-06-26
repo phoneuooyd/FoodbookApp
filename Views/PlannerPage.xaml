@@ -1,22 +1,49 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:Foodbook.Models"
              x:Class="Foodbook.Views.PlannerPage"
              x:Name="ThisPage"
              Title="Planner">
-    <VerticalStackLayout Padding="10" Spacing="10">
-        <Button Text="Add" Command="{Binding AddMealCommand}" />
-        <CollectionView ItemsSource="{Binding PlannedMeals}">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <HorizontalStackLayout Spacing="10">
-                        <Label Text="{Binding Recipe.Name}" />
-                        <Label Text="{Binding Date, StringFormat='{}{0:yyyy-MM-dd}'}" />
-                        <Button Text="Edit" Command="{Binding BindingContext.EditMealCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
-                        <Button Text="Delete" Command="{Binding BindingContext.DeleteMealCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
-                    </HorizontalStackLayout>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-    </VerticalStackLayout>
+    <ScrollView>
+        <VerticalStackLayout Padding="10" Spacing="10">
+            <HorizontalStackLayout>
+                <Label Text="Start:" VerticalOptions="Center" />
+                <DatePicker Date="{Binding StartDate}" />
+                <Label Text="Koniec:" VerticalOptions="Center" />
+                <DatePicker Date="{Binding EndDate}" />
+            </HorizontalStackLayout>
+            <HorizontalStackLayout>
+                <Label Text="Posiłków/dzień:" VerticalOptions="Center" />
+                <Entry Text="{Binding MealsPerDay}" Keyboard="Numeric" WidthRequest="60" />
+            </HorizontalStackLayout>
+            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Days}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate>
+                        <Frame BorderColor="LightGray" Padding="10" Margin="0,5">
+                            <VerticalStackLayout>
+                                <Label Text="{Binding Date, StringFormat='{}{0:yyyy-MM-dd}'}" FontAttributes="Bold" />
+                                <StackLayout BindableLayout.ItemsSource="{Binding Meals}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid ColumnDefinitions="0.85*,Auto" ColumnSpacing="5">
+                                                <Picker Grid.Column="0" ItemsSource="{Binding Source={x:Reference ThisPage}, Path=BindingContext.Recipes}" ItemDisplayBinding="{Binding Name}" SelectedItem="{Binding Recipe}" />
+                                                <Button Grid.Column="1" Text="✖" Command="{Binding BindingContext.RemoveMealCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" WidthRequest="30" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </StackLayout>
+                                <Button Text="+" Command="{Binding BindingContext.AddMealCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
+                            </VerticalStackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+            <HorizontalStackLayout Spacing="10" Margin="0,20,0,0">
+                <Button Text="Zapisz" Command="{Binding SaveCommand}" />
+                <Button Text="Zapisz i stwórz listę" Command="{Binding SaveAndListCommand}" />
+                <Button Text="Anuluj" Command="{Binding CancelCommand}" />
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

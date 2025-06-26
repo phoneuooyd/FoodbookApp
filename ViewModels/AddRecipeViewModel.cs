@@ -31,20 +31,29 @@ namespace Foodbook.ViewModels
         public bool IsImportMode => !IsManualMode;
 
         // Pola do recznego dodawania
-        public string Name { get => _name; set { _name = value; OnPropertyChanged(); } }
-        private string _name;
+        public string Name { get => _name; set { _name = value; OnPropertyChanged(); ValidateInput(); } }
+        private string _name = string.Empty;
         public string Description { get => _description; set { _description = value; OnPropertyChanged(); } }
-        private string _description;
-        public string Calories { get => _calories; set { _calories = value; OnPropertyChanged(); } }
-        private string _calories;
-        public string Protein { get => _protein; set { _protein = value; OnPropertyChanged(); } }
-        private string _protein;
-        public string Fat { get => _fat; set { _fat = value; OnPropertyChanged(); } }
-        private string _fat;
-        public string Carbs { get => _carbs; set { _carbs = value; OnPropertyChanged(); } }
-        private string _carbs;
+        private string _description = string.Empty;
+        public string Calories { get => _calories; set { _calories = value; OnPropertyChanged(); ValidateInput(); } }
+        private string _calories = "0";
+        public string Protein { get => _protein; set { _protein = value; OnPropertyChanged(); ValidateInput(); } }
+        private string _protein = "0";
+        public string Fat { get => _fat; set { _fat = value; OnPropertyChanged(); ValidateInput(); } }
+        private string _fat = "0";
+        public string Carbs { get => _carbs; set { _carbs = value; OnPropertyChanged(); ValidateInput(); } }
+        private string _carbs = "0";
 
         public ObservableCollection<Ingredient> Ingredients { get; set; } = new();
+
+        public string Title => _editingRecipe == null ? "Nowy przepis" : "Edytuj przepis";
+
+        public string SaveButtonText => _editingRecipe == null ? "Dodaj przepis" : "Zapisz zmiany";
+
+        public string ValidationMessage { get => _validationMessage; set { _validationMessage = value; OnPropertyChanged(); } }
+        private string _validationMessage = string.Empty;
+
+        public bool HasValidationError => !string.IsNullOrEmpty(ValidationMessage);
 
         // Pola do importu
         public string ImportUrl { get => _importUrl; set { _importUrl = value; OnPropertyChanged(); } }
@@ -57,6 +66,7 @@ namespace Foodbook.ViewModels
         public ICommand AddIngredientCommand { get; }
         public ICommand RemoveIngredientCommand { get; }
         public ICommand SaveRecipeCommand { get; }
+        public ICommand CancelCommand { get; }
         public ICommand ImportRecipeCommand { get; }
         public ICommand SetManualModeCommand { get; }
         public ICommand SetImportModeCommand { get; }
@@ -73,10 +83,14 @@ namespace Foodbook.ViewModels
 
             AddIngredientCommand = new Command(AddIngredient);
             RemoveIngredientCommand = new Command<Ingredient>(RemoveIngredient);
-            SaveRecipeCommand = new Command(async () => await SaveRecipeAsync());
+            SaveRecipeCommand = new Command(async () => await SaveRecipeAsync(), CanSave);
+            CancelCommand = new Command(async () => await CancelAsync());
             ImportRecipeCommand = new Command(async () => await ImportRecipeAsync());
             SetManualModeCommand = new Command(() => IsManualMode = true);
             SetImportModeCommand = new Command(() => IsManualMode = false);
+
+            Ingredients.CollectionChanged += (_, __) => ValidateInput();
+            ValidateInput();
         }
 
         public async Task LoadRecipeAsync(int id)
@@ -101,12 +115,14 @@ namespace Foodbook.ViewModels
         {
             var name = AvailableIngredientNames.FirstOrDefault() ?? string.Empty;
             Ingredients.Add(new Ingredient { Name = name, Quantity = 0, Unit = Unit.Gram });
+            ValidateInput();
         }
 
         private void RemoveIngredient(Ingredient ingredient)
         {
             if (Ingredients.Contains(ingredient))
                 Ingredients.Remove(ingredient);
+            ValidateInput();
         }
 
         private async Task ImportRecipeAsync()
@@ -127,16 +143,78 @@ namespace Foodbook.ViewModels
                     foreach (var ing in recipe.Ingredients)
                         Ingredients.Add(ing);
                 }
-                ImportStatus = "Zaimporotwano!";
+                ImportStatus = "Zaimportowano!";
             }
             catch
             {
-                ImportStatus = "Blad importu!";
+                ImportStatus = "Błąd importu!";
             }
+        }
+
+        private bool CanSave()
+        {
+            return !HasValidationError;
+        }
+
+        private void ValidateInput()
+        {
+            ValidationMessage = string.Empty;
+
+            if (string.IsNullOrWhiteSpace(Name))
+            {
+                ValidationMessage = "Nazwa przepisu jest wymagana";
+            }
+            else if (Ingredients.Count == 0)
+            {
+                ValidationMessage = "Dodaj co najmniej jeden składnik";
+            }
+            else if (!double.TryParse(Calories, out _))
+            {
+                ValidationMessage = "Kalorie muszą być liczbą";
+            }
+            else if (!double.TryParse(Protein, out _))
+            {
+                ValidationMessage = "Białko musi być liczbą";
+            }
+            else if (!double.TryParse(Fat, out _))
+            {
+                ValidationMessage = "Tłuszcze muszą być liczbą";
+            }
+            else if (!double.TryParse(Carbs, out _))
+            {
+                ValidationMessage = "Węglowodany muszą być liczbą";
+            }
+            else
+            {
+                foreach (var ing in Ingredients)
+                {
+                    if (string.IsNullOrWhiteSpace(ing.Name))
+                    {
+                        ValidationMessage = "Każdy składnik musi mieć nazwę";
+                        break;
+                    }
+                    if (ing.Quantity <= 0)
+                    {
+                        ValidationMessage = "Ilość składnika musi być większa od zera";
+                        break;
+                    }
+                }
+            }
+
+            OnPropertyChanged(nameof(HasValidationError));
+            ((Command)SaveRecipeCommand).ChangeCanExecute();
+        }
+
+        private async Task CancelAsync()
+        {
+            await Shell.Current.GoToAsync("..");
         }
 
         private async Task SaveRecipeAsync()
         {
+            ValidateInput();
+            if (HasValidationError)
+                return;
 
             var recipe = _editingRecipe ?? new Recipe();
             recipe.Name = Name;
@@ -146,10 +224,6 @@ namespace Foodbook.ViewModels
             recipe.Fat = double.TryParse(Fat, out var fat) ? fat : 0;
             recipe.Carbs = double.TryParse(Carbs, out var carbs) ? carbs : 0;
             recipe.Ingredients = Ingredients.ToList();
-
-            // Walidacja: nie zapisuj pustych przepisów
-            if (string.IsNullOrWhiteSpace(recipe.Name) || recipe.Ingredients.Count == 0)
-                return;
 
             if (_editingRecipe == null)
                 await _recipeService.AddRecipeAsync(recipe);
