@@ -5,8 +5,31 @@
              x:Name="ThisPage"
              Title="Plan Meal">
     <VerticalStackLayout Padding="20" Spacing="10">
+
+        <!-- Header -->
+        <Label Text="{Binding Title}"
+               FontSize="24"
+               FontAttributes="Bold"
+               HorizontalOptions="Center"
+               Margin="0,0,0,20" />
+
         <DatePicker Date="{Binding Date}" />
         <Picker Title="Recipe" ItemsSource="{Binding Recipes}" ItemDisplayBinding="{Binding Name}" SelectedItem="{Binding SelectedRecipe}" />
-        <Button Text="Save" Command="{Binding SaveCommand}" />
+
+        <!-- Action Buttons -->
+        <StackLayout Spacing="10" Margin="0,20,0,0">
+            <Button Text="{Binding SaveButtonText}"
+                    Command="{Binding SaveCommand}"
+                    HeightRequest="50" />
+            <Button Text="Anuluj"
+                    Command="{Binding CancelCommand}"
+                    HeightRequest="50" />
+        </StackLayout>
+
+        <!-- Validation Message -->
+        <Label Text="{Binding ValidationMessage}"
+               FontSize="12"
+               IsVisible="{Binding HasValidationError}"
+               HorizontalTextAlignment="Center" />
     </VerticalStackLayout>
 </ContentPage>

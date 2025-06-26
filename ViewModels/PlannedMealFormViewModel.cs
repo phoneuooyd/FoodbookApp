@@ -16,19 +16,31 @@ public class PlannedMealFormViewModel : INotifyPropertyChanged
 
     public ObservableCollection<Recipe> Recipes { get; } = new();
 
-    public Recipe? SelectedRecipe { get => _selectedRecipe; set { _selectedRecipe = value; OnPropertyChanged(); } }
+    public string Title => _meal == null ? "Nowy posiłek" : "Edytuj posiłek";
+
+    public string SaveButtonText => _meal == null ? "Dodaj posiłek" : "Zapisz zmiany";
+
+    public string ValidationMessage { get => _validationMessage; set { _validationMessage = value; OnPropertyChanged(); } }
+    private string _validationMessage = string.Empty;
+
+    public bool HasValidationError => !string.IsNullOrEmpty(ValidationMessage);
+
+    public Recipe? SelectedRecipe { get => _selectedRecipe; set { _selectedRecipe = value; OnPropertyChanged(); ValidateInput(); } }
     private Recipe? _selectedRecipe;
 
-    public DateTime Date { get => _date; set { _date = value; OnPropertyChanged(); } }
+    public DateTime Date { get => _date; set { _date = value; OnPropertyChanged(); ValidateInput(); } }
     private DateTime _date = DateTime.Today;
 
     public ICommand SaveCommand { get; }
+    public ICommand CancelCommand { get; }
 
     public PlannedMealFormViewModel(IPlannerService plannerService, IRecipeService recipeService)
     {
         _plannerService = plannerService;
         _recipeService = recipeService;
-        SaveCommand = new Command(async () => await SaveAsync());
+        SaveCommand = new Command(async () => await SaveAsync(), CanSave);
+        CancelCommand = new Command(async () => await CancelAsync());
+        ValidateInput();
     }
 
     public async Task LoadAsync(int id)
@@ -40,7 +52,10 @@ public class PlannedMealFormViewModel : INotifyPropertyChanged
             _meal = meal;
             Date = meal.Date;
             SelectedRecipe = Recipes.FirstOrDefault(r => r.Id == meal.RecipeId);
+            OnPropertyChanged(nameof(Title));
+            OnPropertyChanged(nameof(SaveButtonText));
         }
+        ValidateInput();
     }
 
     public async Task LoadRecipesAsync()
@@ -49,11 +64,37 @@ public class PlannedMealFormViewModel : INotifyPropertyChanged
         var rec = await _recipeService.GetRecipesAsync();
         foreach (var r in rec)
             Recipes.Add(r);
+        ValidateInput();
+    }
+
+    private bool CanSave()
+    {
+        return !HasValidationError;
+    }
+
+    private void ValidateInput()
+    {
+        ValidationMessage = string.Empty;
+
+        if (SelectedRecipe == null)
+        {
+            ValidationMessage = "Wybierz przepis";
+        }
+
+        OnPropertyChanged(nameof(HasValidationError));
+        ((Command)SaveCommand).ChangeCanExecute();
+    }
+
+    private async Task CancelAsync()
+    {
+        await Shell.Current.GoToAsync("..");
     }
 
     private async Task SaveAsync()
     {
-        if (SelectedRecipe == null) return;
+        ValidateInput();
+        if (HasValidationError)
+            return;
         if (_meal == null)
         {
             var m = new PlannedMeal { RecipeId = SelectedRecipe.Id, Date = Date };
