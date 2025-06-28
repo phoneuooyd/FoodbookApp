@@ -72,7 +72,17 @@ public class PlannerViewModel : INotifyPropertyChanged
 
         AddMealCommand = new Command<PlannerDay>(AddMeal);
         RemoveMealCommand = new Command<PlannedMeal>(RemoveMeal);
-        SaveCommand = new Command(async () => await SaveAsync());
+        SaveCommand = new Command(async () =>
+        {
+            var plan = await SaveAsync();
+            if (plan != null)
+            {
+                await Shell.Current.DisplayAlert(
+                    "Zapisano",
+                    $"Zapisano listę zakupów dla Foodbook od {plan.StartDate:yyyy-MM-dd} - {plan.EndDate:yyyy-MM-dd}",
+                    "OK");
+            }
+        });
         CancelCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
     }
 

@@ -45,6 +45,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<RecipeViewModel>();
             builder.Services.AddScoped<AddRecipeViewModel>();
             builder.Services.AddScoped<PlannerViewModel>();
+            builder.Services.AddScoped<HomeViewModel>();
             builder.Services.AddScoped<ShoppingListViewModel>();
             builder.Services.AddScoped<ShoppingListDetailViewModel>();
             builder.Services.AddScoped<IngredientsViewModel>();
@@ -57,6 +58,7 @@ namespace FoodbookApp
 
             // 🧭 Rejestracja widoków (Pages), jeśli używasz DI do ich tworzenia
             builder.Services.AddScoped<RecipesPage>();
+            builder.Services.AddScoped<HomePage>();
             builder.Services.AddScoped<AddRecipePage>();
             builder.Services.AddScoped<IngredientsPage>();
             builder.Services.AddScoped<IngredientFormPage>();
@@ -74,6 +76,7 @@ namespace FoodbookApp
             Routing.RegisterRoute(nameof(MealFormPage), typeof(MealFormPage));
             Routing.RegisterRoute(nameof(ShoppingListPage), typeof(ShoppingListPage));
             Routing.RegisterRoute(nameof(ShoppingListDetailPage), typeof(ShoppingListDetailPage));
+            Routing.RegisterRoute(nameof(HomePage), typeof(HomePage));
 
             // ✨ Build aplikacji
             var app = builder.Build();
