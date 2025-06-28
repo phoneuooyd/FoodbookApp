@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Foodbook.Models;
 using Foodbook.Services;
+using FoodbookApp;
 using Microsoft.Maui.Controls;
 
 namespace Foodbook.ViewModels;

@@ -24,10 +24,29 @@ namespace Foodbook.Data
                 .Property(i => i.RecipeId)
                 .IsRequired(false);
 
+            // Add indexes for better query performance
+            modelBuilder.Entity<Ingredient>()
+                .HasIndex(i => i.RecipeId)
+                .HasDatabaseName("IX_Ingredients_RecipeId");
+
+            modelBuilder.Entity<Ingredient>()
+                .HasIndex(i => i.Name)
+                .HasDatabaseName("IX_Ingredients_Name");
+
+            // Composite index for filtering standalone ingredients and ordering by name
+            modelBuilder.Entity<Ingredient>()
+                .HasIndex(i => new { i.RecipeId, i.Name })
+                .HasDatabaseName("IX_Ingredients_RecipeId_Name");
+
             modelBuilder.Entity<PlannedMeal>()
                 .HasOne(pm => pm.Recipe)
                 .WithMany()
                 .HasForeignKey(pm => pm.RecipeId);
+
+            // Index for recipe searches
+            modelBuilder.Entity<Recipe>()
+                .HasIndex(r => r.Name)
+                .HasDatabaseName("IX_Recipes_Name");
 
             base.OnModelCreating(modelBuilder);
         }
