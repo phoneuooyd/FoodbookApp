@@ -6,15 +6,17 @@
              x:Class="Foodbook.Views.ShoppingListPage"
              x:Name="ThisPage"
              x:DataType="vm:ShoppingListViewModel"
-             Title="Shopping Lists">
+             Title="Listy zakupów">
     <CollectionView ItemsSource="{Binding Plans}" Margin="10" SelectionMode="None">
         <CollectionView.ItemTemplate>
             <DataTemplate x:DataType="models:Plan">
-                <Grid ColumnDefinitions="*,Auto,Auto" Padding="5">
-                    <Label Text="{Binding Label}" Grid.Column="0" />
-                    <Button Grid.Column="1" Text="Edit" Command="{Binding BindingContext.OpenPlanCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
-                    <Button Grid.Column="2" Text="Delete" Command="{Binding BindingContext.DeletePlanCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
-                </Grid>
+                <Border Stroke="LightGray" StrokeThickness="1" Padding="8" Margin="0,5">
+                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                        <Label Text="{Binding Label}" Grid.Column="0" VerticalOptions="Center" />
+                        <Button Grid.Column="1" Text="✎" Command="{Binding BindingContext.OpenPlanCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" WidthRequest="40" />
+                        <Button Grid.Column="2" Text="🗑" Command="{Binding BindingContext.DeletePlanCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" WidthRequest="40" />
+                    </Grid>
+                </Border>
             </DataTemplate>
         </CollectionView.ItemTemplate>
     </CollectionView>

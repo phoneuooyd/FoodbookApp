@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace Foodbook.Models
 {
     public enum Unit
@@ -13,6 +15,9 @@ namespace Foodbook.Models
         public string Name { get; set; } = string.Empty;
         public double Quantity { get; set; }
         public Unit Unit { get; set; }
+
+        [NotMapped]
+        public bool IsChecked { get; set; }
 
         // Nutritional information per specified amount/unit
         public double Calories { get; set; }
