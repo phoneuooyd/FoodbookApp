@@ -7,7 +7,7 @@
              x:Class="Foodbook.Views.IngredientsPage"
              x:Name="ThisPage"
              x:DataType="vm:IngredientsViewModel"
-             Title="Ingredients">
+             Title="Składniki">
 
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
@@ -37,7 +37,7 @@
             
             <Grid RowDefinitions="Auto,*">
                 <Button Grid.Row="0" 
-                        Text="Add Ingredient" 
+                        Text="Dodaj składnik"
                         Command="{Binding AddCommand}"
                         Margin="10" />
                 
@@ -148,8 +148,8 @@
                                    FontSize="18" 
                                    HorizontalOptions="Center"
                                    TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-                            <Label Text="Dotknij 'Add Ingredient' aby dodać pierwszy składnik" 
-                                   FontSize="14" 
+                            <Label Text="Dotknij 'Dodaj składnik', aby dodać pierwszy"
+                                   FontSize="14"
                                    HorizontalOptions="Center"
                                    TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
                                    Margin="0,10,0,0" />

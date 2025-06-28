@@ -5,7 +5,7 @@
              xmlns:models="clr-namespace:Foodbook.Models"
              x:Class="Foodbook.Views.RecipesPage"
              x:DataType="vm:RecipeViewModel"
-             Title="Recipes">
+             Title="Przepisy">
     <StackLayout>
         <Button Text="Dodaj przepis" Clicked="OnAddRecipeClicked" Margin="10"/>
         <CollectionView x:Name="ThisPage" ItemsSource="{Binding Recipes}">
@@ -16,8 +16,8 @@
                             <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="18"/>
                             <Label Text="{Binding Description}" FontSize="14" LineBreakMode="TailTruncation"/>
                             <HorizontalStackLayout Spacing="6">
-                                <Button Text="Edit" Command="{Binding BindingContext.EditRecipeCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
-                                <Button Text="Delete" Command="{Binding BindingContext.DeleteRecipeCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
+                                <Button Text="Edytuj" Command="{Binding BindingContext.EditRecipeCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
+                                <Button Text="Usuń" Command="{Binding BindingContext.DeleteRecipeCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
                             </HorizontalStackLayout>
                         </VerticalStackLayout>
                     </Border>

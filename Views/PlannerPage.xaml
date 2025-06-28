@@ -6,7 +6,7 @@
              x:Class="Foodbook.Views.PlannerPage"
              x:Name="ThisPage"
              x:DataType="vm:PlannerViewModel"
-             Title="Planner">
+             Title="Planer">
     <ScrollView>
         <VerticalStackLayout Padding="10" Spacing="10">
             <HorizontalStackLayout>

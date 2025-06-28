@@ -6,16 +6,42 @@
              x:Class="Foodbook.Views.ShoppingListDetailPage"
              x:Name="ThisPage"
              x:DataType="vm:ShoppingListDetailViewModel"
-             Title="Shopping List">
+             Title="Lista zakupów">
     <StackLayout Padding="10" Spacing="10">
         <CollectionView ItemsSource="{Binding Items}">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:Ingredient">
-                    <Grid ColumnDefinitions="2*,Auto,Auto,Auto" Padding="5" ColumnSpacing="5">
-                        <Entry Text="{Binding Name}" Placeholder="Nazwa" Grid.Column="0" />
-                        <Entry Text="{Binding Quantity}" Keyboard="Numeric" WidthRequest="60" Grid.Column="1" />
-                        <Picker Grid.Column="2" WidthRequest="80" ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}" SelectedItem="{Binding Unit}" />
-                        <Button Grid.Column="3" Text="Usuń" Command="{Binding BindingContext.RemoveItemCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
+                    <Grid ColumnDefinitions="Auto,2*,Auto,Auto,Auto" Padding="5" ColumnSpacing="5">
+                        <Grid.Triggers>
+                            <DataTrigger TargetType="Grid" Binding="{Binding IsChecked}" Value="True">
+                                <Setter Property="Opacity" Value="0.5" />
+                            </DataTrigger>
+                        </Grid.Triggers>
+                        <CheckBox Grid.Column="0" IsChecked="{Binding IsChecked}" />
+                        <Entry Text="{Binding Name}" Placeholder="Nazwa" Grid.Column="1">
+                            <Entry.Triggers>
+                                <DataTrigger TargetType="Entry" Binding="{Binding IsChecked}" Value="True">
+                                    <Setter Property="TextColor" Value="Gray" />
+                                    <Setter Property="TextDecorations" Value="Strikethrough" />
+                                </DataTrigger>
+                            </Entry.Triggers>
+                        </Entry>
+                        <Entry Text="{Binding Quantity}" Keyboard="Numeric" WidthRequest="60" Grid.Column="2">
+                            <Entry.Triggers>
+                                <DataTrigger TargetType="Entry" Binding="{Binding IsChecked}" Value="True">
+                                    <Setter Property="TextColor" Value="Gray" />
+                                    <Setter Property="TextDecorations" Value="Strikethrough" />
+                                </DataTrigger>
+                            </Entry.Triggers>
+                        </Entry>
+                        <Picker Grid.Column="3" WidthRequest="80" ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}" SelectedItem="{Binding Unit}">
+                            <Picker.Triggers>
+                                <DataTrigger TargetType="Picker" Binding="{Binding IsChecked}" Value="True">
+                                    <Setter Property="TextColor" Value="Gray" />
+                                </DataTrigger>
+                            </Picker.Triggers>
+                        </Picker>
+                        <Button Grid.Column="4" Text="Usuń" Command="{Binding BindingContext.RemoveItemCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
                     </Grid>
                 </DataTemplate>
             </CollectionView.ItemTemplate>

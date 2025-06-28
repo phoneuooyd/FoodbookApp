@@ -28,7 +28,8 @@ public class ShoppingListService : IShoppingListService
                 {
                     Name = i.Name,
                     Unit = i.Unit,
-                    Quantity = i.Quantity * pm.Portions
+                    Quantity = i.Quantity * pm.Portions,
+                    IsChecked = false
                 }));
 
         var grouped = ingredients
@@ -37,7 +38,8 @@ public class ShoppingListService : IShoppingListService
             {
                 Name = g.Key.Name,
                 Unit = g.Key.Unit,
-                Quantity = g.Sum(i => i.Quantity)
+                Quantity = g.Sum(i => i.Quantity),
+                IsChecked = false
             })
             .ToList();
 

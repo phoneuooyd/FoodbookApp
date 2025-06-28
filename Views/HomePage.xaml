@@ -2,10 +2,10 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Foodbook.Views.HomePage"
-             Title="Home">
+             Title="Strona główna">
     <StackLayout>
-        <Label Text="Welcome to Foodbook!" 
-               VerticalOptions="CenterAndExpand" 
+        <Label Text="Witamy w Foodbook!"
+               VerticalOptions="CenterAndExpand"
                HorizontalOptions="Center" />
     </StackLayout>
 </ContentPage>

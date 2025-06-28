@@ -8,19 +8,19 @@
 
     <TabBar>
         <ShellContent
-            Title="Home"
+            Title="Strona główna"
             ContentTemplate="{DataTemplate views:HomePage}" />
         <ShellContent
-            Title="Recipes"
+            Title="Przepisy"
             ContentTemplate="{DataTemplate views:RecipesPage}" />
         <ShellContent
-            Title="Ingredients"
+            Title="Składniki"
             ContentTemplate="{DataTemplate views:IngredientsPage}" />
         <ShellContent
-            Title="Planner"
+            Title="Planer"
             ContentTemplate="{DataTemplate views:PlannerPage}" />
         <ShellContent
-            Title="Shopping List"
+            Title="Lista zakupów"
             ContentTemplate="{DataTemplate views:ShoppingListPage}" />
     </TabBar>
 

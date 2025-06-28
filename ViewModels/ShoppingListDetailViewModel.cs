@@ -39,7 +39,7 @@ public class ShoppingListDetailViewModel
 
     private void AddItem()
     {
-        Items.Add(new Ingredient { Name = string.Empty, Quantity = 0, Unit = Unit.Gram });
+        Items.Add(new Ingredient { Name = string.Empty, Quantity = 0, Unit = Unit.Gram, IsChecked = false });
     }
 
     private void RemoveItem(Ingredient? item)

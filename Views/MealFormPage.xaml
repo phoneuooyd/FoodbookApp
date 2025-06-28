@@ -5,7 +5,7 @@
              x:Class="Foodbook.Views.MealFormPage"
              x:Name="ThisPage"
              x:DataType="vm:PlannedMealFormViewModel"
-             Title="Plan Meal">
+             Title="Zaplanuj posiłek">
     <VerticalStackLayout Padding="20" Spacing="10">
 
         <!-- Header -->
@@ -16,7 +16,7 @@
                Margin="0,0,0,20" />
 
         <DatePicker Date="{Binding Date}" />
-        <Picker Title="Recipe" ItemsSource="{Binding Recipes}" ItemDisplayBinding="{Binding Name}" SelectedItem="{Binding SelectedRecipe}" />
+        <Picker Title="Przepis" ItemsSource="{Binding Recipes}" ItemDisplayBinding="{Binding Name}" SelectedItem="{Binding SelectedRecipe}" />
 
         <!-- Action Buttons -->
         <StackLayout Spacing="10" Margin="0,20,0,0">
