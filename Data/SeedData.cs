@@ -12,7 +12,10 @@ namespace Foodbook.Data
     {
         public static async Task InitializeAsync(AppDbContext context)
         {
-            await SeedIngredientsAsync(context);
+            if (!await context.Ingredients.AnyAsync())
+            {
+                await SeedIngredientsAsync(context);
+            }
 
             if (await context.Recipes.AnyAsync())
                 return;
@@ -38,8 +41,8 @@ namespace Foodbook.Data
 
         public static async Task SeedIngredientsAsync(AppDbContext context)
         {
-            // Check if there are already standalone ingredients (RecipeId is null)
-            if (await context.Ingredients.AnyAsync(i => i.RecipeId == null))
+            // Skip seeding if any ingredients already exist
+            if (await context.Ingredients.AnyAsync())
                 return;
 
             try
@@ -91,19 +94,74 @@ namespace Foodbook.Data
         private static async Task<List<Ingredient>> LoadPopularIngredientsAsync()
         {
             string json;
-
-            // Wersja uproszczona: odczyt wbudowanego zasobu
-            var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = assembly.GetManifestResourceNames()
-                .FirstOrDefault(name => name.EndsWith("ingredients.json"));
-
-            if (string.IsNullOrEmpty(resourceName))
-                throw new FileNotFoundException("ingredients.json resource not found");
-
-            using (var stream = assembly.GetManifestResourceStream(resourceName) ?? throw new FileNotFoundException("ingredients.json resource not found"))
-            using (var reader = new StreamReader(stream))
+            
+            // Metoda 1: Próba odczytu jako embedded resource
+            try
             {
-                json = await reader.ReadToEndAsync();
+                var assembly = Assembly.GetExecutingAssembly();
+                var resourceName = assembly.GetManifestResourceNames()
+                    .FirstOrDefault(name => name.EndsWith("ingredients.json"));
+                
+                if (!string.IsNullOrEmpty(resourceName))
+                {
+                    using var stream = assembly.GetManifestResourceStream(resourceName);
+                    using var reader = new StreamReader(stream);
+                    json = await reader.ReadToEndAsync();
+                }
+                else
+                {
+                    throw new FileNotFoundException("Resource not found");
+                }
+            }
+            catch
+            {
+                // Metoda 2: Próba odczytu z FileSystem (oryginalny sposób)
+                try
+                {
+                    using var stream = await FileSystem.OpenAppPackageFileAsync("ingredients.json");
+                    using var reader = new StreamReader(stream);
+                    json = await reader.ReadToEndAsync();
+                }
+                catch
+                {
+                    // Metoda 3: Próba tradycyjnego odczytu pliku
+                    try
+                    {
+                        using var stream = await FileSystem.Current.OpenAppPackageFileAsync("ingredients.json");
+                        using var reader = new StreamReader(stream);
+                        json = await reader.ReadToEndAsync();
+                    }
+                    catch
+                    {
+                        // Metoda 4: Próba odczytu z różnych lokalizacji
+                        var possiblePaths = new[]
+                        {
+                            Path.Combine(AppContext.BaseDirectory, "ingredients.json"),
+                            Path.Combine(AppContext.BaseDirectory, "Resources", "Raw", "ingredients.json"),
+                            Path.Combine(Environment.CurrentDirectory, "ingredients.json"),
+                            Path.Combine(Environment.CurrentDirectory, "Resources", "Raw", "ingredients.json")
+                        };
+
+                        json = null;
+                        foreach (var path in possiblePaths)
+                        {
+                            try
+                            {
+                                if (File.Exists(path))
+                                {
+                                    json = await File.ReadAllTextAsync(path);
+                                    break;
+                                }
+                            }
+                            catch { continue; }
+                        }
+
+                        if (string.IsNullOrEmpty(json))
+                        {
+                            throw new FileNotFoundException("ingredients.json nie został znaleziony w żadnej z lokalizacji");
+                        }
+                    }
+                }
             }
 
             var infos = JsonConvert.DeserializeObject<List<IngredientInfo>>(json) ?? new();
