@@ -6,11 +6,11 @@
              x:Class="Foodbook.Views.PlannerPage"
              x:Name="ThisPage"
              x:DataType="vm:PlannerViewModel"
-             Title="Planner">
+             Title="Planer">
     <ScrollView>
         <VerticalStackLayout Padding="10" Spacing="10">
             <HorizontalStackLayout>
-                <Label Text="Start:" VerticalOptions="Center" />
+                <Label Text="Początek:" VerticalOptions="Center" />
                 <DatePicker Date="{Binding StartDate}" />
                 <Label Text="Koniec:" VerticalOptions="Center" />
                 <DatePicker Date="{Binding EndDate}" />
@@ -28,9 +28,10 @@
                                 <StackLayout BindableLayout.ItemsSource="{Binding Meals}">
                                     <BindableLayout.ItemTemplate>
                                         <DataTemplate x:DataType="models:PlannedMeal">
-                                            <Grid ColumnDefinitions="0.85*,Auto" ColumnSpacing="5">
+                                            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="5">
                                                 <Picker Grid.Column="0" ItemsSource="{Binding Source={x:Reference ThisPage}, Path=BindingContext.Recipes}" ItemDisplayBinding="{Binding Name}" SelectedItem="{Binding Recipe}" />
-                                                <Button Grid.Column="1" Text="✖" Command="{Binding BindingContext.RemoveMealCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" WidthRequest="30" />
+                                                <Stepper Grid.Column="1" Minimum="1" Maximum="20" Increment="1" Value="{Binding Portions}" WidthRequest="100" />
+                                                <Button Grid.Column="2" Text="✖" Command="{Binding BindingContext.RemoveMealCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" WidthRequest="25" />
                                             </Grid>
                                         </DataTemplate>
                                     </BindableLayout.ItemTemplate>
