@@ -8,19 +8,24 @@
 
     <TabBar>
         <ShellContent
-            Title="Start"
-            ContentTemplate="{DataTemplate views:HomePage}" />
-        <ShellContent
-            Title="Przepisy"
-            ContentTemplate="{DataTemplate views:RecipesPage}" />
-        <ShellContent
             Title="Składniki"
+            Icon="grocery.png"
             ContentTemplate="{DataTemplate views:IngredientsPage}" />
         <ShellContent
+            Title="Przepisy"
+            Icon="chef_hat.png"
+            ContentTemplate="{DataTemplate views:RecipesPage}" />
+        <ShellContent
+            Title="Start"
+            Icon="home.png"
+            ContentTemplate="{DataTemplate views:HomePage}" />
+        <ShellContent
             Title="Planer"
+            Icon="event_upcoming.png"
             ContentTemplate="{DataTemplate views:PlannerPage}" />
         <ShellContent
             Title="Listy zakupów"
+            Icon="event_list.png"
             ContentTemplate="{DataTemplate views:ShoppingListPage}" />
     </TabBar>
 
