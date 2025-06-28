@@ -12,12 +12,18 @@ namespace Foodbook.Data
     {
         public static async Task InitializeAsync(AppDbContext context)
         {
-            if (!await context.Ingredients.AnyAsync())
+            var hasIngredients = await context.Ingredients.AnyAsync();
+            var hasRecipes = await context.Recipes.AnyAsync();
+
+            if (hasIngredients && hasRecipes)
+                return;
+
+            if (!hasIngredients)
             {
                 await SeedIngredientsAsync(context);
             }
 
-            if (await context.Recipes.AnyAsync())
+            if (hasRecipes)
                 return;
 
             var recipe = new Recipe

@@ -91,7 +91,10 @@ namespace FoodbookApp
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             await db.Database.EnsureCreatedAsync();
 
-            if (!await db.Ingredients.AnyAsync())
+            var hasIngredients = await db.Ingredients.AnyAsync();
+            var hasRecipes = await db.Recipes.AnyAsync();
+
+            if (!hasIngredients && !hasRecipes)
             {
                 await SeedData.InitializeAsync(db);
             }
