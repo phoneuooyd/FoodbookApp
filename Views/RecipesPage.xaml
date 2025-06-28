@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Foodbook.ViewModels"
+             xmlns:models="clr-namespace:Foodbook.Models"
              x:Class="Foodbook.Views.RecipesPage"
+             x:DataType="vm:RecipeViewModel"
              Title="Recipes">
     <StackLayout>
         <Button Text="Dodaj przepis" Clicked="OnAddRecipeClicked" Margin="10"/>
         <CollectionView x:Name="ThisPage" ItemsSource="{Binding Recipes}">
             <CollectionView.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate x:DataType="models:Recipe">
                     <Border Margin="5" Padding="10">
                         <VerticalStackLayout>
                             <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="18"/>

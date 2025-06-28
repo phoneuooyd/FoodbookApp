@@ -79,15 +79,18 @@ namespace FoodbookApp
             var app = builder.Build();
             ServiceProvider = app.Services;
 
-            // 📦 Inicjalizacja bazy danych
-            using (var scope = app.Services.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                db.Database.EnsureCreated();
-                SeedData.InitializeAsync(db).GetAwaiter().GetResult();
-            }
+            // 📦 Inicjalizacja bazy danych w tle
+            Task.Run(() => SeedDatabaseAsync(app.Services));
 
             return app;
+        }
+
+        private static async Task SeedDatabaseAsync(IServiceProvider services)
+        {
+            using var scope = services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            await db.Database.EnsureCreatedAsync();
+            await SeedData.InitializeAsync(db);
         }
     }
 }
