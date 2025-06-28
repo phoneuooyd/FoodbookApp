@@ -14,12 +14,15 @@ public class IngredientService : IIngredientService
 
     public async Task<List<Ingredient>> GetIngredientsAsync() => 
         await _context.Ingredients
+            .AsNoTracking() // Improves performance for read-only operations
             .Where(i => i.RecipeId == null)
             .OrderBy(i => i.Name)
             .ToListAsync();
 
     public async Task<Ingredient?> GetIngredientAsync(int id) => 
-        await _context.Ingredients.FindAsync(id);
+        await _context.Ingredients
+            .AsNoTracking()
+            .FirstOrDefaultAsync(i => i.Id == id);
 
     public async Task AddIngredientAsync(Ingredient ingredient)
     {
@@ -44,8 +47,10 @@ public class IngredientService : IIngredientService
     {
         try
         {
-            // Ensure we don't lose the RecipeId status when updating
-            var existingIngredient = await _context.Ingredients.FindAsync(ingredient.Id);
+            // Use more efficient update approach
+            var existingIngredient = await _context.Ingredients
+                .FirstOrDefaultAsync(i => i.Id == ingredient.Id);
+                
             if (existingIngredient != null)
             {
                 // Update only the fields we want to change
@@ -61,6 +66,10 @@ public class IngredientService : IIngredientService
                 await _context.SaveChangesAsync();
                 System.Diagnostics.Debug.WriteLine($"Updated ingredient: {ingredient.Name}, ID: {ingredient.Id}");
             }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"Ingredient with ID {ingredient.Id} not found for update");
+            }
         }
         catch (Exception ex)
         {
@@ -73,18 +82,32 @@ public class IngredientService : IIngredientService
     {
         try
         {
-            var ing = await _context.Ingredients.FindAsync(id);
-            if (ing != null)
-            {
-                _context.Ingredients.Remove(ing);
-                await _context.SaveChangesAsync();
-                System.Diagnostics.Debug.WriteLine($"Deleted ingredient ID: {id}");
-            }
+            // More efficient delete - no need to load the entity first
+            var ingredient = new Ingredient { Id = id };
+            _context.Ingredients.Attach(ingredient);
+            _context.Ingredients.Remove(ingredient);
+            await _context.SaveChangesAsync();
+            System.Diagnostics.Debug.WriteLine($"Deleted ingredient ID: {id}");
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error deleting ingredient: {ex.Message}");
-            throw;
+            // Fallback to traditional delete if attach/remove fails
+            try
+            {
+                var ing = await _context.Ingredients.FindAsync(id);
+                if (ing != null)
+                {
+                    _context.Ingredients.Remove(ing);
+                    await _context.SaveChangesAsync();
+                    System.Diagnostics.Debug.WriteLine($"Deleted ingredient ID: {id} (fallback method)");
+                }
+            }
+            catch (Exception fallbackEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in fallback delete: {fallbackEx.Message}");
+                throw;
+            }
         }
     }
 }
