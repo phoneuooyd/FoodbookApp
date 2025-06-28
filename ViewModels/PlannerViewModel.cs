@@ -5,7 +5,6 @@ using System.Windows.Input;
 using Foodbook.Models;
 using Foodbook.Services;
 using Microsoft.Maui.Controls;
-using Foodbook.Views;
 
 namespace Foodbook.ViewModels;
 
@@ -13,7 +12,6 @@ public class PlannerViewModel : INotifyPropertyChanged
 {
     private readonly IPlannerService _plannerService;
     private readonly IRecipeService _recipeService;
-    private readonly IShoppingListService _shoppingListService;
     private readonly IPlanService _planService;
 
     public ObservableCollection<Recipe> Recipes { get; } = new();
@@ -63,20 +61,17 @@ public class PlannerViewModel : INotifyPropertyChanged
     public ICommand AddMealCommand { get; }
     public ICommand RemoveMealCommand { get; }
     public ICommand SaveCommand { get; }
-    public ICommand SaveAndListCommand { get; }
     public ICommand CancelCommand { get; }
 
-    public PlannerViewModel(IPlannerService plannerService, IRecipeService recipeService, IShoppingListService shoppingListService, IPlanService planService)
+    public PlannerViewModel(IPlannerService plannerService, IRecipeService recipeService, IPlanService planService)
     {
         _plannerService = plannerService ?? throw new ArgumentNullException(nameof(plannerService));
         _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
-        _shoppingListService = shoppingListService ?? throw new ArgumentNullException(nameof(shoppingListService));
         _planService = planService ?? throw new ArgumentNullException(nameof(planService));
 
         AddMealCommand = new Command<PlannerDay>(AddMeal);
         RemoveMealCommand = new Command<PlannedMeal>(RemoveMeal);
         SaveCommand = new Command(async () => await SaveAsync());
-        SaveAndListCommand = new Command(async () => await SaveAndListAsync());
         CancelCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
     }
 
@@ -172,13 +167,6 @@ public class PlannerViewModel : INotifyPropertyChanged
 
         Reset();
         return plan;
-    }
-
-    private async Task SaveAndListAsync()
-    {
-        var plan = await SaveAsync();
-        if (plan != null)
-            await Shell.Current.GoToAsync($"{nameof(ShoppingListDetailPage)}?id={plan.Id}");
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
