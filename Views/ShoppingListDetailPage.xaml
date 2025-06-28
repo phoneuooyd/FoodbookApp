@@ -4,17 +4,22 @@
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              x:Class="Foodbook.Views.ShoppingListDetailPage"
+             x:Name="ThisPage"
              x:DataType="vm:ShoppingListDetailViewModel"
              Title="Shopping List">
-    <CollectionView ItemsSource="{Binding Items}" Margin="10">
-        <CollectionView.ItemTemplate>
-            <DataTemplate x:DataType="models:Ingredient">
-                <Grid ColumnDefinitions="2*,Auto,Auto" Padding="5">
-                    <Label Text="{Binding Name}" Grid.Column="0" />
-                    <Label Text="{Binding Quantity}" Grid.Column="1" />
-                    <Label Text="{Binding Unit}" Grid.Column="2" />
-                </Grid>
-            </DataTemplate>
-        </CollectionView.ItemTemplate>
-    </CollectionView>
+    <StackLayout Padding="10" Spacing="10">
+        <CollectionView ItemsSource="{Binding Items}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:Ingredient">
+                    <Grid ColumnDefinitions="2*,Auto,Auto,Auto" Padding="5" ColumnSpacing="5">
+                        <Entry Text="{Binding Name}" Placeholder="Nazwa" Grid.Column="0" />
+                        <Entry Text="{Binding Quantity}" Keyboard="Numeric" WidthRequest="60" Grid.Column="1" />
+                        <Picker Grid.Column="2" WidthRequest="80" ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}" SelectedItem="{Binding Unit}" />
+                        <Button Grid.Column="3" Text="Usuń" Command="{Binding BindingContext.RemoveItemCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+        <Button Text="Dodaj składnik" Command="{Binding AddItemCommand}" />
+    </StackLayout>
 </ContentPage>

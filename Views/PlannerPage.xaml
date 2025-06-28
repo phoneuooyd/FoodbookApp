@@ -42,9 +42,7 @@
                 </BindableLayout.ItemTemplate>
             </VerticalStackLayout>
             <HorizontalStackLayout Spacing="10" Margin="0,20,0,0">
-                <Button Text="Zapisz" Command="{Binding SaveCommand}" />
                 <Button Text="Zapisz i stwórz listę" Command="{Binding SaveAndListCommand}" />
-                <Button Text="Anuluj" Command="{Binding CancelCommand}" />
             </HorizontalStackLayout>
         </VerticalStackLayout>
     </ScrollView>

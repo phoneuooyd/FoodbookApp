@@ -93,13 +93,9 @@ public class PlannerViewModel : INotifyPropertyChanged
         foreach (var r in rec)
             Recipes.Add(r);
 
-        var meals = await _plannerService.GetPlannedMealsAsync(StartDate, EndDate);
-
         for (var d = StartDate.Date; d <= EndDate.Date; d = d.AddDays(1))
         {
             var day = new PlannerDay(d);
-            foreach (var m in meals.Where(m => m.Date.Date == d))
-                day.Meals.Add(m);
             Days.Add(day);
         }
         AdjustMealsPerDay();
