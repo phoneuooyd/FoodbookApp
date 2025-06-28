@@ -22,4 +22,10 @@ public partial class ShoppingListDetailPage : ContentPage
         base.OnAppearing();
         await _viewModel.LoadAsync(PlanId);
     }
+
+    protected override bool OnBackButtonPressed()
+    {
+        Shell.Current.GoToAsync("..");
+        return true;
+    }
 }

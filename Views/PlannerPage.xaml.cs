@@ -19,5 +19,12 @@ namespace Foodbook.Views
             base.OnAppearing();
             await _viewModel.LoadAsync();
         }
+
+        protected override bool OnBackButtonPressed()
+        {
+            if (_viewModel?.CancelCommand?.CanExecute(null) == true)
+                _viewModel.CancelCommand.Execute(null);
+            return true;
+        }
     }
 }
