@@ -132,7 +132,7 @@ dotnet run --framework net9.0-windows10.0.19041.0
 2. Przejdź do "Listy zakupów"
 3. Otwórz wygenerowaną listę
 4. Podczas zakupów:
-   - Zaznaczaj kupione produkty ?
+   - Zaznaczaj kupione produkty 
    - Edytuj ilości jeśli potrzeba
    - Usuwaj niepotrzebne pozycje
 
@@ -142,9 +142,8 @@ Aplikacja obsługuje jasny i ciemny motyw, automatycznie dostosowując się do u
 ###  **Układy responsywne**
 Interfejs automatycznie dostosowuje się do różnych rozmiarów ekranów i orientacji urządzenia.
 
-### ?? **Główne pakiety NuGet**<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+###  **Główne pakiety NuGet**<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
 <PackageReference Include="HtmlAgilityPack" />
 <PackageReference Include="Newtonsoft.Json" />
 <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
-### ??? **Dodawanie nowych funkcji**
 
