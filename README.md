@@ -22,7 +22,7 @@ FoodBook App to kompleksowa aplikacja mobilna stworzona w technologii .NET MAUI,
 - Przegląd najważniejszych informacji
 - Szybki dostęp do wszystkich funkcji aplikacji
 
-### ?? **Zarządzanie przepisami**
+###  **Zarządzanie przepisami**
 -  Dodawanie nowych przepisów (ręcznie lub import z URL)
 -  Edytowanie istniejących przepisów
 -  Usuwanie przepisów
