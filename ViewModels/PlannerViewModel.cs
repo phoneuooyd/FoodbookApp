@@ -61,6 +61,8 @@ public class PlannerViewModel : INotifyPropertyChanged
 
     public ICommand AddMealCommand { get; }
     public ICommand RemoveMealCommand { get; }
+    public ICommand IncreasePortionsCommand { get; }
+    public ICommand DecreasePortionsCommand { get; }
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
 
@@ -72,6 +74,8 @@ public class PlannerViewModel : INotifyPropertyChanged
 
         AddMealCommand = new Command<PlannerDay>(AddMeal);
         RemoveMealCommand = new Command<PlannedMeal>(RemoveMeal);
+        IncreasePortionsCommand = new Command<PlannedMeal>(IncreasePortions);
+        DecreasePortionsCommand = new Command<PlannedMeal>(DecreasePortions);
         SaveCommand = new Command(async () =>
         {
             var plan = await SaveAsync();
@@ -178,6 +182,22 @@ public class PlannerViewModel : INotifyPropertyChanged
 
         Reset();
         return plan;
+    }
+
+    private void IncreasePortions(PlannedMeal? meal)
+    {
+        if (meal != null && meal.Portions < 20)
+        {
+            meal.Portions++;
+        }
+    }
+
+    private void DecreasePortions(PlannedMeal? meal)
+    {
+        if (meal != null && meal.Portions > 1)
+        {
+            meal.Portions--;
+        }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
