@@ -196,28 +196,3 @@ dotnet ef migrations add NazwaMigracji
 dotnet ef database update
 ## ?? **Wk³ad w projekt**
 
-1. Forkuj repozytorium
-2. Utwórz branch na now¹ funkcjê (`git checkout -b feature/AmazingFeature`)
-3. Commituj zmiany (`git commit -m 'Add some AmazingFeature'`)
-4. Wypchnij branch (`git push origin feature/AmazingFeature`)
-5. Otwórz Pull Request
-
-## ?? **Licencja**
-
-Ten projekt jest licencjonowany na licencji MIT - zobacz plik [LICENSE](LICENSE) po szczegó³y.
-
-## ?? **Autorzy**
-
-- **Takis** - *Programista g³ówny* - [GitHub](https://github.com/takis)
-
-## ?? **Podziêkowania**
-
-- Microsoft za framework .NET MAUI
-- Spo³ecznoœæ .NET za wsparcie i narzêdzia
-- Twórcy HtmlAgilityPack za parser HTML
-- Wszystkich testerów i u¿ytkowników aplikacji
-
----
-
-? **Jeœli podoba Ci siê ten projekt, zostaw gwiazdkê!** ?
-
