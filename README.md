@@ -10,7 +10,7 @@
 ##  Opis projektu
 
 FoodBook App to kompleksowa aplikacja mobilna stworzona w technologii .NET MAUI, która pomaga użytkownikom w:
--  Zarządzaniu bazą przepisów kulinarnych
+-  Zarządzaniu bazą przepisów kulinarnych 
 -  Organizowaniu składników z informacjami odżywczymi
 -  Planowaniu posiłków na wybrane dni
 -  Automatycznym generowaniu list zakupów
