@@ -83,7 +83,7 @@ public class PlannerViewModel : INotifyPropertyChanged
             {
                 await Shell.Current.DisplayAlert(
                     "Zapisano",
-                    $"Zapisano listę zakupów dla Foodbook od {plan.StartDate:yyyy-MM-dd} - {plan.EndDate:yyyy-MM-dd}",
+                    $"Zapisano listę zakupów ({plan.StartDate:dd.MM.yyyy} - {plan.EndDate:dd.MM.yyyy})",
                     "OK");
             }
         });

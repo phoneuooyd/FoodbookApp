@@ -10,11 +10,46 @@
     <CollectionView ItemsSource="{Binding Plans}" Margin="10" SelectionMode="None">
         <CollectionView.ItemTemplate>
             <DataTemplate x:DataType="models:Plan">
-                <Border Stroke="LightGray" StrokeThickness="1" Padding="8" Margin="0,5">
+                <Border Stroke="LightGray" StrokeThickness="1" Padding="10" Margin="5">
                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
-                        <Label Text="{Binding Label}" Grid.Column="0" VerticalOptions="Center" />
-                        <Button Grid.Column="1" Text="✎" Command="{Binding BindingContext.OpenPlanCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" WidthRequest="40" />
-                        <Button Grid.Column="2" Text="🗑" Command="{Binding BindingContext.DeletePlanCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" WidthRequest="40" />
+                        <!-- Kolumna z treścią planu - większy rozmiar jak w RecipesPage -->
+                        <VerticalStackLayout Grid.Column="0">
+                            <Label Text="{Binding Label}" 
+                                   FontAttributes="Bold" 
+                                   FontSize="18" 
+                                   VerticalOptions="Center" />
+                            <Label Text="{Binding StartDate, StringFormat='Od: {0:dd.MM.yyyy}'}" 
+                                   FontSize="14" 
+                                   TextColor="{DynamicResource Primary}"
+                                   Margin="0,2,0,0" />
+                            <Label Text="{Binding EndDate, StringFormat='Do: {0:dd.MM.yyyy}'}" 
+                                   FontSize="14" 
+                                   TextColor="{DynamicResource Primary}" />
+                        </VerticalStackLayout>
+                        
+                        <!-- Ikona edycji - zachowany styl -->
+                        <Button Grid.Column="1" 
+                                Text="✎" 
+                                Command="{Binding BindingContext.OpenPlanCommand, Source={x:Reference ThisPage}}" 
+                                CommandParameter="{Binding .}" 
+                                WidthRequest="40" 
+                                HeightRequest="40"
+                                BackgroundColor="{DynamicResource Primary}"
+                                TextColor="White"
+                                FontSize="16"
+                                CornerRadius="6" />
+                        
+                        <!-- Ikona usuwania - zachowany styl -->
+                        <Button Grid.Column="2" 
+                                Text="🗑" 
+                                Command="{Binding BindingContext.DeletePlanCommand, Source={x:Reference ThisPage}}" 
+                                CommandParameter="{Binding .}" 
+                                WidthRequest="40" 
+                                HeightRequest="40"
+                                BackgroundColor="Red"
+                                TextColor="White"
+                                FontSize="16"
+                                CornerRadius="6" />
                     </Grid>
                 </Border>
             </DataTemplate>

@@ -7,7 +7,7 @@
              x:Class="Foodbook.Views.ShoppingListDetailPage"
              x:Name="ThisPage"
              x:DataType="vm:ShoppingListDetailViewModel"
-             Title="Shopping List">
+             Title="Lista zakupów">
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
     </ContentPage.Resources>

@@ -11,15 +11,38 @@
         <CollectionView x:Name="ThisPage" ItemsSource="{Binding Recipes}">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:Recipe">
-                    <Border Margin="5" Padding="10">
-                        <VerticalStackLayout>
-                            <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="18"/>
-                            <Label Text="{Binding Description}" FontSize="14" LineBreakMode="TailTruncation"/>
-                            <HorizontalStackLayout Spacing="6">
-                                <Button Text="Edit" Command="{Binding BindingContext.EditRecipeCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
-                                <Button Text="Delete" Command="{Binding BindingContext.DeleteRecipeCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
-                            </HorizontalStackLayout>
-                        </VerticalStackLayout>
+                    <Border Stroke="LightGray" StrokeThickness="1" Padding="10" Margin="5">
+                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                            <!-- Kolumna z treścią przepisu -->
+                            <VerticalStackLayout Grid.Column="0">
+                                <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="18"/>
+                                <Label Text="{Binding Description}" FontSize="14" LineBreakMode="TailTruncation"/>
+                            </VerticalStackLayout>
+                            
+                            <!-- Ikona edycji - zgodna ze stylem ShoppingListPage -->
+                            <Button Grid.Column="1" 
+                                    Text="✎" 
+                                    Command="{Binding BindingContext.EditRecipeCommand, Source={x:Reference ThisPage}}" 
+                                    CommandParameter="{Binding .}" 
+                                    WidthRequest="40" 
+                                    HeightRequest="40"
+                                    BackgroundColor="{DynamicResource Primary}"
+                                    TextColor="White"
+                                    FontSize="16"
+                                    CornerRadius="6" />
+                            
+                            <!-- Ikona usuwania - zgodna ze stylem ShoppingListPage -->
+                            <Button Grid.Column="2" 
+                                    Text="🗑" 
+                                    Command="{Binding BindingContext.DeleteRecipeCommand, Source={x:Reference ThisPage}}" 
+                                    CommandParameter="{Binding .}" 
+                                    WidthRequest="40" 
+                                    HeightRequest="40"
+                                    BackgroundColor="Red"
+                                    TextColor="White"
+                                    FontSize="16"
+                                    CornerRadius="6" />
+                        </Grid>
                     </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
