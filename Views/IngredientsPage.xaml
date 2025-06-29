@@ -7,7 +7,7 @@
              x:Class="Foodbook.Views.IngredientsPage"
              x:Name="ThisPage"
              x:DataType="vm:IngredientsViewModel"
-             Title="Ingredients">
+             Title="Składniki">
 
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
@@ -37,7 +37,7 @@
             
             <Grid RowDefinitions="Auto,*">
                 <Button Grid.Row="0" 
-                        Text="Add Ingredient" 
+                        Text="Dodaj składnik" 
                         Command="{Binding AddCommand}"
                         Margin="10" />
                 
@@ -53,63 +53,35 @@
                     
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:Ingredient">
-                            <!-- Optimized layout for better performance -->
-                            <SwipeView BackgroundColor="Transparent">
-                                <SwipeView.RightItems>
-                                    <SwipeItems>
-                                        <SwipeItem Text="Edit" 
-                                                  BackgroundColor="Orange"
-                                                  Command="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}" 
-                                                  CommandParameter="{Binding .}" />
-                                        <SwipeItem Text="Delete" 
-                                                  BackgroundColor="Red"
-                                                  Command="{Binding BindingContext.DeleteCommand, Source={x:Reference ThisPage}}" 
-                                                  CommandParameter="{Binding .}" />
-                                    </SwipeItems>
-                                </SwipeView.RightItems>
-                                
-                                <Frame Padding="15" 
-                                       BackgroundColor="{AppThemeBinding Light=White, Dark=#2D2D30}"
-                                       BorderColor="{AppThemeBinding Light=LightGray, Dark=Gray}"
-                                       CornerRadius="8"
-                                       HasShadow="False">
-                                    
-                                    <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
-                                        
-                                        <!-- Main ingredient info -->
-                                        <StackLayout Grid.Row="0" Grid.Column="0" Spacing="2">
-                                            <Label Text="{Binding Name}" 
-                                                   FontSize="16" 
-                                                   FontAttributes="Bold" />
-                                            <Label FontSize="12" 
-                                                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}">
-                                                <Label.Text>
-                                                    <MultiBinding StringFormat="{}{0:F1} {1}">
-                                                        <Binding Path="Quantity" />
-                                                        <Binding Path="Unit" />
-                                                    </MultiBinding>
-                                                </Label.Text>
-                                            </Label>
-                                        </StackLayout>
-                                        
-                                        <!-- Calories (most important info) -->
-                                        <Label Grid.Row="0" Grid.Column="1" 
-                                               FontSize="14"
-                                               FontAttributes="Bold"
-                                               VerticalOptions="Center"
-                                               TextColor="{AppThemeBinding Light=DarkOrange, Dark=Orange}">
+                            <!-- Ujednolicony layout zgodny z RecipesPage -->
+                            <Border Stroke="LightGray" StrokeThickness="1" Padding="10" Margin="5">
+                                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                                    <!-- Kolumna z treścią składnika -->
+                                    <StackLayout Grid.Column="0">
+                                        <Label Text="{Binding Name}" 
+                                               FontSize="18" 
+                                               FontAttributes="Bold" />
+                                        <Label FontSize="14" 
+                                               TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}">
                                             <Label.Text>
-                                                <MultiBinding StringFormat="{}{0:F0} kcal">
-                                                    <Binding Path="Calories" />
+                                                <MultiBinding StringFormat="{}{0:F1} {1}">
+                                                    <Binding Path="Quantity" />
+                                                    <Binding Path="Unit" />
                                                 </MultiBinding>
                                             </Label.Text>
                                         </Label>
                                         
-                                        <!-- Nutritional info - simplified -->
-                                        <StackLayout Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" 
-                                                    Orientation="Horizontal" 
-                                                    Spacing="15"
-                                                    Margin="0,5,0,0">
+                                        <!-- Informacje odżywcze w jednej linii -->
+                                        <StackLayout Orientation="Horizontal" Spacing="15" Margin="0,2,0,0">
+                                            <Label FontSize="12" 
+                                                   TextColor="{AppThemeBinding Light=DarkOrange, Dark=Orange}"
+                                                   FontAttributes="Bold">
+                                                <Label.Text>
+                                                    <MultiBinding StringFormat="{}{0:F0} kcal">
+                                                        <Binding Path="Calories" />
+                                                    </MultiBinding>
+                                                </Label.Text>
+                                            </Label>
                                             <Label FontSize="11" 
                                                    TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}">
                                                 <Label.Text>
@@ -135,10 +107,33 @@
                                                 </Label.Text>
                                             </Label>
                                         </StackLayout>
-                                        
-                                    </Grid>
-                                </Frame>
-                            </SwipeView>
+                                    </StackLayout>
+                                    
+                                    <!-- Ikona edycji - zgodna ze stylem RecipesPage -->
+                                    <Button Grid.Column="1" 
+                                            Text="✎" 
+                                            Command="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}" 
+                                            CommandParameter="{Binding .}" 
+                                            WidthRequest="40" 
+                                            HeightRequest="40"
+                                            BackgroundColor="{DynamicResource Primary}"
+                                            TextColor="White"
+                                            FontSize="16"
+                                            CornerRadius="6" />
+                                    
+                                    <!-- Ikona usuwania - zgodna ze stylem RecipesPage -->
+                                    <Button Grid.Column="2" 
+                                            Text="🗑" 
+                                            Command="{Binding BindingContext.DeleteCommand, Source={x:Reference ThisPage}}" 
+                                            CommandParameter="{Binding .}" 
+                                            WidthRequest="40" 
+                                            HeightRequest="40"
+                                            BackgroundColor="Red"
+                                            TextColor="White"
+                                            FontSize="16"
+                                            CornerRadius="6" />
+                                </Grid>
+                            </Border>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                     
@@ -148,7 +143,7 @@
                                    FontSize="18" 
                                    HorizontalOptions="Center"
                                    TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-                            <Label Text="Dotknij 'Add Ingredient' aby dodać pierwszy składnik" 
+                            <Label Text="Dotknij 'Dodaj składnik' aby dodać pierwszy składnik" 
                                    FontSize="14" 
                                    HorizontalOptions="Center"
                                    TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
