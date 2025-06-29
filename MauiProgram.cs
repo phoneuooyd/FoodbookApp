@@ -77,7 +77,7 @@ namespace FoodbookApp
             Routing.RegisterRoute(nameof(MealFormPage), typeof(MealFormPage));
             Routing.RegisterRoute(nameof(ShoppingListPage), typeof(ShoppingListPage));
             Routing.RegisterRoute(nameof(ShoppingListDetailPage), typeof(ShoppingListDetailPage));
-            
+
 
             // ✨ Build aplikacji
             var app = builder.Build();

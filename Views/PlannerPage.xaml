@@ -144,10 +144,12 @@
                                                         FontAttributes="Bold"
                                                         BorderWidth="0"
                                                         Padding="0" />
+
                                             </Grid>
                                         </DataTemplate>
                                     </BindableLayout.ItemTemplate>
                                 </StackLayout>
+
                                 
                                 <!-- Wyśrodkowany przycisk "Dodaj posiłek" -->
                                 <StackLayout HorizontalOptions="Center" Margin="0,8,0,0">
@@ -163,6 +165,7 @@
                                             WidthRequest="100"
                                             HeightRequest="32" />
                                 </StackLayout>
+
                             </VerticalStackLayout>
                         </Frame>
                     </DataTemplate>
@@ -172,6 +175,7 @@
             <!-- Przycisk Zapisz - wyśrodkowany -->
             <HorizontalStackLayout Spacing="10" Margin="0,20,0,0" HorizontalOptions="Center">
                 <Button Text="Zapisz" Command="{Binding SaveCommand}" />
+
             </HorizontalStackLayout>
         </VerticalStackLayout>
     </ScrollView>
