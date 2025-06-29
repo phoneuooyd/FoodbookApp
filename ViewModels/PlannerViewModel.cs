@@ -4,8 +4,8 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Foodbook.Models;
 using Foodbook.Services;
+using FoodbookApp;
 using Microsoft.Maui.Controls;
-using Foodbook.Views;
 
 namespace Foodbook.ViewModels;
 
@@ -13,13 +13,13 @@ public class PlannerViewModel : INotifyPropertyChanged
 {
     private readonly IPlannerService _plannerService;
     private readonly IRecipeService _recipeService;
-    private readonly IShoppingListService _shoppingListService;
     private readonly IPlanService _planService;
 
     public ObservableCollection<Recipe> Recipes { get; } = new();
     public ObservableCollection<PlannerDay> Days { get; } = new();
 
     private bool _isLoading;
+
 
     private DateTime _startDate = DateTime.Today;
     public DateTime StartDate
@@ -62,21 +62,32 @@ public class PlannerViewModel : INotifyPropertyChanged
 
     public ICommand AddMealCommand { get; }
     public ICommand RemoveMealCommand { get; }
+    public ICommand IncreasePortionsCommand { get; }
+    public ICommand DecreasePortionsCommand { get; }
     public ICommand SaveCommand { get; }
-    public ICommand SaveAndListCommand { get; }
     public ICommand CancelCommand { get; }
 
-    public PlannerViewModel(IPlannerService plannerService, IRecipeService recipeService, IShoppingListService shoppingListService, IPlanService planService)
+    public PlannerViewModel(IPlannerService plannerService, IRecipeService recipeService, IPlanService planService)
     {
         _plannerService = plannerService ?? throw new ArgumentNullException(nameof(plannerService));
         _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
-        _shoppingListService = shoppingListService ?? throw new ArgumentNullException(nameof(shoppingListService));
         _planService = planService ?? throw new ArgumentNullException(nameof(planService));
 
         AddMealCommand = new Command<PlannerDay>(AddMeal);
         RemoveMealCommand = new Command<PlannedMeal>(RemoveMeal);
-        SaveCommand = new Command(async () => await SaveAsync());
-        SaveAndListCommand = new Command(async () => await SaveAndListAsync());
+        IncreasePortionsCommand = new Command<PlannedMeal>(IncreasePortions);
+        DecreasePortionsCommand = new Command<PlannedMeal>(DecreasePortions);
+        SaveCommand = new Command(async () =>
+        {
+            var plan = await SaveAsync();
+            if (plan != null)
+            {
+                await Shell.Current.DisplayAlert(
+                    "Zapisano",
+                    $"Zapisano listę zakupów ({plan.StartDate:dd.MM.yyyy} - {plan.EndDate:dd.MM.yyyy})",
+                    "OK");
+            }
+        });
         CancelCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
     }
 
@@ -93,13 +104,9 @@ public class PlannerViewModel : INotifyPropertyChanged
         foreach (var r in rec)
             Recipes.Add(r);
 
-        var meals = await _plannerService.GetPlannedMealsAsync(StartDate, EndDate);
-
         for (var d = StartDate.Date; d <= EndDate.Date; d = d.AddDays(1))
         {
             var day = new PlannerDay(d);
-            foreach (var m in meals.Where(m => m.Date.Date == d))
-                day.Meals.Add(m);
             Days.Add(day);
         }
         AdjustMealsPerDay();
@@ -149,7 +156,42 @@ public class PlannerViewModel : INotifyPropertyChanged
         {
             await Shell.Current.DisplayAlert("Błąd", "Plan na podane daty już istnieje.", "OK");
             return null;
+
         }
+    }
+
+    public ICommand AddMealCommand { get; }
+    public ICommand RemoveMealCommand { get; }
+    public ICommand SaveCommand { get; }
+    public ICommand SaveAndListCommand { get; }
+    public ICommand CancelCommand { get; }
+
+    public PlannerViewModel(IPlannerService plannerService, IRecipeService recipeService, IShoppingListService shoppingListService, IPlanService planService)
+    {
+        _plannerService = plannerService ?? throw new ArgumentNullException(nameof(plannerService));
+        _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
+        _shoppingListService = shoppingListService ?? throw new ArgumentNullException(nameof(shoppingListService));
+        _planService = planService ?? throw new ArgumentNullException(nameof(planService));
+
+        AddMealCommand = new Command<PlannerDay>(AddMeal);
+        RemoveMealCommand = new Command<PlannedMeal>(RemoveMeal);
+        SaveCommand = new Command(async () => await SaveAsync());
+        SaveAndListCommand = new Command(async () => await SaveAndListAsync());
+        CancelCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
+    }
+
+    public async Task LoadAsync()
+    {
+        if (_isLoading)
+            return;
+        _isLoading = true;
+
+        Days.Clear();
+        Recipes.Clear();
+
+        var rec = await _recipeService.GetRecipesAsync();
+        foreach (var r in rec)
+            Recipes.Add(r);
 
         var plan = new Plan { StartDate = StartDate, EndDate = EndDate };
         await _planService.AddPlanAsync(plan);
@@ -178,12 +220,22 @@ public class PlannerViewModel : INotifyPropertyChanged
         return plan;
     }
 
-    private async Task SaveAndListAsync()
+    private void IncreasePortions(PlannedMeal? meal)
     {
-        var plan = await SaveAsync();
-        if (plan != null)
-            await Shell.Current.GoToAsync($"{nameof(ShoppingListDetailPage)}?id={plan.Id}");
+        if (meal != null && meal.Portions < 20)
+        {
+            meal.Portions++;
+        }
     }
+
+    private void DecreasePortions(PlannedMeal? meal)
+    {
+        if (meal != null && meal.Portions > 1)
+        {
+            meal.Portions--;
+        }
+    }
+
 
     public event PropertyChangedEventHandler? PropertyChanged;
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>

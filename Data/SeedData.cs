@@ -12,9 +12,18 @@ namespace Foodbook.Data
     {
         public static async Task InitializeAsync(AppDbContext context)
         {
-            await SeedIngredientsAsync(context);
+            var hasIngredients = await context.Ingredients.AnyAsync();
+            var hasRecipes = await context.Recipes.AnyAsync();
 
-            if (await context.Recipes.AnyAsync())
+            if (hasIngredients && hasRecipes)
+                return;
+
+            if (!hasIngredients)
+            {
+                await SeedIngredientsAsync(context);
+            }
+
+            if (hasRecipes)
                 return;
 
             var recipe = new Recipe
@@ -38,8 +47,8 @@ namespace Foodbook.Data
 
         public static async Task SeedIngredientsAsync(AppDbContext context)
         {
-            // Check if there are already standalone ingredients (RecipeId is null)
-            if (await context.Ingredients.AnyAsync(i => i.RecipeId == null))
+            // Skip seeding if any ingredients already exist
+            if (await context.Ingredients.AnyAsync())
                 return;
 
             try
@@ -124,8 +133,8 @@ namespace Foodbook.Data
                     // Metoda 3: Próba tradycyjnego odczytu pliku
                     try
                     {
-                        var appDir = FileSystem.Current.OpenAppPackageFileAsync("ingredients.json").Result;
-                        using var reader = new StreamReader(appDir);
+                        using var stream = await FileSystem.Current.OpenAppPackageFileAsync("ingredients.json");
+                        using var reader = new StreamReader(stream);
                         json = await reader.ReadToEndAsync();
                     }
                     catch

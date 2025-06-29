@@ -2,8 +2,10 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:models="clr-namespace:Foodbook.Models"
+             xmlns:vm="clr-namespace:Foodbook.ViewModels"
              x:Class="Foodbook.Views.AddRecipePage"
              x:Name="ThisPage"
+             x:DataType="vm:AddRecipeViewModel"
              Title="Dodaj przepis">
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="16">
@@ -41,7 +43,7 @@
                 <Label Text="Skladniki:" FontAttributes="Bold" />
                 <CollectionView ItemsSource="{Binding Ingredients}">
                     <CollectionView.ItemTemplate>
-                        <DataTemplate>
+                    <DataTemplate x:DataType="models:Ingredient">
                             <Border StrokeThickness="1"
                                     Stroke="LightGray"
                                     Padding="10"

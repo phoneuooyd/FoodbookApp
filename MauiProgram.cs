@@ -45,6 +45,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<RecipeViewModel>();
             builder.Services.AddScoped<AddRecipeViewModel>();
             builder.Services.AddScoped<PlannerViewModel>();
+            builder.Services.AddScoped<HomeViewModel>();
             builder.Services.AddScoped<ShoppingListViewModel>();
             builder.Services.AddScoped<ShoppingListDetailViewModel>();
             builder.Services.AddScoped<IngredientsViewModel>();
@@ -56,6 +57,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<RecipeImporter>();
 
             // 🧭 Rejestracja widoków (Pages), jeśli używasz DI do ich tworzenia
+            builder.Services.AddScoped<HomePage>();
             builder.Services.AddScoped<RecipesPage>();
             builder.Services.AddScoped<AddRecipePage>();
             builder.Services.AddScoped<IngredientsPage>();
@@ -66,6 +68,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<ShoppingListDetailPage>();
 
             // 🧠 Rejestracja routów do Shell (opcjonalne, jeśli używasz Shell)
+            Routing.RegisterRoute(nameof(HomePage), typeof(HomePage));
             Routing.RegisterRoute(nameof(RecipesPage), typeof(RecipesPage));
             Routing.RegisterRoute(nameof(AddRecipePage), typeof(AddRecipePage));
             Routing.RegisterRoute(nameof(IngredientFormPage), typeof(IngredientFormPage));
@@ -75,19 +78,30 @@ namespace FoodbookApp
             Routing.RegisterRoute(nameof(ShoppingListPage), typeof(ShoppingListPage));
             Routing.RegisterRoute(nameof(ShoppingListDetailPage), typeof(ShoppingListDetailPage));
 
+
             // ✨ Build aplikacji
             var app = builder.Build();
             ServiceProvider = app.Services;
 
-            // 📦 Inicjalizacja bazy danych
-            using (var scope = app.Services.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                db.Database.EnsureCreated();
-                Task.Run(async () => await SeedData.InitializeAsync(db)).Wait();
-            }
+            // 📦 Inicjalizacja bazy danych w tle
+            Task.Run(() => SeedDatabaseAsync(app.Services));
 
             return app;
+        }
+
+        private static async Task SeedDatabaseAsync(IServiceProvider services)
+        {
+            using var scope = services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            await db.Database.EnsureCreatedAsync();
+
+            var hasIngredients = await db.Ingredients.AnyAsync();
+            var hasRecipes = await db.Recipes.AnyAsync();
+
+            if (!hasIngredients && !hasRecipes)
+            {
+                await SeedData.InitializeAsync(db);
+            }
         }
     }
 }

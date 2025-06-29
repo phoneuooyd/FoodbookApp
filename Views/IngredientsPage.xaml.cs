@@ -9,6 +9,7 @@ namespace Foodbook.Views;
 public partial class IngredientsPage : ContentPage
 {
     private readonly IngredientsViewModel _viewModel;
+    private bool _isInitialized;
 
     public IngredientsPage(IngredientsViewModel vm)
     {
@@ -20,18 +21,48 @@ public partial class IngredientsPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _viewModel.LoadAsync();
-
-        if (_viewModel.Ingredients.Count == 0)
+        
+        // Only load once or if explicitly needed
+        if (!_isInitialized)
         {
-            bool create = await DisplayAlert("Brak składników", "Utworzyć listę przykładowych składników?", "Tak", "Nie");
+            await _viewModel.LoadAsync();
+            _isInitialized = true;
+
+            // Check for seeding only after initial load is complete
+            if (_viewModel.Ingredients.Count == 0 && !_viewModel.IsLoading)
+            {
+                await HandleEmptyIngredientsAsync();
+            }
+        }
+        else
+        {
+            // If we're returning to the page, just refresh if needed
+            // This handles cases where ingredients might have been added/modified
+            await _viewModel.ReloadAsync();
+        }
+    }
+
+    private async Task HandleEmptyIngredientsAsync()
+    {
+        try
+        {
+            bool create = await DisplayAlert("Brak składników", 
+                "Utworzyć listę przykładowych składników?", "Tak", "Nie");
+            
             if (create && MauiProgram.ServiceProvider != null)
             {
                 using var scope = MauiProgram.ServiceProvider.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 await SeedData.SeedIngredientsAsync(db);
-                await _viewModel.LoadAsync();
+                
+                // Reload the data after seeding
+                await _viewModel.ReloadAsync();
             }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error handling empty ingredients: {ex.Message}");
+            await DisplayAlert("Błąd", "Wystąpił problem podczas ładowania składników.", "OK");
         }
     }
 }

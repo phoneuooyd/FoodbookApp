@@ -1,82 +1,159 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:Foodbook.Models"
+             xmlns:vm="clr-namespace:Foodbook.ViewModels"
+             xmlns:converters="clr-namespace:Foodbook.Converters"
              x:Class="Foodbook.Views.IngredientsPage"
              x:Name="ThisPage"
-             Title="Ingredients">
+             x:DataType="vm:IngredientsViewModel"
+             Title="Składniki">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="10" Spacing="10">
-            <Button Text="Add Ingredient" Command="{Binding AddCommand}" />
-            <CollectionView ItemsSource="{Binding Ingredients}">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Border Margin="5" Padding="15" StrokeThickness="1">
-                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10" RowSpacing="5">
-                                
-                                <!-- Main ingredient info -->
-                                <StackLayout Grid.Row="0" Grid.Column="0" Spacing="2">
-                                    <Label Text="{Binding Name}" 
-                                           FontSize="16" 
-                                           FontAttributes="Bold" />
-                                    <Label FontSize="12">
-                                        <Label.Text>
-                                            <MultiBinding StringFormat="{}{0:F1} {1}">
-                                                <Binding Path="Quantity" />
-                                                <Binding Path="Unit" />
-                                            </MultiBinding>
-                                        </Label.Text>
-                                    </Label>
-                                </StackLayout>
-                                
-                                <!-- Nutritional info -->
-                                <StackLayout Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Spacing="15">
-                                    <Label FontSize="11">
-                                        <Label.Text>
-                                            <MultiBinding StringFormat="🔥 {0:F0} kcal">
-                                                <Binding Path="Calories" />
-                                            </MultiBinding>
-                                        </Label.Text>
-                                    </Label>
-                                    <Label FontSize="11">
-                                        <Label.Text>
-                                            <MultiBinding StringFormat="💪 {0:F1}g">
-                                                <Binding Path="Protein" />
-                                            </MultiBinding>
-                                        </Label.Text>
-                                    </Label>
-                                    <Label FontSize="11">
-                                        <Label.Text>
-                                            <MultiBinding StringFormat="🧈 {0:F1}g">
-                                                <Binding Path="Fat" />
-                                            </MultiBinding>
-                                        </Label.Text>
-                                    </Label>
-                                    <Label FontSize="11">
-                                        <Label.Text>
-                                            <MultiBinding StringFormat="🍞 {0:F1}g">
-                                                <Binding Path="Carbs" />
-                                            </MultiBinding>
-                                        </Label.Text>
-                                    </Label>
-                                </StackLayout>
-                                
-                                <!-- Action buttons -->
-                                <Button Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" 
-                                        Text="Edit" 
-                                        Command="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}" 
-                                        CommandParameter="{Binding .}"
-                                        FontSize="12" />
-                                <Button Grid.Row="0" Grid.RowSpan="2" Grid.Column="2" 
-                                        Text="Delete" 
-                                        Command="{Binding BindingContext.DeleteCommand, Source={x:Reference ThisPage}}" 
-                                        CommandParameter="{Binding .}"
-                                        FontSize="12" />
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-        </VerticalStackLayout>
-    </ScrollView>
+    <ContentPage.Resources>
+        <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,Auto,*">
+        
+        <!-- Loading indicator -->
+        <ActivityIndicator Grid.Row="0" 
+                          IsVisible="{Binding IsLoading}" 
+                          IsRunning="{Binding IsLoading}"
+                          Color="{AppThemeBinding Light=Black, Dark=White}"
+                          Margin="10" />
+
+        <!-- Search bar -->
+        <SearchBar Grid.Row="1" 
+                   Text="{Binding SearchText}"
+                   Placeholder="Szukaj składników..."
+                   Margin="10,0"
+                   IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+
+        <!-- Content -->
+        <RefreshView Grid.Row="2" 
+                     IsRefreshing="{Binding IsRefreshing}" 
+                     Command="{Binding RefreshCommand}"
+                     IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
+            
+            <Grid RowDefinitions="Auto,*">
+                <Button Grid.Row="0" 
+                        Text="Dodaj składnik" 
+                        Command="{Binding AddCommand}"
+                        Margin="10" />
+                
+                <CollectionView Grid.Row="1"
+                                ItemsSource="{Binding Ingredients}"
+                                ItemSizingStrategy="MeasureFirstItem"
+                                RemainingItemsThreshold="10"
+                                Margin="10,0">
+                    
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="5" />
+                    </CollectionView.ItemsLayout>
+                    
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:Ingredient">
+                            <!-- Ujednolicony layout zgodny z RecipesPage -->
+                            <Border Stroke="LightGray" StrokeThickness="1" Padding="10" Margin="5">
+                                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                                    <!-- Kolumna z treścią składnika -->
+                                    <StackLayout Grid.Column="0">
+                                        <Label Text="{Binding Name}" 
+                                               FontSize="18" 
+                                               FontAttributes="Bold" />
+                                        <Label FontSize="14" 
+                                               TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}">
+                                            <Label.Text>
+                                                <MultiBinding StringFormat="{}{0:F1} {1}">
+                                                    <Binding Path="Quantity" />
+                                                    <Binding Path="Unit" />
+                                                </MultiBinding>
+                                            </Label.Text>
+                                        </Label>
+                                        
+                                        <!-- Informacje odżywcze w jednej linii -->
+                                        <StackLayout Orientation="Horizontal" Spacing="15" Margin="0,2,0,0">
+                                            <Label FontSize="12" 
+                                                   TextColor="{AppThemeBinding Light=DarkOrange, Dark=Orange}"
+                                                   FontAttributes="Bold">
+                                                <Label.Text>
+                                                    <MultiBinding StringFormat="{}{0:F0} kcal">
+                                                        <Binding Path="Calories" />
+                                                    </MultiBinding>
+                                                </Label.Text>
+                                            </Label>
+                                            <Label FontSize="11" 
+                                                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}">
+                                                <Label.Text>
+                                                    <MultiBinding StringFormat="P: {0:F1}g">
+                                                        <Binding Path="Protein" />
+                                                    </MultiBinding>
+                                                </Label.Text>
+                                            </Label>
+                                            <Label FontSize="11" 
+                                                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}">
+                                                <Label.Text>
+                                                    <MultiBinding StringFormat="F: {0:F1}g">
+                                                        <Binding Path="Fat" />
+                                                    </MultiBinding>
+                                                </Label.Text>
+                                            </Label>
+                                            <Label FontSize="11" 
+                                                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}">
+                                                <Label.Text>
+                                                    <MultiBinding StringFormat="C: {0:F1}g">
+                                                        <Binding Path="Carbs" />
+                                                    </MultiBinding>
+                                                </Label.Text>
+                                            </Label>
+                                        </StackLayout>
+                                    </StackLayout>
+                                    
+                                    <!-- Ikona edycji - zgodna ze stylem RecipesPage -->
+                                    <Button Grid.Column="1" 
+                                            Text="✎" 
+                                            Command="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}" 
+                                            CommandParameter="{Binding .}" 
+                                            WidthRequest="40" 
+                                            HeightRequest="40"
+                                            BackgroundColor="{DynamicResource Primary}"
+                                            TextColor="White"
+                                            FontSize="16"
+                                            CornerRadius="6" />
+                                    
+                                    <!-- Ikona usuwania - zgodna ze stylem RecipesPage -->
+                                    <Button Grid.Column="2" 
+                                            Text="🗑" 
+                                            Command="{Binding BindingContext.DeleteCommand, Source={x:Reference ThisPage}}" 
+                                            CommandParameter="{Binding .}" 
+                                            WidthRequest="40" 
+                                            HeightRequest="40"
+                                            BackgroundColor="Red"
+                                            TextColor="White"
+                                            FontSize="16"
+                                            CornerRadius="6" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                    
+                    <CollectionView.EmptyView>
+                        <StackLayout HorizontalOptions="Center" VerticalOptions="Center" Padding="20">
+                            <Label Text="Brak składników" 
+                                   FontSize="18" 
+                                   HorizontalOptions="Center"
+                                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+                            <Label Text="Dotknij 'Dodaj składnik' aby dodać pierwszy składnik" 
+                                   FontSize="14" 
+                                   HorizontalOptions="Center"
+                                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
+                                   Margin="0,10,0,0" />
+                        </StackLayout>
+                    </CollectionView.EmptyView>
+                    
+                </CollectionView>
+            </Grid>
+        </RefreshView>
+    </Grid>
+
 </ContentPage>
