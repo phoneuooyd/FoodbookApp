@@ -12,30 +12,77 @@
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
     </ContentPage.Resources>
     <StackLayout Padding="10" Spacing="10">
+        
+        <!-- Nagłówki kolumn -->
+        <Grid ColumnDefinitions="Auto,2*,Auto,Auto,Auto" Padding="5" ColumnSpacing="5" BackgroundColor="{DynamicResource Primary}">
+            <Label Grid.Column="0" Text="✓" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+            <Label Grid.Column="1" Text="Nazwa składnika" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" />
+            <Label Grid.Column="2" Text="Ilość" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+            <Label Grid.Column="3" Text="Jednostka" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+            <Label Grid.Column="4" Text="Akcje" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+        </Grid>
+        
         <CollectionView ItemsSource="{Binding Items}">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:Ingredient">
-                    <Grid ColumnDefinitions="Auto,2*,Auto,Auto,Auto" Padding="5" ColumnSpacing="5">
-                        <CheckBox Grid.Column="0" IsChecked="{Binding IsChecked}" />
+                    <Border Stroke="LightGray" StrokeThickness="1" Padding="5" Margin="0,2">
+                        <Grid ColumnDefinitions="Auto,2*,Auto,Auto,Auto" ColumnSpacing="5">
+                            <CheckBox Grid.Column="0" IsChecked="{Binding IsChecked}" />
 
-                        <Entry Grid.Column="1" Text="{Binding Name}" Placeholder="Nazwa"
-                               IsVisible="{Binding IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
-                        <Label Grid.Column="1" Text="{Binding Name}" TextDecorations="Strikethrough" TextColor="Gray"
-                               VerticalTextAlignment="Center"
-                               IsVisible="{Binding IsChecked}" />
+                            <!-- Nazwa składnika -->
+                            <Entry Grid.Column="1" 
+                                   Text="{Binding Name}" 
+                                   Placeholder="Nazwa"
+                                   IsVisible="{Binding IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
+                            <Label Grid.Column="1" 
+                                   Text="{Binding Name}" 
+                                   TextDecorations="Strikethrough" 
+                                   TextColor="Gray"
+                                   VerticalTextAlignment="Center"
+                                   IsVisible="{Binding IsChecked}" />
 
-                        <Entry Grid.Column="2" Text="{Binding Quantity}" Keyboard="Numeric" WidthRequest="60"
-                               IsVisible="{Binding IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
-                        <Label Grid.Column="2" Text="{Binding Quantity}" TextDecorations="Strikethrough" TextColor="Gray" VerticalTextAlignment="Center"
-                               IsVisible="{Binding IsChecked}" />
+                            <!-- Ilość -->
+                            <Entry Grid.Column="2" 
+                                   Text="{Binding Quantity}" 
+                                   Keyboard="Numeric" 
+                                   WidthRequest="60"
+                                   HorizontalTextAlignment="Center"
+                                   IsVisible="{Binding IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
+                            <Label Grid.Column="2" 
+                                   Text="{Binding Quantity}" 
+                                   TextDecorations="Strikethrough" 
+                                   TextColor="Gray" 
+                                   VerticalTextAlignment="Center"
+                                   HorizontalTextAlignment="Center"
+                                   IsVisible="{Binding IsChecked}" />
 
-                        <Picker Grid.Column="3" WidthRequest="80" ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}" SelectedItem="{Binding Unit}"
-                                IsVisible="{Binding IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
-                        <Label Grid.Column="3" Text="{Binding Unit}" TextDecorations="Strikethrough" TextColor="Gray" VerticalTextAlignment="Center"
-                               IsVisible="{Binding IsChecked}" />
+                            <!-- Jednostka -->
+                            <Picker Grid.Column="3" 
+                                    WidthRequest="80" 
+                                    ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}" 
+                                    SelectedItem="{Binding Unit}"
+                                    IsVisible="{Binding IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
+                            <Label Grid.Column="3" 
+                                   Text="{Binding Unit}" 
+                                   TextDecorations="Strikethrough" 
+                                   TextColor="Gray" 
+                                   VerticalTextAlignment="Center"
+                                   HorizontalTextAlignment="Center"
+                                   IsVisible="{Binding IsChecked}" />
 
-                        <Button Grid.Column="4" Text="Usuń" Command="{Binding BindingContext.RemoveItemCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
-                    </Grid>
+                            <!-- Przycisk usuwania - zgodny ze stylem innych stron -->
+                            <Button Grid.Column="4" 
+                                    Text="🗑" 
+                                    Command="{Binding BindingContext.RemoveItemCommand, Source={x:Reference ThisPage}}" 
+                                    CommandParameter="{Binding .}" 
+                                    WidthRequest="40" 
+                                    HeightRequest="40"
+                                    BackgroundColor="Red"
+                                    TextColor="White"
+                                    FontSize="16"
+                                    CornerRadius="6" />
+                        </Grid>
+                    </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
