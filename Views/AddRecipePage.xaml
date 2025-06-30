@@ -96,7 +96,7 @@
                 </StackLayout>
 
                 <StackLayout Spacing="5">
-                    <Label Text="Ilość porcji *" FontAttributes="Bold" />
+                    <Label Text="Domyślna ilość porcji (lista zakupów)*" FontAttributes="Bold" />
                     <Entry Placeholder="2" 
                            Keyboard="Numeric"
                            Text="{Binding IloscPorcji}" 

@@ -36,28 +36,28 @@
                                    TextColor="Gray" />
                         </VerticalStackLayout>
                         
-                        <!-- Przycisk przywracania -->
+                        <!-- Przycisk przywracania - strzalka -->
                         <Button Grid.Column="1" 
-                                Text="Przywroc" 
+                                Text="↩️" 
                                 Command="{Binding BindingContext.RestorePlanCommand, Source={x:Reference ThisPage}}" 
                                 CommandParameter="{Binding .}" 
-                                WidthRequest="80" 
+                                WidthRequest="40" 
                                 HeightRequest="40"
                                 BackgroundColor="Green"
                                 TextColor="White"
-                                FontSize="12"
+                                FontSize="16"
                                 CornerRadius="6" />
                         
-                        <!-- Przycisk trwalego usuwania -->
+                        <!-- Przycisk trwalego usuwania - kosz -->
                         <Button Grid.Column="2" 
-                                Text="Usun" 
+                                Text="🗑" 
                                 Command="{Binding BindingContext.DeletePlanCommand, Source={x:Reference ThisPage}}" 
                                 CommandParameter="{Binding .}" 
-                                WidthRequest="60" 
+                                WidthRequest="40" 
                                 HeightRequest="40"
                                 BackgroundColor="Red"
                                 TextColor="White"
-                                FontSize="12"
+                                FontSize="16"
                                 CornerRadius="6" />
                     </Grid>
                 </Border>

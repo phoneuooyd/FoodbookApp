@@ -5,25 +5,256 @@
              xmlns:converters="clr-namespace:Foodbook.Converters"
              x:Class="Foodbook.Views.HomePage"
              x:DataType="vm:HomeViewModel"
-             Title="Start">
+             Title="Dashboard"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}">
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        
+        <!-- Enhanced Card Style with better separation -->
+        <Style x:Key="DashboardCardStyle" TargetType="Frame">
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}" />
+            <Setter Property="HasShadow" Value="True" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Padding" Value="20" />
+            <Setter Property="Margin" Value="12,8" />
+            <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+        </Style>
+        
+        <!-- Card Title Style -->
+        <Style x:Key="CardTitleStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="{DynamicResource Primary}" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+        </Style>
+        
+        <!-- Large Number Style -->
+        <Style x:Key="StatNumberStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="32" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="HorizontalTextAlignment" Value="Center" />
+            <Setter Property="TextColor" Value="{DynamicResource Primary}" />
+            <Setter Property="Margin" Value="0,4" />
+        </Style>
+        
+        <!-- Description Style -->
+        <Style x:Key="StatDescriptionStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="HorizontalTextAlignment" Value="Center" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+        
+        <!-- Card Button Style -->
+        <Style x:Key="CardButtonStyle" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="{DynamicResource Primary}" />
+            <Setter Property="TextColor" Value="White" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="HeightRequest" Value="40" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Margin" Value="0,12,0,0" />
+        </Style>
+        
+        <!-- Disabled Button Style -->
+        <Style x:Key="DisabledButtonStyle" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray400}}" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="HeightRequest" Value="40" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Margin" Value="0,12,0,0" />
+        </Style>
+        
+        <!-- Emoji Style -->
+        <Style x:Key="EmojiStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="24" />
+            <Setter Property="HorizontalTextAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+        
+        <!-- Micro Stat Style -->
+        <Style x:Key="MicroStatStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="HorizontalTextAlignment" Value="Center" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}" />
+        </Style>
     </ContentPage.Resources>
-    <StackLayout Padding="20" Spacing="10">
-        <Label Text="Witaj w Foodbook" FontAttributes="Bold" FontSize="20" HorizontalOptions="Center" />
-        <ActivityIndicator IsVisible="{Binding IsLoading}" IsRunning="{Binding IsLoading}" />
-        <StackLayout IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" Spacing="6">
-            <Label Text="{Binding RecipeCount, StringFormat='Liczba przepisow: {0}'}" />
-            <Label Text="{Binding PlanCount, StringFormat='Zaplanowane foodbooki: {0}'}" />
+
+    <ScrollView BackgroundColor="Transparent">
+        <StackLayout Padding="16" Spacing="0" 
+                     BackgroundColor="Transparent">
             
-            <!-- Dodanie przycisku do Archiwum -->
-            <Button Text="Archiwum" 
-                    Clicked="OnArchiveClicked"
-                    BackgroundColor="{DynamicResource Primary}"
-                    TextColor="White"
-                    FontSize="16"
-                    HeightRequest="45"
-                    Margin="0,20,0,0" />
+            <!-- Header with gradient-like effect -->
+            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}" 
+                   CornerRadius="20" 
+                   HasShadow="True"
+                   Margin="0,0,0,20"
+                   Padding="20,16">
+                <StackLayout>
+                    <Label Text="🍽️ Witaj w Foodbook" 
+                           FontSize="26" 
+                           FontAttributes="Bold" 
+                           HorizontalTextAlignment="Center"
+                           TextColor="{DynamicResource Primary}"
+                           Margin="0,4" />
+                    <Label Text="Twoj osobisty asystent kulinarny" 
+                           FontSize="14" 
+                           HorizontalTextAlignment="Center"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}"
+                           Margin="0,0,0,4" />
+                </StackLayout>
+            </Frame>
+
+            <!-- Loading indicator -->
+            <ActivityIndicator IsVisible="{Binding IsLoading}" 
+                             IsRunning="{Binding IsLoading}" 
+                             Color="{DynamicResource Primary}"
+                             HorizontalOptions="Center"
+                             HeightRequest="60"
+                             WidthRequest="60"
+                             Margin="0,40" />
+
+            <!-- Dashboard Grid -->
+            <Grid IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+                  ColumnDefinitions="*,*" 
+                  RowDefinitions="Auto,Auto,Auto"
+                  ColumnSpacing="0"
+                  RowSpacing="8">
+
+                <!-- Main Stats Card: Przepisy i Plany -->
+                <Frame Grid.Row="0" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
+                    <Grid ColumnDefinitions="*,1,*" ColumnSpacing="20">
+                        <!-- Przepisy -->
+                        <StackLayout Grid.Column="0">
+                            <Label Text="📖" Style="{StaticResource EmojiStyle}" />
+                            <Label Text="Przepisy" Style="{StaticResource CardTitleStyle}" />
+                            <Label Text="{Binding RecipeCount}" Style="{StaticResource StatNumberStyle}" />
+                            <Label Text="zapisanych przepisow" Style="{StaticResource StatDescriptionStyle}" />
+                        </StackLayout>
+                        
+                        <!-- Separator Line -->
+                        <BoxView Grid.Column="1" 
+                                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" 
+                                 WidthRequest="1" 
+                                 HorizontalOptions="Center" />
+                        
+                        <!-- Plany -->
+                        <StackLayout Grid.Column="2">
+                            <Label Text="📋" Style="{StaticResource EmojiStyle}" />
+                            <Label Text="Plany" Style="{StaticResource CardTitleStyle}" />
+                            <Label Text="{Binding PlanCount}" Style="{StaticResource StatNumberStyle}" />
+                            <Label Text="aktywnych list" Style="{StaticResource StatDescriptionStyle}" />
+                        </StackLayout>
+                    </Grid>
+                </Frame>
+
+                <!-- Archive Card -->
+                <Frame Grid.Row="1" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
+                    <StackLayout>
+                        <Label Text="📁" Style="{StaticResource EmojiStyle}" />
+                        <Label Text="Archiwum" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="{Binding ArchivedPlanCount}" Style="{StaticResource StatNumberStyle}" />
+                        <Label Text="zarchiwizowanych" Style="{StaticResource StatDescriptionStyle}" />
+                        <Button Text="📂 Przejdz" 
+                                Clicked="OnArchiveClicked"
+                                Style="{StaticResource CardButtonStyle}" />
+                    </StackLayout>
+                </Frame>
+
+                <!-- Settings Card -->
+                <Frame Grid.Row="1" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
+                    <StackLayout>
+                        <Label Text="⚙️" Style="{StaticResource EmojiStyle}" />
+                        <Label Text="Ustawienia" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="Personalizuj" 
+                               FontSize="16" 
+                               HorizontalTextAlignment="Center"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
+                               Margin="0,16,0,8" />
+                        <Button Text="🔒 Wkrotce" 
+                                Style="{StaticResource DisabledButtonStyle}"
+                                IsEnabled="False" />
+                    </StackLayout>
+                </Frame>
+
+                <!-- Nutrition Stats Card -->
+                <Frame Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
+                    <StackLayout>
+                        <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="8" Margin="0,0,0,16">
+                            <Label Text="📊" FontSize="24" />
+                            <Label Text="Statystyki Diety" Style="{StaticResource CardTitleStyle}" Margin="0" />
+                        </StackLayout>
+                        
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                            <!-- Kalorie -->
+                            <Frame Grid.Column="0" 
+                                   BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
+                                   CornerRadius="12" 
+                                   Padding="12,16" 
+                                   HasShadow="False"
+                                   BorderColor="Transparent">
+                                <StackLayout>
+                                    <Label Text="🔥" FontSize="20" HorizontalTextAlignment="Center" />
+                                    <Label Text="Kalorie" 
+                                           FontSize="12" 
+                                           FontAttributes="Bold"
+                                           HorizontalTextAlignment="Center"
+                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" 
+                                           Margin="0,4,0,8" />
+                                    <Label Text="---" Style="{StaticResource MicroStatStyle}" />
+                                </StackLayout>
+                            </Frame>
+                            
+                            <!-- Białko -->
+                            <Frame Grid.Column="1" 
+                                   BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
+                                   CornerRadius="12" 
+                                   Padding="12,16" 
+                                   HasShadow="False"
+                                   BorderColor="Transparent">
+                                <StackLayout>
+                                    <Label Text="🥩" FontSize="20" HorizontalTextAlignment="Center" />
+                                    <Label Text="Bialko" 
+                                           FontSize="12" 
+                                           FontAttributes="Bold"
+                                           HorizontalTextAlignment="Center"
+                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" 
+                                           Margin="0,4,0,8" />
+                                    <Label Text="---" Style="{StaticResource MicroStatStyle}" />
+                                </StackLayout>
+                            </Frame>
+                            
+                            <!-- Węglowodany -->
+                            <Frame Grid.Column="2" 
+                                   BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
+                                   CornerRadius="12" 
+                                   Padding="12,16" 
+                                   HasShadow="False"
+                                   BorderColor="Transparent">
+                                <StackLayout>
+                                    <Label Text="🌾" FontSize="20" HorizontalTextAlignment="Center" />
+                                    <Label Text="Weglowodany" 
+                                           FontSize="12" 
+                                           FontAttributes="Bold"
+                                           HorizontalTextAlignment="Center"
+                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" 
+                                           Margin="0,4,0,8" />
+                                    <Label Text="---" Style="{StaticResource MicroStatStyle}" />
+                                </StackLayout>
+                            </Frame>
+                        </Grid>
+                        
+                        <Label Text="💡 Funkcja dostepna wkrotce - planuj posilki aby zobaczyc statystyki" 
+                               FontSize="12" 
+                               HorizontalTextAlignment="Center"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
+                               Margin="0,16,0,0" />
+                    </StackLayout>
+                </Frame>
+
+            </Grid>
         </StackLayout>
-    </StackLayout>
+    </ScrollView>
 </ContentPage>

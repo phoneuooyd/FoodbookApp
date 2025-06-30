@@ -12,7 +12,7 @@
             <DataTemplate x:DataType="models:Plan">
                 <Border Stroke="LightGray" StrokeThickness="1" Padding="10" Margin="5">
                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
-                        <!-- Kolumna z trescia planu - wiekszy rozmiar jak w RecipesPage -->
+                        <!-- Kolumna z trescia planu -->
                         <VerticalStackLayout Grid.Column="0">
                             <Label Text="{Binding Label}" 
                                    FontAttributes="Bold" 
@@ -27,28 +27,28 @@
                                    TextColor="{DynamicResource Primary}" />
                         </VerticalStackLayout>
                         
-                        <!-- Ikona edycji - zachowany styl -->
+                        <!-- Przycisk edycji -->
                         <Button Grid.Column="1" 
-                                Text="Edytuj" 
+                                Text="✏️" 
                                 Command="{Binding BindingContext.OpenPlanCommand, Source={x:Reference ThisPage}}" 
                                 CommandParameter="{Binding .}" 
-                                WidthRequest="60" 
+                                WidthRequest="40" 
                                 HeightRequest="40"
                                 BackgroundColor="{DynamicResource Primary}"
                                 TextColor="White"
-                                FontSize="12"
+                                FontSize="16"
                                 CornerRadius="6" />
                         
-                        <!-- Ikona archiwizacji zamiast usuwania -->
+                        <!-- Przycisk archiwizacji - szary kolor -->
                         <Button Grid.Column="2" 
-                                Text="Archiwum" 
+                                Text="📁" 
                                 Command="{Binding BindingContext.ArchivePlanCommand, Source={x:Reference ThisPage}}" 
                                 CommandParameter="{Binding .}" 
-                                WidthRequest="80" 
+                                WidthRequest="40" 
                                 HeightRequest="40"
-                                BackgroundColor="Orange"
+                                BackgroundColor="Gray"
                                 TextColor="White"
-                                FontSize="12"
+                                FontSize="16"
                                 CornerRadius="6" />
                     </Grid>
                 </Border>

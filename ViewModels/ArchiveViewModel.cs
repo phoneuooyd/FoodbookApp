@@ -37,6 +37,18 @@ public class ArchiveViewModel
     {
         if (plan == null) return;
         
+        // SprawdŸ czy istnieje konflikt z aktywnymi planami (ignoruj¹c zarchiwizowane)
+        bool hasConflict = await _planService.HasOverlapAsync(plan.StartDate, plan.EndDate, plan.Id);
+        
+        if (hasConflict)
+        {
+            await Shell.Current.DisplayAlert(
+                "Konflikt dat", 
+                "Nie mo¿na przywróciæ planu - ju¿ istnieje aktywny plan na ten okres dat.", 
+                "OK");
+            return;
+        }
+        
         bool confirm = await Shell.Current.DisplayAlert(
             "Przywracanie", 
             "Czy na pewno chcesz przywróciæ tê listê zakupów?", 
