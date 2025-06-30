@@ -24,7 +24,7 @@ namespace Foodbook.ViewModels
             {
                 _isManualMode = value;
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(IsImportMode)); // <-- DODAJ TO
+                OnPropertyChanged(nameof(IsImportMode));
             }
         }
 
@@ -33,16 +33,57 @@ namespace Foodbook.ViewModels
         // Pola do recznego dodawania
         public string Name { get => _name; set { _name = value; OnPropertyChanged(); ValidateInput(); } }
         private string _name = string.Empty;
+        
         public string Description { get => _description; set { _description = value; OnPropertyChanged(); } }
         private string _description = string.Empty;
+        
         public string Calories { get => _calories; set { _calories = value; OnPropertyChanged(); ValidateInput(); } }
         private string _calories = "0";
+        
         public string Protein { get => _protein; set { _protein = value; OnPropertyChanged(); ValidateInput(); } }
         private string _protein = "0";
+        
         public string Fat { get => _fat; set { _fat = value; OnPropertyChanged(); ValidateInput(); } }
         private string _fat = "0";
+        
         public string Carbs { get => _carbs; set { _carbs = value; OnPropertyChanged(); ValidateInput(); } }
         private string _carbs = "0";
+
+        // Właściwości dla automatycznie obliczanych wartości
+        public string CalculatedCalories { get => _calculatedCalories; private set { _calculatedCalories = value; OnPropertyChanged(); } }
+        private string _calculatedCalories = "0";
+        
+        public string CalculatedProtein { get => _calculatedProtein; private set { _calculatedProtein = value; OnPropertyChanged(); } }
+        private string _calculatedProtein = "0";
+        
+        public string CalculatedFat { get => _calculatedFat; private set { _calculatedFat = value; OnPropertyChanged(); } }
+        private string _calculatedFat = "0";
+        
+        public string CalculatedCarbs { get => _calculatedCarbs; private set { _calculatedCarbs = value; OnPropertyChanged(); } }
+        private string _calculatedCarbs = "0";
+
+        // Flaga kontrolująca czy używać automatycznych obliczeń
+        private bool _useCalculatedValues = true;
+        public bool UseCalculatedValues 
+        { 
+            get => _useCalculatedValues; 
+            set 
+            { 
+                _useCalculatedValues = value; 
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(UseManualValues));
+                if (value)
+                {
+                    // Gdy włączamy automatyczne obliczenia, kopiujemy obliczone wartości
+                    Calories = CalculatedCalories;
+                    Protein = CalculatedProtein;
+                    Fat = CalculatedFat;
+                    Carbs = CalculatedCarbs;
+                }
+            } 
+        }
+        
+        public bool UseManualValues => !UseCalculatedValues;
 
         public ObservableCollection<Ingredient> Ingredients { get; set; } = new();
 
@@ -57,10 +98,10 @@ namespace Foodbook.ViewModels
 
         // Pola do importu
         public string ImportUrl { get => _importUrl; set { _importUrl = value; OnPropertyChanged(); } }
-        private string _importUrl;
+        private string _importUrl = string.Empty;
 
         public string ImportStatus { get => _importStatus; set { _importStatus = value; OnPropertyChanged(); } }
-        private string _importStatus;
+        private string _importStatus = string.Empty;
 
         // Komendy
         public ICommand AddIngredientCommand { get; }
@@ -70,6 +111,7 @@ namespace Foodbook.ViewModels
         public ICommand ImportRecipeCommand { get; }
         public ICommand SetManualModeCommand { get; }
         public ICommand SetImportModeCommand { get; }
+        public ICommand CopyCalculatedValuesCommand { get; }
 
         private readonly IRecipeService _recipeService;
         private readonly IIngredientService _ingredientService;
@@ -88,8 +130,13 @@ namespace Foodbook.ViewModels
             ImportRecipeCommand = new Command(async () => await ImportRecipeAsync());
             SetManualModeCommand = new Command(() => IsManualMode = true);
             SetImportModeCommand = new Command(() => IsManualMode = false);
+            CopyCalculatedValuesCommand = new Command(CopyCalculatedValues);
 
-            Ingredients.CollectionChanged += (_, __) => ValidateInput();
+            Ingredients.CollectionChanged += (_, __) => 
+            {
+                CalculateNutritionalValues();
+                ValidateInput();
+            };
             ValidateInput();
         }
 
@@ -102,27 +149,131 @@ namespace Foodbook.ViewModels
             _editingRecipe = recipe;
             Name = recipe.Name;
             Description = recipe.Description ?? string.Empty;
-            Calories = recipe.Calories.ToString();
-            Protein = recipe.Protein.ToString();
-            Fat = recipe.Fat.ToString();
-            Carbs = recipe.Carbs.ToString();
+            Calories = recipe.Calories.ToString("F1");
+            Protein = recipe.Protein.ToString("F1");
+            Fat = recipe.Fat.ToString("F1");
+            Carbs = recipe.Carbs.ToString("F1");
+            
             Ingredients.Clear();
             foreach (var ing in recipe.Ingredients)
-                Ingredients.Add(new Ingredient { Id = ing.Id, Name = ing.Name, Quantity = ing.Quantity, Unit = ing.Unit, RecipeId = ing.RecipeId });
+            {
+                var ingredient = new Ingredient 
+                { 
+                    Id = ing.Id, 
+                    Name = ing.Name, 
+                    Quantity = ing.Quantity, 
+                    Unit = ing.Unit, 
+                    RecipeId = ing.RecipeId,
+                    Calories = ing.Calories,
+                    Protein = ing.Protein,
+                    Fat = ing.Fat,
+                    Carbs = ing.Carbs
+                };
+                
+                Ingredients.Add(ingredient);
+            }
+            
+            CalculateNutritionalValues();
         }
 
-        private void AddIngredient()
+        private async void AddIngredient()
         {
             var name = AvailableIngredientNames.FirstOrDefault() ?? string.Empty;
-            Ingredients.Add(new Ingredient { Name = name, Quantity = 0, Unit = Unit.Gram });
+            var ingredient = new Ingredient 
+            { 
+                Name = name, 
+                Quantity = 1, 
+                Unit = Unit.Gram, 
+                Calories = 0, 
+                Protein = 0, 
+                Fat = 0, 
+                Carbs = 0 
+            };
+            
+            // Jeśli składnik istnieje w bazie, pobierz jego wartości odżywcze
+            if (!string.IsNullOrEmpty(name))
+            {
+                var existingIngredients = await _ingredientService.GetIngredientsAsync();
+                var existingIngredient = existingIngredients.FirstOrDefault(i => i.Name == name);
+                if (existingIngredient != null)
+                {
+                    ingredient.Calories = existingIngredient.Calories;
+                    ingredient.Protein = existingIngredient.Protein;
+                    ingredient.Fat = existingIngredient.Fat;
+                    ingredient.Carbs = existingIngredient.Carbs;
+                }
+            }
+            
+            Ingredients.Add(ingredient);
             ValidateInput();
         }
 
         private void RemoveIngredient(Ingredient ingredient)
         {
             if (Ingredients.Contains(ingredient))
+            {
                 Ingredients.Remove(ingredient);
+            }
             ValidateInput();
+        }
+
+        // Publiczna metoda do przeliczania wartości odżywczych (wywołana z code-behind)
+        public void RecalculateNutritionalValues()
+        {
+            CalculateNutritionalValues();
+        }
+
+        private void CalculateNutritionalValues()
+        {
+            double totalCalories = 0;
+            double totalProtein = 0;
+            double totalFat = 0;
+            double totalCarbs = 0;
+
+            foreach (var ingredient in Ingredients)
+            {
+                // Oblicz współczynnik przeliczeniowy na podstawie jednostki
+                double factor = GetUnitConversionFactor(ingredient.Unit, ingredient.Quantity);
+                
+                totalCalories += ingredient.Calories * factor;
+                totalProtein += ingredient.Protein * factor;
+                totalFat += ingredient.Fat * factor;
+                totalCarbs += ingredient.Carbs * factor;
+            }
+
+            CalculatedCalories = totalCalories.ToString("F1");
+            CalculatedProtein = totalProtein.ToString("F1");
+            CalculatedFat = totalFat.ToString("F1");
+            CalculatedCarbs = totalCarbs.ToString("F1");
+
+            // Jeśli używamy automatycznych obliczeń, aktualizuj główne wartości
+            if (UseCalculatedValues)
+            {
+                Calories = CalculatedCalories;
+                Protein = CalculatedProtein;
+                Fat = CalculatedFat;
+                Carbs = CalculatedCarbs;
+            }
+        }
+
+        private double GetUnitConversionFactor(Unit unit, double quantity)
+        {
+            // Założenie: wartości odżywcze w bazie są podane na 100g/100ml/1 sztukę
+            return unit switch
+            {
+                Unit.Gram => quantity / 100.0,        // wartości na 100g
+                Unit.Milliliter => quantity / 100.0,  // wartości na 100ml  
+                Unit.Piece => quantity,               // wartości na 1 sztukę
+                _ => quantity / 100.0
+            };
+        }
+
+        private void CopyCalculatedValues()
+        {
+            Calories = CalculatedCalories;
+            Protein = CalculatedProtein;
+            Fat = CalculatedFat;
+            Carbs = CalculatedCarbs;
         }
 
         private async Task ImportRecipeAsync()
@@ -132,22 +283,42 @@ namespace Foodbook.ViewModels
             {
                 var recipe = await _importer.ImportFromUrlAsync(ImportUrl);
                 Name = recipe.Name;
-                Description = recipe.Description;
-                Calories = recipe.Calories.ToString();
-                Protein = recipe.Protein.ToString();
-                Fat = recipe.Fat.ToString();
-                Carbs = recipe.Carbs.ToString();
+                Description = recipe.Description ?? string.Empty;
+                
                 Ingredients.Clear();
+                
                 if (recipe.Ingredients != null)
                 {
                     foreach (var ing in recipe.Ingredients)
+                    {
                         Ingredients.Add(ing);
+                    }
                 }
+                
+                // Oblicz wartości odżywcze z składników
+                CalculateNutritionalValues();
+                
+                // Jeśli import nie dostarczył wartości odżywczych, użyj obliczonych
+                if (recipe.Calories == 0 && recipe.Protein == 0 && recipe.Fat == 0 && recipe.Carbs == 0)
+                {
+                    UseCalculatedValues = true;
+                }
+                else
+                {
+                    // Jeśli import dostarczył wartości, użyj ich ale pozwól na przełączenie
+                    UseCalculatedValues = false;
+                    Calories = recipe.Calories.ToString("F1");
+                    Protein = recipe.Protein.ToString("F1");
+                    Fat = recipe.Fat.ToString("F1");
+                    Carbs = recipe.Carbs.ToString("F1");
+                }
+                
                 ImportStatus = "Zaimportowano!";
+                IsManualMode = true; // Przełącz na tryb ręczny po imporcie
             }
-            catch
+            catch (Exception ex)
             {
-                ImportStatus = "Błąd importu!";
+                ImportStatus = $"Błąd importu: {ex.Message}";
             }
         }
 
@@ -164,28 +335,26 @@ namespace Foodbook.ViewModels
             {
                 ValidationMessage = "Nazwa przepisu jest wymagana";
             }
-            else if (Ingredients.Count == 0)
-            {
-                ValidationMessage = "Dodaj co najmniej jeden składnik";
-            }
-            else if (!double.TryParse(Calories, out _))
+            // Usuwamy wymaganie składników - teraz można zapisać przepis bez składników
+            else if (!IsValidDouble(Calories))
             {
                 ValidationMessage = "Kalorie muszą być liczbą";
             }
-            else if (!double.TryParse(Protein, out _))
+            else if (!IsValidDouble(Protein))
             {
                 ValidationMessage = "Białko musi być liczbą";
             }
-            else if (!double.TryParse(Fat, out _))
+            else if (!IsValidDouble(Fat))
             {
                 ValidationMessage = "Tłuszcze muszą być liczbą";
             }
-            else if (!double.TryParse(Carbs, out _))
+            else if (!IsValidDouble(Carbs))
             {
                 ValidationMessage = "Węglowodany muszą być liczbą";
             }
             else
             {
+                // Sprawdzenie składników tylko jeśli istnieją
                 foreach (var ing in Ingredients)
                 {
                     if (string.IsNullOrWhiteSpace(ing.Name))
@@ -203,6 +372,11 @@ namespace Foodbook.ViewModels
 
             OnPropertyChanged(nameof(HasValidationError));
             ((Command)SaveRecipeCommand).ChangeCanExecute();
+        }
+
+        private static bool IsValidDouble(string value)
+        {
+            return double.TryParse(value, out var result) && result >= 0;
         }
 
         private async Task CancelAsync()
@@ -225,20 +399,33 @@ namespace Foodbook.ViewModels
             recipe.Carbs = double.TryParse(Carbs, out var carbs) ? carbs : 0;
             recipe.Ingredients = Ingredients.ToList();
 
-            if (_editingRecipe == null)
-                await _recipeService.AddRecipeAsync(recipe);
-            else
-                await _recipeService.UpdateRecipeAsync(recipe);
-
-            if (_editingRecipe == null)
+            try
             {
-                Name = Description = Calories = Protein = Fat = Carbs = string.Empty;
-                Ingredients.Clear();
-                ImportUrl = string.Empty;
-                ImportStatus = string.Empty;
-            }
+                if (_editingRecipe == null)
+                    await _recipeService.AddRecipeAsync(recipe);
+                else
+                    await _recipeService.UpdateRecipeAsync(recipe);
 
-            await Shell.Current.GoToAsync("..");
+                // Reset form po udanym zapisie
+                if (_editingRecipe == null)
+                {
+                    Name = Description = string.Empty;
+                    Calories = Protein = Fat = Carbs = "0";
+                    CalculatedCalories = CalculatedProtein = CalculatedFat = CalculatedCarbs = "0";
+                    
+                    Ingredients.Clear();
+                    
+                    ImportUrl = string.Empty;
+                    ImportStatus = string.Empty;
+                    UseCalculatedValues = true;
+                }
+
+                await Shell.Current.GoToAsync("..");
+            }
+            catch (Exception ex)
+            {
+                ValidationMessage = $"Błąd zapisywania: {ex.Message}";
+            }
         }
 
         // Dostępne jednostki i lista nazw składników
@@ -253,8 +440,8 @@ namespace Foodbook.ViewModels
                 AvailableIngredientNames.Add(ing.Name);
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        void OnPropertyChanged([CallerMemberName] string name = null) =>
+        public event PropertyChangedEventHandler? PropertyChanged;
+        void OnPropertyChanged([CallerMemberName] string? name = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }
