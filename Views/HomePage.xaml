@@ -13,8 +13,17 @@
         <Label Text="Witaj w Foodbook" FontAttributes="Bold" FontSize="20" HorizontalOptions="Center" />
         <ActivityIndicator IsVisible="{Binding IsLoading}" IsRunning="{Binding IsLoading}" />
         <StackLayout IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" Spacing="6">
-            <Label Text="Liczba przepisów: {Binding RecipeCount}" />
-            <Label Text="Zaplanowane foodbooki: {Binding PlanCount}" />
+            <Label Text="{Binding RecipeCount, StringFormat='Liczba przepisow: {0}'}" />
+            <Label Text="{Binding PlanCount, StringFormat='Zaplanowane foodbooki: {0}'}" />
+            
+            <!-- Dodanie przycisku do Archiwum -->
+            <Button Text="Archiwum" 
+                    Clicked="OnArchiveClicked"
+                    BackgroundColor="{DynamicResource Primary}"
+                    TextColor="White"
+                    FontSize="16"
+                    HeightRequest="45"
+                    Margin="0,20,0,0" />
         </StackLayout>
     </StackLayout>
 </ContentPage>

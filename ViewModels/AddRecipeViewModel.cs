@@ -37,6 +37,9 @@ namespace Foodbook.ViewModels
         public string Description { get => _description; set { _description = value; OnPropertyChanged(); } }
         private string _description = string.Empty;
         
+        public string IloscPorcji { get => _iloscPorcji; set { _iloscPorcji = value; OnPropertyChanged(); ValidateInput(); } }
+        private string _iloscPorcji = "2";
+        
         public string Calories { get => _calories; set { _calories = value; OnPropertyChanged(); ValidateInput(); } }
         private string _calories = "0";
         
@@ -149,6 +152,7 @@ namespace Foodbook.ViewModels
             _editingRecipe = recipe;
             Name = recipe.Name;
             Description = recipe.Description ?? string.Empty;
+            IloscPorcji = recipe.IloscPorcji.ToString();
             Calories = recipe.Calories.ToString("F1");
             Protein = recipe.Protein.ToString("F1");
             Fat = recipe.Fat.ToString("F1");
@@ -335,6 +339,10 @@ namespace Foodbook.ViewModels
             {
                 ValidationMessage = "Nazwa przepisu jest wymagana";
             }
+            else if (!IsValidInt(IloscPorcji))
+            {
+                ValidationMessage = "Ilość porcji musi być liczbą całkowitą większą od 0";
+            }
             // Usuwamy wymaganie składników - teraz można zapisać przepis bez składników
             else if (!IsValidDouble(Calories))
             {
@@ -379,6 +387,11 @@ namespace Foodbook.ViewModels
             return double.TryParse(value, out var result) && result >= 0;
         }
 
+        private static bool IsValidInt(string value)
+        {
+            return int.TryParse(value, out var result) && result > 0;
+        }
+
         private async Task CancelAsync()
         {
             await Shell.Current.GoToAsync("..");
@@ -393,6 +406,7 @@ namespace Foodbook.ViewModels
             var recipe = _editingRecipe ?? new Recipe();
             recipe.Name = Name;
             recipe.Description = Description;
+            recipe.IloscPorcji = int.TryParse(IloscPorcji, out var porcje) ? porcje : 2;
             recipe.Calories = double.TryParse(Calories, out var cal) ? cal : 0;
             recipe.Protein = double.TryParse(Protein, out var prot) ? prot : 0;
             recipe.Fat = double.TryParse(Fat, out var fat) ? fat : 0;
@@ -410,6 +424,7 @@ namespace Foodbook.ViewModels
                 if (_editingRecipe == null)
                 {
                     Name = Description = string.Empty;
+                    IloscPorcji = "2";
                     Calories = Protein = Fat = Carbs = "0";
                     CalculatedCalories = CalculatedProtein = CalculatedFat = CalculatedCarbs = "0";
                     

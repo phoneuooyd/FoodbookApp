@@ -29,6 +29,12 @@ public class PlanService : IPlanService
         await _context.SaveChangesAsync();
     }
 
+    public async Task UpdatePlanAsync(Plan plan)
+    {
+        _context.Plans.Update(plan);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task RemovePlanAsync(int id)
     {
         var plan = await _context.Plans.FindAsync(id);

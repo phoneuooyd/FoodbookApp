@@ -95,6 +95,17 @@
                             HeightRequest="80" />
                 </StackLayout>
 
+                <StackLayout Spacing="5">
+                    <Label Text="Ilość porcji *" FontAttributes="Bold" />
+                    <Entry Placeholder="2" 
+                           Keyboard="Numeric"
+                           Text="{Binding IloscPorcji}" 
+                           ClearButtonVisibility="WhileEditing"
+                           HorizontalTextAlignment="Center"
+                           WidthRequest="80"
+                           HorizontalOptions="Start" />
+                </StackLayout>
+
                 <!-- Ingredients Section - MOVED UP -->
                 <Label Text="Składniki" 
                        FontSize="18" 
