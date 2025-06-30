@@ -52,7 +52,6 @@
                                 CornerRadius="6" />
                     </Grid>
                 </Border>
-
             </DataTemplate>
         </CollectionView.ItemTemplate>
     </CollectionView>

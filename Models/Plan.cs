@@ -7,7 +7,6 @@ namespace Foodbook.Models
         public int Id { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
-        public string Label => "Lista zakupï¿½w";
-
+        public string Label => "Lista zakupów";
     }
 }
