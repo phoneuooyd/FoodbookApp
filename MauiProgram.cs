@@ -82,6 +82,7 @@ namespace FoodbookApp
             Routing.RegisterRoute(nameof(ArchivePage), typeof(ArchivePage)); // Dodana rejestracja routingu dla ArchivePage
             
 
+
             // ✨ Build aplikacji
             var app = builder.Build();
             ServiceProvider = app.Services;

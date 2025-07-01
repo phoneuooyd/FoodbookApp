@@ -18,7 +18,6 @@ public class IngredientsViewModel : INotifyPropertyChanged
     private string _searchText = string.Empty;
     private List<Ingredient> _allIngredients = new();
 
-    // W³aœciwoœci dla masowej weryfikacji
     private bool _isBulkVerifying;
     public bool IsBulkVerifying
     {
@@ -46,6 +45,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
     }
 
     public bool HasBulkVerificationStatus => !string.IsNullOrWhiteSpace(BulkVerificationStatus);
+
 
     public ObservableCollection<Ingredient> Ingredients { get; } = new();
 
@@ -87,7 +87,9 @@ public class IngredientsViewModel : INotifyPropertyChanged
     public ICommand EditCommand { get; }
     public ICommand DeleteCommand { get; }
     public ICommand RefreshCommand { get; }
+
     public ICommand BulkVerifyCommand { get; } // Nowa komenda
+
 
     public IngredientsViewModel(IIngredientService service)
     {
@@ -104,15 +106,15 @@ public class IngredientsViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Masowa weryfikacja wszystkich sk³adników z OpenFoodFacts
+    /// Masowa weryfikacja wszystkich skï¿½adnikï¿½w z OpenFoodFacts
     /// </summary>
     private async Task BulkVerifyIngredientsAsync()
     {
         if (IsBulkVerifying || Ingredients.Count == 0) return;
 
         bool confirm = await Shell.Current.DisplayAlert(
-            "Masowa weryfikacja sk³adników",
-            $"Czy chcesz zweryfikowaæ wszystkie {Ingredients.Count} sk³adników z OpenFoodFacts?\n\nMo¿e to potrwaæ kilka minut.",
+            "Masowa weryfikacja skï¿½adnikï¿½w",
+            $"Czy chcesz zweryfikowaï¿½ wszystkie {Ingredients.Count} skï¿½adnikï¿½w z OpenFoodFacts?\n\nMoï¿½e to potrwaï¿½ kilka minut.",
             "Tak, weryfikuj",
             "Anuluj");
 
@@ -125,7 +127,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
             var totalCount = Ingredients.Count;
             var failedCount = 0;
 
-            BulkVerificationStatus = $"Weryfikujê sk³adniki: 0/{totalCount}";
+            BulkVerificationStatus = $"Weryfikujï¿½ skï¿½adniki: 0/{totalCount}";
 
             for (int i = 0; i < Ingredients.Count; i++)
             {
@@ -133,9 +135,9 @@ public class IngredientsViewModel : INotifyPropertyChanged
                 
                 try
                 {
-                    BulkVerificationStatus = $"Weryfikujê sk³adniki: {i + 1}/{totalCount} - {ingredient.Name}";
+                    BulkVerificationStatus = $"Weryfikujï¿½ skï¿½adniki: {i + 1}/{totalCount} - {ingredient.Name}";
 
-                    // Skopiuj sk³adnik do weryfikacji
+                    // Skopiuj skï¿½adnik do weryfikacji
                     var tempIngredient = new Ingredient
                     {
                         Id = ingredient.Id,
@@ -154,7 +156,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
 
                     if (wasUpdated)
                     {
-                        // Aktualizuj sk³adnik w bazie danych
+                        // Aktualizuj skï¿½adnik w bazie danych
                         ingredient.Calories = tempIngredient.Calories;
                         ingredient.Protein = tempIngredient.Protein;
                         ingredient.Fat = tempIngredient.Fat;
@@ -166,39 +168,39 @@ public class IngredientsViewModel : INotifyPropertyChanged
                         System.Diagnostics.Debug.WriteLine($"? Zaktualizowano: {ingredient.Name}");
                     }
 
-                    // Ma³e opóŸnienie aby nie przeci¹¿yæ API
+                    // Maï¿½e opï¿½nienie aby nie przeciï¿½ï¿½yï¿½ API
                     await Task.Delay(200);
                 }
                 catch (Exception ex)
                 {
                     failedCount++;
-                    System.Diagnostics.Debug.WriteLine($"? B³¹d weryfikacji {ingredient.Name}: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"? Bï¿½ï¿½d weryfikacji {ingredient.Name}: {ex.Message}");
                 }
             }
 
-            // Poka¿ wyniki
-            var successMessage = $"Weryfikacja zakoñczona!\n\n" +
-                               $"? Zaktualizowano: {updatedCount} sk³adników\n" +
-                               $"?? Bez zmian: {totalCount - updatedCount - failedCount} sk³adników\n" +
-                               (failedCount > 0 ? $"? B³êdy/nie znaleziono: {failedCount} sk³adników" : "");
+            // Pokaï¿½ wyniki
+            var successMessage = $"Weryfikacja zakoï¿½czona!\n\n" +
+                               $"? Zaktualizowano: {updatedCount} skï¿½adnikï¿½w\n" +
+                               $"?? Bez zmian: {totalCount - updatedCount - failedCount} skï¿½adnikï¿½w\n" +
+                               (failedCount > 0 ? $"? Bï¿½ï¿½dy/nie znaleziono: {failedCount} skï¿½adnikï¿½w" : "");
 
-            BulkVerificationStatus = $"? Zakoñczono - zaktualizowano {updatedCount}/{totalCount} sk³adników";
+            BulkVerificationStatus = $"? Zakoï¿½czono - zaktualizowano {updatedCount}/{totalCount} skï¿½adnikï¿½w";
 
             await Shell.Current.DisplayAlert(
-                "Masowa weryfikacja zakoñczona",
+                "Masowa weryfikacja zakoï¿½czona",
                 successMessage,
                 "OK");
 
-            // Odœwie¿ listê
+            // Odï¿½wieï¿½ listï¿½
             await ReloadAsync();
         }
         catch (Exception ex)
         {
-            BulkVerificationStatus = $"? B³¹d masowej weryfikacji: {ex.Message}";
+            BulkVerificationStatus = $"? Bï¿½ï¿½d masowej weryfikacji: {ex.Message}";
             
             await Shell.Current.DisplayAlert(
-                "B³¹d weryfikacji",
-                $"Wyst¹pi³ b³¹d podczas masowej weryfikacji sk³adników:\n{ex.Message}",
+                "Bï¿½ï¿½d weryfikacji",
+                $"Wystï¿½piï¿½ bï¿½ï¿½d podczas masowej weryfikacji skï¿½adnikï¿½w:\n{ex.Message}",
                 "OK");
         }
         finally
@@ -238,7 +240,9 @@ public class IngredientsViewModel : INotifyPropertyChanged
             }
             
             FilterIngredients();
+
             ((Command)BulkVerifyCommand).ChangeCanExecute(); // Refresh command state
+
         }
         catch (Exception ex)
         {
@@ -293,8 +297,10 @@ public class IngredientsViewModel : INotifyPropertyChanged
                 Ingredients.Add(ingredient);
             }
         }
+
         
         ((Command)BulkVerifyCommand).ChangeCanExecute(); // Refresh command state when filter changes
+
     }
 
     private async Task DeleteIngredientAsync(Ingredient? ing)
@@ -306,7 +312,9 @@ public class IngredientsViewModel : INotifyPropertyChanged
             await _service.DeleteIngredientAsync(ing.Id);
             Ingredients.Remove(ing);
             _allIngredients.Remove(ing);
+
             ((Command)BulkVerifyCommand).ChangeCanExecute(); // Refresh command state
+
         }
         catch (Exception ex)
         {

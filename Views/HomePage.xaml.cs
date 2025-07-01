@@ -23,5 +23,6 @@ public partial class HomePage : ContentPage
     {
         await Shell.Current.GoToAsync(nameof(ArchivePage));
     }
+
 }
 
