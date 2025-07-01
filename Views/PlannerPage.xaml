@@ -78,7 +78,6 @@
                                                 <!-- Przycisk zmniejszenia porcji -->
                                                 <Button Grid.Column="1" 
                                                         Text="➖"
-
                                                         Command="{Binding BindingContext.DecreasePortionsCommand, Source={x:Reference ThisPage}}"
                                                         CommandParameter="{Binding .}"
                                                         WidthRequest="30" 
@@ -153,7 +152,6 @@
                                 <!-- Wyśrodkowany przycisk "Dodaj posiłek" -->
                                 <StackLayout HorizontalOptions="Center" Margin="0,8,0,0">
                                     <Button Text="➕ Posiłek" 
-
                                             Command="{Binding BindingContext.AddMealCommand, Source={x:Reference ThisPage}}" 
                                             CommandParameter="{Binding .}"
                                             BackgroundColor="{DynamicResource Primary}" 
@@ -165,7 +163,6 @@
                                             WidthRequest="100"
                                             HeightRequest="32" />
                                 </StackLayout>
-
                             </VerticalStackLayout>
                         </Frame>
                     </DataTemplate>

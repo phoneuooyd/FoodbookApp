@@ -12,7 +12,6 @@
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
     </ContentPage.Resources>
     
-
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="15">
             

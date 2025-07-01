@@ -20,7 +20,6 @@ public class PlannerViewModel : INotifyPropertyChanged
 
     private bool _isLoading;
 
-
     private DateTime _startDate = DateTime.Today;
     public DateTime StartDate
     {
@@ -187,42 +186,7 @@ public class PlannerViewModel : INotifyPropertyChanged
         {
             await Shell.Current.DisplayAlert("Błąd", "Plan na podane daty już istnieje.", "OK");
             return null;
-
         }
-    }
-
-    public ICommand AddMealCommand { get; }
-    public ICommand RemoveMealCommand { get; }
-    public ICommand SaveCommand { get; }
-    public ICommand SaveAndListCommand { get; }
-    public ICommand CancelCommand { get; }
-
-    public PlannerViewModel(IPlannerService plannerService, IRecipeService recipeService, IShoppingListService shoppingListService, IPlanService planService)
-    {
-        _plannerService = plannerService ?? throw new ArgumentNullException(nameof(plannerService));
-        _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
-        _shoppingListService = shoppingListService ?? throw new ArgumentNullException(nameof(shoppingListService));
-        _planService = planService ?? throw new ArgumentNullException(nameof(planService));
-
-        AddMealCommand = new Command<PlannerDay>(AddMeal);
-        RemoveMealCommand = new Command<PlannedMeal>(RemoveMeal);
-        SaveCommand = new Command(async () => await SaveAsync());
-        SaveAndListCommand = new Command(async () => await SaveAndListAsync());
-        CancelCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
-    }
-
-    public async Task LoadAsync()
-    {
-        if (_isLoading)
-            return;
-        _isLoading = true;
-
-        Days.Clear();
-        Recipes.Clear();
-
-        var rec = await _recipeService.GetRecipesAsync();
-        foreach (var r in rec)
-            Recipes.Add(r);
 
         var plan = new Plan { StartDate = StartDate, EndDate = EndDate };
         await _planService.AddPlanAsync(plan);
@@ -257,16 +221,6 @@ public class PlannerViewModel : INotifyPropertyChanged
         {
             meal.Portions++;
         }
-
-    }
-
-    private void DecreasePortions(PlannedMeal? meal)
-    {
-        if (meal != null && meal.Portions > 1)
-        {
-            meal.Portions--;
-        }
-
     }
 
     private void DecreasePortions(PlannedMeal? meal)
@@ -276,7 +230,6 @@ public class PlannerViewModel : INotifyPropertyChanged
             meal.Portions--;
         }
     }
-
 
     public event PropertyChangedEventHandler? PropertyChanged;
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>

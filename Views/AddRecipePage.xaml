@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
-
              xmlns:converters="clr-namespace:Foodbook.Converters"
              x:Class="Foodbook.Views.AddRecipePage"
              x:Name="ThisPage"
@@ -15,7 +14,6 @@
         <converters:StringToBoolConverter x:Key="StringToBoolConverter" />
     </ContentPage.Resources>
     
-
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="15">
 
@@ -116,11 +114,9 @@
                 
                 <CollectionView ItemsSource="{Binding Ingredients}">
                     <CollectionView.ItemTemplate>
-
                         <DataTemplate x:DataType="models:Ingredient">
                             <Border Stroke="LightGray"
                                     StrokeThickness="1"
-
                                     Padding="10"
                                     Margin="0,0,0,8"
                                     BackgroundColor="{AppThemeBinding Light=White, Dark=#2D2D30}">

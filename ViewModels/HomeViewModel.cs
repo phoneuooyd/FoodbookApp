@@ -23,7 +23,6 @@ public class HomeViewModel : INotifyPropertyChanged
         set { if (_planCount != value) { _planCount = value; OnPropertyChanged(); } }
     }
 
-
     private int _archivedPlanCount;
     public int ArchivedPlanCount
     {
@@ -31,8 +30,7 @@ public class HomeViewModel : INotifyPropertyChanged
         set { if (_archivedPlanCount != value) { _archivedPlanCount = value; OnPropertyChanged(); } }
     }
 
-    private bool _isLoading = true; // Zaczynamy z true, ï¿½eby pokazaï¿½ loader
-
+    private bool _isLoading = true; // Zaczynamy z true, ¿eby pokazaæ loader
     public bool IsLoading
     {
         get => _isLoading;
@@ -51,11 +49,11 @@ public class HomeViewModel : INotifyPropertyChanged
         {
             IsLoading = true;
 
-            // ï¿½aduj przepisy
+            // £aduj przepisy
             var recipes = await _recipeService.GetRecipesAsync();
             RecipeCount = recipes?.Count ?? 0;
 
-            // ï¿½aduj plany
+            // £aduj plany
             var allPlans = await _planService.GetPlansAsync();
             if (allPlans != null)
             {
@@ -70,19 +68,18 @@ public class HomeViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            // W przypadku bï¿½ï¿½du, ustaw wartoï¿½ci na 0
+            // W przypadku b³êdu, ustaw wartoœci na 0
             RecipeCount = 0;
             PlanCount = 0;
             ArchivedPlanCount = 0;
             
-            // Log bï¿½ï¿½du (opcjonalne)
+            // Log b³êdu (opcjonalne)
             System.Diagnostics.Debug.WriteLine($"Error loading home data: {ex.Message}");
         }
         finally
         {
             IsLoading = false;
         }
-
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
