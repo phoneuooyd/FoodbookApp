@@ -1,8 +1,6 @@
-
 using System;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
-
 using Foodbook.Models;
 using Foodbook.Services;
 
@@ -12,17 +10,12 @@ public class ShoppingListDetailViewModel
 {
     private readonly IShoppingListService _shoppingListService;
     private readonly IPlanService _planService;
+
     public ObservableCollection<Ingredient> Items { get; } = new();
     public IEnumerable<Unit> Units => Enum.GetValues(typeof(Unit)).Cast<Unit>();
 
     public ICommand AddItemCommand { get; }
     public ICommand RemoveItemCommand { get; }
-
-    public IEnumerable<Unit> Units => Enum.GetValues(typeof(Unit)).Cast<Unit>();
-
-    public ICommand AddItemCommand { get; }
-    public ICommand RemoveItemCommand { get; }
-
 
     public ShoppingListDetailViewModel(IShoppingListService shoppingListService, IPlanService planService)
     {
@@ -31,7 +24,6 @@ public class ShoppingListDetailViewModel
 
         AddItemCommand = new Command(AddItem);
         RemoveItemCommand = new Command<Ingredient>(RemoveItem);
-
     }
 
     public async Task LoadAsync(int planId)
@@ -44,7 +36,6 @@ public class ShoppingListDetailViewModel
         foreach (var item in items)
             Items.Add(item);
     }
-
 
     private void AddItem()
     {

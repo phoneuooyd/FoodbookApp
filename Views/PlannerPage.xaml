@@ -165,7 +165,6 @@
                                             WidthRequest="100"
                                             HeightRequest="32" />
                                 </StackLayout>
-
                             </VerticalStackLayout>
                         </Frame>
                     </DataTemplate>

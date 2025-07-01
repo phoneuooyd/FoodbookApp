@@ -21,7 +21,6 @@
     </ContentPage.ToolbarItems>
 
     <Grid RowDefinitions="Auto,Auto,Auto,*">
-
         
         <!-- Loading indicator -->
         <ActivityIndicator Grid.Row="0" 
@@ -62,7 +61,6 @@
 
         <!-- Content -->
         <RefreshView Grid.Row="3" 
-
                      IsRefreshing="{Binding IsRefreshing}" 
                      Command="{Binding RefreshCommand}"
                      IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
@@ -103,7 +101,6 @@
                 </StackLayout>
                 
                 <CollectionView Grid.Row="2"
-
                                 ItemsSource="{Binding Ingredients}"
                                 ItemSizingStrategy="MeasureFirstItem"
                                 RemainingItemsThreshold="10"

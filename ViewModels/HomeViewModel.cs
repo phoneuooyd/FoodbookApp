@@ -23,13 +23,13 @@ public class HomeViewModel : INotifyPropertyChanged
         set { if (_planCount != value) { _planCount = value; OnPropertyChanged(); } }
     }
 
-
     private int _archivedPlanCount;
     public int ArchivedPlanCount
     {
         get => _archivedPlanCount;
         set { if (_archivedPlanCount != value) { _archivedPlanCount = value; OnPropertyChanged(); } }
     }
+
 
     private bool _isLoading = true; // Zaczynamy z true, �eby pokaza� loader
 

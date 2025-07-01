@@ -1,6 +1,8 @@
 #    FoodBook App
 
+
 **Aplikacja mobilna do zarz�dzania przepisami, planowania posi�k�w i tworzenia list zakup�w**
+
 
 [![.NET MAUI](https://img.shields.io/badge/.NET-MAUI-512BD4 style=flat-square)](https://dotnet.microsoft.com/apps/maui)
 [![.NET 9](https://img.shields.io/badge/.NET-9.0-512BD4 style=flat-square)](https://dotnet.microsoft.com/download/dotnet/9.0)
@@ -50,6 +52,7 @@ FoodBook App to kompleksowa aplikacja mobilna stworzona w technologii .NET MAUI,
 -     Usuwanie niepotrzebnych pozycji
 -    Intuicyjny interfejs do zarz�dzania zakupami
 
+
 ##     Architektura aplikacji
 
 ###     **Technologie**
@@ -60,7 +63,6 @@ FoodBook App to kompleksowa aplikacja mobilna stworzona w technologii .NET MAUI,
 - **Wzorce**: MVVM (Model-View-ViewModel)
 - **DI**: Wbudowany Dependency Injection
 - **UI**: XAML z Material Design
-
 
 ###    **Wzorzec MVVM**
 Aplikacja wykorzystuje wzorzec MVVM z:
@@ -91,6 +93,7 @@ Aplikacja wykorzystuje wzorzec MVVM z:
 
 1. **Sklonuj repozytorium**git clone https://github.com/[twoja-nazwa]/FoodBookApp.git
    cd FoodBookApp
+
 2. **Przywr�� pakiety NuGet**dotnet restore
 3. **Zbuduj projekt**dotnet build
 4. **Uruchom aplikacj�**# Android
@@ -152,15 +155,18 @@ Interfejs automatycznie dostosowuje si� do r�nych rozmiar�w ekran�w i or
 ##    **Konfiguracja rozwoju**
 
 ###    **G��wne pakiety NuGet**<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+
 <PackageReference Include="HtmlAgilityPack" />
 <PackageReference Include="Newtonsoft.Json" />
 <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
 ###     **Dodawanie nowych funkcji**
 
+
 1. **Nowy model**: Dodaj klas� w folderze `Models/`
 2. **Nowy serwis**: Utw�rz interfejs i implementacj� w `Services/`
 3. **Nowy widok**: Dodaj XAML i code-behind w `Views/`
 4. **Nowy ViewModel**: Utw�rz klas� w `ViewModels/`
+
 5. **Rejestracja**: Dodaj do DI w `MauiProgram.cs`
 
 ###     **Migracje bazy danych**# Dodanie nowej migracji
@@ -168,5 +174,4 @@ dotnet ef migrations add NazwaMigracji
 
 # Aktualizacja bazy danych
 dotnet ef database update
-##    **Wk�ad w projekt**
 
