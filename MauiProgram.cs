@@ -86,24 +86,52 @@ namespace FoodbookApp
             var app = builder.Build();
             ServiceProvider = app.Services;
 
-            // 📦 Inicjalizacja bazy danych w tle
-            Task.Run(() => SeedDatabaseAsync(app.Services));
+            // 📦 Inicjalizacja bazy danych w tle - poprawiona wersja
+            Task.Run(async () => await SeedDatabaseAsync(app.Services));
 
             return app;
         }
 
         private static async Task SeedDatabaseAsync(IServiceProvider services)
         {
-            using var scope = services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            await db.Database.EnsureCreatedAsync();
-
-            var hasIngredients = await db.Ingredients.AnyAsync();
-            var hasRecipes = await db.Recipes.AnyAsync();
-
-            if (!hasIngredients && !hasRecipes)
+            try
             {
-                await SeedData.InitializeAsync(db);
+                System.Diagnostics.Debug.WriteLine("🚀 Starting database initialization...");
+                
+                using var scope = services.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                
+                System.Diagnostics.Debug.WriteLine("📊 Ensuring database is created...");
+                await db.Database.EnsureCreatedAsync();
+                
+                System.Diagnostics.Debug.WriteLine("🔍 Checking existing data...");
+                var hasIngredients = await db.Ingredients.AnyAsync();
+                var hasRecipes = await db.Recipes.AnyAsync();
+                
+                System.Diagnostics.Debug.WriteLine($"📈 Current state: Ingredients={hasIngredients}, Recipes={hasRecipes}");
+
+                // Zawsze próbuj załadować składniki jeśli ich nie ma
+                if (!hasIngredients)
+                {
+                    System.Diagnostics.Debug.WriteLine("🌱 No ingredients found, starting seeding...");
+                    await SeedData.SeedIngredientsAsync(db);
+                }
+                
+                // Dodaj przykładowy przepis jeśli nie ma przepisów
+                if (!hasRecipes)
+                {
+                    System.Diagnostics.Debug.WriteLine("📝 No recipes found, adding example recipe...");
+                    await SeedData.InitializeAsync(db);
+                }
+                
+                System.Diagnostics.Debug.WriteLine("✅ Database initialization completed successfully");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error during database initialization: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                
+                // Nie rzucaj wyjątku - aplikacja powinna działać nawet bez seed data
             }
         }
     }

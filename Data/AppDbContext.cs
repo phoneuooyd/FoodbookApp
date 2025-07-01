@@ -9,6 +9,7 @@ namespace Foodbook.Data
         public DbSet<Ingredient> Ingredients => Set<Ingredient>();
         public DbSet<PlannedMeal> PlannedMeals => Set<PlannedMeal>();
         public DbSet<Plan> Plans => Set<Plan>();
+        public DbSet<ShoppingListItem> ShoppingListItems => Set<ShoppingListItem>();
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -23,6 +24,13 @@ namespace Foodbook.Data
             modelBuilder.Entity<Ingredient>()
                 .Property(i => i.RecipeId)
                 .IsRequired(false);
+
+            // ShoppingListItem relationships
+            modelBuilder.Entity<ShoppingListItem>()
+                .HasOne(sli => sli.Plan)
+                .WithMany()
+                .HasForeignKey(sli => sli.PlanId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Add indexes for better query performance
             modelBuilder.Entity<Ingredient>()
@@ -47,6 +55,15 @@ namespace Foodbook.Data
             modelBuilder.Entity<Recipe>()
                 .HasIndex(r => r.Name)
                 .HasDatabaseName("IX_Recipes_Name");
+
+            // ShoppingListItem indexes
+            modelBuilder.Entity<ShoppingListItem>()
+                .HasIndex(sli => sli.PlanId)
+                .HasDatabaseName("IX_ShoppingListItems_PlanId");
+
+            modelBuilder.Entity<ShoppingListItem>()
+                .HasIndex(sli => sli.Name)
+                .HasDatabaseName("IX_ShoppingListItems_Name");
 
             base.OnModelCreating(modelBuilder);
         }

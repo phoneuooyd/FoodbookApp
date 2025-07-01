@@ -3,56 +3,123 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
+             xmlns:converters="clr-namespace:Foodbook.Converters"
              x:Class="Foodbook.Views.ShoppingListPage"
              x:Name="ThisPage"
              x:DataType="vm:ShoppingListViewModel"
-             Title="Listy zakupow">
-    <CollectionView ItemsSource="{Binding Plans}" Margin="10" SelectionMode="None">
-        <CollectionView.ItemTemplate>
-            <DataTemplate x:DataType="models:Plan">
-                <Border Stroke="LightGray" StrokeThickness="1" Padding="10" Margin="5">
-                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
-                        <!-- Kolumna z trescia planu -->
-                        <VerticalStackLayout Grid.Column="0">
-                            <Label Text="{Binding Label}" 
-                                   FontAttributes="Bold" 
-                                   FontSize="18" 
-                                   VerticalOptions="Center" />
-                            <Label Text="{Binding StartDate, StringFormat='Od: {0:dd.MM.yyyy}'}" 
-                                   FontSize="14" 
-                                   TextColor="{DynamicResource Primary}"
-                                   Margin="0,2,0,0" />
-                            <Label Text="{Binding EndDate, StringFormat='Do: {0:dd.MM.yyyy}'}" 
-                                   FontSize="14" 
-                                   TextColor="{DynamicResource Primary}" />
-                        </VerticalStackLayout>
+             Title="Listy zakupów">
+
+    <ContentPage.Resources>
+        <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*">
+        
+        <!-- Loading indicator -->
+        <ActivityIndicator Grid.Row="0" 
+                          IsVisible="{Binding IsLoading}" 
+                          IsRunning="{Binding IsLoading}"
+                          Color="{AppThemeBinding Light=Black, Dark=White}"
+                          Margin="10" />
+
+        <!-- Content Grid -->
+        <Grid Grid.Row="1" IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
+            
+            <!-- Lista planów - gdy są plany -->
+            <CollectionView ItemsSource="{Binding Plans}" 
+                           Margin="10" 
+                           SelectionMode="None"
+                           IsVisible="{Binding HasPlans}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:Plan">
+                        <Border Stroke="LightGray" StrokeThickness="1" Padding="10" Margin="5">
+                            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                                <!-- Kolumna z treścią planu -->
+                                <VerticalStackLayout Grid.Column="0">
+                                    <Label Text="{Binding Label}" 
+                                           FontAttributes="Bold" 
+                                           FontSize="18" 
+                                           VerticalOptions="Center" />
+                                    <Label Text="{Binding StartDate, StringFormat='Od: {0:dd.MM.yyyy}'}" 
+                                           FontSize="14" 
+                                           TextColor="{DynamicResource Primary}"
+                                           Margin="0,2,0,0" />
+                                    <Label Text="{Binding EndDate, StringFormat='Do: {0:dd.MM.yyyy}'}" 
+                                           FontSize="14" 
+                                           TextColor="{DynamicResource Primary}" />
+                                </VerticalStackLayout>
+                                
+                                <!-- Przycisk edycji -->
+                                <Button Grid.Column="1" 
+                                        Text="✏️" 
+                                        Command="{Binding BindingContext.OpenPlanCommand, Source={x:Reference ThisPage}}" 
+                                        CommandParameter="{Binding .}" 
+                                        WidthRequest="40" 
+                                        HeightRequest="40"
+                                        BackgroundColor="{DynamicResource Primary}"
+                                        TextColor="White"
+                                        FontSize="16"
+                                        CornerRadius="6" />
+                                
+                                <!-- Przycisk archiwizacji - szary kolor -->
+                                <Button Grid.Column="2" 
+                                        Text="📁" 
+                                        Command="{Binding BindingContext.ArchivePlanCommand, Source={x:Reference ThisPage}}" 
+                                        CommandParameter="{Binding .}" 
+                                        WidthRequest="40" 
+                                        HeightRequest="40"
+                                        BackgroundColor="Gray"
+                                        TextColor="White"
+                                        FontSize="16"
+                                        CornerRadius="6" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- Pusty stan - gdy nie ma planów -->
+            <StackLayout IsVisible="{Binding HasNoPlans}" 
+                        HorizontalOptions="Center" 
+                        VerticalOptions="Center" 
+                        Padding="40">
+                
+                <!-- Ikona koszyka -->
+                <Label Text="🛒" 
+                       FontSize="72" 
+                       HorizontalOptions="Center"
+                       Margin="0,0,0,20" />
+                
+                <!-- Główny tekst -->
+                <Label Text="Brak list zakupów" 
+                       FontSize="24" 
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
+                       Margin="0,0,0,10" />
+                
+                <!-- Tekst opisowy -->
+                <Label Text="Aby utworzyć listę zakupów, przejdź do Planera i zaplanuj posiłki, a następnie zapisz plan."
+                       FontSize="16" 
+                       HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
+                       LineBreakMode="WordWrap"
+                       Margin="0,0,0,30" />
+                
+                <!-- Przycisk nawigacji do planera -->
+                <Button Text="📅 Przejdź do Planera"
+                        BackgroundColor="{DynamicResource Primary}"
+                        TextColor="White"
+                        FontSize="16"
+                        Padding="20,10"
+                        CornerRadius="8"
+                        Clicked="OnGoToPlannerClicked" />
                         
-                        <!-- Przycisk edycji -->
-                        <Button Grid.Column="1" 
-                                Text="✏️" 
-                                Command="{Binding BindingContext.OpenPlanCommand, Source={x:Reference ThisPage}}" 
-                                CommandParameter="{Binding .}" 
-                                WidthRequest="40" 
-                                HeightRequest="40"
-                                BackgroundColor="{DynamicResource Primary}"
-                                TextColor="White"
-                                FontSize="16"
-                                CornerRadius="6" />
-                        
-                        <!-- Przycisk archiwizacji - szary kolor -->
-                        <Button Grid.Column="2" 
-                                Text="📁" 
-                                Command="{Binding BindingContext.ArchivePlanCommand, Source={x:Reference ThisPage}}" 
-                                CommandParameter="{Binding .}" 
-                                WidthRequest="40" 
-                                HeightRequest="40"
-                                BackgroundColor="Gray"
-                                TextColor="White"
-                                FontSize="16"
-                                CornerRadius="6" />
-                    </Grid>
-                </Border>
-            </DataTemplate>
-        </CollectionView.ItemTemplate>
-    </CollectionView>
+            </StackLayout>
+            
+        </Grid>
+        
+    </Grid>
+
 </ContentPage>

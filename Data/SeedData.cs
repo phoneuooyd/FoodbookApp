@@ -50,6 +50,7 @@ namespace Foodbook.Data
 
             try
             {
+                System.Diagnostics.Debug.WriteLine("🌱 Starting ingredient seeding...");
                 var ingredients = await LoadPopularIngredientsAsync();
 
                 foreach (var ingredient in ingredients)
@@ -59,11 +60,11 @@ namespace Foodbook.Data
 
                 context.Ingredients.AddRange(ingredients);
                 await context.SaveChangesAsync();
-                System.Diagnostics.Debug.WriteLine($"Successfully added {ingredients.Count} ingredients to database");
+                System.Diagnostics.Debug.WriteLine($"✅ Successfully added {ingredients.Count} ingredients to database");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error seeding ingredients: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"❌ Error seeding ingredients: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
             }
         }
@@ -76,6 +77,7 @@ namespace Foodbook.Data
         public static async Task<bool> UpdateIngredientWithOpenFoodFactsAsync(Ingredient ingredient)
         {
             using var httpClient = new HttpClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(10); // Timeout dla API
             
             var url = $"https://world.openfoodfacts.org/cgi/search.pl?search_terms={Uri.EscapeDataString(ingredient.Name)}&search_simple=1&json=1";
 
@@ -210,75 +212,165 @@ namespace Foodbook.Data
 
             try
             {
-                var assembly = Assembly.GetExecutingAssembly();
-                var resourceName = assembly.GetManifestResourceNames()
-                    .FirstOrDefault(name => name.EndsWith("ingredients.json"));
-
-                if (!string.IsNullOrEmpty(resourceName))
-                {
-                    using var stream = assembly.GetManifestResourceStream(resourceName);
-                    using var reader = new StreamReader(stream);
-                    json = await reader.ReadToEndAsync();
-                }
-                else
-                {
-                    throw new FileNotFoundException("Resource not found");
-                }
-            }
-            catch
-            {
+                System.Diagnostics.Debug.WriteLine("📂 Attempting to load ingredients.json...");
+                
+                // Pierwsza próba: MAUI App Package (najlepszy sposób dla .NET MAUI)
                 try
                 {
                     using var stream = await FileSystem.OpenAppPackageFileAsync("ingredients.json");
                     using var reader = new StreamReader(stream);
                     json = await reader.ReadToEndAsync();
+                    System.Diagnostics.Debug.WriteLine("✅ Loaded ingredients.json from App Package");
                 }
-                catch
+                catch (Exception ex)
                 {
-                    string[] paths = new[]
+                    System.Diagnostics.Debug.WriteLine($"⚠️ Failed to load from App Package: {ex.Message}");
+                    
+                    // Druga próba: Embedded Resource
+                    try
                     {
-                        Path.Combine(AppContext.BaseDirectory, "ingredients.json"),
-                        Path.Combine(Environment.CurrentDirectory, "ingredients.json")
-                    };
-
-                    json = null;
-                    foreach (var path in paths)
-                    {
-                        if (File.Exists(path))
+                        var assembly = Assembly.GetExecutingAssembly();
+                        var resourceNames = assembly.GetManifestResourceNames();
+                        System.Diagnostics.Debug.WriteLine($"🔍 Available resources: {string.Join(", ", resourceNames)}");
+                        
+                        var resourceName = resourceNames.FirstOrDefault(name => name.EndsWith("ingredients.json"));
+                        
+                        if (!string.IsNullOrEmpty(resourceName))
                         {
-                            json = await File.ReadAllTextAsync(path);
-                            break;
+                            using var stream = assembly.GetManifestResourceStream(resourceName);
+                            if (stream != null)
+                            {
+                                using var reader = new StreamReader(stream);
+                                json = await reader.ReadToEndAsync();
+                                System.Diagnostics.Debug.WriteLine($"✅ Loaded ingredients.json from Embedded Resource: {resourceName}");
+                            }
+                            else
+                            {
+                                throw new FileNotFoundException($"Resource stream is null for {resourceName}");
+                            }
+                        }
+                        else
+                        {
+                            throw new FileNotFoundException("No ingredients.json resource found");
                         }
                     }
+                    catch (Exception ex2)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"⚠️ Failed to load from Embedded Resource: {ex2.Message}");
+                        
+                        // Trzecia próba: File System (najmniej preferowana)
+                        string[] paths = new[]
+                        {
+                            Path.Combine(AppContext.BaseDirectory, "ingredients.json"),
+                            Path.Combine(Environment.CurrentDirectory, "ingredients.json"),
+                            Path.Combine(FileSystem.AppDataDirectory, "ingredients.json")
+                        };
 
-                    if (string.IsNullOrEmpty(json))
-                        throw new FileNotFoundException("ingredients.json not found in known locations");
+                        json = null;
+                        foreach (var path in paths)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"🔍 Checking path: {path}");
+                            if (File.Exists(path))
+                            {
+                                json = await File.ReadAllTextAsync(path);
+                                System.Diagnostics.Debug.WriteLine($"✅ Loaded ingredients.json from: {path}");
+                                break;
+                            }
+                        }
+
+                        if (string.IsNullOrEmpty(json))
+                        {
+                            System.Diagnostics.Debug.WriteLine("⚠️ ingredients.json not found, using fallback data");
+                            // Fallback: utworz podstawowe składniki programowo
+                            return GetFallbackIngredients();
+                        }
+                    }
                 }
             }
-
-            var infos = JsonConvert.DeserializeObject<List<IngredientInfo>>(json) ?? new();
-            var ingredients = infos.Select(i => new Ingredient
+            catch (Exception ex)
             {
-                Name = i.Name,
-                Quantity = i.Amount,
-                Unit = ParseUnit(i.Unit),
-                Calories = i.Calories,
-                Protein = i.Protein,
-                Fat = i.Fat,
-                Carbs = i.Carbs,
-                RecipeId = null
-            }).ToList();
+                System.Diagnostics.Debug.WriteLine($"❌ Critical error loading ingredients.json: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine("🔄 Using fallback ingredients data");
+                return GetFallbackIngredients();
+            }
 
-            await UpdateWithOpenFoodFactsDataAsync(ingredients);
-            return ingredients;
+            try
+            {
+                var infos = JsonConvert.DeserializeObject<List<IngredientInfo>>(json) ?? new();
+                System.Diagnostics.Debug.WriteLine($"📊 Parsed {infos.Count} ingredients from JSON");
+                
+                var ingredients = infos.Select(i => new Ingredient
+                {
+                    Name = i.Name,
+                    Quantity = i.Amount,
+                    Unit = ParseUnit(i.Unit),
+                    Calories = i.Calories,
+                    Protein = i.Protein,
+                    Fat = i.Fat,
+                    Carbs = i.Carbs,
+                    RecipeId = null
+                }).ToList();
+
+                System.Diagnostics.Debug.WriteLine($"🔧 Created {ingredients.Count} ingredient objects");
+                
+                // USUNIĘTO: await UpdateWithOpenFoodFactsDataAsync(ingredients);
+                // OpenFoodFacts weryfikacja została przeniesiona do opcjonalnej funkcjonalności
+                System.Diagnostics.Debug.WriteLine("ℹ️ Skipping OpenFoodFacts verification during initial seeding for faster startup");
+                
+                return ingredients;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error parsing ingredients JSON: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine("🔄 Using fallback ingredients data");
+                return GetFallbackIngredients();
+            }
+        }
+
+        /// <summary>
+        /// Fallback lista podstawowych składników w przypadku problemów z ładowaniem pliku JSON
+        /// </summary>
+        private static List<Ingredient> GetFallbackIngredients()
+        {
+            System.Diagnostics.Debug.WriteLine("🆘 Creating fallback ingredients list");
+            
+            return new List<Ingredient>
+            {
+                new Ingredient { Name = "Jajka", Quantity = 1, Unit = Unit.Piece, Calories = 155, Protein = 13.0, Fat = 11.0, Carbs = 1.0, RecipeId = null },
+                new Ingredient { Name = "Mleko", Quantity = 100, Unit = Unit.Milliliter, Calories = 64, Protein = 3.4, Fat = 3.5, Carbs = 4.8, RecipeId = null },
+                new Ingredient { Name = "Masło", Quantity = 100, Unit = Unit.Gram, Calories = 717, Protein = 0.9, Fat = 81.0, Carbs = 0.1, RecipeId = null },
+                new Ingredient { Name = "Cukier", Quantity = 100, Unit = Unit.Gram, Calories = 387, Protein = 0.0, Fat = 0.0, Carbs = 100.0, RecipeId = null },
+                new Ingredient { Name = "Sól", Quantity = 100, Unit = Unit.Gram, Calories = 0, Protein = 0.0, Fat = 0.0, Carbs = 0.0, RecipeId = null },
+                new Ingredient { Name = "Mąka", Quantity = 100, Unit = Unit.Gram, Calories = 364, Protein = 10.0, Fat = 1.0, Carbs = 76.0, RecipeId = null },
+                new Ingredient { Name = "Pierś z kurczaka", Quantity = 100, Unit = Unit.Gram, Calories = 200, Protein = 26.0, Fat = 10.0, Carbs = 0.0, RecipeId = null },
+                new Ingredient { Name = "Oliwa z oliwek", Quantity = 100, Unit = Unit.Gram, Calories = 884, Protein = 0.0, Fat = 100.0, Carbs = 0.0, RecipeId = null },
+                new Ingredient { Name = "Czosnek", Quantity = 100, Unit = Unit.Gram, Calories = 25, Protein = 1.0, Fat = 0.0, Carbs = 5.0, RecipeId = null },
+                new Ingredient { Name = "Cebula", Quantity = 100, Unit = Unit.Gram, Calories = 25, Protein = 1.0, Fat = 0.0, Carbs = 5.0, RecipeId = null },
+                new Ingredient { Name = "Pomidor", Quantity = 100, Unit = Unit.Gram, Calories = 25, Protein = 1.0, Fat = 0.0, Carbs = 5.0, RecipeId = null },
+                new Ingredient { Name = "Ziemniak", Quantity = 100, Unit = Unit.Gram, Calories = 25, Protein = 1.0, Fat = 0.0, Carbs = 5.0, RecipeId = null },
+                new Ingredient { Name = "Marchew", Quantity = 100, Unit = Unit.Gram, Calories = 25, Protein = 1.0, Fat = 0.0, Carbs = 5.0, RecipeId = null },
+                new Ingredient { Name = "Ser żółty", Quantity = 100, Unit = Unit.Gram, Calories = 150, Protein = 7.0, Fat = 8.0, Carbs = 5.0, RecipeId = null },
+                new Ingredient { Name = "Ryż", Quantity = 100, Unit = Unit.Gram, Calories = 350, Protein = 10.0, Fat = 2.0, Carbs = 70.0, RecipeId = null },
+                new Ingredient { Name = "Makaron", Quantity = 100, Unit = Unit.Gram, Calories = 350, Protein = 10.0, Fat = 2.0, Carbs = 70.0, RecipeId = null },
+                new Ingredient { Name = "Wołowina", Quantity = 100, Unit = Unit.Gram, Calories = 200, Protein = 26.0, Fat = 10.0, Carbs = 0.0, RecipeId = null },
+                new Ingredient { Name = "Jabłko", Quantity = 100, Unit = Unit.Gram, Calories = 50, Protein = 1.0, Fat = 0.0, Carbs = 13.0, RecipeId = null },
+                new Ingredient { Name = "Banan", Quantity = 100, Unit = Unit.Gram, Calories = 50, Protein = 1.0, Fat = 0.0, Carbs = 13.0, RecipeId = null },
+                new Ingredient { Name = "Sałata", Quantity = 100, Unit = Unit.Gram, Calories = 25, Protein = 1.0, Fat = 0.0, Carbs = 5.0, RecipeId = null }
+            };
         }
 
         private static async Task UpdateWithOpenFoodFactsDataAsync(List<Ingredient> ingredients)
         {
+            System.Diagnostics.Debug.WriteLine($"🌐 Starting OpenFoodFacts verification for {ingredients.Count} ingredients...");
+            
             foreach (var ingredient in ingredients)
             {
                 await UpdateIngredientWithOpenFoodFactsAsync(ingredient);
+                // Małe opóźnienie między zapytaniami aby nie przeciążyć API
+                await Task.Delay(100);
             }
+            
+            System.Diagnostics.Debug.WriteLine("✅ OpenFoodFacts verification completed");
         }
 
         private static Unit ParseUnit(string unitString)
