@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:converters="clr-namespace:Foodbook.Converters"
+             xmlns:resx="clr-namespace:FoodbookApp.Resources"
              x:Class="Foodbook.Views.HomePage"
              x:DataType="vm:HomeViewModel"
              Title="Dashboard"
@@ -93,14 +94,14 @@
                    Margin="0,0,0,20"
                    Padding="20,16">
                 <StackLayout>
-                    <Label Text="🍽️ Witaj w Foodbook" 
-                           FontSize="26" 
-                           FontAttributes="Bold" 
+                    <Label Text="{x:Static resx:HomePage.WelcomeTitle}"
+                           FontSize="26"
+                           FontAttributes="Bold"
                            HorizontalTextAlignment="Center"
                            TextColor="{DynamicResource Primary}"
                            Margin="0,4" />
-                    <Label Text="Twoj osobisty asystent kulinarny" 
-                           FontSize="14" 
+                    <Label Text="{x:Static resx:HomePage.WelcomeSubtitle}"
+                           FontSize="14"
                            HorizontalTextAlignment="Center"
                            TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}"
                            Margin="0,0,0,4" />
@@ -129,9 +130,9 @@
                         <!-- Przepisy -->
                         <StackLayout Grid.Column="0">
                             <Label Text="📖" Style="{StaticResource EmojiStyle}" />
-                            <Label Text="Przepisy" Style="{StaticResource CardTitleStyle}" />
+                            <Label Text="{x:Static resx:HomePage.Recipes}" Style="{StaticResource CardTitleStyle}" />
                             <Label Text="{Binding RecipeCount}" Style="{StaticResource StatNumberStyle}" />
-                            <Label Text="zapisanych przepisow" Style="{StaticResource StatDescriptionStyle}" />
+                            <Label Text="{x:Static resx:HomePage.SavedRecipes}" Style="{StaticResource StatDescriptionStyle}" />
                         </StackLayout>
                         
                         <!-- Separator Line -->
@@ -143,9 +144,9 @@
                         <!-- Plany -->
                         <StackLayout Grid.Column="2">
                             <Label Text="📋" Style="{StaticResource EmojiStyle}" />
-                            <Label Text="Plany" Style="{StaticResource CardTitleStyle}" />
+                            <Label Text="{x:Static resx:HomePage.Plans}" Style="{StaticResource CardTitleStyle}" />
                             <Label Text="{Binding PlanCount}" Style="{StaticResource StatNumberStyle}" />
-                            <Label Text="aktywnych list" Style="{StaticResource StatDescriptionStyle}" />
+                            <Label Text="{x:Static resx:HomePage.ActiveLists}" Style="{StaticResource StatDescriptionStyle}" />
                         </StackLayout>
                     </Grid>
                 </Frame>
@@ -154,10 +155,10 @@
                 <Frame Grid.Row="1" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="📁" Style="{StaticResource EmojiStyle}" />
-                        <Label Text="Archiwum" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="{x:Static resx:HomePage.Archive}" Style="{StaticResource CardTitleStyle}" />
                         <Label Text="{Binding ArchivedPlanCount}" Style="{StaticResource StatNumberStyle}" />
-                        <Label Text="zarchiwizowanych" Style="{StaticResource StatDescriptionStyle}" />
-                        <Button Text="📂 Przejdz" 
+                        <Label Text="{x:Static resx:HomePage.Archived}" Style="{StaticResource StatDescriptionStyle}" />
+                        <Button Text="{x:Static resx:HomePage.Open}"
                                 Clicked="OnArchiveClicked"
                                 Style="{StaticResource CardButtonStyle}" />
                     </StackLayout>
@@ -167,13 +168,13 @@
                 <Frame Grid.Row="1" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="⚙️" Style="{StaticResource EmojiStyle}" />
-                        <Label Text="Ustawienia" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="{x:Static resx:HomePage.Settings}" Style="{StaticResource CardTitleStyle}" />
                         <Label Text="Personalizuj" 
                                FontSize="16" 
                                HorizontalTextAlignment="Center"
                                TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
                                Margin="0,16,0,8" />
-                        <Button Text="🔒 Wkrotce" 
+                        <Button Text="{x:Static resx:HomePage.ComingSoon}"
                                 Style="{StaticResource DisabledButtonStyle}"
                                 IsEnabled="False" />
                     </StackLayout>
@@ -184,7 +185,7 @@
                     <StackLayout>
                         <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="8" Margin="0,0,0,16">
                             <Label Text="📊" FontSize="24" />
-                            <Label Text="Statystyki Diety" Style="{StaticResource CardTitleStyle}" Margin="0" />
+                            <Label Text="{x:Static resx:HomePage.NutritionStats}" Style="{StaticResource CardTitleStyle}" Margin="0" />
                         </StackLayout>
                         
                         <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
@@ -197,8 +198,8 @@
                                    BorderColor="Transparent">
                                 <StackLayout>
                                     <Label Text="🔥" FontSize="20" HorizontalTextAlignment="Center" />
-                                    <Label Text="Kalorie" 
-                                           FontSize="12" 
+                                    <Label Text="{x:Static resx:HomePage.Calories}"
+                                           FontSize="12"
                                            FontAttributes="Bold"
                                            HorizontalTextAlignment="Center"
                                            TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" 
@@ -216,7 +217,7 @@
                                    BorderColor="Transparent">
                                 <StackLayout>
                                     <Label Text="🥩" FontSize="20" HorizontalTextAlignment="Center" />
-                                    <Label Text="Bialko" 
+                                    <Label Text="{x:Static resx:HomePage.Protein}"
                                            FontSize="12" 
                                            FontAttributes="Bold"
                                            HorizontalTextAlignment="Center"
@@ -235,7 +236,7 @@
                                    BorderColor="Transparent">
                                 <StackLayout>
                                     <Label Text="🌾" FontSize="20" HorizontalTextAlignment="Center" />
-                                    <Label Text="Weglowodany" 
+                                    <Label Text="{x:Static resx:HomePage.Carbs}"
                                            FontSize="12" 
                                            FontAttributes="Bold"
                                            HorizontalTextAlignment="Center"
@@ -246,8 +247,8 @@
                             </Frame>
                         </Grid>
                         
-                        <Label Text="💡 Funkcja dostepna wkrotce - planuj posilki aby zobaczyc statystyki" 
-                               FontSize="12" 
+                        <Label Text="{x:Static resx:HomePage.Info}"
+                               FontSize="12"
                                HorizontalTextAlignment="Center"
                                TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
                                Margin="0,16,0,0" />

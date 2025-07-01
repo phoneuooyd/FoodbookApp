@@ -4,10 +4,11 @@
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:converters="clr-namespace:Foodbook.Converters"
+             xmlns:resx="clr-namespace:FoodbookApp.Resources"
              x:Class="Foodbook.Views.ShoppingListDetailPage"
              x:Name="ThisPage"
              x:DataType="vm:ShoppingListDetailViewModel"
-             Title="Lista zakupów">
+             Title="{x:Static resx:ShoppingListDetailPage.Title}">
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
     </ContentPage.Resources>
@@ -16,10 +17,10 @@
         <!-- Nagłówki kolumn -->
         <Grid ColumnDefinitions="Auto,2*,Auto,Auto,Auto" Padding="5" ColumnSpacing="5" BackgroundColor="{DynamicResource Primary}">
             <Label Grid.Column="0" Text="✓" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
-            <Label Grid.Column="1" Text="Nazwa składnika" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" />
-            <Label Grid.Column="2" Text="Ilość" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
-            <Label Grid.Column="3" Text="Jednostka" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
-            <Label Grid.Column="4" Text="Akcje" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+            <Label Grid.Column="1" Text="{x:Static resx:ShoppingListDetailPage.IngredientName}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" />
+            <Label Grid.Column="2" Text="{x:Static resx:ShoppingListDetailPage.Quantity}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+            <Label Grid.Column="3" Text="{x:Static resx:ShoppingListDetailPage.Unit}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+            <Label Grid.Column="4" Text="{x:Static resx:ShoppingListDetailPage.Actions}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
         </Grid>
         
         <CollectionView ItemsSource="{Binding Items}">
@@ -30,9 +31,9 @@
                             <CheckBox Grid.Column="0" IsChecked="{Binding IsChecked}" />
 
                             <!-- Nazwa składnika -->
-                            <Entry Grid.Column="1" 
-                                   Text="{Binding Name}" 
-                                   Placeholder="Nazwa"
+                            <Entry Grid.Column="1"
+                                   Text="{Binding Name}"
+                                   Placeholder="{x:Static resx:ShoppingListDetailPage.NamePlaceholder}"
                                    IsVisible="{Binding IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
                             <Label Grid.Column="1" 
                                    Text="{Binding Name}" 
@@ -86,6 +87,6 @@
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
-        <Button Text="Dodaj składnik" Command="{Binding AddItemCommand}" />
+        <Button Text="{x:Static resx:ShoppingListDetailPage.AddItem}" Command="{Binding AddItemCommand}" />
     </StackLayout>
 </ContentPage>
