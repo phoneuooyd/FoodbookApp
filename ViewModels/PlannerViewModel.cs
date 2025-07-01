@@ -221,16 +221,6 @@ public class PlannerViewModel : INotifyPropertyChanged
         {
             meal.Portions++;
         }
-
-    }
-
-    private void DecreasePortions(PlannedMeal? meal)
-    {
-        if (meal != null && meal.Portions > 1)
-        {
-            meal.Portions--;
-        }
-
     }
 
     private void DecreasePortions(PlannedMeal? meal)

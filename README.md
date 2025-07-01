@@ -1,8 +1,6 @@
 #    FoodBook App
 
-
-**Aplikacja mobilna do zarzï¿½dzania przepisami, planowania posiï¿½kï¿½w i tworzenia list zakupï¿½w**
-
+**Aplikacja mobilna do zarz¹dzania przepisami, planowania posi³ków i tworzenia list zakupów**
 
 [![.NET MAUI](https://img.shields.io/badge/.NET-MAUI-512BD4 style=flat-square)](https://dotnet.microsoft.com/apps/maui)
 [![.NET 9](https://img.shields.io/badge/.NET-9.0-512BD4 style=flat-square)](https://dotnet.microsoft.com/download/dotnet/9.0)
@@ -11,52 +9,50 @@
 
 ##    Opis projektu
 
-FoodBook App to kompleksowa aplikacja mobilna stworzona w technologii .NET MAUI, ktï¿½ra pomaga uï¿½ytkownikom w:
--    Zarzï¿½dzaniu bazï¿½ przepisï¿½w kulinarnych
--    Organizowaniu skï¿½adnikï¿½w z informacjami odï¿½ywczymi
--    Planowaniu posiï¿½kï¿½w na wybrane dni
--    Automatycznym generowaniu list zakupï¿½w
--    Importowaniu przepisï¿½w z internetu
+FoodBook App to kompleksowa aplikacja mobilna stworzona w technologii .NET MAUI, która pomaga u¿ytkownikom w:
+-    Zarz¹dzaniu baz¹ przepisów kulinarnych
+-    Organizowaniu sk³adników z informacjami od¿ywczymi
+-    Planowaniu posi³ków na wybrane dni
+-    Automatycznym generowaniu list zakupów
+-    Importowaniu przepisów z internetu
 
-##   Gï¿½ï¿½wne funkcjonalnoï¿½ci
+##   G³ówne funkcjonalnoœci
 
-###    **Strona gï¿½ï¿½wna**
-- Przeglï¿½d najwaï¿½niejszych informacji
-- Szybki dostï¿½p do wszystkich funkcji aplikacji
+###    **Strona g³ówna**
+- Przegl¹d najwa¿niejszych informacji
+- Szybki dostêp do wszystkich funkcji aplikacji
 
-###    **Zarzï¿½dzanie przepisami**
--   Dodawanie nowych przepisï¿½w (rï¿½cznie lub import z URL)
--    Edytowanie istniejï¿½cych przepisï¿½w
--     Usuwanie przepisï¿½w
--    Automatyczny import przepisï¿½w z stron internetowych
--    Automatyczne obliczanie wartoï¿½ci odï¿½ywczych
+###    **Zarz¹dzanie przepisami**
+-   Dodawanie nowych przepisów (rêcznie lub import z URL)
+-    Edytowanie istniej¹cych przepisów
+-     Usuwanie przepisów
+-    Automatyczny import przepisów z stron internetowych
+-    Automatyczne obliczanie wartoœci od¿ywczych
 
-###    **Baza skï¿½adnikï¿½w**
--    Rozbudowana baza skï¿½adnikï¿½w z wartoï¿½ciami odï¿½ywczymi
--   Dodawanie wï¿½asnych skï¿½adnikï¿½w
--    Edytowanie parametrï¿½w skï¿½adnikï¿½w
--    Wyszukiwanie skï¿½adnikï¿½w
--    Wyï¿½wietlanie kalorii, biaï¿½ka, tï¿½uszczï¿½w i wï¿½glowodanï¿½w
+###    **Baza sk³adników**
+-    Rozbudowana baza sk³adników z wartoœciami od¿ywczymi
+-   Dodawanie w³asnych sk³adników
+-    Edytowanie parametrów sk³adników
+-    Wyszukiwanie sk³adników
+-    Wyœwietlanie kalorii, bia³ka, t³uszczów i wêglowodanów
 
-###    **Planer posiï¿½kï¿½w**
--    Planowanie posiï¿½kï¿½w na wybrane dni
--    Konfiguracja liczby posiï¿½kï¿½w dziennie
--     Wybï¿½r przepisï¿½w z bazy danych
--    Ustalanie liczby porcji dla kaï¿½dego posiï¿½ku
+###    **Planer posi³ków**
+-    Planowanie posi³ków na wybrane dni
+-    Konfiguracja liczby posi³ków dziennie
+-     Wybór przepisów z bazy danych
+-    Ustalanie liczby porcji dla ka¿dego posi³ku
 -     Elastyczny zakres dat (od-do)
 
-###    **Listy zakupï¿½w**
--    Automatyczne generowanie list zakupï¿½w na podstawie planera
--   Zaznaczanie zakupionych produktï¿½w
--    Edycja iloï¿½ci i jednostek w locie
+###    **Listy zakupów**
+-    Automatyczne generowanie list zakupów na podstawie planera
+-   Zaznaczanie zakupionych produktów
+-    Edycja iloœci i jednostek w locie
 -     Usuwanie niepotrzebnych pozycji
--    Intuicyjny interfejs do zarzï¿½dzania zakupami
-
+-    Intuicyjny interfejs do zarz¹dzania zakupami
 
 ##     Architektura aplikacji
 
 ###     **Technologie**
-
 - **Framework**: .NET MAUI (Multi-platform App UI)
 - **Wersja .NET**: 9.0
 - **Baza danych**: SQLite z Entity Framework Core
@@ -66,20 +62,19 @@ FoodBook App to kompleksowa aplikacja mobilna stworzona w technologii .NET MAUI,
 
 ###    **Wzorzec MVVM**
 Aplikacja wykorzystuje wzorzec MVVM z:
-- **Models**: Klasy reprezentujï¿½ce dane (Recipe, Ingredient, Plan)
-- **Views**: Widoki XAML definiujï¿½ce interfejs uï¿½ytkownika
-- **ViewModels**: Logika prezentacji i wiï¿½zanie danych
+- **Models**: Klasy reprezentuj¹ce dane (Recipe, Ingredient, Plan)
+- **Views**: Widoki XAML definiuj¹ce interfejs u¿ytkownika
+- **ViewModels**: Logika prezentacji i wi¹zanie danych
 
 ###    **Baza danych**
-- **SQLite**: Lokalna baza danych na urzï¿½dzeniu
-- **Entity Framework Core**: ORM do zarzï¿½dzania danymi
+- **SQLite**: Lokalna baza danych na urz¹dzeniu
+- **Entity Framework Core**: ORM do zarz¹dzania danymi
 - **Migracje**: Automatyczne tworzenie i aktualizacja schematu
-- **Seed Data**: Automatyczne wypeï¿½nianie przykï¿½adowymi danymi
+- **Seed Data**: Automatyczne wype³nianie przyk³adowymi danymi
 
-##    Rozpoczï¿½cie pracy
+##    Rozpoczêcie pracy
 
 ###    **Wymagania**
-
 - Visual Studio 2022 (17.8+) lub Visual Studio Code
 - .NET 9.0 SDK
 - Workloads dla .NET MAUI:
@@ -88,85 +83,78 @@ Aplikacja wykorzystuje wzorzec MVVM z:
   - Windows (opcjonalnie)
   - macOS (opcjonalnie)
 
-
 ###    **Instalacja**
 
 1. **Sklonuj repozytorium**git clone https://github.com/[twoja-nazwa]/FoodBookApp.git
    cd FoodBookApp
-
-2. **Przywrï¿½ï¿½ pakiety NuGet**dotnet restore
+2. **Przywróæ pakiety NuGet**dotnet restore
 3. **Zbuduj projekt**dotnet build
-4. **Uruchom aplikacjï¿½**# Android
-
+4. **Uruchom aplikacjê**# Android
 dotnet run --framework net9.0-android
 
 # Windows
 dotnet run --framework net9.0-windows10.0.19041.0
-
 ###    **Pierwsze uruchomienie**
 1. Przy pierwszym uruchomieniu baza danych zostanie automatycznie utworzona
-2. Aplikacja zaï¿½aduje przykï¿½adowe skï¿½adniki z pliku `ingredients.json`
-3. Zostanie utworzony przykï¿½adowy przepis do demonstracji funkcjonalnoï¿½ci
+2. Aplikacja za³aduje przyk³adowe sk³adniki z pliku `ingredients.json`
+3. Zostanie utworzony przyk³adowy przepis do demonstracji funkcjonalnoœci
 
-##    **Instrukcja uï¿½ytkowania**
+##    **Instrukcja u¿ytkowania**
 
-###    **Dodawanie skï¿½adnikï¿½w**
-1. Przejdï¿½ do zakï¿½adki "Skï¿½adniki"
-2. Naciï¿½nij "Dodaj skï¿½adnik"
-3. Wypeï¿½nij formularz z wartoï¿½ciami odï¿½ywczymi
-4. Zapisz skï¿½adnik
+###    **Dodawanie sk³adników**
+1. PrzejdŸ do zak³adki "Sk³adniki"
+2. Naciœnij "Dodaj sk³adnik"
+3. Wype³nij formularz z wartoœciami od¿ywczymi
+4. Zapisz sk³adnik
 
-###    **Tworzenie przepisï¿½w**
-1. Przejdï¿½ do zakï¿½adki "Przepisy"
-2. Naciï¿½nij "Dodaj przepis"
+###    **Tworzenie przepisów**
+1. PrzejdŸ do zak³adki "Przepisy"
+2. Naciœnij "Dodaj przepis"
 3. Wybierz tryb:
-   - **Rï¿½czny**: Wprowadï¿½ dane samodzielnie
+   - **Rêczny**: WprowadŸ dane samodzielnie
    - **Import**: Podaj URL strony z przepisem
-4. Dodaj skï¿½adniki i ich iloï¿½ci
+4. Dodaj sk³adniki i ich iloœci
 5. Zapisz przepis
 
-###    **Planowanie posiï¿½kï¿½w**
-1. Przejdï¿½ do zakï¿½adki "Planer"
+###    **Planowanie posi³ków**
+1. PrzejdŸ do zak³adki "Planer"
 2. Wybierz zakres dat (od-do)
-3. Ustaw liczbï¿½ posiï¿½kï¿½w dziennie
-4. Dla kaï¿½dego dnia:
+3. Ustaw liczbê posi³ków dziennie
+4. Dla ka¿dego dnia:
    - Wybierz przepisy z listy
-   - Ustaw liczbï¿½ porcji przyciskami +/-
-   - Dodaj lub usuï¿½ posiï¿½ki
+   - Ustaw liczbê porcji przyciskami +/-
+   - Dodaj lub usuñ posi³ki
 5. Zapisz plan
 
-###    **Generowanie listy zakupï¿½w**
-1. Utwï¿½rz plan posiï¿½kï¿½w w Planerze
-2. Przejdï¿½ do "Listy zakupï¿½w"
-3. Otwï¿½rz wygenerowanï¿½ listï¿½
-4. Podczas zakupï¿½w:
+###    **Generowanie listy zakupów**
+1. Utwórz plan posi³ków w Planerze
+2. PrzejdŸ do "Listy zakupów"
+3. Otwórz wygenerowan¹ listê
+4. Podczas zakupów:
    - Zaznaczaj kupione produkty  
-   - Edytuj iloï¿½ci jeï¿½li potrzeba
+   - Edytuj iloœci jeœli potrzeba
    - Usuwaj niepotrzebne pozycje
 
 ##    **Personalizacja**
 
 ###    **Motywy kolorystyczne**
-Aplikacja obsï¿½uguje jasny i ciemny motyw, automatycznie dostosowujï¿½c siï¿½ do ustawieï¿½ systemu.
+Aplikacja obs³uguje jasny i ciemny motyw, automatycznie dostosowuj¹c siê do ustawieñ systemu.
 
-###    **Ukï¿½ady responsywne**
-Interfejs automatycznie dostosowuje siï¿½ do rï¿½nych rozmiarï¿½w ekranï¿½w i orientacji urzï¿½dzenia.
+###    **Uk³ady responsywne**
+Interfejs automatycznie dostosowuje siê do ró¿nych rozmiarów ekranów i orientacji urz¹dzenia.
 
 ##    **Konfiguracja rozwoju**
 
-###    **Gï¿½ï¿½wne pakiety NuGet**<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
-
+###    **G³ówne pakiety NuGet**<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
 <PackageReference Include="HtmlAgilityPack" />
 <PackageReference Include="Newtonsoft.Json" />
 <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
 ###     **Dodawanie nowych funkcji**
 
-
-1. **Nowy model**: Dodaj klasï¿½ w folderze `Models/`
-2. **Nowy serwis**: Utwï¿½rz interfejs i implementacjï¿½ w `Services/`
+1. **Nowy model**: Dodaj klasê w folderze `Models/`
+2. **Nowy serwis**: Utwórz interfejs i implementacjê w `Services/`
 3. **Nowy widok**: Dodaj XAML i code-behind w `Views/`
-4. **Nowy ViewModel**: Utwï¿½rz klasï¿½ w `ViewModels/`
-
+4. **Nowy ViewModel**: Utwórz klasê w `ViewModels/`
 5. **Rejestracja**: Dodaj do DI w `MauiProgram.cs`
 
 ###     **Migracje bazy danych**# Dodanie nowej migracji
@@ -174,4 +162,5 @@ dotnet ef migrations add NazwaMigracji
 
 # Aktualizacja bazy danych
 dotnet ef database update
+##    **Wk³ad w projekt**
 
