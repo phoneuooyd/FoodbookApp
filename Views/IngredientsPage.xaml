@@ -11,9 +11,16 @@
 
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        <converters:StringToBoolConverter x:Key="StringToBoolConverter" />
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto,Auto,*">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="🔍 Weryfikuj wszystkie"
+                     Command="{Binding BulkVerifyCommand}"
+                     Order="Primary" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,Auto,Auto,*">
         
         <!-- Loading indicator -->
         <ActivityIndicator Grid.Row="0" 
@@ -29,19 +36,71 @@
                    Margin="10,0"
                    IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
 
+        <!-- Bulk Verification Status -->
+        <StackLayout Grid.Row="2" 
+                     IsVisible="{Binding HasBulkVerificationStatus}"
+                     Margin="10,5">
+            <Frame BackgroundColor="{DynamicResource Primary}" 
+                   Padding="10" 
+                   CornerRadius="6">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                    <ActivityIndicator Grid.Column="0"
+                                     IsVisible="{Binding IsBulkVerifying}"
+                                     IsRunning="{Binding IsBulkVerifying}"
+                                     Color="White"
+                                     WidthRequest="20"
+                                     HeightRequest="20" />
+                    <Label Grid.Column="1"
+                           Text="{Binding BulkVerificationStatus}"
+                           TextColor="White"
+                           FontSize="12"
+                           VerticalOptions="Center" />
+                </Grid>
+            </Frame>
+        </StackLayout>
+
         <!-- Content -->
-        <RefreshView Grid.Row="2" 
+        <RefreshView Grid.Row="3" 
                      IsRefreshing="{Binding IsRefreshing}" 
                      Command="{Binding RefreshCommand}"
                      IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
             
-            <Grid RowDefinitions="Auto,*">
-                <Button Grid.Row="0" 
-                        Text="Dodaj składnik" 
-                        Command="{Binding AddCommand}"
-                        Margin="10" />
+            <Grid RowDefinitions="Auto,Auto,*">
+                <!-- Action Buttons Section -->
+                <Grid Grid.Row="0" 
+                      ColumnDefinitions="*,Auto" 
+                      ColumnSpacing="10"
+                      Margin="10">
+                    <Button Grid.Column="0" 
+                            Text="➕ Dodaj składnik" 
+                            Command="{Binding AddCommand}"
+                            BackgroundColor="{DynamicResource Primary}"
+                            TextColor="White"
+                            HeightRequest="45" />
+                    <Button Grid.Column="1"
+                            Text="🔍 Weryfikuj"
+                            Command="{Binding BulkVerifyCommand}"
+                            BackgroundColor="Green"
+                            TextColor="White"
+                            HeightRequest="45"
+                            WidthRequest="100"
+                            IsEnabled="{Binding IsBulkVerifying, Converter={StaticResource InvertedBoolConverter}}" />
+                </Grid>
+
+                <!-- Bulk Verification Info -->
+                <StackLayout Grid.Row="1" 
+                             IsVisible="{Binding IsBulkVerifying, Converter={StaticResource InvertedBoolConverter}}"
+                             Margin="10,0,10,10">
+                    <Frame BackgroundColor="LightBlue" 
+                           Padding="10" 
+                           CornerRadius="6">
+                        <Label Text="💡 Użyj przycisku 'Weryfikuj' aby zaktualizować wartości odżywcze wszystkich składników z bazy OpenFoodFacts"
+                               FontSize="12"
+                               HorizontalTextAlignment="Center" />
+                    </Frame>
+                </StackLayout>
                 
-                <CollectionView Grid.Row="1"
+                <CollectionView Grid.Row="2"
                                 ItemsSource="{Binding Ingredients}"
                                 ItemSizingStrategy="MeasureFirstItem"
                                 RemainingItemsThreshold="10"

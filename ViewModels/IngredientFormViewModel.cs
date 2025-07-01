@@ -157,7 +157,13 @@ public class IngredientFormViewModel : INotifyPropertyChanged
             }
             else
             {
-                VerificationStatus = $"? Nie znaleziono danych dla '{Name}' w OpenFoodFacts";
+                VerificationStatus = $"? Nie znaleziono produktu '{Name}' w OpenFoodFacts";
+                
+                await Shell.Current.DisplayAlert(
+                    "Weryfikacja sk³adnika", 
+                    $"Nie znaleziono produktu '{Name}' w bazie OpenFoodFacts lub dane s¹ identyczne z obecnymi.\n\n" +
+                    "Spróbuj u¿yæ innej nazwy sk³adnika (np. po angielsku) lub wprowadŸ dane rêcznie.", 
+                    "OK");
             }
         }
         catch (Exception ex)

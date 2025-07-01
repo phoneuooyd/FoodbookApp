@@ -18,6 +18,35 @@ public class IngredientsViewModel : INotifyPropertyChanged
     private string _searchText = string.Empty;
     private List<Ingredient> _allIngredients = new();
 
+    // W³aœciwoœci dla masowej weryfikacji
+    private bool _isBulkVerifying;
+    public bool IsBulkVerifying
+    {
+        get => _isBulkVerifying;
+        set
+        {
+            if (_isBulkVerifying == value) return;
+            _isBulkVerifying = value;
+            OnPropertyChanged();
+            ((Command)BulkVerifyCommand).ChangeCanExecute();
+        }
+    }
+
+    private string _bulkVerificationStatus = string.Empty;
+    public string BulkVerificationStatus
+    {
+        get => _bulkVerificationStatus;
+        set
+        {
+            if (_bulkVerificationStatus == value) return;
+            _bulkVerificationStatus = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasBulkVerificationStatus));
+        }
+    }
+
+    public bool HasBulkVerificationStatus => !string.IsNullOrWhiteSpace(BulkVerificationStatus);
+
     public ObservableCollection<Ingredient> Ingredients { get; } = new();
 
     public bool IsLoading
@@ -58,6 +87,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
     public ICommand EditCommand { get; }
     public ICommand DeleteCommand { get; }
     public ICommand RefreshCommand { get; }
+    public ICommand BulkVerifyCommand { get; } // Nowa komenda
 
     public IngredientsViewModel(IIngredientService service)
     {
@@ -70,6 +100,111 @@ public class IngredientsViewModel : INotifyPropertyChanged
         });
         DeleteCommand = new Command<Ingredient>(async ing => await DeleteIngredientAsync(ing));
         RefreshCommand = new Command(async () => await ReloadAsync());
+        BulkVerifyCommand = new Command(async () => await BulkVerifyIngredientsAsync(), () => !IsBulkVerifying && Ingredients.Count > 0);
+    }
+
+    /// <summary>
+    /// Masowa weryfikacja wszystkich sk³adników z OpenFoodFacts
+    /// </summary>
+    private async Task BulkVerifyIngredientsAsync()
+    {
+        if (IsBulkVerifying || Ingredients.Count == 0) return;
+
+        bool confirm = await Shell.Current.DisplayAlert(
+            "Masowa weryfikacja sk³adników",
+            $"Czy chcesz zweryfikowaæ wszystkie {Ingredients.Count} sk³adników z OpenFoodFacts?\n\nMo¿e to potrwaæ kilka minut.",
+            "Tak, weryfikuj",
+            "Anuluj");
+
+        if (!confirm) return;
+
+        try
+        {
+            IsBulkVerifying = true;
+            var updatedCount = 0;
+            var totalCount = Ingredients.Count;
+            var failedCount = 0;
+
+            BulkVerificationStatus = $"Weryfikujê sk³adniki: 0/{totalCount}";
+
+            for (int i = 0; i < Ingredients.Count; i++)
+            {
+                var ingredient = Ingredients[i];
+                
+                try
+                {
+                    BulkVerificationStatus = $"Weryfikujê sk³adniki: {i + 1}/{totalCount} - {ingredient.Name}";
+
+                    // Skopiuj sk³adnik do weryfikacji
+                    var tempIngredient = new Ingredient
+                    {
+                        Id = ingredient.Id,
+                        Name = ingredient.Name,
+                        Quantity = ingredient.Quantity,
+                        Unit = ingredient.Unit,
+                        Calories = ingredient.Calories,
+                        Protein = ingredient.Protein,
+                        Fat = ingredient.Fat,
+                        Carbs = ingredient.Carbs,
+                        RecipeId = ingredient.RecipeId
+                    };
+
+                    // Weryfikuj z OpenFoodFacts
+                    bool wasUpdated = await SeedData.UpdateIngredientWithOpenFoodFactsAsync(tempIngredient);
+
+                    if (wasUpdated)
+                    {
+                        // Aktualizuj sk³adnik w bazie danych
+                        ingredient.Calories = tempIngredient.Calories;
+                        ingredient.Protein = tempIngredient.Protein;
+                        ingredient.Fat = tempIngredient.Fat;
+                        ingredient.Carbs = tempIngredient.Carbs;
+
+                        await _service.UpdateIngredientAsync(ingredient);
+                        updatedCount++;
+                        
+                        System.Diagnostics.Debug.WriteLine($"? Zaktualizowano: {ingredient.Name}");
+                    }
+
+                    // Ma³e opóŸnienie aby nie przeci¹¿yæ API
+                    await Task.Delay(200);
+                }
+                catch (Exception ex)
+                {
+                    failedCount++;
+                    System.Diagnostics.Debug.WriteLine($"? B³¹d weryfikacji {ingredient.Name}: {ex.Message}");
+                }
+            }
+
+            // Poka¿ wyniki
+            var successMessage = $"Weryfikacja zakoñczona!\n\n" +
+                               $"? Zaktualizowano: {updatedCount} sk³adników\n" +
+                               $"?? Bez zmian: {totalCount - updatedCount - failedCount} sk³adników\n" +
+                               (failedCount > 0 ? $"? B³êdy/nie znaleziono: {failedCount} sk³adników" : "");
+
+            BulkVerificationStatus = $"? Zakoñczono - zaktualizowano {updatedCount}/{totalCount} sk³adników";
+
+            await Shell.Current.DisplayAlert(
+                "Masowa weryfikacja zakoñczona",
+                successMessage,
+                "OK");
+
+            // Odœwie¿ listê
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            BulkVerificationStatus = $"? B³¹d masowej weryfikacji: {ex.Message}";
+            
+            await Shell.Current.DisplayAlert(
+                "B³¹d weryfikacji",
+                $"Wyst¹pi³ b³¹d podczas masowej weryfikacji sk³adników:\n{ex.Message}",
+                "OK");
+        }
+        finally
+        {
+            IsBulkVerifying = false;
+        }
     }
 
     public async Task LoadAsync()
@@ -103,6 +238,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
             }
             
             FilterIngredients();
+            ((Command)BulkVerifyCommand).ChangeCanExecute(); // Refresh command state
         }
         catch (Exception ex)
         {
@@ -157,6 +293,8 @@ public class IngredientsViewModel : INotifyPropertyChanged
                 Ingredients.Add(ingredient);
             }
         }
+        
+        ((Command)BulkVerifyCommand).ChangeCanExecute(); // Refresh command state when filter changes
     }
 
     private async Task DeleteIngredientAsync(Ingredient? ing)
@@ -168,6 +306,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
             await _service.DeleteIngredientAsync(ing.Id);
             Ingredients.Remove(ing);
             _allIngredients.Remove(ing);
+            ((Command)BulkVerifyCommand).ChangeCanExecute(); // Refresh command state
         }
         catch (Exception ex)
         {

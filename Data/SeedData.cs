@@ -82,35 +82,109 @@ namespace Foodbook.Data
             try
             {
                 var response = await httpClient.GetAsync(url);
-                if (!response.IsSuccessStatusCode) return false;
+                if (!response.IsSuccessStatusCode) 
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ {ingredient.Name}: HTTP błąd {response.StatusCode}");
+                    return false;
+                }
 
                 var content = await response.Content.ReadAsStringAsync();
                 dynamic? result = JsonConvert.DeserializeObject(content);
-                if (result?.products == null || result.products.Count == 0) return false;
+                
+                // Sprawdź czy znaleziono produkty
+                if (result?.products == null || result.products.Count == 0) 
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ {ingredient.Name}: Nie znaleziono produktu w OpenFoodFacts");
+                    return false;
+                }
 
                 var product = result.products[0];
                 var nutriments = product.nutriments;
 
-                double TryGet(dynamic src, string key) =>
-                    double.TryParse((string?)src?[key], out var val) ? val : 0;
+                // Sprawdź czy nutriments istnieją
+                if (nutriments == null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ {ingredient.Name}: Brak danych odżywczych w znalezionym produkcie");
+                    return false;
+                }
 
+                // Funkcja pomocnicza do bezpiecznego pobierania wartości
+                double TryGet(dynamic src, string key)
+                {
+                    try
+                    {
+                        var value = src?[key];
+                        if (value == null) return -1; // -1 oznacza brak danych
+                        
+                        if (double.TryParse(value.ToString(), out double parsed))
+                            return parsed;
+                        
+                        return -1; // Nie można sparsować
+                    }
+                    catch
+                    {
+                        return -1; // Błąd podczas dostępu
+                    }
+                }
+
+                // Zapisz oryginalne wartości
                 var oldCalories = ingredient.Calories;
                 var oldProtein = ingredient.Protein;
                 var oldFat = ingredient.Fat;
                 var oldCarbs = ingredient.Carbs;
 
-                ingredient.Calories = TryGet(nutriments, "energy-kcal_100g");
-                ingredient.Protein = TryGet(nutriments, "proteins_100g");
-                ingredient.Fat = TryGet(nutriments, "fat_100g");
-                ingredient.Carbs = TryGet(nutriments, "carbohydrates_100g");
+                // Pobierz nowe wartości
+                var newCalories = TryGet(nutriments, "energy-kcal_100g");
+                var newProtein = TryGet(nutriments, "proteins_100g");
+                var newFat = TryGet(nutriments, "fat_100g");
+                var newCarbs = TryGet(nutriments, "carbohydrates_100g");
 
-                System.Diagnostics.Debug.WriteLine($"✅ {ingredient.Name} → kcal: {ingredient.Calories}, P: {ingredient.Protein}, F: {ingredient.Fat}, C: {ingredient.Carbs}");
+                // Sprawdź czy udało się pobrać chociaż jedną wartość odżywczą
+                bool hasValidData = newCalories >= 0 || newProtein >= 0 || newFat >= 0 || newCarbs >= 0;
                 
-                // Zwróć true jeśli dane się zmieniły
-                return oldCalories != ingredient.Calories || 
-                       oldProtein != ingredient.Protein || 
-                       oldFat != ingredient.Fat || 
-                       oldCarbs != ingredient.Carbs;
+                if (!hasValidData)
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ {ingredient.Name}: Znaleziono produkt, ale brak prawidłowych danych odżywczych");
+                    return false;
+                }
+
+                // Aktualizuj tylko te wartości, które zostały znalezione (>=0)
+                bool wasUpdated = false;
+                
+                if (newCalories >= 0 && Math.Abs(oldCalories - newCalories) > 0.1)
+                {
+                    ingredient.Calories = newCalories;
+                    wasUpdated = true;
+                }
+                
+                if (newProtein >= 0 && Math.Abs(oldProtein - newProtein) > 0.1)
+                {
+                    ingredient.Protein = newProtein;
+                    wasUpdated = true;
+                }
+                
+                if (newFat >= 0 && Math.Abs(oldFat - newFat) > 0.1)
+                {
+                    ingredient.Fat = newFat;
+                    wasUpdated = true;
+                }
+                
+                if (newCarbs >= 0 && Math.Abs(oldCarbs - newCarbs) > 0.1)
+                {
+                    ingredient.Carbs = newCarbs;
+                    wasUpdated = true;
+                }
+
+                if (wasUpdated)
+                {
+                    System.Diagnostics.Debug.WriteLine($"✅ {ingredient.Name} → kcal: {ingredient.Calories}, P: {ingredient.Protein}, F: {ingredient.Fat}, C: {ingredient.Carbs}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"ℹ️ {ingredient.Name}: Dane z OpenFoodFacts są identyczne z obecnymi");
+                }
+                
+                return wasUpdated;
             }
             catch (Exception ex)
             {
