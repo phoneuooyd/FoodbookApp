@@ -3,52 +3,59 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
-             x:Class="Foodbook.Views.ShoppingListPage"
+             x:Class="Foodbook.Views.ArchivePage"
              x:Name="ThisPage"
-             x:DataType="vm:ShoppingListViewModel"
-             Title="Listy zakupow">
-
-    <CollectionView ItemsSource="{Binding Plans}" Margin="10" SelectionMode="None">
+             x:DataType="vm:ArchiveViewModel"
+             Title="Archiwum">
+    <CollectionView ItemsSource="{Binding ArchivedPlans}" Margin="10" SelectionMode="None">
+        <CollectionView.EmptyView>
+            <StackLayout HorizontalOptions="Center" VerticalOptions="Center">
+                <Label Text="Brak zarchiwizowanych list zakupow" 
+                       FontSize="16" 
+                       HorizontalTextAlignment="Center"
+                       TextColor="Gray" />
+            </StackLayout>
+        </CollectionView.EmptyView>
         <CollectionView.ItemTemplate>
             <DataTemplate x:DataType="models:Plan">
-                <Border Stroke="LightGray" StrokeThickness="1" Padding="10" Margin="5">
+                <Border Stroke="LightGray" StrokeThickness="1" Padding="10" Margin="5" BackgroundColor="LightGray">
                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
                         <!-- Kolumna z trescia planu -->
-
                         <VerticalStackLayout Grid.Column="0">
                             <Label Text="{Binding Label}" 
                                    FontAttributes="Bold" 
                                    FontSize="18" 
-                                   VerticalOptions="Center" />
+                                   VerticalOptions="Center"
+                                   TextColor="DarkGray" />
                             <Label Text="{Binding StartDate, StringFormat='Od: {0:dd.MM.yyyy}'}" 
                                    FontSize="14" 
-                                   TextColor="{DynamicResource Primary}"
+                                   TextColor="Gray"
                                    Margin="0,2,0,0" />
                             <Label Text="{Binding EndDate, StringFormat='Do: {0:dd.MM.yyyy}'}" 
                                    FontSize="14" 
-                                   TextColor="{DynamicResource Primary}" />
+                                   TextColor="Gray" />
                         </VerticalStackLayout>
                         
-                        <!-- Przycisk edycji -->
+                        <!-- Przycisk przywracania - strzalka -->
                         <Button Grid.Column="1" 
-                                Text="✏️" 
-                                Command="{Binding BindingContext.OpenPlanCommand, Source={x:Reference ThisPage}}" 
+                                Text="↩️" 
+                                Command="{Binding BindingContext.RestorePlanCommand, Source={x:Reference ThisPage}}" 
                                 CommandParameter="{Binding .}" 
                                 WidthRequest="40" 
                                 HeightRequest="40"
-                                BackgroundColor="{DynamicResource Primary}"
+                                BackgroundColor="Green"
                                 TextColor="White"
                                 FontSize="16"
                                 CornerRadius="6" />
                         
-                        <!-- Przycisk archiwizacji - szary kolor -->
+                        <!-- Przycisk trwalego usuwania - kosz -->
                         <Button Grid.Column="2" 
-                                Text="📁" 
-                                Command="{Binding BindingContext.ArchivePlanCommand, Source={x:Reference ThisPage}}" 
+                                Text="🗑" 
+                                Command="{Binding BindingContext.DeletePlanCommand, Source={x:Reference ThisPage}}" 
                                 CommandParameter="{Binding .}" 
                                 WidthRequest="40" 
                                 HeightRequest="40"
-                                BackgroundColor="Gray"
+                                BackgroundColor="Red"
                                 TextColor="White"
                                 FontSize="16"
                                 CornerRadius="6" />

@@ -23,7 +23,16 @@ public class HomeViewModel : INotifyPropertyChanged
         set { if (_planCount != value) { _planCount = value; OnPropertyChanged(); } }
     }
 
-    private bool _isLoading;
+
+    private int _archivedPlanCount;
+    public int ArchivedPlanCount
+    {
+        get => _archivedPlanCount;
+        set { if (_archivedPlanCount != value) { _archivedPlanCount = value; OnPropertyChanged(); } }
+    }
+
+    private bool _isLoading = true; // Zaczynamy z true, �eby pokaza� loader
+
     public bool IsLoading
     {
         get => _isLoading;
@@ -38,16 +47,42 @@ public class HomeViewModel : INotifyPropertyChanged
 
     public async Task LoadAsync()
     {
-        if (IsLoading) return;
-        IsLoading = true;
+        try
+        {
+            IsLoading = true;
 
-        var recipes = await _recipeService.GetRecipesAsync();
-        RecipeCount = recipes.Count;
+            // �aduj przepisy
+            var recipes = await _recipeService.GetRecipesAsync();
+            RecipeCount = recipes?.Count ?? 0;
 
-        var plans = await _planService.GetPlansAsync();
-        PlanCount = plans.Count;
+            // �aduj plany
+            var allPlans = await _planService.GetPlansAsync();
+            if (allPlans != null)
+            {
+                PlanCount = allPlans.Count(p => !p.IsArchived);
+                ArchivedPlanCount = allPlans.Count(p => p.IsArchived);
+            }
+            else
+            {
+                PlanCount = 0;
+                ArchivedPlanCount = 0;
+            }
+        }
+        catch (Exception ex)
+        {
+            // W przypadku b��du, ustaw warto�ci na 0
+            RecipeCount = 0;
+            PlanCount = 0;
+            ArchivedPlanCount = 0;
+            
+            // Log b��du (opcjonalne)
+            System.Diagnostics.Debug.WriteLine($"Error loading home data: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
 
-        IsLoading = false;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

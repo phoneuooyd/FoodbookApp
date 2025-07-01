@@ -31,6 +31,5 @@ namespace Foodbook.Models
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-
     }
 }

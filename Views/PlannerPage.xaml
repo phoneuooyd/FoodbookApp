@@ -75,9 +75,10 @@
                                                         SelectedItem="{Binding Recipe}"
                                                         FontSize="12" />
                                                 
-                                                <!-- Przycisk zmniejszenia porcji - IDEALNIE OKRĄGŁY -->
+                                                <!-- Przycisk zmniejszenia porcji -->
                                                 <Button Grid.Column="1" 
-                                                        Text="−"
+                                                        Text="➖"
+
                                                         Command="{Binding BindingContext.DecreasePortionsCommand, Source={x:Reference ThisPage}}"
                                                         CommandParameter="{Binding .}"
                                                         WidthRequest="30" 
@@ -108,9 +109,9 @@
                                                        WidthRequest="24"
                                                        HorizontalTextAlignment="Center" />
                                                 
-                                                <!-- Przycisk zwiększenia porcji - IDEALNIE OKRĄGŁY -->
+                                                <!-- Przycisk zwiększenia porcji -->
                                                 <Button Grid.Column="3" 
-                                                        Text="+"
+                                                        Text="➕"
                                                         Command="{Binding BindingContext.IncreasePortionsCommand, Source={x:Reference ThisPage}}"
                                                         CommandParameter="{Binding .}"
                                                         WidthRequest="30" 
@@ -130,9 +131,9 @@
                                                     </Button.Triggers>
                                                 </Button>
                                                 
-                                                <!-- Przycisk usuwania posiłku - okrągły -->
+                                                <!-- Przycisk usuwania posiłku -->
                                                 <Button Grid.Column="4" 
-                                                        Text="✖" 
+                                                        Text="❌" 
                                                         Command="{Binding BindingContext.RemoveMealCommand, Source={x:Reference ThisPage}}" 
                                                         CommandParameter="{Binding .}" 
                                                         WidthRequest="26" 
@@ -144,16 +145,15 @@
                                                         FontAttributes="Bold"
                                                         BorderWidth="0"
                                                         Padding="0" />
-
                                             </Grid>
                                         </DataTemplate>
                                     </BindableLayout.ItemTemplate>
                                 </StackLayout>
-
                                 
                                 <!-- Wyśrodkowany przycisk "Dodaj posiłek" -->
                                 <StackLayout HorizontalOptions="Center" Margin="0,8,0,0">
-                                    <Button Text="+ Posiłek" 
+                                    <Button Text="➕ Posiłek" 
+
                                             Command="{Binding BindingContext.AddMealCommand, Source={x:Reference ThisPage}}" 
                                             CommandParameter="{Binding .}"
                                             BackgroundColor="{DynamicResource Primary}" 
@@ -175,7 +175,6 @@
             <!-- Przycisk Zapisz - wyśrodkowany -->
             <HorizontalStackLayout Spacing="10" Margin="0,20,0,0" HorizontalOptions="Center">
                 <Button Text="Zapisz" Command="{Binding SaveCommand}" />
-
             </HorizontalStackLayout>
         </VerticalStackLayout>
     </ScrollView>

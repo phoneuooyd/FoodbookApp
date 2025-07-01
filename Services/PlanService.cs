@@ -29,6 +29,12 @@ public class PlanService : IPlanService
         await _context.SaveChangesAsync();
     }
 
+    public async Task UpdatePlanAsync(Plan plan)
+    {
+        _context.Plans.Update(plan);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task RemovePlanAsync(int id)
     {
         var plan = await _context.Plans.FindAsync(id);
@@ -41,6 +47,11 @@ public class PlanService : IPlanService
 
     public async Task<bool> HasOverlapAsync(DateTime from, DateTime to, int? ignoreId = null)
     {
-        return await _context.Plans.AnyAsync(p => (ignoreId == null || p.Id != ignoreId) && p.StartDate <= to && p.EndDate >= from);
+        // Walidacja ignoruje zarchiwizowane plany - sprawdza tylko aktywne plany
+        return await _context.Plans.AnyAsync(p => 
+            (ignoreId == null || p.Id != ignoreId) && 
+            !p.IsArchived && // Ignoruj zarchiwizowane plany
+            p.StartDate <= to && 
+            p.EndDate >= from);
     }
 }

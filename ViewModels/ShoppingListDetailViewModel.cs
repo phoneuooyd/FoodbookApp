@@ -13,6 +13,10 @@ public class ShoppingListDetailViewModel
     private readonly IShoppingListService _shoppingListService;
     private readonly IPlanService _planService;
     public ObservableCollection<Ingredient> Items { get; } = new();
+    public IEnumerable<Unit> Units => Enum.GetValues(typeof(Unit)).Cast<Unit>();
+
+    public ICommand AddItemCommand { get; }
+    public ICommand RemoveItemCommand { get; }
 
     public IEnumerable<Unit> Units => Enum.GetValues(typeof(Unit)).Cast<Unit>();
 
@@ -24,7 +28,6 @@ public class ShoppingListDetailViewModel
     {
         _shoppingListService = shoppingListService;
         _planService = planService;
-
 
         AddItemCommand = new Command(AddItem);
         RemoveItemCommand = new Command<Ingredient>(RemoveItem);

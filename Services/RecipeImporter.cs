@@ -10,10 +10,12 @@ namespace Foodbook.Services;
 public class RecipeImporter
 {
     private readonly HttpClient _httpClient;
+    private readonly IIngredientService _ingredientService;
 
-    public RecipeImporter(HttpClient httpClient)
+    public RecipeImporter(HttpClient httpClient, IIngredientService ingredientService)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        _ingredientService = ingredientService ?? throw new ArgumentNullException(nameof(ingredientService));
     }
 
     public async Task<Recipe> ImportFromUrlAsync(string url)
@@ -29,6 +31,9 @@ public class RecipeImporter
             Ingredients = new List<Ingredient>()
         };
 
+        // Załaduj listę dostępnych składników z bazy
+        var availableIngredients = await _ingredientService.GetIngredientsAsync();
+
         // 1. SKŁADNIKI
         var ingredientHeader = doc.DocumentNode.SelectSingleNode("//h3[contains(translate(.,'ABCDEFGHIJKLMNOPQRSTUVWXYZĄĆĘŁŃÓŚŹŻ','abcdefghijklmnopqrstuvwxyząćęłńóśźż'),'składniki')]");
         if (ingredientHeader != null)
@@ -39,7 +44,7 @@ public class RecipeImporter
             {
                 foreach (var li in ingredientList.SelectNodes("li"))
                 {
-                    var parsed = ParseIngredient(li.InnerText.Trim());
+                    var parsed = ParseIngredient(li.InnerText.Trim(), availableIngredients);
 
                     if (parsed != null)
                         recipe.Ingredients.Add(parsed);
@@ -82,7 +87,7 @@ public class RecipeImporter
         return double.TryParse(str, NumberStyles.Float, CultureInfo.InvariantCulture, out double val) ? val : 0;
     }
 
-    private Ingredient? ParseIngredient(string raw)
+    private Ingredient? ParseIngredient(string raw, List<Ingredient> availableIngredients)
     {
         // Przykłady: "1/2 burraty (62g)", "1 łyżeczka oliwy", "12-15 pomidorków"
         var quantityMatch = Regex.Match(raw, @"(\d+([.,]\d+)?(/\d+)?)(\s?[a-zA-Ząćęłńóśźż]*)?");
@@ -114,17 +119,108 @@ public class RecipeImporter
         }
 
         // Cała nazwa składnika bez ilości
-        var name = Regex.Replace(raw, @"^[\d\s/.,()-]+", "").Trim();
-
-        if (string.IsNullOrWhiteSpace(name))
+        var extractedName = Regex.Replace(raw, @"^[\d\s/.,()-]+", "").Trim();
+        
+        if (string.IsNullOrWhiteSpace(extractedName))
             return null;
 
-        return new Ingredient
+        // Próba dopasowania do istniejących składników w bazie
+        var matchedIngredient = FindBestMatch(extractedName, availableIngredients);
+        
+        var ingredient = new Ingredient
         {
-            Name = name,
             Quantity = quantity,
             Unit = unit
         };
+
+        if (matchedIngredient != null)
+        {
+            // Użyj danych z bazy
+            ingredient.Name = matchedIngredient.Name;
+            ingredient.Calories = matchedIngredient.Calories;
+            ingredient.Protein = matchedIngredient.Protein;
+            ingredient.Fat = matchedIngredient.Fat;
+            ingredient.Carbs = matchedIngredient.Carbs;
+        }
+        else
+        {
+            // Użyj pierwotnej nazwy jeśli nie znaleziono dopasowania
+            ingredient.Name = extractedName;
+            ingredient.Calories = 0;
+            ingredient.Protein = 0;
+            ingredient.Fat = 0;
+            ingredient.Carbs = 0;
+        }
+
+        return ingredient;
+    }
+
+    private Ingredient? FindBestMatch(string ingredientName, List<Ingredient> availableIngredients)
+    {
+        var normalizedName = NormalizeName(ingredientName);
+        
+        // 1. Dokładne dopasowanie (bez normalizacji)
+        var exactMatch = availableIngredients.FirstOrDefault(i => 
+            string.Equals(i.Name, ingredientName, StringComparison.OrdinalIgnoreCase));
+        if (exactMatch != null) return exactMatch;
+
+        // 2. Dokładne dopasowanie (z normalizacją)
+        var normalizedExactMatch = availableIngredients.FirstOrDefault(i => 
+            string.Equals(NormalizeName(i.Name), normalizedName, StringComparison.OrdinalIgnoreCase));
+        if (normalizedExactMatch != null) return normalizedExactMatch;
+
+        // 3. Dopasowanie zawierające (nazwa składnika zawiera się w nazwie z bazy)
+        var containsMatch = availableIngredients.FirstOrDefault(i => 
+            NormalizeName(i.Name).Contains(normalizedName, StringComparison.OrdinalIgnoreCase) ||
+            normalizedName.Contains(NormalizeName(i.Name), StringComparison.OrdinalIgnoreCase));
+        if (containsMatch != null) return containsMatch;
+
+        // 4. Podobieństwo Levenshtein (dla przypadków typu pomidor/pomidory/pomidorki)
+        var bestMatch = availableIngredients
+            .Select(i => new { Ingredient = i, Distance = LevenshteinDistance(normalizedName, NormalizeName(i.Name)) })
+            .Where(x => x.Distance <= Math.Max(2, Math.Min(normalizedName.Length, NormalizeName(x.Ingredient.Name).Length) / 3))
+            .OrderBy(x => x.Distance)
+            .FirstOrDefault();
+
+        return bestMatch?.Ingredient;
+    }
+
+    private static string NormalizeName(string name)
+    {
+        // Usuń diakrytyki, zmień na małe litery i usuń niepotrzebne znaki
+        return name.ToLowerInvariant()
+            .Replace("ą", "a").Replace("ć", "c").Replace("ę", "e")
+            .Replace("ł", "l").Replace("ń", "n").Replace("ó", "o")
+            .Replace("ś", "s").Replace("ź", "z").Replace("ż", "z")
+            .Replace("sz", "s").Replace("cz", "c").Replace("ch", "h")
+            .Replace("rz", "z").Replace("dz", "z")
+            .Trim();
+    }
+
+    private static int LevenshteinDistance(string s1, string s2)
+    {
+        if (string.IsNullOrEmpty(s1)) return s2?.Length ?? 0;
+        if (string.IsNullOrEmpty(s2)) return s1.Length;
+
+        var matrix = new int[s1.Length + 1, s2.Length + 1];
+
+        for (int i = 0; i <= s1.Length; i++)
+            matrix[i, 0] = i;
+        for (int j = 0; j <= s2.Length; j++)
+            matrix[0, j] = j;
+
+        for (int i = 1; i <= s1.Length; i++)
+        {
+            for (int j = 1; j <= s2.Length; j++)
+            {
+                int cost = s1[i - 1] == s2[j - 1] ? 0 : 1;
+                matrix[i, j] = Math.Min(
+                    Math.Min(matrix[i - 1, j] + 1, matrix[i, j - 1] + 1),
+                    matrix[i - 1, j - 1] + cost);
+            }
+        }
+
+        return matrix[s1.Length, s2.Length];
     }
 
     private string ExtractTitleFromUrl(string url)

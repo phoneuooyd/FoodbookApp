@@ -1,9 +1,7 @@
 using Foodbook.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Maui.Storage;
-using System.IO;
 using Newtonsoft.Json;
-using System.Linq;
 using System.Reflection;
 
 namespace Foodbook.Data
@@ -47,42 +45,151 @@ namespace Foodbook.Data
 
         public static async Task SeedIngredientsAsync(AppDbContext context)
         {
-            // Skip seeding if any ingredients already exist
             if (await context.Ingredients.AnyAsync())
                 return;
 
             try
             {
                 var ingredients = await LoadPopularIngredientsAsync();
-                
-                // Set RecipeId to null explicitly for standalone ingredients
+
                 foreach (var ingredient in ingredients)
                 {
                     ingredient.RecipeId = null;
                 }
-                
+
                 context.Ingredients.AddRange(ingredients);
                 await context.SaveChangesAsync();
-                
                 System.Diagnostics.Debug.WriteLine($"Successfully added {ingredients.Count} ingredients to database");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error seeding ingredients: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-                
-                // Add at least a few basic ingredients as fallback
-                var basicIngredients = new List<Ingredient>
+            }
+        }
+
+        /// <summary>
+        /// Publiczna metoda do weryfikacji i aktualizacji danych składnika z OpenFoodFacts
+        /// </summary>
+        /// <param name="ingredient">Składnik do zaktualizowania</param>
+        /// <returns>True jeśli dane zostały zaktualizowane, False w przeciwnym przypadku</returns>
+        public static async Task<bool> UpdateIngredientWithOpenFoodFactsAsync(Ingredient ingredient)
+        {
+            using var httpClient = new HttpClient();
+            
+            var url = $"https://world.openfoodfacts.org/cgi/search.pl?search_terms={Uri.EscapeDataString(ingredient.Name)}&search_simple=1&json=1";
+
+            try
+            {
+                var response = await httpClient.GetAsync(url);
+                if (!response.IsSuccessStatusCode) 
                 {
-                    new Ingredient { Name = "Jajka", Quantity = 1, Unit = Unit.Piece, Calories = 155, Protein = 13, Fat = 11, Carbs = 1, RecipeId = null },
-                    new Ingredient { Name = "Mleko", Quantity = 100, Unit = Unit.Milliliter, Calories = 150, Protein = 7, Fat = 8, Carbs = 5, RecipeId = null },
-                    new Ingredient { Name = "Mąka", Quantity = 100, Unit = Unit.Gram, Calories = 100, Protein = 2, Fat = 2, Carbs = 10, RecipeId = null },
-                    new Ingredient { Name = "Cukier", Quantity = 100, Unit = Unit.Gram, Calories = 100, Protein = 2, Fat = 2, Carbs = 10, RecipeId = null },
-                    new Ingredient { Name = "Sól", Quantity = 100, Unit = Unit.Gram, Calories = 100, Protein = 2, Fat = 2, Carbs = 10, RecipeId = null }
-                };
+                    System.Diagnostics.Debug.WriteLine($"❌ {ingredient.Name}: HTTP błąd {response.StatusCode}");
+                    return false;
+                }
+
+                var content = await response.Content.ReadAsStringAsync();
+                dynamic? result = JsonConvert.DeserializeObject(content);
                 
-                context.Ingredients.AddRange(basicIngredients);
-                await context.SaveChangesAsync();
+                // Sprawdź czy znaleziono produkty
+                if (result?.products == null || result.products.Count == 0) 
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ {ingredient.Name}: Nie znaleziono produktu w OpenFoodFacts");
+                    return false;
+                }
+
+                var product = result.products[0];
+                var nutriments = product.nutriments;
+
+                // Sprawdź czy nutriments istnieją
+                if (nutriments == null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ {ingredient.Name}: Brak danych odżywczych w znalezionym produkcie");
+                    return false;
+                }
+
+                // Funkcja pomocnicza do bezpiecznego pobierania wartości
+                double TryGet(dynamic src, string key)
+                {
+                    try
+                    {
+                        var value = src?[key];
+                        if (value == null) return -1; // -1 oznacza brak danych
+                        
+                        if (double.TryParse(value.ToString(), out double parsed))
+                            return parsed;
+                        
+                        return -1; // Nie można sparsować
+                    }
+                    catch
+                    {
+                        return -1; // Błąd podczas dostępu
+                    }
+                }
+
+                // Zapisz oryginalne wartości
+                var oldCalories = ingredient.Calories;
+                var oldProtein = ingredient.Protein;
+                var oldFat = ingredient.Fat;
+                var oldCarbs = ingredient.Carbs;
+
+                // Pobierz nowe wartości
+                var newCalories = TryGet(nutriments, "energy-kcal_100g");
+                var newProtein = TryGet(nutriments, "proteins_100g");
+                var newFat = TryGet(nutriments, "fat_100g");
+                var newCarbs = TryGet(nutriments, "carbohydrates_100g");
+
+                // Sprawdź czy udało się pobrać chociaż jedną wartość odżywczą
+                bool hasValidData = newCalories >= 0 || newProtein >= 0 || newFat >= 0 || newCarbs >= 0;
+                
+                if (!hasValidData)
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ {ingredient.Name}: Znaleziono produkt, ale brak prawidłowych danych odżywczych");
+                    return false;
+                }
+
+                // Aktualizuj tylko te wartości, które zostały znalezione (>=0)
+                bool wasUpdated = false;
+                
+                if (newCalories >= 0 && Math.Abs(oldCalories - newCalories) > 0.1)
+                {
+                    ingredient.Calories = newCalories;
+                    wasUpdated = true;
+                }
+                
+                if (newProtein >= 0 && Math.Abs(oldProtein - newProtein) > 0.1)
+                {
+                    ingredient.Protein = newProtein;
+                    wasUpdated = true;
+                }
+                
+                if (newFat >= 0 && Math.Abs(oldFat - newFat) > 0.1)
+                {
+                    ingredient.Fat = newFat;
+                    wasUpdated = true;
+                }
+                
+                if (newCarbs >= 0 && Math.Abs(oldCarbs - newCarbs) > 0.1)
+                {
+                    ingredient.Carbs = newCarbs;
+                    wasUpdated = true;
+                }
+
+                if (wasUpdated)
+                {
+                    System.Diagnostics.Debug.WriteLine($"✅ {ingredient.Name} → kcal: {ingredient.Calories}, P: {ingredient.Protein}, F: {ingredient.Fat}, C: {ingredient.Carbs}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"ℹ️ {ingredient.Name}: Dane z OpenFoodFacts są identyczne z obecnymi");
+                }
+                
+                return wasUpdated;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ {ingredient.Name}: {ex.Message}");
+                return false;
             }
         }
 
@@ -100,14 +207,13 @@ namespace Foodbook.Data
         private static async Task<List<Ingredient>> LoadPopularIngredientsAsync()
         {
             string json;
-            
-            // Metoda 1: Próba odczytu jako embedded resource
+
             try
             {
                 var assembly = Assembly.GetExecutingAssembly();
                 var resourceName = assembly.GetManifestResourceNames()
                     .FirstOrDefault(name => name.EndsWith("ingredients.json"));
-                
+
                 if (!string.IsNullOrEmpty(resourceName))
                 {
                     using var stream = assembly.GetManifestResourceStream(resourceName);
@@ -121,7 +227,6 @@ namespace Foodbook.Data
             }
             catch
             {
-                // Metoda 2: Próba odczytu z FileSystem (oryginalny sposób)
                 try
                 {
                     using var stream = await FileSystem.OpenAppPackageFileAsync("ingredients.json");
@@ -130,48 +235,28 @@ namespace Foodbook.Data
                 }
                 catch
                 {
-                    // Metoda 3: Próba tradycyjnego odczytu pliku
-                    try
+                    string[] paths = new[]
                     {
-                        using var stream = await FileSystem.Current.OpenAppPackageFileAsync("ingredients.json");
-                        using var reader = new StreamReader(stream);
-                        json = await reader.ReadToEndAsync();
-                    }
-                    catch
+                        Path.Combine(AppContext.BaseDirectory, "ingredients.json"),
+                        Path.Combine(Environment.CurrentDirectory, "ingredients.json")
+                    };
+
+                    json = null;
+                    foreach (var path in paths)
                     {
-                        // Metoda 4: Próba odczytu z różnych lokalizacji
-                        var possiblePaths = new[]
+                        if (File.Exists(path))
                         {
-                            Path.Combine(AppContext.BaseDirectory, "ingredients.json"),
-                            Path.Combine(AppContext.BaseDirectory, "Resources", "Raw", "ingredients.json"),
-                            Path.Combine(Environment.CurrentDirectory, "ingredients.json"),
-                            Path.Combine(Environment.CurrentDirectory, "Resources", "Raw", "ingredients.json")
-                        };
-
-                        json = null;
-                        foreach (var path in possiblePaths)
-                        {
-                            try
-                            {
-                                if (File.Exists(path))
-                                {
-                                    json = await File.ReadAllTextAsync(path);
-                                    break;
-                                }
-                            }
-                            catch { continue; }
-                        }
-
-                        if (string.IsNullOrEmpty(json))
-                        {
-                            throw new FileNotFoundException("ingredients.json nie został znaleziony w żadnej z lokalizacji");
+                            json = await File.ReadAllTextAsync(path);
+                            break;
                         }
                     }
+
+                    if (string.IsNullOrEmpty(json))
+                        throw new FileNotFoundException("ingredients.json not found in known locations");
                 }
             }
 
             var infos = JsonConvert.DeserializeObject<List<IngredientInfo>>(json) ?? new();
-
             var ingredients = infos.Select(i => new Ingredient
             {
                 Name = i.Name,
@@ -184,7 +269,16 @@ namespace Foodbook.Data
                 RecipeId = null
             }).ToList();
 
+            await UpdateWithOpenFoodFactsDataAsync(ingredients);
             return ingredients;
+        }
+
+        private static async Task UpdateWithOpenFoodFactsDataAsync(List<Ingredient> ingredients)
+        {
+            foreach (var ingredient in ingredients)
+            {
+                await UpdateIngredientWithOpenFoodFactsAsync(ingredient);
+            }
         }
 
         private static Unit ParseUnit(string unitString)

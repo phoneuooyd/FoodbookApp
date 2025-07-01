@@ -117,7 +117,9 @@ public class PlannerViewModel : INotifyPropertyChanged
     private void AddMeal(PlannerDay? day)
     {
         if (day == null) return;
-        day.Meals.Add(new PlannedMeal { Date = day.Date, Portions = 1 });
+        var meal = new PlannedMeal { Date = day.Date, Portions = 1 };
+        meal.PropertyChanged += OnMealRecipeChanged;
+        day.Meals.Add(meal);
     }
 
     private void RemoveMeal(PlannedMeal? meal)
@@ -125,7 +127,10 @@ public class PlannerViewModel : INotifyPropertyChanged
         if (meal == null) return;
         var day = Days.FirstOrDefault(d => d.Meals.Contains(meal));
         if (day != null)
+        {
+            meal.PropertyChanged -= OnMealRecipeChanged;
             day.Meals.Remove(meal);
+        }
     }
 
     private void AdjustMealsPerDay()
@@ -133,14 +138,40 @@ public class PlannerViewModel : INotifyPropertyChanged
         foreach (var day in Days)
         {
             while (day.Meals.Count < MealsPerDay)
-                day.Meals.Add(new PlannedMeal { Date = day.Date, Portions = 1 });
+            {
+                var meal = new PlannedMeal { Date = day.Date, Portions = 1 };
+                meal.PropertyChanged += OnMealRecipeChanged;
+                day.Meals.Add(meal);
+            }
             while (day.Meals.Count > MealsPerDay)
+            {
+                var mealToRemove = day.Meals[day.Meals.Count - 1];
+                mealToRemove.PropertyChanged -= OnMealRecipeChanged;
                 day.Meals.RemoveAt(day.Meals.Count - 1);
+            }
+        }
+    }
+
+    private void OnMealRecipeChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(PlannedMeal.Recipe) && sender is PlannedMeal meal && meal.Recipe != null)
+        {
+            // Ustaw domyślną liczbę porcji z przepisu
+            meal.Portions = meal.Recipe.IloscPorcji;
         }
     }
 
     private void Reset()
     {
+        // Usuń event handlery przed czyszczeniem
+        foreach (var day in Days)
+        {
+            foreach (var meal in day.Meals)
+            {
+                meal.PropertyChanged -= OnMealRecipeChanged;
+            }
+        }
+
         _startDate = DateTime.Today;
         _endDate = DateTime.Today.AddDays(6);
         OnPropertyChanged(nameof(StartDate));
@@ -226,6 +257,16 @@ public class PlannerViewModel : INotifyPropertyChanged
         {
             meal.Portions++;
         }
+
+    }
+
+    private void DecreasePortions(PlannedMeal? meal)
+    {
+        if (meal != null && meal.Portions > 1)
+        {
+            meal.Portions--;
+        }
+
     }
 
     private void DecreasePortions(PlannedMeal? meal)

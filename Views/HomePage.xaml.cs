@@ -18,5 +18,11 @@ public partial class HomePage : ContentPage
         if (ViewModel != null)
             await ViewModel.LoadAsync();
     }
+
+    private async void OnArchiveClicked(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync(nameof(ArchivePage));
+    }
+
 }
 

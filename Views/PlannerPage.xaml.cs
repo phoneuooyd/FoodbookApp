@@ -25,7 +25,6 @@ namespace Foodbook.Views
             if (_viewModel?.CancelCommand?.CanExecute(null) == true)
                 _viewModel.CancelCommand.Execute(null);
             return true;
-
         }
     }
 }

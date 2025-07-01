@@ -28,5 +28,4 @@ public partial class ShoppingListDetailPage : ContentPage
         Shell.Current.GoToAsync("..");
         return true;
     }
-
 }
