@@ -1,9 +1,7 @@
 using Foodbook.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Maui.Storage;
-using System.IO;
 using Newtonsoft.Json;
-using System.Linq;
 using System.Reflection;
 
 namespace Foodbook.Data
@@ -47,42 +45,77 @@ namespace Foodbook.Data
 
         public static async Task SeedIngredientsAsync(AppDbContext context)
         {
-            // Skip seeding if any ingredients already exist
             if (await context.Ingredients.AnyAsync())
                 return;
 
             try
             {
                 var ingredients = await LoadPopularIngredientsAsync();
-                
-                // Set RecipeId to null explicitly for standalone ingredients
+
                 foreach (var ingredient in ingredients)
                 {
                     ingredient.RecipeId = null;
                 }
-                
+
                 context.Ingredients.AddRange(ingredients);
                 await context.SaveChangesAsync();
-                
                 System.Diagnostics.Debug.WriteLine($"Successfully added {ingredients.Count} ingredients to database");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error seeding ingredients: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+            }
+        }
+
+        /// <summary>
+        /// Publiczna metoda do weryfikacji i aktualizacji danych składnika z OpenFoodFacts
+        /// </summary>
+        /// <param name="ingredient">Składnik do zaktualizowania</param>
+        /// <returns>True jeśli dane zostały zaktualizowane, False w przeciwnym przypadku</returns>
+        public static async Task<bool> UpdateIngredientWithOpenFoodFactsAsync(Ingredient ingredient)
+        {
+            using var httpClient = new HttpClient();
+            
+            var url = $"https://world.openfoodfacts.org/cgi/search.pl?search_terms={Uri.EscapeDataString(ingredient.Name)}&search_simple=1&json=1";
+
+            try
+            {
+                var response = await httpClient.GetAsync(url);
+                if (!response.IsSuccessStatusCode) return false;
+
+                var content = await response.Content.ReadAsStringAsync();
+                dynamic? result = JsonConvert.DeserializeObject(content);
+                if (result?.products == null || result.products.Count == 0) return false;
+
+                var product = result.products[0];
+                var nutriments = product.nutriments;
+
+                double TryGet(dynamic src, string key) =>
+                    double.TryParse((string?)src?[key], out var val) ? val : 0;
+
+                var oldCalories = ingredient.Calories;
+                var oldProtein = ingredient.Protein;
+                var oldFat = ingredient.Fat;
+                var oldCarbs = ingredient.Carbs;
+
+                ingredient.Calories = TryGet(nutriments, "energy-kcal_100g");
+                ingredient.Protein = TryGet(nutriments, "proteins_100g");
+                ingredient.Fat = TryGet(nutriments, "fat_100g");
+                ingredient.Carbs = TryGet(nutriments, "carbohydrates_100g");
+
+                System.Diagnostics.Debug.WriteLine($"✅ {ingredient.Name} → kcal: {ingredient.Calories}, P: {ingredient.Protein}, F: {ingredient.Fat}, C: {ingredient.Carbs}");
                 
-                // Add at least a few basic ingredients as fallback
-                var basicIngredients = new List<Ingredient>
-                {
-                    new Ingredient { Name = "Jajka", Quantity = 1, Unit = Unit.Piece, Calories = 155, Protein = 13, Fat = 11, Carbs = 1, RecipeId = null },
-                    new Ingredient { Name = "Mleko", Quantity = 100, Unit = Unit.Milliliter, Calories = 150, Protein = 7, Fat = 8, Carbs = 5, RecipeId = null },
-                    new Ingredient { Name = "Mąka", Quantity = 100, Unit = Unit.Gram, Calories = 100, Protein = 2, Fat = 2, Carbs = 10, RecipeId = null },
-                    new Ingredient { Name = "Cukier", Quantity = 100, Unit = Unit.Gram, Calories = 100, Protein = 2, Fat = 2, Carbs = 10, RecipeId = null },
-                    new Ingredient { Name = "Sól", Quantity = 100, Unit = Unit.Gram, Calories = 100, Protein = 2, Fat = 2, Carbs = 10, RecipeId = null }
-                };
-                
-                context.Ingredients.AddRange(basicIngredients);
-                await context.SaveChangesAsync();
+                // Zwróć true jeśli dane się zmieniły
+                return oldCalories != ingredient.Calories || 
+                       oldProtein != ingredient.Protein || 
+                       oldFat != ingredient.Fat || 
+                       oldCarbs != ingredient.Carbs;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ {ingredient.Name}: {ex.Message}");
+                return false;
             }
         }
 
@@ -100,14 +133,13 @@ namespace Foodbook.Data
         private static async Task<List<Ingredient>> LoadPopularIngredientsAsync()
         {
             string json;
-            
-            // Metoda 1: Próba odczytu jako embedded resource
+
             try
             {
                 var assembly = Assembly.GetExecutingAssembly();
                 var resourceName = assembly.GetManifestResourceNames()
                     .FirstOrDefault(name => name.EndsWith("ingredients.json"));
-                
+
                 if (!string.IsNullOrEmpty(resourceName))
                 {
                     using var stream = assembly.GetManifestResourceStream(resourceName);
@@ -121,7 +153,6 @@ namespace Foodbook.Data
             }
             catch
             {
-                // Metoda 2: Próba odczytu z FileSystem (oryginalny sposób)
                 try
                 {
                     using var stream = await FileSystem.OpenAppPackageFileAsync("ingredients.json");
@@ -130,48 +161,28 @@ namespace Foodbook.Data
                 }
                 catch
                 {
-                    // Metoda 3: Próba tradycyjnego odczytu pliku
-                    try
+                    string[] paths = new[]
                     {
-                        using var stream = await FileSystem.Current.OpenAppPackageFileAsync("ingredients.json");
-                        using var reader = new StreamReader(stream);
-                        json = await reader.ReadToEndAsync();
-                    }
-                    catch
+                        Path.Combine(AppContext.BaseDirectory, "ingredients.json"),
+                        Path.Combine(Environment.CurrentDirectory, "ingredients.json")
+                    };
+
+                    json = null;
+                    foreach (var path in paths)
                     {
-                        // Metoda 4: Próba odczytu z różnych lokalizacji
-                        var possiblePaths = new[]
+                        if (File.Exists(path))
                         {
-                            Path.Combine(AppContext.BaseDirectory, "ingredients.json"),
-                            Path.Combine(AppContext.BaseDirectory, "Resources", "Raw", "ingredients.json"),
-                            Path.Combine(Environment.CurrentDirectory, "ingredients.json"),
-                            Path.Combine(Environment.CurrentDirectory, "Resources", "Raw", "ingredients.json")
-                        };
-
-                        json = null;
-                        foreach (var path in possiblePaths)
-                        {
-                            try
-                            {
-                                if (File.Exists(path))
-                                {
-                                    json = await File.ReadAllTextAsync(path);
-                                    break;
-                                }
-                            }
-                            catch { continue; }
-                        }
-
-                        if (string.IsNullOrEmpty(json))
-                        {
-                            throw new FileNotFoundException("ingredients.json nie został znaleziony w żadnej z lokalizacji");
+                            json = await File.ReadAllTextAsync(path);
+                            break;
                         }
                     }
+
+                    if (string.IsNullOrEmpty(json))
+                        throw new FileNotFoundException("ingredients.json not found in known locations");
                 }
             }
 
             var infos = JsonConvert.DeserializeObject<List<IngredientInfo>>(json) ?? new();
-
             var ingredients = infos.Select(i => new Ingredient
             {
                 Name = i.Name,
@@ -184,7 +195,16 @@ namespace Foodbook.Data
                 RecipeId = null
             }).ToList();
 
+            await UpdateWithOpenFoodFactsDataAsync(ingredients);
             return ingredients;
+        }
+
+        private static async Task UpdateWithOpenFoodFactsDataAsync(List<Ingredient> ingredients)
+        {
+            foreach (var ingredient in ingredients)
+            {
+                await UpdateIngredientWithOpenFoodFactsAsync(ingredient);
+            }
         }
 
         private static Unit ParseUnit(string unitString)

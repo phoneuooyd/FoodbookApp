@@ -47,16 +47,25 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     
     public string RecipeInfo => IsPartOfRecipe ? "Ten sk³adnik jest czêœci¹ przepisu" : string.Empty;
 
+    // Status weryfikacji OpenFoodFacts
+    public string VerificationStatus { get => _verificationStatus; set { _verificationStatus = value; OnPropertyChanged(); } }
+    private string _verificationStatus = string.Empty;
+
+    public bool IsVerifying { get => _isVerifying; set { _isVerifying = value; OnPropertyChanged(); } }
+    private bool _isVerifying = false;
+
     public IEnumerable<Unit> Units { get; } = Enum.GetValues(typeof(Unit)).Cast<Unit>();
 
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
+    public ICommand VerifyNutritionCommand { get; } // Nowa komenda
 
     public IngredientFormViewModel(IIngredientService service)
     {
         _service = service;
         SaveCommand = new Command(async () => await SaveAsync(), CanSave);
         CancelCommand = new Command(async () => await CancelAsync());
+        VerifyNutritionCommand = new Command(async () => await VerifyNutritionAsync(), () => !string.IsNullOrWhiteSpace(Name) && !IsVerifying);
         ValidateInput();
     }
 
@@ -88,6 +97,81 @@ public class IngredientFormViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             ValidationMessage = $"B³¹d podczas ³adowania sk³adnika: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Weryfikuje wartoœci od¿ywcze sk³adnika z OpenFoodFacts
+    /// </summary>
+    private async Task VerifyNutritionAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Name))
+        {
+            VerificationStatus = "WprowadŸ nazwê sk³adnika przed weryfikacj¹";
+            return;
+        }
+
+        try
+        {
+            IsVerifying = true;
+            VerificationStatus = "Weryfikujê dane w OpenFoodFacts...";
+            ((Command)VerifyNutritionCommand).ChangeCanExecute();
+
+            // Zapisz oryginalne wartoœci
+            var originalCalories = double.TryParse(Calories, out var cal) ? cal : 0;
+            var originalProtein = double.TryParse(Protein, out var prot) ? prot : 0;
+            var originalFat = double.TryParse(Fat, out var fat) ? fat : 0;
+            var originalCarbs = double.TryParse(Carbs, out var carbs) ? carbs : 0;
+
+            // Stwórz tymczasowy sk³adnik do weryfikacji
+            var tempIngredient = new Ingredient
+            {
+                Name = Name.Trim(),
+                Calories = originalCalories,
+                Protein = originalProtein,
+                Fat = originalFat,
+                Carbs = originalCarbs
+            };
+
+            // U¿yj publicznej metody z SeedData
+            bool wasUpdated = await Data.SeedData.UpdateIngredientWithOpenFoodFactsAsync(tempIngredient);
+
+            if (wasUpdated)
+            {
+                // Aktualizuj pola w ViewModelu
+                Calories = tempIngredient.Calories.ToString("F1");
+                Protein = tempIngredient.Protein.ToString("F1");
+                Fat = tempIngredient.Fat.ToString("F1");
+                Carbs = tempIngredient.Carbs.ToString("F1");
+
+                VerificationStatus = $"? Zaktualizowano dane dla '{Name}'";
+                
+                await Shell.Current.DisplayAlert(
+                    "Weryfikacja sk³adnika", 
+                    $"Zaktualizowano dane dla '{Name}':\n" +
+                    $"Kalorie: {originalCalories:F1} ? {tempIngredient.Calories:F1}\n" +
+                    $"Bia³ko: {originalProtein:F1} ? {tempIngredient.Protein:F1}g\n" +
+                    $"T³uszcze: {originalFat:F1} ? {tempIngredient.Fat:F1}g\n" +
+                    $"Wêglowodany: {originalCarbs:F1} ? {tempIngredient.Carbs:F1}g", 
+                    "OK");
+            }
+            else
+            {
+                VerificationStatus = $"? Nie znaleziono danych dla '{Name}' w OpenFoodFacts";
+            }
+        }
+        catch (Exception ex)
+        {
+            VerificationStatus = $"? B³¹d weryfikacji: {ex.Message}";
+            await Shell.Current.DisplayAlert(
+                "B³¹d weryfikacji", 
+                $"Wyst¹pi³ b³¹d podczas weryfikacji sk³adnika '{Name}': {ex.Message}", 
+                "OK");
+        }
+        finally
+        {
+            IsVerifying = false;
+            ((Command)VerifyNutritionCommand).ChangeCanExecute();
         }
     }
 
@@ -137,6 +221,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
 
         OnPropertyChanged(nameof(HasValidationError));
         ((Command)SaveCommand).ChangeCanExecute();
+        ((Command)VerifyNutritionCommand).ChangeCanExecute();
     }
 
     private async Task SaveAsync()

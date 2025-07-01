@@ -165,6 +165,25 @@
                                             FontSize="16"
                                             CornerRadius="6"
                                             VerticalOptions="End" />
+
+                                    <!-- Wartości odżywcze składnika (opcjonalne wyświetlanie) -->
+                                    <StackLayout Grid.Row="1" Grid.ColumnSpan="4" 
+                                                 Orientation="Horizontal" 
+                                                 Spacing="15"
+                                                 Margin="0,5,0,0">
+                                        <Label Text="{Binding Calories, StringFormat='⚡ {0:F1} kcal'}" 
+                                               FontSize="11" 
+                                               TextColor="Gray" />
+                                        <Label Text="{Binding Protein, StringFormat='🥩 {0:F1}g'}" 
+                                               FontSize="11" 
+                                               TextColor="Gray" />
+                                        <Label Text="{Binding Fat, StringFormat='🧈 {0:F1}g'}" 
+                                               FontSize="11" 
+                                               TextColor="Gray" />
+                                        <Label Text="{Binding Carbs, StringFormat='🌾 {0:F1}g'}" 
+                                               FontSize="11" 
+                                               TextColor="Gray" />
+                                    </StackLayout>
                                 </Grid>
                             </Border>
                         </DataTemplate>
