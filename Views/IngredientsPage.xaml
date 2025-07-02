@@ -4,10 +4,11 @@
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:converters="clr-namespace:Foodbook.Converters"
+             xmlns:resx="clr-namespace:FoodbookApp.Resources"
              x:Class="Foodbook.Views.IngredientsPage"
              x:Name="ThisPage"
              x:DataType="vm:IngredientsViewModel"
-             Title="Składniki">
+             Title="{x:Static resx:IngredientsPage.Title}">
 
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
@@ -15,7 +16,7 @@
     </ContentPage.Resources>
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="🔍 Weryfikuj wszystkie"
+        <ToolbarItem Text="{x:Static resx:IngredientsPage.VerifyAll}"
                      Command="{Binding BulkVerifyCommand}"
                      Order="Primary" />
     </ContentPage.ToolbarItems>
@@ -30,9 +31,9 @@
                           Margin="10" />
 
         <!-- Search bar -->
-        <SearchBar Grid.Row="1" 
+        <SearchBar Grid.Row="1"
                    Text="{Binding SearchText}"
-                   Placeholder="Szukaj składników..."
+                   Placeholder="{x:Static resx:IngredientsPage.SearchPlaceholder}"
                    Margin="10,0"
                    IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
 
@@ -71,14 +72,14 @@
                       ColumnDefinitions="*,Auto" 
                       ColumnSpacing="10"
                       Margin="10">
-                    <Button Grid.Column="0" 
-                            Text="➕ Dodaj składnik" 
+                    <Button Grid.Column="0"
+                            Text="{x:Static resx:IngredientsPage.AddIngredient}"
                             Command="{Binding AddCommand}"
                             BackgroundColor="{DynamicResource Primary}"
                             TextColor="White"
                             HeightRequest="45" />
                     <Button Grid.Column="1"
-                            Text="🔍 Weryfikuj"
+                            Text="{x:Static resx:IngredientsPage.Verify}"
                             Command="{Binding BulkVerifyCommand}"
                             BackgroundColor="Green"
                             TextColor="White"
@@ -94,7 +95,7 @@
                     <Frame BackgroundColor="LightBlue" 
                            Padding="10" 
                            CornerRadius="6">
-                        <Label Text="💡 Użyj przycisku 'Weryfikuj' aby zaktualizować wartości odżywcze wszystkich składników z bazy OpenFoodFacts"
+                        <Label Text="{x:Static resx:IngredientsPage.BulkHint}"
                                FontSize="12"
                                HorizontalTextAlignment="Center" />
                     </Frame>
@@ -198,12 +199,12 @@
                     
                     <CollectionView.EmptyView>
                         <StackLayout HorizontalOptions="Center" VerticalOptions="Center" Padding="20">
-                            <Label Text="Brak składników" 
-                                   FontSize="18" 
+                            <Label Text="{x:Static resx:IngredientsPage.NoIngredients}"
+                                   FontSize="18"
                                    HorizontalOptions="Center"
                                    TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-                            <Label Text="Dotknij 'Dodaj składnik' aby dodać pierwszy składnik" 
-                                   FontSize="14" 
+                            <Label Text="{x:Static resx:IngredientsPage.TapToAdd}"
+                                   FontSize="14"
                                    HorizontalOptions="Center"
                                    TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
                                    Margin="0,10,0,0" />

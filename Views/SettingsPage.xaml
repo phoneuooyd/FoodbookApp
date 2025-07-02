@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Foodbook.ViewModels"
+             xmlns:resx="clr-namespace:FoodbookApp.Resources"
+             x:Class="Foodbook.Views.SettingsPage"
+             x:DataType="vm:SettingsViewModel"
+             Title="{x:Static resx:SettingsPage.Title}">
+    <VerticalStackLayout Padding="20" Spacing="15">
+        <Label Text="{x:Static resx:SettingsPage.SelectLanguage}" FontAttributes="Bold" />
+        <Picker ItemsSource="{Binding Languages}" ItemDisplayBinding="{Binding DisplayName}" SelectedItem="{Binding SelectedLanguage}" />
+        <Button Text="{x:Static resx:SettingsPage.Apply}" Command="{Binding ApplyLanguageCommand}" />
+    </VerticalStackLayout>
+</ContentPage>

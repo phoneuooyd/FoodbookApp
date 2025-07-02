@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="Title" xml:space="preserve"><value>Shopping lists</value></data>
+  <data name="EmptyTitle" xml:space="preserve"><value>No shopping lists</value></data>
+  <data name="EmptyHint" xml:space="preserve"><value>To create a list, go to Planner and plan meals, then save the plan.</value></data>
+  <data name="GoToPlanner" xml:space="preserve"><value>📅 Go to Planner</value></data>
+  <data name="From" xml:space="preserve"><value>From:</value></data>
+  <data name="To" xml:space="preserve"><value>To:</value></data>
+</root>

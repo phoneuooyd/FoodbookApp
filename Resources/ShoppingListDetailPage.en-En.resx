@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="Title" xml:space="preserve"><value>Shopping list</value></data>
+  <data name="IngredientName" xml:space="preserve"><value>Ingredient name</value></data>
+  <data name="Quantity" xml:space="preserve"><value>Quantity</value></data>
+  <data name="Unit" xml:space="preserve"><value>Unit</value></data>
+  <data name="Actions" xml:space="preserve"><value>Actions</value></data>
+  <data name="NamePlaceholder" xml:space="preserve"><value>Name</value></data>
+  <data name="AddItem" xml:space="preserve"><value>Add ingredient</value></data>
+</root>

@@ -67,7 +67,14 @@
         <!-- JSON Data Files -->
         <!-- Other data files -->
         <MauiAsset Include="Resources\Data\**" Exclude="Resources\Data\ingredients.json" LogicalName="Data/%(RecursiveDir)%(Filename)%(Extension)" />
-	</ItemGroup>
+        </ItemGroup>
+
+        <ItemGroup>
+                <EmbeddedResource Update="Resources\*.resx">
+                        <Generator>ResXFileCodeGenerator</Generator>
+                        <CustomToolNamespace>FoodbookApp.Resources</CustomToolNamespace>
+                </EmbeddedResource>
+        </ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="HtmlAgilityPack" Version="1.12.1" />
