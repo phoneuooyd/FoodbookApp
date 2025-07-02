@@ -48,4 +48,13 @@
   <data name="Info" xml:space="preserve">
     <value>Planowanie posiłków wkrótce</value>
   </data>
+  <data name="Language" xml:space="preserve">
+    <value>Język</value>
+  </data>
+  <data name="Polish" xml:space="preserve">
+    <value>Polski</value>
+  </data>
+  <data name="English" xml:space="preserve">
+    <value>Angielski</value>
+  </data>
 </root>

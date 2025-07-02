@@ -1,7 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
   <data name="WelcomeTitle" xml:space="preserve">
-    <value>🍽️ Welcome to Foodbook</value>
+    <value>??? Welcome to Foodbook</value>
   </data>
   <data name="WelcomeSubtitle" xml:space="preserve">
     <value>Your personal culinary assistant</value>
@@ -30,11 +42,17 @@
   <data name="Settings" xml:space="preserve">
     <value>Settings</value>
   </data>
+  <data name="SettingsDescription" xml:space="preserve">
+    <value>Customize language and app preferences</value>
+  </data>
+  <data name="OpenSettings" xml:space="preserve">
+    <value>Open Settings</value>
+  </data>
   <data name="ComingSoon" xml:space="preserve">
-    <value>Coming soon</value>
+    <value>Coming Soon</value>
   </data>
   <data name="NutritionStats" xml:space="preserve">
-    <value>Diet statistics</value>
+    <value>Diet Statistics</value>
   </data>
   <data name="Calories" xml:space="preserve">
     <value>Calories</value>
@@ -43,9 +61,18 @@
     <value>Protein</value>
   </data>
   <data name="Carbs" xml:space="preserve">
-    <value>Carbohydrates</value>
+    <value>Carbs</value>
   </data>
   <data name="Info" xml:space="preserve">
-    <value>Plan meals to see statistics</value>
+    <value>Meal planning coming soon</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="Polish" xml:space="preserve">
+    <value>Polish</value>
+  </data>
+  <data name="English" xml:space="preserve">
+    <value>English</value>
   </data>
 </root>

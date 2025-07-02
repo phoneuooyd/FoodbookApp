@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Foodbook.ViewModels"
+             xmlns:resx="clr-namespace:FoodbookApp.Resources"
+             x:Class="Foodbook.Views.SettingsPage"
+             x:DataType="vm:SettingsViewModel"
+             Title="{x:Static resx:SettingsPage.Title}"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}">
+
+    <ContentPage.Resources>
+        <!-- Settings Card Style -->
+        <Style x:Key="SettingsCardStyle" TargetType="Frame">
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}" />
+            <Setter Property="HasShadow" Value="True" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Padding" Value="20" />
+            <Setter Property="Margin" Value="12,8" />
+            <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+        </Style>
+        
+        <!-- Section Title Style -->
+        <Style x:Key="SectionTitleStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="{DynamicResource Primary}" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+        </Style>
+        
+        <!-- Setting Label Style -->
+        <Style x:Key="SettingLabelStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray700}, Dark={StaticResource Gray300}}" />
+            <Setter Property="VerticalOptions" Value="Center" />
+        </Style>
+        
+        <!-- Setting Description Style -->
+        <Style x:Key="SettingDescriptionStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" />
+            <Setter Property="Margin" Value="0,2,0,0" />
+        </Style>
+    </ContentPage.Resources>
+
+    <ScrollView BackgroundColor="Transparent">
+        <StackLayout Padding="16" Spacing="12" BackgroundColor="Transparent">
+            
+            <!-- Header -->
+            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}" 
+                   CornerRadius="20" 
+                   HasShadow="True"
+                   Margin="0,0,0,20"
+                   Padding="20,16">
+                <StackLayout>
+                    <Label Text="{x:Static resx:SettingsPage.Title}"
+                           FontSize="26"
+                           FontAttributes="Bold"
+                           HorizontalTextAlignment="Center"
+                           TextColor="{DynamicResource Primary}"
+                           Margin="0,4" />
+                    <Label Text="{x:Static resx:SettingsPage.Subtitle}"
+                           FontSize="14"
+                           HorizontalTextAlignment="Center"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}"
+                           Margin="0,0,0,4" />
+                </StackLayout>
+            </Frame>
+
+            <!-- Language Settings Card -->
+            <Frame Style="{StaticResource SettingsCardStyle}">
+                <StackLayout>
+                    <StackLayout Orientation="Horizontal" Spacing="8" Margin="0,0,0,16">
+                        <Label Text="" FontSize="24" VerticalOptions="Center" />
+                        <Label Text="{x:Static resx:SettingsPage.LanguageSection}" Style="{StaticResource SectionTitleStyle}" Margin="0" />
+                    </StackLayout>
+                    
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                        <StackLayout Grid.Column="0">
+                            <Label Text="{x:Static resx:SettingsPage.LanguageLabel}" Style="{StaticResource SettingLabelStyle}" />
+                            <Label Text="{x:Static resx:SettingsPage.LanguageDescription}" Style="{StaticResource SettingDescriptionStyle}" />
+                        </StackLayout>
+                        
+                        <Picker Grid.Column="1"
+                                x:Name="LanguagePicker"
+                                ItemsSource="{Binding AvailableLanguages}"
+                                ItemDisplayBinding="{Binding Name}"
+                                FontSize="14"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}"
+                                TextColor="{AppThemeBinding Light={StaticResource Gray800}, Dark={StaticResource Gray200}}"
+                                WidthRequest="120"
+                                SelectedIndexChanged="OnLanguageChanged" />
+                    </Grid>
+                </StackLayout>
+            </Frame>
+
+            <!-- Application Settings Card -->
+            <Frame Style="{StaticResource SettingsCardStyle}">
+                <StackLayout>
+                    <StackLayout Orientation="Horizontal" Spacing="8" Margin="0,0,0,16">
+                        <Label Text="" FontSize="24" VerticalOptions="Center" />
+                        <Label Text="{x:Static resx:SettingsPage.AppSection}" Style="{StaticResource SectionTitleStyle}" Margin="0" />
+                    </StackLayout>
+                    
+                    <!-- Theme Setting (Coming Soon) -->
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" Margin="0,0,0,16">
+                        <StackLayout Grid.Column="0">
+                            <Label Text="{x:Static resx:SettingsPage.ThemeLabel}" Style="{StaticResource SettingLabelStyle}" />
+                            <Label Text="{x:Static resx:SettingsPage.ThemeDescription}" Style="{StaticResource SettingDescriptionStyle}" />
+                        </StackLayout>
+                        
+                        <Label Grid.Column="1" 
+                               Text="{x:Static resx:SettingsPage.ComingSoon}"
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
+                               VerticalOptions="Center" />
+                    </Grid>
+                    
+                    <!-- Notifications Setting (Coming Soon) -->
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                        <StackLayout Grid.Column="0">
+                            <Label Text="{x:Static resx:SettingsPage.NotificationsLabel}" Style="{StaticResource SettingLabelStyle}" />
+                            <Label Text="{x:Static resx:SettingsPage.NotificationsDescription}" Style="{StaticResource SettingDescriptionStyle}" />
+                        </StackLayout>
+                        
+                        <Label Grid.Column="1" 
+                               Text="{x:Static resx:SettingsPage.ComingSoon}"
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
+                               VerticalOptions="Center" />
+                    </Grid>
+                </StackLayout>
+            </Frame>
+
+            <!-- About Card -->
+            <Frame Style="{StaticResource SettingsCardStyle}">
+                <StackLayout>
+                    <StackLayout Orientation="Horizontal" Spacing="8" Margin="0,0,0,16">
+                        <Label Text="" FontSize="24" VerticalOptions="Center" />
+                        <Label Text="{x:Static resx:SettingsPage.AboutSection}" Style="{StaticResource SectionTitleStyle}" Margin="0" />
+                    </StackLayout>
+                    
+                    <Label Text="{x:Static resx:SettingsPage.AppName}"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray700}, Dark={StaticResource Gray300}}"
+                           Margin="0,0,0,4" />
+                    
+                    <Label Text="{x:Static resx:SettingsPage.Version}"
+                           FontSize="14"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
+                           Margin="0,0,0,8" />
+                    
+                    <Label Text="{x:Static resx:SettingsPage.Description}"
+                           FontSize="14"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
+                           LineBreakMode="WordWrap" />
+                </StackLayout>
+            </Frame>
+
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

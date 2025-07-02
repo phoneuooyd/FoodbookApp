@@ -69,10 +69,66 @@
         <MauiAsset Include="Resources\Data\**" Exclude="Resources\Data\ingredients.json" LogicalName="Data/%(RecursiveDir)%(Filename)%(Extension)" />
         </ItemGroup>
 
+        <!-- Resource files configuration -->
         <ItemGroup>
-                <EmbeddedResource Update="Resources\*.resx">
+                <!-- Main resource files (English) -->
+                <EmbeddedResource Update="Resources\AppShell.resx">
                         <Generator>ResXFileCodeGenerator</Generator>
+                        <LastGenOutput>AppShell.Designer.cs</LastGenOutput>
                         <CustomToolNamespace>FoodbookApp.Resources</CustomToolNamespace>
+                </EmbeddedResource>
+                <EmbeddedResource Update="Resources\HomePage.resx">
+                        <Generator>ResXFileCodeGenerator</Generator>
+                        <LastGenOutput>HomePage.Designer.cs</LastGenOutput>
+                        <CustomToolNamespace>FoodbookApp.Resources</CustomToolNamespace>
+                </EmbeddedResource>
+                <EmbeddedResource Update="Resources\RecipesPage.resx">
+                        <Generator>ResXFileCodeGenerator</Generator>
+                        <LastGenOutput>RecipesPage.Designer.cs</LastGenOutput>
+                        <CustomToolNamespace>FoodbookApp.Resources</CustomToolNamespace>
+                </EmbeddedResource>
+                <EmbeddedResource Update="Resources\AddRecipePage.resx">
+                        <Generator>ResXFileCodeGenerator</Generator>
+                        <LastGenOutput>AddRecipePage.Designer.cs</LastGenOutput>
+                        <CustomToolNamespace>FoodbookApp.Resources</CustomToolNamespace>
+                </EmbeddedResource>
+                <EmbeddedResource Update="Resources\IngredientsPage.resx">
+                        <Generator>ResXFileCodeGenerator</Generator>
+                        <LastGenOutput>IngredientsPage.Designer.cs</LastGenOutput>
+                        <CustomToolNamespace>FoodbookApp.Resources</CustomToolNamespace>
+                </EmbeddedResource>
+                <EmbeddedResource Update="Resources\IngredientFormPage.resx">
+                        <Generator>ResXFileCodeGenerator</Generator>
+                        <LastGenOutput>IngredientFormPage.Designer.cs</LastGenOutput>
+                        <CustomToolNamespace>FoodbookApp.Resources</CustomToolNamespace>
+                </EmbeddedResource>
+                <EmbeddedResource Update="Resources\PlannerPage.resx">
+                        <Generator>ResXFileCodeGenerator</Generator>
+                        <LastGenOutput>PlannerPage.Designer.cs</LastGenOutput>
+                        <CustomToolNamespace>FoodbookApp.Resources</CustomToolNamespace>
+                </EmbeddedResource>
+                <EmbeddedResource Update="Resources\ShoppingListPage.resx">
+                        <Generator>ResXFileCodeGenerator</Generator>
+                        <LastGenOutput>ShoppingListPage.Designer.cs</LastGenOutput>
+                        <CustomToolNamespace>FoodbookApp.Resources</CustomToolNamespace>
+                </EmbeddedResource>
+                <EmbeddedResource Update="Resources\ShoppingListDetailPage.resx">
+                        <Generator>ResXFileCodeGenerator</Generator>
+                        <LastGenOutput>ShoppingListDetailPage.Designer.cs</LastGenOutput>
+                        <CustomToolNamespace>FoodbookApp.Resources</CustomToolNamespace>
+                </EmbeddedResource>
+                <EmbeddedResource Update="Resources\ArchivePage.resx">
+                        <Generator>ResXFileCodeGenerator</Generator>
+                        <LastGenOutput>ArchivePage.Designer.cs</LastGenOutput>
+                        <CustomToolNamespace>FoodbookApp.Resources</CustomToolNamespace>
+                </EmbeddedResource>
+                
+                <!-- Culture-specific resource files (no code generation) -->
+                <EmbeddedResource Update="Resources\*.pl-PL.resx">
+                        <DependentUpon>%(Filename.Replace('.pl-PL', '')).resx</DependentUpon>
+                </EmbeddedResource>
+                <EmbeddedResource Update="Resources\*.en-En.resx">
+                        <DependentUpon>%(Filename.Replace('.en-En', '')).resx</DependentUpon>
                 </EmbeddedResource>
         </ItemGroup>
 
@@ -108,6 +164,9 @@
             <Generator>MSBuild:Compile</Generator>
           </MauiXaml>
           <MauiXaml Update="Views\MealFormPage.xaml">
+            <Generator>MSBuild:Compile</Generator>
+          </MauiXaml>
+          <MauiXaml Update="Views\SettingsPage.xaml">
             <Generator>MSBuild:Compile</Generator>
           </MauiXaml>
           <MauiXaml Update="Views\ShoppingListPage.xaml">

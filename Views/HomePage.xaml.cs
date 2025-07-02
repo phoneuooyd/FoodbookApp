@@ -16,12 +16,19 @@ public partial class HomePage : ContentPage
     {
         base.OnAppearing();
         if (ViewModel != null)
+        {
             await ViewModel.LoadAsync();
+        }
     }
 
     private async void OnArchiveClicked(object sender, EventArgs e)
     {
         await Shell.Current.GoToAsync(nameof(ArchivePage));
+    }
+
+    private async void OnSettingsClicked(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync(nameof(SettingsPage));
     }
 }
 
