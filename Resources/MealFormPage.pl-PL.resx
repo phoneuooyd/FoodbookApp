@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="Title" xml:space="preserve"><value>Zaplanuj posiłek</value></data>
+  <data name="NewTitle" xml:space="preserve"><value>Nowy posiłek</value></data>
+  <data name="EditTitle" xml:space="preserve"><value>Edytuj posiłek</value></data>
+  <data name="AddButton" xml:space="preserve"><value>Dodaj posiłek</value></data>
+  <data name="SaveButton" xml:space="preserve"><value>Zapisz zmiany</value></data>
+  <data name="SelectRecipe" xml:space="preserve"><value>Wybierz przepis</value></data>
+</root>

@@ -4,27 +4,28 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:views="clr-namespace:Foodbook.Views"
+    xmlns:resx="clr-namespace:FoodbookApp.Resources"
     Title="FoodbookApp">
 
     <TabBar>
         <ShellContent
-            Title="Składniki"
+            Title="{x:Static resx:AppShell.IngredientsTab}"
             Icon="grocery.png"
             ContentTemplate="{DataTemplate views:IngredientsPage}" />
         <ShellContent
-            Title="Przepisy"
+            Title="{x:Static resx:AppShell.RecipesTab}"
             Icon="chef_hat.png"
             ContentTemplate="{DataTemplate views:RecipesPage}" />
         <ShellContent
-            Title="Start"
+            Title="{x:Static resx:AppShell.HomeTab}"
             Icon="home.png"
             ContentTemplate="{DataTemplate views:HomePage}" />
         <ShellContent
-            Title="Planer"
+            Title="{x:Static resx:AppShell.PlannerTab}"
             Icon="event_upcoming.png"
             ContentTemplate="{DataTemplate views:PlannerPage}" />
         <ShellContent
-            Title="Listy zakupów"
+            Title="{x:Static resx:AppShell.ShoppingTab}"
             Icon="event_list.png"
             ContentTemplate="{DataTemplate views:ShoppingListPage}" />
     </TabBar>
@@ -41,4 +42,7 @@
     <ShellContent
         Route="ShoppingListDetailPage"
         ContentTemplate="{DataTemplate views:ShoppingListDetailPage}" />
+    <ShellContent
+        Route="SettingsPage"
+        ContentTemplate="{DataTemplate views:SettingsPage}" />
 </Shell>

@@ -4,10 +4,11 @@
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:converters="clr-namespace:Foodbook.Converters"
+             xmlns:resx="clr-namespace:FoodbookApp.Resources"
              x:Class="Foodbook.Views.ShoppingListPage"
              x:Name="ThisPage"
              x:DataType="vm:ShoppingListViewModel"
-             Title="Listy zakupów">
+             Title="{x:Static resx:ShoppingListPage.Title}">
 
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
@@ -40,13 +41,22 @@
                                            FontAttributes="Bold" 
                                            FontSize="18" 
                                            VerticalOptions="Center" />
-                                    <Label Text="{Binding StartDate, StringFormat='Od: {0:dd.MM.yyyy}'}" 
-                                           FontSize="14" 
-                                           TextColor="{DynamicResource Primary}"
-                                           Margin="0,2,0,0" />
-                                    <Label Text="{Binding EndDate, StringFormat='Do: {0:dd.MM.yyyy}'}" 
-                                           FontSize="14" 
-                                           TextColor="{DynamicResource Primary}" />
+                                    <Label FontSize="14" TextColor="{DynamicResource Primary}" Margin="0,2,0,0">
+                                        <Label.FormattedText>
+                                            <FormattedString>
+                                                <Span Text="{x:Static resx:ShoppingListPage.From}" />
+                                                <Span Text="{Binding StartDate, StringFormat=' {0:dd.MM.yyyy}'}" />
+                                            </FormattedString>
+                                        </Label.FormattedText>
+                                    </Label>
+                                    <Label FontSize="14" TextColor="{DynamicResource Primary}">
+                                        <Label.FormattedText>
+                                            <FormattedString>
+                                                <Span Text="{x:Static resx:ShoppingListPage.To}" />
+                                                <Span Text="{Binding EndDate, StringFormat=' {0:dd.MM.yyyy}'}" />
+                                            </FormattedString>
+                                        </Label.FormattedText>
+                                    </Label>
                                 </VerticalStackLayout>
                                 
                                 <!-- Przycisk edycji -->
@@ -91,16 +101,16 @@
                        Margin="0,0,0,20" />
                 
                 <!-- Główny tekst -->
-                <Label Text="Brak list zakupów" 
-                       FontSize="24" 
+                <Label Text="{x:Static resx:ShoppingListPage.EmptyTitle}"
+                       FontSize="24"
                        FontAttributes="Bold"
                        HorizontalOptions="Center"
                        TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
                        Margin="0,0,0,10" />
                 
                 <!-- Tekst opisowy -->
-                <Label Text="Aby utworzyć listę zakupów, przejdź do Planera i zaplanuj posiłki, a następnie zapisz plan."
-                       FontSize="16" 
+                <Label Text="{x:Static resx:ShoppingListPage.EmptyHint}"
+                       FontSize="16"
                        HorizontalOptions="Center"
                        HorizontalTextAlignment="Center"
                        TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
@@ -108,7 +118,7 @@
                        Margin="0,0,0,30" />
                 
                 <!-- Przycisk nawigacji do planera -->
-                <Button Text="📅 Przejdź do Planera"
+                <Button Text="{x:Static resx:ShoppingListPage.GoToPlanner}"
                         BackgroundColor="{DynamicResource Primary}"
                         TextColor="White"
                         FontSize="16"

@@ -8,6 +8,7 @@ using Microsoft.Maui.Controls;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FoodbookApp.Resources;
 
 namespace Foodbook.ViewModels
 {
@@ -90,9 +91,9 @@ namespace Foodbook.ViewModels
 
         public ObservableCollection<Ingredient> Ingredients { get; set; } = new();
 
-        public string Title => _editingRecipe == null ? "Nowy przepis" : "Edytuj przepis";
+        public string Title => _editingRecipe == null ? FoodbookApp.Resources.AddRecipePage.NewTitle : FoodbookApp.Resources.AddRecipePage.EditTitle;
 
-        public string SaveButtonText => _editingRecipe == null ? "Dodaj przepis" : "Zapisz zmiany";
+        public string SaveButtonText => _editingRecipe == null ? FoodbookApp.Resources.AddRecipePage.AddButton : FoodbookApp.Resources.AddRecipePage.SaveButton;
 
         public string ValidationMessage { get => _validationMessage; set { _validationMessage = value; OnPropertyChanged(); } }
         private string _validationMessage = string.Empty;
@@ -317,12 +318,12 @@ namespace Foodbook.ViewModels
                     Carbs = recipe.Carbs.ToString("F1");
                 }
                 
-                ImportStatus = "Zaimportowano!";
+                ImportStatus = AddRecipePage.ImportSuccess;
                 IsManualMode = true; // Przełącz na tryb ręczny po imporcie
             }
             catch (Exception ex)
             {
-                ImportStatus = $"Błąd importu: {ex.Message}";
+                ImportStatus = string.Format(AddRecipePage.ImportError, ex.Message);
             }
         }
 
@@ -337,28 +338,28 @@ namespace Foodbook.ViewModels
 
             if (string.IsNullOrWhiteSpace(Name))
             {
-                ValidationMessage = "Nazwa przepisu jest wymagana";
+                ValidationMessage = AddRecipePage.RecipeNameRequired;
             }
             else if (!IsValidInt(IloscPorcji))
             {
-                ValidationMessage = "Ilość porcji musi być liczbą całkowitą większą od 0";
+                ValidationMessage = AddRecipePage.PortionsInvalid;
             }
             // Usuwamy wymaganie składników - teraz można zapisać przepis bez składników
             else if (!IsValidDouble(Calories))
             {
-                ValidationMessage = "Kalorie muszą być liczbą";
+                ValidationMessage = AddRecipePage.CaloriesInvalid;
             }
             else if (!IsValidDouble(Protein))
             {
-                ValidationMessage = "Białko musi być liczbą";
+                ValidationMessage = AddRecipePage.ProteinInvalid;
             }
             else if (!IsValidDouble(Fat))
             {
-                ValidationMessage = "Tłuszcze muszą być liczbą";
+                ValidationMessage = AddRecipePage.FatInvalid;
             }
             else if (!IsValidDouble(Carbs))
             {
-                ValidationMessage = "Węglowodany muszą być liczbą";
+                ValidationMessage = AddRecipePage.CarbsInvalid;
             }
             else
             {
@@ -367,12 +368,12 @@ namespace Foodbook.ViewModels
                 {
                     if (string.IsNullOrWhiteSpace(ing.Name))
                     {
-                        ValidationMessage = "Każdy składnik musi mieć nazwę";
+                        ValidationMessage = AddRecipePage.IngredientNameRequired;
                         break;
                     }
                     if (ing.Quantity <= 0)
                     {
-                        ValidationMessage = "Ilość składnika musi być większa od zera";
+                        ValidationMessage = AddRecipePage.IngredientQuantityInvalid;
                         break;
                     }
                 }
@@ -439,7 +440,7 @@ namespace Foodbook.ViewModels
             }
             catch (Exception ex)
             {
-                ValidationMessage = $"Błąd zapisywania: {ex.Message}";
+                ValidationMessage = string.Format(AddRecipePage.SaveError, ex.Message);
             }
         }
 

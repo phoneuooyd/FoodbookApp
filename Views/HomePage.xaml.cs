@@ -23,5 +23,10 @@ public partial class HomePage : ContentPage
     {
         await Shell.Current.GoToAsync(nameof(ArchivePage));
     }
+
+    private async void OnSettingsClicked(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync(nameof(SettingsPage));
+    }
 }
 

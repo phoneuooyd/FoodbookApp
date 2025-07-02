@@ -52,6 +52,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<IngredientFormViewModel>();
             builder.Services.AddScoped<PlannedMealFormViewModel>();
             builder.Services.AddScoped<ArchiveViewModel>(); // Dodany ArchiveViewModel
+            builder.Services.AddScoped<SettingsViewModel>();
 
             // Rejestracja HttpClient i RecipeImporter
             builder.Services.AddScoped<HttpClient>();
@@ -68,6 +69,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<ShoppingListPage>();
             builder.Services.AddScoped<ShoppingListDetailPage>();
             builder.Services.AddScoped<ArchivePage>(); // Dodana ArchivePage
+            builder.Services.AddScoped<SettingsPage>();
 
             // 🧠 Rejestracja routów do Shell (opcjonalne, jeśli używasz Shell)
             Routing.RegisterRoute(nameof(HomePage), typeof(HomePage));
@@ -80,6 +82,7 @@ namespace FoodbookApp
             Routing.RegisterRoute(nameof(ShoppingListPage), typeof(ShoppingListPage));
             Routing.RegisterRoute(nameof(ShoppingListDetailPage), typeof(ShoppingListDetailPage));
             Routing.RegisterRoute(nameof(ArchivePage), typeof(ArchivePage)); // Dodana rejestracja routingu dla ArchivePage
+            Routing.RegisterRoute(nameof(SettingsPage), typeof(SettingsPage));
             
 
             // ✨ Build aplikacji

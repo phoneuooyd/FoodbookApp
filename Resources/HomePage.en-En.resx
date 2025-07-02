@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="WelcomeTitle" xml:space="preserve">
+    <value>🍽️ Welcome to Foodbook</value>
+  </data>
+  <data name="WelcomeSubtitle" xml:space="preserve">
+    <value>Your personal culinary assistant</value>
+  </data>
+  <data name="Recipes" xml:space="preserve">
+    <value>Recipes</value>
+  </data>
+  <data name="SavedRecipes" xml:space="preserve">
+    <value>saved recipes</value>
+  </data>
+  <data name="Plans" xml:space="preserve">
+    <value>Plans</value>
+  </data>
+  <data name="ActiveLists" xml:space="preserve">
+    <value>active lists</value>
+  </data>
+  <data name="Archive" xml:space="preserve">
+    <value>Archive</value>
+  </data>
+  <data name="Archived" xml:space="preserve">
+    <value>archived</value>
+  </data>
+  <data name="Open" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Personalize" xml:space="preserve">
+    <value>Personalize</value>
+  </data>
+  <data name="ComingSoon" xml:space="preserve">
+    <value>Coming soon</value>
+  </data>
+  <data name="NutritionStats" xml:space="preserve">
+    <value>Diet statistics</value>
+  </data>
+  <data name="Calories" xml:space="preserve">
+    <value>Calories</value>
+  </data>
+  <data name="Protein" xml:space="preserve">
+    <value>Protein</value>
+  </data>
+  <data name="Carbs" xml:space="preserve">
+    <value>Carbohydrates</value>
+  </data>
+  <data name="Info" xml:space="preserve">
+    <value>Plan meals to see statistics</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+</root>

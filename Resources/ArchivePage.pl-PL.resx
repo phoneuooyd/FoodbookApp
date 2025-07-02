@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="Title" xml:space="preserve"><value>Archiwum</value></data>
+  <data name="NoArchived" xml:space="preserve"><value>Brak zarchiwizowanych list zakupow</value></data>
+  <data name="From" xml:space="preserve"><value>Od:</value></data>
+  <data name="To" xml:space="preserve"><value>Do:</value></data>
+</root>
