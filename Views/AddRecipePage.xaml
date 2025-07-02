@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" xmlns:loc="clr-namespace:Foodbook.Localization"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:converters="clr-namespace:Foodbook.Converters"
@@ -26,19 +26,19 @@
 
             <!-- Mode Selection Section -->
             <StackLayout Spacing="10">
-                <Label Text="Sposób dodawania przepisu" 
+                <Label Text="{local:Translate 'Sposób dodawania przepisu'}" 
                        FontSize="18" 
                        FontAttributes="Bold" />
                 
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                     <Button Grid.Column="0"
-                            Text="✏️ Ręcznie"
+                            Text="{local:Translate '✏️ Ręcznie'}"
                             Command="{Binding SetManualModeCommand}"
                             BackgroundColor="{Binding IsManualMode, Converter={StaticResource BoolToColorConverter}}"
                             TextColor="White"
                             HeightRequest="45" />
                     <Button Grid.Column="1"
-                            Text="🌐 Z linku"
+                            Text="{local:Translate '🌐 Z linku'}"
                             Command="{Binding SetImportModeCommand}"
                             BackgroundColor="{Binding IsImportMode, Converter={StaticResource BoolToColorConverter}}"
                             TextColor="White"
@@ -48,20 +48,20 @@
 
             <!-- Import Section -->
             <StackLayout IsVisible="{Binding IsImportMode}" Spacing="10">
-                <Label Text="Import z internetu" 
+                <Label Text="{local:Translate 'Import z internetu'}" 
                        FontSize="18" 
                        FontAttributes="Bold" 
                        Margin="0,10,0,5" />
                 
                 <StackLayout Spacing="5">
-                    <Label Text="URL przepisu *" FontAttributes="Bold" />
-                    <Entry Placeholder="Wklej link do przepisu" 
+                    <Label Text="{local:Translate 'URL przepisu *'}" FontAttributes="Bold" />
+                    <Entry Placeholder="{local:Translate 'Wklej link do przepisu'}" 
                            Text="{Binding ImportUrl}" 
                            ClearButtonVisibility="WhileEditing"
                            Keyboard="Url" />
                 </StackLayout>
                 
-                <Button Text="🔄 Importuj przepis" 
+                <Button Text="{local:Translate '🔄 Importuj przepis'}" 
                         Command="{Binding ImportRecipeCommand}"
                         HeightRequest="45" />
                 
@@ -75,29 +75,29 @@
             <StackLayout IsVisible="{Binding IsManualMode}" Spacing="10">
                 
                 <!-- Basic Information -->
-                <Label Text="Informacje podstawowe" 
+                <Label Text="{local:Translate 'Informacje podstawowe'}" 
                        FontSize="18" 
                        FontAttributes="Bold" 
                        Margin="0,10,0,5" />
                 
                 <StackLayout Spacing="5">
-                    <Label Text="Nazwa przepisu *" FontAttributes="Bold" />
-                    <Entry Placeholder="Wprowadź nazwę przepisu" 
+                    <Label Text="{local:Translate 'Nazwa przepisu *'}" FontAttributes="Bold" />
+                    <Entry Placeholder="{local:Translate 'Wprowadź nazwę przepisu'}" 
                            Text="{Binding Name}" 
                            ClearButtonVisibility="WhileEditing" />
                 </StackLayout>
                 
                 <StackLayout Spacing="5">
-                    <Label Text="Opis" FontAttributes="Bold" />
-                    <Editor Placeholder="Wprowadź opis przepisu" 
+                    <Label Text="{local:Translate 'Opis'}" FontAttributes="Bold" />
+                    <Editor Placeholder="{local:Translate 'Wprowadź opis przepisu'}" 
                             Text="{Binding Description}" 
                             AutoSize="TextChanges"
                             HeightRequest="80" />
                 </StackLayout>
 
                 <StackLayout Spacing="5">
-                    <Label Text="Domyślna ilość porcji (lista zakupów)*" FontAttributes="Bold" />
-                    <Entry Placeholder="2" 
+                    <Label Text="{local:Translate 'Domyślna ilość porcji (lista zakupów)*'}" FontAttributes="Bold" />
+                    <Entry Placeholder="{local:Translate '2'}" 
                            Keyboard="Numeric"
                            Text="{Binding IloscPorcji}" 
                            ClearButtonVisibility="WhileEditing"
@@ -107,7 +107,7 @@
                 </StackLayout>
 
                 <!-- Ingredients Section - MOVED UP -->
-                <Label Text="Składniki" 
+                <Label Text="{local:Translate 'Składniki'}" 
                        FontSize="18" 
                        FontAttributes="Bold" 
                        Margin="0,15,0,5" />
@@ -127,16 +127,16 @@
                                     
                                     <!-- Nazwa składnika -->
                                     <StackLayout Grid.Row="0" Grid.Column="0" Spacing="3">
-                                        <Label Text="Składnik" FontSize="12" FontAttributes="Bold" />
-                                        <Picker Title="Wybierz składnik"
+                                        <Label Text="{local:Translate 'Składnik'}" FontSize="12" FontAttributes="Bold" />
+                                        <Picker Title="{local:Translate 'Wybierz składnik'}"
                                                 ItemsSource="{Binding BindingContext.AvailableIngredientNames, Source={x:Reference ThisPage}}"
                                                 SelectedItem="{Binding Name}" />
                                     </StackLayout>
                                     
                                     <!-- Ilość -->
                                     <StackLayout Grid.Row="0" Grid.Column="1" Spacing="3">
-                                        <Label Text="Ilość" FontSize="12" FontAttributes="Bold" />
-                                        <Entry Placeholder="1.0"
+                                        <Label Text="{local:Translate 'Ilość'}" FontSize="12" FontAttributes="Bold" />
+                                        <Entry Placeholder="{local:Translate '1.0'}"
                                                Keyboard="Numeric"
                                                Text="{Binding Quantity}"
                                                HorizontalTextAlignment="Center"
@@ -145,8 +145,8 @@
                                     
                                     <!-- Jednostka -->
                                     <StackLayout Grid.Row="0" Grid.Column="2" Spacing="3">
-                                        <Label Text="Jednostka" FontSize="12" FontAttributes="Bold" />
-                                        <Picker Title="Jednostka"
+                                        <Label Text="{local:Translate 'Jednostka'}" FontSize="12" FontAttributes="Bold" />
+                                        <Picker Title="{local:Translate 'Jednostka'}"
                                                 ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}"
                                                 SelectedItem="{Binding Unit}"
                                                 SelectedIndexChanged="OnIngredientValueChanged"
@@ -155,7 +155,7 @@
                                     
                                     <!-- Przycisk usuń -->
                                     <Button Grid.Row="0" Grid.Column="3"
-                                            Text="🗑"
+                                            Text="{local:Translate '🗑'}"
                                             Command="{Binding BindingContext.RemoveIngredientCommand, Source={x:Reference ThisPage}}"
                                             CommandParameter="{Binding .}"
                                             WidthRequest="40"
@@ -190,31 +190,31 @@
                     </CollectionView.ItemTemplate>
                 </CollectionView>
                 
-                <Button Text="➕ Dodaj składnik" 
+                <Button Text="{local:Translate '➕ Dodaj składnik'}" 
                         Command="{Binding AddIngredientCommand}"
                         HeightRequest="45" />
 
                 <!-- Nutritional Information - MOVED DOWN -->
-                <Label Text="Wartości odżywcze (na całą porcję)" 
+                <Label Text="{local:Translate 'Wartości odżywcze (na całą porcję)'}" 
                        FontSize="18" 
                        FontAttributes="Bold" 
                        Margin="0,20,0,5" />
 
                 <!-- Calculation Mode Toggle -->
                 <StackLayout Spacing="10">
-                    <Label Text="Sposób obliczania wartości odżywczych" 
+                    <Label Text="{local:Translate 'Sposób obliczania wartości odżywczych'}" 
                            FontSize="14" 
                            FontAttributes="Bold" />
                     
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                         <Button Grid.Column="0"
-                                Text="🧮 Automatycznie"
+                                Text="{local:Translate '🧮 Automatycznie'}"
                                 BackgroundColor="{Binding UseCalculatedValues, Converter={StaticResource BoolToColorConverter}}"
                                 TextColor="White"
                                 HeightRequest="40"
                                 Clicked="OnAutoModeClicked" />
                         <Button Grid.Column="1"
-                                Text="✏️ Ręcznie"
+                                Text="{local:Translate '✏️ Ręcznie'}"
                                 BackgroundColor="{Binding UseManualValues, Converter={StaticResource BoolToColorConverter}}"
                                 TextColor="White"
                                 HeightRequest="40"
@@ -224,14 +224,14 @@
 
                 <!-- Calculated Values Display -->
                 <StackLayout IsVisible="{Binding UseCalculatedValues}" Spacing="10">
-                    <Label Text="Obliczone automatycznie na podstawie składników:" 
+                    <Label Text="{local:Translate 'Obliczone automatycznie na podstawie składników:'}" 
                            FontSize="12" 
                            FontAttributes="Italic"
                            HorizontalTextAlignment="Center" />
                     
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
                         <StackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
-                            <Label Text="Kalorie" FontAttributes="Bold" />
+                            <Label Text="{local:Translate 'Kalorie'}" FontAttributes="Bold" />
                             <Label Text="{Binding CalculatedCalories}" 
                                    FontSize="16"
                                    HorizontalTextAlignment="Center"
@@ -241,7 +241,7 @@
                         </StackLayout>
                         
                         <StackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
-                            <Label Text="Białko (g)" FontAttributes="Bold" />
+                            <Label Text="{local:Translate 'Białko (g)'}" FontAttributes="Bold" />
                             <Label Text="{Binding CalculatedProtein}" 
                                    FontSize="16"
                                    HorizontalTextAlignment="Center"
@@ -251,7 +251,7 @@
                         </StackLayout>
                         
                         <StackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
-                            <Label Text="Tłuszcze (g)" FontAttributes="Bold" />
+                            <Label Text="{local:Translate 'Tłuszcze (g)'}" FontAttributes="Bold" />
                             <Label Text="{Binding CalculatedFat}" 
                                    FontSize="16"
                                    HorizontalTextAlignment="Center"
@@ -261,7 +261,7 @@
                         </StackLayout>
                         
                         <StackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
-                            <Label Text="Węglowodany (g)" FontAttributes="Bold" />
+                            <Label Text="{local:Translate 'Węglowodany (g)'}" FontAttributes="Bold" />
                             <Label Text="{Binding CalculatedCarbs}" 
                                    FontSize="16"
                                    HorizontalTextAlignment="Center"
@@ -276,12 +276,12 @@
                 <StackLayout IsVisible="{Binding UseManualValues}" Spacing="10">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                         <Label Grid.Column="0"
-                               Text="Wprowadź wartości ręcznie:" 
+                               Text="{local:Translate 'Wprowadź wartości ręcznie:'}" 
                                FontSize="12" 
                                FontAttributes="Italic"
                                VerticalOptions="Center" />
                         <Button Grid.Column="1"
-                                Text="📋 Skopiuj obliczone"
+                                Text="{local:Translate '📋 Skopiuj obliczone'}"
                                 Command="{Binding CopyCalculatedValuesCommand}"
                                 FontSize="12"
                                 HeightRequest="30" />
@@ -289,32 +289,32 @@
                     
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
                         <StackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
-                            <Label Text="Kalorie" FontAttributes="Bold" />
-                            <Entry Placeholder="0.0" 
+                            <Label Text="{local:Translate 'Kalorie'}" FontAttributes="Bold" />
+                            <Entry Placeholder="{local:Translate '0.0'}" 
                                    Keyboard="Numeric" 
                                    Text="{Binding Calories}"
                                    ClearButtonVisibility="WhileEditing" />
                         </StackLayout>
                         
                         <StackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
-                            <Label Text="Białko (g)" FontAttributes="Bold" />
-                            <Entry Placeholder="0.0" 
+                            <Label Text="{local:Translate 'Białko (g)'}" FontAttributes="Bold" />
+                            <Entry Placeholder="{local:Translate '0.0'}" 
                                    Keyboard="Numeric" 
                                    Text="{Binding Protein}"
                                    ClearButtonVisibility="WhileEditing" />
                         </StackLayout>
                         
                         <StackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
-                            <Label Text="Tłuszcze (g)" FontAttributes="Bold" />
-                            <Entry Placeholder="0.0" 
+                            <Label Text="{local:Translate 'Tłuszcze (g)'}" FontAttributes="Bold" />
+                            <Entry Placeholder="{local:Translate '0.0'}" 
                                    Keyboard="Numeric" 
                                    Text="{Binding Fat}"
                                    ClearButtonVisibility="WhileEditing" />
                         </StackLayout>
                         
                         <StackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
-                            <Label Text="Węglowodany (g)" FontAttributes="Bold" />
-                            <Entry Placeholder="0.0" 
+                            <Label Text="{local:Translate 'Węglowodany (g)'}" FontAttributes="Bold" />
+                            <Entry Placeholder="{local:Translate '0.0'}" 
                                    Keyboard="Numeric" 
                                    Text="{Binding Carbs}"
                                    ClearButtonVisibility="WhileEditing" />

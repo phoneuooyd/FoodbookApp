@@ -1,0 +1,315 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="---" xml:space="preserve">
+    <value>---</value>
+  </data>
+  <data name="0.0" xml:space="preserve">
+    <value>0.0</value>
+  </data>
+  <data name="1.0" xml:space="preserve">
+    <value>1.0</value>
+  </data>
+  <data name="100" xml:space="preserve">
+    <value>100</value>
+  </data>
+  <data name="2" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="Aby utworzyć listę zakupów, przejdź do Planera i zaplanuj posiłki, a następnie zapisz plan." xml:space="preserve">
+    <value>Aby utworzyć listę zakupów, przejdź do Planera i zaplanuj posiłki, a następnie zapisz plan.</value>
+  </data>
+  <data name="Akcje" xml:space="preserve">
+    <value>Akcje</value>
+  </data>
+  <data name="Archiwum" xml:space="preserve">
+    <value>Archiwum</value>
+  </data>
+  <data name="Bialko" xml:space="preserve">
+    <value>Bialko</value>
+  </data>
+  <data name="Białko (g)" xml:space="preserve">
+    <value>Białko (g)</value>
+  </data>
+  <data name="Brak list zakupów" xml:space="preserve">
+    <value>Brak list zakupów</value>
+  </data>
+  <data name="Brak składników" xml:space="preserve">
+    <value>Brak składników</value>
+  </data>
+  <data name="Brak zarchiwizowanych list zakupow" xml:space="preserve">
+    <value>Brak zarchiwizowanych list zakupow</value>
+  </data>
+  <data name="Dashboard" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="Data do:" xml:space="preserve">
+    <value>Data do:</value>
+  </data>
+  <data name="Data od:" xml:space="preserve">
+    <value>Data od:</value>
+  </data>
+  <data name="Dodaj przepis" xml:space="preserve">
+    <value>Dodaj przepis</value>
+  </data>
+  <data name="Dodaj składnik" xml:space="preserve">
+    <value>Dodaj składnik</value>
+  </data>
+  <data name="Domyślna ilość porcji (lista zakupów)*" xml:space="preserve">
+    <value>Domyślna ilość porcji (lista zakupów)*</value>
+  </data>
+  <data name="Ilość" xml:space="preserve">
+    <value>Ilość</value>
+  </data>
+  <data name="Ilość *" xml:space="preserve">
+    <value>Ilość *</value>
+  </data>
+  <data name="Import z internetu" xml:space="preserve">
+    <value>Import z internetu</value>
+  </data>
+  <data name="Informacja" xml:space="preserve">
+    <value>Informacja</value>
+  </data>
+  <data name="Informacje podstawowe" xml:space="preserve">
+    <value>Informacje podstawowe</value>
+  </data>
+  <data name="Jednostka" xml:space="preserve">
+    <value>Jednostka</value>
+  </data>
+  <data name="Jednostka *" xml:space="preserve">
+    <value>Jednostka *</value>
+  </data>
+  <data name="Kalorie" xml:space="preserve">
+    <value>Kalorie</value>
+  </data>
+  <data name="Lista zakupów" xml:space="preserve">
+    <value>Lista zakupów</value>
+  </data>
+  <data name="Listy zakupów" xml:space="preserve">
+    <value>Listy zakupów</value>
+  </data>
+  <data name="Nazwa" xml:space="preserve">
+    <value>Nazwa</value>
+  </data>
+  <data name="Nazwa przepisu *" xml:space="preserve">
+    <value>Nazwa przepisu *</value>
+  </data>
+  <data name="Nazwa składnika" xml:space="preserve">
+    <value>Nazwa składnika</value>
+  </data>
+  <data name="Nazwa składnika *" xml:space="preserve">
+    <value>Nazwa składnika *</value>
+  </data>
+  <data name="Obliczone automatycznie na podstawie składników:" xml:space="preserve">
+    <value>Obliczone automatycznie na podstawie składników:</value>
+  </data>
+  <data name="Opis" xml:space="preserve">
+    <value>Opis</value>
+  </data>
+  <data name="Personalizuj" xml:space="preserve">
+    <value>Personalizuj</value>
+  </data>
+  <data name="Plan Meal" xml:space="preserve">
+    <value>Plan Meal</value>
+  </data>
+  <data name="Planer" xml:space="preserve">
+    <value>Planer</value>
+  </data>
+  <data name="Plany" xml:space="preserve">
+    <value>Plany</value>
+  </data>
+  <data name="Posiłków dziennie:" xml:space="preserve">
+    <value>Posiłków dziennie:</value>
+  </data>
+  <data name="Przepisy" xml:space="preserve">
+    <value>Przepisy</value>
+  </data>
+  <data name="Recipe" xml:space="preserve">
+    <value>Recipe</value>
+  </data>
+  <data name="Recipes" xml:space="preserve">
+    <value>Recipes</value>
+  </data>
+  <data name="Składnik" xml:space="preserve">
+    <value>Składnik</value>
+  </data>
+  <data name="Składniki" xml:space="preserve">
+    <value>Składniki</value>
+  </data>
+  <data name="Sposób dodawania przepisu" xml:space="preserve">
+    <value>Sposób dodawania przepisu</value>
+  </data>
+  <data name="Sposób obliczania wartości odżywczych" xml:space="preserve">
+    <value>Sposób obliczania wartości odżywczych</value>
+  </data>
+  <data name="Statystyki Diety" xml:space="preserve">
+    <value>Statystyki Diety</value>
+  </data>
+  <data name="Szukaj składników..." xml:space="preserve">
+    <value>Szukaj składników...</value>
+  </data>
+  <data name="Twoj osobisty asystent kulinarny" xml:space="preserve">
+    <value>Twoj osobisty asystent kulinarny</value>
+  </data>
+  <data name="Tłuszcze (g)" xml:space="preserve">
+    <value>Tłuszcze (g)</value>
+  </data>
+  <data name="URL przepisu *" xml:space="preserve">
+    <value>URL przepisu *</value>
+  </data>
+  <data name="Ustawienia" xml:space="preserve">
+    <value>Ustawienia</value>
+  </data>
+  <data name="Wartości odżywcze" xml:space="preserve">
+    <value>Wartości odżywcze</value>
+  </data>
+  <data name="Wartości odżywcze (na całą porcję)" xml:space="preserve">
+    <value>Wartości odżywcze (na całą porcję)</value>
+  </data>
+  <data name="Weglowodany" xml:space="preserve">
+    <value>Weglowodany</value>
+  </data>
+  <data name="Wklej link do przepisu" xml:space="preserve">
+    <value>Wklej link do przepisu</value>
+  </data>
+  <data name="Wprowadź nazwę przepisu" xml:space="preserve">
+    <value>Wprowadź nazwę przepisu</value>
+  </data>
+  <data name="Wprowadź nazwę składnika" xml:space="preserve">
+    <value>Wprowadź nazwę składnika</value>
+  </data>
+  <data name="Wprowadź opis przepisu" xml:space="preserve">
+    <value>Wprowadź opis przepisu</value>
+  </data>
+  <data name="Wprowadź wartości ręcznie:" xml:space="preserve">
+    <value>Wprowadź wartości ręcznie:</value>
+  </data>
+  <data name="Wybierz składnik" xml:space="preserve">
+    <value>Wybierz składnik</value>
+  </data>
+  <data name="Węglowodany (g)" xml:space="preserve">
+    <value>Węglowodany (g)</value>
+  </data>
+  <data name="Zapisz" xml:space="preserve">
+    <value>Zapisz</value>
+  </data>
+  <data name="Zweryfikuj dane z OpenFoodFacts:" xml:space="preserve">
+    <value>Zweryfikuj dane z OpenFoodFacts:</value>
+  </data>
+  <data name="aktywnych list" xml:space="preserve">
+    <value>aktywnych list</value>
+  </data>
+  <data name="zapisanych przepisow" xml:space="preserve">
+    <value>zapisanych przepisow</value>
+  </data>
+  <data name="zarchiwizowanych" xml:space="preserve">
+    <value>zarchiwizowanych</value>
+  </data>
+  <data name="↩️" xml:space="preserve">
+    <value>↩️</value>
+  </data>
+  <data name="⚙️" xml:space="preserve">
+    <value>⚙️</value>
+  </data>
+  <data name="✎" xml:space="preserve">
+    <value>✎</value>
+  </data>
+  <data name="✏️" xml:space="preserve">
+    <value>✏️</value>
+  </data>
+  <data name="✏️ Ręcznie" xml:space="preserve">
+    <value>✏️ Ręcznie</value>
+  </data>
+  <data name="✓" xml:space="preserve">
+    <value>✓</value>
+  </data>
+  <data name="❌" xml:space="preserve">
+    <value>❌</value>
+  </data>
+  <data name="➕" xml:space="preserve">
+    <value>➕</value>
+  </data>
+  <data name="➕ Dodaj składnik" xml:space="preserve">
+    <value>➕ Dodaj składnik</value>
+  </data>
+  <data name="➕ Posiłek" xml:space="preserve">
+    <value>➕ Posiłek</value>
+  </data>
+  <data name="➖" xml:space="preserve">
+    <value>➖</value>
+  </data>
+  <data name="🌐 Z linku" xml:space="preserve">
+    <value>🌐 Z linku</value>
+  </data>
+  <data name="🌾" xml:space="preserve">
+    <value>🌾</value>
+  </data>
+  <data name="🍽️ Witaj w Foodbook" xml:space="preserve">
+    <value>🍽️ Witaj w Foodbook</value>
+  </data>
+  <data name="💡 Funkcja dostepna wkrotce - planuj posilki aby zobaczyc statystyki" xml:space="preserve">
+    <value>💡 Funkcja dostepna wkrotce - planuj posilki aby zobaczyc statystyki</value>
+  </data>
+  <data name="📁" xml:space="preserve">
+    <value>📁</value>
+  </data>
+  <data name="📂 Przejdz" xml:space="preserve">
+    <value>📂 Przejdz</value>
+  </data>
+  <data name="📅 Przejdź do Planera" xml:space="preserve">
+    <value>📅 Przejdź do Planera</value>
+  </data>
+  <data name="📊" xml:space="preserve">
+    <value>📊</value>
+  </data>
+  <data name="📋" xml:space="preserve">
+    <value>📋</value>
+  </data>
+  <data name="📋 Skopiuj obliczone" xml:space="preserve">
+    <value>📋 Skopiuj obliczone</value>
+  </data>
+  <data name="📖" xml:space="preserve">
+    <value>📖</value>
+  </data>
+  <data name="🔄 Importuj przepis" xml:space="preserve">
+    <value>🔄 Importuj przepis</value>
+  </data>
+  <data name="🔍 Weryfikuj" xml:space="preserve">
+    <value>🔍 Weryfikuj</value>
+  </data>
+  <data name="🔍 Weryfikuj wszystkie" xml:space="preserve">
+    <value>🔍 Weryfikuj wszystkie</value>
+  </data>
+  <data name="🔒 Wkrotce" xml:space="preserve">
+    <value>🔒 Wkrotce</value>
+  </data>
+  <data name="🔥" xml:space="preserve">
+    <value>🔥</value>
+  </data>
+  <data name="🗑" xml:space="preserve">
+    <value>🗑</value>
+  </data>
+  <data name="🛒" xml:space="preserve">
+    <value>🛒</value>
+  </data>
+  <data name="🥩" xml:space="preserve">
+    <value>🥩</value>
+  </data>
+  <data name="🧮 Automatycznie" xml:space="preserve">
+    <value>🧮 Automatycznie</value>
+  </data>
+  <data name="Wybierz język" xml:space="preserve">
+    <value>Wybierz język</value>
+  </data>
+</root>

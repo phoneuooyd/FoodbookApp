@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" xmlns:loc="clr-namespace:Foodbook.Localization"
+             x:Class="Foodbook.Views.SettingsPage"
+             Title="{loc:Translate 'Ustawienia'}">
+    <StackLayout Padding="20" Spacing="20">
+        <Label Text="{loc:Translate 'Wybierz język'}" FontAttributes="Bold" />
+        <Picker x:Name="LanguagePicker" SelectedIndexChanged="OnLanguageChanged">
+            <Picker.Items>
+                <x:String>English</x:String>
+                <x:String>Polski</x:String>
+            </Picker.Items>
+        </Picker>
+    </StackLayout>
+</ContentPage>

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" xmlns:loc="clr-namespace:Foodbook.Localization"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:converters="clr-namespace:Foodbook.Converters"
              x:Class="Foodbook.Views.ShoppingListPage"
              x:Name="ThisPage"
              x:DataType="vm:ShoppingListViewModel"
-             Title="Listy zakupów">
+             Title="{local:Translate 'Listy zakupów'}">
 
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
@@ -51,7 +51,7 @@
                                 
                                 <!-- Przycisk edycji -->
                                 <Button Grid.Column="1" 
-                                        Text="✏️" 
+                                        Text="{local:Translate '✏️'}" 
                                         Command="{Binding BindingContext.OpenPlanCommand, Source={x:Reference ThisPage}}" 
                                         CommandParameter="{Binding .}" 
                                         WidthRequest="40" 
@@ -63,7 +63,7 @@
                                 
                                 <!-- Przycisk archiwizacji - szary kolor -->
                                 <Button Grid.Column="2" 
-                                        Text="📁" 
+                                        Text="{local:Translate '📁'}" 
                                         Command="{Binding BindingContext.ArchivePlanCommand, Source={x:Reference ThisPage}}" 
                                         CommandParameter="{Binding .}" 
                                         WidthRequest="40" 
@@ -85,13 +85,13 @@
                         Padding="40">
                 
                 <!-- Ikona koszyka -->
-                <Label Text="🛒" 
+                <Label Text="{local:Translate '🛒'}" 
                        FontSize="72" 
                        HorizontalOptions="Center"
                        Margin="0,0,0,20" />
                 
                 <!-- Główny tekst -->
-                <Label Text="Brak list zakupów" 
+                <Label Text="{local:Translate 'Brak list zakupów'}" 
                        FontSize="24" 
                        FontAttributes="Bold"
                        HorizontalOptions="Center"
@@ -99,7 +99,7 @@
                        Margin="0,0,0,10" />
                 
                 <!-- Tekst opisowy -->
-                <Label Text="Aby utworzyć listę zakupów, przejdź do Planera i zaplanuj posiłki, a następnie zapisz plan."
+                <Label Text="{local:Translate 'Aby utworzyć listę zakupów, przejdź do Planera i zaplanuj posiłki, a następnie zapisz plan.'}"
                        FontSize="16" 
                        HorizontalOptions="Center"
                        HorizontalTextAlignment="Center"
@@ -108,7 +108,7 @@
                        Margin="0,0,0,30" />
                 
                 <!-- Przycisk nawigacji do planera -->
-                <Button Text="📅 Przejdź do Planera"
+                <Button Text="{local:Translate '📅 Przejdź do Planera'}"
                         BackgroundColor="{DynamicResource Primary}"
                         TextColor="White"
                         FontSize="16"

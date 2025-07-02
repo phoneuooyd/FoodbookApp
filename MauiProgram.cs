@@ -4,6 +4,9 @@ using Foodbook.Data;
 using Foodbook.Services;
 using Foodbook.ViewModels;
 using Foodbook.Views;
+using Foodbook.Localization;
+using Microsoft.Maui.Storage;
+using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http;
@@ -68,6 +71,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<ShoppingListPage>();
             builder.Services.AddScoped<ShoppingListDetailPage>();
             builder.Services.AddScoped<ArchivePage>(); // Dodana ArchivePage
+            builder.Services.AddScoped<SettingsPage>();
 
             // 🧠 Rejestracja routów do Shell (opcjonalne, jeśli używasz Shell)
             Routing.RegisterRoute(nameof(HomePage), typeof(HomePage));
@@ -80,11 +84,15 @@ namespace FoodbookApp
             Routing.RegisterRoute(nameof(ShoppingListPage), typeof(ShoppingListPage));
             Routing.RegisterRoute(nameof(ShoppingListDetailPage), typeof(ShoppingListDetailPage));
             Routing.RegisterRoute(nameof(ArchivePage), typeof(ArchivePage)); // Dodana rejestracja routingu dla ArchivePage
+            Routing.RegisterRoute(nameof(SettingsPage), typeof(SettingsPage));
             
 
             // ✨ Build aplikacji
             var app = builder.Build();
             ServiceProvider = app.Services;
+
+            var lang = Preferences.Default.Get("AppLanguage", CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+            LocalizationResourceManager.Instance.CurrentCulture = new CultureInfo(lang);
 
             // 📦 Inicjalizacja bazy danych w tle - poprawiona wersja
             Task.Run(async () => await SeedDatabaseAsync(app.Services));

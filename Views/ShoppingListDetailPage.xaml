@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" xmlns:loc="clr-namespace:Foodbook.Localization"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:converters="clr-namespace:Foodbook.Converters"
              x:Class="Foodbook.Views.ShoppingListDetailPage"
              x:Name="ThisPage"
              x:DataType="vm:ShoppingListDetailViewModel"
-             Title="Lista zakupów">
+             Title="{local:Translate 'Lista zakupów'}">
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
     </ContentPage.Resources>
@@ -15,11 +15,11 @@
         
         <!-- Nagłówki kolumn -->
         <Grid ColumnDefinitions="Auto,2*,Auto,Auto,Auto" Padding="5" ColumnSpacing="5" BackgroundColor="{DynamicResource Primary}">
-            <Label Grid.Column="0" Text="✓" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
-            <Label Grid.Column="1" Text="Nazwa składnika" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" />
-            <Label Grid.Column="2" Text="Ilość" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
-            <Label Grid.Column="3" Text="Jednostka" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
-            <Label Grid.Column="4" Text="Akcje" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+            <Label Grid.Column="0" Text="{local:Translate '✓'}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+            <Label Grid.Column="1" Text="{local:Translate 'Nazwa składnika'}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" />
+            <Label Grid.Column="2" Text="{local:Translate 'Ilość'}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+            <Label Grid.Column="3" Text="{local:Translate 'Jednostka'}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+            <Label Grid.Column="4" Text="{local:Translate 'Akcje'}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
         </Grid>
         
         <CollectionView ItemsSource="{Binding Items}">
@@ -32,7 +32,7 @@
                             <!-- Nazwa składnika -->
                             <Entry Grid.Column="1" 
                                    Text="{Binding Name}" 
-                                   Placeholder="Nazwa"
+                                   Placeholder="{local:Translate 'Nazwa'}"
                                    IsVisible="{Binding IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
                             <Label Grid.Column="1" 
                                    Text="{Binding Name}" 
@@ -72,7 +72,7 @@
 
                             <!-- Przycisk usuwania - zgodny ze stylem innych stron -->
                             <Button Grid.Column="4" 
-                                    Text="🗑" 
+                                    Text="{local:Translate '🗑'}" 
                                     Command="{Binding BindingContext.RemoveItemCommand, Source={x:Reference ThisPage}}" 
                                     CommandParameter="{Binding .}" 
                                     WidthRequest="40" 
@@ -86,6 +86,6 @@
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
-        <Button Text="Dodaj składnik" Command="{Binding AddItemCommand}" />
+        <Button Text="{local:Translate 'Dodaj składnik'}" Command="{Binding AddItemCommand}" />
     </StackLayout>
 </ContentPage>
