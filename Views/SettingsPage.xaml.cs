@@ -15,6 +15,7 @@ public partial class SettingsPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
+        // Force refresh of the picker selection when the page appears
         if (ViewModel != null && ViewModel.AvailableLanguages.Count > 0)
         {
             var selected = ViewModel.AvailableLanguages.FirstOrDefault(l => l.Code == ViewModel.SelectedLanguage.Code);
@@ -22,14 +23,6 @@ public partial class SettingsPage : ContentPage
             {
                 LanguagePicker.SelectedItem = selected;
             }
-        }
-    }
-
-    private void OnLanguageChanged(object sender, EventArgs e)
-    {
-        if (sender is Picker picker && picker.SelectedItem is ValueTuple<string, string> selectedLanguage && ViewModel != null)
-        {
-            ViewModel.SelectedLanguage = selectedLanguage;
         }
     }
 }

@@ -7,6 +7,7 @@ namespace Foodbook.Services
         Task SetLanguageAsync(string languageCode);
         string GetCurrentLanguage();
         List<(string Code, string Name)> GetAvailableLanguages();
+        void InitializeLanguage();
     }
 
     public class LocalizationService : ILocalizationService
@@ -17,19 +18,19 @@ namespace Foodbook.Services
         {
             try
             {
-                // Zapisz wybór w preferencjach
+                // Save preference
                 await SecureStorage.SetAsync(LANGUAGE_KEY, languageCode);
                 
-                // Ustaw kulturê aplikacji
-                var culture = new CultureInfo(languageCode);
-                CultureInfo.DefaultThreadCurrentCulture = culture;
-                CultureInfo.DefaultThreadCurrentUICulture = culture;
+                // Set application culture immediately
+                ApplyCulture(languageCode);
                 
-                System.Diagnostics.Debug.WriteLine($"Language changed to: {languageCode}");
+                System.Diagnostics.Debug.WriteLine($"? Language successfully changed to: {languageCode}");
+                System.Diagnostics.Debug.WriteLine($"? Current UI Culture: {CultureInfo.CurrentUICulture.Name}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error setting language: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"? Error setting language: {ex.Message}");
+                throw;
             }
         }
 
@@ -40,31 +41,65 @@ namespace Foodbook.Services
                 var savedLanguage = SecureStorage.GetAsync(LANGUAGE_KEY).Result;
                 if (!string.IsNullOrEmpty(savedLanguage))
                 {
+                    System.Diagnostics.Debug.WriteLine($"?? Retrieved saved language: {savedLanguage}");
                     return savedLanguage;
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Ignore errors and fall back to system language
+                System.Diagnostics.Debug.WriteLine($"?? Error retrieving saved language: {ex.Message}");
             }
 
             // Fallback to system language
             var systemLanguage = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
-            return systemLanguage switch
+            var fallbackLanguage = systemLanguage switch
             {
                 "pl" => "pl-PL",
                 "en" => "en-US",
                 _ => "en-US"
             };
+            
+            System.Diagnostics.Debug.WriteLine($"?? Using fallback language: {fallbackLanguage} (system: {systemLanguage})");
+            return fallbackLanguage;
         }
 
         public List<(string Code, string Name)> GetAvailableLanguages()
         {
-            return new List<(string Code, string Name)>
+            var languages = new List<(string Code, string Name)>
             {
                 ("pl-PL", "Polski"),
                 ("en-US", "English")
             };
+            
+            System.Diagnostics.Debug.WriteLine($"?? Available languages: {string.Join(", ", languages.Select(l => $"{l.Name}({l.Code})"))}");
+            return languages;
+        }
+
+        public void InitializeLanguage()
+        {
+            var currentLanguage = GetCurrentLanguage();
+            ApplyCulture(currentLanguage);
+            System.Diagnostics.Debug.WriteLine($"?? Language initialized: {currentLanguage}");
+        }
+
+        private void ApplyCulture(string languageCode)
+        {
+            try
+            {
+                var culture = new CultureInfo(languageCode);
+                CultureInfo.DefaultThreadCurrentCulture = culture;
+                CultureInfo.DefaultThreadCurrentUICulture = culture;
+                
+                // Also set current thread culture for immediate effect
+                Thread.CurrentThread.CurrentCulture = culture;
+                Thread.CurrentThread.CurrentUICulture = culture;
+                
+                System.Diagnostics.Debug.WriteLine($"?? Culture applied: {culture.Name} (Display: {culture.DisplayName})");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"? Error applying culture {languageCode}: {ex.Message}");
+            }
         }
     }
 }

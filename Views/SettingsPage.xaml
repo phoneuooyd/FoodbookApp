@@ -71,7 +71,7 @@
             <Frame Style="{StaticResource SettingsCardStyle}">
                 <StackLayout>
                     <StackLayout Orientation="Horizontal" Spacing="8" Margin="0,0,0,16">
-                        <Label Text="" FontSize="24" VerticalOptions="Center" />
+                        <Label Text="🌐" FontSize="24" VerticalOptions="Center" />
                         <Label Text="{x:Static resx:SettingsPage.LanguageSection}" Style="{StaticResource SectionTitleStyle}" Margin="0" />
                     </StackLayout>
                     
@@ -85,11 +85,11 @@
                                 x:Name="LanguagePicker"
                                 ItemsSource="{Binding AvailableLanguages}"
                                 ItemDisplayBinding="{Binding Name}"
+                                SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"
                                 FontSize="14"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}"
                                 TextColor="{AppThemeBinding Light={StaticResource Gray800}, Dark={StaticResource Gray200}}"
-                                WidthRequest="120"
-                                SelectedIndexChanged="OnLanguageChanged" />
+                                WidthRequest="120" />
                     </Grid>
                 </StackLayout>
             </Frame>
@@ -98,7 +98,7 @@
             <Frame Style="{StaticResource SettingsCardStyle}">
                 <StackLayout>
                     <StackLayout Orientation="Horizontal" Spacing="8" Margin="0,0,0,16">
-                        <Label Text="" FontSize="24" VerticalOptions="Center" />
+                        <Label Text="⚙️" FontSize="24" VerticalOptions="Center" />
                         <Label Text="{x:Static resx:SettingsPage.AppSection}" Style="{StaticResource SectionTitleStyle}" Margin="0" />
                     </StackLayout>
                     
@@ -136,7 +136,7 @@
             <Frame Style="{StaticResource SettingsCardStyle}">
                 <StackLayout>
                     <StackLayout Orientation="Horizontal" Spacing="8" Margin="0,0,0,16">
-                        <Label Text="" FontSize="24" VerticalOptions="Center" />
+                        <Label Text="ℹ️" FontSize="24" VerticalOptions="Center" />
                         <Label Text="{x:Static resx:SettingsPage.AboutSection}" Style="{StaticResource SectionTitleStyle}" Margin="0" />
                     </StackLayout>
                     
