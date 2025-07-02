@@ -2,10 +2,11 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
+             xmlns:resx="clr-namespace:FoodbookApp.Resources"
              x:Class="Foodbook.Views.MealFormPage"
              x:Name="ThisPage"
              x:DataType="vm:PlannedMealFormViewModel"
-             Title="Plan Meal">
+             Title="{x:Static resx:MealFormPage.Title}">
     <VerticalStackLayout Padding="20" Spacing="10">
 
         <!-- Header -->

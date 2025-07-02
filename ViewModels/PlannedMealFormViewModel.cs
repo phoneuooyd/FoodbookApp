@@ -16,9 +16,9 @@ public class PlannedMealFormViewModel : INotifyPropertyChanged
 
     public ObservableCollection<Recipe> Recipes { get; } = new();
 
-    public string Title => _meal == null ? "Nowy posiłek" : "Edytuj posiłek";
+    public string Title => _meal == null ? FoodbookApp.Resources.MealFormPage.NewTitle : FoodbookApp.Resources.MealFormPage.EditTitle;
 
-    public string SaveButtonText => _meal == null ? "Dodaj posiłek" : "Zapisz zmiany";
+    public string SaveButtonText => _meal == null ? FoodbookApp.Resources.MealFormPage.AddButton : FoodbookApp.Resources.MealFormPage.SaveButton;
 
     public string ValidationMessage { get => _validationMessage; set { _validationMessage = value; OnPropertyChanged(); } }
     private string _validationMessage = string.Empty;
@@ -78,7 +78,7 @@ public class PlannedMealFormViewModel : INotifyPropertyChanged
 
         if (SelectedRecipe == null)
         {
-            ValidationMessage = "Wybierz przepis";
+            ValidationMessage = FoodbookApp.Resources.MealFormPage.SelectRecipe;
         }
 
         OnPropertyChanged(nameof(HasValidationError));

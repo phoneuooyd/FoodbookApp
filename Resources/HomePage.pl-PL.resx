@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="WelcomeTitle" xml:space="preserve">
+    <value>🍽️ Witaj w Foodbook</value>
+  </data>
+  <data name="WelcomeSubtitle" xml:space="preserve">
+    <value>Twój osobisty asystent kulinarny</value>
+  </data>
+  <data name="Recipes" xml:space="preserve">
+    <value>Przepisy</value>
+  </data>
+  <data name="SavedRecipes" xml:space="preserve">
+    <value>zapisanych przepisów</value>
+  </data>
+  <data name="Plans" xml:space="preserve">
+    <value>Plany</value>
+  </data>
+  <data name="ActiveLists" xml:space="preserve">
+    <value>aktywnych list</value>
+  </data>
+  <data name="Archive" xml:space="preserve">
+    <value>Archiwum</value>
+  </data>
+  <data name="Archived" xml:space="preserve">
+    <value>zarchiwizowanych</value>
+  </data>
+  <data name="Open" xml:space="preserve">
+    <value>Przejdź</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Ustawienia</value>
+  </data>
+  <data name="Personalize" xml:space="preserve">
+    <value>Personalizuj</value>
+  </data>
+  <data name="ComingSoon" xml:space="preserve">
+    <value>Wkrótce</value>
+  </data>
+  <data name="NutritionStats" xml:space="preserve">
+    <value>Statystyki Diety</value>
+  </data>
+  <data name="Calories" xml:space="preserve">
+    <value>Kalorie</value>
+  </data>
+  <data name="Protein" xml:space="preserve">
+    <value>Białko</value>
+  </data>
+  <data name="Carbs" xml:space="preserve">
+    <value>Węglowodany</value>
+  </data>
+  <data name="Info" xml:space="preserve">
+    <value>Planowanie posiłków wkrótce</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Pulpit</value>
+  </data>
+</root>

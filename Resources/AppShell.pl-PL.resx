@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="IngredientsTab" xml:space="preserve"><value>Składniki</value></data>
+  <data name="RecipesTab" xml:space="preserve"><value>Przepisy</value></data>
+  <data name="HomeTab" xml:space="preserve"><value>Start</value></data>
+  <data name="PlannerTab" xml:space="preserve"><value>Planer</value></data>
+  <data name="ShoppingTab" xml:space="preserve"><value>Listy zakupów</value></data>
+</root>
