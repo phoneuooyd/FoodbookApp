@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="Title" xml:space="preserve"><value>Składniki</value></data>
+  <data name="VerifyAll" xml:space="preserve"><value>🔍 Weryfikuj wszystkie</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Szukaj składników...</value></data>
+  <data name="AddIngredient" xml:space="preserve"><value>➕ Dodaj składnik</value></data>
+  <data name="Verify" xml:space="preserve"><value>🔍 Weryfikuj</value></data>
+  <data name="BulkHint" xml:space="preserve"><value>💡 Użyj przycisku 'Weryfikuj' aby zaktualizować wartości odżywcze wszystkich składników z bazy OpenFoodFacts</value></data>
+  <data name="NoIngredients" xml:space="preserve"><value>Brak składników</value></data>
+  <data name="TapToAdd" xml:space="preserve"><value>Dotknij 'Dodaj składnik' aby dodać pierwszy składnik</value></data>
+</root>

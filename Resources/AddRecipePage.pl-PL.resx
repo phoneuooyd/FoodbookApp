@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="AddModeLabel" xml:space="preserve"><value>Sposób dodawania przepisu</value></data>
+  <data name="ManualButton" xml:space="preserve"><value>✏️ Ręcznie</value></data>
+  <data name="ImportButton" xml:space="preserve"><value>🌐 Z linku</value></data>
+  <data name="ImportHeader" xml:space="preserve"><value>Import z internetu</value></data>
+  <data name="UrlLabel" xml:space="preserve"><value>URL przepisu *</value></data>
+  <data name="UrlPlaceholder" xml:space="preserve"><value>Wklej link do przepisu</value></data>
+  <data name="ImportAction" xml:space="preserve"><value>🔄 Importuj przepis</value></data>
+  <data name="BasicInfo" xml:space="preserve"><value>Informacje podstawowe</value></data>
+  <data name="NameLabel" xml:space="preserve"><value>Nazwa przepisu *</value></data>
+  <data name="NamePlaceholder" xml:space="preserve"><value>Wprowadź nazwę przepisu</value></data>
+  <data name="DescriptionLabel" xml:space="preserve"><value>Opis</value></data>
+  <data name="DescriptionPlaceholder" xml:space="preserve"><value>Wprowadź opis przepisu</value></data>
+  <data name="DefaultPortionsLabel" xml:space="preserve"><value>Domyślna ilość porcji (lista zakupów)*</value></data>
+  <data name="Ingredients" xml:space="preserve"><value>Składniki</value></data>
+  <data name="IngredientLabel" xml:space="preserve"><value>Składnik</value></data>
+  <data name="PickIngredient" xml:space="preserve"><value>Wybierz składnik</value></data>
+  <data name="QuantityLabel" xml:space="preserve"><value>Ilość</value></data>
+  <data name="UnitLabel" xml:space="preserve"><value>Jednostka</value></data>
+  <data name="AddIngredientButton" xml:space="preserve"><value>➕ Dodaj składnik</value></data>
+  <data name="NutritionHeader" xml:space="preserve"><value>Wartości odżywcze (na całą porcję)</value></data>
+  <data name="CalcMethodLabel" xml:space="preserve"><value>Sposób obliczania wartości odżywczych</value></data>
+  <data name="CalcAuto" xml:space="preserve"><value>🧮 Automatycznie</value></data>
+  <data name="CalcManual" xml:space="preserve"><value>✏️ Ręcznie</value></data>
+  <data name="AutoInfo" xml:space="preserve"><value>Obliczone automatycznie na podstawie składników:</value></data>
+  <data name="ManualInfo" xml:space="preserve"><value>Wprowadź wartości ręcznie:</value></data>
+  <data name="CopyButton" xml:space="preserve"><value>📋 Skopiuj obliczone</value></data>
+  <data name="Calories" xml:space="preserve"><value>Kalorie</value></data>
+  <data name="Protein" xml:space="preserve"><value>Białko (g)</value></data>
+  <data name="Fat" xml:space="preserve"><value>Tłuszcze (g)</value></data>
+  <data name="Carbs" xml:space="preserve"><value>Węglowodany (g)</value></data>
+</root>

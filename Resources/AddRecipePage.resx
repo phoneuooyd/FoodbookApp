@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="AddModeLabel" xml:space="preserve"><value>Recipe entry mode</value></data>
+  <data name="ManualButton" xml:space="preserve"><value>✏️ Manual</value></data>
+  <data name="ImportButton" xml:space="preserve"><value>🌐 From link</value></data>
+  <data name="ImportHeader" xml:space="preserve"><value>Import from the web</value></data>
+  <data name="UrlLabel" xml:space="preserve"><value>Recipe URL *</value></data>
+  <data name="UrlPlaceholder" xml:space="preserve"><value>Paste recipe link</value></data>
+  <data name="ImportAction" xml:space="preserve"><value>🔄 Import recipe</value></data>
+  <data name="BasicInfo" xml:space="preserve"><value>Basic information</value></data>
+  <data name="NameLabel" xml:space="preserve"><value>Recipe name *</value></data>
+  <data name="NamePlaceholder" xml:space="preserve"><value>Enter recipe name</value></data>
+  <data name="DescriptionLabel" xml:space="preserve"><value>Description</value></data>
+  <data name="DescriptionPlaceholder" xml:space="preserve"><value>Enter recipe description</value></data>
+  <data name="DefaultPortionsLabel" xml:space="preserve"><value>Default servings (shopping list)*</value></data>
+  <data name="Ingredients" xml:space="preserve"><value>Ingredients</value></data>
+  <data name="IngredientLabel" xml:space="preserve"><value>Ingredient</value></data>
+  <data name="PickIngredient" xml:space="preserve"><value>Select ingredient</value></data>
+  <data name="QuantityLabel" xml:space="preserve"><value>Quantity</value></data>
+  <data name="UnitLabel" xml:space="preserve"><value>Unit</value></data>
+  <data name="AddIngredientButton" xml:space="preserve"><value>➕ Add ingredient</value></data>
+  <data name="NutritionHeader" xml:space="preserve"><value>Nutrition (per recipe)</value></data>
+  <data name="CalcMethodLabel" xml:space="preserve"><value>Nutrition calculation method</value></data>
+  <data name="CalcAuto" xml:space="preserve"><value>🧮 Automatic</value></data>
+  <data name="CalcManual" xml:space="preserve"><value>✏️ Manual</value></data>
+  <data name="AutoInfo" xml:space="preserve"><value>Calculated automatically from ingredients:</value></data>
+  <data name="ManualInfo" xml:space="preserve"><value>Enter values manually:</value></data>
+  <data name="CopyButton" xml:space="preserve"><value>📋 Copy calculated</value></data>
+  <data name="Calories" xml:space="preserve"><value>Calories</value></data>
+  <data name="Protein" xml:space="preserve"><value>Protein (g)</value></data>
+  <data name="Fat" xml:space="preserve"><value>Fat (g)</value></data>
+  <data name="Carbs" xml:space="preserve"><value>Carbs (g)</value></data>
+</root>

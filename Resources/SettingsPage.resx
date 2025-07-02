@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Subtitle" xml:space="preserve">
+    <value>Configure your app preferences</value>
+  </data>
+  <data name="LanguageSection" xml:space="preserve">
+    <value>Language &amp; Region</value>
+  </data>
+  <data name="LanguageLabel" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="LanguageDescription" xml:space="preserve">
+    <value>Choose your preferred language</value>
+  </data>
+  <data name="AppSection" xml:space="preserve">
+    <value>Application</value>
+  </data>
+  <data name="ThemeLabel" xml:space="preserve">
+    <value>Theme</value>
+  </data>
+  <data name="ThemeDescription" xml:space="preserve">
+    <value>Light or dark mode</value>
+  </data>
+  <data name="NotificationsLabel" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
+  <data name="NotificationsDescription" xml:space="preserve">
+    <value>Meal and shopping reminders</value>
+  </data>
+  <data name="AboutSection" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="AppName" xml:space="preserve">
+    <value>Foodbook App</value>
+  </data>
+  <data name="Version" xml:space="preserve">
+    <value>Version 1.0.0</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Your personal culinary assistant for managing recipes, meal planning, and shopping lists.</value>
+  </data>
+  <data name="ComingSoon" xml:space="preserve">
+    <value>Coming soon</value>
+  </data>
+</root>
