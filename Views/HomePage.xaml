@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" xmlns:loc="clr-namespace:Foodbook.Localization"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:converters="clr-namespace:Foodbook.Converters"
              x:Class="Foodbook.Views.HomePage"
              x:DataType="vm:HomeViewModel"
-             Title="Dashboard"
+             Title="{local:Translate 'Dashboard'}"
              BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}">
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
@@ -93,13 +93,13 @@
                    Margin="0,0,0,20"
                    Padding="20,16">
                 <StackLayout>
-                    <Label Text="🍽️ Witaj w Foodbook" 
+                    <Label Text="{local:Translate '🍽️ Witaj w Foodbook'}" 
                            FontSize="26" 
                            FontAttributes="Bold" 
                            HorizontalTextAlignment="Center"
                            TextColor="{DynamicResource Primary}"
                            Margin="0,4" />
-                    <Label Text="Twoj osobisty asystent kulinarny" 
+                    <Label Text="{local:Translate 'Twoj osobisty asystent kulinarny'}" 
                            FontSize="14" 
                            HorizontalTextAlignment="Center"
                            TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}"
@@ -128,10 +128,10 @@
                     <Grid ColumnDefinitions="*,1,*" ColumnSpacing="20">
                         <!-- Przepisy -->
                         <StackLayout Grid.Column="0">
-                            <Label Text="📖" Style="{StaticResource EmojiStyle}" />
-                            <Label Text="Przepisy" Style="{StaticResource CardTitleStyle}" />
+                            <Label Text="{local:Translate '📖'}" Style="{StaticResource EmojiStyle}" />
+                            <Label Text="{local:Translate 'Przepisy'}" Style="{StaticResource CardTitleStyle}" />
                             <Label Text="{Binding RecipeCount}" Style="{StaticResource StatNumberStyle}" />
-                            <Label Text="zapisanych przepisow" Style="{StaticResource StatDescriptionStyle}" />
+                            <Label Text="{local:Translate 'zapisanych przepisow'}" Style="{StaticResource StatDescriptionStyle}" />
                         </StackLayout>
                         
                         <!-- Separator Line -->
@@ -142,10 +142,10 @@
                         
                         <!-- Plany -->
                         <StackLayout Grid.Column="2">
-                            <Label Text="📋" Style="{StaticResource EmojiStyle}" />
-                            <Label Text="Plany" Style="{StaticResource CardTitleStyle}" />
+                            <Label Text="{local:Translate '📋'}" Style="{StaticResource EmojiStyle}" />
+                            <Label Text="{local:Translate 'Plany'}" Style="{StaticResource CardTitleStyle}" />
                             <Label Text="{Binding PlanCount}" Style="{StaticResource StatNumberStyle}" />
-                            <Label Text="aktywnych list" Style="{StaticResource StatDescriptionStyle}" />
+                            <Label Text="{local:Translate 'aktywnych list'}" Style="{StaticResource StatDescriptionStyle}" />
                         </StackLayout>
                     </Grid>
                 </Frame>
@@ -153,11 +153,11 @@
                 <!-- Archive Card -->
                 <Frame Grid.Row="1" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
-                        <Label Text="📁" Style="{StaticResource EmojiStyle}" />
-                        <Label Text="Archiwum" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="{local:Translate '📁'}" Style="{StaticResource EmojiStyle}" />
+                        <Label Text="{local:Translate 'Archiwum'}" Style="{StaticResource CardTitleStyle}" />
                         <Label Text="{Binding ArchivedPlanCount}" Style="{StaticResource StatNumberStyle}" />
-                        <Label Text="zarchiwizowanych" Style="{StaticResource StatDescriptionStyle}" />
-                        <Button Text="📂 Przejdz" 
+                        <Label Text="{local:Translate 'zarchiwizowanych'}" Style="{StaticResource StatDescriptionStyle}" />
+                        <Button Text="{local:Translate '📂 Przejdz'}" 
                                 Clicked="OnArchiveClicked"
                                 Style="{StaticResource CardButtonStyle}" />
                     </StackLayout>
@@ -166,16 +166,16 @@
                 <!-- Settings Card -->
                 <Frame Grid.Row="1" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
-                        <Label Text="⚙️" Style="{StaticResource EmojiStyle}" />
-                        <Label Text="Ustawienia" Style="{StaticResource CardTitleStyle}" />
-                        <Label Text="Personalizuj" 
+                        <Label Text="{local:Translate '⚙️'}" Style="{StaticResource EmojiStyle}" />
+                        <Label Text="{local:Translate 'Ustawienia'}" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="{local:Translate 'Personalizuj'}" 
                                FontSize="16" 
                                HorizontalTextAlignment="Center"
                                TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
                                Margin="0,16,0,8" />
-                        <Button Text="🔒 Wkrotce" 
-                                Style="{StaticResource DisabledButtonStyle}"
-                                IsEnabled="False" />
+                        <Button Text="{local:Translate 'Ustawienia'}"
+                                Clicked="OnSettingsClicked"
+                                Style="{StaticResource CardButtonStyle}" />
                     </StackLayout>
                 </Frame>
 
@@ -183,8 +183,8 @@
                 <Frame Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="8" Margin="0,0,0,16">
-                            <Label Text="📊" FontSize="24" />
-                            <Label Text="Statystyki Diety" Style="{StaticResource CardTitleStyle}" Margin="0" />
+                            <Label Text="{local:Translate '📊'}" FontSize="24" />
+                            <Label Text="{local:Translate 'Statystyki Diety'}" Style="{StaticResource CardTitleStyle}" Margin="0" />
                         </StackLayout>
                         
                         <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
@@ -196,14 +196,14 @@
                                    HasShadow="False"
                                    BorderColor="Transparent">
                                 <StackLayout>
-                                    <Label Text="🔥" FontSize="20" HorizontalTextAlignment="Center" />
-                                    <Label Text="Kalorie" 
+                                    <Label Text="{local:Translate '🔥'}" FontSize="20" HorizontalTextAlignment="Center" />
+                                    <Label Text="{local:Translate 'Kalorie'}" 
                                            FontSize="12" 
                                            FontAttributes="Bold"
                                            HorizontalTextAlignment="Center"
                                            TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" 
                                            Margin="0,4,0,8" />
-                                    <Label Text="---" Style="{StaticResource MicroStatStyle}" />
+                                    <Label Text="{local:Translate '---'}" Style="{StaticResource MicroStatStyle}" />
                                 </StackLayout>
                             </Frame>
                             
@@ -215,14 +215,14 @@
                                    HasShadow="False"
                                    BorderColor="Transparent">
                                 <StackLayout>
-                                    <Label Text="🥩" FontSize="20" HorizontalTextAlignment="Center" />
-                                    <Label Text="Bialko" 
+                                    <Label Text="{local:Translate '🥩'}" FontSize="20" HorizontalTextAlignment="Center" />
+                                    <Label Text="{local:Translate 'Bialko'}" 
                                            FontSize="12" 
                                            FontAttributes="Bold"
                                            HorizontalTextAlignment="Center"
                                            TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" 
                                            Margin="0,4,0,8" />
-                                    <Label Text="---" Style="{StaticResource MicroStatStyle}" />
+                                    <Label Text="{local:Translate '---'}" Style="{StaticResource MicroStatStyle}" />
                                 </StackLayout>
                             </Frame>
                             
@@ -234,19 +234,19 @@
                                    HasShadow="False"
                                    BorderColor="Transparent">
                                 <StackLayout>
-                                    <Label Text="🌾" FontSize="20" HorizontalTextAlignment="Center" />
-                                    <Label Text="Weglowodany" 
+                                    <Label Text="{local:Translate '🌾'}" FontSize="20" HorizontalTextAlignment="Center" />
+                                    <Label Text="{local:Translate 'Weglowodany'}" 
                                            FontSize="12" 
                                            FontAttributes="Bold"
                                            HorizontalTextAlignment="Center"
                                            TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" 
                                            Margin="0,4,0,8" />
-                                    <Label Text="---" Style="{StaticResource MicroStatStyle}" />
+                                    <Label Text="{local:Translate '---'}" Style="{StaticResource MicroStatStyle}" />
                                 </StackLayout>
                             </Frame>
                         </Grid>
                         
-                        <Label Text="💡 Funkcja dostepna wkrotce - planuj posilki aby zobaczyc statystyki" 
+                        <Label Text="{local:Translate '💡 Funkcja dostepna wkrotce - planuj posilki aby zobaczyc statystyki'}" 
                                FontSize="12" 
                                HorizontalTextAlignment="Center"
                                TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"

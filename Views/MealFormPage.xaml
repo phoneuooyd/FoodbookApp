@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" xmlns:loc="clr-namespace:Foodbook.Localization"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              x:Class="Foodbook.Views.MealFormPage"
              x:Name="ThisPage"
              x:DataType="vm:PlannedMealFormViewModel"
-             Title="Plan Meal">
+             Title="{local:Translate 'Plan Meal'}">
     <VerticalStackLayout Padding="20" Spacing="10">
 
         <!-- Header -->
@@ -16,7 +16,7 @@
                Margin="0,0,0,20" />
 
         <DatePicker Date="{Binding Date}" />
-        <Picker Title="Recipe" ItemsSource="{Binding Recipes}" ItemDisplayBinding="{Binding Name}" SelectedItem="{Binding SelectedRecipe}" />
+        <Picker Title="{local:Translate 'Recipe'}" ItemsSource="{Binding Recipes}" ItemDisplayBinding="{Binding Name}" SelectedItem="{Binding SelectedRecipe}" />
 
         <!-- Action Buttons -->
         <StackLayout Spacing="10" Margin="0,20,0,0">

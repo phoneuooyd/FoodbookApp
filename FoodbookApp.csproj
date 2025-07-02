@@ -63,6 +63,7 @@
         
         <!-- Embedded Resource as fallback -->
         <EmbeddedResource Include="Resources\Raw\ingredients.json" />
+    <EmbeddedResource Include="Resources/Localization/*.resx" />
         
         <!-- JSON Data Files -->
         <!-- Other data files -->

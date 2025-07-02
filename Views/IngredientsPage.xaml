@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" xmlns:loc="clr-namespace:Foodbook.Localization"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:converters="clr-namespace:Foodbook.Converters"
              x:Class="Foodbook.Views.IngredientsPage"
              x:Name="ThisPage"
              x:DataType="vm:IngredientsViewModel"
-             Title="Składniki">
+             Title="{local:Translate 'Składniki'}">
 
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
@@ -15,7 +15,7 @@
     </ContentPage.Resources>
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="🔍 Weryfikuj wszystkie"
+        <ToolbarItem Text="{local:Translate '🔍 Weryfikuj wszystkie'}"
                      Command="{Binding BulkVerifyCommand}"
                      Order="Primary" />
     </ContentPage.ToolbarItems>
@@ -32,7 +32,7 @@
         <!-- Search bar -->
         <SearchBar Grid.Row="1" 
                    Text="{Binding SearchText}"
-                   Placeholder="Szukaj składników..."
+                   Placeholder="{local:Translate 'Szukaj składników...'}"
                    Margin="10,0"
                    IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
 
@@ -72,13 +72,13 @@
                       ColumnSpacing="10"
                       Margin="10">
                     <Button Grid.Column="0" 
-                            Text="➕ Dodaj składnik" 
+                            Text="{local:Translate '➕ Dodaj składnik'}" 
                             Command="{Binding AddCommand}"
                             BackgroundColor="{DynamicResource Primary}"
                             TextColor="White"
                             HeightRequest="45" />
                     <Button Grid.Column="1"
-                            Text="🔍 Weryfikuj"
+                            Text="{local:Translate '🔍 Weryfikuj'}"
                             Command="{Binding BulkVerifyCommand}"
                             BackgroundColor="Green"
                             TextColor="White"
@@ -94,7 +94,7 @@
                     <Frame BackgroundColor="LightBlue" 
                            Padding="10" 
                            CornerRadius="6">
-                        <Label Text="💡 Użyj przycisku 'Weryfikuj' aby zaktualizować wartości odżywcze wszystkich składników z bazy OpenFoodFacts"
+                        <Label Text="{local:Translate '💡 Użyj przycisku 'Weryfikuj' aby zaktualizować wartości odżywcze wszystkich składników z bazy OpenFoodFacts'}"
                                FontSize="12"
                                HorizontalTextAlignment="Center" />
                     </Frame>
@@ -170,7 +170,7 @@
                                     
                                     <!-- Ikona edycji - zgodna ze stylem RecipesPage -->
                                     <Button Grid.Column="1" 
-                                            Text="✎" 
+                                            Text="{local:Translate '✎'}" 
                                             Command="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}" 
                                             CommandParameter="{Binding .}" 
                                             WidthRequest="40" 
@@ -182,7 +182,7 @@
                                     
                                     <!-- Ikona usuwania - zgodna ze stylem RecipesPage -->
                                     <Button Grid.Column="2" 
-                                            Text="🗑" 
+                                            Text="{local:Translate '🗑'}" 
                                             Command="{Binding BindingContext.DeleteCommand, Source={x:Reference ThisPage}}" 
                                             CommandParameter="{Binding .}" 
                                             WidthRequest="40" 
@@ -198,11 +198,11 @@
                     
                     <CollectionView.EmptyView>
                         <StackLayout HorizontalOptions="Center" VerticalOptions="Center" Padding="20">
-                            <Label Text="Brak składników" 
+                            <Label Text="{local:Translate 'Brak składników'}" 
                                    FontSize="18" 
                                    HorizontalOptions="Center"
                                    TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-                            <Label Text="Dotknij 'Dodaj składnik' aby dodać pierwszy składnik" 
+                            <Label Text="{local:Translate 'Dotknij 'Dodaj składnik' aby dodać pierwszy składnik'}" 
                                    FontSize="14" 
                                    HorizontalOptions="Center"
                                    TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
