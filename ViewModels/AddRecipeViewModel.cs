@@ -156,6 +156,7 @@ namespace Foodbook.ViewModels
             ImportUrl = string.Empty;
             ImportStatus = string.Empty;
             UseCalculatedValues = true;
+            IsManualMode = true; // Resetuj też tryb na ręczny
             
             // Powiadom o zmianach w tytule i przycisku
             OnPropertyChanged(nameof(Title));
@@ -163,6 +164,8 @@ namespace Foodbook.ViewModels
             
             ValidateInput();
         }
+
+        public bool IsEditMode => _editingRecipe != null;
 
         public async Task LoadRecipeAsync(int id)
         {

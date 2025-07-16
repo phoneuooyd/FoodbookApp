@@ -22,14 +22,12 @@ namespace Foodbook.Views
         {
             base.OnAppearing();
             
-            // Resetuj stan przed operacj¹
-            if (RecipeId == 0)
-            {
-                ViewModel?.Reset();
-            }
+            // Zawsze resetuj stan ViewModelu na pocz¹tku
+            ViewModel?.Reset();
             
             await ViewModel.LoadAvailableIngredientsAsync();
             
+            // Tylko jeœli mamy RecipeId > 0, za³aduj przepis do edycji
             if (RecipeId > 0)
                 await ViewModel.LoadRecipeAsync(RecipeId);
         }
