@@ -21,7 +21,15 @@ namespace Foodbook.Views
         protected override async void OnAppearing()
         {
             base.OnAppearing();
+            
+            // Resetuj stan przed operacj¹
+            if (RecipeId == 0)
+            {
+                ViewModel?.Reset();
+            }
+            
             await ViewModel.LoadAvailableIngredientsAsync();
+            
             if (RecipeId > 0)
                 await ViewModel.LoadRecipeAsync(RecipeId);
         }

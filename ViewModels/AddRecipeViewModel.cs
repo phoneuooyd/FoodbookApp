@@ -143,6 +143,27 @@ namespace Foodbook.ViewModels
             ValidateInput();
         }
 
+        public void Reset()
+        {
+            _editingRecipe = null;
+            Name = Description = string.Empty;
+            IloscPorcji = "2";
+            Calories = Protein = Fat = Carbs = "0";
+            CalculatedCalories = CalculatedProtein = CalculatedFat = CalculatedCarbs = "0";
+            
+            Ingredients.Clear();
+            
+            ImportUrl = string.Empty;
+            ImportStatus = string.Empty;
+            UseCalculatedValues = true;
+            
+            // Powiadom o zmianach w tytule i przycisku
+            OnPropertyChanged(nameof(Title));
+            OnPropertyChanged(nameof(SaveButtonText));
+            
+            ValidateInput();
+        }
+
         public async Task LoadRecipeAsync(int id)
         {
             var recipe = await _recipeService.GetRecipeAsync(id);
@@ -178,6 +199,10 @@ namespace Foodbook.ViewModels
             }
             
             CalculateNutritionalValues();
+            
+            // Ważne: Powiadom interfejs o zmianach w tytule i przycisku
+            OnPropertyChanged(nameof(Title));
+            OnPropertyChanged(nameof(SaveButtonText));
         }
 
         private async void AddIngredient()
@@ -420,7 +445,7 @@ namespace Foodbook.ViewModels
                 else
                     await _recipeService.UpdateRecipeAsync(recipe);
 
-                // Reset form po udanym zapisie
+                // Reset form po udanym zapisie tylko w trybie dodawania
                 if (_editingRecipe == null)
                 {
                     Name = Description = string.Empty;
