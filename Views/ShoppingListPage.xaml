@@ -6,7 +6,7 @@
              x:Class="Foodbook.Views.ShoppingListPage"
              x:Name="ThisPage"
              x:DataType="vm:ShoppingListViewModel"
-             Title="Listy zakupow">
+             Title="Listy zakupów">
     <CollectionView ItemsSource="{Binding Plans}" Margin="10" SelectionMode="None">
         <CollectionView.ItemTemplate>
             <DataTemplate x:DataType="models:Plan">

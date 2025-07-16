@@ -94,16 +94,40 @@ namespace FoodbookApp
 
         private static async Task SeedDatabaseAsync(IServiceProvider services)
         {
-            using var scope = services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            await db.Database.EnsureCreatedAsync();
-
-            var hasIngredients = await db.Ingredients.AnyAsync();
-            var hasRecipes = await db.Recipes.AnyAsync();
-
-            if (!hasIngredients && !hasRecipes)
+            try
             {
-                await SeedData.InitializeAsync(db);
+                System.Diagnostics.Debug.WriteLine("🔄 Starting database initialization...");
+                
+                using var scope = services.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                
+                System.Diagnostics.Debug.WriteLine("🔄 Ensuring database is created...");
+                await db.Database.EnsureCreatedAsync();
+                System.Diagnostics.Debug.WriteLine("✅ Database created successfully");
+
+                var hasIngredients = await db.Ingredients.AnyAsync();
+                var hasRecipes = await db.Recipes.AnyAsync();
+
+                System.Diagnostics.Debug.WriteLine($"📊 Database state: Ingredients={hasIngredients}, Recipes={hasRecipes}");
+
+                if (!hasIngredients && !hasRecipes)
+                {
+                    System.Diagnostics.Debug.WriteLine("🌱 Starting data seeding...");
+                    await SeedData.InitializeAsync(db);
+                    System.Diagnostics.Debug.WriteLine("✅ Data seeding completed");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("ℹ️ Database already contains data - skipping seeding");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Database initialization failed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"📋 Stack trace: {ex.StackTrace}");
+                
+                // Don't crash the app - let it continue without seeded data
+                System.Diagnostics.Debug.WriteLine("⚠️ App will continue without seeded data");
             }
         }
     }

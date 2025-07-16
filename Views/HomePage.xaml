@@ -131,7 +131,7 @@
                             <Label Text="📖" Style="{StaticResource EmojiStyle}" />
                             <Label Text="Przepisy" Style="{StaticResource CardTitleStyle}" />
                             <Label Text="{Binding RecipeCount}" Style="{StaticResource StatNumberStyle}" />
-                            <Label Text="zapisanych przepisow" Style="{StaticResource StatDescriptionStyle}" />
+                            <Label Text="Zapisanych przepisow" Style="{StaticResource StatDescriptionStyle}" />
                         </StackLayout>
                         
                         <!-- Separator Line -->
@@ -145,7 +145,7 @@
                             <Label Text="📋" Style="{StaticResource EmojiStyle}" />
                             <Label Text="Plany" Style="{StaticResource CardTitleStyle}" />
                             <Label Text="{Binding PlanCount}" Style="{StaticResource StatNumberStyle}" />
-                            <Label Text="aktywnych list" Style="{StaticResource StatDescriptionStyle}" />
+                            <Label Text="Aktywnych list" Style="{StaticResource StatDescriptionStyle}" />
                         </StackLayout>
                     </Grid>
                 </Frame>
@@ -156,7 +156,7 @@
                         <Label Text="📁" Style="{StaticResource EmojiStyle}" />
                         <Label Text="Archiwum" Style="{StaticResource CardTitleStyle}" />
                         <Label Text="{Binding ArchivedPlanCount}" Style="{StaticResource StatNumberStyle}" />
-                        <Label Text="zarchiwizowanych" Style="{StaticResource StatDescriptionStyle}" />
+                        <Label Text="W archiwum" Style="{StaticResource StatDescriptionStyle}" />
                         <Button Text="📂 Przejdz" 
                                 Clicked="OnArchiveClicked"
                                 Style="{StaticResource CardButtonStyle}" />
@@ -235,7 +235,7 @@
                                    BorderColor="Transparent">
                                 <StackLayout>
                                     <Label Text="🌾" FontSize="20" HorizontalTextAlignment="Center" />
-                                    <Label Text="Weglowodany" 
+                                    <Label Text="Węgle" 
                                            FontSize="12" 
                                            FontAttributes="Bold"
                                            HorizontalTextAlignment="Center"
