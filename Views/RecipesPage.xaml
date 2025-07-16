@@ -5,7 +5,7 @@
              xmlns:models="clr-namespace:Foodbook.Models"
              x:Class="Foodbook.Views.RecipesPage"
              x:DataType="vm:RecipeViewModel"
-             Title="Recipes">
+             Title="Przepisy">
     <StackLayout>
         <Button Text="Dodaj przepis" Clicked="OnAddRecipeClicked" Margin="10"/>
         <CollectionView x:Name="ThisPage" ItemsSource="{Binding Recipes}">
@@ -26,7 +26,6 @@
                                     CommandParameter="{Binding .}" 
                                     WidthRequest="40" 
                                     HeightRequest="40"
-                                    BackgroundColor="{DynamicResource Primary}"
                                     TextColor="White"
                                     FontSize="16"
                                     CornerRadius="6" />
