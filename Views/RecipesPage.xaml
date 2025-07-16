@@ -7,7 +7,7 @@
              x:DataType="vm:RecipeViewModel"
              Title="Przepisy">
     <StackLayout>
-        <Button Text="Dodaj przepis" BackgroundColor="{DynamicResource Primary}" Clicked="OnAddRecipeClicked" Margin="10"/>
+        <Button Text="Dodaj przepis" Clicked="OnAddRecipeClicked" Margin="10"/>
         <CollectionView x:Name="ThisPage" ItemsSource="{Binding Recipes}">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:Recipe">
@@ -26,7 +26,6 @@
                                     CommandParameter="{Binding .}" 
                                     WidthRequest="40" 
                                     HeightRequest="40"
-                                    BackgroundColor="{DynamicResource Primary}"
                                     TextColor="White"
                                     FontSize="16"
                                     CornerRadius="6" />

@@ -47,13 +47,13 @@ namespace Foodbook.Data
         {
             if (await context.Ingredients.AnyAsync())
             {
-                System.Diagnostics.Debug.WriteLine("ℹ️ Ingredients already exist in database - skipping seed");
+                LogDebug("Ingredients already exist in database - skipping seed");
                 return;
             }
 
             try
             {
-                System.Diagnostics.Debug.WriteLine("🌱 Starting ingredient seeding...");
+                LogDebug("Starting ingredient seeding");
                 var ingredients = await LoadPopularIngredientsAsync();
 
                 foreach (var ingredient in ingredients)
@@ -61,19 +61,16 @@ namespace Foodbook.Data
                     ingredient.RecipeId = null;
                 }
 
-                System.Diagnostics.Debug.WriteLine($"🔄 Adding {ingredients.Count} ingredients to database...");
+                LogDebug($"Adding {ingredients.Count} ingredients to database");
                 context.Ingredients.AddRange(ingredients);
                 await context.SaveChangesAsync();
-                System.Diagnostics.Debug.WriteLine($"✅ Successfully added {ingredients.Count} ingredients to database");
+                LogDebug($"Successfully added {ingredients.Count} ingredients to database");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"❌ Error seeding ingredients: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"📋 Stack trace: {ex.StackTrace}");
-                
-                // Don't throw - let the app continue without seeded ingredients
-                // The user can still add ingredients manually
-                System.Diagnostics.Debug.WriteLine("⚠️ Continuing without seeded ingredients - user can add manually");
+                LogError($"Error seeding ingredients: {ex.Message}");
+                LogError($"Stack trace: {ex.StackTrace}");
+                LogWarning("Continuing without seeded ingredients - user can add manually");
             }
         }
 
@@ -93,71 +90,64 @@ namespace Foodbook.Data
                 var response = await httpClient.GetAsync(url);
                 if (!response.IsSuccessStatusCode) 
                 {
-                    System.Diagnostics.Debug.WriteLine($"❌ {ingredient.Name}: HTTP błąd {response.StatusCode}");
+                    LogError($"{ingredient.Name}: HTTP error {response.StatusCode}");
                     return false;
                 }
 
                 var content = await response.Content.ReadAsStringAsync();
                 dynamic? result = JsonConvert.DeserializeObject(content);
                 
-                // Sprawdź czy znaleziono produkty
                 if (result?.products == null || result.products.Count == 0) 
                 {
-                    System.Diagnostics.Debug.WriteLine($"❌ {ingredient.Name}: Nie znaleziono produktu w OpenFoodFacts");
+                    LogWarning($"{ingredient.Name}: Product not found in OpenFoodFacts");
                     return false;
                 }
 
                 var product = result.products[0];
                 var nutriments = product.nutriments;
 
-                // Sprawdź czy nutriments istnieją
                 if (nutriments == null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"❌ {ingredient.Name}: Brak danych odżywczych w znalezionym produkcie");
+                    LogWarning($"{ingredient.Name}: No nutritional data in found product");
                     return false;
                 }
 
-                // Funkcja pomocnicza do bezpiecznego pobierania wartości
                 double TryGet(dynamic src, string key)
                 {
                     try
                     {
                         var value = src?[key];
-                        if (value == null) return -1; // -1 oznacza brak danych
+                        if (value == null) return -1;
                         
                         if (double.TryParse(value.ToString(), out double parsed))
                             return parsed;
                         
-                        return -1; // Nie można sparsować
+                        return -1;
                     }
                     catch
                     {
-                        return -1; // Błąd podczas dostępu
+                        return -1;
                     }
                 }
 
-                // Zapisz oryginalne wartości
                 var oldCalories = ingredient.Calories;
                 var oldProtein = ingredient.Protein;
                 var oldFat = ingredient.Fat;
                 var oldCarbs = ingredient.Carbs;
 
-                // Pobierz nowe wartości
                 var newCalories = TryGet(nutriments, "energy-kcal_100g");
                 var newProtein = TryGet(nutriments, "proteins_100g");
                 var newFat = TryGet(nutriments, "fat_100g");
                 var newCarbs = TryGet(nutriments, "carbohydrates_100g");
 
-                // Sprawdź czy udało się pobrać chociaż jedną wartość odżywczą
                 bool hasValidData = newCalories >= 0 || newProtein >= 0 || newFat >= 0 || newCarbs >= 0;
                 
                 if (!hasValidData)
                 {
-                    System.Diagnostics.Debug.WriteLine($"❌ {ingredient.Name}: Znaleziono produkt, ale brak prawidłowych danych odżywczych");
+                    LogWarning($"{ingredient.Name}: Product found but no valid nutritional data");
                     return false;
                 }
 
-                // Aktualizuj tylko te wartości, które zostały znalezione (>=0)
                 bool wasUpdated = false;
                 
                 if (newCalories >= 0 && Math.Abs(oldCalories - newCalories) > 0.1)
@@ -186,18 +176,18 @@ namespace Foodbook.Data
 
                 if (wasUpdated)
                 {
-                    System.Diagnostics.Debug.WriteLine($"✅ {ingredient.Name} → kcal: {ingredient.Calories}, P: {ingredient.Protein}, F: {ingredient.Fat}, C: {ingredient.Carbs}");
+                    LogDebug($"{ingredient.Name} updated: kcal={ingredient.Calories}, P={ingredient.Protein}, F={ingredient.Fat}, C={ingredient.Carbs}");
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"ℹ️ {ingredient.Name}: Dane z OpenFoodFacts są identyczne z obecnymi");
+                    LogDebug($"{ingredient.Name}: OpenFoodFacts data identical to current");
                 }
                 
                 return wasUpdated;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"❌ {ingredient.Name}: {ex.Message}");
+                LogError($"{ingredient.Name}: {ex.Message}");
                 return false;
             }
         }
@@ -232,20 +222,19 @@ namespace Foodbook.Data
 
             try
             {
-                // First, try loading as embedded resource
                 var assembly = Assembly.GetExecutingAssembly();
                 var resourceName = assembly.GetManifestResourceNames()
                     .FirstOrDefault(name => name.EndsWith("ingredients.json"));
 
                 if (!string.IsNullOrEmpty(resourceName))
                 {
-                    System.Diagnostics.Debug.WriteLine($"✅ Found embedded resource: {resourceName}");
+                    LogDebug($"Found embedded resource: {resourceName}");
                     using var stream = assembly.GetManifestResourceStream(resourceName);
                     if (stream != null)
                     {
                         using var reader = new StreamReader(stream);
                         json = await reader.ReadToEndAsync();
-                        System.Diagnostics.Debug.WriteLine($"✅ Successfully loaded {json.Length} characters from embedded resource");
+                        LogDebug($"Loaded {json.Length} characters from embedded resource");
                     }
                     else
                     {
@@ -254,27 +243,25 @@ namespace Foodbook.Data
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("❌ No embedded resource found, trying app package");
+                    LogWarning("No embedded resource found, trying app package");
                     throw new FileNotFoundException("No embedded resource found");
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"⚠️ Embedded resource failed: {ex.Message}");
+                LogWarning($"Embedded resource failed: {ex.Message}");
                 try
                 {
-                    // Try loading from app package
-                    System.Diagnostics.Debug.WriteLine("🔄 Trying to load from app package...");
+                    LogDebug("Trying to load from app package");
                     using var stream = await FileSystem.OpenAppPackageFileAsync("ingredients.json");
                     using var reader = new StreamReader(stream);
                     json = await reader.ReadToEndAsync();
-                    System.Diagnostics.Debug.WriteLine($"✅ Successfully loaded {json.Length} characters from app package");
+                    LogDebug($"Loaded {json.Length} characters from app package");
                 }
                 catch (Exception ex2)
                 {
-                    System.Diagnostics.Debug.WriteLine($"⚠️ App package failed: {ex2.Message}");
+                    LogWarning($"App package failed: {ex2.Message}");
                     
-                    // Fallback to file system paths
                     string[] paths = new[]
                     {
                         Path.Combine(AppContext.BaseDirectory, "ingredients.json"),
@@ -282,22 +269,22 @@ namespace Foodbook.Data
                         Path.Combine(FileSystem.AppDataDirectory, "ingredients.json")
                     };
 
-                    System.Diagnostics.Debug.WriteLine($"🔄 Trying file system paths...");
+                    LogDebug("Trying file system paths");
                     json = null;
                     foreach (var path in paths)
                     {
-                        System.Diagnostics.Debug.WriteLine($"🔍 Checking path: {path}");
+                        LogDebug($"Checking path: {path}");
                         if (File.Exists(path))
                         {
                             json = await File.ReadAllTextAsync(path);
-                            System.Diagnostics.Debug.WriteLine($"✅ Successfully loaded {json.Length} characters from {path}");
+                            LogDebug($"Loaded {json.Length} characters from {path}");
                             break;
                         }
                     }
 
                     if (string.IsNullOrEmpty(json))
                     {
-                        System.Diagnostics.Debug.WriteLine("❌ All loading methods failed! Creating minimal fallback data");
+                        LogError("All loading methods failed! Creating fallback data");
                         return CreateFallbackIngredients();
                     }
                 }
@@ -305,9 +292,9 @@ namespace Foodbook.Data
 
             try
             {
-                System.Diagnostics.Debug.WriteLine("🔄 Deserializing JSON...");
+                LogDebug("Deserializing JSON");
                 var infos = JsonConvert.DeserializeObject<List<IngredientInfo>>(json) ?? new();
-                System.Diagnostics.Debug.WriteLine($"✅ Successfully deserialized {infos.Count} ingredient infos");
+                LogDebug($"Deserialized {infos.Count} ingredient infos");
 
                 var ingredients = infos.Select(i => new Ingredient
                 {
@@ -321,12 +308,11 @@ namespace Foodbook.Data
                     RecipeId = null
                 }).ToList();
 
-                System.Diagnostics.Debug.WriteLine($"✅ Successfully created {ingredients.Count} ingredients");
+                LogDebug($"Created {ingredients.Count} ingredients");
 
-                // Disable OpenFoodFacts updates on mobile devices to speed up seeding
                 if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
                 {
-                    System.Diagnostics.Debug.WriteLine("📱 Mobile device detected - skipping OpenFoodFacts updates for faster seeding");
+                    LogDebug("Mobile device detected - skipping OpenFoodFacts updates for faster seeding");
                 }
                 else
                 {
@@ -337,18 +323,15 @@ namespace Foodbook.Data
             }
             catch (JsonException ex)
             {
-                System.Diagnostics.Debug.WriteLine($"❌ JSON deserialization failed: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine("🔄 Creating fallback ingredients due to JSON error");
+                LogError($"JSON deserialization failed: {ex.Message}");
+                LogDebug("Creating fallback ingredients due to JSON error");
                 return CreateFallbackIngredients();
             }
         }
 
-        /// <summary>
-        /// Creates a minimal set of basic ingredients as fallback when JSON loading fails
-        /// </summary>
         private static List<Ingredient> CreateFallbackIngredients()
         {
-            System.Diagnostics.Debug.WriteLine("🆘 Creating fallback ingredients...");
+            LogDebug("Creating fallback ingredients");
             
             var fallbackIngredients = new List<Ingredient>
             {
@@ -369,7 +352,7 @@ namespace Foodbook.Data
                 new Ingredient { Name = "Ryż", Quantity = 100, Unit = Unit.Gram, Calories = 130, Protein = 2.7, Fat = 0.3, Carbs = 28.0, RecipeId = null }
             };
 
-            System.Diagnostics.Debug.WriteLine($"🆘 Created {fallbackIngredients.Count} fallback ingredients");
+            LogDebug($"Created {fallbackIngredients.Count} fallback ingredients");
             return fallbackIngredients;
         }
 
@@ -400,23 +383,39 @@ namespace Foodbook.Data
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("🧪 DIAGNOSTIC: Testing ingredient loading...");
+                LogDebug("DIAGNOSTIC: Testing ingredient loading");
                 var ingredients = await LoadPopularIngredientsAsync();
-                System.Diagnostics.Debug.WriteLine($"🧪 DIAGNOSTIC: Successfully loaded {ingredients.Count} ingredients");
+                LogDebug($"DIAGNOSTIC: Successfully loaded {ingredients.Count} ingredients");
                 
                 if (ingredients.Count > 0)
                 {
                     var firstIngredient = ingredients.First();
-                    System.Diagnostics.Debug.WriteLine($"🧪 DIAGNOSTIC: First ingredient: {firstIngredient.Name}, Calories: {firstIngredient.Calories}, Unit: {firstIngredient.Unit}");
+                    LogDebug($"DIAGNOSTIC: First ingredient: {firstIngredient.Name}, Calories: {firstIngredient.Calories}, Unit: {firstIngredient.Unit}");
                 }
                 
                 return ingredients.Count;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"🧪 DIAGNOSTIC: Error loading ingredients: {ex.Message}");
+                LogError($"DIAGNOSTIC: Error loading ingredients: {ex.Message}");
                 return -1;
             }
+        }
+
+        // Centralized logging methods
+        private static void LogDebug(string message)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SeedData] {message}");
+        }
+
+        private static void LogWarning(string message)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SeedData] WARNING: {message}");
+        }
+
+        private static void LogError(string message)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SeedData] ERROR: {message}");
         }
     }
 }

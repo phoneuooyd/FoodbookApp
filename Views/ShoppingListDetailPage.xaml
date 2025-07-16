@@ -14,7 +14,7 @@
     <StackLayout Padding="10" Spacing="10">
         
         <!-- Nagłówki kolumn -->
-        <Grid ColumnDefinitions="Auto,2*,Auto,Auto,Auto" Padding="5" ColumnSpacing="5" BackgroundColor="{DynamicResource Primary}">
+        <Grid ColumnDefinitions="Auto,2*,Auto,Auto,Auto" Padding="5" ColumnSpacing="5" BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}">
             <Label Grid.Column="0" Text="✓" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
             <Label Grid.Column="1" Text="Nazwa składnika" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" />
             <Label Grid.Column="2" Text="Ilość" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />

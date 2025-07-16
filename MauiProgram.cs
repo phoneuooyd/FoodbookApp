@@ -28,14 +28,14 @@ namespace FoodbookApp
             builder.Logging.AddDebug();
 #endif
 
-            // 💾 Rejestracja EFCore DbContext
+            // Rejestracja EFCore DbContext
             builder.Services.AddDbContext<AppDbContext>(options =>
             {
                 var dbPath = Path.Combine(FileSystem.AppDataDirectory, "foodbook.db");
                 options.UseSqlite($"Filename={dbPath}");
             });
 
-            // 🔧 Rejestracja serwisów i VM
+            // Rejestracja serwisów i VM
             builder.Services.AddScoped<IRecipeService, RecipeService>();
             builder.Services.AddScoped<IPlannerService, PlannerService>();
             builder.Services.AddScoped<IShoppingListService, ShoppingListService>();
@@ -57,7 +57,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<HttpClient>();
             builder.Services.AddScoped<RecipeImporter>();
 
-            // 🧭 Rejestracja widoków (Pages), jeśli używasz DI do ich tworzenia
+            // Rejestracja widoków (Pages), jeśli używasz DI do ich tworzenia
             builder.Services.AddScoped<HomePage>();
             builder.Services.AddScoped<RecipesPage>();
             builder.Services.AddScoped<AddRecipePage>();
@@ -69,7 +69,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<ShoppingListDetailPage>();
             builder.Services.AddScoped<ArchivePage>(); // Dodana ArchivePage
 
-            // 🧠 Rejestracja routów do Shell (opcjonalne, jeśli używasz Shell)
+            // Rejestracja routów do Shell (opcjonalne, jeśli używasz Shell)
             Routing.RegisterRoute(nameof(HomePage), typeof(HomePage));
             Routing.RegisterRoute(nameof(RecipesPage), typeof(RecipesPage));
             Routing.RegisterRoute(nameof(AddRecipePage), typeof(AddRecipePage));
@@ -82,11 +82,11 @@ namespace FoodbookApp
             Routing.RegisterRoute(nameof(ArchivePage), typeof(ArchivePage)); // Dodana rejestracja routingu dla ArchivePage
             
 
-            // ✨ Build aplikacji
+            // Build aplikacji
             var app = builder.Build();
             ServiceProvider = app.Services;
 
-            // 📦 Inicjalizacja bazy danych w tle
+            // Inicjalizacja bazy danych w tle
             Task.Run(() => SeedDatabaseAsync(app.Services));
 
             return app;
@@ -96,39 +96,40 @@ namespace FoodbookApp
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("🔄 Starting database initialization...");
+                LogDebug("Starting database initialization");
                 
                 using var scope = services.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 
-                System.Diagnostics.Debug.WriteLine("🔄 Ensuring database is created...");
+                LogDebug("Ensuring database is created");
                 await db.Database.EnsureCreatedAsync();
-                System.Diagnostics.Debug.WriteLine("✅ Database created successfully");
+                LogDebug("Database created successfully");
 
-                var hasIngredients = await db.Ingredients.AnyAsync();
-                var hasRecipes = await db.Recipes.AnyAsync();
-
-                System.Diagnostics.Debug.WriteLine($"📊 Database state: Ingredients={hasIngredients}, Recipes={hasRecipes}");
-
-                if (!hasIngredients && !hasRecipes)
-                {
-                    System.Diagnostics.Debug.WriteLine("🌱 Starting data seeding...");
-                    await SeedData.InitializeAsync(db);
-                    System.Diagnostics.Debug.WriteLine("✅ Data seeding completed");
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("ℹ️ Database already contains data - skipping seeding");
-                }
+                await SeedData.InitializeAsync(db);
+                LogDebug("Data initialization completed");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"❌ Database initialization failed: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"📋 Stack trace: {ex.StackTrace}");
-                
-                // Don't crash the app - let it continue without seeded data
-                System.Diagnostics.Debug.WriteLine("⚠️ App will continue without seeded data");
+                LogError($"Database initialization failed: {ex.Message}");
+                LogError($"Stack trace: {ex.StackTrace}");
+                LogWarning("App will continue without seeded data");
             }
+        }
+
+        // Centralized logging methods
+        private static void LogDebug(string message)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MauiProgram] {message}");
+        }
+
+        private static void LogWarning(string message)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MauiProgram] WARNING: {message}");
+        }
+
+        private static void LogError(string message)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MauiProgram] ERROR: {message}");
         }
     }
 }

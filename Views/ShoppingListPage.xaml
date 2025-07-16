@@ -20,11 +20,11 @@
                                    VerticalOptions="Center" />
                             <Label Text="{Binding StartDate, StringFormat='Od: {0:dd.MM.yyyy}'}" 
                                    FontSize="14" 
-                                   TextColor="{DynamicResource Primary}"
+                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                                    Margin="0,2,0,0" />
                             <Label Text="{Binding EndDate, StringFormat='Do: {0:dd.MM.yyyy}'}" 
                                    FontSize="14" 
-                                   TextColor="{DynamicResource Primary}" />
+                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
                         </VerticalStackLayout>
                         
                         <!-- Przycisk edycji -->
@@ -34,7 +34,6 @@
                                 CommandParameter="{Binding .}" 
                                 WidthRequest="40" 
                                 HeightRequest="40"
-                                BackgroundColor="{DynamicResource Primary}"
                                 TextColor="White"
                                 FontSize="16"
                                 CornerRadius="6" />

@@ -24,7 +24,7 @@
         <Style x:Key="CardTitleStyle" TargetType="Label">
             <Setter Property="FontSize" Value="18" />
             <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="TextColor" Value="{DynamicResource Primary}" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
             <Setter Property="Margin" Value="0,0,0,12" />
         </Style>
         
@@ -33,7 +33,7 @@
             <Setter Property="FontSize" Value="32" />
             <Setter Property="FontAttributes" Value="Bold" />
             <Setter Property="HorizontalTextAlignment" Value="Center" />
-            <Setter Property="TextColor" Value="{DynamicResource Primary}" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
             <Setter Property="Margin" Value="0,4" />
         </Style>
         
@@ -47,7 +47,6 @@
         
         <!-- Card Button Style -->
         <Style x:Key="CardButtonStyle" TargetType="Button">
-            <Setter Property="BackgroundColor" Value="{DynamicResource Primary}" />
             <Setter Property="TextColor" Value="White" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="FontAttributes" Value="Bold" />
@@ -97,7 +96,7 @@
                            FontSize="26" 
                            FontAttributes="Bold" 
                            HorizontalTextAlignment="Center"
-                           TextColor="{DynamicResource Primary}"
+                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                            Margin="0,4" />
                     <Label Text="Twoj osobisty asystent kulinarny" 
                            FontSize="14" 
@@ -110,7 +109,7 @@
             <!-- Loading indicator -->
             <ActivityIndicator IsVisible="{Binding IsLoading}" 
                              IsRunning="{Binding IsLoading}" 
-                             Color="{DynamicResource Primary}"
+                             Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                              HorizontalOptions="Center"
                              HeightRequest="60"
                              WidthRequest="60"
