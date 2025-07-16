@@ -43,7 +43,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<IIngredientService, IngredientService>();
 
             builder.Services.AddScoped<RecipeViewModel>();
-            builder.Services.AddScoped<AddRecipeViewModel>();
+            builder.Services.AddTransient<AddRecipeViewModel>(); // Zmieniono na Transient
             builder.Services.AddScoped<PlannerViewModel>();
             builder.Services.AddScoped<HomeViewModel>();
             builder.Services.AddScoped<ShoppingListViewModel>();
@@ -60,7 +60,7 @@ namespace FoodbookApp
             // Rejestracja widoków (Pages), jeśli używasz DI do ich tworzenia
             builder.Services.AddScoped<HomePage>();
             builder.Services.AddScoped<RecipesPage>();
-            builder.Services.AddScoped<AddRecipePage>();
+            builder.Services.AddTransient<AddRecipePage>(); // Zmieniono na Transient
             builder.Services.AddScoped<IngredientsPage>();
             builder.Services.AddScoped<IngredientFormPage>();
             builder.Services.AddScoped<PlannerPage>();

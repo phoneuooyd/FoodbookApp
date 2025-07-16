@@ -1,4 +1,6 @@
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.CompilerServices;
 
 namespace Foodbook.Models
 {
@@ -9,15 +11,27 @@ namespace Foodbook.Models
         Piece
     }
 
-    public class Ingredient
+    public class Ingredient : INotifyPropertyChanged
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public double Quantity { get; set; }
         public Unit Unit { get; set; }
 
+        private bool _isChecked;
         [NotMapped]
-        public bool IsChecked { get; set; }
+        public bool IsChecked 
+        { 
+            get => _isChecked; 
+            set 
+            { 
+                if (_isChecked != value)
+                {
+                    _isChecked = value;
+                    OnPropertyChanged();
+                }
+            } 
+        }
 
         // Nutritional information per specified amount/unit
         public double Calories { get; set; }
@@ -26,5 +40,11 @@ namespace Foodbook.Models
         public double Carbs { get; set; }
         public int? RecipeId { get; set; }
         public Recipe? Recipe { get; set; }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }

@@ -103,11 +103,32 @@ public class PlannerViewModel : INotifyPropertyChanged
         foreach (var r in rec)
             Recipes.Add(r);
 
+        // Wczytaj istniejące posiłki z bazy
+        var existingMeals = await _plannerService.GetPlannedMealsAsync(StartDate, EndDate);
+
         for (var d = StartDate.Date; d <= EndDate.Date; d = d.AddDays(1))
         {
             var day = new PlannerDay(d);
             Days.Add(day);
+
+            // Dodaj istniejące posiłki dla tego dnia
+            var mealsForDay = existingMeals.Where(m => m.Date.Date == d.Date).ToList();
+            foreach (var existingMeal in mealsForDay)
+            {
+                var recipe = Recipes.FirstOrDefault(r => r.Id == existingMeal.RecipeId);
+                var meal = new PlannedMeal
+                {
+                    Id = existingMeal.Id,
+                    RecipeId = existingMeal.RecipeId,
+                    Recipe = recipe,
+                    Date = existingMeal.Date,
+                    Portions = existingMeal.Portions
+                };
+                meal.PropertyChanged += OnMealRecipeChanged;
+                day.Meals.Add(meal);
+            }
         }
+
         AdjustMealsPerDay();
 
         _isLoading = false;
