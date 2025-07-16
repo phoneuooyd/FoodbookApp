@@ -8,7 +8,21 @@ namespace Foodbook.Models
     {
         public int Id { get; set; }
         public int RecipeId { get; set; }
-        public Recipe? Recipe { get; set; }
+        
+        private Recipe? _recipe;
+        public Recipe? Recipe 
+        { 
+            get => _recipe; 
+            set 
+            { 
+                if (_recipe != value)
+                {
+                    _recipe = value;
+                    OnPropertyChanged();
+                }
+            } 
+        }
+        
         public DateTime Date { get; set; }
         
         private int _portions = 1;
