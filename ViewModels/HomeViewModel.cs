@@ -3,6 +3,8 @@ using System.Runtime.CompilerServices;
 using Foodbook.Services;
 using Foodbook.Models;
 using System.Collections.ObjectModel;
+using System.Windows.Input;
+using Microsoft.Maui.Controls;
 
 namespace Foodbook.ViewModels;
 
@@ -54,11 +56,16 @@ public class HomeViewModel : INotifyPropertyChanged
         set { if (_hasPlannedMeals != value) { _hasPlannedMeals = value; OnPropertyChanged(); } }
     }
 
+    // Commands
+    public ICommand ShowRecipeIngredientsCommand { get; }
+
     public HomeViewModel(IRecipeService recipeService, IPlanService planService, IPlannerService plannerService)
     {
         _recipeService = recipeService;
         _planService = planService;
         _plannerService = plannerService;
+        
+        ShowRecipeIngredientsCommand = new Command<PlannedMeal>(async (meal) => await ShowRecipeIngredientsAsync(meal));
     }
 
     public async Task LoadAsync()
@@ -152,6 +159,65 @@ public class HomeViewModel : INotifyPropertyChanged
             PlannedMealHistory.Clear();
             HasPlannedMeals = false;
         }
+    }
+
+    private async Task ShowRecipeIngredientsAsync(PlannedMeal meal)
+    {
+        if (meal?.Recipe == null)
+            return;
+
+        try
+        {
+            // Pobierz pe³ny przepis ze sk³adnikami z serwisu
+            var fullRecipe = await _recipeService.GetRecipeAsync(meal.Recipe.Id);
+            if (fullRecipe?.Ingredients == null || !fullRecipe.Ingredients.Any())
+            {
+                await Application.Current.MainPage.DisplayAlert(
+                    "Sk³adniki", 
+                    "Ten przepis nie ma zdefiniowanych sk³adników.", 
+                    "OK");
+                return;
+            }
+
+            // Przygotuj listê sk³adników z uwzglêdnieniem liczby porcji
+            var ingredientsList = fullRecipe.Ingredients
+                .Select(ing => 
+                {
+                    var adjustedQuantity = (ing.Quantity * meal.Portions) / fullRecipe.IloscPorcji;
+                    var unitText = GetUnitText(ing.Unit);
+                    return $"• {ing.Name}: {adjustedQuantity:F1} {unitText}";
+                })
+                .ToList();
+
+            var ingredientsText = string.Join("\n", ingredientsList);
+            
+            var title = $"Sk³adniki - {fullRecipe.Name}";
+            if (meal.Portions != fullRecipe.IloscPorcji)
+            {
+                title += $" ({meal.Portions} porcji)";
+            }
+
+            await Application.Current.MainPage.DisplayAlert(title, ingredientsText, "OK");
+        }
+        catch (Exception ex)
+        {
+            await Application.Current.MainPage.DisplayAlert(
+                "B³¹d", 
+                "Nie uda³o siê pobraæ sk³adników przepisu.", 
+                "OK");
+            System.Diagnostics.Debug.WriteLine($"Error showing recipe ingredients: {ex.Message}");
+        }
+    }
+
+    private string GetUnitText(Unit unit)
+    {
+        return unit switch
+        {
+            Unit.Gram => "g",
+            Unit.Milliliter => "ml", 
+            Unit.Piece => "szt",
+            _ => ""
+        };
     }
 
     private string GetDateLabel(DateTime date)

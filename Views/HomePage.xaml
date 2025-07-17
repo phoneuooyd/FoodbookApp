@@ -5,6 +5,7 @@
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:converters="clr-namespace:Foodbook.Converters"
              x:Class="Foodbook.Views.HomePage"
+             x:Name="HomePageView"
              x:DataType="vm:HomeViewModel"
              Title="Dashboard"
              BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}">
@@ -94,6 +95,15 @@
             <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
             <Setter Property="Margin" Value="16,2,0,2" />
         </Style>
+
+        <!-- Clickable Meal Item Style -->
+        <Style x:Key="ClickableMealItemStyle" TargetType="Frame">
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="HasShadow" Value="False" />
+            <Setter Property="BorderColor" Value="Transparent" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="Margin" Value="8,1" />
+        </Style>
     </ContentPage.Resources>
 
     <ScrollView BackgroundColor="Transparent">
@@ -133,7 +143,7 @@
             <!-- Dashboard Grid -->
             <Grid IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
                   ColumnDefinitions="*,*" 
-                  RowDefinitions="Auto,Auto,Auto,Auto"
+                  RowDefinitions="Auto,Auto,Auto,Auto,Auto"
                   ColumnSpacing="0"
                   RowSpacing="8">
 
@@ -173,6 +183,12 @@
                             <Label Text="Zaplanowane Posiłki" Style="{StaticResource CardTitleStyle}" Margin="0" />
                         </StackLayout>
                         
+                        <Label Text="💡 Kliknij na przepis aby zobaczyć składniki" 
+                               FontSize="12" 
+                               HorizontalTextAlignment="Center"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
+                               Margin="0,0,0,12" />
+                        
                         <CollectionView ItemsSource="{Binding PlannedMealHistory}"
                                         MaximumHeightRequest="300">
                             <CollectionView.ItemTemplate>
@@ -186,23 +202,28 @@
                                         <CollectionView ItemsSource="{Binding Meals}">
                                             <CollectionView.ItemTemplate>
                                                 <DataTemplate x:DataType="{x:Type models:PlannedMeal}">
-                                                    <StackLayout Orientation="Horizontal" 
-                                                                 Margin="16,2,0,2">
-                                                        <Label Text="•" 
-                                                               FontSize="14"
-                                                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                                                               VerticalOptions="Center"
-                                                               Margin="0,0,8,0" />
-                                                        <Label Text="{Binding Recipe.Name}" 
-                                                               FontSize="14"
-                                                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"
-                                                               VerticalOptions="Center" />
-                                                        <Label Text="{Binding Portions, StringFormat='({0} porcji)'}" 
-                                                               FontSize="12"
-                                                               TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
-                                                               VerticalOptions="Center"
-                                                               Margin="8,0,0,0" />
-                                                    </StackLayout>
+                                                    <Frame Style="{StaticResource ClickableMealItemStyle}">
+                                                        <Frame.GestureRecognizers>
+                                                            <TapGestureRecognizer Command="{Binding Source={x:Reference Name=HomePageView}, Path=BindingContext.ShowRecipeIngredientsCommand}"
+                                                                                  CommandParameter="{Binding .}" />
+                                                        </Frame.GestureRecognizers>
+                                                        <StackLayout Orientation="Horizontal">
+                                                            <Label Text="•" 
+                                                                   FontSize="14"
+                                                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                                                   VerticalOptions="Center"
+                                                                   Margin="0,0,8,0" />
+                                                            <Label Text="{Binding Recipe.Name}" 
+                                                                   FontSize="14"
+                                                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"
+                                                                   VerticalOptions="Center" />
+                                                            <Label Text="{Binding Portions, StringFormat='({0} porcji)'}" 
+                                                                   FontSize="12"
+                                                                   TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
+                                                                   VerticalOptions="Center"
+                                                                   Margin="8,0,0,0" />
+                                                        </StackLayout>
+                                                    </Frame>
                                                 </DataTemplate>
                                             </CollectionView.ItemTemplate>
                                         </CollectionView>
@@ -213,37 +234,8 @@
                     </StackLayout>
                 </Frame>
 
-                <!-- Archive Card -->
-                <Frame Grid.Row="2" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
-                    <StackLayout>
-                        <Label Text="📁" Style="{StaticResource EmojiStyle}" />
-                        <Label Text="Archiwum" Style="{StaticResource CardTitleStyle}" />
-                        <Label Text="{Binding ArchivedPlanCount}" Style="{StaticResource StatNumberStyle}" />
-                        <Label Text="W archiwum" Style="{StaticResource StatDescriptionStyle}" />
-                        <Button Text="📂 Przejdz" 
-                                Clicked="OnArchiveClicked"
-                                Style="{StaticResource CardButtonStyle}" />
-                    </StackLayout>
-                </Frame>
-
-                <!-- Settings Card -->
-                <Frame Grid.Row="2" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
-                    <StackLayout>
-                        <Label Text="⚙️" Style="{StaticResource EmojiStyle}" />
-                        <Label Text="Ustawienia" Style="{StaticResource CardTitleStyle}" />
-                        <Label Text="Personalizuj" 
-                               FontSize="16" 
-                               HorizontalTextAlignment="Center"
-                               TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
-                               Margin="0,16,0,8" />
-                        <Button Text="🔒 Wkrotce" 
-                                Style="{StaticResource DisabledButtonStyle}"
-                                IsEnabled="False" />
-                    </StackLayout>
-                </Frame>
-
                 <!-- Nutrition Stats Card -->
-                <Frame Grid.Row="3" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
+                <Frame Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="8" Margin="0,0,0,16">
                             <Label Text="📊" FontSize="24" />
@@ -314,6 +306,35 @@
                                HorizontalTextAlignment="Center"
                                TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
                                Margin="0,16,0,0" />
+                    </StackLayout>
+                </Frame>
+
+                <!-- Archive Card -->
+                <Frame Grid.Row="3" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
+                    <StackLayout>
+                        <Label Text="📁" Style="{StaticResource EmojiStyle}" />
+                        <Label Text="Archiwum" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="{Binding ArchivedPlanCount}" Style="{StaticResource StatNumberStyle}" />
+                        <Label Text="W archiwum" Style="{StaticResource StatDescriptionStyle}" />
+                        <Button Text="📂 Przejdz" 
+                                Clicked="OnArchiveClicked"
+                                Style="{StaticResource CardButtonStyle}" />
+                    </StackLayout>
+                </Frame>
+
+                <!-- Settings Card -->
+                <Frame Grid.Row="3" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
+                    <StackLayout>
+                        <Label Text="⚙️" Style="{StaticResource EmojiStyle}" />
+                        <Label Text="Ustawienia" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="Personalizuj" 
+                               FontSize="16" 
+                               HorizontalTextAlignment="Center"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
+                               Margin="0,16,0,8" />
+                        <Button Text="🔒 Wkrotce" 
+                                Style="{StaticResource DisabledButtonStyle}"
+                                IsEnabled="False" />
                     </StackLayout>
                 </Frame>
 
