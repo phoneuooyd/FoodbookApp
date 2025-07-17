@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
+             xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:converters="clr-namespace:Foodbook.Converters"
              x:Class="Foodbook.Views.HomePage"
              x:DataType="vm:HomeViewModel"
@@ -79,6 +80,20 @@
             <Setter Property="HorizontalTextAlignment" Value="Center" />
             <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}" />
         </Style>
+
+        <!-- Planned Meal Styles -->
+        <Style x:Key="DateHeaderStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+            <Setter Property="Margin" Value="0,8,0,4" />
+        </Style>
+
+        <Style x:Key="MealItemStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+            <Setter Property="Margin" Value="16,2,0,2" />
+        </Style>
     </ContentPage.Resources>
 
     <ScrollView BackgroundColor="Transparent">
@@ -118,7 +133,7 @@
             <!-- Dashboard Grid -->
             <Grid IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
                   ColumnDefinitions="*,*" 
-                  RowDefinitions="Auto,Auto,Auto"
+                  RowDefinitions="Auto,Auto,Auto,Auto"
                   ColumnSpacing="0"
                   RowSpacing="8">
 
@@ -149,8 +164,57 @@
                     </Grid>
                 </Frame>
 
+                <!-- Planned Meals History Card -->
+                <Frame Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}"
+                       IsVisible="{Binding HasPlannedMeals}">
+                    <StackLayout>
+                        <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="8" Margin="0,0,0,16">
+                            <Label Text="📅" FontSize="24" />
+                            <Label Text="Zaplanowane Posiłki" Style="{StaticResource CardTitleStyle}" Margin="0" />
+                        </StackLayout>
+                        
+                        <CollectionView ItemsSource="{Binding PlannedMealHistory}"
+                                        MaximumHeightRequest="300">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="vm:PlannedMealGroup">
+                                    <StackLayout>
+                                        <!-- Date Header -->
+                                        <Label Text="{Binding DateLabel}" 
+                                               Style="{StaticResource DateHeaderStyle}" />
+                                        
+                                        <!-- Meals for this date -->
+                                        <CollectionView ItemsSource="{Binding Meals}">
+                                            <CollectionView.ItemTemplate>
+                                                <DataTemplate x:DataType="{x:Type models:PlannedMeal}">
+                                                    <StackLayout Orientation="Horizontal" 
+                                                                 Margin="16,2,0,2">
+                                                        <Label Text="•" 
+                                                               FontSize="14"
+                                                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                                               VerticalOptions="Center"
+                                                               Margin="0,0,8,0" />
+                                                        <Label Text="{Binding Recipe.Name}" 
+                                                               FontSize="14"
+                                                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"
+                                                               VerticalOptions="Center" />
+                                                        <Label Text="{Binding Portions, StringFormat='({0} porcji)'}" 
+                                                               FontSize="12"
+                                                               TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
+                                                               VerticalOptions="Center"
+                                                               Margin="8,0,0,0" />
+                                                    </StackLayout>
+                                                </DataTemplate>
+                                            </CollectionView.ItemTemplate>
+                                        </CollectionView>
+                                    </StackLayout>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </StackLayout>
+                </Frame>
+
                 <!-- Archive Card -->
-                <Frame Grid.Row="1" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
+                <Frame Grid.Row="2" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="📁" Style="{StaticResource EmojiStyle}" />
                         <Label Text="Archiwum" Style="{StaticResource CardTitleStyle}" />
@@ -163,7 +227,7 @@
                 </Frame>
 
                 <!-- Settings Card -->
-                <Frame Grid.Row="1" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
+                <Frame Grid.Row="2" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="⚙️" Style="{StaticResource EmojiStyle}" />
                         <Label Text="Ustawienia" Style="{StaticResource CardTitleStyle}" />
@@ -179,7 +243,7 @@
                 </Frame>
 
                 <!-- Nutrition Stats Card -->
-                <Frame Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
+                <Frame Grid.Row="3" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="8" Margin="0,0,0,16">
                             <Label Text="📊" FontSize="24" />
