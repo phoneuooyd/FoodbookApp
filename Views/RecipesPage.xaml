@@ -99,9 +99,6 @@
                                                     </MultiBinding>
                                                 </Label.Text>
                                             </Label>
-                                            <Label Text="{Binding IloscPorcji, StringFormat='{0} porcji'}" 
-                                                   FontSize="11" 
-                                                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
                                         </StackLayout>
                                     </VerticalStackLayout>
                                     

@@ -30,6 +30,30 @@ public class PlannerViewModel : INotifyPropertyChanged
         }
     }
 
+    private string _loadingStatus = "Ładowanie...";
+    public string LoadingStatus
+    {
+        get => _loadingStatus;
+        set
+        {
+            if (_loadingStatus == value) return;
+            _loadingStatus = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private double _loadingProgress = 0;
+    public double LoadingProgress
+    {
+        get => _loadingProgress;
+        set
+        {
+            if (Math.Abs(_loadingProgress - value) < 0.01) return;
+            _loadingProgress = value;
+            OnPropertyChanged();
+        }
+    }
+
     private DateTime _startDate = DateTime.Today;
     public DateTime StartDate
     {
@@ -106,17 +130,55 @@ public class PlannerViewModel : INotifyPropertyChanged
             return;
         
         IsLoading = true;
+        LoadingProgress = 0;
+        
         try
         {
+            // Etap 1: Czyszczenie danych
+            LoadingStatus = "Przygotowywanie danych...";
+            LoadingProgress = 0.1;
+            await Task.Delay(50); // Pozwól UI się odświeżyć
+
             Days.Clear();
             Recipes.Clear();
 
-            var rec = await _recipeService.GetRecipesAsync();
-            foreach (var r in rec)
-                Recipes.Add(r);
+            // Etap 2: Ładowanie przepisów
+            LoadingStatus = "Ładowanie przepisów...";
+            LoadingProgress = 0.2;
+            await Task.Delay(50);
 
-            // Wczytaj istniejące posiłki z bazy
+            var rec = await _recipeService.GetRecipesAsync();
+            
+            // Dodaj przepisy w pakietach aby nie blokować UI
+            const int batchSize = 20;
+            for (int i = 0; i < rec.Count; i += batchSize)
+            {
+                var batch = rec.Skip(i).Take(batchSize);
+                foreach (var r in batch)
+                    Recipes.Add(r);
+                
+                // Update progress podczas dodawania przepisów
+                var recipeProgress = 0.2 + (0.3 * (double)(i + batchSize) / rec.Count);
+                LoadingProgress = Math.Min(recipeProgress, 0.5);
+                
+                if (i + batchSize < rec.Count)
+                    await Task.Delay(10); // Krótkie opóźnienie dla UI
+            }
+
+            // Etap 3: Ładowanie istniejących posiłków
+            LoadingStatus = "Ładowanie zaplanowanych posiłków...";
+            LoadingProgress = 0.5;
+            await Task.Delay(50);
+
             var existingMeals = await _plannerService.GetPlannedMealsAsync(StartDate, EndDate);
+            
+            // Etap 4: Tworzenie dni planera
+            LoadingStatus = "Przygotowywanie kalendarza...";
+            LoadingProgress = 0.7;
+            await Task.Delay(50);
+
+            var totalDays = (EndDate.Date - StartDate.Date).Days + 1;
+            var currentDay = 0;
 
             for (var d = StartDate.Date; d <= EndDate.Date; d = d.AddDays(1))
             {
@@ -141,18 +203,43 @@ public class PlannerViewModel : INotifyPropertyChanged
                     //day.Meals.Add(meal); // This adds sample meals for the days from top to bottom
                                            // will be used later when an AI planner is implemented
                 }
+
+                // Update progress podczas tworzenia dni
+                currentDay++;
+                var dayProgress = 0.7 + (0.2 * (double)currentDay / totalDays);
+                LoadingProgress = dayProgress;
+                
+                // Pozwól UI się odświeżyć co kilka dni
+                if (currentDay % 3 == 0)
+                    await Task.Delay(10);
             }
 
+            // Etap 5: Finalizacja
+            LoadingStatus = "Finalizowanie...";
+            LoadingProgress = 0.9;
+            await Task.Delay(50);
+
             AdjustMealsPerDay();
+            
+            LoadingProgress = 1.0;
+            await Task.Delay(100); // Krótkie pokazanie 100%
         }
         catch (Exception ex)
         {
+            LoadingStatus = "Błąd ładowania danych";
             System.Diagnostics.Debug.WriteLine($"Error loading planner data: {ex.Message}");
-            // Could show user-friendly error message here
+            
+            // Show user-friendly error message
+            await Shell.Current.DisplayAlert(
+                "Błąd", 
+                "Wystąpił problem podczas ładowania danych planera. Spróbuj ponownie.", 
+                "OK");
         }
         finally
         {
             IsLoading = false;
+            LoadingStatus = "Ładowanie...";
+            LoadingProgress = 0;
         }
     }
 
