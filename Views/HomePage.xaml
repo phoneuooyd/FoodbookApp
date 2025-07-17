@@ -254,28 +254,33 @@
                                 Margin="0,0,0,16"
                                 HorizontalOptions="Center" />
                         
+                        <!-- Top row - Kalorie (full width) -->
+                        <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
+                               CornerRadius="12" 
+                               Padding="16,20" 
+                               HasShadow="False"
+                               BorderColor="Transparent"
+                               Margin="0,0,0,12">
+                            <StackLayout>
+                                <Label Text="🔥" FontSize="28" HorizontalTextAlignment="Center" />
+                                <Label Text="Kalorie" 
+                                       FontSize="16" 
+                                       FontAttributes="Bold"
+                                       HorizontalTextAlignment="Center"
+                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" 
+                                       Margin="0,8,0,12" />
+                                <Label Text="{Binding CaloriesDisplay}" 
+                                       FontSize="28"
+                                       FontAttributes="Bold"
+                                       HorizontalTextAlignment="Center"
+                                       TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                            </StackLayout>
+                        </Frame>
+                        
+                        <!-- Bottom row - Białko, Węglowodany, Tłuszcze (3 columns) -->
                         <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
-                            <!-- Kalorie -->
-                            <Frame Grid.Column="0" 
-                                   BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
-                                   CornerRadius="12" 
-                                   Padding="12,16" 
-                                   HasShadow="False"
-                                   BorderColor="Transparent">
-                                <StackLayout>
-                                    <Label Text="🔥" FontSize="20" HorizontalTextAlignment="Center" />
-                                    <Label Text="Kalorie" 
-                                           FontSize="12" 
-                                           FontAttributes="Bold"
-                                           HorizontalTextAlignment="Center"
-                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" 
-                                           Margin="0,4,0,8" />
-                                    <Label Text="{Binding CaloriesDisplay}" Style="{StaticResource MicroStatStyle}" />
-                                </StackLayout>
-                            </Frame>
-                            
                             <!-- Białko -->
-                            <Frame Grid.Column="1" 
+                            <Frame Grid.Column="0" 
                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
                                    CornerRadius="12" 
                                    Padding="12,16" 
@@ -294,7 +299,7 @@
                             </Frame>
                             
                             <!-- Węglowodany -->
-                            <Frame Grid.Column="2" 
+                            <Frame Grid.Column="1" 
                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
                                    CornerRadius="12" 
                                    Padding="12,16" 
@@ -311,12 +316,9 @@
                                     <Label Text="{Binding CarbsDisplay}" Style="{StaticResource MicroStatStyle}" />
                                 </StackLayout>
                             </Frame>
-                        </Grid>
-                        
-                        <!-- Additional row for Fat -->
-                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12" Margin="0,12,0,0">
+                            
                             <!-- Tłuszcze -->
-                            <Frame Grid.Column="1" 
+                            <Frame Grid.Column="2" 
                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
                                    CornerRadius="12" 
                                    Padding="12,16" 

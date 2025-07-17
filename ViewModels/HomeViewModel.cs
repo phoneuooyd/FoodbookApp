@@ -444,16 +444,8 @@ public class HomeViewModel : INotifyPropertyChanged
 
     private string GetDateLabel(DateTime date)
     {
-        var today = DateTime.Today;
-        
-        if (date.Date == today)
-            return "Dzisiaj";
-        else if (date.Date == today.AddDays(1))
-            return "Jutro";
-        else if (date.Date == today.AddDays(2))
-            return "Pojutrze";
-        else
-            return date.ToString("dddd, dd.MM.yyyy");
+        // Zawsze pokazuj datê zamiast s³ów "dzisiaj", "jutro"
+        return date.ToString("dddd, dd.MM.yyyy");
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
