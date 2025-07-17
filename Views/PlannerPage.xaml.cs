@@ -6,6 +6,7 @@ namespace Foodbook.Views
     public partial class PlannerPage : ContentPage
     {
         private readonly PlannerViewModel _viewModel;
+        private bool _isInitialized;
 
         public PlannerPage(PlannerViewModel viewModel)
         {
@@ -17,7 +18,19 @@ namespace Foodbook.Views
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            await _viewModel.LoadAsync();
+            
+            // Only load once or if explicitly needed
+            if (!_isInitialized)
+            {
+                await _viewModel.LoadAsync();
+                _isInitialized = true;
+            }
+            else
+            {
+                // If we're returning to the page, just reload if needed
+                // This handles cases where data might have been modified
+                await _viewModel.LoadAsync();
+            }
         }
 
         protected override bool OnBackButtonPressed()

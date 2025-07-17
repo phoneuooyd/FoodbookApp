@@ -3,173 +3,188 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
+             xmlns:converters="clr-namespace:Foodbook.Converters"
              x:Class="Foodbook.Views.PlannerPage"
              x:Name="ThisPage"
              x:DataType="vm:PlannerViewModel"
              Title="Planer">
-    <ScrollView>
-        <VerticalStackLayout Padding="10" Spacing="15">
-            
-            <!-- Sekcja dat - rozłożona na pełną szerokość -->
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="15" Margin="0,5">
-                <!-- Data Od - maksymalnie po lewej -->
-                <VerticalStackLayout Grid.Column="0" HorizontalOptions="Start">
-                    <Label Text="Data od:" 
-                           FontSize="12" 
+    
+    <ContentPage.Resources>
+        <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*">
+        
+        <!-- Loading indicator -->
+        <ActivityIndicator Grid.Row="0" 
+                          IsVisible="{Binding IsLoading}" 
+                          IsRunning="{Binding IsLoading}"
+                          Color="{AppThemeBinding Light=Black, Dark=White}"
+                          Margin="10" />
+
+        <!-- Main content -->
+        <ScrollView Grid.Row="1" 
+                    IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
+            <VerticalStackLayout Padding="10" Spacing="15">
+                
+                <!-- Sekcja dat - rozłożona na pełną szerokość -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="15" Margin="0,5">
+                    <!-- Data Od - maksymalnie po lewej -->
+                    <VerticalStackLayout Grid.Column="0" HorizontalOptions="Start">
+                        <Label Text="Data od:" 
+                               FontSize="12" 
+                               FontAttributes="Bold" 
+                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" 
+                               Margin="0,0,0,5" />
+                        <DatePicker Date="{Binding StartDate}" 
+                                    Format="dd.MM.yyyy"
+                                    FontSize="14"
+                                    HorizontalOptions="FillAndExpand" />
+                    </VerticalStackLayout>
+                    
+                    <!-- Data Do - maksymalnie po prawej -->
+                    <VerticalStackLayout Grid.Column="1" HorizontalOptions="End">
+                        <Label Text="Data do:" 
+                               FontSize="12" 
+                               FontAttributes="Bold" 
+                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" 
+                               Margin="0,0,0,5" />
+                        <DatePicker Date="{Binding EndDate}" 
+                                    Format="dd.MM.yyyy"
+                                    FontSize="14"
+                                    HorizontalOptions="FillAndExpand" />
+                    </VerticalStackLayout>
+                </Grid>
+                
+                <!-- Sekcja ilości posiłków - wyśrodkowana, niżej -->
+                <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
+                    <Label Text="Posiłków dziennie:" 
+                           VerticalOptions="Center" 
+                           FontSize="14" 
                            FontAttributes="Bold" 
-                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" 
-                           Margin="0,0,0,5" />
-                    <DatePicker Date="{Binding StartDate}" 
-                                Format="dd.MM.yyyy"
-                                FontSize="14"
-                                HorizontalOptions="FillAndExpand" />
+                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                    <Entry Text="{Binding MealsPerDay}" 
+                           Keyboard="Numeric" 
+                           WidthRequest="50" 
+                           FontSize="14"
+                           HorizontalTextAlignment="Center" />
+                </HorizontalStackLayout>
+                
+                <!-- Lista dni z posiłkami -->
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Days}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="models:PlannerDay">
+                            <Frame BorderColor="LightGray" Padding="8" Margin="0,3">
+                                <VerticalStackLayout>
+                                    <!-- Data dnia w polskim formacie -->
+                                    <Label Text="{Binding Date, StringFormat='{0:dd.MM.yyyy}'}" 
+                                           FontAttributes="Bold" 
+                                           FontSize="14" />
+                                           
+                                    <StackLayout BindableLayout.ItemsSource="{Binding Meals}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="models:PlannedMeal">
+                                                <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="4" Margin="0,1">
+                                                    <!-- Picker z elastyczną szerokością -->
+                                                    <Picker Grid.Column="0" 
+                                                            ItemsSource="{Binding Source={x:Reference ThisPage}, Path=BindingContext.Recipes}" 
+                                                            ItemDisplayBinding="{Binding Name}" 
+                                                            SelectedItem="{Binding Recipe}"
+                                                            FontSize="12" />
+                                                    
+                                                    <!-- Przycisk zmniejszenia porcji -->
+                                                    <Button Grid.Column="1" 
+                                                            Text="➖"
+                                                            Command="{Binding BindingContext.DecreasePortionsCommand, Source={x:Reference ThisPage}}"
+                                                            CommandParameter="{Binding .}"
+                                                            WidthRequest="30" 
+                                                            HeightRequest="30"
+                                                            CornerRadius="15"
+                                                            FontSize="16"
+                                                            FontAttributes="Bold"
+                                                            BorderWidth="0"
+                                                            Padding="0">
+                                                        <Button.Triggers>
+                                                            <DataTrigger TargetType="Button" Binding="{Binding Portions}" Value="1">
+                                                                <Setter Property="IsEnabled" Value="False" />
+                                                                <Setter Property="BackgroundColor" Value="LightGray" />
+                                                            </DataTrigger>
+                                                        </Button.Triggers>
+                                                    </Button>
+                                                    
+                                                    <!-- Label z liczbą porcji -->
+                                                    <Label Grid.Column="2" 
+                                                           Text="{Binding Portions}" 
+                                                           VerticalOptions="Center" 
+                                                           HorizontalOptions="Center"
+                                                           FontSize="14" 
+                                                           FontAttributes="Bold"
+                                                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                                           WidthRequest="24"
+                                                           HorizontalTextAlignment="Center" />
+                                                    
+                                                    <!-- Przycisk zwięksenia porcji -->
+                                                    <Button Grid.Column="3" 
+                                                            Text="➕"
+                                                            Command="{Binding BindingContext.IncreasePortionsCommand, Source={x:Reference ThisPage}}"
+                                                            CommandParameter="{Binding .}"
+                                                            WidthRequest="30" 
+                                                            HeightRequest="30"
+                                                            CornerRadius="15"
+                                                            FontSize="16"
+                                                            FontAttributes="Bold"
+                                                            BorderWidth="0"
+                                                            Padding="0">
+                                                        <Button.Triggers>
+                                                            <DataTrigger TargetType="Button" Binding="{Binding Portions}" Value="20">
+                                                                <Setter Property="IsEnabled" Value="False" />
+                                                                <Setter Property="BackgroundColor" Value="LightGray" />
+                                                            </DataTrigger>
+                                                        </Button.Triggers>
+                                                    </Button>
+                                                    
+                                                    <!-- Przycisk usuwania posiłku -->
+                                                    <Button Grid.Column="4" 
+                                                            Text="❌" 
+                                                            Command="{Binding BindingContext.RemoveMealCommand, Source={x:Reference ThisPage}}" 
+                                                            CommandParameter="{Binding .}" 
+                                                            WidthRequest="26" 
+                                                            HeightRequest="26"
+                                                            CornerRadius="13"
+                                                            BackgroundColor="Transparent"
+                                                            TextColor="Red"
+                                                            FontSize="12"
+                                                            FontAttributes="Bold"
+                                                            BorderWidth="0"
+                                                            Padding="0" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </StackLayout>
+                                    
+                                    <!-- Wyśrodkowany przycisk "Dodaj posiłek" -->
+                                    <StackLayout HorizontalOptions="Center" Margin="0,8,0,0">
+                                        <Button Text="➕ Dodaj posiłek" 
+                                                Command="{Binding BindingContext.AddMealCommand, Source={x:Reference ThisPage}}" 
+                                                CommandParameter="{Binding .}"
+                                                FontSize="12"
+                                                FontAttributes="Bold"
+                                                CornerRadius="6"
+                                                Padding="12,6"
+                                                WidthRequest="120"
+                                                HeightRequest="32" />
+                                    </StackLayout>
+                                </VerticalStackLayout>
+                            </Frame>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
                 </VerticalStackLayout>
                 
-                <!-- Data Do - maksymalnie po prawej -->
-                <VerticalStackLayout Grid.Column="1" HorizontalOptions="End">
-                    <Label Text="Data do:" 
-                           FontSize="12" 
-                           FontAttributes="Bold" 
-                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" 
-                           Margin="0,0,0,5" />
-                    <DatePicker Date="{Binding EndDate}" 
-                                Format="dd.MM.yyyy"
-                                FontSize="14"
-                                HorizontalOptions="FillAndExpand" />
-                </VerticalStackLayout>
-            </Grid>
-            
-            <!-- Sekcja ilości posiłków - wyśrodkowana, niżej -->
-            <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
-                <Label Text="Posiłków dziennie:" 
-                       VerticalOptions="Center" 
-                       FontSize="14" 
-                       FontAttributes="Bold" 
-                       TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
-                <Entry Text="{Binding MealsPerDay}" 
-                       Keyboard="Numeric" 
-                       WidthRequest="50" 
-                       FontSize="14"
-                       HorizontalTextAlignment="Center" />
-            </HorizontalStackLayout>
-            
-            <!-- Lista dni z posiłkami -->
-            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Days}">
-                <BindableLayout.ItemTemplate>
-                    <DataTemplate x:DataType="models:PlannerDay">
-                        <Frame BorderColor="LightGray" Padding="8" Margin="0,3">
-                            <VerticalStackLayout>
-                                <!-- Data dnia w polskim formacie -->
-                                <Label Text="{Binding Date, StringFormat='{0:dd.MM.yyyy}'}" 
-                                       FontAttributes="Bold" 
-                                       FontSize="14" />
-                                       
-                                <StackLayout BindableLayout.ItemsSource="{Binding Meals}">
-                                    <BindableLayout.ItemTemplate>
-                                        <DataTemplate x:DataType="models:PlannedMeal">
-                                            <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="4" Margin="0,1">
-                                                <!-- Picker z elastyczną szerokością -->
-                                                <Picker Grid.Column="0" 
-                                                        ItemsSource="{Binding Source={x:Reference ThisPage}, Path=BindingContext.Recipes}" 
-                                                        ItemDisplayBinding="{Binding Name}" 
-                                                        SelectedItem="{Binding Recipe}"
-                                                        FontSize="12" />
-                                                
-                                                <!-- Przycisk zmniejszenia porcji -->
-                                                <Button Grid.Column="1" 
-                                                        Text="➖"
-                                                        Command="{Binding BindingContext.DecreasePortionsCommand, Source={x:Reference ThisPage}}"
-                                                        CommandParameter="{Binding .}"
-                                                        WidthRequest="30" 
-                                                        HeightRequest="30"
-                                                        CornerRadius="15"
-                                                        TextColor="White"
-                                                        FontSize="16"
-                                                        FontAttributes="Bold"
-                                                        BorderWidth="0"
-                                                        Padding="0">
-                                                    <Button.Triggers>
-                                                        <DataTrigger TargetType="Button" Binding="{Binding Portions}" Value="1">
-                                                            <Setter Property="IsEnabled" Value="False" />
-                                                            <Setter Property="BackgroundColor" Value="LightGray" />
-                                                        </DataTrigger>
-                                                    </Button.Triggers>
-                                                </Button>
-                                                
-                                                <!-- Label z liczbą porcji -->
-                                                <Label Grid.Column="2" 
-                                                       Text="{Binding Portions}" 
-                                                       VerticalOptions="Center" 
-                                                       HorizontalOptions="Center"
-                                                       FontSize="14" 
-                                                       FontAttributes="Bold"
-                                                       TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                                                       WidthRequest="24"
-                                                       HorizontalTextAlignment="Center" />
-                                                
-                                                <!-- Przycisk zwięksenia porcji -->
-                                                <Button Grid.Column="3" 
-                                                        Text="➕"
-                                                        Command="{Binding BindingContext.IncreasePortionsCommand, Source={x:Reference ThisPage}}"
-                                                        CommandParameter="{Binding .}"
-                                                        WidthRequest="30" 
-                                                        HeightRequest="30"
-                                                        CornerRadius="15"
-                                                        TextColor="White"
-                                                        FontSize="16"
-                                                        FontAttributes="Bold"
-                                                        BorderWidth="0"
-                                                        Padding="0">
-                                                    <Button.Triggers>
-                                                        <DataTrigger TargetType="Button" Binding="{Binding Portions}" Value="20">
-                                                            <Setter Property="IsEnabled" Value="False" />
-                                                            <Setter Property="BackgroundColor" Value="LightGray" />
-                                                        </DataTrigger>
-                                                    </Button.Triggers>
-                                                </Button>
-                                                
-                                                <!-- Przycisk usuwania posiłku -->
-                                                <Button Grid.Column="4" 
-                                                        Text="❌" 
-                                                        Command="{Binding BindingContext.RemoveMealCommand, Source={x:Reference ThisPage}}" 
-                                                        CommandParameter="{Binding .}" 
-                                                        WidthRequest="26" 
-                                                        HeightRequest="26"
-                                                        CornerRadius="13"
-                                                        BackgroundColor="Transparent"
-                                                        TextColor="Red"
-                                                        FontSize="12"
-                                                        FontAttributes="Bold"
-                                                        BorderWidth="0"
-                                                        Padding="0" />
-                                            </Grid>
-                                        </DataTemplate>
-                                    </BindableLayout.ItemTemplate>
-                                </StackLayout>
-                                
-                                <!-- Wyśrodkowany przycisk "Dodaj posiłek" -->
-                                <StackLayout HorizontalOptions="Center" Margin="0,8,0,0">
-                                    <Button Text="➕ Posiłek" 
-                                            Command="{Binding BindingContext.AddMealCommand, Source={x:Reference ThisPage}}" 
-                                            CommandParameter="{Binding .}"
-                                            TextColor="White"
-                                            FontSize="12"
-                                            FontAttributes="Bold"
-                                            CornerRadius="6"
-                                            Padding="12,6"
-                                            WidthRequest="100"
-                                            HeightRequest="32" />
-                                </StackLayout>
-                            </VerticalStackLayout>
-                        </Frame>
-                    </DataTemplate>
-                </BindableLayout.ItemTemplate>
+                <!-- Przycisk Zapisz - wyśrodkowany -->
+                <HorizontalStackLayout Spacing="10" Margin="0,20,0,0" HorizontalOptions="Center">
+                    <Button Text="💾 Zapisz" Command="{Binding SaveCommand}" />
+                </HorizontalStackLayout>
             </VerticalStackLayout>
-            
-            <!-- Przycisk Zapisz - wyśrodkowany -->
-            <HorizontalStackLayout Spacing="10" Margin="0,20,0,0" HorizontalOptions="Center">
-                <Button Text="Zapisz" Command="{Binding SaveCommand}" />
-            </HorizontalStackLayout>
-        </VerticalStackLayout>
-    </ScrollView>
+        </ScrollView>
+    </Grid>
 </ContentPage>

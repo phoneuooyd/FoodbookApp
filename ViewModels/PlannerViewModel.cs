@@ -19,6 +19,16 @@ public class PlannerViewModel : INotifyPropertyChanged
     public ObservableCollection<PlannerDay> Days { get; } = new();
 
     private bool _isLoading;
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set
+        {
+            if (_isLoading == value) return;
+            _isLoading = value;
+            OnPropertyChanged();
+        }
+    }
 
     private DateTime _startDate = DateTime.Today;
     public DateTime StartDate
@@ -92,50 +102,58 @@ public class PlannerViewModel : INotifyPropertyChanged
 
     public async Task LoadAsync()
     {
-        if (_isLoading)
+        if (IsLoading)
             return;
-        _isLoading = true;
-
-        Days.Clear();
-        Recipes.Clear();
-
-        var rec = await _recipeService.GetRecipesAsync();
-        foreach (var r in rec)
-            Recipes.Add(r);
-
-        // Wczytaj istniejące posiłki z bazy
-        var existingMeals = await _plannerService.GetPlannedMealsAsync(StartDate, EndDate);
-
-        for (var d = StartDate.Date; d <= EndDate.Date; d = d.AddDays(1))
+        
+        IsLoading = true;
+        try
         {
-            var day = new PlannerDay(d);
-            Days.Add(day);
+            Days.Clear();
+            Recipes.Clear();
 
-            // Dodaj istniejące posiłki dla tego dnia
-            var mealsForDay = existingMeals.Where(m => m.Date.Date == d.Date).ToList();
-            foreach (var existingMeal in mealsForDay)
+            var rec = await _recipeService.GetRecipesAsync();
+            foreach (var r in rec)
+                Recipes.Add(r);
+
+            // Wczytaj istniejące posiłki z bazy
+            var existingMeals = await _plannerService.GetPlannedMealsAsync(StartDate, EndDate);
+
+            for (var d = StartDate.Date; d <= EndDate.Date; d = d.AddDays(1))
             {
-                var recipe = Recipes.FirstOrDefault(r => r.Id == existingMeal.RecipeId);
-                var meal = new PlannedMeal
+                var day = new PlannerDay(d);
+                Days.Add(day);
+
+                // Dodaj istniejące posiłki dla tego dnia
+                var mealsForDay = existingMeals.Where(m => m.Date.Date == d.Date).ToList();
+                foreach (var existingMeal in mealsForDay)
                 {
-                    Id = existingMeal.Id,
-                    RecipeId = existingMeal.RecipeId,
-                    Recipe = recipe,
-                    Date = existingMeal.Date,
-                    Portions = existingMeal.Portions
-                };
-                meal.PropertyChanged += OnMealRecipeChanged;
+                    var recipe = Recipes.FirstOrDefault(r => r.Id == existingMeal.RecipeId);
+                    var meal = new PlannedMeal
+                    {
+                        Id = existingMeal.Id,
+                        RecipeId = existingMeal.RecipeId,
+                        Recipe = recipe,
+                        Date = existingMeal.Date,
+                        Portions = existingMeal.Portions
+                    };
+                    meal.PropertyChanged += OnMealRecipeChanged;
 
-                //day.Meals.Add(meal); // This adds sample meals for the days from top to bottom
-                                       // will be used later when an AI planner is implemented
-
-
+                    //day.Meals.Add(meal); // This adds sample meals for the days from top to bottom
+                                           // will be used later when an AI planner is implemented
+                }
             }
+
+            AdjustMealsPerDay();
         }
-
-        AdjustMealsPerDay();
-
-        _isLoading = false;
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error loading planner data: {ex.Message}");
+            // Could show user-friendly error message here
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private void AddMeal(PlannerDay? day)
