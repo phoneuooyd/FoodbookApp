@@ -1,6 +1,10 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Foodbook.Services;
+using Foodbook.Models;
+using System.Collections.ObjectModel;
+using System.Windows.Input;
+using Microsoft.Maui.Controls;
 
 namespace Foodbook.ViewModels;
 
@@ -8,6 +12,7 @@ public class HomeViewModel : INotifyPropertyChanged
 {
     private readonly IRecipeService _recipeService;
     private readonly IPlanService _planService;
+    private readonly IPlannerService _plannerService;
 
     private int _recipeCount;
     public int RecipeCount
@@ -37,10 +42,30 @@ public class HomeViewModel : INotifyPropertyChanged
         set { if (_isLoading != value) { _isLoading = value; OnPropertyChanged(); } }
     }
 
-    public HomeViewModel(IRecipeService recipeService, IPlanService planService)
+    private ObservableCollection<PlannedMealGroup> _plannedMealHistory = new();
+    public ObservableCollection<PlannedMealGroup> PlannedMealHistory
+    {
+        get => _plannedMealHistory;
+        set { if (_plannedMealHistory != value) { _plannedMealHistory = value; OnPropertyChanged(); } }
+    }
+
+    private bool _hasPlannedMeals;
+    public bool HasPlannedMeals
+    {
+        get => _hasPlannedMeals;
+        set { if (_hasPlannedMeals != value) { _hasPlannedMeals = value; OnPropertyChanged(); } }
+    }
+
+    // Commands
+    public ICommand ShowRecipeIngredientsCommand { get; }
+
+    public HomeViewModel(IRecipeService recipeService, IPlanService planService, IPlannerService plannerService)
     {
         _recipeService = recipeService;
         _planService = planService;
+        _plannerService = plannerService;
+        
+        ShowRecipeIngredientsCommand = new Command<PlannedMeal>(async (meal) => await ShowRecipeIngredientsAsync(meal));
     }
 
     public async Task LoadAsync()
@@ -65,6 +90,9 @@ public class HomeViewModel : INotifyPropertyChanged
                 PlanCount = 0;
                 ArchivedPlanCount = 0;
             }
+
+            // £aduj zaplanowane posi³ki (od dzisiaj do przysz³oœci)
+            await LoadPlannedMealsAsync();
         }
         catch (Exception ex)
         {
@@ -72,6 +100,8 @@ public class HomeViewModel : INotifyPropertyChanged
             RecipeCount = 0;
             PlanCount = 0;
             ArchivedPlanCount = 0;
+            PlannedMealHistory.Clear();
+            HasPlannedMeals = false;
             
             // Log b³êdu (opcjonalne)
             System.Diagnostics.Debug.WriteLine($"Error loading home data: {ex.Message}");
@@ -82,8 +112,138 @@ public class HomeViewModel : INotifyPropertyChanged
         }
     }
 
+    private async Task LoadPlannedMealsAsync()
+    {
+        try
+        {
+            // Pobierz zaplanowane posi³ki od dzisiaj do 14 dni w przód
+            var startDate = DateTime.Today;
+            var endDate = DateTime.Today.AddDays(14);
+            
+            var plannedMeals = await _plannerService.GetPlannedMealsAsync(startDate, endDate);
+            
+            // Filtruj tylko te z recepturami
+            var mealsWithRecipes = plannedMeals?.Where(m => m.Recipe != null).ToList() ?? new List<PlannedMeal>();
+            
+            if (mealsWithRecipes.Any())
+            {
+                // Grupuj po dacie i sortuj
+                var groupedMeals = mealsWithRecipes
+                    .GroupBy(m => m.Date.Date)
+                    .OrderBy(g => g.Key)
+                    .Select(g => new PlannedMealGroup
+                    {
+                        Date = g.Key,
+                        DateLabel = GetDateLabel(g.Key),
+                        Meals = new ObservableCollection<PlannedMeal>(g.OrderBy(m => m.Date.TimeOfDay))
+                    })
+                    .ToList();
+
+                PlannedMealHistory.Clear();
+                foreach (var group in groupedMeals)
+                {
+                    PlannedMealHistory.Add(group);
+                }
+                
+                HasPlannedMeals = true;
+            }
+            else
+            {
+                PlannedMealHistory.Clear();
+                HasPlannedMeals = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error loading planned meals: {ex.Message}");
+            PlannedMealHistory.Clear();
+            HasPlannedMeals = false;
+        }
+    }
+
+    private async Task ShowRecipeIngredientsAsync(PlannedMeal meal)
+    {
+        if (meal?.Recipe == null)
+            return;
+
+        try
+        {
+            // Pobierz pe³ny przepis ze sk³adnikami z serwisu
+            var fullRecipe = await _recipeService.GetRecipeAsync(meal.Recipe.Id);
+            if (fullRecipe?.Ingredients == null || !fullRecipe.Ingredients.Any())
+            {
+                await Application.Current.MainPage.DisplayAlert(
+                    "Sk³adniki", 
+                    "Ten przepis nie ma zdefiniowanych sk³adników.", 
+                    "OK");
+                return;
+            }
+
+            // Przygotuj listê sk³adników z uwzglêdnieniem liczby porcji
+            var ingredientsList = fullRecipe.Ingredients
+                .Select(ing => 
+                {
+                    var adjustedQuantity = (ing.Quantity * meal.Portions) / fullRecipe.IloscPorcji;
+                    var unitText = GetUnitText(ing.Unit);
+                    return $"• {ing.Name}: {adjustedQuantity:F1} {unitText}";
+                })
+                .ToList();
+
+            var ingredientsText = string.Join("\n", ingredientsList);
+            
+            var title = $"Sk³adniki - {fullRecipe.Name}";
+            if (meal.Portions != fullRecipe.IloscPorcji)
+            {
+                title += $" ({meal.Portions} porcji)";
+            }
+
+            await Application.Current.MainPage.DisplayAlert(title, ingredientsText, "OK");
+        }
+        catch (Exception ex)
+        {
+            await Application.Current.MainPage.DisplayAlert(
+                "B³¹d", 
+                "Nie uda³o siê pobraæ sk³adników przepisu.", 
+                "OK");
+            System.Diagnostics.Debug.WriteLine($"Error showing recipe ingredients: {ex.Message}");
+        }
+    }
+
+    private string GetUnitText(Unit unit)
+    {
+        return unit switch
+        {
+            Unit.Gram => "g",
+            Unit.Milliliter => "ml", 
+            Unit.Piece => "szt",
+            _ => ""
+        };
+    }
+
+    private string GetDateLabel(DateTime date)
+    {
+        var today = DateTime.Today;
+        
+        if (date.Date == today)
+            return "Dzisiaj";
+        else if (date.Date == today.AddDays(1))
+            return "Jutro";
+        else if (date.Date == today.AddDays(2))
+            return "Pojutrze";
+        else
+            return date.ToString("dddd, dd.MM.yyyy");
+    }
+
     public event PropertyChangedEventHandler? PropertyChanged;
     private void OnPropertyChanged([CallerMemberName] string? name = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+}
+
+// Klasa pomocnicza do grupowania zaplanowanych posi³ków
+public class PlannedMealGroup
+{
+    public DateTime Date { get; set; }
+    public string DateLabel { get; set; } = string.Empty;
+    public ObservableCollection<PlannedMeal> Meals { get; set; } = new();
 }
 

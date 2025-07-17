@@ -125,7 +125,11 @@ public class PlannerViewModel : INotifyPropertyChanged
                     Portions = existingMeal.Portions
                 };
                 meal.PropertyChanged += OnMealRecipeChanged;
-                day.Meals.Add(meal);
+
+                //day.Meals.Add(meal); // This adds sample meals for the days from top to bottom
+                                       // will be used later when an AI planner is implemented
+
+
             }
         }
 

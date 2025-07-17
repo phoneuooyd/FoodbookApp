@@ -53,5 +53,26 @@
                 </Border>
             </DataTemplate>
         </CollectionView.ItemTemplate>
+        
+        <!-- Empty View - wyświetlane gdy brak list zakupów -->
+        <CollectionView.EmptyView>
+            <StackLayout HorizontalOptions="Center" VerticalOptions="Center" Padding="20">
+                <Label Text="🛒" 
+                       FontSize="64" 
+                       HorizontalOptions="Center"
+                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
+                       Margin="0,0,0,20" />
+                <Label Text="Brak list zakupów" 
+                       FontSize="18" 
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+                <Label Text="Utwórz listę w planerze" 
+                       FontSize="16" 
+                       HorizontalOptions="Center"
+                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
+                       Margin="0,10,0,0" />
+            </StackLayout>
+        </CollectionView.EmptyView>
     </CollectionView>
 </ContentPage>
