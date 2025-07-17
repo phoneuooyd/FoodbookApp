@@ -125,7 +125,7 @@ public class PlannerViewModel : INotifyPropertyChanged
                     Portions = existingMeal.Portions
                 };
                 meal.PropertyChanged += OnMealRecipeChanged;
-                day.Meals.Add(meal);
+                //day.Meals.Add(meal);
             }
         }
 
