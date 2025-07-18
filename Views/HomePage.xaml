@@ -118,13 +118,12 @@
                    Margin="0,0,0,20"
                    Padding="20,16">
                 <StackLayout>
-                    <Label FontSize="26"
+                    <Label Text="{x:Static resources:HomePageResources.Welcome}"
+                           FontSize="26"
                            FontAttributes="Bold"
                            HorizontalTextAlignment="Center"
                            TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                           Margin="0,4">
-                        <Label Text="{x:Static resources:HomePageResources.Welcome}" />
-                    </Label>
+                           Margin="0,4" />
                     <Label Text="{x:Static resources:HomePageResources.Subtitle}"
                            FontSize="14"
                            HorizontalTextAlignment="Center"
