@@ -134,5 +134,6 @@ namespace FoodbookApp.Localization {
                 return ResourceManager.GetString("ComingSoon", resourceCulture);
             }
         }
+
     }
 }
