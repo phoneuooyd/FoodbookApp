@@ -146,11 +146,6 @@
             <AutoGen>True</AutoGen>
             <DependentUpon>ShoppingListPageResources.resx</DependentUpon>
           </Compile>
-          <Compile Update="Localization\SettingsPageResources.Designer.cs">
-            <DesignTime>True</DesignTime>
-            <AutoGen>True</AutoGen>
-            <DependentUpon>SettingsPageResources.resx</DependentUpon>
-          </Compile>
         </ItemGroup>
 
         <ItemGroup>
@@ -193,10 +188,6 @@
           <EmbeddedResource Update="Localization\ShoppingListPageResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>ShoppingListPageResources.Designer.cs</LastGenOutput>
-          </EmbeddedResource>
-          <EmbeddedResource Update="Localization\SettingsPageResources.resx">
-            <Generator>ResXFileCodeGenerator</Generator>
-            <LastGenOutput>SettingsPageResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
         </ItemGroup>
 
