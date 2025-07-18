@@ -36,26 +36,14 @@
                             Command="{Binding SetManualModeCommand}"
                             BackgroundColor="{Binding IsManualMode, Converter={StaticResource BoolToColorConverter}}"
                             TextColor="White"
-                            HeightRequest="45">
-                        <Button.Text>
-                            <FormattedString>
-                                <Span Text="✏️ "/>
-                                <Span Text="{x:Static resources:AddRecipePageResources.Manual}"/>
-                            </FormattedString>
-                        </Button.Text>
-                    </Button>
+                            HeightRequest="45"
+                            Text="{x:Static resources:AddRecipePageResources.Manual}"/>
                     <Button Grid.Column="1"
                             Command="{Binding SetImportModeCommand}"
                             BackgroundColor="{Binding IsImportMode, Converter={StaticResource BoolToColorConverter}}"
                             TextColor="White"
-                            HeightRequest="45">
-                        <Button.Text>
-                            <FormattedString>
-                                <Span Text="🌐 "/>
-                                <Span Text="{x:Static resources:AddRecipePageResources.FromLink}"/>
-                            </FormattedString>
-                        </Button.Text>
-                    </Button>
+                            HeightRequest="45"
+                            Text="{x:Static resources:AddRecipePageResources.FromLink}"/>
                 </Grid>
             </StackLayout>
 
@@ -75,14 +63,8 @@
                 </StackLayout>
                 
                 <Button Command="{Binding ImportRecipeCommand}"
-                        HeightRequest="45">
-                    <Button.Text>
-                        <FormattedString>
-                            <Span Text="🔄 "/>
-                            <Span Text="{x:Static resources:AddRecipePageResources.ImportButton}"/>
-                        </FormattedString>
-                    </Button.Text>
-                </Button>
+                        HeightRequest="45"
+                        Text="{x:Static resources:AddRecipePageResources.ImportButton}"/>
                 
                 <Label Text="{Binding ImportStatus}" 
                        FontSize="12" 
@@ -212,14 +194,8 @@
                 </CollectionView>
                 
                 <Button Command="{Binding AddIngredientCommand}"
-                        HeightRequest="45">
-                    <Button.Text>
-                        <FormattedString>
-                            <Span Text="➕ "/>
-                            <Span Text="{x:Static resources:AddRecipePageResources.AddIngredient}"/>
-                        </FormattedString>
-                    </Button.Text>
-                </Button>
+                        HeightRequest="45"
+                        Text="{x:Static resources:AddRecipePageResources.AddIngredient}"/>
 
                 <!-- Nutritional Information - MOVED DOWN -->
                 <Label Text="{x:Static resources:AddRecipePageResources.NutritionHeader}"
@@ -238,26 +214,14 @@
                                 BackgroundColor="{Binding UseCalculatedValues, Converter={StaticResource BoolToColorConverter}}"
                                 TextColor="White"
                                 HeightRequest="40"
-                                Clicked="OnAutoModeClicked">
-                            <Button.Text>
-                                <FormattedString>
-                                    <Span Text="🧮 "/>
-                                    <Span Text="{x:Static resources:AddRecipePageResources.AutoButton}"/>
-                                </FormattedString>
-                            </Button.Text>
-                        </Button>
+                                Clicked="OnAutoModeClicked"
+                                Text="{x:Static resources:AddRecipePageResources.AutoButton}"/>
                         <Button Grid.Column="1"
                                 BackgroundColor="{Binding UseManualValues, Converter={StaticResource BoolToColorConverter}}"
                                 TextColor="White"
                                 HeightRequest="40"
-                                Clicked="OnManualModeClicked">
-                            <Button.Text>
-                                <FormattedString>
-                                    <Span Text="✏️ "/>
-                                    <Span Text="{x:Static resources:AddRecipePageResources.ManualButton}"/>
-                                </FormattedString>
-                            </Button.Text>
-                        </Button>
+                                Clicked="OnManualModeClicked"
+                                Text="{x:Static resources:AddRecipePageResources.ManualButton}"/>
                     </Grid>
                 </StackLayout>
 
@@ -322,14 +286,8 @@
                         <Button Grid.Column="1"
                                 Command="{Binding CopyCalculatedValuesCommand}"
                                 FontSize="12"
-                                HeightRequest="30">
-                            <Button.Text>
-                                <FormattedString>
-                                    <Span Text="📋 "/>
-                                    <Span Text="{x:Static resources:AddRecipePageResources.CopyCalculated}"/>
-                                </FormattedString>
-                            </Button.Text>
-                        </Button>
+                                HeightRequest="30"
+                                Text="{x:Static resources:AddRecipePageResources.CopyCalculated}"/>
                     </Grid>
                     
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
