@@ -183,54 +183,73 @@
                             <Label Text="Zaplanowane Posiłki" Style="{StaticResource CardTitleStyle}" Margin="0" />
                         </StackLayout>
                         
+                        <!-- Period Selection Button for Planned Meals -->
+                        <Button Text="{Binding PlannedMealsPeriodDisplay, StringFormat='📅 {0}'}"
+                                Command="{Binding ChangePlannedMealsPeriodCommand}"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                TextColor="White"
+                                FontSize="14"
+                                FontAttributes="Bold"
+                                HeightRequest="35"
+                                CornerRadius="8"
+                                Margin="0,0,0,16"
+                                HorizontalOptions="Center" />
+                        
                         <Label Text="💡 Kliknij na przepis aby zobaczyć składniki" 
                                FontSize="12" 
                                HorizontalTextAlignment="Center"
                                TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
                                Margin="0,0,0,12" />
                         
-                        <CollectionView ItemsSource="{Binding PlannedMealHistory}"
-                                        MaximumHeightRequest="300">
-                            <CollectionView.ItemTemplate>
-                                <DataTemplate x:DataType="vm:PlannedMealGroup">
-                                    <StackLayout>
-                                        <!-- Date Header -->
-                                        <Label Text="{Binding DateLabel}" 
-                                               Style="{StaticResource DateHeaderStyle}" />
-                                        
-                                        <!-- Meals for this date -->
-                                        <CollectionView ItemsSource="{Binding Meals}">
-                                            <CollectionView.ItemTemplate>
-                                                <DataTemplate x:DataType="{x:Type models:PlannedMeal}">
-                                                    <Frame Style="{StaticResource ClickableMealItemStyle}">
-                                                        <Frame.GestureRecognizers>
-                                                            <TapGestureRecognizer Command="{Binding Source={x:Reference Name=HomePageView}, Path=BindingContext.ShowRecipeIngredientsCommand}"
-                                                                                  CommandParameter="{Binding .}" />
-                                                        </Frame.GestureRecognizers>
-                                                        <StackLayout Orientation="Horizontal">
-                                                            <Label Text="•" 
-                                                                   FontSize="14"
-                                                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                                                                   VerticalOptions="Center"
-                                                                   Margin="0,0,8,0" />
-                                                            <Label Text="{Binding Recipe.Name}" 
-                                                                   FontSize="14"
-                                                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"
-                                                                   VerticalOptions="Center" />
-                                                            <Label Text="{Binding Portions, StringFormat='({0} porcji)'}" 
-                                                                   FontSize="12"
-                                                                   TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
-                                                                   VerticalOptions="Center"
-                                                                   Margin="8,0,0,0" />
-                                                        </StackLayout>
-                                                    </Frame>
-                                                </DataTemplate>
-                                            </CollectionView.ItemTemplate>
-                                        </CollectionView>
-                                    </StackLayout>
-                                </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
+                        <!-- Scrollable CollectionView with limited height -->
+                        <ScrollView MaximumHeightRequest="250" 
+                                    VerticalScrollBarVisibility="Always">
+                            <CollectionView ItemsSource="{Binding PlannedMealHistory}"
+                                            ItemSizingStrategy="MeasureAllItems">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:PlannedMealGroup">
+                                        <StackLayout Margin="0,4">
+                                            <!-- Date Header -->
+                                            <Label Text="{Binding DateLabel}" 
+                                                   Style="{StaticResource DateHeaderStyle}" />
+                                            
+                                            <!-- Meals for this date -->
+                                            <CollectionView ItemsSource="{Binding Meals}"
+                                                            ItemSizingStrategy="MeasureAllItems">
+                                                <CollectionView.ItemTemplate>
+                                                    <DataTemplate x:DataType="{x:Type models:PlannedMeal}">
+                                                        <Frame Style="{StaticResource ClickableMealItemStyle}">
+                                                            <Frame.GestureRecognizers>
+                                                                <TapGestureRecognizer Command="{Binding Source={x:Reference Name=HomePageView}, Path=BindingContext.ShowRecipeIngredientsCommand}"
+                                                                                      CommandParameter="{Binding .}" />
+                                                            </Frame.GestureRecognizers>
+                                                            <StackLayout Orientation="Horizontal">
+                                                                <Label Text="•" 
+                                                                       FontSize="14"
+                                                                       TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                                                       VerticalOptions="Center"
+                                                                       Margin="0,0,8,0" />
+                                                                <Label Text="{Binding Recipe.Name}" 
+                                                                       FontSize="14"
+                                                                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"
+                                                                       VerticalOptions="Center"
+                                                                       LineBreakMode="TailTruncation"
+                                                                       HorizontalOptions="FillAndExpand" />
+                                                                <Label Text="{Binding Portions, StringFormat='({0} porcji)'}" 
+                                                                       FontSize="12"
+                                                                       TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
+                                                                       VerticalOptions="Center"
+                                                                       Margin="8,0,0,0" />
+                                                            </StackLayout>
+                                                        </Frame>
+                                                    </DataTemplate>
+                                                </CollectionView.ItemTemplate>
+                                            </CollectionView>
+                                        </StackLayout>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </ScrollView>
                     </StackLayout>
                 </Frame>
 

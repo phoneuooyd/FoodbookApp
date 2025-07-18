@@ -56,6 +56,39 @@ public class HomeViewModel : INotifyPropertyChanged
         set { if (_hasPlannedMeals != value) { _hasPlannedMeals = value; OnPropertyChanged(); } }
     }
 
+    // Planned meals period settings
+    private PlannedMealsPeriod _selectedPlannedMealsPeriod = PlannedMealsPeriod.Week;
+    public PlannedMealsPeriod SelectedPlannedMealsPeriod
+    {
+        get => _selectedPlannedMealsPeriod;
+        set 
+        { 
+            if (_selectedPlannedMealsPeriod != value) 
+            { 
+                _selectedPlannedMealsPeriod = value; 
+                OnPropertyChanged(); 
+                OnPropertyChanged(nameof(PlannedMealsPeriodDisplay));
+                _ = LoadPlannedMealsAsync(); 
+            } 
+        }
+    }
+
+    private DateTime _plannedMealsCustomStartDate = DateTime.Today;
+    public DateTime PlannedMealsCustomStartDate
+    {
+        get => _plannedMealsCustomStartDate;
+        set { if (_plannedMealsCustomStartDate != value) { _plannedMealsCustomStartDate = value; OnPropertyChanged(); if (SelectedPlannedMealsPeriod == PlannedMealsPeriod.Custom) _ = LoadPlannedMealsAsync(); } }
+    }
+
+    private DateTime _plannedMealsCustomEndDate = DateTime.Today.AddDays(7);
+    public DateTime PlannedMealsCustomEndDate
+    {
+        get => _plannedMealsCustomEndDate;
+        set { if (_plannedMealsCustomEndDate != value) { _plannedMealsCustomEndDate = value; OnPropertyChanged(); if (SelectedPlannedMealsPeriod == PlannedMealsPeriod.Custom) _ = LoadPlannedMealsAsync(); } }
+    }
+
+    public string PlannedMealsPeriodDisplay => GetPlannedMealsPeriodDisplay();
+
     // Nutrition statistics properties
     private double _totalCalories;
     public double TotalCalories
@@ -133,6 +166,7 @@ public class HomeViewModel : INotifyPropertyChanged
     // Commands
     public ICommand ShowRecipeIngredientsCommand { get; }
     public ICommand ChangeNutritionPeriodCommand { get; }
+    public ICommand ChangePlannedMealsPeriodCommand { get; }
 
     public HomeViewModel(IRecipeService recipeService, IPlanService planService, IPlannerService plannerService)
     {
@@ -142,6 +176,7 @@ public class HomeViewModel : INotifyPropertyChanged
         
         ShowRecipeIngredientsCommand = new Command<PlannedMeal>(async (meal) => await ShowRecipeIngredientsAsync(meal));
         ChangeNutritionPeriodCommand = new Command(async () => await ShowNutritionPeriodPickerAsync());
+        ChangePlannedMealsPeriodCommand = new Command(async () => await ShowPlannedMealsPeriodPickerAsync());
     }
 
     public async Task LoadAsync()
@@ -167,7 +202,7 @@ public class HomeViewModel : INotifyPropertyChanged
                 ArchivedPlanCount = 0;
             }
 
-            // £aduj zaplanowane posi³ki (od dzisiaj do przysz³oœci)
+            // £aduj zaplanowane posi³ki
             await LoadPlannedMealsAsync();
             
             // Oblicz statystyki ¿ywieniowe
@@ -196,9 +231,7 @@ public class HomeViewModel : INotifyPropertyChanged
     {
         try
         {
-            // Pobierz zaplanowane posi³ki od dzisiaj do 14 dni w przód
-            var startDate = DateTime.Today;
-            var endDate = DateTime.Today.AddDays(14);
+            var (startDate, endDate) = GetPlannedMealsDateRange();
             
             var plannedMeals = await _plannerService.GetPlannedMealsAsync(startDate, endDate);
             
@@ -238,6 +271,87 @@ public class HomeViewModel : INotifyPropertyChanged
             System.Diagnostics.Debug.WriteLine($"Error loading planned meals: {ex.Message}");
             PlannedMealHistory.Clear();
             HasPlannedMeals = false;
+        }
+    }
+
+    private (DateTime startDate, DateTime endDate) GetPlannedMealsDateRange()
+    {
+        return SelectedPlannedMealsPeriod switch
+        {
+            PlannedMealsPeriod.Today => (DateTime.Today, DateTime.Today.AddDays(1).AddSeconds(-1)),
+            PlannedMealsPeriod.Week => (DateTime.Today, DateTime.Today.AddDays(7)),
+            PlannedMealsPeriod.Custom => (PlannedMealsCustomStartDate, PlannedMealsCustomEndDate.AddDays(1).AddSeconds(-1)),
+            _ => (DateTime.Today, DateTime.Today.AddDays(7))
+        };
+    }
+
+    private string GetPlannedMealsPeriodDisplay()
+    {
+        return SelectedPlannedMealsPeriod switch
+        {
+            PlannedMealsPeriod.Today => "Dzisiaj",
+            PlannedMealsPeriod.Week => "Ten tydzieñ",
+            PlannedMealsPeriod.Custom => $"{PlannedMealsCustomStartDate:dd.MM} - {PlannedMealsCustomEndDate:dd.MM}",
+            _ => "Ten tydzieñ"
+        };
+    }
+
+    private async Task ShowPlannedMealsPeriodPickerAsync()
+    {
+        var options = new[]
+        {
+            "Dzisiaj",
+            "Ten tydzieñ", 
+            "Niestandardowy okres"
+        };
+
+        var choice = await Application.Current.MainPage.DisplayActionSheet(
+            "Wybierz okres dla zaplanowanych posi³ków", 
+            "Anuluj", 
+            null, 
+            options);
+
+        switch (choice)
+        {
+            case "Dzisiaj":
+                SelectedPlannedMealsPeriod = PlannedMealsPeriod.Today;
+                break;
+            case "Ten tydzieñ":
+                SelectedPlannedMealsPeriod = PlannedMealsPeriod.Week;
+                break;
+            case "Niestandardowy okres":
+                await ShowCustomPlannedMealsDateRangePickerAsync();
+                break;
+        }
+    }
+
+    private async Task ShowCustomPlannedMealsDateRangePickerAsync()
+    {
+        var startDateInput = await Application.Current.MainPage.DisplayPromptAsync(
+            "Data pocz¹tkowa", 
+            "Podaj datê pocz¹tkow¹ (dd.mm.yyyy):", 
+            initialValue: PlannedMealsCustomStartDate.ToString("dd.MM.yyyy"));
+
+        if (DateTime.TryParseExact(startDateInput, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out var startDate))
+        {
+            var endDateInput = await Application.Current.MainPage.DisplayPromptAsync(
+                "Data koñcowa", 
+                "Podaj datê koñcow¹ (dd.mm.yyyy):", 
+                initialValue: PlannedMealsCustomEndDate.ToString("dd.MM.yyyy"));
+
+            if (DateTime.TryParseExact(endDateInput, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out var endDate))
+            {
+                if (endDate >= startDate)
+                {
+                    PlannedMealsCustomStartDate = startDate;
+                    PlannedMealsCustomEndDate = endDate;
+                    SelectedPlannedMealsPeriod = PlannedMealsPeriod.Custom;
+                }
+                else
+                {
+                    await Application.Current.MainPage.DisplayAlert("B³¹d", "Data koñcowa musi byæ póŸniejsza ni¿ pocz¹tkowa", "OK");
+                }
+            }
         }
     }
 
@@ -465,6 +579,14 @@ public class PlannedMealGroup
 public enum NutritionPeriod
 {
     Day,
+    Week,
+    Custom
+}
+
+// Enum dla okresów zaplanowanych posi³ków
+public enum PlannedMealsPeriod
+{
+    Today,
     Week,
     Custom
 }
