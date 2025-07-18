@@ -18,6 +18,14 @@ public class PlannerViewModel : INotifyPropertyChanged
     public ObservableCollection<Recipe> Recipes { get; } = new();
     public ObservableCollection<PlannerDay> Days { get; } = new();
 
+    // Cache properties
+    private bool _isDataCached = false;
+    private DateTime _cachedStartDate;
+    private DateTime _cachedEndDate;
+    private int _cachedMealsPerDay;
+    private List<Recipe> _cachedRecipes = new();
+    private List<PlannerDay> _cachedDays = new();
+
     private bool _isLoading;
     public bool IsLoading
     {
@@ -124,8 +132,15 @@ public class PlannerViewModel : INotifyPropertyChanged
         CancelCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
     }
 
-    public async Task LoadAsync()
+    public async Task LoadAsync(bool forceReload = false)
     {
+        // Check if we can use cached data
+        if (!forceReload && _isDataCached && CanUseCachedData())
+        {
+            RestoreFromCache();
+            return;
+        }
+
         if (IsLoading)
             return;
         
@@ -223,6 +238,9 @@ public class PlannerViewModel : INotifyPropertyChanged
             
             LoadingProgress = 1.0;
             await Task.Delay(100); // Krótkie pokazanie 100%
+
+            // Cache the loaded data
+            CacheCurrentData();
         }
         catch (Exception ex)
         {
@@ -241,6 +259,109 @@ public class PlannerViewModel : INotifyPropertyChanged
             LoadingStatus = "Ładowanie...";
             LoadingProgress = 0;
         }
+    }
+
+    private bool CanUseCachedData()
+    {
+        // Check if the date range and meals per day haven't changed significantly
+        return _cachedStartDate == StartDate && 
+               _cachedEndDate == EndDate && 
+               _cachedMealsPerDay == MealsPerDay;
+    }
+
+    private void CacheCurrentData()
+    {
+        try
+        {
+            _cachedStartDate = StartDate;
+            _cachedEndDate = EndDate;
+            _cachedMealsPerDay = MealsPerDay;
+            
+            // Deep copy recipes
+            _cachedRecipes = Recipes.ToList();
+            
+            // Deep copy days and meals
+            _cachedDays.Clear();
+            foreach (var day in Days)
+            {
+                var cachedDay = new PlannerDay(day.Date);
+                foreach (var meal in day.Meals)
+                {
+                    var cachedMeal = new PlannedMeal
+                    {
+                        Id = meal.Id,
+                        RecipeId = meal.RecipeId,
+                        Recipe = meal.Recipe,
+                        Date = meal.Date,
+                        Portions = meal.Portions
+                    };
+                    cachedMeal.PropertyChanged += OnMealRecipeChanged;
+                    cachedDay.Meals.Add(cachedMeal);
+                }
+                _cachedDays.Add(cachedDay);
+            }
+            
+            _isDataCached = true;
+            System.Diagnostics.Debug.WriteLine("✅ Planner data cached successfully");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ Error caching planner data: {ex.Message}");
+        }
+    }
+
+    private void RestoreFromCache()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("🔄 Restoring planner data from cache");
+            
+            // Clear current collections
+            Days.Clear();
+            Recipes.Clear();
+            
+            // Restore recipes
+            foreach (var recipe in _cachedRecipes)
+            {
+                Recipes.Add(recipe);
+            }
+            
+            // Restore days and meals
+            foreach (var cachedDay in _cachedDays)
+            {
+                var day = new PlannerDay(cachedDay.Date);
+                foreach (var cachedMeal in cachedDay.Meals)
+                {
+                    var meal = new PlannedMeal
+                    {
+                        Id = cachedMeal.Id,
+                        RecipeId = cachedMeal.RecipeId,
+                        Recipe = cachedMeal.Recipe,
+                        Date = cachedMeal.Date,
+                        Portions = cachedMeal.Portions
+                    };
+                    meal.PropertyChanged += OnMealRecipeChanged;
+                    day.Meals.Add(meal);
+                }
+                Days.Add(day);
+            }
+            
+            System.Diagnostics.Debug.WriteLine("✅ Planner data restored from cache");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ Error restoring from cache: {ex.Message}");
+            // If cache restore fails, force a reload
+            _ = LoadAsync(forceReload: true);
+        }
+    }
+
+    private void ClearCache()
+    {
+        _isDataCached = false;
+        _cachedRecipes.Clear();
+        _cachedDays.Clear();
+        System.Diagnostics.Debug.WriteLine("🗑️ Planner cache cleared");
     }
 
     private void AddMeal(PlannerDay? day)
@@ -307,6 +428,10 @@ public class PlannerViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(EndDate));
         MealsPerDay = 3;
         Days.Clear();
+        
+        // Clear cache when resetting (after save)
+        ClearCache();
+        
         _ = LoadAsync();
     }
 
@@ -341,7 +466,7 @@ public class PlannerViewModel : INotifyPropertyChanged
             }
         }
 
-        Reset();
+        Reset(); // This will clear cache and reload fresh data
         return plan;
     }
 

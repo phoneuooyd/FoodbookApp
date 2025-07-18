@@ -7,6 +7,7 @@ namespace Foodbook.Views
     {
         private readonly PlannerViewModel _viewModel;
         private bool _isInitialized;
+        private bool _hasEverLoaded;
 
         public PlannerPage(PlannerViewModel viewModel)
         {
@@ -19,17 +20,19 @@ namespace Foodbook.Views
         {
             base.OnAppearing();
             
-            // Only load once or if explicitly needed
-            if (!_isInitialized)
+            if (!_hasEverLoaded)
             {
-                await _viewModel.LoadAsync();
+                // First time loading - always load fresh data
+                System.Diagnostics.Debug.WriteLine("?? PlannerPage: First load - loading fresh data");
+                await _viewModel.LoadAsync(forceReload: false);
+                _hasEverLoaded = true;
                 _isInitialized = true;
             }
             else
             {
-                // If we're returning to the page, just reload if needed
-                // This handles cases where data might have been modified
-                await _viewModel.LoadAsync();
+                // Subsequent loads - use cached data if available
+                System.Diagnostics.Debug.WriteLine("? PlannerPage: Using cached data");
+                await _viewModel.LoadAsync(forceReload: false);
             }
         }
 
@@ -38,6 +41,12 @@ namespace Foodbook.Views
             if (_viewModel?.CancelCommand?.CanExecute(null) == true)
                 _viewModel.CancelCommand.Execute(null);
             return true;
+        }
+
+        protected override void OnDisappearing()
+        {
+            base.OnDisappearing();
+            System.Diagnostics.Debug.WriteLine("?? PlannerPage: Disappearing - data remains cached");
         }
     }
 }
