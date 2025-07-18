@@ -1,4 +1,5 @@
 using Foodbook.ViewModels;
+using Microsoft.Maui.Controls;
 
 namespace Foodbook.Views;
 
@@ -22,6 +23,11 @@ public partial class HomePage : ContentPage
     private async void OnArchiveClicked(object sender, EventArgs e)
     {
         await Shell.Current.GoToAsync(nameof(ArchivePage));
+    }
+
+    private async void OnSettingsClicked(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync(nameof(SettingsPage));
     }
 }
 

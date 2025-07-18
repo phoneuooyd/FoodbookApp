@@ -42,4 +42,7 @@
     <ShellContent
         Route="ShoppingListDetailPage"
         ContentTemplate="{DataTemplate views:ShoppingListDetailPage}" />
+    <ShellContent
+        Route="SettingsPage"
+        ContentTemplate="{DataTemplate views:SettingsPage}" />
 </Shell>

@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Foodbook.Views.SettingsPage"
+             Title="Ustawienia"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}">
+    
+    <ContentPage.Resources>
+        <!-- Enhanced Card Style with better separation -->
+        <Style x:Key="DashboardCardStyle" TargetType="Frame">
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}" />
+            <Setter Property="HasShadow" Value="True" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Padding" Value="20" />
+            <Setter Property="Margin" Value="12,8" />
+            <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+        </Style>
+        
+        <!-- Card Title Style -->
+        <Style x:Key="CardTitleStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+            <Setter Property="HorizontalTextAlignment" Value="Center"/>
+        </Style>
+        
+        <!-- Card Button Style -->
+        <Style x:Key="CardButtonStyle" TargetType="Button">
+            <Setter Property="TextColor" Value="White" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="HeightRequest" Value="40" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Margin" Value="0,12,0,0" />
+        </Style>
+        
+        <!-- Disabled Button Style -->
+        <Style x:Key="DisabledButtonStyle" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray400}}" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="HeightRequest" Value="40" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Margin" Value="0,12,0,0" />
+        </Style>
+        
+        <!-- Emoji Style -->
+        <Style x:Key="EmojiStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="24" />
+            <Setter Property="HorizontalTextAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+
+        <!-- Description Style -->
+        <Style x:Key="DescriptionStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="HorizontalTextAlignment" Value="Center" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+
+        <!-- Info Text Style -->
+        <Style x:Key="InfoTextStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="HorizontalTextAlignment" Value="Center" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}" />
+            <Setter Property="Margin" Value="0,4" />
+        </Style>
+    </ContentPage.Resources>
+
+    <ScrollView BackgroundColor="Transparent">
+        <StackLayout Padding="16" Spacing="0" 
+                     BackgroundColor="Transparent">
+            
+            <!-- Header with gradient-like effect -->
+            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}" 
+                   CornerRadius="20" 
+                   HasShadow="True"
+                   Margin="0,0,0,20"
+                   Padding="20,16">
+                <StackLayout>
+                    <Label Text="Ustawienia"
+                           FontSize="26"
+                           FontAttributes="Bold"
+                           HorizontalTextAlignment="Center"
+                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                           Margin="0,4" />
+                    <Label Text="Personalizuj swoja aplikacje"
+                           FontSize="14"
+                           HorizontalTextAlignment="Center"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}"
+                           Margin="0,0,0,4" />
+                </StackLayout>
+            </Frame>
+
+            <!-- Settings Grid -->
+            <Grid ColumnDefinitions="*,*" 
+                  RowDefinitions="Auto,Auto,Auto"
+                  ColumnSpacing="0"
+                  RowSpacing="8">
+
+                <!-- Theme Settings Card -->
+                <Frame Grid.Row="0" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
+                    <StackLayout>
+                        <Label Text="Motyw" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="Jasny / ciemny"
+                               Style="{StaticResource DescriptionStyle}" />
+                        <Button Style="{StaticResource DisabledButtonStyle}"
+                                IsEnabled="False"
+                                Text="Wkrotce" />
+                    </StackLayout>
+                </Frame>
+
+                <!-- Language Settings Card -->
+                <Frame Grid.Row="0" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
+                    <StackLayout>
+                        <Label Text="Jezyk" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="PL / EN"
+                               Style="{StaticResource DescriptionStyle}" />
+                        <Button Style="{StaticResource DisabledButtonStyle}"
+                                IsEnabled="False"
+                                Text="Wkrotce" />
+                    </StackLayout>
+                </Frame>
+
+                <!-- Version Info Card -->
+                <Frame Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
+                    <StackLayout>
+                        <Label Text="Informacje o wersji" Style="{StaticResource CardTitleStyle}" />
+                        
+                        <StackLayout Spacing="8" Margin="0,8">
+                            <Label Text="Wersja 1.0"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="Center"
+                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                            
+                            <Label Text="Autor: Przemyslaw Przybyszewski"
+                                   Style="{StaticResource InfoTextStyle}" />
+                            
+                            <Label Text="All rights reserved 2025"
+                                   Style="{StaticResource InfoTextStyle}" />
+                            
+                            <Label Text="FoodBook App"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="Center"
+                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
+                                   Margin="0,8,0,0" />
+                        </StackLayout>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Data Export Card -->
+                <Frame Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
+                    <StackLayout>
+                        <Label Text="Eksport danych" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="Zapisz przepisy i plany"
+                               Style="{StaticResource DescriptionStyle}" />
+                        <Button Style="{StaticResource DisabledButtonStyle}"
+                                IsEnabled="False"
+                                Text="Wkrotce" />
+                    </StackLayout>
+                </Frame>
+
+            </Grid>
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

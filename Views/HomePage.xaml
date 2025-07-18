@@ -382,16 +382,17 @@
                 <!-- Settings Card -->
                 <Frame Grid.Row="3" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
-                        <Label Text="⚙️" Style="{StaticResource EmojiStyle}" />
+                        <Label Text="Ustawienia" Style="{StaticResource EmojiStyle}" />
                         <Label Text="{x:Static resources:HomePageResources.Settings}" Style="{StaticResource CardTitleStyle}" />
                         <Label Text="{x:Static resources:HomePageResources.Customize}"
                                FontSize="16"
                                HorizontalTextAlignment="Center"
                                TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
                                Margin="0,16,0,8" />
-                        <Button Style="{StaticResource DisabledButtonStyle}"
-                                IsEnabled="False"
-                                Text="{x:Static resources:HomePageResources.ComingSoon}" />
+                        <Button Style="{StaticResource CardButtonStyle}"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                Text="Przejdź do ustawień"
+                                Clicked="OnSettingsClicked" />
                     </StackLayout>
                 </Frame>
 

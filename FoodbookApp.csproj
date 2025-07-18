@@ -216,6 +216,9 @@
           <MauiXaml Update="Views\MealFormPage.xaml">
             <Generator>MSBuild:Compile</Generator>
           </MauiXaml>
+          <MauiXaml Update="Views\SettingsPage.xaml">
+            <Generator>MSBuild:Compile</Generator>
+          </MauiXaml>
           <MauiXaml Update="Views\ShoppingListPage.xaml">
             <Generator>MSBuild:Compile</Generator>
           </MauiXaml>
