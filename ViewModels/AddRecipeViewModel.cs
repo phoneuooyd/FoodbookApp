@@ -255,15 +255,57 @@ namespace Foodbook.ViewModels
             CalculateNutritionalValues();
         }
 
-        private void CalculateNutritionalValues()
+        // Nowa metoda do aktualizacji wartości odżywczych składnika
+        public async Task UpdateIngredientNutritionalValuesAsync(Ingredient ingredient)
+        {
+            if (string.IsNullOrEmpty(ingredient.Name))
+                return;
+
+            var existingIngredients = await _ingredientService.GetIngredientsAsync();
+            var existingIngredient = existingIngredients.FirstOrDefault(i => i.Name == ingredient.Name);
+            
+            if (existingIngredient != null)
+            {
+                ingredient.Calories = existingIngredient.Calories;
+                ingredient.Protein = existingIngredient.Protein;
+                ingredient.Fat = existingIngredient.Fat;
+                ingredient.Carbs = existingIngredient.Carbs;
+            }
+            else
+            {
+                // Jeśli składnik nie istnieje w bazie, resetuj wartości
+                ingredient.Calories = 0;
+                ingredient.Protein = 0;
+                ingredient.Fat = 0;
+                ingredient.Carbs = 0;
+            }
+
+            // Przelicz wartości odżywcze po aktualizacji
+            CalculateNutritionalValues();
+        }
+
+        private async void CalculateNutritionalValues()
         {
             double totalCalories = 0;
             double totalProtein = 0;
             double totalFat = 0;
             double totalCarbs = 0;
 
+            // Załaduj aktualną listę składników z bazy danych
+            var existingIngredients = await _ingredientService.GetIngredientsAsync();
+
             foreach (var ingredient in Ingredients)
             {
+                // Znajdź składnik w bazie danych i zaktualizuj jego wartości odżywcze
+                var dbIngredient = existingIngredients.FirstOrDefault(i => i.Name == ingredient.Name);
+                if (dbIngredient != null)
+                {
+                    ingredient.Calories = dbIngredient.Calories;
+                    ingredient.Protein = dbIngredient.Protein;
+                    ingredient.Fat = dbIngredient.Fat;
+                    ingredient.Carbs = dbIngredient.Carbs;
+                }
+
                 // Oblicz współczynnik przeliczeniowy na podstawie jednostki
                 double factor = GetUnitConversionFactor(ingredient.Unit, ingredient.Quantity);
                 

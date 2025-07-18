@@ -131,7 +131,8 @@
                                         <Label Text="Składnik" FontSize="12" FontAttributes="Bold" />
                                         <Picker Title="Wybierz składnik"
                                                 ItemsSource="{Binding BindingContext.AvailableIngredientNames, Source={x:Reference ThisPage}}"
-                                                SelectedItem="{Binding Name}" />
+                                                SelectedItem="{Binding Name}"
+                                                SelectedIndexChanged="OnIngredientNameChanged" />
                                     </StackLayout>
                                     
                                     <!-- Ilość -->

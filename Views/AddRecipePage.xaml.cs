@@ -1,6 +1,7 @@
 using Microsoft.Maui.Controls;
 using Foodbook.Services;
 using Foodbook.ViewModels;
+using Foodbook.Models;
 using System.Threading.Tasks;
 
 namespace Foodbook.Views
@@ -73,6 +74,15 @@ namespace Foodbook.Views
                 ViewModel?.RecalculateNutritionalValues();
             };
             timer.Start();
+        }
+
+        private async void OnIngredientNameChanged(object sender, EventArgs e)
+        {
+            if (sender is Picker picker && picker.BindingContext is Ingredient ingredient)
+            {
+                // Aktualizuj wartoœci od¿ywcze sk³adnika na podstawie wybranej nazwy
+                await ViewModel.UpdateIngredientNutritionalValuesAsync(ingredient);
+            }
         }
     }
 }
