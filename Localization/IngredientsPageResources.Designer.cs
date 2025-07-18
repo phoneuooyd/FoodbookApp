@@ -50,5 +50,29 @@ namespace FoodbookApp.Localization {
                 return ResourceManager.GetString("Title", resourceCulture);
             }
         }
+
+        internal static string SearchPlaceholder {
+            get {
+                return ResourceManager.GetString("SearchPlaceholder", resourceCulture);
+            }
+        }
+
+        internal static string AddButton {
+            get {
+                return ResourceManager.GetString("AddButton", resourceCulture);
+            }
+        }
+
+        internal static string EmptyTitle {
+            get {
+                return ResourceManager.GetString("EmptyTitle", resourceCulture);
+            }
+        }
+
+        internal static string EmptyHint {
+            get {
+                return ResourceManager.GetString("EmptyHint", resourceCulture);
+            }
+        }
     }
 }

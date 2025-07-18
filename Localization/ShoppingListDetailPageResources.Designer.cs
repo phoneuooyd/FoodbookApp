@@ -50,5 +50,53 @@ namespace FoodbookApp.Localization {
                 return ResourceManager.GetString("Title", resourceCulture);
             }
         }
+
+        internal static string ToBuy {
+            get {
+                return ResourceManager.GetString("ToBuy", resourceCulture);
+            }
+        }
+
+        internal static string NameHeader {
+            get {
+                return ResourceManager.GetString("NameHeader", resourceCulture);
+            }
+        }
+
+        internal static string QuantityHeader {
+            get {
+                return ResourceManager.GetString("QuantityHeader", resourceCulture);
+            }
+        }
+
+        internal static string UnitHeader {
+            get {
+                return ResourceManager.GetString("UnitHeader", resourceCulture);
+            }
+        }
+
+        internal static string ActionsHeader {
+            get {
+                return ResourceManager.GetString("ActionsHeader", resourceCulture);
+            }
+        }
+
+        internal static string AddItem {
+            get {
+                return ResourceManager.GetString("AddItem", resourceCulture);
+            }
+        }
+
+        internal static string Collected {
+            get {
+                return ResourceManager.GetString("Collected", resourceCulture);
+            }
+        }
+
+        internal static string NoCollected {
+            get {
+                return ResourceManager.GetString("NoCollected", resourceCulture);
+            }
+        }
     }
 }

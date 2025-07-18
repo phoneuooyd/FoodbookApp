@@ -15,4 +15,10 @@
   <data name="Title" xml:space="preserve">
     <value>Shopping Lists</value>
   </data>
+  <data name="EmptyTitle" xml:space="preserve">
+    <value>No shopping lists</value>
+  </data>
+  <data name="EmptyHint" xml:space="preserve">
+    <value>Create a list in Planner</value>
+  </data>
 </root>

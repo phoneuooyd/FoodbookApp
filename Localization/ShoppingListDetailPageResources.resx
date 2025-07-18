@@ -15,4 +15,28 @@
   <data name="Title" xml:space="preserve">
     <value>Shopping List Details</value>
   </data>
+  <data name="ToBuy" xml:space="preserve">
+    <value>To buy</value>
+  </data>
+  <data name="NameHeader" xml:space="preserve">
+    <value>Ingredient name</value>
+  </data>
+  <data name="QuantityHeader" xml:space="preserve">
+    <value>Amount</value>
+  </data>
+  <data name="UnitHeader" xml:space="preserve">
+    <value>Unit</value>
+  </data>
+  <data name="ActionsHeader" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="AddItem" xml:space="preserve">
+    <value>Add item</value>
+  </data>
+  <data name="Collected" xml:space="preserve">
+    <value>Collected</value>
+  </data>
+  <data name="NoCollected" xml:space="preserve">
+    <value>No collected items</value>
+  </data>
 </root>

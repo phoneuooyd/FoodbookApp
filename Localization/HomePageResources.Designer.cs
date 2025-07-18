@@ -50,5 +50,125 @@ namespace FoodbookApp.Localization {
                 return ResourceManager.GetString("Title", resourceCulture);
             }
         }
+
+        internal static string Welcome {
+            get {
+                return ResourceManager.GetString("Welcome", resourceCulture);
+            }
+        }
+
+        internal static string Subtitle {
+            get {
+                return ResourceManager.GetString("Subtitle", resourceCulture);
+            }
+        }
+
+        internal static string Recipes {
+            get {
+                return ResourceManager.GetString("Recipes", resourceCulture);
+            }
+        }
+
+        internal static string SavedRecipes {
+            get {
+                return ResourceManager.GetString("SavedRecipes", resourceCulture);
+            }
+        }
+
+        internal static string Plans {
+            get {
+                return ResourceManager.GetString("Plans", resourceCulture);
+            }
+        }
+
+        internal static string ActiveLists {
+            get {
+                return ResourceManager.GetString("ActiveLists", resourceCulture);
+            }
+        }
+
+        internal static string PlannedMealsHeader {
+            get {
+                return ResourceManager.GetString("PlannedMealsHeader", resourceCulture);
+            }
+        }
+
+        internal static string ClickRecipeHint {
+            get {
+                return ResourceManager.GetString("ClickRecipeHint", resourceCulture);
+            }
+        }
+
+        internal static string NutritionStatsHeader {
+            get {
+                return ResourceManager.GetString("NutritionStatsHeader", resourceCulture);
+            }
+        }
+
+        internal static string Calories {
+            get {
+                return ResourceManager.GetString("Calories", resourceCulture);
+            }
+        }
+
+        internal static string Protein {
+            get {
+                return ResourceManager.GetString("Protein", resourceCulture);
+            }
+        }
+
+        internal static string Carbs {
+            get {
+                return ResourceManager.GetString("Carbs", resourceCulture);
+            }
+        }
+
+        internal static string Fats {
+            get {
+                return ResourceManager.GetString("Fats", resourceCulture);
+            }
+        }
+
+        internal static string NoNutritionData {
+            get {
+                return ResourceManager.GetString("NoNutritionData", resourceCulture);
+            }
+        }
+
+        internal static string Archive {
+            get {
+                return ResourceManager.GetString("Archive", resourceCulture);
+            }
+        }
+
+        internal static string InArchive {
+            get {
+                return ResourceManager.GetString("InArchive", resourceCulture);
+            }
+        }
+
+        internal static string GoToArchive {
+            get {
+                return ResourceManager.GetString("GoToArchive", resourceCulture);
+            }
+        }
+
+        internal static string Settings {
+            get {
+                return ResourceManager.GetString("Settings", resourceCulture);
+            }
+        }
+
+        internal static string Customize {
+            get {
+                return ResourceManager.GetString("Customize", resourceCulture);
+            }
+        }
+
+        internal static string ComingSoon {
+            get {
+                return ResourceManager.GetString("ComingSoon", resourceCulture);
+            }
+        }
     }
 }

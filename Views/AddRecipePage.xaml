@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
-             xmlns:converters="clr-namespace:Foodbook.Converters"
+            xmlns:converters="clr-namespace:Foodbook.Converters"
+            xmlns:resources="clr-namespace:FoodbookApp.Localization"
              x:Class="Foodbook.Views.AddRecipePage"
              x:Name="ThisPage"
              x:DataType="vm:AddRecipeViewModel"
@@ -26,44 +27,44 @@
 
             <!-- Mode Selection Section -->
             <StackLayout Spacing="10">
-                <Label Text="Sposób dodawania przepisu" 
-                       FontSize="18" 
+                <Label Text="{x:Static resources:AddRecipePageResources.ModeSelection}"
+                       FontSize="18"
                        FontAttributes="Bold" />
                 
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                     <Button Grid.Column="0"
-                            Text="✏️ Ręcznie"
                             Command="{Binding SetManualModeCommand}"
                             BackgroundColor="{Binding IsManualMode, Converter={StaticResource BoolToColorConverter}}"
                             TextColor="White"
-                            HeightRequest="45" />
+                            HeightRequest="45"
+                            Text="{x:Static resources:AddRecipePageResources.Manual}"/>
                     <Button Grid.Column="1"
-                            Text="🌐 Z linku"
                             Command="{Binding SetImportModeCommand}"
                             BackgroundColor="{Binding IsImportMode, Converter={StaticResource BoolToColorConverter}}"
                             TextColor="White"
-                            HeightRequest="45" />
+                            HeightRequest="45"
+                            Text="{x:Static resources:AddRecipePageResources.FromLink}"/>
                 </Grid>
             </StackLayout>
 
             <!-- Import Section -->
             <StackLayout IsVisible="{Binding IsImportMode}" Spacing="10">
-                <Label Text="Import z internetu" 
-                       FontSize="18" 
-                       FontAttributes="Bold" 
+                <Label Text="{x:Static resources:AddRecipePageResources.ImportHeader}"
+                       FontSize="18"
+                       FontAttributes="Bold"
                        Margin="0,10,0,5" />
                 
                 <StackLayout Spacing="5">
-                    <Label Text="URL przepisu *" FontAttributes="Bold" />
-                    <Entry Placeholder="Wklej link do przepisu" 
-                           Text="{Binding ImportUrl}" 
+                    <Label Text="{x:Static resources:AddRecipePageResources.UrlLabel}" FontAttributes="Bold" />
+                    <Entry Placeholder="{x:Static resources:AddRecipePageResources.UrlPlaceholder}"
+                           Text="{Binding ImportUrl}"
                            ClearButtonVisibility="WhileEditing"
                            Keyboard="Url" />
                 </StackLayout>
                 
-                <Button Text="🔄 Importuj przepis" 
-                        Command="{Binding ImportRecipeCommand}"
-                        HeightRequest="45" />
+                <Button Command="{Binding ImportRecipeCommand}"
+                        HeightRequest="45"
+                        Text="{x:Static resources:AddRecipePageResources.ImportButton}"/>
                 
                 <Label Text="{Binding ImportStatus}" 
                        FontSize="12" 
@@ -75,29 +76,29 @@
             <StackLayout IsVisible="{Binding IsManualMode}" Spacing="10">
                 
                 <!-- Basic Information -->
-                <Label Text="Informacje podstawowe" 
+                <Label Text="{x:Static resources:AddRecipePageResources.BasicInfoHeader}"
 
                        FontSize="18" 
                        FontAttributes="Bold" 
                        Margin="0,10,0,5" />
                 
                 <StackLayout Spacing="5">
-                    <Label Text="Nazwa przepisu *" FontAttributes="Bold" />
-                    <Entry Placeholder="Wprowadź nazwę przepisu" 
+                    <Label Text="{x:Static resources:AddRecipePageResources.NameLabel}" FontAttributes="Bold" />
+                    <Entry Placeholder="{x:Static resources:AddRecipePageResources.NamePlaceholder}"
                            Text="{Binding Name}" 
                            ClearButtonVisibility="WhileEditing" />
                 </StackLayout>
                 
                 <StackLayout Spacing="5">
-                    <Label Text="Opis" FontAttributes="Bold" />
-                    <Editor Placeholder="Wprowadź opis przepisu" 
+                    <Label Text="{x:Static resources:AddRecipePageResources.DescriptionLabel}" FontAttributes="Bold" />
+                    <Editor Placeholder="{x:Static resources:AddRecipePageResources.DescriptionPlaceholder}"
                             Text="{Binding Description}" 
                             AutoSize="TextChanges"
                             HeightRequest="80" />
                 </StackLayout>
 
                 <StackLayout Spacing="5">
-                    <Label Text="Domyślna ilość porcji (lista zakupów)*" FontAttributes="Bold" />
+                    <Label Text="{x:Static resources:AddRecipePageResources.PortionsLabel}" FontAttributes="Bold" />
                     <Entry Placeholder="2" 
                            Keyboard="Numeric"
                            Text="{Binding IloscPorcji}" 
@@ -108,7 +109,7 @@
                 </StackLayout>
 
                 <!-- Ingredients Section - MOVED UP -->
-                <Label Text="Składniki" 
+                <Label Text="{x:Static resources:AddRecipePageResources.IngredientsHeader}"
                        FontSize="18" 
                        FontAttributes="Bold" 
                        Margin="0,15,0,5" />
@@ -128,8 +129,8 @@
                                     
                                     <!-- Nazwa składnika -->
                                     <StackLayout Grid.Row="0" Grid.Column="0" Spacing="3">
-                                        <Label Text="Składnik" FontSize="12" FontAttributes="Bold" />
-                                        <Picker Title="Wybierz składnik"
+                                        <Label Text="{x:Static resources:AddRecipePageResources.IngredientLabel}" FontSize="12" FontAttributes="Bold" />
+                                        <Picker Title="{x:Static resources:AddRecipePageResources.ChooseIngredient}"
                                                 ItemsSource="{Binding BindingContext.AvailableIngredientNames, Source={x:Reference ThisPage}}"
                                                 SelectedItem="{Binding Name}"
                                                 SelectedIndexChanged="OnIngredientNameChanged" />
@@ -137,7 +138,7 @@
                                     
                                     <!-- Ilość -->
                                     <StackLayout Grid.Row="0" Grid.Column="1" Spacing="3">
-                                        <Label Text="Ilość" FontSize="12" FontAttributes="Bold" />
+                                        <Label Text="{x:Static resources:AddRecipePageResources.QuantityLabelShort}" FontSize="12" FontAttributes="Bold" />
                                         <Entry Placeholder="1.0"
                                                Keyboard="Numeric"
                                                Text="{Binding Quantity}"
@@ -147,8 +148,8 @@
                                     
                                     <!-- Jednostka -->
                                     <StackLayout Grid.Row="0" Grid.Column="2" Spacing="3">
-                                        <Label Text="Jednostka" FontSize="12" FontAttributes="Bold" />
-                                        <Picker Title="Jednostka"
+                                        <Label Text="{x:Static resources:AddRecipePageResources.UnitLabelShort}" FontSize="12" FontAttributes="Bold" />
+                                        <Picker Title="{x:Static resources:AddRecipePageResources.UnitLabelShort}"
                                                 ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}"
                                                 SelectedItem="{Binding Unit}"
                                                 SelectedIndexChanged="OnIngredientValueChanged"
@@ -192,48 +193,48 @@
                     </CollectionView.ItemTemplate>
                 </CollectionView>
                 
-                <Button Text="➕ Dodaj składnik" 
-                        Command="{Binding AddIngredientCommand}"
-                        HeightRequest="45" />
+                <Button Command="{Binding AddIngredientCommand}"
+                        HeightRequest="45"
+                        Text="{x:Static resources:AddRecipePageResources.AddIngredient}"/>
 
                 <!-- Nutritional Information - MOVED DOWN -->
-                <Label Text="Wartości odżywcze (na całą porcję)" 
-                       FontSize="18" 
-                       FontAttributes="Bold" 
+                <Label Text="{x:Static resources:AddRecipePageResources.NutritionHeader}"
+                       FontSize="18"
+                       FontAttributes="Bold"
                        Margin="0,20,0,5" />
 
                 <!-- Calculation Mode Toggle -->
                 <StackLayout Spacing="10">
-                    <Label Text="Sposób obliczania wartości odżywczych" 
-                           FontSize="14" 
+                    <Label Text="{x:Static resources:AddRecipePageResources.CalcModeLabel}"
+                           FontSize="14"
                            FontAttributes="Bold" />
                     
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                         <Button Grid.Column="0"
-                                Text="🧮 Automatycznie"
                                 BackgroundColor="{Binding UseCalculatedValues, Converter={StaticResource BoolToColorConverter}}"
                                 TextColor="White"
                                 HeightRequest="40"
-                                Clicked="OnAutoModeClicked" />
+                                Clicked="OnAutoModeClicked"
+                                Text="{x:Static resources:AddRecipePageResources.AutoButton}"/>
                         <Button Grid.Column="1"
-                                Text="✏️ Ręcznie"
                                 BackgroundColor="{Binding UseManualValues, Converter={StaticResource BoolToColorConverter}}"
                                 TextColor="White"
                                 HeightRequest="40"
-                                Clicked="OnManualModeClicked" />
+                                Clicked="OnManualModeClicked"
+                                Text="{x:Static resources:AddRecipePageResources.ManualButton}"/>
                     </Grid>
                 </StackLayout>
 
                 <!-- Calculated Values Display -->
                 <StackLayout IsVisible="{Binding UseCalculatedValues}" Spacing="10">
-                    <Label Text="Obliczone automatycznie na podstawie składników:" 
-                           FontSize="12" 
+                    <Label Text="{x:Static resources:AddRecipePageResources.AutoCalculatedInfo}"
+                           FontSize="12"
                            FontAttributes="Italic"
                            HorizontalTextAlignment="Center" />
                     
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
                         <StackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
-                            <Label Text="Kalorie" FontAttributes="Bold" />
+                            <Label Text="{x:Static resources:AddRecipePageResources.CaloriesLabel}" FontAttributes="Bold" />
                             <Label Text="{Binding CalculatedCalories}" 
                                    FontSize="16"
                                    HorizontalTextAlignment="Center"
@@ -243,7 +244,7 @@
                         </StackLayout>
                         
                         <StackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
-                            <Label Text="Białko (g)" FontAttributes="Bold" />
+                            <Label Text="{x:Static resources:AddRecipePageResources.ProteinLabel}" FontAttributes="Bold" />
                             <Label Text="{Binding CalculatedProtein}" 
                                    FontSize="16"
                                    HorizontalTextAlignment="Center"
@@ -253,7 +254,7 @@
                         </StackLayout>
                         
                         <StackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
-                            <Label Text="Tłuszcze (g)" FontAttributes="Bold" />
+                            <Label Text="{x:Static resources:AddRecipePageResources.FatLabel}" FontAttributes="Bold" />
                             <Label Text="{Binding CalculatedFat}" 
                                    FontSize="16"
                                    HorizontalTextAlignment="Center"
@@ -263,7 +264,7 @@
                         </StackLayout>
                         
                         <StackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
-                            <Label Text="Węglowodany (g)" FontAttributes="Bold" />
+                            <Label Text="{x:Static resources:AddRecipePageResources.CarbsLabel}" FontAttributes="Bold" />
                             <Label Text="{Binding CalculatedCarbs}" 
                                    FontSize="16"
                                    HorizontalTextAlignment="Center"
@@ -278,20 +279,20 @@
                 <StackLayout IsVisible="{Binding UseManualValues}" Spacing="10">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                         <Label Grid.Column="0"
-                               Text="Wprowadź wartości ręcznie:" 
-                               FontSize="12" 
+                               Text="{x:Static resources:AddRecipePageResources.ManualInputLabel}"
+                               FontSize="12"
                                FontAttributes="Italic"
                                VerticalOptions="Center" />
                         <Button Grid.Column="1"
-                                Text="📋 Skopiuj obliczone"
                                 Command="{Binding CopyCalculatedValuesCommand}"
                                 FontSize="12"
-                                HeightRequest="30" />
+                                HeightRequest="30"
+                                Text="{x:Static resources:AddRecipePageResources.CopyCalculated}"/>
                     </Grid>
                     
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
                         <StackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
-                            <Label Text="Kalorie" FontAttributes="Bold" />
+                            <Label Text="{x:Static resources:AddRecipePageResources.CaloriesLabel}" FontAttributes="Bold" />
                             <Entry Placeholder="0.0" 
                                    Keyboard="Numeric" 
                                    Text="{Binding Calories}"
@@ -299,7 +300,7 @@
                         </StackLayout>
                         
                         <StackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
-                            <Label Text="Białko (g)" FontAttributes="Bold" />
+                            <Label Text="{x:Static resources:AddRecipePageResources.ProteinLabel}" FontAttributes="Bold" />
                             <Entry Placeholder="0.0" 
                                    Keyboard="Numeric" 
                                    Text="{Binding Protein}"
@@ -307,7 +308,7 @@
                         </StackLayout>
                         
                         <StackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
-                            <Label Text="Tłuszcze (g)" FontAttributes="Bold" />
+                            <Label Text="{x:Static resources:AddRecipePageResources.FatLabel}" FontAttributes="Bold" />
                             <Entry Placeholder="0.0" 
                                    Keyboard="Numeric" 
                                    Text="{Binding Fat}"
@@ -315,7 +316,7 @@
                         </StackLayout>
                         
                         <StackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
-                            <Label Text="Węglowodany (g)" FontAttributes="Bold" />
+                            <Label Text="{x:Static resources:AddRecipePageResources.CarbsLabel}" FontAttributes="Bold" />
                             <Entry Placeholder="0.0" 
                                    Keyboard="Numeric" 
                                    Text="{Binding Carbs}"

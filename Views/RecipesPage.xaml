@@ -4,10 +4,11 @@
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:converters="clr-namespace:Foodbook.Converters"
+             xmlns:resources="clr-namespace:FoodbookApp.Localization"
              x:Class="Foodbook.Views.RecipesPage"
              x:Name="ThisPage"
              x:DataType="vm:RecipeViewModel"
-             Title="Przepisy">
+             Title="{x:Static resources:RecipesPageResources.Title}">
     
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
@@ -23,9 +24,9 @@
                           Margin="10" />
 
         <!-- Search bar -->
-        <SearchBar Grid.Row="1" 
+        <SearchBar Grid.Row="1"
                    Text="{Binding SearchText}"
-                   Placeholder="Szukaj przepisów..."
+                   Placeholder="{x:Static resources:RecipesPageResources.SearchPlaceholder}"
                    Margin="10,0"
                    IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
 
@@ -39,9 +40,9 @@
                 <!-- Action Buttons Section -->
                 <Grid Grid.Row="0" 
                       Margin="10">
-                    <Button Text="➕ Dodaj przepis" 
-                            Clicked="OnAddRecipeClicked"
-                            HeightRequest="45" />
+                    <Button Clicked="OnAddRecipeClicked"
+                            HeightRequest="45"
+                            Text="{x:Static resources:RecipesPageResources.AddButton}" />
                 </Grid>
 
                 <CollectionView Grid.Row="1"
@@ -130,12 +131,12 @@
                     
                     <CollectionView.EmptyView>
                         <StackLayout HorizontalOptions="Center" VerticalOptions="Center" Padding="20">
-                            <Label Text="Brak przepisów" 
-                                   FontSize="18" 
+                            <Label Text="{x:Static resources:RecipesPageResources.EmptyTitle}"
+                                   FontSize="18"
                                    HorizontalOptions="Center"
                                    TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-                            <Label Text="Dotknij 'Dodaj przepis' aby dodać pierwszy przepis" 
-                                   FontSize="14" 
+                            <Label Text="{x:Static resources:RecipesPageResources.EmptyHint}"
+                                   FontSize="14"
                                    HorizontalOptions="Center"
                                    TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
                                    Margin="0,10,0,0" />
