@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Ustawienia</value>
+  </data>
+  <data name="HeaderTitle" xml:space="preserve">
+    <value>Ustawienia</value>
+  </data>
+  <data name="HeaderSubtitle" xml:space="preserve">
+    <value>Personalizuj swoja aplikacje</value>
+  </data>
+  <data name="ThemeTitle" xml:space="preserve">
+    <value>Motyw</value>
+  </data>
+  <data name="ThemeDescription" xml:space="preserve">
+    <value>Jasny / ciemny</value>
+  </data>
+  <data name="LanguageTitle" xml:space="preserve">
+    <value>Jezyk</value>
+  </data>
+  <data name="LanguageDescription" xml:space="preserve">
+    <value>PL / EN</value>
+  </data>
+  <data name="VersionInfoTitle" xml:space="preserve">
+    <value>Informacje o wersji</value>
+  </data>
+  <data name="VersionNumber" xml:space="preserve">
+    <value>Wersja 1.0</value>
+  </data>
+  <data name="AuthorLabel" xml:space="preserve">
+    <value>Autor: Przemyslaw Przybyszewski</value>
+  </data>
+  <data name="RightsLabel" xml:space="preserve">
+    <value>All rights reserved 2025</value>
+  </data>
+  <data name="AppName" xml:space="preserve">
+    <value>FoodBook App</value>
+  </data>
+  <data name="DataExportTitle" xml:space="preserve">
+    <value>Eksport danych</value>
+  </data>
+  <data name="DataExportDescription" xml:space="preserve">
+    <value>Zapisz przepisy i plany</value>
+  </data>
+  <data name="ComingSoon" xml:space="preserve">
+    <value>Wkrótce</value>
+  </data>
+</root>
