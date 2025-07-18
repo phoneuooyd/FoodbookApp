@@ -123,12 +123,7 @@
                            HorizontalTextAlignment="Center"
                            TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                            Margin="0,4">
-                        <Label.FormattedText>
-                            <FormattedString>
-                                <Span Text="🍽️ "/>
-                                <Span Text="{x:Static resources:HomePageResources.Welcome}"/>
-                            </FormattedString>
-                        </Label.FormattedText>
+                        <Label Text="{x:Static resources:HomePageResources.Welcome}" />
                     </Label>
                     <Label Text="{x:Static resources:HomePageResources.Subtitle}"
                            FontSize="14"
@@ -205,14 +200,8 @@
                         <Label FontSize="12"
                                HorizontalTextAlignment="Center"
                                TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
-                               Margin="0,0,0,12">
-                            <Label.FormattedText>
-                                <FormattedString>
-                                    <Span Text="💡 "/>
-                                    <Span Text="{x:Static resources:HomePageResources.ClickRecipeHint}"/>
-                                </FormattedString>
-                            </Label.FormattedText>
-                        </Label>
+                               Margin="0,0,0,12"
+                               Text="{x:Static resources:HomePageResources.ClickRecipeHint}" />
                         
                         <!-- Scrollable CollectionView with limited height -->
                         <ScrollView MaximumHeightRequest="250" 
@@ -373,14 +362,8 @@
                                FontSize="12"
                                HorizontalTextAlignment="Center"
                                TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
-                               Margin="0,16,0,0">
-                            <Label.FormattedText>
-                                <FormattedString>
-                                    <Span Text="💡 "/>
-                                    <Span Text="{x:Static resources:HomePageResources.NoNutritionData}"/>
-                                </FormattedString>
-                            </Label.FormattedText>
-                        </Label>
+                               Margin="0,16,0,0"
+                               Text="{x:Static resources:HomePageResources.NoNutritionData}" />
                     </StackLayout>
                 </Frame>
 
@@ -392,14 +375,8 @@
                         <Label Text="{Binding ArchivedPlanCount}" Style="{StaticResource StatNumberStyle}" />
                         <Label Text="{x:Static resources:HomePageResources.InArchive}" Style="{StaticResource StatDescriptionStyle}" />
                         <Button Clicked="OnArchiveClicked"
-                                Style="{StaticResource CardButtonStyle}">
-                            <Button.Text>
-                                <FormattedString>
-                                    <Span Text="📂 "/>
-                                    <Span Text="{x:Static resources:HomePageResources.GoToArchive}"/>
-                                </FormattedString>
-                            </Button.Text>
-                        </Button>
+                                Style="{StaticResource CardButtonStyle}"
+                                Text="{x:Static resources:HomePageResources.GoToArchive}" />
                     </StackLayout>
                 </Frame>
 
@@ -414,14 +391,8 @@
                                TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
                                Margin="0,16,0,8" />
                         <Button Style="{StaticResource DisabledButtonStyle}"
-                                IsEnabled="False">
-                            <Button.Text>
-                                <FormattedString>
-                                    <Span Text="🔒 "/>
-                                    <Span Text="{x:Static resources:HomePageResources.ComingSoon}"/>
-                                </FormattedString>
-                            </Button.Text>
-                        </Button>
+                                IsEnabled="False"
+                                Text="{x:Static resources:HomePageResources.ComingSoon}" />
                     </StackLayout>
                 </Frame>
 

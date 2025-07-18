@@ -41,14 +41,8 @@
                 <Grid Grid.Row="0" 
                       Margin="10">
                     <Button Clicked="OnAddRecipeClicked"
-                            HeightRequest="45">
-                        <Button.Text>
-                            <FormattedString>
-                                <Span Text="➕ "/>
-                                <Span Text="{x:Static resources:RecipesPageResources.AddButton}"/>
-                            </FormattedString>
-                        </Button.Text>
-                    </Button>
+                            HeightRequest="45"
+                            Text="{x:Static resources:RecipesPageResources.AddButton}" />
                 </Grid>
 
                 <CollectionView Grid.Row="1"

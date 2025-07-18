@@ -43,14 +43,8 @@
                       Margin="10">
                     <Button Command="{Binding AddCommand}"
                             TextColor="White"
-                            HeightRequest="45">
-                        <Button.Text>
-                            <FormattedString>
-                                <Span Text="➕ "/>
-                                <Span Text="{x:Static resources:IngredientsPageResources.AddButton}"/>
-                            </FormattedString>
-                        </Button.Text>
-                    </Button>
+                            HeightRequest="45"
+                            Text="{x:Static resources:IngredientsPageResources.AddButton}" />
                 </Grid>
 
                 <CollectionView Grid.Row="1"
