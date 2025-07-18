@@ -50,5 +50,90 @@ namespace FoodbookApp.Localization {
                 return ResourceManager.GetString("Title", resourceCulture);
             }
         }
+
+        internal static string HeaderTitle {
+            get {
+                return ResourceManager.GetString("HeaderTitle", resourceCulture);
+            }
+        }
+
+        internal static string HeaderSubtitle {
+            get {
+                return ResourceManager.GetString("HeaderSubtitle", resourceCulture);
+            }
+        }
+
+        internal static string ThemeTitle {
+            get {
+                return ResourceManager.GetString("ThemeTitle", resourceCulture);
+            }
+        }
+
+        internal static string ThemeDescription {
+            get {
+                return ResourceManager.GetString("ThemeDescription", resourceCulture);
+            }
+        }
+
+        internal static string LanguageTitle {
+            get {
+                return ResourceManager.GetString("LanguageTitle", resourceCulture);
+            }
+        }
+
+        internal static string LanguageDescription {
+            get {
+                return ResourceManager.GetString("LanguageDescription", resourceCulture);
+            }
+        }
+
+        internal static string VersionInfoTitle {
+            get {
+                return ResourceManager.GetString("VersionInfoTitle", resourceCulture);
+            }
+        }
+
+        internal static string VersionNumber {
+            get {
+                return ResourceManager.GetString("VersionNumber", resourceCulture);
+            }
+        }
+
+        internal static string AuthorLabel {
+            get {
+                return ResourceManager.GetString("AuthorLabel", resourceCulture);
+            }
+        }
+
+        internal static string RightsLabel {
+            get {
+                return ResourceManager.GetString("RightsLabel", resourceCulture);
+            }
+        }
+
+        internal static string AppName {
+            get {
+                return ResourceManager.GetString("AppName", resourceCulture);
+            }
+        }
+
+        internal static string DataExportTitle {
+            get {
+                return ResourceManager.GetString("DataExportTitle", resourceCulture);
+            }
+        }
+
+        internal static string DataExportDescription {
+            get {
+                return ResourceManager.GetString("DataExportDescription", resourceCulture);
+            }
+        }
+
+        internal static string ComingSoon {
+            get {
+                return ResourceManager.GetString("ComingSoon", resourceCulture);
+            }
+        }
+
     }
 }
