@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:converters="clr-namespace:Foodbook.Converters"
+             xmlns:resources="clr-namespace:FoodbookApp.Localization"
              x:Class="Foodbook.Views.IngredientFormPage"
              x:Name="ThisPage"
              x:DataType="vm:IngredientFormViewModel"
@@ -23,16 +24,16 @@
                    Margin="0,0,0,10" />
             
             <!-- Basic Information Section -->
-            <Label Text="Informacje podstawowe" 
-                   FontSize="18" 
-                   FontAttributes="Bold" 
+            <Label Text="{x:Static resources:IngredientFormPageResources.BasicInfoHeader}"
+                   FontSize="18"
+                   FontAttributes="Bold"
                    Margin="0,10,0,5" />
             
             <!-- Name Field -->
             <StackLayout Spacing="5">
-                <Label Text="Nazwa składnika *" FontAttributes="Bold" />
-                <Entry Placeholder="Wprowadź nazwę składnika" 
-                       Text="{Binding Name}" 
+                <Label Text="{x:Static resources:IngredientFormPageResources.NameLabel}" FontAttributes="Bold" />
+                <Entry Placeholder="{x:Static resources:IngredientFormPageResources.NamePlaceholder}"
+                       Text="{Binding Name}"
                        ClearButtonVisibility="WhileEditing" />
             </StackLayout>
             
@@ -40,7 +41,7 @@
             <Grid ColumnDefinitions="2*,*" ColumnSpacing="10">
                 <!-- Quantity Field -->
                 <StackLayout Grid.Column="0" Spacing="5">
-                    <Label Text="Ilość *" FontAttributes="Bold" />
+                    <Label Text="{x:Static resources:IngredientFormPageResources.QuantityLabel}" FontAttributes="Bold" />
                     <Entry Placeholder="100" 
                            Keyboard="Numeric" 
                            Text="{Binding Quantity}"
@@ -50,29 +51,29 @@
                 
                 <!-- Unit Field -->
                 <StackLayout Grid.Column="1" Spacing="5">
-                    <Label Text="Jednostka *" FontAttributes="Bold" />
-                    <Picker Title="Jednostka" 
-                            ItemsSource="{Binding Units}" 
+                    <Label Text="{x:Static resources:IngredientFormPageResources.UnitLabel}" FontAttributes="Bold" />
+                    <Picker Title="{x:Static resources:IngredientFormPageResources.UnitPickerTitle}"
+                            ItemsSource="{Binding Units}"
                             SelectedItem="{Binding SelectedUnit}" />
                 </StackLayout>
             </Grid>
             
             <!-- Nutritional Information Section -->
-            <Label Text="Wartości odżywcze" 
-                   FontSize="18" 
-                   FontAttributes="Bold" 
+            <Label Text="{x:Static resources:IngredientFormPageResources.NutritionHeader}"
+                   FontSize="18"
+                   FontAttributes="Bold"
                    Margin="0,20,0,5" />
 
             <!-- OpenFoodFacts Verification Section -->
             <StackLayout Spacing="10">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                     <Label Grid.Column="0"
-                           Text="Zweryfikuj dane z OpenFoodFacts:" 
-                           FontSize="14" 
+                           Text="{x:Static resources:IngredientFormPageResources.VerifyLabel}"
+                           FontSize="14"
                            FontAttributes="Bold"
                            VerticalOptions="Center" />
                     <Button Grid.Column="1"
-                            Text="🔍 Weryfikuj"
+                            Text="🔍 {x:Static resources:IngredientFormPageResources.VerifyButton}"
                             Command="{Binding VerifyNutritionCommand}"
                             TextColor="White"
                             FontSize="12"
@@ -134,8 +135,8 @@
             
             <!-- Recipe Info (if applicable) -->
             <StackLayout Spacing="5" IsVisible="{Binding IsPartOfRecipe}" Margin="0,15,0,0">
-                <Label Text="Informacja" 
-                       FontSize="14" 
+                <Label Text="{x:Static resources:IngredientFormPageResources.InfoLabel}"
+                       FontSize="14"
                        FontAttributes="Bold" />
                 <Frame BackgroundColor="LightBlue" 
                        Padding="10" 

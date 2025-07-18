@@ -50,5 +50,185 @@ namespace FoodbookApp.Localization {
                 return ResourceManager.GetString("Title", resourceCulture);
             }
         }
+
+        internal static string ModeSelection {
+            get {
+                return ResourceManager.GetString("ModeSelection", resourceCulture);
+            }
+        }
+
+        internal static string Manual {
+            get {
+                return ResourceManager.GetString("Manual", resourceCulture);
+            }
+        }
+
+        internal static string FromLink {
+            get {
+                return ResourceManager.GetString("FromLink", resourceCulture);
+            }
+        }
+
+        internal static string ImportHeader {
+            get {
+                return ResourceManager.GetString("ImportHeader", resourceCulture);
+            }
+        }
+
+        internal static string UrlLabel {
+            get {
+                return ResourceManager.GetString("UrlLabel", resourceCulture);
+            }
+        }
+
+        internal static string UrlPlaceholder {
+            get {
+                return ResourceManager.GetString("UrlPlaceholder", resourceCulture);
+            }
+        }
+
+        internal static string ImportButton {
+            get {
+                return ResourceManager.GetString("ImportButton", resourceCulture);
+            }
+        }
+
+        internal static string BasicInfoHeader {
+            get {
+                return ResourceManager.GetString("BasicInfoHeader", resourceCulture);
+            }
+        }
+
+        internal static string NameLabel {
+            get {
+                return ResourceManager.GetString("NameLabel", resourceCulture);
+            }
+        }
+
+        internal static string NamePlaceholder {
+            get {
+                return ResourceManager.GetString("NamePlaceholder", resourceCulture);
+            }
+        }
+
+        internal static string DescriptionLabel {
+            get {
+                return ResourceManager.GetString("DescriptionLabel", resourceCulture);
+            }
+        }
+
+        internal static string DescriptionPlaceholder {
+            get {
+                return ResourceManager.GetString("DescriptionPlaceholder", resourceCulture);
+            }
+        }
+
+        internal static string PortionsLabel {
+            get {
+                return ResourceManager.GetString("PortionsLabel", resourceCulture);
+            }
+        }
+
+        internal static string IngredientsHeader {
+            get {
+                return ResourceManager.GetString("IngredientsHeader", resourceCulture);
+            }
+        }
+
+        internal static string AddIngredient {
+            get {
+                return ResourceManager.GetString("AddIngredient", resourceCulture);
+            }
+        }
+
+        internal static string NutritionHeader {
+            get {
+                return ResourceManager.GetString("NutritionHeader", resourceCulture);
+            }
+        }
+
+        internal static string CalcModeLabel {
+            get {
+                return ResourceManager.GetString("CalcModeLabel", resourceCulture);
+            }
+        }
+
+        internal static string AutoButton {
+            get {
+                return ResourceManager.GetString("AutoButton", resourceCulture);
+            }
+        }
+
+        internal static string ManualButton {
+            get {
+                return ResourceManager.GetString("ManualButton", resourceCulture);
+            }
+        }
+
+        internal static string AutoCalculatedInfo {
+            get {
+                return ResourceManager.GetString("AutoCalculatedInfo", resourceCulture);
+            }
+        }
+
+        internal static string ManualInputLabel {
+            get {
+                return ResourceManager.GetString("ManualInputLabel", resourceCulture);
+            }
+        }
+
+        internal static string CopyCalculated {
+            get {
+                return ResourceManager.GetString("CopyCalculated", resourceCulture);
+            }
+        }
+
+        internal static string CaloriesLabel {
+            get {
+                return ResourceManager.GetString("CaloriesLabel", resourceCulture);
+            }
+        }
+
+        internal static string ProteinLabel {
+            get {
+                return ResourceManager.GetString("ProteinLabel", resourceCulture);
+            }
+        }
+
+        internal static string FatLabel {
+            get {
+                return ResourceManager.GetString("FatLabel", resourceCulture);
+            }
+        }
+
+        internal static string CarbsLabel {
+            get {
+                return ResourceManager.GetString("CarbsLabel", resourceCulture);
+            }
+        }
+
+        internal static string IngredientLabel {
+            get {
+                return ResourceManager.GetString("IngredientLabel", resourceCulture);
+            }
+        }
+
+        internal static string ChooseIngredient {
+            get {
+                return ResourceManager.GetString("ChooseIngredient", resourceCulture);
+            }
+        }
+
+        internal static string QuantityLabelShort {
+            get {
+                return ResourceManager.GetString("QuantityLabelShort", resourceCulture);
+            }
+        }
+
+        internal static string UnitLabelShort {
+            get {
+                return ResourceManager.GetString("UnitLabelShort", resourceCulture);
+            }
+        }
     }
 }
