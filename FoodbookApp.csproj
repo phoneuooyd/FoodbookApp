@@ -79,20 +79,117 @@
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Compile Update="Localization\TabBarResources.Designer.cs">
-	    <DesignTime>True</DesignTime>
-	    <AutoGen>True</AutoGen>
-	    <DependentUpon>TabBarResources.resx</DependentUpon>
-	  </Compile>
-	</ItemGroup>
+        <ItemGroup>
+          <Compile Update="Localization\TabBarResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>TabBarResources.resx</DependentUpon>
+          </Compile>
+        </ItemGroup>
 
-	<ItemGroup>
-	  <EmbeddedResource Update="Localization\TabBarResources.resx">
-	    <Generator>ResXFileCodeGenerator</Generator>
-	    <LastGenOutput>TabBarResources.Designer.cs</LastGenOutput>
-	  </EmbeddedResource>
-	</ItemGroup>
+        <ItemGroup>
+          <EmbeddedResource Update="Localization\TabBarResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>TabBarResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
+        </ItemGroup>
+
+        <!-- Localization resources for individual pages -->
+        <ItemGroup>
+          <Compile Update="Localization\AddRecipePageResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>AddRecipePageResources.resx</DependentUpon>
+          </Compile>
+          <Compile Update="Localization\ArchivePageResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>ArchivePageResources.resx</DependentUpon>
+          </Compile>
+          <Compile Update="Localization\HomePageResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>HomePageResources.resx</DependentUpon>
+          </Compile>
+          <Compile Update="Localization\IngredientFormPageResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>IngredientFormPageResources.resx</DependentUpon>
+          </Compile>
+          <Compile Update="Localization\IngredientsPageResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>IngredientsPageResources.resx</DependentUpon>
+          </Compile>
+          <Compile Update="Localization\MealFormPageResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>MealFormPageResources.resx</DependentUpon>
+          </Compile>
+          <Compile Update="Localization\PlannerPageResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>PlannerPageResources.resx</DependentUpon>
+          </Compile>
+          <Compile Update="Localization\RecipesPageResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>RecipesPageResources.resx</DependentUpon>
+          </Compile>
+          <Compile Update="Localization\ShoppingListDetailPageResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>ShoppingListDetailPageResources.resx</DependentUpon>
+          </Compile>
+          <Compile Update="Localization\ShoppingListPageResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>ShoppingListPageResources.resx</DependentUpon>
+          </Compile>
+        </ItemGroup>
+
+        <ItemGroup>
+          <EmbeddedResource Update="Localization\AddRecipePageResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>AddRecipePageResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
+          <EmbeddedResource Update="Localization\ArchivePageResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>ArchivePageResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
+          <EmbeddedResource Update="Localization\HomePageResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>HomePageResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
+          <EmbeddedResource Update="Localization\IngredientFormPageResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>IngredientFormPageResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
+          <EmbeddedResource Update="Localization\IngredientsPageResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>IngredientsPageResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
+          <EmbeddedResource Update="Localization\MealFormPageResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>MealFormPageResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
+          <EmbeddedResource Update="Localization\PlannerPageResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>PlannerPageResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
+          <EmbeddedResource Update="Localization\RecipesPageResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>RecipesPageResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
+          <EmbeddedResource Update="Localization\ShoppingListDetailPageResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>ShoppingListDetailPageResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
+          <EmbeddedResource Update="Localization\ShoppingListPageResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>ShoppingListPageResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
+        </ItemGroup>
 
 	<ItemGroup>
 	  <MauiXaml Update="Views\AddRecipePage.xaml">
