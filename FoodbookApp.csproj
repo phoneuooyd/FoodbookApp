@@ -39,7 +39,7 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
-                <NeutralLanguage>en</NeutralLanguage>
+		<NeutralLanguage>pl</NeutralLanguage>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -199,9 +199,7 @@
             <LastGenOutput>SettingsPageResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
         </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Localization\*.pl-PL.resx" />
-  </ItemGroup>
+
 	<ItemGroup>
 	  <MauiXaml Update="Views\AddRecipePage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
