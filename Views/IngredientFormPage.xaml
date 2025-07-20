@@ -104,7 +104,7 @@
                 
                 <!-- Protein Field -->
                 <StackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
-                    <Label Text="{x:Static resources:IngredientFormPageResources.ProteinLabel}" FontAttributes="Bold" />
+                    <Label Text="Białko (g)" FontAttributes="Bold" />
                     <Entry Placeholder="0.0" 
                            Keyboard="Numeric" 
                            Text="{Binding Protein}"
@@ -114,7 +114,7 @@
                 
                 <!-- Fat Field -->
                 <StackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
-                    <Label Text="{x:Static resources:IngredientFormPageResources.FatLabel}" FontAttributes="Bold" />
+                    <Label Text="Tłuszcze (g)" FontAttributes="Bold" />
                     <Entry Placeholder="0.0" 
                            Keyboard="Numeric" 
                            Text="{Binding Fat}"
@@ -124,7 +124,7 @@
                 
                 <!-- Carbs Field -->
                 <StackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
-                    <Label Text="{x:Static resources:IngredientFormPageResources.CarbsLabel}" FontAttributes="Bold" />
+                    <Label Text="Węglowodany (g)" FontAttributes="Bold" />
                     <Entry Placeholder="0.0" 
                            Keyboard="Numeric" 
                            Text="{Binding Carbs}"

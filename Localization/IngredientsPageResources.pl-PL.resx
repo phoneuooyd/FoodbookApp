@@ -27,25 +27,4 @@
   <data name="EmptyHint" xml:space="preserve">
     <value>Dotknij 'Dodaj składnik' aby dodać pierwszy składnik</value>
   </data>
-  <data name="EmptyDialogTitle" xml:space="preserve">
-    <value>Brak składników</value>
-  </data>
-  <data name="EmptyDialogMessage" xml:space="preserve">
-    <value>Utworzyć listę przykładowych składników?</value>
-  </data>
-  <data name="EmptyDialogConfirm" xml:space="preserve">
-    <value>Tak</value>
-  </data>
-  <data name="EmptyDialogCancel" xml:space="preserve">
-    <value>Nie</value>
-  </data>
-  <data name="LoadErrorTitle" xml:space="preserve">
-    <value>Błąd</value>
-  </data>
-  <data name="LoadErrorMessage" xml:space="preserve">
-    <value>Wystąpił problem podczas ładowania składników.</value>
-  </data>
-  <data name="Ok" xml:space="preserve">
-    <value>OK</value>
-  </data>
 </root>

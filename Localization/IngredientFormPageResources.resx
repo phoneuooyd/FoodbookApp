@@ -36,15 +36,6 @@
   <data name="NutritionHeader" xml:space="preserve">
     <value>Nutrition values</value>
   </data>
-  <data name="ProteinLabel" xml:space="preserve">
-    <value>Protein (g)</value>
-  </data>
-  <data name="FatLabel" xml:space="preserve">
-    <value>Fats (g)</value>
-  </data>
-  <data name="CarbsLabel" xml:space="preserve">
-    <value>Carbs (g)</value>
-  </data>
   <data name="VerifyLabel" xml:space="preserve">
     <value>Verify with OpenFoodFacts:</value>
   </data>
