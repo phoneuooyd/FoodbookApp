@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:resources="clr-namespace:FoodbookApp.Localization"
              x:Class="Foodbook.Views.SettingsPage"
-             Title="Ustawienia"
+             Title="{x:Static resources:SettingsPageResources.Title}"
              BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}">
     
     <ContentPage.Resources>
@@ -74,19 +75,19 @@
                      BackgroundColor="Transparent">
             
             <!-- Header with gradient-like effect -->
-            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}" 
-                   CornerRadius="20" 
+            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                   CornerRadius="20"
                    HasShadow="True"
                    Margin="0,0,0,20"
                    Padding="20,16">
                 <StackLayout>
-                    <Label Text="Ustawienia"
+                    <Label Text="{x:Static resources:SettingsPageResources.HeaderTitle}"
                            FontSize="26"
                            FontAttributes="Bold"
                            HorizontalTextAlignment="Center"
                            TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                            Margin="0,4" />
-                    <Label Text="Personalizuj swoja aplikacje"
+                    <Label Text="{x:Static resources:SettingsPageResources.HeaderSubtitle}"
                            FontSize="14"
                            HorizontalTextAlignment="Center"
                            TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}"
@@ -103,46 +104,45 @@
                 <!-- Theme Settings Card -->
                 <Frame Grid.Row="0" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
-                        <Label Text="Motyw" Style="{StaticResource CardTitleStyle}" />
-                        <Label Text="Jasny / ciemny"
+                        <Label Text="{x:Static resources:SettingsPageResources.ThemeTitle}" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="{x:Static resources:SettingsPageResources.ThemeDescription}"
                                Style="{StaticResource DescriptionStyle}" />
                         <Button Style="{StaticResource DisabledButtonStyle}"
                                 IsEnabled="False"
-                                Text="Wkrotce" />
+                                Text="{x:Static resources:SettingsPageResources.ComingSoon}" />
                     </StackLayout>
                 </Frame>
 
                 <!-- Language Settings Card -->
                 <Frame Grid.Row="0" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
-                        <Label Text="Jezyk" Style="{StaticResource CardTitleStyle}" />
-                        <Label Text="PL / EN"
+                        <Label Text="{x:Static resources:SettingsPageResources.LanguageTitle}" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="{x:Static resources:SettingsPageResources.LanguageDescription}"
                                Style="{StaticResource DescriptionStyle}" />
-                        <Button Style="{StaticResource DisabledButtonStyle}"
-                                IsEnabled="False"
-                                Text="Wkrotce" />
+                        <Picker x:Name="LanguagePicker"
+                                SelectedIndexChanged="OnLanguageSelected" />
                     </StackLayout>
                 </Frame>
 
                 <!-- Version Info Card -->
                 <Frame Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
-                        <Label Text="Informacje o wersji" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="{x:Static resources:SettingsPageResources.VersionInfoTitle}" Style="{StaticResource CardTitleStyle}" />
                         
                         <StackLayout Spacing="8" Margin="0,8">
-                            <Label Text="Wersja 1.0"
+                            <Label Text="{x:Static resources:SettingsPageResources.VersionNumber}"
                                    FontSize="16"
                                    FontAttributes="Bold"
                                    HorizontalTextAlignment="Center"
                                    TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
                             
-                            <Label Text="Autor: Przemyslaw Przybyszewski"
+                            <Label Text="{x:Static resources:SettingsPageResources.AuthorLabel}"
                                    Style="{StaticResource InfoTextStyle}" />
                             
-                            <Label Text="All rights reserved 2025"
+                            <Label Text="{x:Static resources:SettingsPageResources.RightsLabel}"
                                    Style="{StaticResource InfoTextStyle}" />
                             
-                            <Label Text="FoodBook App"
+                            <Label Text="{x:Static resources:SettingsPageResources.AppName}"
                                    FontSize="14"
                                    FontAttributes="Bold"
                                    HorizontalTextAlignment="Center"
@@ -155,12 +155,12 @@
                 <!-- Data Export Card -->
                 <Frame Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
-                        <Label Text="Eksport danych" Style="{StaticResource CardTitleStyle}" />
-                        <Label Text="Zapisz przepisy i plany"
+                        <Label Text="{x:Static resources:SettingsPageResources.DataExportTitle}" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="{x:Static resources:SettingsPageResources.DataExportDescription}"
                                Style="{StaticResource DescriptionStyle}" />
                         <Button Style="{StaticResource DisabledButtonStyle}"
                                 IsEnabled="False"
-                                Text="Wkrotce" />
+                                Text="{x:Static resources:SettingsPageResources.ComingSoon}" />
                     </StackLayout>
                 </Frame>
 
