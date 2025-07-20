@@ -70,6 +70,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<ShoppingListDetailPage>();
             builder.Services.AddScoped<ArchivePage>(); // Dodana ArchivePage
             builder.Services.AddScoped<SettingsPage>(); // Dodana SettingsPage
+            builder.Services.AddTransient<AppShell>();
 
             // Rejestracja routów do Shell (opcjonalne, jeśli używasz Shell)
             Routing.RegisterRoute(nameof(HomePage), typeof(HomePage));
