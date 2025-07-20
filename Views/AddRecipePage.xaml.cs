@@ -12,27 +12,23 @@ namespace Foodbook.Views
         public IEnumerable<Foodbook.Models.Unit> Units => Enum.GetValues(typeof(Foodbook.Models.Unit)).Cast<Foodbook.Models.Unit>();
 
         private AddRecipeViewModel ViewModel => BindingContext as AddRecipeViewModel;
-        private readonly ILocalizationService _localizationService;
 
-        public AddRecipePage(AddRecipeViewModel vm, ILocalizationService localizationService)
+        public AddRecipePage(AddRecipeViewModel vm)
         {
             InitializeComponent();
             BindingContext = vm;
-            _localizationService = localizationService;
         }
 
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-
-            _localizationService.CultureChanged += OnCultureChanged;
-
-            // Zawsze resetuj stan ViewModelu na poczƒÖtku
+            
+            // Zawsze resetuj stan ViewModelu na poczπtku
             ViewModel?.Reset();
             
             await ViewModel.LoadAvailableIngredientsAsync();
             
-            // Tylko je≈õli mamy RecipeId > 0, za≈Çaduj przepis do edycji
+            // Tylko jeúli mamy RecipeId > 0, za≥aduj przepis do edycji
             if (RecipeId > 0)
                 await ViewModel.LoadRecipeAsync(RecipeId);
         }
@@ -42,12 +38,6 @@ namespace Foodbook.Views
         {
             get => _recipeId;
             set => _recipeId = value;
-        }
-
-        protected override void OnDisappearing()
-        {
-            base.OnDisappearing();
-            _localizationService.CultureChanged -= OnCultureChanged;
         }
 
         protected override bool OnBackButtonPressed()
@@ -75,7 +65,7 @@ namespace Foodbook.Views
 
         private void OnIngredientValueChanged(object sender, EventArgs e)
         {
-            // Op√≥≈∫nij przeliczenie o 500ms, ≈ºeby nie by≈Ço ciƒÖg≈Çych oblicze≈Ñ podczas pisania
+            // OpÛünij przeliczenie o 500ms, øeby nie by≥o ciπg≥ych obliczeÒ podczas pisania
             var timer = Application.Current.Dispatcher.CreateTimer();
             timer.Interval = TimeSpan.FromMilliseconds(500);
             timer.Tick += (s, args) =>
@@ -90,14 +80,9 @@ namespace Foodbook.Views
         {
             if (sender is Picker picker && picker.BindingContext is Ingredient ingredient)
             {
-                // Aktualizuj warto≈õci od≈ºywcze sk≈Çadnika na podstawie wybranej nazwy
+                // Aktualizuj wartoúci odøywcze sk≥adnika na podstawie wybranej nazwy
                 await ViewModel.UpdateIngredientNutritionalValuesAsync(ingredient);
             }
-        }
-
-        private void OnCultureChanged()
-        {
-            ViewModel?.RefreshTranslations();
         }
     }
 }

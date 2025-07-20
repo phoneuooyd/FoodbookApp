@@ -119,15 +119,12 @@ namespace Foodbook.ViewModels
         private readonly IRecipeService _recipeService;
         private readonly IIngredientService _ingredientService;
         private readonly RecipeImporter _importer;
-        private readonly ILocalizationService _localizationService;
 
-        public AddRecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService, RecipeImporter importer, ILocalizationService localizationService)
+        public AddRecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService, RecipeImporter importer)
         {
             _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
             _ingredientService = ingredientService ?? throw new ArgumentNullException(nameof(ingredientService));
             _importer = importer ?? throw new ArgumentNullException(nameof(importer));
-            _localizationService = localizationService;
-            _localizationService.CultureChanged += OnCultureChanged;
 
             AddIngredientCommand = new Command(AddIngredient);
             RemoveIngredientCommand = new Command<Ingredient>(RemoveIngredient);
@@ -531,16 +528,5 @@ namespace Foodbook.ViewModels
         public event PropertyChangedEventHandler? PropertyChanged;
         void OnPropertyChanged([CallerMemberName] string? name = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
-        public void RefreshTranslations()
-        {
-            OnPropertyChanged(nameof(Title));
-            OnPropertyChanged(nameof(SaveButtonText));
-        }
-
-        private void OnCultureChanged()
-        {
-            RefreshTranslations();
-        }
     }
 }
