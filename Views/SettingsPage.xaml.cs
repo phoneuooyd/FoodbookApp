@@ -1,4 +1,5 @@
 using Microsoft.Maui.Controls;
+using Microsoft.Extensions.DependencyInjection;
 using Foodbook.Services;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +17,9 @@ public partial class SettingsPage : ContentPage
     };
 
     public SettingsPage(ILocalizationService localizationService)
+
     {
+        _localizationService = localizationService;
         InitializeComponent();
         _localizationService = localizationService;
 
@@ -38,4 +41,14 @@ public partial class SettingsPage : ContentPage
         _localizationService.SetCulture(culture);
         Application.Current.MainPage = new AppShell();
     }
+
+    private void OnLanguageSelected(object sender, EventArgs e)
+    {
+        if (sender is Picker picker && picker.SelectedItem is string culture)
+        {
+            _localizationService.SetCulture(culture);
+            Application.Current.MainPage = MauiProgram.ServiceProvider!.GetRequiredService<AppShell>();
+        }
+    }
 }
+
