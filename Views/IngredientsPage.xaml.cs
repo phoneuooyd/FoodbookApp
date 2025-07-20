@@ -3,6 +3,7 @@ using Foodbook.ViewModels;
 using Foodbook.Data;
 using Microsoft.Extensions.DependencyInjection;
 using FoodbookApp;
+using FoodbookApp.Localization;
 
 namespace Foodbook.Views;
 
@@ -46,8 +47,10 @@ public partial class IngredientsPage : ContentPage
     {
         try
         {
-            bool create = await DisplayAlert("Brak składników", 
-                "Utworzyć listę przykładowych składników?", "Tak", "Nie");
+            bool create = await DisplayAlert(IngredientsPageResources.EmptyDialogTitle,
+                IngredientsPageResources.EmptyDialogMessage,
+                IngredientsPageResources.EmptyDialogConfirm,
+                IngredientsPageResources.EmptyDialogCancel);
             
             if (create && MauiProgram.ServiceProvider != null)
             {
@@ -62,7 +65,9 @@ public partial class IngredientsPage : ContentPage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error handling empty ingredients: {ex.Message}");
-            await DisplayAlert("Błąd", "Wystąpił problem podczas ładowania składników.", "OK");
+            await DisplayAlert(IngredientsPageResources.LoadErrorTitle,
+                IngredientsPageResources.LoadErrorMessage,
+                IngredientsPageResources.Ok);
         }
     }
 }

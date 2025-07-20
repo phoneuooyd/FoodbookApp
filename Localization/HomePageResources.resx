@@ -72,6 +72,9 @@
   <data name="Customize" xml:space="preserve">
     <value>Customize</value>
   </data>
+  <data name="GoToSettings" xml:space="preserve">
+    <value>Go to settings</value>
+  </data>
   <data name="ComingSoon" xml:space="preserve">
     <value>Soon</value>
   </data>
