@@ -5,8 +5,12 @@ namespace FoodbookApp
 {
     public partial class App : Application
     {
-        public App()
+        private readonly Foodbook.Services.ILocalizationService _localizationService;
+
+        public App(Foodbook.Services.ILocalizationService localizationService)
         {
+            _localizationService = localizationService;
+            _localizationService.SetCulture(System.Globalization.CultureInfo.CurrentUICulture.Name);
             InitializeComponent();
         }
 
