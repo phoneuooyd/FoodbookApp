@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Threading;
 using System.Resources;
 using FoodbookApp.Localization;
 
@@ -13,6 +14,8 @@ public class LocalizationService : ILocalizationService
     public void SetCulture(string cultureName)
     {
         var culture = new CultureInfo(cultureName);
+        Thread.CurrentThread.CurrentCulture = culture;
+        Thread.CurrentThread.CurrentUICulture = culture;
         CultureInfo.DefaultThreadCurrentCulture = culture;
         CultureInfo.DefaultThreadCurrentUICulture = culture;
         CurrentCulture = culture;
