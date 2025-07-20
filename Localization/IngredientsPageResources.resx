@@ -27,4 +27,25 @@
   <data name="EmptyHint" xml:space="preserve">
     <value>Tap 'Add ingredient' to create one</value>
   </data>
+  <data name="EmptyDialogTitle" xml:space="preserve">
+    <value>No ingredients</value>
+  </data>
+  <data name="EmptyDialogMessage" xml:space="preserve">
+    <value>Create sample ingredients list?</value>
+  </data>
+  <data name="EmptyDialogConfirm" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="EmptyDialogCancel" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="LoadErrorTitle" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="LoadErrorMessage" xml:space="preserve">
+    <value>An error occurred while loading ingredients.</value>
+  </data>
+  <data name="Ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
 </root>

@@ -36,6 +36,15 @@
   <data name="NutritionHeader" xml:space="preserve">
     <value>Wartości odżywcze</value>
   </data>
+  <data name="ProteinLabel" xml:space="preserve">
+    <value>Białko (g)</value>
+  </data>
+  <data name="FatLabel" xml:space="preserve">
+    <value>Tłuszcze (g)</value>
+  </data>
+  <data name="CarbsLabel" xml:space="preserve">
+    <value>Węglowodany (g)</value>
+  </data>
   <data name="VerifyLabel" xml:space="preserve">
     <value>Zweryfikuj dane z OpenFoodFacts:</value>
   </data>

@@ -74,5 +74,47 @@ namespace FoodbookApp.Localization {
                 return ResourceManager.GetString("EmptyHint", resourceCulture);
             }
         }
+
+        internal static string EmptyDialogTitle {
+            get {
+                return ResourceManager.GetString("EmptyDialogTitle", resourceCulture);
+            }
+        }
+
+        internal static string EmptyDialogMessage {
+            get {
+                return ResourceManager.GetString("EmptyDialogMessage", resourceCulture);
+            }
+        }
+
+        internal static string EmptyDialogConfirm {
+            get {
+                return ResourceManager.GetString("EmptyDialogConfirm", resourceCulture);
+            }
+        }
+
+        internal static string EmptyDialogCancel {
+            get {
+                return ResourceManager.GetString("EmptyDialogCancel", resourceCulture);
+            }
+        }
+
+        internal static string LoadErrorTitle {
+            get {
+                return ResourceManager.GetString("LoadErrorTitle", resourceCulture);
+            }
+        }
+
+        internal static string LoadErrorMessage {
+            get {
+                return ResourceManager.GetString("LoadErrorMessage", resourceCulture);
+            }
+        }
+
+        internal static string Ok {
+            get {
+                return ResourceManager.GetString("Ok", resourceCulture);
+            }
+        }
     }
 }
