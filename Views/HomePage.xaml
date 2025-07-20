@@ -391,7 +391,7 @@
                                Margin="0,16,0,8" />
                         <Button Style="{StaticResource CardButtonStyle}"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                                Text="Przejdź do ustawień"
+                                Text="{x:Static resources:HomePageResources.GoToSettings}"
                                 Clicked="OnSettingsClicked" />
                     </StackLayout>
                 </Frame>

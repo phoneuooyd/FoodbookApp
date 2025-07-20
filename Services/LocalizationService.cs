@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Threading;
 using System.Resources;
 using FoodbookApp.Localization;
 
@@ -8,11 +9,15 @@ public class LocalizationService : ILocalizationService
 {
     private readonly Dictionary<string, ResourceManager> _resourceManagers = new();
 
+    public event Action? CultureChanged;
+
     public CultureInfo CurrentCulture { get; private set; } = CultureInfo.CurrentUICulture;
 
     public void SetCulture(string cultureName)
     {
         var culture = new CultureInfo(cultureName);
+        Thread.CurrentThread.CurrentCulture = culture;
+        Thread.CurrentThread.CurrentUICulture = culture;
         CultureInfo.DefaultThreadCurrentCulture = culture;
         CultureInfo.DefaultThreadCurrentUICulture = culture;
         CurrentCulture = culture;
@@ -29,6 +34,8 @@ public class LocalizationService : ILocalizationService
         ShoppingListDetailPageResources.Culture = culture;
         ShoppingListPageResources.Culture = culture;
         TabBarResources.Culture = culture;
+
+        CultureChanged?.Invoke();
     }
 
     public string GetString(string baseName, string key)
