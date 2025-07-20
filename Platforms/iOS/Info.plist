@@ -35,6 +35,7 @@
 	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>pl</string>
-	<key>CFBundleDisplayName</key>
+        <key>CFBundleDisplayName</key>
+        <string>Foodbook</string>
 </dict>
 </plist>
