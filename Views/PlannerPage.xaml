@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Foodbook.Services"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:converters="clr-namespace:Foodbook.Converters"
@@ -8,7 +9,7 @@
              x:Class="Foodbook.Views.PlannerPage"
              x:Name="ThisPage"
              x:DataType="vm:PlannerViewModel"
-             Title="{x:Static resources:PlannerPageResources.Title}">
+             Title="{loc:Translate Resource=PlannerPageResources, Key=Title}">
     
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
@@ -61,7 +62,7 @@
                    HorizontalTextAlignment="Center"
                    TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
                    Margin="0,10,0,0"
-                   Text="{x:Static resources:PlannerPageResources.LoadingTip}" />
+                   Text="{loc:Translate Resource=PlannerPageResources, Key=LoadingTip}" />
         </StackLayout>
 
         <!-- Main content -->
@@ -73,7 +74,7 @@
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="15" Margin="0,5">
                     <!-- Data Od - maksymalnie po lewej -->
                     <VerticalStackLayout Grid.Column="0" HorizontalOptions="Start">
-                        <Label Text="{x:Static resources:PlannerPageResources.DateFrom}"
+                        <Label Text="{loc:Translate Resource=PlannerPageResources, Key=DateFrom}"
                                FontSize="12"
                                FontAttributes="Bold"
                                TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
@@ -86,7 +87,7 @@
                     
                     <!-- Data Do - maksymalnie po prawej -->
                     <VerticalStackLayout Grid.Column="1" HorizontalOptions="End">
-                        <Label Text="{x:Static resources:PlannerPageResources.DateTo}"
+                        <Label Text="{loc:Translate Resource=PlannerPageResources, Key=DateTo}"
                                FontSize="12"
                                FontAttributes="Bold"
                                TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
@@ -100,7 +101,7 @@
                 
                 <!-- Sekcja ilości posiłków - wyśrodkowana, niżej -->
                 <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
-                    <Label Text="{x:Static resources:PlannerPageResources.MealsPerDay}"
+                    <Label Text="{loc:Translate Resource=PlannerPageResources, Key=MealsPerDay}"
                            VerticalOptions="Center"
                            FontSize="14"
                            FontAttributes="Bold"
@@ -214,7 +215,7 @@
                                                 Padding="12,6"
                                                 WidthRequest="120"
                                                 HeightRequest="32"
-                                                Text="{x:Static resources:PlannerPageResources.AddMeal}" />
+                                                Text="{loc:Translate Resource=PlannerPageResources, Key=AddMeal}" />
                                     </StackLayout>
                                 </VerticalStackLayout>
                             </Frame>
@@ -225,7 +226,7 @@
                 <!-- Przycisk Zapisz - wyśrodkowany -->
                 <HorizontalStackLayout Spacing="10" Margin="0,20,0,0" HorizontalOptions="Center">
                     <Button Command="{Binding SaveCommand}"
-                            Text="{x:Static resources:PlannerPageResources.Save}" />
+                            Text="{loc:Translate Resource=PlannerPageResources, Key=Save}" />
                 </HorizontalStackLayout>
             </VerticalStackLayout>
         </ScrollView>

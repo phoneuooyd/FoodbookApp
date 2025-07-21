@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Foodbook.Services"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:converters="clr-namespace:Foodbook.Converters"
@@ -8,7 +9,7 @@
              x:Class="Foodbook.Views.RecipesPage"
              x:Name="ThisPage"
              x:DataType="vm:RecipeViewModel"
-             Title="{x:Static resources:RecipesPageResources.Title}">
+             Title="{loc:Translate Resource=RecipesPageResources, Key=Title}">
     
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
@@ -26,7 +27,7 @@
         <!-- Search bar -->
         <SearchBar Grid.Row="1"
                    Text="{Binding SearchText}"
-                   Placeholder="{x:Static resources:RecipesPageResources.SearchPlaceholder}"
+                   Placeholder="{loc:Translate Resource=RecipesPageResources, Key=SearchPlaceholder}"
                    Margin="10,0"
                    IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
 
@@ -42,7 +43,7 @@
                       Margin="10">
                     <Button Clicked="OnAddRecipeClicked"
                             HeightRequest="45"
-                            Text="{x:Static resources:RecipesPageResources.AddButton}" />
+                            Text="{loc:Translate Resource=RecipesPageResources, Key=AddButton}" />
                 </Grid>
 
                 <CollectionView Grid.Row="1"
@@ -131,11 +132,11 @@
                     
                     <CollectionView.EmptyView>
                         <StackLayout HorizontalOptions="Center" VerticalOptions="Center" Padding="20">
-                            <Label Text="{x:Static resources:RecipesPageResources.EmptyTitle}"
+                            <Label Text="{loc:Translate Resource=RecipesPageResources, Key=EmptyTitle}"
                                    FontSize="18"
                                    HorizontalOptions="Center"
                                    TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-                            <Label Text="{x:Static resources:RecipesPageResources.EmptyHint}"
+                            <Label Text="{loc:Translate Resource=RecipesPageResources, Key=EmptyHint}"
                                    FontSize="14"
                                    HorizontalOptions="Center"
                                    TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"

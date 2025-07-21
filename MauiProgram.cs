@@ -42,6 +42,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<IPlanService, PlanService>();
             builder.Services.AddScoped<IIngredientService, IngredientService>();
             builder.Services.AddSingleton<ILocalizationService, LocalizationService>();
+            builder.Services.AddSingleton<LocalizationResourceManager>();
 
             builder.Services.AddScoped<RecipeViewModel>();
             builder.Services.AddTransient<AddRecipeViewModel>(); // Zmieniono na Transient
@@ -53,6 +54,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<IngredientFormViewModel>();
             builder.Services.AddScoped<PlannedMealFormViewModel>();
             builder.Services.AddScoped<ArchiveViewModel>(); // Dodany ArchiveViewModel
+            builder.Services.AddSingleton<SettingsViewModel>();
 
             // Rejestracja HttpClient i RecipeImporter
             builder.Services.AddScoped<HttpClient>();

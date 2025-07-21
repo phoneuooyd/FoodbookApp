@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Foodbook.Services"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              x:Class="Foodbook.Views.ArchivePage"
              x:Name="ThisPage"
              x:DataType="vm:ArchiveViewModel"
-             Title="Archiwum">
+             Title="{loc:Translate Resource=ArchivePageResources, Key=Title}">
     <CollectionView ItemsSource="{Binding ArchivedPlans}" Margin="10" SelectionMode="None">
         <CollectionView.EmptyView>
             <StackLayout HorizontalOptions="Center" VerticalOptions="Center">
