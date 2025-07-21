@@ -42,6 +42,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<IPlanService, PlanService>();
             builder.Services.AddScoped<IIngredientService, IngredientService>();
             builder.Services.AddSingleton<ILocalizationService, LocalizationService>();
+            builder.Services.AddSingleton<Foodbook.Services.Localization.LocalizationResourceManager>();
 
             builder.Services.AddScoped<RecipeViewModel>();
             builder.Services.AddTransient<AddRecipeViewModel>(); // Zmieniono na Transient
