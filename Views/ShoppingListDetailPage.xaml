@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:services="clr-namespace:Foodbook.Services"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:converters="clr-namespace:Foodbook.Converters"
@@ -8,7 +9,7 @@
              x:Class="Foodbook.Views.ShoppingListDetailPage"
              x:Name="ThisPage"
              x:DataType="vm:ShoppingListDetailViewModel"
-             Title="{x:Static resources:ShoppingListDetailPageResources.Title}">
+             Title="{services:Translate BaseName=ShoppingListDetailPageResources, Key=Title}">
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
     </ContentPage.Resources>
@@ -22,7 +23,7 @@
                        FontAttributes="Bold"
                        TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                        Margin="0,0,0,10"
-                       Text="{x:Static resources:ShoppingListDetailPageResources.ToBuy}" />
+                       Text="{services:Translate BaseName=ShoppingListDetailPageResources, Key=ToBuy}" />
                 
                 <!-- Nagłówki kolumn dla produktów do kupienia -->
                 <Grid ColumnDefinitions="Auto,2*,Auto,Auto,Auto" 
@@ -30,10 +31,10 @@
                       ColumnSpacing="5" 
                       BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}">
                     <Label Grid.Column="0" Text="✓" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
-                    <Label Grid.Column="1" Text="{x:Static resources:ShoppingListDetailPageResources.NameHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" />
-                    <Label Grid.Column="2" Text="{x:Static resources:ShoppingListDetailPageResources.QuantityHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
-                    <Label Grid.Column="3" Text="{x:Static resources:ShoppingListDetailPageResources.UnitHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
-                    <Label Grid.Column="4" Text="{x:Static resources:ShoppingListDetailPageResources.ActionsHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+                    <Label Grid.Column="1" Text="{services:Translate BaseName=ShoppingListDetailPageResources, Key=NameHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" />
+                    <Label Grid.Column="2" Text="{services:Translate BaseName=ShoppingListDetailPageResources, Key=QuantityHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+                    <Label Grid.Column="3" Text="{services:Translate BaseName=ShoppingListDetailPageResources, Key=UnitHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+                    <Label Grid.Column="4" Text="{services:Translate BaseName=ShoppingListDetailPageResources, Key=ActionsHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
                 </Grid>
                 
                 <!-- Lista produktów do kupienia -->
@@ -81,7 +82,7 @@
                 
                 <Button Command="{Binding AddItemCommand}"
                         Margin="0,10,0,0"
-                        Text="{x:Static resources:ShoppingListDetailPageResources.AddItem}" />
+                        Text="{services:Translate BaseName=ShoppingListDetailPageResources, Key=AddItem}" />
             </StackLayout>
 
             <!-- Separator -->
@@ -95,7 +96,7 @@
                        FontAttributes="Bold"
                        TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
                        Margin="0,0,0,10"
-                       Text="{x:Static resources:ShoppingListDetailPageResources.Collected}" />
+                       Text="{services:Translate BaseName=ShoppingListDetailPageResources, Key=Collected}" />
                 
                 <!-- Nagłówki kolumn dla produktów zebranych -->
                 <Grid ColumnDefinitions="Auto,2*,Auto,Auto,Auto" 
@@ -103,10 +104,10 @@
                       ColumnSpacing="5" 
                       BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}">
                     <Label Grid.Column="0" Text="✓" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
-                    <Label Grid.Column="1" Text="{x:Static resources:ShoppingListDetailPageResources.NameHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" />
-                    <Label Grid.Column="2" Text="{x:Static resources:ShoppingListDetailPageResources.QuantityHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
-                    <Label Grid.Column="3" Text="{x:Static resources:ShoppingListDetailPageResources.UnitHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
-                    <Label Grid.Column="4" Text="{x:Static resources:ShoppingListDetailPageResources.ActionsHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+                    <Label Grid.Column="1" Text="{services:Translate BaseName=ShoppingListDetailPageResources, Key=NameHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" />
+                    <Label Grid.Column="2" Text="{services:Translate BaseName=ShoppingListDetailPageResources, Key=QuantityHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+                    <Label Grid.Column="3" Text="{services:Translate BaseName=ShoppingListDetailPageResources, Key=UnitHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+                    <Label Grid.Column="4" Text="{services:Translate BaseName=ShoppingListDetailPageResources, Key=ActionsHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
                 </Grid>
                 
                 <!-- Lista produktów zebranych -->
@@ -162,7 +163,7 @@
                 </CollectionView>
                 
                 <!-- Informacja gdy brak zebranych produktów -->
-                <Label Text="{x:Static resources:ShoppingListDetailPageResources.NoCollected}"
+                <Label Text="{services:Translate BaseName=ShoppingListDetailPageResources, Key=NoCollected}"
                        TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
                        HorizontalTextAlignment="Center"
                        Margin="0,20"

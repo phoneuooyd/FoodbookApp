@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:services="clr-namespace:Foodbook.Services"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
             xmlns:converters="clr-namespace:Foodbook.Converters"
@@ -8,7 +9,7 @@
              x:Class="Foodbook.Views.IngredientsPage"
              x:Name="ThisPage"
              x:DataType="vm:IngredientsViewModel"
-             Title="{x:Static resources:IngredientsPageResources.Title}">
+             Title="{services:Translate BaseName=IngredientsPageResources, Key=Title}">
 
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
@@ -27,7 +28,7 @@
         <!-- Search bar -->
         <SearchBar Grid.Row="1"
                    Text="{Binding SearchText}"
-                   Placeholder="{x:Static resources:IngredientsPageResources.SearchPlaceholder}"
+                   Placeholder="{services:Translate BaseName=IngredientsPageResources, Key=SearchPlaceholder}"
                    Margin="10,0"
                    IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
 
@@ -44,7 +45,7 @@
                     <Button Command="{Binding AddCommand}"
                             TextColor="White"
                             HeightRequest="45"
-                            Text="{x:Static resources:IngredientsPageResources.AddButton}" />
+                            Text="{services:Translate BaseName=IngredientsPageResources, Key=AddButton}" />
                 </Grid>
 
                 <CollectionView Grid.Row="1"
@@ -144,11 +145,11 @@
                     
                     <CollectionView.EmptyView>
                         <StackLayout HorizontalOptions="Center" VerticalOptions="Center" Padding="20">
-                            <Label Text="{x:Static resources:IngredientsPageResources.EmptyTitle}"
+                            <Label Text="{services:Translate BaseName=IngredientsPageResources, Key=EmptyTitle}"
                                    FontSize="18"
                                    HorizontalOptions="Center"
                                    TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-                            <Label Text="{x:Static resources:IngredientsPageResources.EmptyHint}"
+                            <Label Text="{services:Translate BaseName=IngredientsPageResources, Key=EmptyHint}"
                                    FontSize="14"
                                    HorizontalOptions="Center"
                                    TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
