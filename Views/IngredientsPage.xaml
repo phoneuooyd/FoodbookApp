@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Foodbook.Services"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
-             xmlns:converters="clr-namespace:Foodbook.Converters"
+            xmlns:converters="clr-namespace:Foodbook.Converters"
+            xmlns:resources="clr-namespace:FoodbookApp.Localization"
              x:Class="Foodbook.Views.IngredientsPage"
              x:Name="ThisPage"
              x:DataType="vm:IngredientsViewModel"
-             Title="Składniki">
+             Title="{loc:Translate Resource=IngredientsPageResources, Key=Title}">
 
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
@@ -24,9 +26,9 @@
                           Margin="10" />
 
         <!-- Search bar -->
-        <SearchBar Grid.Row="1" 
+        <SearchBar Grid.Row="1"
                    Text="{Binding SearchText}"
-                   Placeholder="Szukaj składników..."
+                   Placeholder="{loc:Translate Resource=IngredientsPageResources, Key=SearchPlaceholder}"
                    Margin="10,0"
                    IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
 
@@ -40,10 +42,10 @@
                 <!-- Action Buttons Section - Simplified to single button -->
                 <Grid Grid.Row="0" 
                       Margin="10">
-                    <Button Text="➕ Dodaj składnik" 
-                            Command="{Binding AddCommand}"
+                    <Button Command="{Binding AddCommand}"
                             TextColor="White"
-                            HeightRequest="45" />
+                            HeightRequest="45"
+                            Text="{loc:Translate Resource=IngredientsPageResources, Key=AddButton}" />
                 </Grid>
 
                 <CollectionView Grid.Row="1"
@@ -143,12 +145,12 @@
                     
                     <CollectionView.EmptyView>
                         <StackLayout HorizontalOptions="Center" VerticalOptions="Center" Padding="20">
-                            <Label Text="Brak składników" 
-                                   FontSize="18" 
+                            <Label Text="{loc:Translate Resource=IngredientsPageResources, Key=EmptyTitle}"
+                                   FontSize="18"
                                    HorizontalOptions="Center"
                                    TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-                            <Label Text="Dotknij 'Dodaj składnik' aby dodać pierwszy składnik" 
-                                   FontSize="14" 
+                            <Label Text="{loc:Translate Resource=IngredientsPageResources, Key=EmptyHint}"
+                                   FontSize="14"
                                    HorizontalOptions="Center"
                                    TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
                                    Margin="0,10,0,0" />

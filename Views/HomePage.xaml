@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Foodbook.Services"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:converters="clr-namespace:Foodbook.Converters"
+             xmlns:resources="clr-namespace:FoodbookApp.Localization"
              x:Class="Foodbook.Views.HomePage"
              x:Name="HomePageView"
              x:DataType="vm:HomeViewModel"
-             Title="Dashboard"
+             Title="{loc:Translate Resource=HomePageResources, Key=Title}"
              BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}">
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
@@ -117,14 +119,14 @@
                    Margin="0,0,0,20"
                    Padding="20,16">
                 <StackLayout>
-                    <Label Text="🍽️ Witaj w Foodbook" 
-                           FontSize="26" 
-                           FontAttributes="Bold" 
+                    <Label Text="{loc:Translate Resource=HomePageResources, Key=Welcome}"
+                           FontSize="26"
+                           FontAttributes="Bold"
                            HorizontalTextAlignment="Center"
                            TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                            Margin="0,4" />
-                    <Label Text="Twoj osobisty asystent kulinarny" 
-                           FontSize="14" 
+                    <Label Text="{loc:Translate Resource=HomePageResources, Key=Subtitle}"
+                           FontSize="14"
                            HorizontalTextAlignment="Center"
                            TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}"
                            Margin="0,0,0,4" />
@@ -153,9 +155,9 @@
                         <!-- Przepisy -->
                         <StackLayout Grid.Column="0">
                             <Label Text="📖" Style="{StaticResource EmojiStyle}" />
-                            <Label Text="Przepisy" Style="{StaticResource CardTitleStyle}" />
+                            <Label Text="{loc:Translate Resource=HomePageResources, Key=Recipes}" Style="{StaticResource CardTitleStyle}" />
                             <Label Text="{Binding RecipeCount}" Style="{StaticResource StatNumberStyle}" />
-                            <Label Text="Zapisanych przepisow" Style="{StaticResource StatDescriptionStyle}" />
+                            <Label Text="{loc:Translate Resource=HomePageResources, Key=SavedRecipes}" Style="{StaticResource StatDescriptionStyle}" />
                         </StackLayout>
                         
                         <!-- Separator Line -->
@@ -167,9 +169,9 @@
                         <!-- Plany -->
                         <StackLayout Grid.Column="2">
                             <Label Text="📋" Style="{StaticResource EmojiStyle}" />
-                            <Label Text="Plany" Style="{StaticResource CardTitleStyle}" />
+                            <Label Text="{loc:Translate Resource=HomePageResources, Key=Plans}" Style="{StaticResource CardTitleStyle}" />
                             <Label Text="{Binding PlanCount}" Style="{StaticResource StatNumberStyle}" />
-                            <Label Text="Aktywnych list" Style="{StaticResource StatDescriptionStyle}" />
+                            <Label Text="{loc:Translate Resource=HomePageResources, Key=ActiveLists}" Style="{StaticResource StatDescriptionStyle}" />
                         </StackLayout>
                     </Grid>
                 </Frame>
@@ -180,57 +182,76 @@
                     <StackLayout>
                         <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="8" Margin="0,0,0,16">
                             <Label Text="📅" FontSize="24" />
-                            <Label Text="Zaplanowane Posiłki" Style="{StaticResource CardTitleStyle}" Margin="0" />
+                            <Label Text="{loc:Translate Resource=HomePageResources, Key=PlannedMealsHeader}" Style="{StaticResource CardTitleStyle}" Margin="0" />
                         </StackLayout>
                         
-                        <Label Text="💡 Kliknij na przepis aby zobaczyć składniki" 
-                               FontSize="12" 
+                        <!-- Period Selection Button for Planned Meals -->
+                        <Button Text="{Binding PlannedMealsPeriodDisplay, StringFormat='📅 {0}'}"
+                                Command="{Binding ChangePlannedMealsPeriodCommand}"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                TextColor="White"
+                                FontSize="14"
+                                FontAttributes="Bold"
+                                HeightRequest="35"
+                                CornerRadius="8"
+                                Margin="0,0,0,16"
+                                HorizontalOptions="Center" />
+                        
+                        <Label FontSize="12"
                                HorizontalTextAlignment="Center"
                                TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
-                               Margin="0,0,0,12" />
+                               Margin="0,0,0,12"
+                               Text="{loc:Translate Resource=HomePageResources, Key=ClickRecipeHint}" />
                         
-                        <CollectionView ItemsSource="{Binding PlannedMealHistory}"
-                                        MaximumHeightRequest="300">
-                            <CollectionView.ItemTemplate>
-                                <DataTemplate x:DataType="vm:PlannedMealGroup">
-                                    <StackLayout>
-                                        <!-- Date Header -->
-                                        <Label Text="{Binding DateLabel}" 
-                                               Style="{StaticResource DateHeaderStyle}" />
-                                        
-                                        <!-- Meals for this date -->
-                                        <CollectionView ItemsSource="{Binding Meals}">
-                                            <CollectionView.ItemTemplate>
-                                                <DataTemplate x:DataType="{x:Type models:PlannedMeal}">
-                                                    <Frame Style="{StaticResource ClickableMealItemStyle}">
-                                                        <Frame.GestureRecognizers>
-                                                            <TapGestureRecognizer Command="{Binding Source={x:Reference Name=HomePageView}, Path=BindingContext.ShowRecipeIngredientsCommand}"
-                                                                                  CommandParameter="{Binding .}" />
-                                                        </Frame.GestureRecognizers>
-                                                        <StackLayout Orientation="Horizontal">
-                                                            <Label Text="•" 
-                                                                   FontSize="14"
-                                                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                                                                   VerticalOptions="Center"
-                                                                   Margin="0,0,8,0" />
-                                                            <Label Text="{Binding Recipe.Name}" 
-                                                                   FontSize="14"
-                                                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"
-                                                                   VerticalOptions="Center" />
-                                                            <Label Text="{Binding Portions, StringFormat='({0} porcji)'}" 
-                                                                   FontSize="12"
-                                                                   TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
-                                                                   VerticalOptions="Center"
-                                                                   Margin="8,0,0,0" />
-                                                        </StackLayout>
-                                                    </Frame>
-                                                </DataTemplate>
-                                            </CollectionView.ItemTemplate>
-                                        </CollectionView>
-                                    </StackLayout>
-                                </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
+                        <!-- Scrollable CollectionView with limited height -->
+                        <ScrollView MaximumHeightRequest="250" 
+                                    VerticalScrollBarVisibility="Always">
+                            <CollectionView ItemsSource="{Binding PlannedMealHistory}"
+                                            ItemSizingStrategy="MeasureAllItems">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:PlannedMealGroup">
+                                        <StackLayout Margin="0,4">
+                                            <!-- Date Header -->
+                                            <Label Text="{Binding DateLabel}" 
+                                                   Style="{StaticResource DateHeaderStyle}" />
+                                            
+                                            <!-- Meals for this date -->
+                                            <CollectionView ItemsSource="{Binding Meals}"
+                                                            ItemSizingStrategy="MeasureAllItems">
+                                                <CollectionView.ItemTemplate>
+                                                    <DataTemplate x:DataType="{x:Type models:PlannedMeal}">
+                                                        <Frame Style="{StaticResource ClickableMealItemStyle}">
+                                                            <Frame.GestureRecognizers>
+                                                                <TapGestureRecognizer Command="{Binding Source={x:Reference Name=HomePageView}, Path=BindingContext.ShowRecipeIngredientsCommand}"
+                                                                                      CommandParameter="{Binding .}" />
+                                                            </Frame.GestureRecognizers>
+                                                            <StackLayout Orientation="Horizontal">
+                                                                <Label Text="•" 
+                                                                       FontSize="14"
+                                                                       TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                                                       VerticalOptions="Center"
+                                                                       Margin="0,0,8,0" />
+                                                                <Label Text="{Binding Recipe.Name}" 
+                                                                       FontSize="14"
+                                                                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"
+                                                                       VerticalOptions="Center"
+                                                                       LineBreakMode="TailTruncation"
+                                                                       HorizontalOptions="FillAndExpand" />
+                                                                <Label Text="{Binding Portions, StringFormat='({0} porcji)'}" 
+                                                                       FontSize="12"
+                                                                       TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
+                                                                       VerticalOptions="Center"
+                                                                       Margin="8,0,0,0" />
+                                                            </StackLayout>
+                                                        </Frame>
+                                                    </DataTemplate>
+                                                </CollectionView.ItemTemplate>
+                                            </CollectionView>
+                                        </StackLayout>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </ScrollView>
                     </StackLayout>
                 </Frame>
 
@@ -239,11 +260,47 @@
                     <StackLayout>
                         <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="8" Margin="0,0,0,16">
                             <Label Text="📊" FontSize="24" />
-                            <Label Text="Statystyki Diety" Style="{StaticResource CardTitleStyle}" Margin="0" />
+                            <Label Text="{loc:Translate Resource=HomePageResources, Key=NutritionStatsHeader}" Style="{StaticResource CardTitleStyle}" Margin="0" />
                         </StackLayout>
                         
+                        <!-- Period Selection Button -->
+                        <Button Text="{Binding NutritionPeriodDisplay, StringFormat='📅 {0}'}"
+                                Command="{Binding ChangeNutritionPeriodCommand}"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                TextColor="White"
+                                FontSize="14"
+                                FontAttributes="Bold"
+                                HeightRequest="35"
+                                CornerRadius="8"
+                                Margin="0,0,0,16"
+                                HorizontalOptions="Center" />
+                        
+                        <!-- Top row - Kalorie (full width) -->
+                        <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
+                               CornerRadius="12" 
+                               Padding="16,20" 
+                               HasShadow="False"
+                               BorderColor="Transparent"
+                               Margin="0,0,0,12">
+                            <StackLayout>
+                                <Label Text="🔥" FontSize="28" HorizontalTextAlignment="Center" />
+                                <Label Text="{loc:Translate Resource=HomePageResources, Key=Calories}"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       HorizontalTextAlignment="Center"
+                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" 
+                                       Margin="0,8,0,12" />
+                                <Label Text="{Binding CaloriesDisplay}" 
+                                       FontSize="28"
+                                       FontAttributes="Bold"
+                                       HorizontalTextAlignment="Center"
+                                       TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                            </StackLayout>
+                        </Frame>
+                        
+                        <!-- Bottom row - Białko, Węglowodany, Tłuszcze (3 columns) -->
                         <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
-                            <!-- Kalorie -->
+                            <!-- Białko -->
                             <Frame Grid.Column="0" 
                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
                                    CornerRadius="12" 
@@ -251,18 +308,18 @@
                                    HasShadow="False"
                                    BorderColor="Transparent">
                                 <StackLayout>
-                                    <Label Text="🔥" FontSize="20" HorizontalTextAlignment="Center" />
-                                    <Label Text="Kalorie" 
-                                           FontSize="12" 
+                                    <Label Text="🥩" FontSize="20" HorizontalTextAlignment="Center" />
+                                    <Label Text="{loc:Translate Resource=HomePageResources, Key=Protein}"
+                                           FontSize="12"
                                            FontAttributes="Bold"
                                            HorizontalTextAlignment="Center"
                                            TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" 
                                            Margin="0,4,0,8" />
-                                    <Label Text="---" Style="{StaticResource MicroStatStyle}" />
+                                    <Label Text="{Binding ProteinDisplay}" Style="{StaticResource MicroStatStyle}" />
                                 </StackLayout>
                             </Frame>
                             
-                            <!-- Białko -->
+                            <!-- Węglowodany -->
                             <Frame Grid.Column="1" 
                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
                                    CornerRadius="12" 
@@ -270,18 +327,18 @@
                                    HasShadow="False"
                                    BorderColor="Transparent">
                                 <StackLayout>
-                                    <Label Text="🥩" FontSize="20" HorizontalTextAlignment="Center" />
-                                    <Label Text="Bialko" 
-                                           FontSize="12" 
+                                    <Label Text="🌾" FontSize="20" HorizontalTextAlignment="Center" />
+                                    <Label Text="{loc:Translate Resource=HomePageResources, Key=Carbs}"
+                                           FontSize="12"
                                            FontAttributes="Bold"
                                            HorizontalTextAlignment="Center"
                                            TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" 
                                            Margin="0,4,0,8" />
-                                    <Label Text="---" Style="{StaticResource MicroStatStyle}" />
+                                    <Label Text="{Binding CarbsDisplay}" Style="{StaticResource MicroStatStyle}" />
                                 </StackLayout>
                             </Frame>
                             
-                            <!-- Węglowodany -->
+                            <!-- Tłuszcze -->
                             <Frame Grid.Column="2" 
                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
                                    CornerRadius="12" 
@@ -289,23 +346,24 @@
                                    HasShadow="False"
                                    BorderColor="Transparent">
                                 <StackLayout>
-                                    <Label Text="🌾" FontSize="20" HorizontalTextAlignment="Center" />
-                                    <Label Text="Węgle" 
-                                           FontSize="12" 
+                                    <Label Text="🧈" FontSize="20" HorizontalTextAlignment="Center" />
+                                    <Label Text="{loc:Translate Resource=HomePageResources, Key=Fats}"
+                                           FontSize="12"
                                            FontAttributes="Bold"
                                            HorizontalTextAlignment="Center"
                                            TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" 
                                            Margin="0,4,0,8" />
-                                    <Label Text="---" Style="{StaticResource MicroStatStyle}" />
+                                    <Label Text="{Binding FatDisplay}" Style="{StaticResource MicroStatStyle}" />
                                 </StackLayout>
                             </Frame>
                         </Grid>
                         
-                        <Label Text="💡 Funkcja dostepna wkrotce - planuj posilki aby zobaczyc statystyki" 
-                               FontSize="12" 
+                        <Label IsVisible="{Binding HasNutritionData, Converter={StaticResource InvertedBoolConverter}}"
+                               FontSize="12"
                                HorizontalTextAlignment="Center"
                                TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
-                               Margin="0,16,0,0" />
+                               Margin="0,16,0,0"
+                               Text="{loc:Translate Resource=HomePageResources, Key=NoNutritionData}" />
                     </StackLayout>
                 </Frame>
 
@@ -313,12 +371,12 @@
                 <Frame Grid.Row="3" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="📁" Style="{StaticResource EmojiStyle}" />
-                        <Label Text="Archiwum" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="{loc:Translate Resource=HomePageResources, Key=Archive}" Style="{StaticResource CardTitleStyle}" />
                         <Label Text="{Binding ArchivedPlanCount}" Style="{StaticResource StatNumberStyle}" />
-                        <Label Text="W archiwum" Style="{StaticResource StatDescriptionStyle}" />
-                        <Button Text="📂 Przejdz" 
-                                Clicked="OnArchiveClicked"
-                                Style="{StaticResource CardButtonStyle}" />
+                        <Label Text="{loc:Translate Resource=HomePageResources, Key=InArchive}" Style="{StaticResource StatDescriptionStyle}" />
+                        <Button Clicked="OnArchiveClicked"
+                                Style="{StaticResource CardButtonStyle}"
+                                Text="{loc:Translate Resource=HomePageResources, Key=GoToArchive}" />
                     </StackLayout>
                 </Frame>
 
@@ -326,15 +384,16 @@
                 <Frame Grid.Row="3" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="⚙️" Style="{StaticResource EmojiStyle}" />
-                        <Label Text="Ustawienia" Style="{StaticResource CardTitleStyle}" />
-                        <Label Text="Personalizuj" 
-                               FontSize="16" 
+                        <Label Text="{loc:Translate Resource=HomePageResources, Key=Settings}" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="{loc:Translate Resource=HomePageResources, Key=Customize}"
+                               FontSize="16"
                                HorizontalTextAlignment="Center"
                                TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
                                Margin="0,16,0,8" />
-                        <Button Text="🔒 Wkrotce" 
-                                Style="{StaticResource DisabledButtonStyle}"
-                                IsEnabled="False" />
+                        <Button Style="{StaticResource CardButtonStyle}"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                Text="Przejdź do ustawień"
+                                Clicked="OnSettingsClicked" />
                     </StackLayout>
                 </Frame>
 
