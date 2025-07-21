@@ -4,8 +4,9 @@ namespace Foodbook.Views;
 
 public partial class SettingsPage : ContentPage
 {
-    public SettingsPage()
+    public SettingsPage(Foodbook.ViewModels.SettingsViewModel vm)
     {
         InitializeComponent();
+        BindingContext = vm;
     }
 }

@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:services="clr-namespace:Foodbook.Services"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:resources="clr-namespace:FoodbookApp.Localization"
              x:Class="Foodbook.Views.ShoppingListPage"
              x:Name="ThisPage"
              x:DataType="vm:ShoppingListViewModel"
-             Title="{x:Static resources:ShoppingListPageResources.Title}">
+             Title="{services:Translate BaseName=ShoppingListPageResources, Key=Title}">
     <CollectionView ItemsSource="{Binding Plans}" Margin="10" SelectionMode="None">
         <CollectionView.ItemTemplate>
             <DataTemplate x:DataType="models:Plan">
@@ -63,12 +64,12 @@
                        HorizontalOptions="Center"
                        TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
                        Margin="0,0,0,20" />
-                <Label Text="{x:Static resources:ShoppingListPageResources.EmptyTitle}"
+                <Label Text="{services:Translate BaseName=ShoppingListPageResources, Key=EmptyTitle}"
                        FontSize="18"
                        FontAttributes="Bold"
                        HorizontalOptions="Center"
                        TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-                <Label Text="{x:Static resources:ShoppingListPageResources.EmptyHint}"
+                <Label Text="{services:Translate BaseName=ShoppingListPageResources, Key=EmptyHint}"
                        FontSize="16"
                        HorizontalOptions="Center"
                        TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:services="clr-namespace:Foodbook.Services"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:converters="clr-namespace:Foodbook.Converters"
@@ -8,7 +9,7 @@
              x:Class="Foodbook.Views.HomePage"
              x:Name="HomePageView"
              x:DataType="vm:HomeViewModel"
-             Title="{x:Static resources:HomePageResources.Title}"
+             Title="{services:Translate BaseName=HomePageResources, Key=Title}"
              BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}">
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
@@ -118,13 +119,13 @@
                    Margin="0,0,0,20"
                    Padding="20,16">
                 <StackLayout>
-                    <Label Text="{x:Static resources:HomePageResources.Welcome}"
+                    <Label Text="{services:Translate BaseName=HomePageResources, Key=Welcome}"
                            FontSize="26"
                            FontAttributes="Bold"
                            HorizontalTextAlignment="Center"
                            TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                            Margin="0,4" />
-                    <Label Text="{x:Static resources:HomePageResources.Subtitle}"
+                    <Label Text="{services:Translate BaseName=HomePageResources, Key=Subtitle}"
                            FontSize="14"
                            HorizontalTextAlignment="Center"
                            TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}"
@@ -154,9 +155,9 @@
                         <!-- Przepisy -->
                         <StackLayout Grid.Column="0">
                             <Label Text="📖" Style="{StaticResource EmojiStyle}" />
-                            <Label Text="{x:Static resources:HomePageResources.Recipes}" Style="{StaticResource CardTitleStyle}" />
+                            <Label Text="{services:Translate BaseName=HomePageResources, Key=Recipes}" Style="{StaticResource CardTitleStyle}" />
                             <Label Text="{Binding RecipeCount}" Style="{StaticResource StatNumberStyle}" />
-                            <Label Text="{x:Static resources:HomePageResources.SavedRecipes}" Style="{StaticResource StatDescriptionStyle}" />
+                            <Label Text="{services:Translate BaseName=HomePageResources, Key=SavedRecipes}" Style="{StaticResource StatDescriptionStyle}" />
                         </StackLayout>
                         
                         <!-- Separator Line -->
@@ -168,9 +169,9 @@
                         <!-- Plany -->
                         <StackLayout Grid.Column="2">
                             <Label Text="📋" Style="{StaticResource EmojiStyle}" />
-                            <Label Text="{x:Static resources:HomePageResources.Plans}" Style="{StaticResource CardTitleStyle}" />
+                            <Label Text="{services:Translate BaseName=HomePageResources, Key=Plans}" Style="{StaticResource CardTitleStyle}" />
                             <Label Text="{Binding PlanCount}" Style="{StaticResource StatNumberStyle}" />
-                            <Label Text="{x:Static resources:HomePageResources.ActiveLists}" Style="{StaticResource StatDescriptionStyle}" />
+                            <Label Text="{services:Translate BaseName=HomePageResources, Key=ActiveLists}" Style="{StaticResource StatDescriptionStyle}" />
                         </StackLayout>
                     </Grid>
                 </Frame>
@@ -181,7 +182,7 @@
                     <StackLayout>
                         <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="8" Margin="0,0,0,16">
                             <Label Text="📅" FontSize="24" />
-                            <Label Text="{x:Static resources:HomePageResources.PlannedMealsHeader}" Style="{StaticResource CardTitleStyle}" Margin="0" />
+                            <Label Text="{services:Translate BaseName=HomePageResources, Key=PlannedMealsHeader}" Style="{StaticResource CardTitleStyle}" Margin="0" />
                         </StackLayout>
                         
                         <!-- Period Selection Button for Planned Meals -->
@@ -200,7 +201,7 @@
                                HorizontalTextAlignment="Center"
                                TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
                                Margin="0,0,0,12"
-                               Text="{x:Static resources:HomePageResources.ClickRecipeHint}" />
+                               Text="{services:Translate BaseName=HomePageResources, Key=ClickRecipeHint}" />
                         
                         <!-- Scrollable CollectionView with limited height -->
                         <ScrollView MaximumHeightRequest="250" 
@@ -259,7 +260,7 @@
                     <StackLayout>
                         <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="8" Margin="0,0,0,16">
                             <Label Text="📊" FontSize="24" />
-                            <Label Text="{x:Static resources:HomePageResources.NutritionStatsHeader}" Style="{StaticResource CardTitleStyle}" Margin="0" />
+                            <Label Text="{services:Translate BaseName=HomePageResources, Key=NutritionStatsHeader}" Style="{StaticResource CardTitleStyle}" Margin="0" />
                         </StackLayout>
                         
                         <!-- Period Selection Button -->
@@ -283,7 +284,7 @@
                                Margin="0,0,0,12">
                             <StackLayout>
                                 <Label Text="🔥" FontSize="28" HorizontalTextAlignment="Center" />
-                                <Label Text="{x:Static resources:HomePageResources.Calories}"
+                                <Label Text="{services:Translate BaseName=HomePageResources, Key=Calories}"
                                        FontSize="16"
                                        FontAttributes="Bold"
                                        HorizontalTextAlignment="Center"
@@ -308,7 +309,7 @@
                                    BorderColor="Transparent">
                                 <StackLayout>
                                     <Label Text="🥩" FontSize="20" HorizontalTextAlignment="Center" />
-                                    <Label Text="{x:Static resources:HomePageResources.Protein}"
+                                    <Label Text="{services:Translate BaseName=HomePageResources, Key=Protein}"
                                            FontSize="12"
                                            FontAttributes="Bold"
                                            HorizontalTextAlignment="Center"
@@ -327,7 +328,7 @@
                                    BorderColor="Transparent">
                                 <StackLayout>
                                     <Label Text="🌾" FontSize="20" HorizontalTextAlignment="Center" />
-                                    <Label Text="{x:Static resources:HomePageResources.Carbs}"
+                                    <Label Text="{services:Translate BaseName=HomePageResources, Key=Carbs}"
                                            FontSize="12"
                                            FontAttributes="Bold"
                                            HorizontalTextAlignment="Center"
@@ -346,7 +347,7 @@
                                    BorderColor="Transparent">
                                 <StackLayout>
                                     <Label Text="🧈" FontSize="20" HorizontalTextAlignment="Center" />
-                                    <Label Text="{x:Static resources:HomePageResources.Fats}"
+                                    <Label Text="{services:Translate BaseName=HomePageResources, Key=Fats}"
                                            FontSize="12"
                                            FontAttributes="Bold"
                                            HorizontalTextAlignment="Center"
@@ -362,7 +363,7 @@
                                HorizontalTextAlignment="Center"
                                TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
                                Margin="0,16,0,0"
-                               Text="{x:Static resources:HomePageResources.NoNutritionData}" />
+                               Text="{services:Translate BaseName=HomePageResources, Key=NoNutritionData}" />
                     </StackLayout>
                 </Frame>
 
@@ -370,12 +371,12 @@
                 <Frame Grid.Row="3" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="📁" Style="{StaticResource EmojiStyle}" />
-                        <Label Text="{x:Static resources:HomePageResources.Archive}" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="{services:Translate BaseName=HomePageResources, Key=Archive}" Style="{StaticResource CardTitleStyle}" />
                         <Label Text="{Binding ArchivedPlanCount}" Style="{StaticResource StatNumberStyle}" />
-                        <Label Text="{x:Static resources:HomePageResources.InArchive}" Style="{StaticResource StatDescriptionStyle}" />
+                        <Label Text="{services:Translate BaseName=HomePageResources, Key=InArchive}" Style="{StaticResource StatDescriptionStyle}" />
                         <Button Clicked="OnArchiveClicked"
                                 Style="{StaticResource CardButtonStyle}"
-                                Text="{x:Static resources:HomePageResources.GoToArchive}" />
+                                Text="{services:Translate BaseName=HomePageResources, Key=GoToArchive}" />
                     </StackLayout>
                 </Frame>
 
@@ -383,8 +384,8 @@
                 <Frame Grid.Row="3" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="Ustawienia" Style="{StaticResource EmojiStyle}" />
-                        <Label Text="{x:Static resources:HomePageResources.Settings}" Style="{StaticResource CardTitleStyle}" />
-                        <Label Text="{x:Static resources:HomePageResources.Customize}"
+                        <Label Text="{services:Translate BaseName=HomePageResources, Key=Settings}" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="{services:Translate BaseName=HomePageResources, Key=Customize}"
                                FontSize="16"
                                HorizontalTextAlignment="Center"
                                TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
