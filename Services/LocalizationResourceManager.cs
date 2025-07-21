@@ -18,7 +18,7 @@ public class LocalizationResourceManager : INotifyPropertyChanged
         get
         {
             if (string.IsNullOrEmpty(key)) return string.Empty;
-            var parts = key.Split('.');
+            var parts = key.Split(':');
             if (parts.Length != 2) return key;
             return _localizationService.GetString(parts[0], parts[1]);
         }
