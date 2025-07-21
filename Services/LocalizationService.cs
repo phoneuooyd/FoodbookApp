@@ -11,6 +11,8 @@ public class LocalizationService : ILocalizationService
 
     public CultureInfo CurrentCulture { get; private set; } = CultureInfo.CurrentUICulture;
 
+    public event EventHandler? CultureChanged;
+
     public void SetCulture(string cultureName)
     {
         var culture = new CultureInfo(cultureName);
@@ -32,6 +34,8 @@ public class LocalizationService : ILocalizationService
         ShoppingListDetailPageResources.Culture = culture;
         ShoppingListPageResources.Culture = culture;
         TabBarResources.Culture = culture;
+
+        CultureChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public string GetString(string baseName, string key)
