@@ -28,10 +28,10 @@
     <value>Jasny / ciemny</value>
   </data>
   <data name="LanguageTitle" xml:space="preserve">
-    <value>Jezyk</value>
+    <value>Język</value>
   </data>
   <data name="LanguageDescription" xml:space="preserve">
-    <value>PL / EN</value>
+    <value>Wybierz język</value>
   </data>
   <data name="VersionInfoTitle" xml:space="preserve">
     <value>Informacje o wersji</value>
