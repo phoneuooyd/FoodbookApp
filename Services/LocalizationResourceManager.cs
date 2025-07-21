@@ -10,7 +10,7 @@ public class LocalizationResourceManager : INotifyPropertyChanged
     public LocalizationResourceManager(ILocalizationService localizationService)
     {
         _localizationService = localizationService;
-        _localizationService.CultureChanged += (_, _) => OnPropertyChanged("Item[]");
+        _localizationService.CultureChanged += (_, _) => OnPropertyChanged(null);
     }
 
     public string this[string key]
@@ -27,7 +27,7 @@ public class LocalizationResourceManager : INotifyPropertyChanged
     public void SetCulture(string cultureName)
     {
         _localizationService.SetCulture(cultureName);
-        OnPropertyChanged("Item[]");
+        OnPropertyChanged(null);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
