@@ -5,6 +5,7 @@ using Foodbook.Models;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Microsoft.Maui.Controls;
+using FoodbookApp.Localization;
 
 namespace Foodbook.ViewModels;
 
@@ -289,10 +290,10 @@ public class HomeViewModel : INotifyPropertyChanged
     {
         return SelectedPlannedMealsPeriod switch
         {
-            PlannedMealsPeriod.Today => "Dzisiaj",
-            PlannedMealsPeriod.Week => "Ten tydzieñ",
+            PlannedMealsPeriod.Today => ButtonResources.Today,
+            PlannedMealsPeriod.Week => ButtonResources.ThisWeek,
             PlannedMealsPeriod.Custom => $"{PlannedMealsCustomStartDate:dd.MM} - {PlannedMealsCustomEndDate:dd.MM}",
-            _ => "Ten tydzieñ"
+            _ => ButtonResources.ThisWeek
         };
     }
 
@@ -300,9 +301,9 @@ public class HomeViewModel : INotifyPropertyChanged
     {
         var options = new[]
         {
-            "Dzisiaj",
-            "Ten tydzieñ", 
-            "Niestandardowy okres"
+            ButtonResources.Today,
+            ButtonResources.ThisWeek, 
+            ButtonResources.CustomDate
         };
 
         var choice = await Application.Current.MainPage.DisplayActionSheet(
@@ -313,13 +314,13 @@ public class HomeViewModel : INotifyPropertyChanged
 
         switch (choice)
         {
-            case "Dzisiaj":
+            case var today when today == ButtonResources.Today:
                 SelectedPlannedMealsPeriod = PlannedMealsPeriod.Today;
                 break;
-            case "Ten tydzieñ":
+            case var thisWeek when thisWeek == ButtonResources.ThisWeek:
                 SelectedPlannedMealsPeriod = PlannedMealsPeriod.Week;
                 break;
-            case "Niestandardowy okres":
+            case var customDate when customDate == ButtonResources.CustomDate:
                 await ShowCustomPlannedMealsDateRangePickerAsync();
                 break;
         }
@@ -429,10 +430,10 @@ public class HomeViewModel : INotifyPropertyChanged
     {
         return SelectedNutritionPeriod switch
         {
-            NutritionPeriod.Day => "Dzisiaj",
-            NutritionPeriod.Week => "Ten tydzieñ",
+            NutritionPeriod.Day => ButtonResources.Today,
+            NutritionPeriod.Week => ButtonResources.ThisWeek,
             NutritionPeriod.Custom => $"{CustomStartDate:dd.MM} - {CustomEndDate:dd.MM}",
-            _ => "Dzisiaj"
+            _ => ButtonResources.Today
         };
     }
 
@@ -440,9 +441,9 @@ public class HomeViewModel : INotifyPropertyChanged
     {
         var options = new[]
         {
-            "Dzisiaj",
-            "Ten tydzieñ", 
-            "Niestandardowy okres"
+            ButtonResources.Today,
+            ButtonResources.ThisWeek, 
+            ButtonResources.CustomDate
         };
 
         var choice = await Application.Current.MainPage.DisplayActionSheet(
@@ -453,13 +454,13 @@ public class HomeViewModel : INotifyPropertyChanged
 
         switch (choice)
         {
-            case "Dzisiaj":
+            case var today when today == ButtonResources.Today:
                 SelectedNutritionPeriod = NutritionPeriod.Day;
                 break;
-            case "Ten tydzieñ":
+            case var thisWeek when thisWeek == ButtonResources.ThisWeek:
                 SelectedNutritionPeriod = NutritionPeriod.Week;
                 break;
-            case "Niestandardowy okres":
+            case var customDate when customDate == ButtonResources.CustomDate:
                 await ShowCustomDateRangePickerAsync();
                 break;
         }

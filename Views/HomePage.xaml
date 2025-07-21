@@ -383,7 +383,7 @@
                 <!-- Settings Card -->
                 <Frame Grid.Row="3" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
-                        <Label Text="Ustawienia" Style="{StaticResource EmojiStyle}" />
+                        <Label Text="⚙️" Style="{StaticResource EmojiStyle}" />
                         <Label Text="{loc:Translate Resource=HomePageResources, Key=Settings}" Style="{StaticResource CardTitleStyle}" />
                         <Label Text="{loc:Translate Resource=HomePageResources, Key=Customize}"
                                FontSize="16"

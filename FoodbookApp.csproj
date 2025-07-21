@@ -80,6 +80,11 @@
 	</ItemGroup>
 
         <ItemGroup>
+          <Compile Update="Localization\ButtonResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>ButtonResources.resx</DependentUpon>
+          </Compile>
           <Compile Update="Localization\TabBarResources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
@@ -88,6 +93,10 @@
         </ItemGroup>
 
         <ItemGroup>
+          <EmbeddedResource Update="Localization\ButtonResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>ButtonResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
           <EmbeddedResource Update="Localization\TabBarResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>TabBarResources.Designer.cs</LastGenOutput>
