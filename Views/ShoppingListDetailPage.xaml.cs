@@ -23,6 +23,13 @@ public partial class ShoppingListDetailPage : ContentPage
         await _viewModel.LoadAsync(PlanId);
     }
 
+    protected override async void OnDisappearing()
+    {
+        base.OnDisappearing();
+        // Save all states when leaving the page
+        await _viewModel.SaveAllStatesAsync();
+    }
+
     protected override bool OnBackButtonPressed()
     {
         Shell.Current.GoToAsync("..");

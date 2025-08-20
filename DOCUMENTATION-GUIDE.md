@@ -444,13 +444,146 @@ Zapewnić pełny cykl życia przepisów kulinarnych wraz z automatycznym lub rę
 | Skalowanie porcji | Dynamiczna zmiana IloscPorcji -> przeliczenie makro proporcjonalne |
 | Eksport / Udostępnianie | Generowanie PDF / linków |
 | Zaawansowany import | Wsparcie wielu serwisów kulinarnych + parser pluginy |
-| Analiza makro per porcja | Automatyczne wyliczenie wartości na porcję |
+| Analiza makro per porcja | Automatyczne wyliczenie wartości na porcę |
 | Integracja z Planerem | Szybkie dodanie przepisu do planu z poziomu karty |
 | Fuzzy search | Lepsze wyszukiwanie (zawiera, literówki) |
 | Testy automatyczne kalkulacji | Walidacja poprawności sum przy różnych jednostkach |
 
 ---
-## 5. (Pozostałe sekcje przewodnika)
+## 5. Moduł Ustawień (Settings) – Dokumentacja Funkcjonalna
+Analiza na podstawie: `SettingsViewModel`, `SettingsPage`, `IPreferencesService`, `PreferencesService`, integracja z `LocalizationService`.
+
+### 5.1 Cel modułu
+Umożliwić użytkownikowi zarządzanie ustawieniami aplikacji z trwałym zapisem preferencji:
+- Wybór języka interfejsu (lokalizacja) z automatycznym zapisem preferencji
+- Wyświetlanie informacji o wersji aplikacji
+- Placeholder dla przyszłych ustawień (motyw, eksport danych)
+- Przywracanie zapisanych ustawień przy ponownym uruchomieniu aplikacji
+
+### 5.2 Kluczowe klasy
+| Klasa | Rola |
+|-------|------|
+| SettingsViewModel | Logika ustawień, zarządzanie wyborem języka, komunikacja z serwisami |
+| SettingsPage | Strona UI z kartami ustawień (język, wersja, przyszłe funkcje) |
+| IPreferencesService | Abstrakcja do zarządzania preferencjami użytkownika |
+| PreferencesService | Implementacja używająca Microsoft.Maui.Storage.Preferences |
+| LocalizationService | Serwis odpowiedzialny za zmianę kultury/języka |
+| LocalizationResourceManager | Manager zasobów lokalizacyjnych z obsługą zdarzeń |
+
+### 5.3 Stany i właściwości (SettingsViewModel)
+| Właściwość | Opis |
+|-----------|------|
+| SupportedCultures | Kolekcja obsługiwanych kodów kultur ("en", "pl-PL") |
+| SelectedCulture | Aktualnie wybrany język, wywołuje zmianę kultury i zapis preferencji |
+
+### 5.4 Komendy / Akcje
+| Kontekst | Komenda | Działanie |
+|----------|---------|----------|
+| SettingsViewModel | Property SelectedCulture | Zmiana języka → aktualizacja LocalizationService → zapis do Preferences |
+
+### 5.5 Główne przepływy
+1. **Inicjalizacja aplikacji (App.xaml.cs)**:
+   - Ładowanie zapisanych preferencji języka przez PreferencesService
+   - Ustawienie kultury w LocalizationService przed inicjalizacją komponentów
+   - Fallback do języka systemowego lub angielskiego jeśli brak zapisanych preferencji
+
+2. **Ładowanie strony ustawień (SettingsViewModel)**:
+   - Pobranie listy obsługiwanych kultur z PreferencesService
+   - Ładowanie aktualnie zapisanej preferencji językowej
+   - Ustawienie kultury bez wyzwalania zapisu (unikanie cyklu)
+
+3. **Zmiana języka przez użytkownika**:
+   - Picker wywołuje setter SelectedCulture
+   - LocalizationResourceManager.SetCulture() → aktualizacja wszystkich zasobów
+   - PreferencesService.SaveLanguage() → trwały zapis preferencji
+   - Natychmiastowa aktualizacja interfejsu (event PropertyChanged)
+
+4. **Przywracanie ustawień przy restart aplikacji**:
+   - App.xaml.cs ładuje preferencję przy starcie
+   - SettingsViewModel synchronizuje stan z zapisaną preferencją
+   - UI automatycznie odzwierciedla zapisany wybór
+
+### 5.6 Reguły biznesowe / Walidacje
+| Reguła | Opis |
+|-------|------|
+| Obsługiwane kultury | Tylko "en" i "pl-PL" są obecnie wspierane |
+| Fallback języka | System → pierwszy z obsługiwanych → angielski (wielopoziomowy fallback) |
+| Walidacja kultury | PreferencesService sprawdza czy kod kultury jest na liście obsługiwanych |
+| Persistence | Preferencje zapisywane natychmiast po zmianie (brak odroczonego zapisu) |
+
+### 5.7 Elementy UI + Binding (SettingsPage)
+| Element | Powiązanie | Opis |
+|---------|-----------|------|
+| Picker języka | ItemsSource=`SupportedCultures`, SelectedItem=`SelectedCulture` | Wybór języka z natychmiastową zmianą |
+| Karta motywu | Placeholder (IsEnabled=False) | Przygotowane pod przyszłe rozszerzenie |
+| Karta eksportu | Placeholder (IsEnabled=False) | Przygotowane pod przyszłe rozszerzenie |
+| Informacje o wersji | Statyczne zasoby lokalizacyjne | Nazwa, wersja, autor aplikacji |
+
+### 5.8 Artefakty / Produkty
+| Artefakt | Opis |
+|----------|------|
+| Preferencja "SelectedCulture" | Trwale zapisany kod kultury w Preferences |
+| Zmiana kultury aplikacji | Wszystkie zasoby .resx aktualizują się zgodnie z wyborem |
+| Logi debug | Informacje o ładowaniu/zapisywaniu preferencji |
+
+### 5.9 Cechy i wzorce jakości
+- **Separation of Concerns**: Oddzielenie logiki preferencji (PreferencesService) od ViewModelu
+- **Dependency Injection**: Serwisy wstrzykiwane przez DI, łatwe testowanie
+- **Error Handling**: Try-catch z logowaniem błędów, aplikacja nie crashuje przy problemach z preferencjami
+- **Fallback Strategy**: Wielopoziomowy fallback (zapisana → systemowa → domyślna kultura)
+- **Immediate Persistence**: Zapis natychmiast po zmianie, brak ryzyka utraty preferencji
+- **Singleton Pattern**: SettingsViewModel jako singleton zachowuje stan przez cały cykl życia aplikacji
+
+### 5.10 Przypadki użycia (Use Cases)
+| Id | Nazwa | Aktor | Scenariusz sukcesu |
+|----|-------|-------|--------------------|
+| UC-SET-01 | Zmiana języka aplikacji | Użytkownik | Otwiera Ustawienia → wybiera język z pickera → UI natychmiast się zmienia |
+| UC-SET-02 | Zachowanie języka po restart | Użytkownik | Zmienia język → zamyka app → otwiera → język pozostaje zachowany |
+| UC-SET-03 | Fallback przy braku preferencji | Nowy użytkownik | Pierwszie uruchomienie → język ustawiony na systemowy lub angielski |
+| UC-SET-04 | Obsługa błędów preferencji | Użytkownik | Problem z zapisem → aplikacja kontynuuje działanie, używa domyślnego języka |
+| UC-SET-05 | Przegląd informacji o aplikacji | Użytkownik | Otwiera Ustawienia → widzi wersję, autora i nazwę aplikacji |
+
+### 5.11 Ryzyka i ograniczenia
+| Ryzyko/Ograniczenie | Mitigacja |
+|---------------------|----------|
+| Brak dostępu do Preferences | Try-catch + fallback do domyślnego języka |
+| Nieprawidłowa kultura w Preferences | Walidacja w PreferencesService + fallback |
+| Synchronizacja między App i SettingsViewModel | Oba używają tego samego PreferencesService |
+| Ograniczona lista języków | Łatwe dodanie nowych kultur w tablicy SupportedCultures |
+| Brak walidacji UI przy błędzie | Dodać status/message binding dla kommunikacji błędów |
+
+### 5.12 Przyszłe rozszerzenia
+| Obszar | Propozycja |
+|--------|-----------|
+| Więcej języków | Dodanie kolejnych kultur do SupportedCultures + odpowiednie pliki .resx |
+| Motyw aplikacji | Implementacja dark/light mode przez PreferencesService |
+| Eksport danych | Funkcjonalność eksportu bazy przepisów/planów |
+| Powiadomienia | Ustawienia notyfikacji dla planowanych posiłków |
+| Zaawansowane preferencje | Jednostki miary, format dat, domyślne wartości |
+| Cloud sync | Synchronizacja preferencji między urządzeniami |
+| Resetowanie ustawień | Przycisk reset do ustawień fabrycznych |
+
+### 5.13 Architektura serwisu preferencjiIPreferencesService
+├── GetSavedLanguage(): string
+├── SaveLanguage(cultureCode): void
+├── GetSupportedCultures(): string[]
+└── [Future] GetTheme(), SaveTheme(), etc.
+
+PreferencesService (Implementation)
+├── Uses: Microsoft.Maui.Storage.Preferences
+├── Key: "SelectedCulture"
+├── Validation: Checks against SupportedCultures
+└── Error handling: Graceful degradation
+### 5.14 Integracja z lokalizacjąApp.xaml.cs → PreferencesService.GetSavedLanguage()
+           → LocalizationService.SetCulture()
+           → All .resx resources updated
+
+SettingsViewModel → User changes SelectedCulture
+                 → LocalizationResourceManager.SetCulture()
+                 → PreferencesService.SaveLanguage()
+                 → PropertyChanged event → UI updates
+---
+## 6. (Pozostałe sekcje przewodnika)
 Patrz dalsza część dokumentu (standardy dokumentowania kodu, lokalizacji, testów, ADR itd.).
 
 ---

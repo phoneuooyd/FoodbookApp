@@ -9,6 +9,7 @@ namespace Foodbook.Data
         public DbSet<Ingredient> Ingredients => Set<Ingredient>();
         public DbSet<PlannedMeal> PlannedMeals => Set<PlannedMeal>();
         public DbSet<Plan> Plans => Set<Plan>();
+        public DbSet<ShoppingListItem> ShoppingListItems => Set<ShoppingListItem>();
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -47,6 +48,19 @@ namespace Foodbook.Data
             modelBuilder.Entity<Recipe>()
                 .HasIndex(r => r.Name)
                 .HasDatabaseName("IX_Recipes_Name");
+
+            // ShoppingListItem configuration
+            modelBuilder.Entity<ShoppingListItem>()
+                .HasOne(sli => sli.Plan)
+                .WithMany()
+                .HasForeignKey(sli => sli.PlanId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Composite unique index for shopping list items
+            modelBuilder.Entity<ShoppingListItem>()
+                .HasIndex(sli => new { sli.PlanId, sli.IngredientName, sli.Unit })
+                .IsUnique()
+                .HasDatabaseName("IX_ShoppingListItems_PlanId_IngredientName_Unit");
 
             base.OnModelCreating(modelBuilder);
         }

@@ -13,6 +13,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
 {
     private readonly IShoppingListService _shoppingListService;
     private readonly IPlanService _planService;
+    private int _currentPlanId;
 
     // Dwie oddzielne kolekcje
     public ObservableCollection<Ingredient> UncheckedItems { get; } = new();
@@ -41,10 +42,12 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
 
     public async Task LoadAsync(int planId)
     {
+        _currentPlanId = planId;
         var plan = await _planService.GetPlanAsync(planId);
         if (plan == null) return;
 
-        var items = await _shoppingListService.GetShoppingListAsync(plan.StartDate, plan.EndDate);
+        // Use the new method that includes checked state
+        var items = await _shoppingListService.GetShoppingListWithCheckedStateAsync(planId);
         
         UncheckedItems.Clear();
         CheckedItems.Clear();
@@ -61,7 +64,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         }
     }
 
-    private void OnItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private async void OnItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(Ingredient.IsChecked) && sender is Ingredient item)
         {
@@ -83,6 +86,39 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
                     UncheckedItems.Add(item);
                 }
             }
+
+            // Save the state immediately when changed
+            await SaveItemStateAsync(item);
+        }
+    }
+
+    private async Task SaveItemStateAsync(Ingredient item)
+    {
+        try
+        {
+            await _shoppingListService.SaveShoppingListItemStateAsync(
+                _currentPlanId, 
+                item.Name, 
+                item.Unit, 
+                item.IsChecked, 
+                item.Quantity);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error saving shopping list item state: {ex.Message}");
+        }
+    }
+
+    public async Task SaveAllStatesAsync()
+    {
+        try
+        {
+            var allItems = UncheckedItems.Concat(CheckedItems).ToList();
+            await _shoppingListService.SaveAllShoppingListStatesAsync(_currentPlanId, allItems);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error saving all shopping list states: {ex.Message}");
         }
     }
 

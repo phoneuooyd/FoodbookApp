@@ -173,6 +173,7 @@ public async Task<List<Recipe>> GetRecipesAsync()
 builder.Services.AddScoped<IRecipeService, RecipeService>();
 builder.Services.AddTransient<AddRecipeViewModel>();
 builder.Services.AddSingleton<ILocalizationService, LocalizationService>();
+
 #### 5. Localization Support// Używaj Resource files
 public string Title => AddRecipePageResources.Title;
 public string SaveButton => ButtonResources.Save;
@@ -183,7 +184,8 @@ public string SaveButton => ButtonResources.Save;
 
 ## 🧪 Testing Guidelines
 
-### Unit Test Structure[Fact]
+### Unit Test Structure
+[Fact]
 public async Task LoadRecipes_WhenServiceSucceeds_ShouldPopulateRecipes()
 {
     // Arrange
@@ -201,7 +203,8 @@ public async Task LoadRecipes_WhenServiceSucceeds_ShouldPopulateRecipes()
     viewModel.Recipes.Should().HaveCount(1);
     viewModel.Recipes.First().Name.Should().Be("Test");
 }
-### Integration Tests[Fact]
+### Integration Tests
+[Fact]
 public async Task AddRecipe_ShouldSaveToDatabase()
 {
     // Arrange
@@ -226,6 +229,7 @@ public async Task AddRecipe_ShouldSaveToDatabase()
 - **Database Queries**: Używaj Include() tylko gdy potrzebne
 - **Collections**: ObservableCollection dla UI binding
 - **Caching**: Implementuj dla często używanych danych
+
 // ✅ Dobra praktyka - unsubscribe events
 protected override void OnDisappearing()
 {
@@ -238,6 +242,7 @@ var recipes = await context.Recipes
     .Where(r => r.Name.Contains(searchTerm))
     .Take(20)
     .ToListAsync();
+
 ### Platform Compatibility
 - **iOS/Android Differences**: Sprawdzaj navigation behavior
 - **File System**: Używaj FileSystem.AppDataDirectory
