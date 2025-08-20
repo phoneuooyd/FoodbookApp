@@ -66,13 +66,13 @@
                    Margin="0,20,0,5" />
 
             <!-- OpenFoodFacts Verification Section -->
-            <StackLayout Spacing="10">
+            <StackLayout Spacing="8">
                 <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=VerifyLabel}"
                        FontSize="14"
                        FontAttributes="Bold"
-                       Margin="0,0,0,5" />
+                       Margin="0,0,0,8" />
                        
-                <Button Text="🔍 {loc:Translate Resource=IngredientFormPageResources, Key=VerifyButton}"
+                <Button Text="{loc:Translate Resource=IngredientFormPageResources, Key=VerifyButton}"
                         Command="{Binding VerifyNutritionCommand}"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                         TextColor="White"
@@ -80,7 +80,8 @@
                         FontAttributes="Bold"
                         HeightRequest="45"
                         CornerRadius="8"
-                        Margin="0,0,0,5"
+                        Margin="0,0,0,8"
+                        HorizontalOptions="FillAndExpand"
                         IsEnabled="{Binding IsVerifying, Converter={StaticResource InvertedBoolConverter}}" />
                 
                 <!-- Verification Status -->
@@ -89,7 +90,7 @@
                        HorizontalTextAlignment="Center"
                        TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"
                        IsVisible="{Binding VerificationStatus, Converter={StaticResource StringToBoolConverter}}"
-                       Margin="0,5,0,5" />
+                       Margin="0,0,0,8" />
             </StackLayout>
             
             <!-- Nutritional Values Grid -->
@@ -153,9 +154,13 @@
             <StackLayout Spacing="10" Margin="0,20,0,0">
                 <Button Text="{Binding SaveButtonText}"
                         Command="{Binding SaveCommand}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                        TextColor="White"
                         HeightRequest="50"
                         FontSize="16"
-                        FontAttributes="Bold" />
+                        FontAttributes="Bold"
+                        CornerRadius="8"
+                        HorizontalOptions="FillAndExpand" />
             </StackLayout>
             
             <!-- Validation Message -->

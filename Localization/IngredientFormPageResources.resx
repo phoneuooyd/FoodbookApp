@@ -40,7 +40,7 @@
     <value>Verify with OpenFoodFacts:</value>
   </data>
   <data name="VerifyButton" xml:space="preserve">
-    <value>Verify</value>
+    <value>🔍 Verify</value>
   </data>
   <data name="InfoLabel" xml:space="preserve">
     <value>Info</value>

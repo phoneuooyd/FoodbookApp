@@ -40,7 +40,7 @@
     <value>Zweryfikuj dane z OpenFoodFacts:</value>
   </data>
   <data name="VerifyButton" xml:space="preserve">
-    <value>Weryfikuj</value>
+    <value>🔍 Weryfikuj</value>
   </data>
   <data name="InfoLabel" xml:space="preserve">
     <value>Informacja</value>
