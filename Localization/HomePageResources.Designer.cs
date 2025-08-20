@@ -170,5 +170,11 @@ namespace FoodbookApp.Localization {
                 return ResourceManager.GetString("ComingSoon", resourceCulture);
             }
         }
+
+        internal static string GoToSettings {
+            get {
+                return ResourceManager.GetString("GoToSettings", resourceCulture);
+            }
+        }
     }
 }

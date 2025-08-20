@@ -75,4 +75,7 @@
   <data name="ComingSoon" xml:space="preserve">
     <value>Soon</value>
   </data>
+  <data name="GoToSettings" xml:space="preserve">
+    <value>Open</value>
+  </data>
 </root>

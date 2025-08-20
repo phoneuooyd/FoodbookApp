@@ -376,6 +376,7 @@
                         <Label Text="{loc:Translate Resource=HomePageResources, Key=InArchive}" Style="{StaticResource StatDescriptionStyle}" />
                         <Button Clicked="OnArchiveClicked"
                                 Style="{StaticResource CardButtonStyle}"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                                 Text="{loc:Translate Resource=HomePageResources, Key=GoToArchive}" />
                     </StackLayout>
                 </Frame>
@@ -385,14 +386,11 @@
                     <StackLayout>
                         <Label Text="⚙️" Style="{StaticResource EmojiStyle}" />
                         <Label Text="{loc:Translate Resource=HomePageResources, Key=Settings}" Style="{StaticResource CardTitleStyle}" />
-                        <Label Text="{loc:Translate Resource=HomePageResources, Key=Customize}"
-                               FontSize="16"
-                               HorizontalTextAlignment="Center"
-                               TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
-                               Margin="0,16,0,8" />
+                        <Label Text="🛠️" Style="{StaticResource StatNumberStyle}" />
+                        <Label Text="{loc:Translate Resource=HomePageResources, Key=Customize}" Style="{StaticResource StatDescriptionStyle}" />
                         <Button Style="{StaticResource CardButtonStyle}"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                                Text="Przejdź do ustawień"
+                                Text="{loc:Translate Resource=HomePageResources, Key=GoToSettings}"
                                 Clicked="OnSettingsClicked" />
                     </StackLayout>
                 </Frame>

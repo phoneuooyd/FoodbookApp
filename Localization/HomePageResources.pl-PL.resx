@@ -75,4 +75,7 @@
   <data name="ComingSoon" xml:space="preserve">
     <value>Wkrótce</value>
   </data>
+  <data name="GoToSettings" xml:space="preserve">
+    <value>Przejdź</value>
+  </data>
 </root>
