@@ -45,4 +45,16 @@
   <data name="InfoLabel" xml:space="preserve">
     <value>Info</value>
   </data>
+  <data name="CaloriesLabel" xml:space="preserve">
+    <value>Calories</value>
+  </data>
+  <data name="ProteinLabel" xml:space="preserve">
+    <value>Protein (g)</value>
+  </data>
+  <data name="FatLabel" xml:space="preserve">
+    <value>Fat (g)</value>
+  </data>
+  <data name="CarbsLabel" xml:space="preserve">
+    <value>Carbohydrates (g)</value>
+  </data>
 </root>

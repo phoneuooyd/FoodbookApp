@@ -110,5 +110,29 @@ namespace FoodbookApp.Localization {
                 return ResourceManager.GetString("InfoLabel", resourceCulture);
             }
         }
+
+        internal static string CaloriesLabel {
+            get {
+                return ResourceManager.GetString("CaloriesLabel", resourceCulture);
+            }
+        }
+
+        internal static string ProteinLabel {
+            get {
+                return ResourceManager.GetString("ProteinLabel", resourceCulture);
+            }
+        }
+
+        internal static string FatLabel {
+            get {
+                return ResourceManager.GetString("FatLabel", resourceCulture);
+            }
+        }
+
+        internal static string CarbsLabel {
+            get {
+                return ResourceManager.GetString("CarbsLabel", resourceCulture);
+            }
+        }
     }
 }
