@@ -8,8 +8,8 @@ on:
 
 jobs:
   test:
-    name: Build and Test
-    runs-on: ubuntu-latest
+    name: Unit Tests
+    runs-on: windows-latest
     
     steps:
     - name: Checkout code
@@ -20,14 +20,17 @@ jobs:
       with:
         dotnet-version: '9.0.x'
         
-    - name: Restore dependencies
-      run: dotnet restore
+    - name: Install MAUI workloads
+      run: dotnet workload install maui
+        
+    - name: Restore test dependencies
+      run: dotnet restore FoodbookApp.Tests/FoodbookApp.Tests.csproj
       
-    - name: Build
-      run: dotnet build --no-restore --configuration Release
+    - name: Build tests
+      run: dotnet build FoodbookApp.Tests/FoodbookApp.Tests.csproj --no-restore --configuration Release
       
     - name: Run tests
-      run: dotnet test --no-build --configuration Release --verbosity normal --logger trx --results-directory "TestResults"
+      run: dotnet test FoodbookApp.Tests/FoodbookApp.Tests.csproj --no-build --configuration Release --verbosity normal --logger trx --results-directory "TestResults" --collect:"XPlat Code Coverage"
       
     - name: Upload test results
       uses: actions/upload-artifact@v4
@@ -35,3 +38,10 @@ jobs:
       with:
         name: test-results
         path: TestResults/*.trx
+        
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage-reports
+        path: TestResults/**/coverage.cobertura.xml
