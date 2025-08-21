@@ -1,0 +1,28 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      
+    - uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+        
+    - run: dotnet workload install maui
+        
+    - run: dotnet restore FoodbookApp.App/FoodbookApp.App.csproj
+      
+    - run: dotnet restore FoodbookApp.Tests/FoodbookApp.Tests.csproj
+      
+    - run: dotnet build FoodbookApp.Tests/FoodbookApp.Tests.csproj --configuration Release
+      
+    - run: dotnet test FoodbookApp.Tests/FoodbookApp.Tests.csproj --configuration Release --verbosity normal
