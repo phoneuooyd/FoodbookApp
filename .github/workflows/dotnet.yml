@@ -19,8 +19,10 @@ jobs:
         
     - run: dotnet workload install maui
         
-    - run: dotnet restore
+    - run: dotnet restore FoodbookApp.App/FoodbookApp.App.csproj
       
-    - run: dotnet build --configuration Release
+    - run: dotnet restore FoodbookApp.Tests/FoodbookApp.Tests.csproj
+      
+    - run: dotnet build FoodbookApp.Tests/FoodbookApp.Tests.csproj --configuration Release
       
     - run: dotnet test FoodbookApp.Tests/FoodbookApp.Tests.csproj --configuration Release --verbosity normal
