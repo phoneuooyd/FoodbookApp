@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Foodbook.Services"
+             xmlns:vm="clr-namespace:Foodbook.ViewModels"
+             xmlns:converters="clr-namespace:Foodbook.Converters"
+             xmlns:resources="clr-namespace:FoodbookApp.Localization"
+             x:Class="Foodbook.Views.IngredientFormPage"
+             x:Name="ThisPage"
+             x:DataType="vm:IngredientFormViewModel"
+             Title="{Binding Title}">
+    <ContentPage.Resources>
+        <converters:StringToBoolConverter x:Key="StringToBoolConverter" />
+        <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+    </ContentPage.Resources>
+    
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="15">
+            
+            <!-- Header -->
+            <Label Text="{Binding Title}" 
+                   FontSize="24" 
+                   FontAttributes="Bold" 
+                   HorizontalOptions="Center"
+                   Margin="0,0,0,10" />
+            
+            <!-- Basic Information Section -->
+            <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=BasicInfoHeader}"
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   Margin="0,10,0,5" />
+            
+            <!-- Name Field -->
+            <StackLayout Spacing="5">
+                <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=NameLabel}" FontAttributes="Bold" />
+                <Entry Placeholder="{loc:Translate Resource=IngredientFormPageResources, Key=NamePlaceholder}"
+                       Text="{Binding Name}"
+                       ClearButtonVisibility="WhileEditing" />
+            </StackLayout>
+            
+            <!-- Quantity and Unit in Grid -->
+            <Grid ColumnDefinitions="2*,*" ColumnSpacing="10">
+                <!-- Quantity Field -->
+                <StackLayout Grid.Column="0" Spacing="5">
+                    <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=QuantityLabel}" FontAttributes="Bold" />
+                    <Entry Placeholder="100" 
+                           Keyboard="Numeric" 
+                           Text="{Binding Quantity}"
+                           ClearButtonVisibility="WhileEditing"
+                           HorizontalTextAlignment="Center" />
+                </StackLayout>
+                
+                <!-- Unit Field -->
+                <StackLayout Grid.Column="1" Spacing="5">
+                    <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=UnitLabel}" FontAttributes="Bold" />
+                    <Picker Title="{loc:Translate Resource=IngredientFormPageResources, Key=UnitPickerTitle}"
+                            ItemsSource="{Binding Units}"
+                            SelectedItem="{Binding SelectedUnit}" />
+                </StackLayout>
+            </Grid>
+            
+            <!-- Nutritional Information Section -->
+            <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=NutritionHeader}"
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   Margin="0,20,0,5" />
+
+            <!-- OpenFoodFacts Verification Section -->
+            <StackLayout Spacing="8">
+                <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=VerifyLabel}"
+                       FontSize="14"
+                       FontAttributes="Bold"
+                       Margin="0,0,0,8" />
+                       
+                <Button Text="{loc:Translate Resource=IngredientFormPageResources, Key=VerifyButton}"
+                        Command="{Binding VerifyNutritionCommand}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                        TextColor="White"
+                        FontSize="14"
+                        FontAttributes="Bold"
+                        HeightRequest="45"
+                        CornerRadius="8"
+                        Margin="0,0,0,8"
+                        HorizontalOptions="FillAndExpand"
+                        IsEnabled="{Binding IsVerifying, Converter={StaticResource InvertedBoolConverter}}" />
+                
+                <!-- Verification Status -->
+                <Label Text="{Binding VerificationStatus}" 
+                       FontSize="12" 
+                       HorizontalTextAlignment="Center"
+                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"
+                       IsVisible="{Binding VerificationStatus, Converter={StaticResource StringToBoolConverter}}"
+                       Margin="0,0,0,8" />
+            </StackLayout>
+            
+            <!-- Nutritional Values Grid -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
+                <!-- Calories Field -->
+                <StackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
+                    <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=CaloriesLabel}" FontAttributes="Bold" />
+                    <Entry Placeholder="0.0" 
+                           Keyboard="Numeric" 
+                           Text="{Binding Calories}"
+                           ClearButtonVisibility="WhileEditing"
+                           HorizontalTextAlignment="Center" />
+                </StackLayout>
+                
+                <!-- Protein Field -->
+                <StackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
+                    <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=ProteinLabel}" FontAttributes="Bold" />
+                    <Entry Placeholder="0.0" 
+                           Keyboard="Numeric" 
+                           Text="{Binding Protein}"
+                           ClearButtonVisibility="WhileEditing"
+                           HorizontalTextAlignment="Center" />
+                </StackLayout>
+                
+                <!-- Fat Field -->
+                <StackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
+                    <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=FatLabel}" FontAttributes="Bold" />
+                    <Entry Placeholder="0.0" 
+                           Keyboard="Numeric" 
+                           Text="{Binding Fat}"
+                           ClearButtonVisibility="WhileEditing"
+                           HorizontalTextAlignment="Center" />
+                </StackLayout>
+                
+                <!-- Carbs Field -->
+                <StackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
+                    <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=CarbsLabel}" FontAttributes="Bold" />
+                    <Entry Placeholder="0.0" 
+                           Keyboard="Numeric" 
+                           Text="{Binding Carbs}"
+                           ClearButtonVisibility="WhileEditing"
+                           HorizontalTextAlignment="Center" />
+                </StackLayout>
+            </Grid>
+            
+            <!-- Recipe Info (if applicable) -->
+            <StackLayout Spacing="5" IsVisible="{Binding IsPartOfRecipe}" Margin="0,15,0,0">
+                <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=InfoLabel}"
+                       FontSize="14"
+                       FontAttributes="Bold" />
+                <Frame BackgroundColor="LightBlue" 
+                       Padding="10" 
+                       CornerRadius="6">
+                    <Label Text="{Binding RecipeInfo}" 
+                           FontSize="12"
+                           HorizontalTextAlignment="Center" />
+                </Frame>
+            </StackLayout>
+            
+            <!-- Action Buttons -->
+            <StackLayout Spacing="10" Margin="0,20,0,0">
+                <Button Text="{Binding SaveButtonText}"
+                        Command="{Binding SaveCommand}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                        TextColor="White"
+                        HeightRequest="50"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        CornerRadius="8"
+                        HorizontalOptions="FillAndExpand" />
+            </StackLayout>
+            
+            <!-- Validation Message -->
+            <Label Text="{Binding ValidationMessage}" 
+                   FontSize="12"
+                   IsVisible="{Binding HasValidationError}"
+                   HorizontalTextAlignment="Center"
+                   TextColor="Red"
+                   Margin="0,10,0,0" />
+                   
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

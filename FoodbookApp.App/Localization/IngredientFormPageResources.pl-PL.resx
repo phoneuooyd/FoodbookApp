@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Składnik</value>
+  </data>
+  <data name="BasicInfoHeader" xml:space="preserve">
+    <value>Informacje podstawowe</value>
+  </data>
+  <data name="NameLabel" xml:space="preserve">
+    <value>Nazwa składnika *</value>
+  </data>
+  <data name="NamePlaceholder" xml:space="preserve">
+    <value>Wprowadź nazwę składnika</value>
+  </data>
+  <data name="QuantityLabel" xml:space="preserve">
+    <value>Ilość *</value>
+  </data>
+  <data name="UnitLabel" xml:space="preserve">
+    <value>Jednostka *</value>
+  </data>
+  <data name="UnitPickerTitle" xml:space="preserve">
+    <value>Jednostka</value>
+  </data>
+  <data name="NutritionHeader" xml:space="preserve">
+    <value>Wartości odżywcze</value>
+  </data>
+  <data name="VerifyLabel" xml:space="preserve">
+    <value>Zweryfikuj dane z OpenFoodFacts:</value>
+  </data>
+  <data name="VerifyButton" xml:space="preserve">
+    <value>🔍 Weryfikuj</value>
+  </data>
+  <data name="InfoLabel" xml:space="preserve">
+    <value>Informacja</value>
+  </data>
+  <data name="CaloriesLabel" xml:space="preserve">
+    <value>Kalorie</value>
+  </data>
+  <data name="ProteinLabel" xml:space="preserve">
+    <value>Białko (g)</value>
+  </data>
+  <data name="FatLabel" xml:space="preserve">
+    <value>Tłuszcze (g)</value>
+  </data>
+  <data name="CarbsLabel" xml:space="preserve">
+    <value>Węglowodany (g)</value>
+  </data>
+</root>
