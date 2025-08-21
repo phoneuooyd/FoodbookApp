@@ -2,7 +2,9 @@
 
 **Aplikacja mobilna do zarządzania przepisami, planowania posiłków i tworzenia list zakupów**
 
-[![.NET MAUI](https://img.shields.io/badge/.NET-MAUI-512BD4 style=flat-square)](https://dotnet.microsoft.com/apps/maui)
+[![.NET MAUI](https://img.shields.io/badge/.NET-MAUI-512BD4?style=flat-square)](https://dotnet.microsoft.com/apps/maui)
+
+[![SQLite](https://img.shields.io/badge/Database-SQLite-003B57?style=flat-square)](https://www.sqlite.org/)
 
 [![.NET 9](https://img.shields.io/badge/.NET-9.0-512BD4 style=flat-square)](https://dotnet.microsoft.com/download/dotnet/9.0)
 
