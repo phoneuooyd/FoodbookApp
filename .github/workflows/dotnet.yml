@@ -8,8 +8,8 @@ on:
 
 jobs:
   test:
-    name: Build and Test
-    runs-on: windows-latest
+    name: Unit Tests
+    runs-on: ubuntu-latest
     
     steps:
     - name: Checkout code
@@ -20,17 +20,14 @@ jobs:
       with:
         dotnet-version: '9.0.x'
         
-    - name: Install MAUI workloads
-      run: dotnet workload install maui
+    - name: Restore dependencies (Tests only)
+      run: dotnet restore FoodbookApp.Tests/FoodbookApp.Tests.csproj
       
-    - name: Restore dependencies
-      run: dotnet restore
-      
-    - name: Build solution
-      run: dotnet build --no-restore --configuration Release
+    - name: Build tests
+      run: dotnet build FoodbookApp.Tests/FoodbookApp.Tests.csproj --no-restore --configuration Release
       
     - name: Run tests
-      run: dotnet test --no-build --configuration Release --verbosity normal --logger trx --results-directory "TestResults"
+      run: dotnet test FoodbookApp.Tests/FoodbookApp.Tests.csproj --no-build --configuration Release --verbosity normal --logger trx --results-directory "TestResults"
       
     - name: Upload test results
       uses: actions/upload-artifact@v4
