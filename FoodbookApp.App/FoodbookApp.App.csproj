@@ -74,7 +74,7 @@
 		<PackageReference Include="HtmlAgilityPack" Version="1.12.1" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.6" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.6" />
-		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" Condition="'$(TargetFramework)' != 'net9.0'" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 	</ItemGroup>
