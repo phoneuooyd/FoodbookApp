@@ -60,8 +60,12 @@
                     
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:Ingredient">
-                            <!-- Ujednolicony layout zgodny z RecipesPage -->
-                            <Border Stroke="LightGray" StrokeThickness="1" Padding="10" Margin="5">
+                            <!-- Ujednolicony layout zgodny z PlannerPage -->
+                            <Frame BorderColor="LightGray" Padding="10" Margin="0,3">
+                                <Frame.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}" 
+                                                          CommandParameter="{Binding .}" />
+                                </Frame.GestureRecognizers>
                                 <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
                                     <!-- Kolumna z treścią składnika -->
                                     <StackLayout Grid.Column="0">
@@ -116,7 +120,7 @@
                                         </StackLayout>
                                     </StackLayout>
                                     
-                                    <!-- Ikona edycji - zgodna ze stylem RecipesPage -->
+                                    <!-- Ikona edycji - zgodna ze stylem PlannerPage -->
                                     <Button Grid.Column="1" 
                                             Text="✎" 
                                             Command="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}" 
@@ -127,7 +131,7 @@
                                             FontSize="16"
                                             CornerRadius="6" />
                                     
-                                    <!-- Ikona usuwania - zgodna ze stylem RecipesPage -->
+                                    <!-- Ikona usuwania - zgodna ze stylem PlannerPage -->
                                     <Button Grid.Column="2" 
                                             Text="🗑" 
                                             Command="{Binding BindingContext.DeleteCommand, Source={x:Reference ThisPage}}" 
@@ -139,7 +143,7 @@
                                             FontSize="16"
                                             CornerRadius="6" />
                                 </Grid>
-                            </Border>
+                            </Frame>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                     
