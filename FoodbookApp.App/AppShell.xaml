@@ -22,7 +22,7 @@
         <ShellContent
             Title="{loc:Translate Resource=TabBarResources, Key=Home}"
             Icon="home.png"
-            Route="HomePage"
+            Route="HomeTab"
             ContentTemplate="{DataTemplate views:HomePage}" />
         <ShellContent
             Title="{loc:Translate Resource=TabBarResources, Key=Planner}"
