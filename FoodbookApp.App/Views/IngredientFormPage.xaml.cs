@@ -23,16 +23,35 @@ public partial class IngredientFormPage : ContentPage
         get => _itemId;
         set
         {
-            _itemId = value;
-            if (value > 0)
-                Task.Run(async () => await ViewModel.LoadAsync(value));
+            try
+            {
+                _itemId = value;
+                if (value > 0)
+                    Task.Run(async () => await ViewModel.LoadAsync(value));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error setting ItemId: {ex.Message}");
+                if (ViewModel != null)
+                {
+                    ViewModel.ValidationMessage = $"B³¹d ³adowania sk³adnika: {ex.Message}";
+                }
+            }
         }
     }
 
     protected override bool OnBackButtonPressed()
     {
-        if (ViewModel?.CancelCommand?.CanExecute(null) == true)
-            ViewModel.CancelCommand.Execute(null);
-        return true;
+        try
+        {
+            if (ViewModel?.CancelCommand?.CanExecute(null) == true)
+                ViewModel.CancelCommand.Execute(null);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in OnBackButtonPressed: {ex.Message}");
+            return base.OnBackButtonPressed();
+        }
     }
 }

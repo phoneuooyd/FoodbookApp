@@ -10,9 +10,23 @@ public class BoolToColorConverter : IValueConverter
     {
         if (value is bool boolValue)
         {
-            return boolValue ? Colors.Green : Colors.Gray;
+            var param = parameter?.ToString();
+            
+            return param switch
+            {
+                "Text" => boolValue ? Colors.White : Colors.Black,
+                "Bold" => boolValue ? FontAttributes.Bold : FontAttributes.None,
+                _ => boolValue ? Colors.Green : Colors.Gray
+            };
         }
-        return Colors.Gray;
+        
+        var paramDefault = parameter?.ToString();
+        return paramDefault switch
+        {
+            "Text" => Colors.Black,
+            "Bold" => FontAttributes.None,
+            _ => Colors.Gray
+        };
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
