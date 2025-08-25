@@ -14,6 +14,7 @@ public class HomeViewModel : INotifyPropertyChanged
     private readonly IRecipeService _recipeService;
     private readonly IPlanService _planService;
     private readonly IPlannerService _plannerService;
+    private readonly ILocalizationService _localizationService;
 
     private int _recipeCount;
     public int RecipeCount
@@ -169,11 +170,15 @@ public class HomeViewModel : INotifyPropertyChanged
     public ICommand ChangeNutritionPeriodCommand { get; }
     public ICommand ChangePlannedMealsPeriodCommand { get; }
 
-    public HomeViewModel(IRecipeService recipeService, IPlanService planService, IPlannerService plannerService)
+    public HomeViewModel(IRecipeService recipeService, IPlanService planService, IPlannerService plannerService, ILocalizationService localizationService)
     {
         _recipeService = recipeService;
         _planService = planService;
         _plannerService = plannerService;
+        _localizationService = localizationService;
+        
+        // Subscribe to culture changes to refresh display properties
+        _localizationService.CultureChanged += OnCultureChanged;
         
         ShowRecipeIngredientsCommand = new Command<PlannedMeal>(async (meal) => await ShowRecipeIngredientsAsync(meal));
         ChangeNutritionPeriodCommand = new Command(async () => await ShowNutritionPeriodPickerAsync());
@@ -561,6 +566,23 @@ public class HomeViewModel : INotifyPropertyChanged
     {
         // Zawsze pokazuj datê zamiast s³ów "dzisiaj", "jutro"
         return date.ToString("dddd, dd.MM.yyyy");
+    }
+
+    /// <summary>
+    /// Handles culture change events to refresh localized display properties
+    /// </summary>
+    private void OnCultureChanged(object? sender, EventArgs e)
+    {
+        try
+        {
+            // Refresh all display properties that depend on localized resources
+            OnPropertyChanged(nameof(NutritionPeriodDisplay));
+            OnPropertyChanged(nameof(PlannedMealsPeriodDisplay));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in OnCultureChanged: {ex.Message}");
+        }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
