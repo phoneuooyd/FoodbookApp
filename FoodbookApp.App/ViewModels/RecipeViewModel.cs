@@ -16,6 +16,7 @@ namespace Foodbook.ViewModels
     public class RecipeViewModel : INotifyPropertyChanged
     {
         private readonly IRecipeService _recipeService;
+        private readonly IIngredientService _ingredientService;
         private bool _isLoading;
         private bool _isRefreshing;
         private string _searchText = string.Empty;
@@ -62,9 +63,10 @@ namespace Foodbook.ViewModels
         public ICommand DeleteRecipeCommand { get; }
         public ICommand RefreshCommand { get; }
 
-        public RecipeViewModel(IRecipeService recipeService)
+        public RecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService)
         {
             _recipeService = recipeService;
+            _ingredientService = ingredientService;
             AddRecipeCommand = new Command(async () => await Shell.Current.GoToAsync(nameof(AddRecipePage)));
             EditRecipeCommand = new Command<Recipe>(async r =>
             {
@@ -83,6 +85,10 @@ namespace Foodbook.ViewModels
             try
             {
                 var recipes = await _recipeService.GetRecipesAsync();
+                
+                // Recalculate nutritional values for all recipes to ensure accuracy
+                await RecalculateNutritionalValuesForRecipes(recipes);
+                
                 _allRecipes = recipes;
                 
                 // Clear and add in batches to improve UI responsiveness
@@ -116,6 +122,71 @@ namespace Foodbook.ViewModels
             {
                 IsLoading = false;
             }
+        }
+
+        private async Task RecalculateNutritionalValuesForRecipes(List<Recipe> recipes)
+        {
+            try
+            {
+                // Get all ingredients from the database for reference
+                var allIngredients = await _ingredientService.GetIngredientsAsync();
+                
+                foreach (var recipe in recipes)
+                {
+                    if (recipe.Ingredients?.Any() == true)
+                    {
+                        double totalCalories = 0;
+                        double totalProtein = 0;
+                        double totalFat = 0;
+                        double totalCarbs = 0;
+
+                        foreach (var ingredient in recipe.Ingredients)
+                        {
+                            // Find the ingredient in the database to get current nutritional values
+                            var dbIngredient = allIngredients.FirstOrDefault(i => i.Name == ingredient.Name);
+                            if (dbIngredient != null)
+                            {
+                                // Update ingredient with current nutritional values from database
+                                ingredient.Calories = dbIngredient.Calories;
+                                ingredient.Protein = dbIngredient.Protein;
+                                ingredient.Fat = dbIngredient.Fat;
+                                ingredient.Carbs = dbIngredient.Carbs;
+                            }
+
+                            // Calculate conversion factor based on unit
+                            double factor = GetUnitConversionFactor(ingredient.Unit, ingredient.Quantity);
+                            
+                            totalCalories += ingredient.Calories * factor;
+                            totalProtein += ingredient.Protein * factor;
+                            totalFat += ingredient.Fat * factor;
+                            totalCarbs += ingredient.Carbs * factor;
+                        }
+
+                        // Update recipe nutritional values with calculated totals
+                        recipe.Calories = totalCalories;
+                        recipe.Protein = totalProtein;
+                        recipe.Fat = totalFat;
+                        recipe.Carbs = totalCarbs;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error recalculating nutritional values: {ex.Message}");
+            }
+        }
+
+        private double GetUnitConversionFactor(Unit unit, double quantity)
+        {
+            // Same conversion logic as in AddRecipeViewModel
+            // Assumption: nutritional values in database are per 100g/100ml/1 piece
+            return unit switch
+            {
+                Unit.Gram => quantity / 100.0,        // values per 100g
+                Unit.Milliliter => quantity / 100.0,  // values per 100ml  
+                Unit.Piece => quantity,               // values per 1 piece
+                _ => quantity / 100.0
+            };
         }
 
         public async Task ReloadAsync()
