@@ -120,13 +120,24 @@ public class PlannerViewModel : INotifyPropertyChanged
         DecreasePortionsCommand = new Command<PlannedMeal>(DecreasePortions);
         SaveCommand = new Command(async () =>
         {
-            var plan = await SaveAsync();
-            if (plan != null)
+            try 
             {
-                await Shell.Current.DisplayAlert(
-                    "Zapisano",
-                    $"Zapisano listę zakupów ({plan.StartDate:dd.MM.yyyy} - {plan.EndDate:dd.MM.yyyy})",
-                    "OK");
+                var plan = await SaveAsync();
+                if (plan != null)
+                {
+                    await Shell.Current.DisplayAlert(
+                        "Zapisano",
+                        $"Zapisano listę zakupów ({plan.StartDate:dd.MM.yyyy} - {plan.EndDate:dd.MM.yyyy})",
+                        "OK");
+                    
+                    // Po udanym zapisie, wróć do głównego widoku
+                    await Shell.Current.GoToAsync("..");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error in SaveCommand: {ex.Message}");
+                await Shell.Current.DisplayAlert("Błąd", "Wystąpił nieoczekiwany błąd podczas zapisywania.", "OK");
             }
         });
         CancelCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
@@ -437,37 +448,48 @@ public class PlannerViewModel : INotifyPropertyChanged
 
     private async Task<Plan?> SaveAsync()
     {
-        if (await _planService.HasOverlapAsync(StartDate, EndDate))
+        try
         {
-            await Shell.Current.DisplayAlert("Błąd", "Plan na podane daty już istnieje.", "OK");
+            if (await _planService.HasOverlapAsync(StartDate, EndDate))
+            {
+                await Shell.Current.DisplayAlert("Błąd", "Plan na podane daty już istnieje.", "OK");
+                return null;
+            }
+
+            var plan = new Plan { StartDate = StartDate, EndDate = EndDate };
+            await _planService.AddPlanAsync(plan);
+
+            var existing = await _plannerService.GetPlannedMealsAsync(StartDate, EndDate);
+            foreach (var m in existing)
+                await _plannerService.RemovePlannedMealAsync(m.Id);
+
+            foreach (var day in Days)
+            {
+                foreach (var meal in day.Meals)
+                {
+                    if (meal.Recipe != null)
+                        meal.RecipeId = meal.Recipe.Id;
+                    if (meal.RecipeId > 0)
+                        await _plannerService.AddPlannedMealAsync(new PlannedMeal
+                        {
+                            RecipeId = meal.RecipeId,
+                            Date = meal.Date,
+                            Portions = meal.Portions
+                        });
+                }
+            }
+
+            // Wyczyść cache po zapisie - nie wywołuj Reset() który może powodować konflikty
+            ClearCache();
+            
+            return plan;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ Error saving meal plan: {ex.Message}");
+            await Shell.Current.DisplayAlert("Błąd", "Wystąpił problem podczas zapisywania planu. Spróbuj ponownie.", "OK");
             return null;
         }
-
-        var plan = new Plan { StartDate = StartDate, EndDate = EndDate };
-        await _planService.AddPlanAsync(plan);
-
-        var existing = await _plannerService.GetPlannedMealsAsync(StartDate, EndDate);
-        foreach (var m in existing)
-            await _plannerService.RemovePlannedMealAsync(m.Id);
-
-        foreach (var day in Days)
-        {
-            foreach (var meal in day.Meals)
-            {
-                if (meal.Recipe != null)
-                    meal.RecipeId = meal.Recipe.Id;
-                if (meal.RecipeId > 0)
-                    await _plannerService.AddPlannedMealAsync(new PlannedMeal
-                    {
-                        RecipeId = meal.RecipeId,
-                        Date = meal.Date,
-                        Portions = meal.Portions
-                    });
-            }
-        }
-
-        Reset(); // This will clear cache and reload fresh data
-        return plan;
     }
 
     private void IncreasePortions(PlannedMeal? meal)

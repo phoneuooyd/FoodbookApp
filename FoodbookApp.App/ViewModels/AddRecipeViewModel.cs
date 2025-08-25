@@ -505,6 +505,7 @@ namespace Foodbook.ViewModels
                     UseCalculatedValues = true;
                 }
 
+                // Zawsze wróć do grida po zapisie
                 await Shell.Current.GoToAsync("..");
             }
             catch (Exception ex)
