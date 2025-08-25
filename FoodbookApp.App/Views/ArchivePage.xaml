@@ -10,41 +10,48 @@
              Title="{loc:Translate Resource=ArchivePageResources, Key=Title}">
     <CollectionView ItemsSource="{Binding ArchivedPlans}" Margin="10" SelectionMode="None">
         <CollectionView.EmptyView>
-            <StackLayout HorizontalOptions="Center" VerticalOptions="Center">
-                <Label Text="Brak zarchiwizowanych list zakupow" 
-                       FontSize="16" 
+            <StackLayout HorizontalOptions="Center" VerticalOptions="Center" Padding="20">
+                <Label Text="Brak zarchiwizowanych list zakupów" 
+                       FontSize="18" 
                        HorizontalTextAlignment="Center"
-                       TextColor="Gray" />
+                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
             </StackLayout>
         </CollectionView.EmptyView>
+        <CollectionView.ItemsLayout>
+            <LinearItemsLayout Orientation="Vertical" ItemSpacing="5" />
+        </CollectionView.ItemsLayout>
         <CollectionView.ItemTemplate>
             <DataTemplate x:DataType="models:Plan">
-                <Frame BorderColor="LightGray" Padding="10" Margin="0,3" BackgroundColor="LightGray">
+                <Frame BorderColor="{AppThemeBinding Light=LightGray, Dark=Gray}" 
+                       Padding="10" 
+                       Margin="0,3" 
+                       BackgroundColor="{AppThemeBinding Light=White, Dark=#2D3748}"
+                       CornerRadius="8">
                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
-                        <!-- Kolumna z trescia planu -->
+                        <!-- Kolumna z treścią planu -->
                         <VerticalStackLayout Grid.Column="0">
                             <Label Text="{Binding Label}" 
                                    FontAttributes="Bold" 
                                    FontSize="18" 
                                    VerticalOptions="Center"
-                                   TextColor="DarkGray" />
+                                   TextColor="{AppThemeBinding Light=#2D3748, Dark=#E2E8F0}" />
                             <Label Text="{Binding StartDate, StringFormat='Od: {0:dd.MM.yyyy}'}" 
                                    FontSize="14" 
-                                   TextColor="Gray"
+                                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
                                    Margin="0,2,0,0" />
                             <Label Text="{Binding EndDate, StringFormat='Do: {0:dd.MM.yyyy}'}" 
                                    FontSize="14" 
-                                   TextColor="Gray" />
+                                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
                         </VerticalStackLayout>
                         
-                        <!-- Przycisk przywracania - strzalka -->
+                        <!-- Przycisk przywracania - strzałka -->
                         <Button Grid.Column="1" 
                                 Text="↩️" 
                                 Command="{Binding BindingContext.RestorePlanCommand, Source={x:Reference ThisPage}}" 
                                 CommandParameter="{Binding .}" 
                                 WidthRequest="40" 
                                 HeightRequest="40"
-                                BackgroundColor="Green"
+                                BackgroundColor="{AppThemeBinding Light=Green, Dark=DarkGreen}"
                                 TextColor="White"
                                 FontSize="16"
                                 CornerRadius="6" />
@@ -56,7 +63,7 @@
                                 CommandParameter="{Binding .}" 
                                 WidthRequest="40" 
                                 HeightRequest="40"
-                                BackgroundColor="Red"
+                                BackgroundColor="{AppThemeBinding Light=Red, Dark=DarkRed}"
                                 TextColor="White"
                                 FontSize="16"
                                 CornerRadius="6" />
