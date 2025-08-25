@@ -12,6 +12,32 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     private readonly IIngredientService _service;
     private Ingredient? _ingredient;
 
+    // Tab management
+    private int _selectedTabIndex = 0;
+    public int SelectedTabIndex
+    {
+        get => _selectedTabIndex;
+        set
+        {
+            try
+            {
+                _selectedTabIndex = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsBasicInfoTabSelected));
+                OnPropertyChanged(nameof(IsNutritionTabSelected));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error setting SelectedTabIndex: {ex.Message}");
+            }
+        }
+    }
+    
+    public bool IsBasicInfoTabSelected => SelectedTabIndex == 0;
+    public bool IsNutritionTabSelected => SelectedTabIndex == 1;
+    
+    public ICommand SelectTabCommand { get; }
+
     public string Name { get => _name; set { _name = value; OnPropertyChanged(); ValidateInput(); } }
     private string _name = string.Empty;
 
@@ -66,7 +92,44 @@ public class IngredientFormViewModel : INotifyPropertyChanged
         SaveCommand = new Command(async () => await SaveAsync(), CanSave);
         CancelCommand = new Command(async () => await CancelAsync());
         VerifyNutritionCommand = new Command(async () => await VerifyNutritionAsync(), () => !string.IsNullOrWhiteSpace(Name) && !IsVerifying);
+        SelectTabCommand = new Command<object>(SelectTab);
         ValidateInput();
+    }
+
+    private void SelectTab(object parameter)
+    {
+        try
+        {
+            int tabIndex = 0;
+            
+            if (parameter is int intParam)
+            {
+                tabIndex = intParam;
+            }
+            else if (parameter is string stringParam && int.TryParse(stringParam, out int parsedIndex))
+            {
+                tabIndex = parsedIndex;
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"Invalid tab parameter: {parameter}");
+                return;
+            }
+
+            // Validate tab index is within bounds
+            if (tabIndex >= 0 && tabIndex <= 1)
+            {
+                SelectedTabIndex = tabIndex;
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"Tab index out of bounds: {tabIndex}");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in SelectTab: {ex.Message}");
+        }
     }
 
     public async Task LoadAsync(int id)
@@ -85,6 +148,9 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 Fat = ing.Fat.ToString("F1");
                 Carbs = ing.Carbs.ToString("F1");
                 
+                // Reset to first tab when loading
+                SelectedTabIndex = 0;
+                
                 // Notify UI about property changes
                 OnPropertyChanged(nameof(Title));
                 OnPropertyChanged(nameof(SaveButtonText));
@@ -97,6 +163,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             ValidationMessage = $"B³¹d podczas ³adowania sk³adnika: {ex.Message}";
+            System.Diagnostics.Debug.WriteLine($"Error in LoadAsync: {ex.Message}");
         }
     }
 
@@ -105,14 +172,14 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     /// </summary>
     private async Task VerifyNutritionAsync()
     {
-        if (string.IsNullOrWhiteSpace(Name))
-        {
-            VerificationStatus = "WprowadŸ nazwê sk³adnika przed weryfikacj¹";
-            return;
-        }
-
         try
         {
+            if (string.IsNullOrWhiteSpace(Name))
+            {
+                VerificationStatus = "WprowadŸ nazwê sk³adnika przed weryfikacj¹";
+                return;
+            }
+
             IsVerifying = true;
             VerificationStatus = "Weryfikujê dane w OpenFoodFacts...";
             ((Command)VerifyNutritionCommand).ChangeCanExecute();
@@ -173,6 +240,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 "B³¹d weryfikacji", 
                 $"Wyst¹pi³ b³¹d podczas weryfikacji sk³adnika '{Name}': {ex.Message}", 
                 "OK");
+            System.Diagnostics.Debug.WriteLine($"Error in VerifyNutritionAsync: {ex.Message}");
         }
         finally
         {
@@ -183,68 +251,84 @@ public class IngredientFormViewModel : INotifyPropertyChanged
 
     private bool CanSave()
     {
-        return !string.IsNullOrWhiteSpace(Name) && 
-               double.TryParse(Quantity, out var qty) && 
-               qty > 0 &&
-               double.TryParse(Calories, out _) &&
-               double.TryParse(Protein, out _) &&
-               double.TryParse(Fat, out _) &&
-               double.TryParse(Carbs, out _);
+        try
+        {
+            return !string.IsNullOrWhiteSpace(Name) && 
+                   double.TryParse(Quantity, out var qty) && 
+                   qty > 0 &&
+                   double.TryParse(Calories, out _) &&
+                   double.TryParse(Protein, out _) &&
+                   double.TryParse(Fat, out _) &&
+                   double.TryParse(Carbs, out _);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in CanSave: {ex.Message}");
+            return false;
+        }
     }
 
     private void ValidateInput()
     {
-        ValidationMessage = string.Empty;
+        try
+        {
+            ValidationMessage = string.Empty;
 
-        if (string.IsNullOrWhiteSpace(Name))
-        {
-            ValidationMessage = "Nazwa sk³adnika jest wymagana";
-        }
-        else if (!double.TryParse(Quantity, out var qty))
-        {
-            ValidationMessage = "Iloœæ musi byæ liczb¹";
-        }
-        else if (qty <= 0)
-        {
-            ValidationMessage = "Iloœæ musi byæ wiêksza od zera";
-        }
-        else if (!double.TryParse(Calories, out _))
-        {
-            ValidationMessage = "Kalorie musz¹ byæ liczb¹";
-        }
-        else if (!double.TryParse(Protein, out _))
-        {
-            ValidationMessage = "Bia³ko musi byæ liczb¹";
-        }
-        else if (!double.TryParse(Fat, out _))
-        {
-            ValidationMessage = "T³uszcze musz¹ byæ liczb¹";
-        }
-        else if (!double.TryParse(Carbs, out _))
-        {
-            ValidationMessage = "Wêglowodany musz¹ byæ liczb¹";
-        }
+            if (string.IsNullOrWhiteSpace(Name))
+            {
+                ValidationMessage = "Nazwa sk³adnika jest wymagana";
+            }
+            else if (!double.TryParse(Quantity, out var qty))
+            {
+                ValidationMessage = "Iloœæ musi byæ liczb¹";
+            }
+            else if (qty <= 0)
+            {
+                ValidationMessage = "Iloœæ musi byæ wiêksza od zera";
+            }
+            else if (!double.TryParse(Calories, out _))
+            {
+                ValidationMessage = "Kalorie musz¹ byæ liczb¹";
+            }
+            else if (!double.TryParse(Protein, out _))
+            {
+                ValidationMessage = "Bia³ko musi byæ liczb¹";
+            }
+            else if (!double.TryParse(Fat, out _))
+            {
+                ValidationMessage = "T³uszcze musz¹ byæ liczb¹";
+            }
+            else if (!double.TryParse(Carbs, out _))
+            {
+                ValidationMessage = "Wêglowodany musz¹ byæ liczb¹";
+            }
 
-        OnPropertyChanged(nameof(HasValidationError));
-        ((Command)SaveCommand).ChangeCanExecute();
-        ((Command)VerifyNutritionCommand).ChangeCanExecute();
+            OnPropertyChanged(nameof(HasValidationError));
+            ((Command)SaveCommand).ChangeCanExecute();
+            ((Command)VerifyNutritionCommand).ChangeCanExecute();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in ValidateInput: {ex.Message}");
+            ValidationMessage = "B³¹d walidacji danych";
+        }
     }
 
     private async Task SaveAsync()
     {
-        if (!CanSave())
-        {
-            return;
-        }
-
-        var qty = double.Parse(Quantity);
-        var cal = double.Parse(Calories);
-        var prot = double.Parse(Protein);
-        var fat = double.Parse(Fat);
-        var carbs = double.Parse(Carbs);
-        
         try
         {
+            if (!CanSave())
+            {
+                return;
+            }
+
+            var qty = double.Parse(Quantity);
+            var cal = double.Parse(Calories);
+            var prot = double.Parse(Protein);
+            var fat = double.Parse(Fat);
+            var carbs = double.Parse(Carbs);
+            
             if (_ingredient == null)
             {
                 // Creating new ingredient
@@ -289,10 +373,26 @@ public class IngredientFormViewModel : INotifyPropertyChanged
 
     private async Task CancelAsync()
     {
-        await Shell.Current.GoToAsync("..");
+        try
+        {
+            await Shell.Current.GoToAsync("..");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in CancelAsync: {ex.Message}");
+        }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
-    void OnPropertyChanged([CallerMemberName] string name = null) =>
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    void OnPropertyChanged([CallerMemberName] string name = null)
+    {
+        try
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in OnPropertyChanged: {ex.Message}");
+        }
+    }
 }

@@ -16,334 +16,383 @@
         <converters:StringToBoolConverter x:Key="StringToBoolConverter" />
     </ContentPage.Resources>
     
-    <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="15">
+    <Grid RowDefinitions="Auto,*">
+        
+        <!-- Tab Bar - Wysokość minimum 5% ekranu -->
+        <Grid Grid.Row="0" 
+              ColumnDefinitions="*,*,*" 
+              HeightRequest="{OnPlatform Default=60, iOS=70}"
+              BackgroundColor="{AppThemeBinding Light=#F0F0F0, Dark=#2D2D30}">
+            
+            <!-- Tab 1: Nazwa i opis -->
+            <Button Grid.Column="0"
+                    Text="{loc:Translate Resource=AddRecipePageResources, Key=BasicInfoTab}"
+                    Command="{Binding SelectTabCommand}"
+                    CommandParameter="0"
+                    BackgroundColor="{Binding IsBasicInfoTabSelected, Converter={StaticResource BoolToColorConverter}}"
+                    TextColor="{Binding IsBasicInfoTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter='Text'}"
+                    FontSize="12"
+                    FontAttributes="{Binding IsBasicInfoTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter='Bold'}"
+                    CornerRadius="0"
+                    BorderWidth="0" />
+            
+            <!-- Tab 2: Składniki -->
+            <Button Grid.Column="1"
+                    Text="{loc:Translate Resource=AddRecipePageResources, Key=IngredientsTab}"
+                    Command="{Binding SelectTabCommand}"
+                    CommandParameter="1"
+                    BackgroundColor="{Binding IsIngredientsTabSelected, Converter={StaticResource BoolToColorConverter}}"
+                    TextColor="{Binding IsIngredientsTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter='Text'}"
+                    FontSize="12"
+                    FontAttributes="{Binding IsIngredientsTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter='Bold'}"
+                    CornerRadius="0"
+                    BorderWidth="0" />
+            
+            <!-- Tab 3: Wartości odżywcze -->
+            <Button Grid.Column="2"
+                    Text="{loc:Translate Resource=AddRecipePageResources, Key=NutritionTab}"
+                    Command="{Binding SelectTabCommand}"
+                    CommandParameter="2"
+                    BackgroundColor="{Binding IsNutritionTabSelected, Converter={StaticResource BoolToColorConverter}}"
+                    TextColor="{Binding IsNutritionTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter='Text'}"
+                    FontSize="12"
+                    FontAttributes="{Binding IsNutritionTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter='Bold'}"
+                    CornerRadius="0"
+                    BorderWidth="0" />
+        </Grid>
+        
+        <!-- Content Area -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="20" Spacing="15">
 
-            <!-- Header -->
-            <Label Text="{Binding Title}"
-                   FontSize="24"
-                   FontAttributes="Bold"
-                   HorizontalOptions="Center"
-                   Margin="0,0,0,10" />
-
-            <!-- Mode Selection Section -->
-            <StackLayout Spacing="10">
-                <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=ModeSelection}"
-                       FontSize="18"
-                       FontAttributes="Bold" />
-                
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                    <Button Grid.Column="0"
-                            Command="{Binding SetManualModeCommand}"
-                            BackgroundColor="{Binding IsManualMode, Converter={StaticResource BoolToColorConverter}}"
-                            TextColor="White"
-                            HeightRequest="45"
-                            Text="{loc:Translate Resource=AddRecipePageResources, Key=Manual}"/>
-                    <Button Grid.Column="1"
-                            Command="{Binding SetImportModeCommand}"
-                            BackgroundColor="{Binding IsImportMode, Converter={StaticResource BoolToColorConverter}}"
-                            TextColor="White"
-                            HeightRequest="45"
-                            Text="{loc:Translate Resource=AddRecipePageResources, Key=FromLink}"/>
-                </Grid>
-            </StackLayout>
-
-            <!-- Import Section -->
-            <StackLayout IsVisible="{Binding IsImportMode}" Spacing="10">
-                <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=ImportHeader}"
-                       FontSize="18"
-                       FontAttributes="Bold"
-                       Margin="0,10,0,5" />
-                
-                <StackLayout Spacing="5">
-                    <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=UrlLabel}" FontAttributes="Bold" />
-                    <Entry Placeholder="{loc:Translate Resource=AddRecipePageResources, Key=UrlPlaceholder}"
-                           Text="{Binding ImportUrl}"
-                           ClearButtonVisibility="WhileEditing"
-                           Keyboard="Url" />
-                </StackLayout>
-                
-                <Button Command="{Binding ImportRecipeCommand}"
-                        HeightRequest="45"
-                        Text="{loc:Translate Resource=AddRecipePageResources, Key=ImportButton}"/>
-                
-                <Label Text="{Binding ImportStatus}" 
-                       FontSize="12" 
-                       HorizontalTextAlignment="Center"
-                       IsVisible="{Binding ImportStatus, Converter={StaticResource StringToBoolConverter}}" />
-            </StackLayout>
-
-            <!-- Manual Entry Section -->
-            <StackLayout IsVisible="{Binding IsManualMode}" Spacing="10">
-                
-                <!-- Basic Information -->
-                <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=BasicInfoHeader}"
-
-                       FontSize="18" 
-                       FontAttributes="Bold" 
-                       Margin="0,10,0,5" />
-                
-                <StackLayout Spacing="5">
-                    <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=NameLabel}" FontAttributes="Bold" />
-                    <Entry Placeholder="{loc:Translate Resource=AddRecipePageResources, Key=NamePlaceholder}"
-                           Text="{Binding Name}" 
-                           ClearButtonVisibility="WhileEditing" />
-                </StackLayout>
-                
-                <StackLayout Spacing="5">
-                    <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=DescriptionLabel}" FontAttributes="Bold" />
-                    <Editor Placeholder="{loc:Translate Resource=AddRecipePageResources, Key=DescriptionPlaceholder}"
-                            Text="{Binding Description}" 
-                            AutoSize="TextChanges"
-                            HeightRequest="80" />
-                </StackLayout>
-
-                <StackLayout Spacing="5">
-                    <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=PortionsLabel}" FontAttributes="Bold" />
-                    <Entry Placeholder="2" 
-                           Keyboard="Numeric"
-                           Text="{Binding IloscPorcji}" 
-                           ClearButtonVisibility="WhileEditing"
-                           HorizontalTextAlignment="Center"
-                           WidthRequest="80"
-                           HorizontalOptions="Start" />
-                </StackLayout>
-
-                <!-- Ingredients Section - MOVED UP -->
-                <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=IngredientsHeader}"
-                       FontSize="18" 
-                       FontAttributes="Bold" 
-                       Margin="0,15,0,5" />
-                
-                <CollectionView ItemsSource="{Binding Ingredients}">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="models:Ingredient">
-                            <Border Stroke="LightGray"
-                                    StrokeThickness="1"
-                                    Padding="10"
-                                    Margin="0,0,0,8"
-                                    BackgroundColor="{AppThemeBinding Light=White, Dark=#2D2D30}">
-                                <Grid ColumnDefinitions="2*,*,Auto,Auto"
-                                      ColumnSpacing="8"
-                                      RowDefinitions="Auto,Auto"
-                                      RowSpacing="8">
-                                    
-                                    <!-- Nazwa składnika -->
-                                    <StackLayout Grid.Row="0" Grid.Column="0" Spacing="3">
-                                        <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=IngredientLabel}" FontSize="12" FontAttributes="Bold" />
-                                        <Picker Title="{loc:Translate Resource=AddRecipePageResources, Key=ChooseIngredient}"
-                                                ItemsSource="{Binding BindingContext.AvailableIngredientNames, Source={x:Reference ThisPage}}"
-                                                SelectedItem="{Binding Name}"
-                                                SelectedIndexChanged="OnIngredientNameChanged" />
-                                    </StackLayout>
-                                    
-                                    <!-- Ilość -->
-                                    <StackLayout Grid.Row="0" Grid.Column="1" Spacing="3">
-                                        <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=QuantityLabelShort}" FontSize="12" FontAttributes="Bold" />
-                                        <Entry Placeholder="1.0"
-                                               Keyboard="Numeric"
-                                               Text="{Binding Quantity}"
-                                               HorizontalTextAlignment="Center"
-                                               TextChanged="OnIngredientValueChanged" />
-                                    </StackLayout>
-                                    
-                                    <!-- Jednostka -->
-                                    <StackLayout Grid.Row="0" Grid.Column="2" Spacing="3">
-                                        <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=UnitLabelShort}" FontSize="12" FontAttributes="Bold" />
-                                        <Picker Title="{loc:Translate Resource=AddRecipePageResources, Key=UnitLabelShort}"
-                                                ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}"
-                                                SelectedItem="{Binding Unit}"
-                                                SelectedIndexChanged="OnIngredientValueChanged"
-                                                WidthRequest="90" />
-                                    </StackLayout>
-                                    
-                                    <!-- Przycisk usuń -->
-                                    <Button Grid.Row="0" Grid.Column="3"
-                                            Text="🗑"
-                                            Command="{Binding BindingContext.RemoveIngredientCommand, Source={x:Reference ThisPage}}"
-                                            CommandParameter="{Binding .}"
-                                            WidthRequest="40"
-                                            HeightRequest="40"
-                                            BackgroundColor="Red"
-                                            TextColor="White"
-                                            FontSize="16"
-                                            CornerRadius="6"
-                                            VerticalOptions="End" />
-
-                                    <!-- Wartości odżywcze składnika (opcjonalne wyświetlanie) -->
-                                    <StackLayout Grid.Row="1" Grid.ColumnSpan="4" 
-                                                 Orientation="Horizontal" 
-                                                 Spacing="15"
-                                                 Margin="0,5,0,0">
-                                        <Label Text="{Binding Calories, StringFormat='⚡ {0:F1} kcal'}" 
-                                               FontSize="11" 
-                                               TextColor="Gray" />
-                                        <Label Text="{Binding Protein, StringFormat='🥩 {0:F1}g'}" 
-                                               FontSize="11" 
-                                               TextColor="Gray" />
-                                        <Label Text="{Binding Fat, StringFormat='🧈 {0:F1}g'}" 
-                                               FontSize="11" 
-                                               TextColor="Gray" />
-                                        <Label Text="{Binding Carbs, StringFormat='🌾 {0:F1}g'}" 
-                                               FontSize="11" 
-                                               TextColor="Gray" />
-                                    </StackLayout>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-                
-                <Button Command="{Binding AddIngredientCommand}"
-                        HeightRequest="45"
-                        Text="{loc:Translate Resource=AddRecipePageResources, Key=AddIngredient}"/>
-
-                <!-- Nutritional Information - MOVED DOWN -->
-                <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=NutritionHeader}"
-                       FontSize="18"
-                       FontAttributes="Bold"
-                       Margin="0,20,0,5" />
-
-                <!-- Calculation Mode Toggle -->
-                <StackLayout Spacing="10">
-                    <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=CalcModeLabel}"
-                           FontSize="14"
-                           FontAttributes="Bold" />
+                <!-- Tab 1: Nazwa i opis -->
+                <StackLayout IsVisible="{Binding IsBasicInfoTabSelected}" Spacing="15">
                     
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                        <Button Grid.Column="0"
-                                BackgroundColor="{Binding UseCalculatedValues, Converter={StaticResource BoolToColorConverter}}"
-                                TextColor="White"
-                                HeightRequest="40"
-                                Clicked="OnAutoModeClicked"
-                                Text="{loc:Translate Resource=AddRecipePageResources, Key=AutoButton}"/>
-                        <Button Grid.Column="1"
-                                BackgroundColor="{Binding UseManualValues, Converter={StaticResource BoolToColorConverter}}"
-                                TextColor="White"
-                                HeightRequest="40"
-                                Clicked="OnManualModeClicked"
-                                Text="{loc:Translate Resource=AddRecipePageResources, Key=ManualButton}"/>
-                    </Grid>
+                    <!-- Mode Selection Section -->
+                    <StackLayout Spacing="10">
+                        <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=ModeSelection}"
+                               FontSize="18"
+                               FontAttributes="Bold" />
+                        
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <Button Grid.Column="0"
+                                    Command="{Binding SetManualModeCommand}"
+                                    BackgroundColor="{Binding IsManualMode, Converter={StaticResource BoolToColorConverter}}"
+                                    TextColor="White"
+                                    HeightRequest="45"
+                                    Text="{loc:Translate Resource=AddRecipePageResources, Key=Manual}"/>
+                            <Button Grid.Column="1"
+                                    Command="{Binding SetImportModeCommand}"
+                                    BackgroundColor="{Binding IsImportMode, Converter={StaticResource BoolToColorConverter}}"
+                                    TextColor="White"
+                                    HeightRequest="45"
+                                    Text="{loc:Translate Resource=AddRecipePageResources, Key=FromLink}"/>
+                        </Grid>
+                    </StackLayout>
+
+                    <!-- Import Section -->
+                    <StackLayout IsVisible="{Binding IsImportMode}" Spacing="10">
+                        <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=ImportHeader}"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               Margin="0,10,0,5" />
+                        
+                        <StackLayout Spacing="5">
+                            <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=UrlLabel}" FontAttributes="Bold" />
+                            <Entry Placeholder="{loc:Translate Resource=AddRecipePageResources, Key=UrlPlaceholder}"
+                                   Text="{Binding ImportUrl}"
+                                   ClearButtonVisibility="WhileEditing"
+                                   Keyboard="Url" />
+                        </StackLayout>
+                        
+                        <Button Command="{Binding ImportRecipeCommand}"
+                                HeightRequest="45"
+                                Text="{loc:Translate Resource=AddRecipePageResources, Key=ImportButton}"/>
+                        
+                        <Label Text="{Binding ImportStatus}" 
+                               FontSize="12" 
+                               HorizontalTextAlignment="Center"
+                               IsVisible="{Binding ImportStatus, Converter={StaticResource StringToBoolConverter}}" />
+                    </StackLayout>
+
+                    <!-- Manual Entry Section - Basic Info -->
+                    <StackLayout IsVisible="{Binding IsManualMode}" Spacing="10">
+                        
+                        <!-- Basic Information -->
+                        <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=BasicInfoHeader}"
+                               FontSize="18" 
+                               FontAttributes="Bold" 
+                               Margin="0,10,0,5" />
+                        
+                        <StackLayout Spacing="5">
+                            <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=NameLabel}" FontAttributes="Bold" />
+                            <Entry Placeholder="{loc:Translate Resource=AddRecipePageResources, Key=NamePlaceholder}"
+                                   Text="{Binding Name}" 
+                                   ClearButtonVisibility="WhileEditing" />
+                        </StackLayout>
+                        
+                        <StackLayout Spacing="5">
+                            <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=DescriptionLabel}" FontAttributes="Bold" />
+                            <Editor Placeholder="{loc:Translate Resource=AddRecipePageResources, Key=DescriptionPlaceholder}"
+                                    Text="{Binding Description}" 
+                                    AutoSize="TextChanges"
+                                    HeightRequest="80" />
+                        </StackLayout>
+
+                        <StackLayout Spacing="5">
+                            <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=PortionsLabel}" FontAttributes="Bold" />
+                            <Entry Placeholder="2" 
+                                   Keyboard="Numeric"
+                                   Text="{Binding IloscPorcji}" 
+                                   ClearButtonVisibility="WhileEditing"
+                                   HorizontalTextAlignment="Center"
+                                   WidthRequest="80"
+                                   HorizontalOptions="Start" />
+                        </StackLayout>
+                    </StackLayout>
                 </StackLayout>
 
-                <!-- Calculated Values Display -->
-                <StackLayout IsVisible="{Binding UseCalculatedValues}" Spacing="10">
-                    <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=AutoCalculatedInfo}"
-                           FontSize="12"
-                           FontAttributes="Italic"
-                           HorizontalTextAlignment="Center" />
+                <!-- Tab 2: Składniki -->
+                <StackLayout IsVisible="{Binding IsIngredientsTabSelected}" Spacing="15">
                     
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
-                        <StackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
-                            <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=CaloriesLabel}" FontAttributes="Bold" />
-                            <Label Text="{Binding CalculatedCalories}" 
-                                   FontSize="16"
-                                   HorizontalTextAlignment="Center"
-                                   BackgroundColor="LightGray"
-                                   Padding="10"
-                                   TextColor="Black" />
-                        </StackLayout>
-                        
-                        <StackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
-                            <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=ProteinLabel}" FontAttributes="Bold" />
-                            <Label Text="{Binding CalculatedProtein}" 
-                                   FontSize="16"
-                                   HorizontalTextAlignment="Center"
-                                   BackgroundColor="LightGray"
-                                   Padding="10"
-                                   TextColor="Black" />
-                        </StackLayout>
-                        
-                        <StackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
-                            <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=FatLabel}" FontAttributes="Bold" />
-                            <Label Text="{Binding CalculatedFat}" 
-                                   FontSize="16"
-                                   HorizontalTextAlignment="Center"
-                                   BackgroundColor="LightGray"
-                                   Padding="10"
-                                   TextColor="Black" />
-                        </StackLayout>
-                        
-                        <StackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
-                            <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=CarbsLabel}" FontAttributes="Bold" />
-                            <Label Text="{Binding CalculatedCarbs}" 
-                                   FontSize="16"
-                                   HorizontalTextAlignment="Center"
-                                   BackgroundColor="LightGray"
-                                   Padding="10"
-                                   TextColor="Black" />
-                        </StackLayout>
-                    </Grid>
+                    <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=IngredientsHeader}"
+                           FontSize="18" 
+                           FontAttributes="Bold" 
+                           Margin="0,0,0,5" />
+                    
+                    <CollectionView ItemsSource="{Binding Ingredients}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:Ingredient">
+                                <Border Stroke="LightGray"
+                                        StrokeThickness="1"
+                                        Padding="10"
+                                        Margin="0,0,0,8"
+                                        BackgroundColor="{AppThemeBinding Light=White, Dark=#2D2D30}">
+                                    <Grid ColumnDefinitions="2*,*,Auto,Auto"
+                                          ColumnSpacing="8"
+                                          RowDefinitions="Auto,Auto"
+                                          RowSpacing="8">
+                                        
+                                        <!-- Nazwa składnika -->
+                                        <StackLayout Grid.Row="0" Grid.Column="0" Spacing="3">
+                                            <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=IngredientLabel}" FontSize="12" FontAttributes="Bold" />
+                                            <Picker Title="{loc:Translate Resource=AddRecipePageResources, Key=ChooseIngredient}"
+                                                    ItemsSource="{Binding BindingContext.AvailableIngredientNames, Source={x:Reference ThisPage}}"
+                                                    SelectedItem="{Binding Name}"
+                                                    SelectedIndexChanged="OnIngredientNameChanged" />
+                                        </StackLayout>
+                                        
+                                        <!-- Ilość -->
+                                        <StackLayout Grid.Row="0" Grid.Column="1" Spacing="3">
+                                            <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=QuantityLabelShort}" FontSize="12" FontAttributes="Bold" />
+                                            <Entry Placeholder="1.0"
+                                                   Keyboard="Numeric"
+                                                   Text="{Binding Quantity}"
+                                                   HorizontalTextAlignment="Center"
+                                                   TextChanged="OnIngredientValueChanged" />
+                                        </StackLayout>
+                                        
+                                        <!-- Jednostka -->
+                                        <StackLayout Grid.Row="0" Grid.Column="2" Spacing="3">
+                                            <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=UnitLabelShort}" FontSize="12" FontAttributes="Bold" />
+                                            <Picker Title="{loc:Translate Resource=AddRecipePageResources, Key=UnitLabelShort}"
+                                                    ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}"
+                                                    SelectedItem="{Binding Unit}"
+                                                    SelectedIndexChanged="OnIngredientValueChanged"
+                                                    WidthRequest="90" />
+                                        </StackLayout>
+                                        
+                                        <!-- Przycisk usuń -->
+                                        <Button Grid.Row="0" Grid.Column="3"
+                                                Text="🗑"
+                                                Command="{Binding BindingContext.RemoveIngredientCommand, Source={x:Reference ThisPage}}"
+                                                CommandParameter="{Binding .}"
+                                                WidthRequest="40"
+                                                HeightRequest="40"
+                                                BackgroundColor="Red"
+                                                TextColor="White"
+                                                FontSize="16"
+                                                CornerRadius="6"
+                                                VerticalOptions="End" />
+
+                                        <!-- Wartości odżywcze składnika -->
+                                        <StackLayout Grid.Row="1" Grid.ColumnSpan="4" 
+                                                     Orientation="Horizontal" 
+                                                     Spacing="15"
+                                                     Margin="0,5,0,0">
+                                            <Label Text="{Binding Calories, StringFormat='⚡ {0:F1} kcal'}" 
+                                                   FontSize="11" 
+                                                   TextColor="Gray" />
+                                            <Label Text="{Binding Protein, StringFormat='🥩 {0:F1}g'}" 
+                                                   FontSize="11" 
+                                                   TextColor="Gray" />
+                                            <Label Text="{Binding Fat, StringFormat='🧈 {0:F1}g'}" 
+                                                   FontSize="11" 
+                                                   TextColor="Gray" />
+                                            <Label Text="{Binding Carbs, StringFormat='🌾 {0:F1}g'}" 
+                                                   FontSize="11" 
+                                                   TextColor="Gray" />
+                                        </StackLayout>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                    
+                    <Button Command="{Binding AddIngredientCommand}"
+                            HeightRequest="45"
+                            Text="{loc:Translate Resource=AddRecipePageResources, Key=AddIngredient}"/>
                 </StackLayout>
 
-                <!-- Manual Values Input -->
-                <StackLayout IsVisible="{Binding UseManualValues}" Spacing="10">
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                        <Label Grid.Column="0"
-                               Text="{loc:Translate Resource=AddRecipePageResources, Key=ManualInputLabel}"
+                <!-- Tab 3: Wartości odżywcze -->
+                <StackLayout IsVisible="{Binding IsNutritionTabSelected}" Spacing="15">
+                    
+                    <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=NutritionHeader}"
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           Margin="0,0,0,5" />
+
+                    <!-- Calculation Mode Toggle -->
+                    <StackLayout Spacing="10">
+                        <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=CalcModeLabel}"
+                               FontSize="14"
+                               FontAttributes="Bold" />
+                        
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <Button Grid.Column="0"
+                                    BackgroundColor="{Binding UseCalculatedValues, Converter={StaticResource BoolToColorConverter}}"
+                                    TextColor="White"
+                                    HeightRequest="40"
+                                    Clicked="OnAutoModeClicked"
+                                    Text="{loc:Translate Resource=AddRecipePageResources, Key=AutoButton}"/>
+                            <Button Grid.Column="1"
+                                    BackgroundColor="{Binding UseManualValues, Converter={StaticResource BoolToColorConverter}}"
+                                    TextColor="White"
+                                    HeightRequest="40"
+                                    Clicked="OnManualModeClicked"
+                                    Text="{loc:Translate Resource=AddRecipePageResources, Key=ManualButton}"/>
+                        </Grid>
+                    </StackLayout>
+
+                    <!-- Calculated Values Display -->
+                    <StackLayout IsVisible="{Binding UseCalculatedValues}" Spacing="10">
+                        <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=AutoCalculatedInfo}"
                                FontSize="12"
                                FontAttributes="Italic"
-                               VerticalOptions="Center" />
-                        <Button Grid.Column="1"
-                                Command="{Binding CopyCalculatedValuesCommand}"
-                                FontSize="12"
-                                HeightRequest="30"
-                                Text="{loc:Translate Resource=AddRecipePageResources, Key=CopyCalculated}"/>
-                    </Grid>
-                    
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
-                        <StackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
-                            <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=CaloriesLabel}" FontAttributes="Bold" />
-                            <Entry Placeholder="0.0" 
-                                   Keyboard="Numeric" 
-                                   Text="{Binding Calories}"
-                                   ClearButtonVisibility="WhileEditing" />
-                        </StackLayout>
+                               HorizontalTextAlignment="Center" />
                         
-                        <StackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
-                            <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=ProteinLabel}" FontAttributes="Bold" />
-                            <Entry Placeholder="0.0" 
-                                   Keyboard="Numeric" 
-                                   Text="{Binding Protein}"
-                                   ClearButtonVisibility="WhileEditing" />
-                        </StackLayout>
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
+                            <StackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
+                                <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=CaloriesLabel}" FontAttributes="Bold" />
+                                <Label Text="{Binding CalculatedCalories}" 
+                                       FontSize="16"
+                                       HorizontalTextAlignment="Center"
+                                       BackgroundColor="LightGray"
+                                       Padding="10"
+                                       TextColor="Black" />
+                            </StackLayout>
+                            
+                            <StackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
+                                <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=ProteinLabel}" FontAttributes="Bold" />
+                                <Label Text="{Binding CalculatedProtein}" 
+                                       FontSize="16"
+                                       HorizontalTextAlignment="Center"
+                                       BackgroundColor="LightGray"
+                                       Padding="10"
+                                       TextColor="Black" />
+                            </StackLayout>
+                            
+                            <StackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
+                                <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=FatLabel}" FontAttributes="Bold" />
+                                <Label Text="{Binding CalculatedFat}" 
+                                       FontSize="16"
+                                       HorizontalTextAlignment="Center"
+                                       BackgroundColor="LightGray"
+                                       Padding="10"
+                                       TextColor="Black" />
+                            </StackLayout>
+                            
+                            <StackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
+                                <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=CarbsLabel}" FontAttributes="Bold" />
+                                <Label Text="{Binding CalculatedCarbs}" 
+                                       FontSize="16"
+                                       HorizontalTextAlignment="Center"
+                                       BackgroundColor="LightGray"
+                                       Padding="10"
+                                       TextColor="Black" />
+                            </StackLayout>
+                        </Grid>
+                    </StackLayout>
+
+                    <!-- Manual Values Input -->
+                    <StackLayout IsVisible="{Binding UseManualValues}" Spacing="10">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <Label Grid.Column="0"
+                                   Text="{loc:Translate Resource=AddRecipePageResources, Key=ManualInputLabel}"
+                                   FontSize="12"
+                                   FontAttributes="Italic"
+                                   VerticalOptions="Center" />
+                            <Button Grid.Column="1"
+                                    Command="{Binding CopyCalculatedValuesCommand}"
+                                    FontSize="12"
+                                    HeightRequest="30"
+                                    Text="{loc:Translate Resource=AddRecipePageResources, Key=CopyCalculated}"/>
+                        </Grid>
                         
-                        <StackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
-                            <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=FatLabel}" FontAttributes="Bold" />
-                            <Entry Placeholder="0.0" 
-                                   Keyboard="Numeric" 
-                                   Text="{Binding Fat}"
-                                   ClearButtonVisibility="WhileEditing" />
-                        </StackLayout>
-                        
-                        <StackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
-                            <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=CarbsLabel}" FontAttributes="Bold" />
-                            <Entry Placeholder="0.0" 
-                                   Keyboard="Numeric" 
-                                   Text="{Binding Carbs}"
-                                   ClearButtonVisibility="WhileEditing" />
-                        </StackLayout>
-                    </Grid>
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
+                            <StackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
+                                <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=CaloriesLabel}" FontAttributes="Bold" />
+                                <Entry Placeholder="0.0" 
+                                       Keyboard="Numeric" 
+                                       Text="{Binding Calories}"
+                                       ClearButtonVisibility="WhileEditing" />
+                            </StackLayout>
+                            
+                            <StackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
+                                <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=ProteinLabel}" FontAttributes="Bold" />
+                                <Entry Placeholder="0.0" 
+                                       Keyboard="Numeric" 
+                                       Text="{Binding Protein}"
+                                       ClearButtonVisibility="WhileEditing" />
+                            </StackLayout>
+                            
+                            <StackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
+                                <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=FatLabel}" FontAttributes="Bold" />
+                                <Entry Placeholder="0.0" 
+                                       Keyboard="Numeric" 
+                                       Text="{Binding Fat}"
+                                       ClearButtonVisibility="WhileEditing" />
+                            </StackLayout>
+                            
+                            <StackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
+                                <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=CarbsLabel}" FontAttributes="Bold" />
+                                <Entry Placeholder="0.0" 
+                                       Keyboard="Numeric" 
+                                       Text="{Binding Carbs}"
+                                       ClearButtonVisibility="WhileEditing" />
+                            </StackLayout>
+                        </Grid>
+                    </StackLayout>
                 </StackLayout>
-            </StackLayout>
 
-            <!-- Action Buttons -->
-            <StackLayout Spacing="10" Margin="0,20,0,0">
-                <Button Text="{Binding SaveButtonText}"
-                        Command="{Binding SaveRecipeCommand}"
-                        HeightRequest="50"
-                        FontSize="16"
-                        FontAttributes="Bold" />
-            </StackLayout>
+                <!-- Action Buttons - Always visible at bottom -->
+                <StackLayout Spacing="10" Margin="0,20,0,0">
+                    <Button Text="{Binding SaveButtonText}"
+                            Command="{Binding SaveRecipeCommand}"
+                            HeightRequest="50"
+                            FontSize="16"
+                            FontAttributes="Bold" />
+                </StackLayout>
 
-            <!-- Validation Message -->
-            <Label Text="{Binding ValidationMessage}"
-                   FontSize="12"
-                   IsVisible="{Binding HasValidationError}"
-                   HorizontalTextAlignment="Center"
-                   TextColor="Red"
-                   Margin="0,10,0,0" />
+                <!-- Validation Message -->
+                <Label Text="{Binding ValidationMessage}"
+                       FontSize="12"
+                       IsVisible="{Binding HasValidationError}"
+                       HorizontalTextAlignment="Center"
+                       TextColor="Red"
+                       Margin="0,10,0,0" />
                    
-        </VerticalStackLayout>
-    </ScrollView>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
 </ContentPage>

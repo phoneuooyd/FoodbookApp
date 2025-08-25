@@ -14,6 +14,34 @@ namespace Foodbook.ViewModels
     public class AddRecipeViewModel : INotifyPropertyChanged
     {
         private Recipe? _editingRecipe;
+        
+        // Tab management
+        private int _selectedTabIndex = 0;
+        public int SelectedTabIndex
+        {
+            get => _selectedTabIndex;
+            set
+            {
+                try
+                {
+                    _selectedTabIndex = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsBasicInfoTabSelected));
+                    OnPropertyChanged(nameof(IsIngredientsTabSelected));
+                    OnPropertyChanged(nameof(IsNutritionTabSelected));
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error setting SelectedTabIndex: {ex.Message}");
+                }
+            }
+        }
+        
+        public bool IsBasicInfoTabSelected => SelectedTabIndex == 0;
+        public bool IsIngredientsTabSelected => SelectedTabIndex == 1;
+        public bool IsNutritionTabSelected => SelectedTabIndex == 2;
+        
+        public ICommand SelectTabCommand { get; }
 
         // Tryb: true = reczny, false = import z linku
         private bool _isManualMode = true;
@@ -22,9 +50,16 @@ namespace Foodbook.ViewModels
             get => _isManualMode;
             set
             {
-                _isManualMode = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(IsImportMode));
+                try
+                {
+                    _isManualMode = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsImportMode));
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error setting IsManualMode: {ex.Message}");
+                }
             }
         }
 
@@ -72,16 +107,23 @@ namespace Foodbook.ViewModels
             get => _useCalculatedValues; 
             set 
             { 
-                _useCalculatedValues = value; 
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(UseManualValues));
-                if (value)
+                try
                 {
-                    // Gdy włączamy automatyczne obliczenia, kopiujemy obliczone wartości
-                    Calories = CalculatedCalories;
-                    Protein = CalculatedProtein;
-                    Fat = CalculatedFat;
-                    Carbs = CalculatedCarbs;
+                    _useCalculatedValues = value; 
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(UseManualValues));
+                    if (value)
+                    {
+                        // Gdy włączamy automatyczne obliczenia, kopiujemy obliczone wartości
+                        Calories = CalculatedCalories;
+                        Protein = CalculatedProtein;
+                        Fat = CalculatedFat;
+                        Carbs = CalculatedCarbs;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error setting UseCalculatedValues: {ex.Message}");
                 }
             } 
         }
@@ -134,6 +176,7 @@ namespace Foodbook.ViewModels
             SetManualModeCommand = new Command(() => IsManualMode = true);
             SetImportModeCommand = new Command(() => IsManualMode = false);
             CopyCalculatedValuesCommand = new Command(CopyCalculatedValues);
+            SelectTabCommand = new Command<object>(SelectTab);
 
             Ingredients.CollectionChanged += (_, __) => 
             {
@@ -143,90 +186,204 @@ namespace Foodbook.ViewModels
             ValidateInput();
         }
 
+        private void SelectTab(object parameter)
+        {
+            try
+            {
+                int tabIndex = 0;
+                
+                if (parameter is int intParam)
+                {
+                    tabIndex = intParam;
+                }
+                else if (parameter is string stringParam && int.TryParse(stringParam, out int parsedIndex))
+                {
+                    tabIndex = parsedIndex;
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"Invalid tab parameter: {parameter}");
+                    return;
+                }
+
+                // Validate tab index is within bounds
+                if (tabIndex >= 0 && tabIndex <= 2)
+                {
+                    SelectedTabIndex = tabIndex;
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"Tab index out of bounds: {tabIndex}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in SelectTab: {ex.Message}");
+            }
+        }
+
         public void Reset()
         {
-            _editingRecipe = null;
-            Name = Description = string.Empty;
-            IloscPorcji = "2";
-            Calories = Protein = Fat = Carbs = "0";
-            CalculatedCalories = CalculatedProtein = CalculatedFat = CalculatedCarbs = "0";
-            
-            Ingredients.Clear();
-            
-            ImportUrl = string.Empty;
-            ImportStatus = string.Empty;
-            UseCalculatedValues = true;
-            IsManualMode = true; // Resetuj też tryb na ręczny
-            
-            // Powiadom o zmianach w tytule i przycisku
-            OnPropertyChanged(nameof(Title));
-            OnPropertyChanged(nameof(SaveButtonText));
-            
-            ValidateInput();
+            try
+            {
+                _editingRecipe = null;
+                Name = Description = string.Empty;
+                IloscPorcji = "2";
+                Calories = Protein = Fat = Carbs = "0";
+                CalculatedCalories = CalculatedProtein = CalculatedFat = CalculatedCarbs = "0";
+                
+                Ingredients.Clear();
+                
+                ImportUrl = string.Empty;
+                ImportStatus = string.Empty;
+                UseCalculatedValues = true;
+                IsManualMode = true; // Resetuj też tryb na ręczny
+                SelectedTabIndex = 0; // Reset do pierwszej zakładki
+                
+                // Powiadom o zmianach w tytule i przycisku
+                OnPropertyChanged(nameof(Title));
+                OnPropertyChanged(nameof(SaveButtonText));
+                
+                ValidateInput();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in Reset: {ex.Message}");
+            }
         }
 
         public bool IsEditMode => _editingRecipe != null;
 
         public async Task LoadRecipeAsync(int id)
         {
-            var recipe = await _recipeService.GetRecipeAsync(id);
-            if (recipe == null)
-                return;
-
-            _editingRecipe = recipe;
-            Name = recipe.Name;
-            Description = recipe.Description ?? string.Empty;
-            IloscPorcji = recipe.IloscPorcji.ToString();
-            Calories = recipe.Calories.ToString("F1");
-            Protein = recipe.Protein.ToString("F1");
-            Fat = recipe.Fat.ToString("F1");
-            Carbs = recipe.Carbs.ToString("F1");
-            
-            Ingredients.Clear();
-            foreach (var ing in recipe.Ingredients)
+            try
             {
-                var ingredient = new Ingredient 
-                { 
-                    Id = ing.Id, 
-                    Name = ing.Name, 
-                    Quantity = ing.Quantity, 
-                    Unit = ing.Unit, 
-                    RecipeId = ing.RecipeId,
-                    Calories = ing.Calories,
-                    Protein = ing.Protein,
-                    Fat = ing.Fat,
-                    Carbs = ing.Carbs
-                };
+                var recipe = await _recipeService.GetRecipeAsync(id);
+                if (recipe == null)
+                    return;
+
+                _editingRecipe = recipe;
+                Name = recipe.Name;
+                Description = recipe.Description ?? string.Empty;
+                IloscPorcji = recipe.IloscPorcji.ToString();
+                Calories = recipe.Calories.ToString("F1");
+                Protein = recipe.Protein.ToString("F1");
+                Fat = recipe.Fat.ToString("F1");
+                Carbs = recipe.Carbs.ToString("F1");
                 
-                Ingredients.Add(ingredient);
+                Ingredients.Clear();
+                foreach (var ing in recipe.Ingredients)
+                {
+                    var ingredient = new Ingredient 
+                    { 
+                        Id = ing.Id, 
+                        Name = ing.Name, 
+                        Quantity = ing.Quantity, 
+                        Unit = ing.Unit, 
+                        RecipeId = ing.RecipeId,
+                        Calories = ing.Calories,
+                        Protein = ing.Protein,
+                        Fat = ing.Fat,
+                        Carbs = ing.Carbs
+                    };
+                    
+                    Ingredients.Add(ingredient);
+                }
+                
+                CalculateNutritionalValues();
+                
+                // Ważne: Powiadom interfejs o zmianach w tytule i przycisku
+                OnPropertyChanged(nameof(Title));
+                OnPropertyChanged(nameof(SaveButtonText));
             }
-            
-            CalculateNutritionalValues();
-            
-            // Ważne: Powiadom interfejs o zmianach w tytule i przycisku
-            OnPropertyChanged(nameof(Title));
-            OnPropertyChanged(nameof(SaveButtonText));
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in LoadRecipeAsync: {ex.Message}");
+                ValidationMessage = $"Błąd ładowania przepisu: {ex.Message}";
+            }
         }
 
         private async void AddIngredient()
         {
-            var name = AvailableIngredientNames.FirstOrDefault() ?? string.Empty;
-            var ingredient = new Ingredient 
-            { 
-                Name = name, 
-                Quantity = 1, 
-                Unit = Unit.Gram, 
-                Calories = 0, 
-                Protein = 0, 
-                Fat = 0, 
-                Carbs = 0 
-            };
-            
-            // Jeśli składnik istnieje w bazie, pobierz jego wartości odżywcze
-            if (!string.IsNullOrEmpty(name))
+            try
             {
+                var name = AvailableIngredientNames.FirstOrDefault() ?? string.Empty;
+                var ingredient = new Ingredient 
+                { 
+                    Name = name, 
+                    Quantity = 1, 
+                    Unit = Unit.Gram, 
+                    Calories = 0, 
+                    Protein = 0, 
+                    Fat = 0, 
+                    Carbs = 0 
+                };
+                
+                // Jeśli składnik istnieje w bazie, pobierz jego wartości odżywcze
+                if (!string.IsNullOrEmpty(name))
+                {
+                    var existingIngredients = await _ingredientService.GetIngredientsAsync();
+                    var existingIngredient = existingIngredients.FirstOrDefault(i => i.Name == name);
+                    if (existingIngredient != null)
+                    {
+                        ingredient.Calories = existingIngredient.Calories;
+                        ingredient.Protein = existingIngredient.Protein;
+                        ingredient.Fat = existingIngredient.Fat;
+                        ingredient.Carbs = existingIngredient.Carbs;
+                    }
+                }
+                
+                Ingredients.Add(ingredient);
+                ValidateInput();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in AddIngredient: {ex.Message}");
+                ValidationMessage = $"Błąd dodawania składnika: {ex.Message}";
+            }
+        }
+
+        private void RemoveIngredient(Ingredient ingredient)
+        {
+            try
+            {
+                if (Ingredients.Contains(ingredient))
+                {
+                    Ingredients.Remove(ingredient);
+                }
+                ValidateInput();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in RemoveIngredient: {ex.Message}");
+                ValidationMessage = $"Błąd usuwania składnika: {ex.Message}";
+            }
+        }
+
+        // Publiczna metoda do przeliczania wartości odżywczych (wywołana z code-behind)
+        public void RecalculateNutritionalValues()
+        {
+            try
+            {
+                CalculateNutritionalValues();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in RecalculateNutritionalValues: {ex.Message}");
+            }
+        }
+
+        // Nowa metoda do aktualizacji wartości odżywczych składnika
+        public async Task UpdateIngredientNutritionalValuesAsync(Ingredient ingredient)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(ingredient.Name))
+                    return;
+
                 var existingIngredients = await _ingredientService.GetIngredientsAsync();
-                var existingIngredient = existingIngredients.FirstOrDefault(i => i.Name == name);
+                var existingIngredient = existingIngredients.FirstOrDefault(i => i.Name == ingredient.Name);
+                
                 if (existingIngredient != null)
                 {
                     ingredient.Calories = existingIngredient.Calories;
@@ -234,127 +391,117 @@ namespace Foodbook.ViewModels
                     ingredient.Fat = existingIngredient.Fat;
                     ingredient.Carbs = existingIngredient.Carbs;
                 }
-            }
-            
-            Ingredients.Add(ingredient);
-            ValidateInput();
-        }
+                else
+                {
+                    // Jeśli składnik nie istnieje w bazie, resetuj wartości
+                    ingredient.Calories = 0;
+                    ingredient.Protein = 0;
+                    ingredient.Fat = 0;
+                    ingredient.Carbs = 0;
+                }
 
-        private void RemoveIngredient(Ingredient ingredient)
-        {
-            if (Ingredients.Contains(ingredient))
+                // Przelicz wartości odżywcze po aktualizacji
+                CalculateNutritionalValues();
+            }
+            catch (Exception ex)
             {
-                Ingredients.Remove(ingredient);
+                System.Diagnostics.Debug.WriteLine($"Error in UpdateIngredientNutritionalValuesAsync: {ex.Message}");
             }
-            ValidateInput();
-        }
-
-        // Publiczna metoda do przeliczania wartości odżywczych (wywołana z code-behind)
-        public void RecalculateNutritionalValues()
-        {
-            CalculateNutritionalValues();
-        }
-
-        // Nowa metoda do aktualizacji wartości odżywczych składnika
-        public async Task UpdateIngredientNutritionalValuesAsync(Ingredient ingredient)
-        {
-            if (string.IsNullOrEmpty(ingredient.Name))
-                return;
-
-            var existingIngredients = await _ingredientService.GetIngredientsAsync();
-            var existingIngredient = existingIngredients.FirstOrDefault(i => i.Name == ingredient.Name);
-            
-            if (existingIngredient != null)
-            {
-                ingredient.Calories = existingIngredient.Calories;
-                ingredient.Protein = existingIngredient.Protein;
-                ingredient.Fat = existingIngredient.Fat;
-                ingredient.Carbs = existingIngredient.Carbs;
-            }
-            else
-            {
-                // Jeśli składnik nie istnieje w bazie, resetuj wartości
-                ingredient.Calories = 0;
-                ingredient.Protein = 0;
-                ingredient.Fat = 0;
-                ingredient.Carbs = 0;
-            }
-
-            // Przelicz wartości odżywcze po aktualizacji
-            CalculateNutritionalValues();
         }
 
         private async void CalculateNutritionalValues()
         {
-            double totalCalories = 0;
-            double totalProtein = 0;
-            double totalFat = 0;
-            double totalCarbs = 0;
-
-            // Załaduj aktualną listę składników z bazy danych
-            var existingIngredients = await _ingredientService.GetIngredientsAsync();
-
-            foreach (var ingredient in Ingredients)
+            try
             {
-                // Znajdź składnik w bazie danych i zaktualizuj jego wartości odżywcze
-                var dbIngredient = existingIngredients.FirstOrDefault(i => i.Name == ingredient.Name);
-                if (dbIngredient != null)
+                double totalCalories = 0;
+                double totalProtein = 0;
+                double totalFat = 0;
+                double totalCarbs = 0;
+
+                // Załaduj aktualną listę składników z bazy danych
+                var existingIngredients = await _ingredientService.GetIngredientsAsync();
+
+                foreach (var ingredient in Ingredients)
                 {
-                    ingredient.Calories = dbIngredient.Calories;
-                    ingredient.Protein = dbIngredient.Protein;
-                    ingredient.Fat = dbIngredient.Fat;
-                    ingredient.Carbs = dbIngredient.Carbs;
+                    // Znajdź składnik w bazie danych i zaktualizuj jego wartości odżywcze
+                    var dbIngredient = existingIngredients.FirstOrDefault(i => i.Name == ingredient.Name);
+                    if (dbIngredient != null)
+                    {
+                        ingredient.Calories = dbIngredient.Calories;
+                        ingredient.Protein = dbIngredient.Protein;
+                        ingredient.Fat = dbIngredient.Fat;
+                        ingredient.Carbs = dbIngredient.Carbs;
+                    }
+
+                    // Oblicz współczynnik przeliczeniowy na podstawie jednostki
+                    double factor = GetUnitConversionFactor(ingredient.Unit, ingredient.Quantity);
+                    
+                    totalCalories += ingredient.Calories * factor;
+                    totalProtein += ingredient.Protein * factor;
+                    totalFat += ingredient.Fat * factor;
+                    totalCarbs += ingredient.Carbs * factor;
                 }
 
-                // Oblicz współczynnik przeliczeniowy na podstawie jednostki
-                double factor = GetUnitConversionFactor(ingredient.Unit, ingredient.Quantity);
-                
-                totalCalories += ingredient.Calories * factor;
-                totalProtein += ingredient.Protein * factor;
-                totalFat += ingredient.Fat * factor;
-                totalCarbs += ingredient.Carbs * factor;
+                CalculatedCalories = totalCalories.ToString("F1");
+                CalculatedProtein = totalProtein.ToString("F1");
+                CalculatedFat = totalFat.ToString("F1");
+                CalculatedCarbs = totalCarbs.ToString("F1");
+
+                // Jeśli używamy automatycznych obliczeń, aktualizuj główne wartości
+                if (UseCalculatedValues)
+                {
+                    Calories = CalculatedCalories;
+                    Protein = CalculatedProtein;
+                    Fat = CalculatedFat;
+                    Carbs = CalculatedCarbs;
+                }
             }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in CalculateNutritionalValues: {ex.Message}");
+            }
+        }
 
-            CalculatedCalories = totalCalories.ToString("F1");
-            CalculatedProtein = totalProtein.ToString("F1");
-            CalculatedFat = totalFat.ToString("F1");
-            CalculatedCarbs = totalCarbs.ToString("F1");
+        private double GetUnitConversionFactor(Unit unit, double quantity)
+        {
+            try
+            {
+                // Założenie: wartości odżywcze w bazie są podane na 100g/100ml/1 sztukę
+                return unit switch
+                {
+                    Unit.Gram => quantity / 100.0,        // wartości na 100g
+                    Unit.Milliliter => quantity / 100.0,  // wartości na 100ml  
+                    Unit.Piece => quantity,               // wartości na 1 sztukę
+                    _ => quantity / 100.0
+                };
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in GetUnitConversionFactor: {ex.Message}");
+                return 0;
+            }
+        }
 
-            // Jeśli używamy automatycznych obliczeń, aktualizuj główne wartości
-            if (UseCalculatedValues)
+        private void CopyCalculatedValues()
+        {
+            try
             {
                 Calories = CalculatedCalories;
                 Protein = CalculatedProtein;
                 Fat = CalculatedFat;
                 Carbs = CalculatedCarbs;
             }
-        }
-
-        private double GetUnitConversionFactor(Unit unit, double quantity)
-        {
-            // Założenie: wartości odżywcze w bazie są podane na 100g/100ml/1 sztukę
-            return unit switch
+            catch (Exception ex)
             {
-                Unit.Gram => quantity / 100.0,        // wartości na 100g
-                Unit.Milliliter => quantity / 100.0,  // wartości na 100ml  
-                Unit.Piece => quantity,               // wartości na 1 sztukę
-                _ => quantity / 100.0
-            };
-        }
-
-        private void CopyCalculatedValues()
-        {
-            Calories = CalculatedCalories;
-            Protein = CalculatedProtein;
-            Fat = CalculatedFat;
-            Carbs = CalculatedCarbs;
+                System.Diagnostics.Debug.WriteLine($"Error in CopyCalculatedValues: {ex.Message}");
+            }
         }
 
         private async Task ImportRecipeAsync()
         {
-            ImportStatus = "Importowanie...";
             try
             {
+                ImportStatus = "Importowanie...";
                 var recipe = await _importer.ImportFromUrlAsync(ImportUrl);
                 Name = recipe.Name;
                 Description = recipe.Description ?? string.Empty;
@@ -393,98 +540,136 @@ namespace Foodbook.ViewModels
             catch (Exception ex)
             {
                 ImportStatus = $"Błąd importu: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"Error in ImportRecipeAsync: {ex.Message}");
             }
         }
 
         private bool CanSave()
         {
-            return !HasValidationError;
+            try
+            {
+                return !HasValidationError;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in CanSave: {ex.Message}");
+                return false;
+            }
         }
 
         private void ValidateInput()
         {
-            ValidationMessage = string.Empty;
+            try
+            {
+                ValidationMessage = string.Empty;
 
-            if (string.IsNullOrWhiteSpace(Name))
-            {
-                ValidationMessage = "Nazwa przepisu jest wymagana";
-            }
-            else if (!IsValidInt(IloscPorcji))
-            {
-                ValidationMessage = "Ilość porcji musi być liczbą całkowitą większą od 0";
-            }
-            // Usuwamy wymaganie składników - teraz można zapisać przepis bez składników
-            else if (!IsValidDouble(Calories))
-            {
-                ValidationMessage = "Kalorie muszą być liczbą";
-            }
-            else if (!IsValidDouble(Protein))
-            {
-                ValidationMessage = "Białko musi być liczbą";
-            }
-            else if (!IsValidDouble(Fat))
-            {
-                ValidationMessage = "Tłuszcze muszą być liczbą";
-            }
-            else if (!IsValidDouble(Carbs))
-            {
-                ValidationMessage = "Węglowodany muszą być liczbą";
-            }
-            else
-            {
-                // Sprawdzenie składników tylko jeśli istnieją
-                foreach (var ing in Ingredients)
+                if (string.IsNullOrWhiteSpace(Name))
                 {
-                    if (string.IsNullOrWhiteSpace(ing.Name))
+                    ValidationMessage = "Nazwa przepisu jest wymagana";
+                }
+                else if (!IsValidInt(IloscPorcji))
+                {
+                    ValidationMessage = "Ilość porcji musi być liczbą całkowitą większą od 0";
+                }
+                // Usuwamy wymaganie składników - teraz można zapisać przepis bez składników
+                else if (!IsValidDouble(Calories))
+                {
+                    ValidationMessage = "Kalorie muszą być liczbą";
+                }
+                else if (!IsValidDouble(Protein))
+                {
+                    ValidationMessage = "Białko musi być liczbą";
+                }
+                else if (!IsValidDouble(Fat))
+                {
+                    ValidationMessage = "Tłuszcze muszą być liczbą";
+                }
+                else if (!IsValidDouble(Carbs))
+                {
+                    ValidationMessage = "Węglowodany muszą być liczbą";
+                }
+                else
+                {
+                    // Sprawdzenie składników tylko jeśli istnieją
+                    foreach (var ing in Ingredients)
                     {
-                        ValidationMessage = "Każdy składnik musi mieć nazwę";
-                        break;
-                    }
-                    if (ing.Quantity <= 0)
-                    {
-                        ValidationMessage = "Ilość składnika musi być większa od zera";
-                        break;
+                        if (string.IsNullOrWhiteSpace(ing.Name))
+                        {
+                            ValidationMessage = "Każdy składnik musi mieć nazwę";
+                            break;
+                        }
+                        if (ing.Quantity <= 0)
+                        {
+                            ValidationMessage = "Ilość składnika musi być większa od zera";
+                            break;
+                        }
                     }
                 }
-            }
 
-            OnPropertyChanged(nameof(HasValidationError));
-            ((Command)SaveRecipeCommand).ChangeCanExecute();
+                OnPropertyChanged(nameof(HasValidationError));
+                ((Command)SaveRecipeCommand).ChangeCanExecute();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in ValidateInput: {ex.Message}");
+                ValidationMessage = "Błąd walidacji danych";
+            }
         }
 
         private static bool IsValidDouble(string value)
         {
-            return double.TryParse(value, out var result) && result >= 0;
+            try
+            {
+                return double.TryParse(value, out var result) && result >= 0;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private static bool IsValidInt(string value)
         {
-            return int.TryParse(value, out var result) && result > 0;
+            try
+            {
+                return int.TryParse(value, out var result) && result > 0;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private async Task CancelAsync()
         {
-            await Shell.Current.GoToAsync("..");
+            try
+            {
+                await Shell.Current.GoToAsync("..");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in CancelAsync: {ex.Message}");
+            }
         }
 
         private async Task SaveRecipeAsync()
         {
-            ValidateInput();
-            if (HasValidationError)
-                return;
-
-            var recipe = _editingRecipe ?? new Recipe();
-            recipe.Name = Name;
-            recipe.Description = Description;
-            recipe.IloscPorcji = int.TryParse(IloscPorcji, out var porcje) ? porcje : 2;
-            recipe.Calories = double.TryParse(Calories, out var cal) ? cal : 0;
-            recipe.Protein = double.TryParse(Protein, out var prot) ? prot : 0;
-            recipe.Fat = double.TryParse(Fat, out var fat) ? fat : 0;
-            recipe.Carbs = double.TryParse(Carbs, out var carbs) ? carbs : 0;
-            recipe.Ingredients = Ingredients.ToList();
-
             try
             {
+                ValidateInput();
+                if (HasValidationError)
+                    return;
+
+                var recipe = _editingRecipe ?? new Recipe();
+                recipe.Name = Name;
+                recipe.Description = Description;
+                recipe.IloscPorcji = int.TryParse(IloscPorcji, out var porcje) ? porcje : 2;
+                recipe.Calories = double.TryParse(Calories, out var cal) ? cal : 0;
+                recipe.Protein = double.TryParse(Protein, out var prot) ? prot : 0;
+                recipe.Fat = double.TryParse(Fat, out var fat) ? fat : 0;
+                recipe.Carbs = double.TryParse(Carbs, out var carbs) ? carbs : 0;
+                recipe.Ingredients = Ingredients.ToList();
+
                 if (_editingRecipe == null)
                     await _recipeService.AddRecipeAsync(recipe);
                 else
@@ -505,11 +690,13 @@ namespace Foodbook.ViewModels
                     UseCalculatedValues = true;
                 }
 
+                // Zawsze wróć do grida po zapisie
                 await Shell.Current.GoToAsync("..");
             }
             catch (Exception ex)
             {
                 ValidationMessage = $"Błąd zapisywania: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"Error in SaveRecipeAsync: {ex.Message}");
             }
         }
 
@@ -519,14 +706,30 @@ namespace Foodbook.ViewModels
 
         public async Task LoadAvailableIngredientsAsync()
         {
-            AvailableIngredientNames.Clear();
-            var list = await _ingredientService.GetIngredientsAsync();
-            foreach (var ing in list)
-                AvailableIngredientNames.Add(ing.Name);
+            try
+            {
+                AvailableIngredientNames.Clear();
+                var list = await _ingredientService.GetIngredientsAsync();
+                foreach (var ing in list)
+                    AvailableIngredientNames.Add(ing.Name);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in LoadAvailableIngredientsAsync: {ex.Message}");
+            }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        void OnPropertyChanged([CallerMemberName] string? name = null) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        void OnPropertyChanged([CallerMemberName] string? name = null)
+        {
+            try
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in OnPropertyChanged: {ex.Message}");
+            }
+        }
     }
 }
