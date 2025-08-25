@@ -254,12 +254,12 @@ public class IngredientFormViewModel : INotifyPropertyChanged
         try
         {
             return !string.IsNullOrWhiteSpace(Name) && 
-                   double.TryParse(Quantity, out var qty) && 
-                   qty > 0 &&
-                   double.TryParse(Calories, out _) &&
-                   double.TryParse(Protein, out _) &&
-                   double.TryParse(Fat, out _) &&
-                   double.TryParse(Carbs, out _);
+                   IsValidDouble(Quantity) && 
+                   ParseDoubleValue(Quantity) > 0 &&
+                   IsValidDouble(Calories) &&
+                   IsValidDouble(Protein) &&
+                   IsValidDouble(Fat) &&
+                   IsValidDouble(Carbs);
         }
         catch (Exception ex)
         {
@@ -278,27 +278,27 @@ public class IngredientFormViewModel : INotifyPropertyChanged
             {
                 ValidationMessage = "Nazwa sk³adnika jest wymagana";
             }
-            else if (!double.TryParse(Quantity, out var qty))
+            else if (!IsValidDouble(Quantity))
             {
                 ValidationMessage = "Iloœæ musi byæ liczb¹";
             }
-            else if (qty <= 0)
+            else if (ParseDoubleValue(Quantity) <= 0)
             {
                 ValidationMessage = "Iloœæ musi byæ wiêksza od zera";
             }
-            else if (!double.TryParse(Calories, out _))
+            else if (!IsValidDouble(Calories))
             {
                 ValidationMessage = "Kalorie musz¹ byæ liczb¹";
             }
-            else if (!double.TryParse(Protein, out _))
+            else if (!IsValidDouble(Protein))
             {
                 ValidationMessage = "Bia³ko musi byæ liczb¹";
             }
-            else if (!double.TryParse(Fat, out _))
+            else if (!IsValidDouble(Fat))
             {
                 ValidationMessage = "T³uszcze musz¹ byæ liczb¹";
             }
-            else if (!double.TryParse(Carbs, out _))
+            else if (!IsValidDouble(Carbs))
             {
                 ValidationMessage = "Wêglowodany musz¹ byæ liczb¹";
             }
@@ -323,11 +323,11 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 return;
             }
 
-            var qty = double.Parse(Quantity);
-            var cal = double.Parse(Calories);
-            var prot = double.Parse(Protein);
-            var fat = double.Parse(Fat);
-            var carbs = double.Parse(Carbs);
+            var qty = ParseDoubleValue(Quantity);
+            var cal = ParseDoubleValue(Calories);
+            var prot = ParseDoubleValue(Protein);
+            var fat = ParseDoubleValue(Fat);
+            var carbs = ParseDoubleValue(Carbs);
             
             if (_ingredient == null)
             {
@@ -393,6 +393,46 @@ public class IngredientFormViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error in OnPropertyChanged: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Validates if a string represents a valid double number
+    /// </summary>
+    private static bool IsValidDouble(string value)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return false;
+            
+            // Handle both decimal comma and dot
+            string normalizedValue = value.Replace(',', '.');
+            return double.TryParse(normalizedValue, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var result) && result >= 0;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+    
+    /// <summary>
+    /// Parses a double value from string, handling both comma and dot decimal separators
+    /// </summary>
+    private static double ParseDoubleValue(string value)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return 0;
+                
+            // Handle both decimal comma and dot
+            string normalizedValue = value.Replace(',', '.');
+            return double.TryParse(normalizedValue, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var result) ? result : 0;
+        }
+        catch
+        {
+            return 0;
         }
     }
 }
