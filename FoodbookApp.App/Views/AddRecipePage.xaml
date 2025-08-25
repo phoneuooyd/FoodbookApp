@@ -163,11 +163,7 @@
                     <CollectionView ItemsSource="{Binding Ingredients}">
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="models:Ingredient">
-                                <Border Stroke="LightGray"
-                                        StrokeThickness="1"
-                                        Padding="10"
-                                        Margin="0,0,0,8"
-                                        BackgroundColor="{AppThemeBinding Light=White, Dark=#2D2D30}">
+                                <Frame BorderColor="LightGray" Padding="10" Margin="0,3">
                                     <Grid ColumnDefinitions="2*,*,Auto,Auto"
                                           ColumnSpacing="8"
                                           RowDefinitions="Auto,Auto"
@@ -234,7 +230,7 @@
                                                    TextColor="Gray" />
                                         </StackLayout>
                                     </Grid>
-                                </Border>
+                                </Frame>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                     </CollectionView>
