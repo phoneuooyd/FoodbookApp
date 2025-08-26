@@ -12,7 +12,7 @@
     <CollectionView ItemsSource="{Binding Plans}" Margin="10" SelectionMode="None">
         <CollectionView.ItemTemplate>
             <DataTemplate x:DataType="models:Plan">
-                <Border Stroke="LightGray" StrokeThickness="1" Padding="10" Margin="5">
+                <Frame BorderColor="LightGray" Padding="10" Margin="0,3">
                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
                         <!-- Kolumna z trescia planu -->
                         <VerticalStackLayout Grid.Column="0">
@@ -52,7 +52,7 @@
                                 FontSize="16"
                                 CornerRadius="6" />
                     </Grid>
-                </Border>
+                </Frame>
             </DataTemplate>
         </CollectionView.ItemTemplate>
         

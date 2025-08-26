@@ -12,22 +12,27 @@
         <ShellContent
             Title="{loc:Translate Resource=TabBarResources, Key=Ingredients}"
             Icon="grocery.png"
+            Route="IngredientsTab"
             ContentTemplate="{DataTemplate views:IngredientsPage}" />
         <ShellContent
             Title="{loc:Translate Resource=TabBarResources, Key=Recipes}"
             Icon="chef_hat.png"
+            Route="RecipesTab"
             ContentTemplate="{DataTemplate views:RecipesPage}" />
         <ShellContent
             Title="{loc:Translate Resource=TabBarResources, Key=Home}"
             Icon="home.png"
+            Route="HomeTab"
             ContentTemplate="{DataTemplate views:HomePage}" />
         <ShellContent
             Title="{loc:Translate Resource=TabBarResources, Key=Planner}"
             Icon="event_upcoming.png"
+            Route="PlannerTab"
             ContentTemplate="{DataTemplate views:PlannerPage}" />
         <ShellContent
             Title="{loc:Translate Resource=TabBarResources, Key=ShoppingLists}"
             Icon="event_list.png"
+            Route="ShoppingListTab"
             ContentTemplate="{DataTemplate views:ShoppingListPage}" />
     </TabBar>
 

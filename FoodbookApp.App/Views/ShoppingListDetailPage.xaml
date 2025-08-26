@@ -41,7 +41,7 @@
                 <CollectionView ItemsSource="{Binding UncheckedItems}">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:Ingredient">
-                            <Border Stroke="LightGray" StrokeThickness="1" Padding="5" Margin="0,2">
+                            <Frame BorderColor="LightGray" Padding="5" Margin="0,2">
                                 <Grid ColumnDefinitions="Auto,2*,Auto,Auto,Auto" ColumnSpacing="5">
                                     <CheckBox Grid.Column="0" IsChecked="{Binding IsChecked}" />
 
@@ -75,7 +75,7 @@
                                             FontSize="16"
                                             CornerRadius="6" />
                                 </Grid>
-                            </Border>
+                            </Frame>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
@@ -114,11 +114,10 @@
                 <CollectionView ItemsSource="{Binding CheckedItems}">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:Ingredient">
-                            <Border Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" 
-                                    StrokeThickness="1" 
-                                    Padding="5" 
-                                    Margin="0,2"
-                                    BackgroundColor="{AppThemeBinding Light=#F8F8F8, Dark=#2A2A2A}">
+                            <Frame BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" 
+                                   Padding="5" 
+                                   Margin="0,2"
+                                   BackgroundColor="{AppThemeBinding Light=#F8F8F8, Dark=#2A2A2A}">
                                 <Grid ColumnDefinitions="Auto,2*,Auto,Auto,Auto" ColumnSpacing="5">
                                     <CheckBox Grid.Column="0" IsChecked="{Binding IsChecked}" />
 
@@ -157,7 +156,7 @@
                                             FontSize="16"
                                             CornerRadius="6" />
                                 </Grid>
-                            </Border>
+                            </Frame>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>

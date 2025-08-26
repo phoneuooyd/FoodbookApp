@@ -59,12 +59,15 @@
                     
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:Recipe">
-                            <Border Stroke="LightGray" StrokeThickness="1" Padding="10" Margin="5">
+                            <Frame BorderColor="LightGray" Padding="10" Margin="0,3">
+                                <Frame.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding BindingContext.EditRecipeCommand, Source={x:Reference ThisPage}}" 
+                                                          CommandParameter="{Binding .}" />
+                                </Frame.GestureRecognizers>
                                 <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
                                     <!-- Kolumna z treścią przepisu -->
                                     <VerticalStackLayout Grid.Column="0">
                                         <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="18"/>
-                                        <Label Text="{Binding Description}" FontSize="14" LineBreakMode="TailTruncation"/>
                                         
                                         <!-- Informacje odżywcze w jednej linii -->
                                         <StackLayout Orientation="Horizontal" Spacing="15" Margin="0,5,0,0">
@@ -126,7 +129,7 @@
                                             FontSize="16"
                                             CornerRadius="6" />
                                 </Grid>
-                            </Border>
+                            </Frame>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                     

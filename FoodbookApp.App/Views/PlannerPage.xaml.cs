@@ -30,9 +30,9 @@ namespace Foodbook.Views
             }
             else
             {
-                // Subsequent loads - use cached data if available
-                System.Diagnostics.Debug.WriteLine("? PlannerPage: Using cached data");
-                await _viewModel.LoadAsync(forceReload: false);
+                // Subsequent loads - force reload recipes to include any newly added ones
+                System.Diagnostics.Debug.WriteLine("?? PlannerPage: Refreshing recipes");
+                await _viewModel.LoadAsync(forceReload: true);
             }
         }
 

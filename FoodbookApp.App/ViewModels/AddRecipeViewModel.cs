@@ -620,7 +620,12 @@ namespace Foodbook.ViewModels
         {
             try
             {
-                return double.TryParse(value, out var result) && result >= 0;
+                if (string.IsNullOrWhiteSpace(value))
+                    return false;
+                
+                // Handle both decimal comma and dot
+                string normalizedValue = value.Replace(',', '.');
+                return double.TryParse(normalizedValue, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var result) && result >= 0;
             }
             catch
             {
@@ -632,6 +637,9 @@ namespace Foodbook.ViewModels
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(value))
+                    return false;
+                    
                 return int.TryParse(value, out var result) && result > 0;
             }
             catch
@@ -664,10 +672,13 @@ namespace Foodbook.ViewModels
                 recipe.Name = Name;
                 recipe.Description = Description;
                 recipe.IloscPorcji = int.TryParse(IloscPorcji, out var porcje) ? porcje : 2;
-                recipe.Calories = double.TryParse(Calories, out var cal) ? cal : 0;
-                recipe.Protein = double.TryParse(Protein, out var prot) ? prot : 0;
-                recipe.Fat = double.TryParse(Fat, out var fat) ? fat : 0;
-                recipe.Carbs = double.TryParse(Carbs, out var carbs) ? carbs : 0;
+                
+                // Parse nutritional values with proper decimal separator handling
+                recipe.Calories = ParseDoubleValue(Calories);
+                recipe.Protein = ParseDoubleValue(Protein);
+                recipe.Fat = ParseDoubleValue(Fat);
+                recipe.Carbs = ParseDoubleValue(Carbs);
+                
                 recipe.Ingredients = Ingredients.ToList();
 
                 if (_editingRecipe == null)
@@ -697,6 +708,26 @@ namespace Foodbook.ViewModels
             {
                 ValidationMessage = $"Błąd zapisywania: {ex.Message}";
                 System.Diagnostics.Debug.WriteLine($"Error in SaveRecipeAsync: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// Parses a double value from string, handling both comma and dot decimal separators
+        /// </summary>
+        private static double ParseDoubleValue(string value)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                    return 0;
+                    
+                // Handle both decimal comma and dot
+                string normalizedValue = value.Replace(',', '.');
+                return double.TryParse(normalizedValue, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var result) ? result : 0;
+            }
+            catch
+            {
+                return 0;
             }
         }
 
