@@ -170,10 +170,8 @@
                                 <Editor Placeholder="{loc:Translate Resource=AddRecipePageResources, Key=DescriptionPlaceholder}"
                                         Text="{Binding Description}" 
                                         AutoSize="TextChanges"
-                                        HeightRequest="80"
-                                        FontSize="16"
-                                        BackgroundColor="{AppThemeBinding Light=White, Dark=#4A5568}"
-                                        TextColor="{AppThemeBinding Light=#2D3748, Dark=#E2E8F0}" />
+                                        MinimumHeightRequest="120"
+                                        MaximumHeightRequest="300" />
                             </StackLayout>
                         </Frame>
 

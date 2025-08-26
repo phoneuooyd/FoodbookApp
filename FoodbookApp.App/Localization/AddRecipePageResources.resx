@@ -56,10 +56,10 @@
     <value>Enter recipe name</value>
   </data>
   <data name="DescriptionLabel" xml:space="preserve">
-    <value>Description</value>
+    <value>Instructions</value>
   </data>
   <data name="DescriptionPlaceholder" xml:space="preserve">
-    <value>Enter recipe description</value>
+    <value>Enter preparation instructions</value>
   </data>
   <data name="PortionsLabel" xml:space="preserve">
     <value>Default portions (shopping list)*</value>

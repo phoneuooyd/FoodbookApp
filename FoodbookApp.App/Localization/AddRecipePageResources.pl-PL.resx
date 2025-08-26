@@ -17,7 +17,7 @@
   </data>
   <!-- Tab Labels -->
   <data name="BasicInfoTab" xml:space="preserve">
-    <value>📝 Nazwa i opis</value>
+    <value>📝 Nazwa i sposób</value>
   </data>
   <data name="IngredientsTab" xml:space="preserve">
     <value>🥕 Składniki</value>
@@ -56,10 +56,10 @@
     <value>Wprowadź nazwę przepisu</value>
   </data>
   <data name="DescriptionLabel" xml:space="preserve">
-    <value>Opis</value>
+    <value>Sposób wykonania</value>
   </data>
   <data name="DescriptionPlaceholder" xml:space="preserve">
-    <value>Wprowadź opis przepisu</value>
+    <value>Opisz sposób przygotowania przepisu</value>
   </data>
   <data name="PortionsLabel" xml:space="preserve">
     <value>Domyślna ilość porcji (lista zakupów)*</value>

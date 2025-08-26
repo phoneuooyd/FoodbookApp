@@ -68,7 +68,6 @@
                                     <!-- Kolumna z treścią przepisu -->
                                     <VerticalStackLayout Grid.Column="0">
                                         <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="18"/>
-                                        <Label Text="{Binding Description}" FontSize="14" LineBreakMode="TailTruncation"/>
                                         
                                         <!-- Informacje odżywcze w jednej linii -->
                                         <StackLayout Orientation="Horizontal" Spacing="15" Margin="0,5,0,0">
