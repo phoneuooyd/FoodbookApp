@@ -55,6 +55,7 @@ public class ShoppingListService : IShoppingListService
         // Get saved checked states
         var savedStates = await _context.ShoppingListItems
             .Where(sli => sli.PlanId == planId)
+            .OrderBy(sli => sli.Order)
             .ToListAsync();
 
         // Apply saved states to ingredients
@@ -66,10 +67,12 @@ public class ShoppingListService : IShoppingListService
             if (savedState != null)
             {
                 ingredient.IsChecked = savedState.IsChecked;
+                ingredient.Order = savedState.Order;
             }
         }
 
-        return ingredients;
+        // Sort ingredients by order
+        return ingredients.OrderBy(i => i.Order).ToList();
     }
 
     public async Task SaveShoppingListItemStateAsync(int planId, string ingredientName, Unit unit, bool isChecked, double quantity)
@@ -86,13 +89,19 @@ public class ShoppingListService : IShoppingListService
         }
         else
         {
+            // Get the next order value for this plan
+            var maxOrder = await _context.ShoppingListItems
+                .Where(sli => sli.PlanId == planId)
+                .MaxAsync(sli => (int?)sli.Order) ?? -1;
+
             var newItem = new ShoppingListItem
             {
                 PlanId = planId,
                 IngredientName = ingredientName,
                 Unit = unit,
                 IsChecked = isChecked,
-                Quantity = quantity
+                Quantity = quantity,
+                Order = maxOrder + 1
             };
             _context.ShoppingListItems.Add(newItem);
         }
@@ -117,6 +126,7 @@ public class ShoppingListService : IShoppingListService
             {
                 existingItem.IsChecked = ingredient.IsChecked;
                 existingItem.Quantity = ingredient.Quantity;
+                existingItem.Order = ingredient.Order;
             }
             else
             {
@@ -126,7 +136,8 @@ public class ShoppingListService : IShoppingListService
                     IngredientName = ingredient.Name,
                     Unit = ingredient.Unit,
                     IsChecked = ingredient.IsChecked,
-                    Quantity = ingredient.Quantity
+                    Quantity = ingredient.Quantity,
+                    Order = ingredient.Order
                 };
                 _context.ShoppingListItems.Add(newItem);
             }

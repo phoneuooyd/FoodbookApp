@@ -114,19 +114,21 @@
                                             CommandParameter="{Binding .}" 
                                             WidthRequest="40" 
                                             HeightRequest="40"
+                                            BackgroundColor="Transparent"
+                                            TextColor="Black"
                                             FontSize="16"
                                             CornerRadius="6" />
                                     
                                     <!-- Ikona usuwania -->
                                     <Button Grid.Column="2" 
-                                            Text="🗑" 
+                                            Text="−" 
                                             Command="{Binding BindingContext.DeleteRecipeCommand, Source={x:Reference ThisPage}}" 
                                             CommandParameter="{Binding .}" 
                                             WidthRequest="40" 
                                             HeightRequest="40"
-                                            BackgroundColor="Red"
-                                            TextColor="White"
-                                            FontSize="16"
+                                            BackgroundColor="Transparent"
+                                            TextColor="Black"
+                                            FontSize="20"
                                             CornerRadius="6" />
                                 </Grid>
                             </Frame>

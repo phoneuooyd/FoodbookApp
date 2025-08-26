@@ -122,6 +122,69 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         }
     }
 
+    public async Task ReorderItemsAsync(Ingredient draggedItem, Ingredient targetItem)
+    {
+        try
+        {
+            // Determine which collection the items belong to
+            var draggedInUnchecked = UncheckedItems.Contains(draggedItem);
+            var targetInUnchecked = UncheckedItems.Contains(targetItem);
+
+            // Only allow reordering within the same collection (checked/unchecked)
+            if (draggedInUnchecked != targetInUnchecked)
+                return;
+
+            var targetCollection = draggedInUnchecked ? UncheckedItems : CheckedItems;
+
+            var draggedIndex = targetCollection.IndexOf(draggedItem);
+            var targetIndex = targetCollection.IndexOf(targetItem);
+
+            if (draggedIndex != -1 && targetIndex != -1 && draggedIndex != targetIndex)
+            {
+                // Remove the dragged item
+                targetCollection.RemoveAt(draggedIndex);
+                
+                // Adjust target index if needed
+                if (draggedIndex < targetIndex)
+                    targetIndex--;
+                
+                // Insert at new position
+                targetCollection.Insert(targetIndex, draggedItem);
+                
+                await SaveOrderAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error reordering items: {ex.Message}");
+        }
+    }
+
+    private async Task SaveOrderAsync()
+    {
+        try
+        {
+            // Assign order indices to all items
+            for (int i = 0; i < UncheckedItems.Count; i++)
+            {
+                UncheckedItems[i].Order = i;
+            }
+            
+            for (int i = 0; i < CheckedItems.Count; i++)
+            {
+                CheckedItems[i].Order = i;
+            }
+
+            // Save all items with their new order
+            var allItems = UncheckedItems.Concat(CheckedItems).ToList();
+            await _shoppingListService.SaveAllShoppingListStatesAsync(_currentPlanId, allItems);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error saving item order: {ex.Message}");
+        }
+    }
+
     private void AddItem()
     {
         var newItem = new Ingredient { Name = string.Empty, Quantity = 0, Unit = Unit.Gram };

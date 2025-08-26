@@ -31,24 +31,25 @@
                         
                         <!-- Przycisk edycji -->
                         <Button Grid.Column="1" 
-                                Text="✏️" 
+                                Text="✎" 
                                 Command="{Binding BindingContext.OpenPlanCommand, Source={x:Reference ThisPage}}" 
                                 CommandParameter="{Binding .}" 
                                 WidthRequest="40" 
                                 HeightRequest="40"
-                                TextColor="White"
+                                BackgroundColor="Transparent"
+                                TextColor="Black"
                                 FontSize="16"
                                 CornerRadius="6" />
                         
-                        <!-- Przycisk archiwizacji - szary kolor -->
+                        <!-- Przycisk archiwizacji - folder -->
                         <Button Grid.Column="2" 
                                 Text="📁" 
                                 Command="{Binding BindingContext.ArchivePlanCommand, Source={x:Reference ThisPage}}" 
                                 CommandParameter="{Binding .}" 
                                 WidthRequest="40" 
                                 HeightRequest="40"
-                                BackgroundColor="Gray"
-                                TextColor="White"
+                                BackgroundColor="Transparent"
+                                TextColor="Black"
                                 FontSize="16"
                                 CornerRadius="6" />
                     </Grid>

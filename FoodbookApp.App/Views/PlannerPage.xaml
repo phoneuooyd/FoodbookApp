@@ -188,15 +188,15 @@
                                                     
                                                     <!-- Przycisk usuwania posiłku -->
                                                     <Button Grid.Column="4" 
-                                                            Text="❌" 
+                                                            Text="−" 
                                                             Command="{Binding BindingContext.RemoveMealCommand, Source={x:Reference ThisPage}}" 
                                                             CommandParameter="{Binding .}" 
                                                             WidthRequest="26" 
                                                             HeightRequest="26"
                                                             CornerRadius="13"
                                                             BackgroundColor="Transparent"
-                                                            TextColor="Red"
-                                                            FontSize="12"
+                                                            TextColor="Black"
+                                                            FontSize="16"
                                                             FontAttributes="Bold"
                                                             BorderWidth="0"
                                                             Padding="0" />

@@ -44,28 +44,28 @@
                                    TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
                         </VerticalStackLayout>
                         
-                        <!-- Przycisk przywracania - strzałka -->
+                        <!-- Przycisk przywracania - folder -->
                         <Button Grid.Column="1" 
-                                Text="↩️" 
+                                Text="📁" 
                                 Command="{Binding BindingContext.RestorePlanCommand, Source={x:Reference ThisPage}}" 
                                 CommandParameter="{Binding .}" 
                                 WidthRequest="40" 
                                 HeightRequest="40"
-                                BackgroundColor="{AppThemeBinding Light=Green, Dark=DarkGreen}"
-                                TextColor="White"
+                                BackgroundColor="Transparent"
+                                TextColor="Black"
                                 FontSize="16"
                                 CornerRadius="6" />
                         
-                        <!-- Przycisk trwalego usuwania - kosz -->
+                        <!-- Przycisk trwalego usuwania - minus -->
                         <Button Grid.Column="2" 
-                                Text="🗑" 
+                                Text="−" 
                                 Command="{Binding BindingContext.DeletePlanCommand, Source={x:Reference ThisPage}}" 
                                 CommandParameter="{Binding .}" 
                                 WidthRequest="40" 
                                 HeightRequest="40"
-                                BackgroundColor="{AppThemeBinding Light=Red, Dark=DarkRed}"
-                                TextColor="White"
-                                FontSize="16"
+                                BackgroundColor="Transparent"
+                                TextColor="Black"
+                                FontSize="20"
                                 CornerRadius="6" />
                     </Grid>
                 </Frame>

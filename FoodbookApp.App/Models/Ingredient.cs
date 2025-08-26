@@ -33,6 +33,9 @@ namespace Foodbook.Models
             } 
         }
 
+        // Order for shopping list items (used for reordering functionality)
+        public int Order { get; set; } = 0;
+
         // Nutritional information per specified amount/unit
         public double Calories { get; set; }
         public double Protein { get; set; }
