@@ -33,4 +33,16 @@
   <data name="Save" xml:space="preserve">
     <value>Zapisz</value>
   </data>
+  <data name="NoRecipesAvailable" xml:space="preserve">
+    <value>Brak dostępnych przepisów</value>
+  </data>
+  <data name="NoRecipesMessage" xml:space="preserve">
+    <value>Musisz najpierw dodać przepisy, zanim będziesz mógł utworzyć plan posiłków.</value>
+  </data>
+  <data name="AddRecipesFirst" xml:space="preserve">
+    <value>Przejdź do Przepisów</value>
+  </data>
+  <data name="NoRecipeSelected" xml:space="preserve">
+    <value>Proszę wybrać przepis</value>
+  </data>
 </root>

@@ -13,6 +13,10 @@
         <CollectionView.ItemTemplate>
             <DataTemplate x:DataType="models:Plan">
                 <Frame BorderColor="LightGray" Padding="10" Margin="0,3">
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding BindingContext.OpenPlanCommand, Source={x:Reference ThisPage}}" 
+                                              CommandParameter="{Binding .}" />
+                    </Frame.GestureRecognizers>
                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
                         <!-- Kolumna z trescia planu -->
                         <VerticalStackLayout Grid.Column="0">

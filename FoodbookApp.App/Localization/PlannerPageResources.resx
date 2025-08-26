@@ -33,4 +33,16 @@
   <data name="Save" xml:space="preserve">
     <value>Save</value>
   </data>
+  <data name="NoRecipesAvailable" xml:space="preserve">
+    <value>No recipes available</value>
+  </data>
+  <data name="NoRecipesMessage" xml:space="preserve">
+    <value>You need to add some recipes first before you can create a meal plan.</value>
+  </data>
+  <data name="AddRecipesFirst" xml:space="preserve">
+    <value>Go to Recipes</value>
+  </data>
+  <data name="NoRecipeSelected" xml:space="preserve">
+    <value>Please select a recipe</value>
+  </data>
 </root>

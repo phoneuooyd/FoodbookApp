@@ -43,7 +43,7 @@ public partial class ShoppingListDetailPage : ContentPage
         try
         {
             // Get the dragged item from the binding context
-            if (sender is Element element && element.BindingContext is Ingredient item)
+            if (sender is Border border && border.BindingContext is Ingredient item)
             {
                 _draggedItem = item;
                 
@@ -61,8 +61,22 @@ public partial class ShoppingListDetailPage : ContentPage
 
     private void OnItemDragOver(object sender, DragEventArgs e)
     {
-        // Allow the drop operation
-        e.AcceptedOperation = DataPackageOperation.Copy;
+        try
+        {
+            // Only allow drop if we have a dragged item and sender is a Border
+            if (_draggedItem != null && sender is Border)
+            {
+                e.AcceptedOperation = DataPackageOperation.Copy;
+            }
+            else
+            {
+                e.AcceptedOperation = DataPackageOperation.None;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in OnItemDragOver: {ex.Message}");
+        }
     }
 
     private async void OnItemDropped(object sender, Microsoft.Maui.Controls.DropEventArgs e)
@@ -70,7 +84,7 @@ public partial class ShoppingListDetailPage : ContentPage
         try
         {
             // Get the target item from the binding context
-            if (sender is Element element && element.BindingContext is Ingredient targetItem && _draggedItem != null)
+            if (sender is Border border && border.BindingContext is Ingredient targetItem && _draggedItem != null)
             {
                 // Check if we're dropping on a different item
                 if (_draggedItem != targetItem)
@@ -84,6 +98,10 @@ public partial class ShoppingListDetailPage : ContentPage
                     {
                         await _viewModel.ReorderItemsAsync(_draggedItem, targetItem);
                         System.Diagnostics.Debug.WriteLine($"Reordered {_draggedItem.Name} relative to {targetItem.Name}");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("Cannot reorder items between different collections (checked/unchecked)");
                     }
                 }
             }

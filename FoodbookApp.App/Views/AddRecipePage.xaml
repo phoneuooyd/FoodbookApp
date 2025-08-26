@@ -248,16 +248,20 @@
                                         
                                         <!-- Przycisk usuń -->
                                         <Button Grid.Row="0" Grid.Column="3"
-                                                Text="🗑"
+                                                Text="✕"
                                                 Command="{Binding BindingContext.RemoveIngredientCommand, Source={x:Reference ThisPage}}"
                                                 CommandParameter="{Binding .}"
                                                 WidthRequest="40"
                                                 HeightRequest="40"
-                                                BackgroundColor="Red"
+                                                BackgroundColor="#FF6B6B"
                                                 TextColor="White"
-                                                FontSize="16"
-                                                CornerRadius="6"
-                                                VerticalOptions="End" />
+                                                FontSize="18"
+                                                FontAttributes="Bold"
+                                                CornerRadius="20"
+                                                BorderWidth="0"
+                                                Padding="0"
+                                                VerticalOptions="End"
+                                                HorizontalOptions="Center" />
 
                                         <!-- Wartości odżywcze składnika -->
                                         <StackLayout Grid.Row="1" Grid.ColumnSpan="4" 

@@ -62,6 +62,10 @@ public class PlannerViewModel : INotifyPropertyChanged
         }
     }
 
+    // New property to track if recipes are available
+    public bool HasRecipes => Recipes.Count > 0;
+    public bool HasNoRecipes => Recipes.Count == 0;
+
     private DateTime _startDate = DateTime.Today;
     public DateTime StartDate
     {
@@ -70,6 +74,14 @@ public class PlannerViewModel : INotifyPropertyChanged
         {
             if (_startDate == value) return;
             _startDate = value;
+            
+            // If start date is set higher than end date, adjust end date to match start date
+            if (_startDate > _endDate)
+            {
+                _endDate = _startDate;
+                OnPropertyChanged(nameof(EndDate));
+            }
+            
             OnPropertyChanged();
             _ = LoadAsync();
         }
@@ -82,6 +94,14 @@ public class PlannerViewModel : INotifyPropertyChanged
         set
         {
             if (_endDate == value) return;
+            
+            // If end date is set lower than start date, adjust start date to match end date
+            if (value < _startDate)
+            {
+                _startDate = value;
+                OnPropertyChanged(nameof(StartDate));
+            }
+            
             _endDate = value;
             OnPropertyChanged();
             _ = LoadAsync();
@@ -107,6 +127,7 @@ public class PlannerViewModel : INotifyPropertyChanged
     public ICommand DecreasePortionsCommand { get; }
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
+    public ICommand GoToRecipesCommand { get; } // New command to navigate to recipes
 
     public PlannerViewModel(IPlannerService plannerService, IRecipeService recipeService, IPlanService planService)
     {
@@ -141,6 +162,17 @@ public class PlannerViewModel : INotifyPropertyChanged
             }
         });
         CancelCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
+        GoToRecipesCommand = new Command(async () => 
+        {
+            try
+            {
+                await Shell.Current.GoToAsync("//RecipesPage");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error navigating to recipes: {ex.Message}");
+            }
+        });
     }
 
     public async Task LoadAsync(bool forceReload = false)
@@ -190,6 +222,10 @@ public class PlannerViewModel : INotifyPropertyChanged
                 if (i + batchSize < rec.Count)
                     await Task.Delay(10); // Krótkie opóźnienie dla UI
             }
+
+            // Notify about recipe availability changes
+            OnPropertyChanged(nameof(HasRecipes));
+            OnPropertyChanged(nameof(HasNoRecipes));
 
             // Etap 3: Ładowanie istniejących posiłków
             LoadingStatus = "Ładowanie zaplanowanych posiłków...";
@@ -245,7 +281,11 @@ public class PlannerViewModel : INotifyPropertyChanged
             LoadingProgress = 0.9;
             await Task.Delay(50);
 
-            AdjustMealsPerDay();
+            // Only adjust meals if we have recipes
+            if (HasRecipes)
+            {
+                AdjustMealsPerDay();
+            }
             
             LoadingProgress = 1.0;
             await Task.Delay(100); // Krótkie pokazanie 100%
@@ -337,6 +377,10 @@ public class PlannerViewModel : INotifyPropertyChanged
                 Recipes.Add(recipe);
             }
             
+            // Notify about recipe availability changes
+            OnPropertyChanged(nameof(HasRecipes));
+            OnPropertyChanged(nameof(HasNoRecipes));
+            
             // Restore days and meals
             foreach (var cachedDay in _cachedDays)
             {
@@ -378,6 +422,17 @@ public class PlannerViewModel : INotifyPropertyChanged
     private void AddMeal(PlannerDay? day)
     {
         if (day == null) return;
+
+        // Check if recipes are available before adding meal
+        if (!HasRecipes)
+        {
+            _ = Shell.Current.DisplayAlert(
+                "Brak przepisów", 
+                "Musisz najpierw dodać przepisy, zanim będziesz mógł dodać posiłek.", 
+                "OK");
+            return;
+        }
+
         var meal = new PlannedMeal { Date = day.Date, Portions = 1 };
         meal.PropertyChanged += OnMealRecipeChanged;
         day.Meals.Add(meal);
@@ -396,6 +451,9 @@ public class PlannerViewModel : INotifyPropertyChanged
 
     private void AdjustMealsPerDay()
     {
+        // Only adjust meals if we have recipes
+        if (!HasRecipes) return;
+
         foreach (var day in Days)
         {
             while (day.Meals.Count < MealsPerDay)
