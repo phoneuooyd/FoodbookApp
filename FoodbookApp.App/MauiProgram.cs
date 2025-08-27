@@ -13,6 +13,9 @@ namespace FoodbookApp
     public static class MauiProgram
     {
         public static IServiceProvider? ServiceProvider { get; private set; }
+        private static bool _isDatabaseInitialized = false;
+        private static readonly object _initLock = new object();
+
         public static MauiApp CreateMauiApp()
         {
             var builder = MauiApp.CreateBuilder();
@@ -33,6 +36,7 @@ namespace FoodbookApp
             {
                 var dbPath = Path.Combine(FileSystem.AppDataDirectory, "foodbook.db");
                 options.UseSqlite($"Filename={dbPath}");
+                LogDebug($"Database path: {dbPath}");
             });
 
             // Rejestracja serwisów i VM
@@ -92,14 +96,38 @@ namespace FoodbookApp
             var app = builder.Build();
             ServiceProvider = app.Services;
 
-            // Inicjalizacja bazy danych w tle
-            Task.Run(() => SeedDatabaseAsync(app.Services));
+            // Inicjalizacja bazy danych - bez Task.Run aby uniknąć race conditions
+            _ = InitializeDatabaseAsync(app.Services);
 
             return app;
         }
 
-        private static async Task SeedDatabaseAsync(IServiceProvider services)
+        /// <summary>
+        /// Publiczna metoda do sprawdzenia czy baza została zainicjalizowana
+        /// </summary>
+        public static bool IsDatabaseInitialized
         {
+            get { lock (_initLock) { return _isDatabaseInitialized; } }
+        }
+
+        /// <summary>
+        /// Publiczna metoda do ręcznej inicjalizacji bazy danych
+        /// </summary>
+        public static async Task EnsureDatabaseInitializedAsync()
+        {
+            if (!IsDatabaseInitialized && ServiceProvider != null)
+            {
+                await InitializeDatabaseAsync(ServiceProvider);
+            }
+        }
+
+        private static async Task InitializeDatabaseAsync(IServiceProvider services)
+        {
+            lock (_initLock)
+            {
+                if (_isDatabaseInitialized) return;
+            }
+
             try
             {
                 LogDebug("Starting database initialization");
@@ -111,14 +139,31 @@ namespace FoodbookApp
                 await db.Database.EnsureCreatedAsync();
                 LogDebug("Database created successfully");
 
-                await SeedData.InitializeAsync(db);
-                LogDebug("Data initialization completed");
+                // Sprawdź czy są już składniki
+                var hasIngredients = await db.Ingredients.AnyAsync();
+                LogDebug($"Existing ingredients found: {hasIngredients}");
+
+                if (!hasIngredients)
+                {
+                    LogDebug("No ingredients found, attempting to seed");
+                    await SeedData.SeedIngredientsAsync(db);
+                }
+
+                lock (_initLock)
+                {
+                    _isDatabaseInitialized = true;
+                }
+                
+                LogDebug("Database initialization completed successfully");
             }
             catch (Exception ex)
             {
                 LogError($"Database initialization failed: {ex.Message}");
                 LogError($"Stack trace: {ex.StackTrace}");
                 LogWarning("App will continue without seeded data");
+                
+                // Nie ustawiamy _isDatabaseInitialized = true przy błędzie
+                // aby umożliwić ponowną próbę
             }
         }
 

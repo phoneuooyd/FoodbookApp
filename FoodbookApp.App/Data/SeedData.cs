@@ -1,5 +1,6 @@
 using Foodbook.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Maui.Storage;
 using Newtonsoft.Json;
 using System.Reflection;
@@ -8,69 +9,399 @@ namespace Foodbook.Data
 {
     public static class SeedData
     {
+        /// <summary>
+        /// Inicjalizuje bazę danych z transakcją dla zapewnienia integralności danych
+        /// </summary>
+        /// <param name="context">Kontekst bazy danych</param>
+        /// <returns>Task representing the async operation</returns>
         public static async Task InitializeAsync(AppDbContext context)
         {
-            var hasIngredients = await context.Ingredients.AnyAsync();
-            var hasRecipes = await context.Recipes.AnyAsync();
-
-            if (hasIngredients && hasRecipes)
-                return;
-
-            if (!hasIngredients)
+            // Rozpocznij transakcję dla całej operacji inicjalizacji
+            using var transaction = await context.Database.BeginTransactionAsync();
+            
+            try
             {
-                await SeedIngredientsAsync(context);
-            }
+                LogDebug("Starting database initialization with transaction");
+                
+                var hasIngredients = await context.Ingredients.AnyAsync();
+                var hasRecipes = await context.Recipes.AnyAsync();
 
-            if (hasRecipes)
-                return;
+                LogDebug($"Database state: hasIngredients={hasIngredients}, hasRecipes={hasRecipes}");
 
-            var recipe = new Recipe
-            {
-                Name = "Prosta sałatka",
-                Description = "Przykładowa sałatka.",
-                Calories = 150,
-                Protein = 3,
-                Fat = 7,
-                Carbs = 18,
-                Ingredients = new List<Ingredient>
+                // Jeśli wszystko już istnieje, zakończ bez zmian
+                if (hasIngredients && hasRecipes)
                 {
-                    new Ingredient { Name = "Sałata", Quantity = 100, Unit = Unit.Gram, Calories = 25, Protein = 1, Fat = 0, Carbs = 5 },
-                    new Ingredient { Name = "Pomidor", Quantity = 50, Unit = Unit.Gram, Calories = 25, Protein = 1, Fat = 0, Carbs = 5 }
+                    LogDebug("Database already fully populated - rolling back transaction");
+                    await transaction.RollbackAsync();
+                    return;
                 }
-            };
 
-            context.Recipes.Add(recipe);
-            await context.SaveChangesAsync();
+                bool dataSeeded = false;
+
+                // Seed ingredients jeśli nie istnieją
+                if (!hasIngredients)
+                {
+                    LogDebug("Seeding ingredients within transaction");
+                    await SeedIngredientsInTransactionAsync(context);
+                    dataSeeded = true;
+                }
+
+                // Seed recipes jeśli nie istnieją
+                if (!hasRecipes)
+                {
+                    LogDebug("Seeding sample recipe within transaction");
+                    await SeedSampleRecipeInTransactionAsync(context);
+                    dataSeeded = true;
+                }
+
+                if (dataSeeded)
+                {
+                    // Commit transakcji tylko jeśli coś zostało dodane
+                    await transaction.CommitAsync();
+                    LogDebug("Database initialization transaction committed successfully");
+                }
+                else
+                {
+                    // Rollback jeśli nic nie zostało dodane
+                    await transaction.RollbackAsync();
+                    LogDebug("No data seeded - transaction rolled back");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error during database initialization: {ex.Message}");
+                LogError($"Stack trace: {ex.StackTrace}");
+                
+                try
+                {
+                    await transaction.RollbackAsync();
+                    LogDebug("Transaction rolled back due to error");
+                }
+                catch (Exception rollbackEx)
+                {
+                    LogError($"Error during transaction rollback: {rollbackEx.Message}");
+                }
+                
+                throw; // Re-throw original exception
+            }
         }
 
+        /// <summary>
+        /// Seeduje składniki w ramach istniejącej transakcji
+        /// </summary>
+        /// <param name="context">Kontekst bazy danych z aktywną transakcją</param>
         public static async Task SeedIngredientsAsync(AppDbContext context)
         {
+            // Sprawdź czy jest aktywna transakcja
+            var currentTransaction = context.Database.CurrentTransaction;
+            
+            if (currentTransaction != null)
+            {
+                // Jeśli jest aktywna transakcja, użyj jej
+                LogDebug("Using existing transaction for ingredient seeding");
+                await SeedIngredientsInTransactionAsync(context);
+            }
+            else
+            {
+                // Jeśli nie ma transakcji, utwórz nową
+                using var transaction = await context.Database.BeginTransactionAsync();
+                
+                try
+                {
+                    LogDebug("Creating new transaction for ingredient seeding");
+                    await SeedIngredientsInTransactionAsync(context);
+                    await transaction.CommitAsync();
+                    LogDebug("Ingredient seeding transaction committed successfully");
+                }
+                catch (Exception ex)
+                {
+                    LogError($"Error seeding ingredients: {ex.Message}");
+                    LogError($"Stack trace: {ex.StackTrace}");
+                    
+                    try
+                    {
+                        await transaction.RollbackAsync();
+                        LogDebug("Ingredient seeding transaction rolled back due to error");
+                    }
+                    catch (Exception rollbackEx)
+                    {
+                        LogError($"Error during transaction rollback: {rollbackEx.Message}");
+                    }
+                    
+                    LogWarning("Continuing without seeded ingredients - user can add manually");
+                    throw; // Re-throw to allow caller to handle the error
+                }
+            }
+        }
+
+        /// <summary>
+        /// Wewnętrzna metoda seedowania składników bez zarządzania transakcją
+        /// </summary>
+        /// <param name="context">Kontekst bazy danych</param>
+        private static async Task SeedIngredientsInTransactionAsync(AppDbContext context)
+        {
+            LogDebug("SeedIngredientsInTransactionAsync started");
+            
+            // Double-check w ramach transakcji
             if (await context.Ingredients.AnyAsync())
             {
                 LogDebug("Ingredients already exist in database - skipping seed");
                 return;
             }
 
+            LogDebug("Starting ingredient seeding");
+            var ingredients = await LoadPopularIngredientsAsync();
+            LogDebug($"Loaded {ingredients.Count} ingredients from data source");
+
+            if (ingredients.Count == 0)
+            {
+                LogWarning("No ingredients loaded from data source!");
+                return;
+            }
+
+            // Walidacja danych przed dodaniem
+            var validIngredients = ValidateIngredients(ingredients);
+            LogDebug($"Validated {validIngredients.Count} out of {ingredients.Count} ingredients");
+
+            if (validIngredients.Count == 0)
+            {
+                LogError("No valid ingredients to seed!");
+                throw new InvalidOperationException("No valid ingredients available for seeding");
+            }
+
+            // Ustawienie RecipeId na null dla składników głównych
+            foreach (var ingredient in validIngredients)
+            {
+                ingredient.RecipeId = null;
+            }
+
+            LogDebug($"Adding {validIngredients.Count} ingredients to database");
+            
+            // Batch dodawanie z kontrolą pamięci
+            const int batchSize = 100;
+            var totalAdded = 0;
+            
+            for (int i = 0; i < validIngredients.Count; i += batchSize)
+            {
+                var batch = validIngredients.Skip(i).Take(batchSize).ToList();
+                context.Ingredients.AddRange(batch);
+                
+                // Zapisz batch do bazy
+                var savedInBatch = await context.SaveChangesAsync();
+                totalAdded += savedInBatch;
+                
+                LogDebug($"Saved batch {(i / batchSize) + 1}: {savedInBatch} ingredients");
+                
+                // Wyczyść change tracker dla zarządzania pamięcią
+                context.ChangeTracker.Clear();
+            }
+
+            LogDebug($"Successfully added {totalAdded} ingredients to database");
+            
+            // Weryfikacja końcowa
+            var verifyCount = await context.Ingredients.CountAsync();
+            LogDebug($"Verification: {verifyCount} ingredients now in database");
+            
+            if (verifyCount < validIngredients.Count)
+            {
+                LogWarning($"Expected {validIngredients.Count} ingredients but found {verifyCount} in database");
+            }
+        }
+
+        /// <summary>
+        /// Seeduje przykładowy przepis w ramach transakcji
+        /// </summary>
+        /// <param name="context">Kontekst bazy danych</param>
+        private static async Task SeedSampleRecipeInTransactionAsync(AppDbContext context)
+        {
+            LogDebug("SeedSampleRecipeInTransactionAsync started");
+            
+            // Double-check w ramach transakcji
+            if (await context.Recipes.AnyAsync())
+            {
+                LogDebug("Recipes already exist in database - skipping seed");
+                return;
+            }
+
+            var recipe = new Recipe
+            {
+                Name = "Prosta sałatka",
+                Description = "Przykładowa sałatka z podstawowymi składnikami.",
+                Calories = 150,
+                Protein = 3,
+                Fat = 7,
+                Carbs = 18,
+                IloscPorcji = 2,
+                Ingredients = new List<Ingredient>
+                {
+                    new Ingredient 
+                    { 
+                        Name = "Sałata", 
+                        Quantity = 100, 
+                        Unit = Unit.Gram, 
+                        Calories = 25, 
+                        Protein = 1, 
+                        Fat = 0, 
+                        Carbs = 5 
+                    },
+                    new Ingredient 
+                    { 
+                        Name = "Pomidor", 
+                        Quantity = 50, 
+                        Unit = Unit.Gram, 
+                        Calories = 25, 
+                        Protein = 1, 
+                        Fat = 0, 
+                        Carbs = 5 
+                    }
+                }
+            };
+
+            // Walidacja przepisu przed dodaniem
+            if (ValidateRecipe(recipe))
+            {
+                context.Recipes.Add(recipe);
+                var savedCount = await context.SaveChangesAsync();
+                LogDebug($"Successfully added sample recipe with {savedCount} changes saved");
+            }
+            else
+            {
+                LogError("Sample recipe validation failed");
+                throw new InvalidOperationException("Sample recipe data is invalid");
+            }
+        }
+
+        /// <summary>
+        /// Waliduje listę składników przed dodaniem do bazy
+        /// </summary>
+        /// <param name="ingredients">Lista składników do walidacji</param>
+        /// <returns>Lista poprawnych składników</returns>
+        private static List<Ingredient> ValidateIngredients(List<Ingredient> ingredients)
+        {
+            var validIngredients = new List<Ingredient>();
+            
+            foreach (var ingredient in ingredients)
+            {
+                if (ValidateIngredient(ingredient))
+                {
+                    validIngredients.Add(ingredient);
+                }
+                else
+                {
+                    LogWarning($"Invalid ingredient skipped: {ingredient?.Name ?? "NULL"}");
+                }
+            }
+            
+            return validIngredients;
+        }
+
+        /// <summary>
+        /// Waliduje pojedynczy składnik
+        /// </summary>
+        /// <param name="ingredient">Składnik do walidacji</param>
+        /// <returns>True jeśli składnik jest poprawny</returns>
+        private static bool ValidateIngredient(Ingredient? ingredient)
+        {
+            if (ingredient == null)
+            {
+                LogWarning("Ingredient is null");
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(ingredient.Name))
+            {
+                LogWarning("Ingredient name is empty or null");
+                return false;
+            }
+
+            if (ingredient.Quantity <= 0)
+            {
+                LogWarning($"Ingredient {ingredient.Name} has invalid quantity: {ingredient.Quantity}");
+                return false;
+            }
+
+            if (ingredient.Calories < 0 || ingredient.Protein < 0 || ingredient.Fat < 0 || ingredient.Carbs < 0)
+            {
+                LogWarning($"Ingredient {ingredient.Name} has negative nutritional values");
+                return false;
+            }
+
+            if (ingredient.Name.Length > 200) // Assumption about max name length
+            {
+                LogWarning($"Ingredient name too long: {ingredient.Name.Length} characters");
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Waliduje przepis przed dodaniem do bazy
+        /// </summary>
+        /// <param name="recipe">Przepis do walidacji</param>
+        /// <returns>True jeśli przepis jest poprawny</returns>
+        private static bool ValidateRecipe(Recipe? recipe)
+        {
+            if (recipe == null)
+            {
+                LogWarning("Recipe is null");
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(recipe.Name))
+            {
+                LogWarning("Recipe name is empty or null");
+                return false;
+            }
+
+            if (recipe.IloscPorcji <= 0)
+            {
+                LogWarning($"Recipe {recipe.Name} has invalid portion count: {recipe.IloscPorcji}");
+                return false;
+            }
+
+            if (recipe.Calories < 0 || recipe.Protein < 0 || recipe.Fat < 0 || recipe.Carbs < 0)
+            {
+                LogWarning($"Recipe {recipe.Name} has negative nutritional values");
+                return false;
+            }
+
+            // Walidacja składników przepisu
+            if (recipe.Ingredients != null)
+            {
+                foreach (var ingredient in recipe.Ingredients)
+                {
+                    if (!ValidateIngredient(ingredient))
+                    {
+                        LogWarning($"Recipe {recipe.Name} contains invalid ingredient");
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Metoda diagnostyczna do sprawdzania stanu transakcji
+        /// </summary>
+        /// <param name="context">Kontekst bazy danych</param>
+        /// <returns>Informacje o stanie transakcji</returns>
+        public static string GetTransactionInfo(AppDbContext context)
+        {
             try
             {
-                LogDebug("Starting ingredient seeding");
-                var ingredients = await LoadPopularIngredientsAsync();
-
-                foreach (var ingredient in ingredients)
+                var transaction = context.Database.CurrentTransaction;
+                if (transaction == null)
                 {
-                    ingredient.RecipeId = null;
+                    return "No active transaction";
                 }
 
-                LogDebug($"Adding {ingredients.Count} ingredients to database");
-                context.Ingredients.AddRange(ingredients);
-                await context.SaveChangesAsync();
-                LogDebug($"Successfully added {ingredients.Count} ingredients to database");
+                return $"Active transaction ID: {transaction.TransactionId}";
             }
             catch (Exception ex)
             {
-                LogError($"Error seeding ingredients: {ex.Message}");
-                LogError($"Stack trace: {ex.StackTrace}");
-                LogWarning("Continuing without seeded ingredients - user can add manually");
+                return $"Error getting transaction info: {ex.Message}";
             }
         }
 
@@ -399,6 +730,39 @@ namespace Foodbook.Data
             {
                 LogError($"DIAGNOSTIC: Error loading ingredients: {ex.Message}");
                 return -1;
+            }
+        }
+
+        /// <summary>
+        /// Metoda diagnostyczna do testowania składników w bazie danych
+        /// </summary>
+        public static async Task<string> DiagnoseDatabaseAsync(AppDbContext context)
+        {
+            try
+            {
+                var ingredientCount = await context.Ingredients.CountAsync();
+                var recipeCount = await context.Recipes.CountAsync();
+                
+                var dbPath = context.Database.GetConnectionString();
+                var dbExists = !string.IsNullOrEmpty(dbPath) && System.IO.File.Exists(dbPath.Replace("Filename=", ""));
+                
+                var transactionInfo = GetTransactionInfo(context);
+                
+                LogDebug($"DIAGNOSTIC: Database exists: {dbExists}");
+                LogDebug($"DIAGNOSTIC: Ingredients in DB: {ingredientCount}");
+                LogDebug($"DIAGNOSTIC: Recipes in DB: {recipeCount}");
+                LogDebug($"DIAGNOSTIC: Transaction: {transactionInfo}");
+                
+                return $"Database: {(dbExists ? "EXISTS" : "MISSING")}\n" +
+                       $"Ingredients: {ingredientCount}\n" +
+                       $"Recipes: {recipeCount}\n" +
+                       $"Transaction: {transactionInfo}\n" +
+                       $"Path: {dbPath}";
+            }
+            catch (Exception ex)
+            {
+                LogError($"DIAGNOSTIC: Database diagnosis failed: {ex.Message}");
+                return $"ERROR: {ex.Message}";
             }
         }
 

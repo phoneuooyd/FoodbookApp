@@ -11,6 +11,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
 {
     private readonly IIngredientService _service;
     private Ingredient? _ingredient;
+    private bool _isSaving = false;
 
     // Tab management
     private int _selectedTabIndex = 0;
@@ -80,6 +81,20 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     public bool IsVerifying { get => _isVerifying; set { _isVerifying = value; OnPropertyChanged(); } }
     private bool _isVerifying = false;
 
+    public bool IsSaving 
+    { 
+        get => _isSaving; 
+        set 
+        { 
+            _isSaving = value; 
+            OnPropertyChanged(); 
+            OnPropertyChanged(nameof(CanSaveNow));
+            ((Command)SaveCommand).ChangeCanExecute(); 
+        } 
+    }
+
+    public bool CanSaveNow => !IsSaving && CanSave();
+
     public IEnumerable<Unit> Units { get; } = Enum.GetValues(typeof(Unit)).Cast<Unit>();
 
     public ICommand SaveCommand { get; }
@@ -89,7 +104,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     public IngredientFormViewModel(IIngredientService service)
     {
         _service = service;
-        SaveCommand = new Command(async () => await SaveAsync(), CanSave);
+        SaveCommand = new Command(async () => await SaveAsync(), () => CanSaveNow);
         CancelCommand = new Command(async () => await CancelAsync());
         VerifyNutritionCommand = new Command(async () => await VerifyNutritionAsync(), () => !string.IsNullOrWhiteSpace(Name) && !IsVerifying);
         SelectTabCommand = new Command<object>(SelectTab);
@@ -253,13 +268,16 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     {
         try
         {
-            return !string.IsNullOrWhiteSpace(Name) && 
-                   IsValidDouble(Quantity) && 
-                   ParseDoubleValue(Quantity) > 0 &&
-                   IsValidDouble(Calories) &&
-                   IsValidDouble(Protein) &&
-                   IsValidDouble(Fat) &&
-                   IsValidDouble(Carbs);
+            bool isValid = !string.IsNullOrWhiteSpace(Name) && 
+                          IsValidDouble(Quantity) && 
+                          ParseDoubleValue(Quantity) > 0 &&
+                          IsValidDouble(Calories) &&
+                          IsValidDouble(Protein) &&
+                          IsValidDouble(Fat) &&
+                          IsValidDouble(Carbs);
+
+            System.Diagnostics.Debug.WriteLine($"CanSave validation: Name='{Name}', Quantity='{Quantity}', Valid={isValid}");
+            return isValid;
         }
         catch (Exception ex)
         {
@@ -290,20 +308,37 @@ public class IngredientFormViewModel : INotifyPropertyChanged
             {
                 ValidationMessage = "Kalorie musz¹ byæ liczb¹";
             }
+            else if (ParseDoubleValue(Calories) < 0)
+            {
+                ValidationMessage = "Kalorie nie mog¹ byæ ujemne";
+            }
             else if (!IsValidDouble(Protein))
             {
                 ValidationMessage = "Bia³ko musi byæ liczb¹";
+            }
+            else if (ParseDoubleValue(Protein) < 0)
+            {
+                ValidationMessage = "Bia³ko nie mo¿e byæ ujemne";
             }
             else if (!IsValidDouble(Fat))
             {
                 ValidationMessage = "T³uszcze musz¹ byæ liczb¹";
             }
+            else if (ParseDoubleValue(Fat) < 0)
+            {
+                ValidationMessage = "T³uszcze nie mog¹ byæ ujemne";
+            }
             else if (!IsValidDouble(Carbs))
             {
                 ValidationMessage = "Wêglowodany musz¹ byæ liczb¹";
             }
+            else if (ParseDoubleValue(Carbs) < 0)
+            {
+                ValidationMessage = "Wêglowodany nie mog¹ byæ ujemne";
+            }
 
             OnPropertyChanged(nameof(HasValidationError));
+            OnPropertyChanged(nameof(CanSaveNow));
             ((Command)SaveCommand).ChangeCanExecute();
             ((Command)VerifyNutritionCommand).ChangeCanExecute();
         }
@@ -318,10 +353,20 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     {
         try
         {
-            if (!CanSave())
+            if (IsSaving)
             {
+                System.Diagnostics.Debug.WriteLine("Save already in progress, ignoring duplicate call");
                 return;
             }
+
+            if (!CanSave())
+            {
+                System.Diagnostics.Debug.WriteLine("CanSave returned false, aborting save");
+                return;
+            }
+
+            IsSaving = true;
+            System.Diagnostics.Debug.WriteLine("Starting save operation");
 
             var qty = ParseDoubleValue(Quantity);
             var cal = ParseDoubleValue(Calories);
@@ -329,6 +374,8 @@ public class IngredientFormViewModel : INotifyPropertyChanged
             var fat = ParseDoubleValue(Fat);
             var carbs = ParseDoubleValue(Carbs);
             
+            System.Diagnostics.Debug.WriteLine($"Parsed values - Qty: {qty}, Cal: {cal}, Prot: {prot}, Fat: {fat}, Carbs: {carbs}");
+
             if (_ingredient == null)
             {
                 // Creating new ingredient
@@ -344,8 +391,9 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                     RecipeId = null  // Explicitly set to null for standalone ingredients
                 };
                 
+                System.Diagnostics.Debug.WriteLine($"Creating new ingredient: {newIng.Name}");
                 await _service.AddIngredientAsync(newIng);
-                System.Diagnostics.Debug.WriteLine($"Added new ingredient: {Name}, {qty}, {SelectedUnit}, {cal} cal");
+                System.Diagnostics.Debug.WriteLine($"Successfully added new ingredient: {Name}, {qty}, {SelectedUnit}, {cal} cal");
             }
             else
             {
@@ -358,16 +406,25 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 _ingredient.Fat = fat;
                 _ingredient.Carbs = carbs;
                 // Preserve existing RecipeId and Recipe navigation property
+                
+                System.Diagnostics.Debug.WriteLine($"Updating existing ingredient: {_ingredient.Name}");
                 await _service.UpdateIngredientAsync(_ingredient);
-                System.Diagnostics.Debug.WriteLine($"Updated ingredient: {Name}, {qty}, {SelectedUnit}, {cal} cal");
+                System.Diagnostics.Debug.WriteLine($"Successfully updated ingredient: {Name}, {qty}, {SelectedUnit}, {cal} cal");
             }
             
+            System.Diagnostics.Debug.WriteLine("Navigating back to previous page");
             await Shell.Current.GoToAsync("..");
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error saving ingredient: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
             ValidationMessage = $"Nie uda³o siê zapisaæ sk³adnika: {ex.Message}";
+        }
+        finally
+        {
+            IsSaving = false;
+            System.Diagnostics.Debug.WriteLine("Save operation completed");
         }
     }
 
@@ -408,10 +465,13 @@ public class IngredientFormViewModel : INotifyPropertyChanged
             
             // Handle both decimal comma and dot
             string normalizedValue = value.Replace(',', '.');
-            return double.TryParse(normalizedValue, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var result) && result >= 0;
+            bool valid = double.TryParse(normalizedValue, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var result) && result >= 0;
+            System.Diagnostics.Debug.WriteLine($"IsValidDouble('{value}') = {valid}");
+            return valid;
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"Error in IsValidDouble: {ex.Message}");
             return false;
         }
     }
@@ -428,10 +488,13 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 
             // Handle both decimal comma and dot
             string normalizedValue = value.Replace(',', '.');
-            return double.TryParse(normalizedValue, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var result) ? result : 0;
+            double result = double.TryParse(normalizedValue, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var parsed) ? parsed : 0;
+            System.Diagnostics.Debug.WriteLine($"ParseDoubleValue('{value}') = {result}");
+            return result;
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"Error in ParseDoubleValue: {ex.Message}");
             return 0;
         }
     }
