@@ -119,17 +119,20 @@
                                             FontSize="16"
                                             CornerRadius="6" />
                                     
-                                    <!-- Ikona usuwania -->
+                                    <!-- Przycisk usuwania - zgodny ze stylem ShoppingListDetailPage -->
                                     <Button Grid.Column="2" 
-                                            Text="−" 
+                                            Text="✕" 
                                             Command="{Binding BindingContext.DeleteRecipeCommand, Source={x:Reference ThisPage}}" 
                                             CommandParameter="{Binding .}" 
-                                            WidthRequest="40" 
-                                            HeightRequest="40"
-                                            BackgroundColor="Transparent"
-                                            TextColor="Black"
-                                            FontSize="20"
-                                            CornerRadius="6" />
+                                            WidthRequest="35" 
+                                            HeightRequest="35"
+                                            BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}"
+                                            TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}"
+                                            FontSize="16"
+                                            CornerRadius="17"
+                                            BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}"
+                                            BorderWidth="1"
+                                            VerticalOptions="Center" />
                                 </Grid>
                             </Frame>
                         </DataTemplate>

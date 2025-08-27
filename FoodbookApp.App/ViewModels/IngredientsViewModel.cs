@@ -301,6 +301,15 @@ public class IngredientsViewModel : INotifyPropertyChanged
     {
         if (ing == null) return;
         
+        // Add confirmation dialog
+        bool confirm = await Shell.Current.DisplayAlert(
+            "Usuwanie sk³adnika", 
+            $"Czy na pewno chcesz usun¹æ sk³adnik '{ing.Name}'?", 
+            "Tak", 
+            "Nie");
+            
+        if (!confirm) return;
+        
         try
         {
             await _service.DeleteIngredientAsync(ing.Id);

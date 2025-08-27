@@ -238,6 +238,15 @@ namespace Foodbook.ViewModels
         {
             if (recipe == null) return;
             
+            // Add confirmation dialog
+            bool confirm = await Shell.Current.DisplayAlert(
+                "Usuwanie przepisu", 
+                $"Czy na pewno chcesz usun¹æ przepis '{recipe.Name}'?", 
+                "Tak", 
+                "Nie");
+                
+            if (!confirm) return;
+            
             try
             {
                 await _recipeService.DeleteRecipeAsync(recipe.Id);

@@ -81,29 +81,38 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
 
     private async void OnItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(Ingredient.IsChecked) && sender is Ingredient item)
+        if (sender is Ingredient item)
         {
-            if (item.IsChecked)
+            if (e.PropertyName == nameof(Ingredient.IsChecked))
             {
-                // Przenoszenie z UncheckedItems do CheckedItems
-                if (UncheckedItems.Contains(item))
+                if (item.IsChecked)
                 {
-                    UncheckedItems.Remove(item);
-                    CheckedItems.Add(item);
+                    // Przenoszenie z UncheckedItems do CheckedItems
+                    if (UncheckedItems.Contains(item))
+                    {
+                        UncheckedItems.Remove(item);
+                        CheckedItems.Add(item);
+                    }
                 }
-            }
-            else
-            {
-                // Przenoszenie z CheckedItems do UncheckedItems
-                if (CheckedItems.Contains(item))
+                else
                 {
-                    CheckedItems.Remove(item);
-                    UncheckedItems.Add(item);
+                    // Przenoszenie z CheckedItems do UncheckedItems
+                    if (CheckedItems.Contains(item))
+                    {
+                        CheckedItems.Remove(item);
+                        UncheckedItems.Add(item);
+                    }
                 }
             }
 
-            // Save the state immediately when changed
-            await SaveItemStateAsync(item);
+            // Save the state immediately when any relevant property changes
+            if (e.PropertyName == nameof(Ingredient.IsChecked) || 
+                e.PropertyName == nameof(Ingredient.Name) || 
+                e.PropertyName == nameof(Ingredient.Quantity) ||
+                e.PropertyName == nameof(Ingredient.Unit))
+            {
+                await SaveItemStateAsync(item);
+            }
         }
     }
 
@@ -206,12 +215,21 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
 
     private void AddItem()
     {
-        var newItem = new Ingredient { Name = string.Empty, Quantity = 0, Unit = Unit.Gram };
+        var newItem = new Ingredient 
+        { 
+            Name = "Nowy sk³adnik", // Give it a default name
+            Quantity = 1, // Default quantity
+            Unit = Unit.Piece, // Default unit
+            Order = UncheckedItems.Count // Set order to the end of unchecked items
+        };
         newItem.PropertyChanged += OnItemPropertyChanged;
         UncheckedItems.Add(newItem);
+        
+        // Immediately save the new item to ensure it persists
+        _ = Task.Run(async () => await SaveItemStateAsync(newItem));
     }
 
-    private void RemoveItem(Ingredient? item)
+    private async void RemoveItem(Ingredient? item)
     {
         if (item == null) return;
         
@@ -219,8 +237,21 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         item.PropertyChanged -= OnItemPropertyChanged;
         
         // Usuñ z odpowiedniej kolekcji
-        UncheckedItems.Remove(item);
-        CheckedItems.Remove(item);
+        var removedFromUnchecked = UncheckedItems.Remove(item);
+        var removedFromChecked = CheckedItems.Remove(item);
+        
+        // Remove from database if it was saved there
+        if (removedFromUnchecked || removedFromChecked)
+        {
+            try
+            {
+                await _shoppingListService.RemoveShoppingListItemAsync(_currentPlanId, item.Name, item.Unit);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error removing shopping list item: {ex.Message}");
+            }
+        }
     }
 
     public async Task MoveItemUpAsync(Ingredient? item)
