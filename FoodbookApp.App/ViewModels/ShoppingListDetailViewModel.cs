@@ -14,6 +14,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     private readonly IShoppingListService _shoppingListService;
     private readonly IPlanService _planService;
     private int _currentPlanId;
+    private Ingredient? _itemBeingDragged;
 
     // Dwie oddzielne kolekcje
     public ObservableCollection<Ingredient> UncheckedItems { get; } = new();
@@ -26,6 +27,12 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
 
     public ICommand AddItemCommand { get; }
     public ICommand RemoveItemCommand { get; }
+    public ICommand MoveUpCommand { get; }
+    public ICommand MoveDownCommand { get; }
+    public ICommand ItemDraggedCommand { get; }
+    public ICommand ItemDraggedOverCommand { get; }
+    public ICommand ItemDragLeaveCommand { get; }
+    public ICommand ItemDroppedCommand { get; }
 
     public ShoppingListDetailViewModel(IShoppingListService shoppingListService, IPlanService planService)
     {
@@ -34,6 +41,14 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
 
         AddItemCommand = new Command(AddItem);
         RemoveItemCommand = new Command<Ingredient>(RemoveItem);
+        MoveUpCommand = new Command<Ingredient>(async (item) => await MoveItemUpAsync(item));
+        MoveDownCommand = new Command<Ingredient>(async (item) => await MoveItemDownAsync(item));
+        
+        // Drag and drop commands
+        ItemDraggedCommand = new Command<Ingredient>(OnItemDragged);
+        ItemDraggedOverCommand = new Command<Ingredient>(OnItemDraggedOver);
+        ItemDragLeaveCommand = new Command<Ingredient>(OnItemDragLeave);
+        ItemDroppedCommand = new Command<Ingredient>(async (item) => await OnItemDroppedAsync(item));
         
         // S³uchaj zmian w kolekcjach
         UncheckedItems.CollectionChanged += (s, e) => OnPropertyChanged(nameof(HasCheckedItems));
@@ -143,14 +158,18 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
             {
                 // Remove the dragged item
                 targetCollection.RemoveAt(draggedIndex);
-                
+
                 // Adjust target index if needed
                 if (draggedIndex < targetIndex)
                     targetIndex--;
-                
+
                 // Insert at new position
                 targetCollection.Insert(targetIndex, draggedItem);
-                
+
+                // Notify UI about changes
+                OnPropertyChanged(nameof(UncheckedItems));
+                OnPropertyChanged(nameof(CheckedItems));
+
                 await SaveOrderAsync();
             }
         }
@@ -160,7 +179,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         }
     }
 
-    private async Task SaveOrderAsync()
+    public async Task SaveOrderAsync()
     {
         try
         {
@@ -202,6 +221,131 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         // Usuñ z odpowiedniej kolekcji
         UncheckedItems.Remove(item);
         CheckedItems.Remove(item);
+    }
+
+    public async Task MoveItemUpAsync(Ingredient? item)
+    {
+        if (item == null) return;
+
+        try
+        {
+            var collection = UncheckedItems.Contains(item) ? UncheckedItems : CheckedItems;
+            var currentIndex = collection.IndexOf(item);
+            
+            if (currentIndex > 0)
+            {
+                collection.RemoveAt(currentIndex);
+                collection.Insert(currentIndex - 1, item);
+                
+                await SaveOrderAsync();
+                System.Diagnostics.Debug.WriteLine($"Moved {item.Name} up from index {currentIndex} to {currentIndex - 1}");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error moving item up: {ex.Message}");
+        }
+    }
+
+    public async Task MoveItemDownAsync(Ingredient? item)
+    {
+        if (item == null) return;
+
+        try
+        {
+            var collection = UncheckedItems.Contains(item) ? UncheckedItems : CheckedItems;
+            var currentIndex = collection.IndexOf(item);
+            
+            if (currentIndex >= 0 && currentIndex < collection.Count - 1)
+            {
+                collection.RemoveAt(currentIndex);
+                collection.Insert(currentIndex + 1, item);
+                
+                await SaveOrderAsync();
+                System.Diagnostics.Debug.WriteLine($"Moved {item.Name} down from index {currentIndex} to {currentIndex + 1}");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error moving item down: {ex.Message}");
+        }
+    }
+
+    private void OnItemDragged(Ingredient item)
+    {
+        if (item == null) return;
+        
+        System.Diagnostics.Debug.WriteLine($"ItemDragged: {item.Name}");
+        item.IsBeingDragged = true;
+        _itemBeingDragged = item;
+    }
+
+    private void OnItemDraggedOver(Ingredient item)
+    {
+        if (item == null) return;
+        
+        System.Diagnostics.Debug.WriteLine($"ItemDraggedOver: {item.Name}");
+        
+        // Reset drag state for the dragged item when it's over another item
+        if (item == _itemBeingDragged)
+        {
+            item.IsBeingDragged = false;
+        }
+        
+        // Only show drag over state if it's not the same item being dragged
+        item.IsBeingDraggedOver = item != _itemBeingDragged;
+    }
+
+    private void OnItemDragLeave(Ingredient item)
+    {
+        if (item == null) return;
+        
+        System.Diagnostics.Debug.WriteLine($"ItemDragLeave: {item.Name}");
+        item.IsBeingDraggedOver = false;
+    }
+
+    private async Task OnItemDroppedAsync(Ingredient item)
+    {
+        if (item == null || _itemBeingDragged == null) return;
+        
+        try
+        {
+            var itemToMove = _itemBeingDragged;
+            var itemToInsertBefore = item;
+            
+            if (itemToMove == itemToInsertBefore) return;
+            
+            // Check if items are in the same collection
+            var draggedInUnchecked = UncheckedItems.Contains(itemToMove);
+            var targetInUnchecked = UncheckedItems.Contains(itemToInsertBefore);
+            
+            if (draggedInUnchecked != targetInUnchecked) return; // Can't move between collections
+            
+            var collection = draggedInUnchecked ? UncheckedItems : CheckedItems;
+            
+            int insertAtIndex = collection.IndexOf(itemToInsertBefore);
+            if (insertAtIndex >= 0 && insertAtIndex < collection.Count)
+            {
+                collection.Remove(itemToMove);
+                collection.Insert(insertAtIndex, itemToMove);
+                
+                // Reset drag states
+                itemToMove.IsBeingDragged = false;
+                itemToInsertBefore.IsBeingDraggedOver = false;
+                
+                await SaveOrderAsync();
+                
+                System.Diagnostics.Debug.WriteLine($"ItemDropped: [{itemToMove.Name}] => [{itemToInsertBefore.Name}], target index = [{insertAtIndex}]");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in OnItemDroppedAsync: {ex.Message}");
+        }
+        finally
+        {
+            _itemBeingDragged = null;
+        }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

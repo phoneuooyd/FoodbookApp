@@ -8,7 +8,6 @@ namespace Foodbook.Views;
 public partial class ShoppingListDetailPage : ContentPage
 {
     private readonly ShoppingListDetailViewModel _viewModel;
-    private Ingredient? _draggedItem;
 
     public int PlanId { get; set; }
 
@@ -36,83 +35,5 @@ public partial class ShoppingListDetailPage : ContentPage
     {
         Shell.Current.GoToAsync("..");
         return true;
-    }
-
-    private void OnItemDragStarting(object sender, DragStartingEventArgs e)
-    {
-        try
-        {
-            // Get the dragged item from the binding context
-            if (sender is Border border && border.BindingContext is Ingredient item)
-            {
-                _draggedItem = item;
-                
-                // Set the data for the drag operation
-                e.Data.Properties["DraggedItem"] = item;
-
-                System.Diagnostics.Debug.WriteLine($"Drag started for: {item.Name}");
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error in OnItemDragStarting: {ex.Message}");
-        }
-    }
-
-    private void OnItemDragOver(object sender, DragEventArgs e)
-    {
-        try
-        {
-            // Only allow drop if we have a dragged item and sender is a Border
-            if (_draggedItem != null && sender is Border)
-            {
-                e.AcceptedOperation = DataPackageOperation.Copy;
-            }
-            else
-            {
-                e.AcceptedOperation = DataPackageOperation.None;
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error in OnItemDragOver: {ex.Message}");
-        }
-    }
-
-    private async void OnItemDropped(object sender, Microsoft.Maui.Controls.DropEventArgs e)
-    {
-        try
-        {
-            // Get the target item from the binding context
-            if (sender is Border border && border.BindingContext is Ingredient targetItem && _draggedItem != null)
-            {
-                // Check if we're dropping on a different item
-                if (_draggedItem != targetItem)
-                {
-                    // Determine which collection the items belong to
-                    var draggedInUnchecked = _viewModel.UncheckedItems.Contains(_draggedItem);
-                    var targetInUnchecked = _viewModel.UncheckedItems.Contains(targetItem);
-
-                    // Only allow reordering within the same collection
-                    if (draggedInUnchecked == targetInUnchecked)
-                    {
-                        await _viewModel.ReorderItemsAsync(_draggedItem, targetItem);
-                        System.Diagnostics.Debug.WriteLine($"Reordered {_draggedItem.Name} relative to {targetItem.Name}");
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine("Cannot reorder items between different collections (checked/unchecked)");
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error in OnItemDropped: {ex.Message}");
-        }
-        finally
-        {
-            _draggedItem = null;
-        }
     }
 }

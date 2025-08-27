@@ -33,6 +33,36 @@ namespace Foodbook.Models
             } 
         }
 
+        private bool _isBeingDragged;
+        [NotMapped]
+        public bool IsBeingDragged
+        {
+            get => _isBeingDragged;
+            set
+            {
+                if (_isBeingDragged != value)
+                {
+                    _isBeingDragged = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private bool _isBeingDraggedOver;
+        [NotMapped]
+        public bool IsBeingDraggedOver
+        {
+            get => _isBeingDraggedOver;
+            set
+            {
+                if (_isBeingDraggedOver != value)
+                {
+                    _isBeingDraggedOver = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         // Order for shopping list items (used for reordering functionality)
         public int Order { get; set; } = 0;
 
