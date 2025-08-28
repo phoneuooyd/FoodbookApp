@@ -12,6 +12,9 @@ namespace Foodbook.Views
         public IEnumerable<Foodbook.Models.Unit> Units => Enum.GetValues(typeof(Foodbook.Models.Unit)).Cast<Foodbook.Models.Unit>();
 
         private AddRecipeViewModel ViewModel => BindingContext as AddRecipeViewModel;
+        
+        // ? NOWE: Debouncing timer dla zmian wartoœci
+        private IDispatcherTimer? _valueChangeTimer;
 
         public AddRecipePage(AddRecipeViewModel vm)
         {
@@ -104,26 +107,34 @@ namespace Foodbook.Views
             }
         }
 
+        // ? ZOPTYMALIZOWANE: Debounced przeliczenia z u¿yciem nowej async metody
         private void OnIngredientValueChanged(object sender, EventArgs e)
         {
             try
             {
-                // OpóŸnij przeliczenie o 500ms, ¿eby nie by³o ci¹g³ych obliczeñ podczas pisania
-                var timer = Application.Current.Dispatcher.CreateTimer();
-                timer.Interval = TimeSpan.FromMilliseconds(500);
-                timer.Tick += (s, args) =>
+                // Anuluj poprzedni timer
+                _valueChangeTimer?.Stop();
+                
+                // Utwórz nowy timer z 500ms opóŸnieniem
+                _valueChangeTimer = Application.Current.Dispatcher.CreateTimer();
+                _valueChangeTimer.Interval = TimeSpan.FromMilliseconds(500);
+                _valueChangeTimer.Tick += async (s, args) =>
                 {
                     try
                     {
-                        timer.Stop();
-                        ViewModel?.RecalculateNutritionalValues();
+                        _valueChangeTimer.Stop();
+                        // ? U¿ywa nowej asynchronicznej metody
+                        if (ViewModel != null)
+                        {
+                            await ViewModel.RecalculateNutritionalValuesAsync();
+                        }
                     }
                     catch (Exception timerEx)
                     {
                         System.Diagnostics.Debug.WriteLine($"Error in timer callback: {timerEx.Message}");
                     }
                 };
-                timer.Start();
+                _valueChangeTimer.Start();
             }
             catch (Exception ex)
             {

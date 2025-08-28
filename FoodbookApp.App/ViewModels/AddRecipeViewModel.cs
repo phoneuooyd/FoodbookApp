@@ -8,12 +8,23 @@ using Microsoft.Maui.Controls;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Foodbook.ViewModels
 {
     public class AddRecipeViewModel : INotifyPropertyChanged
     {
         private Recipe? _editingRecipe;
+        
+        // ✅ NOWE: Cache składników z debouncing
+        private List<Ingredient> _cachedIngredients = new();
+        private DateTime _lastCacheUpdate = DateTime.MinValue;
+        private readonly TimeSpan _cacheValidityDuration = TimeSpan.FromMinutes(5);
+        
+        // ✅ NOWE: Debouncing dla kalkulacji
+        private CancellationTokenSource _calculationCts = new();
+        private readonly SemaphoreSlim _calculationSemaphore = new(1, 1);
         
         // Tab management
         private int _selectedTabIndex = 0;
@@ -178,12 +189,60 @@ namespace Foodbook.ViewModels
             CopyCalculatedValuesCommand = new Command(CopyCalculatedValues);
             SelectTabCommand = new Command<object>(SelectTab);
 
-            Ingredients.CollectionChanged += (_, __) => 
+            // ✅ ZOPTYMALIZOWANE: Asynchroniczne event handling
+            Ingredients.CollectionChanged += async (_, __) => 
             {
-                CalculateNutritionalValues();
+                await ScheduleNutritionalCalculationAsync();
                 ValidateInput();
             };
             ValidateInput();
+        }
+
+        // ✅ NOWE: Metoda ładowania cache
+        private async Task EnsureIngredientsAreCachedAsync()
+        {
+            if (_cachedIngredients.Count == 0 || 
+                DateTime.Now - _lastCacheUpdate > _cacheValidityDuration)
+            {
+                _cachedIngredients = await _ingredientService.GetIngredientsAsync();
+                _lastCacheUpdate = DateTime.Now;
+                System.Diagnostics.Debug.WriteLine($"Ingredients cache refreshed: {_cachedIngredients.Count} items");
+            }
+        }
+
+        // ✅ NOWE: Debounced kalkulacja
+        private async Task ScheduleNutritionalCalculationAsync()
+        {
+            // Anuluj poprzednie kalkulacje
+            _calculationCts.Cancel();
+            _calculationCts = new CancellationTokenSource();
+
+            try
+            {
+                // Czekaj 300ms na kolejne zmiany
+                await Task.Delay(300, _calculationCts.Token);
+                
+                await _calculationSemaphore.WaitAsync(_calculationCts.Token);
+                try
+                {
+                    await CalculateNutritionalValuesAsync();
+                }
+                finally
+                {
+                    _calculationSemaphore.Release();
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Normalne anulowanie - ignoruj
+            }
+        }
+
+        // ✅ NOWE: Publiczna metoda do synchronizacji cache
+        public async Task RefreshIngredientsCacheAsync()
+        {
+            _lastCacheUpdate = DateTime.MinValue; // Force refresh
+            await EnsureIngredientsAreCachedAsync();
         }
 
         private void SelectTab(object parameter)
@@ -290,7 +349,7 @@ namespace Foodbook.ViewModels
                     Ingredients.Add(ingredient);
                 }
                 
-                CalculateNutritionalValues();
+                await ScheduleNutritionalCalculationAsync();
                 
                 // Ważne: Powiadom interfejs o zmianach w tytule i przycisku
                 OnPropertyChanged(nameof(Title));
@@ -307,6 +366,8 @@ namespace Foodbook.ViewModels
         {
             try
             {
+                await EnsureIngredientsAreCachedAsync();
+                
                 var name = AvailableIngredientNames.FirstOrDefault() ?? string.Empty;
                 var ingredient = new Ingredient 
                 { 
@@ -319,11 +380,10 @@ namespace Foodbook.ViewModels
                     Carbs = 0 
                 };
                 
-                // Jeśli składnik istnieje w bazie, pobierz jego wartości odżywcze
+                // ✅ ZOPTYMALIZOWANE: Używa cache zamiast pobierania z bazy
                 if (!string.IsNullOrEmpty(name))
                 {
-                    var existingIngredients = await _ingredientService.GetIngredientsAsync();
-                    var existingIngredient = existingIngredients.FirstOrDefault(i => i.Name == name);
+                    var existingIngredient = _cachedIngredients.FirstOrDefault(i => i.Name == name);
                     if (existingIngredient != null)
                     {
                         ingredient.Calories = existingIngredient.Calories;
@@ -361,19 +421,19 @@ namespace Foodbook.ViewModels
         }
 
         // Publiczna metoda do przeliczania wartości odżywczych (wywołana z code-behind)
-        public void RecalculateNutritionalValues()
+        public async Task RecalculateNutritionalValuesAsync()
         {
             try
             {
-                CalculateNutritionalValues();
+                await ScheduleNutritionalCalculationAsync();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in RecalculateNutritionalValues: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error in RecalculateNutritionalValuesAsync: {ex.Message}");
             }
         }
 
-        // Nowa metoda do aktualizacji wartości odżywczych składnika
+        // ✅ ZOPTYMALIZOWANE: Szybkie aktualizacje bez pełnego pobierania
         public async Task UpdateIngredientNutritionalValuesAsync(Ingredient ingredient)
         {
             try
@@ -381,8 +441,9 @@ namespace Foodbook.ViewModels
                 if (string.IsNullOrEmpty(ingredient.Name))
                     return;
 
-                var existingIngredients = await _ingredientService.GetIngredientsAsync();
-                var existingIngredient = existingIngredients.FirstOrDefault(i => i.Name == ingredient.Name);
+                await EnsureIngredientsAreCachedAsync();
+                
+                var existingIngredient = _cachedIngredients.FirstOrDefault(i => i.Name == ingredient.Name);
                 
                 if (existingIngredient != null)
                 {
@@ -393,15 +454,15 @@ namespace Foodbook.ViewModels
                 }
                 else
                 {
-                    // Jeśli składnik nie istnieje w bazie, resetuj wartości
+                    // Reset wartości dla nieistniejących składników
                     ingredient.Calories = 0;
                     ingredient.Protein = 0;
                     ingredient.Fat = 0;
                     ingredient.Carbs = 0;
                 }
 
-                // Przelicz wartości odżywcze po aktualizacji
-                CalculateNutritionalValues();
+                // Wyzwól przeliczenie z debouncing
+                await ScheduleNutritionalCalculationAsync();
             }
             catch (Exception ex)
             {
@@ -409,22 +470,22 @@ namespace Foodbook.ViewModels
             }
         }
 
-        private async void CalculateNutritionalValues()
+        // ✅ ZOPTYMALIZOWANE: Szybka kalkulacja z cache
+        private async Task CalculateNutritionalValuesAsync()
         {
             try
             {
+                await EnsureIngredientsAreCachedAsync();
+
                 double totalCalories = 0;
                 double totalProtein = 0;
                 double totalFat = 0;
                 double totalCarbs = 0;
 
-                // Załaduj aktualną listę składników z bazy danych
-                var existingIngredients = await _ingredientService.GetIngredientsAsync();
-
                 foreach (var ingredient in Ingredients)
                 {
-                    // Znajdź składnik w bazie danych i zaktualizuj jego wartości odżywcze
-                    var dbIngredient = existingIngredients.FirstOrDefault(i => i.Name == ingredient.Name);
+                    // Używa cache zamiast pobierania z bazy
+                    var dbIngredient = _cachedIngredients.FirstOrDefault(i => i.Name == ingredient.Name);
                     if (dbIngredient != null)
                     {
                         ingredient.Calories = dbIngredient.Calories;
@@ -433,7 +494,6 @@ namespace Foodbook.ViewModels
                         ingredient.Carbs = dbIngredient.Carbs;
                     }
 
-                    // Oblicz współczynnik przeliczeniowy na podstawie jednostki
                     double factor = GetUnitConversionFactor(ingredient.Unit, ingredient.Quantity);
                     
                     totalCalories += ingredient.Calories * factor;
@@ -442,23 +502,26 @@ namespace Foodbook.ViewModels
                     totalCarbs += ingredient.Carbs * factor;
                 }
 
-                CalculatedCalories = totalCalories.ToString("F1");
-                CalculatedProtein = totalProtein.ToString("F1");
-                CalculatedFat = totalFat.ToString("F1");
-                CalculatedCarbs = totalCarbs.ToString("F1");
-
-                // Jeśli używamy automatycznych obliczeń, aktualizuj główne wartości
-                if (UseCalculatedValues)
+                // Aktualizacja UI w wątku głównym
+                MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    Calories = CalculatedCalories;
-                    Protein = CalculatedProtein;
-                    Fat = CalculatedFat;
-                    Carbs = CalculatedCarbs;
-                }
+                    CalculatedCalories = totalCalories.ToString("F1");
+                    CalculatedProtein = totalProtein.ToString("F1");
+                    CalculatedFat = totalFat.ToString("F1");
+                    CalculatedCarbs = totalCarbs.ToString("F1");
+
+                    if (UseCalculatedValues)
+                    {
+                        Calories = CalculatedCalories;
+                        Protein = CalculatedProtein;
+                        Fat = CalculatedFat;
+                        Carbs = CalculatedCarbs;
+                    }
+                });
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in CalculateNutritionalValues: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error in CalculateNutritionalValuesAsync: {ex.Message}");
             }
         }
 
@@ -517,7 +580,7 @@ namespace Foodbook.ViewModels
                 }
                 
                 // Oblicz wartości odżywcze z składników
-                CalculateNutritionalValues();
+                await ScheduleNutritionalCalculationAsync();
                 
                 // Jeśli import nie dostarczył wartości odżywczych, użyj obliczonych
                 if (recipe.Calories == 0 && recipe.Protein == 0 && recipe.Fat == 0 && recipe.Carbs == 0)
@@ -739,9 +802,10 @@ namespace Foodbook.ViewModels
         {
             try
             {
+                await EnsureIngredientsAreCachedAsync();
+                
                 AvailableIngredientNames.Clear();
-                var list = await _ingredientService.GetIngredientsAsync();
-                foreach (var ing in list)
+                foreach (var ing in _cachedIngredients)
                     AvailableIngredientNames.Add(ing.Name);
             }
             catch (Exception ex)

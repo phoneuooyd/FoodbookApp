@@ -7,17 +7,35 @@ namespace Foodbook.Services;
 public class IngredientService : IIngredientService
 {
     private readonly AppDbContext _context;
+    
+    // ? NOWE: Cache sk³adników z invalidacj¹
+    private List<Ingredient>? _cachedIngredients;
+    private DateTime _lastCacheTime = DateTime.MinValue;
+    private readonly TimeSpan _cacheValidity = TimeSpan.FromMinutes(10);
+    
     public IngredientService(AppDbContext context)
     {
         _context = context;
     }
 
-    public async Task<List<Ingredient>> GetIngredientsAsync() => 
-        await _context.Ingredients
-            .AsNoTracking() // Improves performance for read-only operations
-            .Where(i => i.RecipeId == null)
-            .OrderBy(i => i.Name)
-            .ToListAsync();
+    // ? ZOPTYMALIZOWANE: Getter z cache
+    public async Task<List<Ingredient>> GetIngredientsAsync()
+    {
+        if (_cachedIngredients == null || 
+            DateTime.Now - _lastCacheTime > _cacheValidity)
+        {
+            _cachedIngredients = await _context.Ingredients
+                .AsNoTracking() // Improves performance for read-only operations
+                .Where(i => i.RecipeId == null) // Only standalone ingredients
+                .OrderBy(i => i.Name)
+                .ToListAsync();
+            _lastCacheTime = DateTime.Now;
+            
+            System.Diagnostics.Debug.WriteLine($"Ingredients cache refreshed: {_cachedIngredients.Count} items");
+        }
+
+        return _cachedIngredients.ToList(); // Return copy to prevent mutations
+    }
 
     public async Task<Ingredient?> GetIngredientAsync(int id) => 
         await _context.Ingredients
@@ -34,6 +52,9 @@ public class IngredientService : IIngredientService
         {
             _context.Ingredients.Add(ingredient);
             await _context.SaveChangesAsync();
+            
+            // ? NOWE: Invalidacja cache po dodaniu
+            InvalidateCache();
             System.Diagnostics.Debug.WriteLine($"Added ingredient: {ingredient.Name}, ID: {ingredient.Id}");
         }
         catch (Exception ex)
@@ -64,6 +85,9 @@ public class IngredientService : IIngredientService
                 // RecipeId stays the same
 
                 await _context.SaveChangesAsync();
+                
+                // ? NOWE: Invalidacja cache po aktualizacji
+                InvalidateCache();
                 System.Diagnostics.Debug.WriteLine($"Updated ingredient: {ingredient.Name}, ID: {ingredient.Id}");
             }
             else
@@ -87,6 +111,9 @@ public class IngredientService : IIngredientService
             _context.Ingredients.Attach(ingredient);
             _context.Ingredients.Remove(ingredient);
             await _context.SaveChangesAsync();
+            
+            // ? NOWE: Invalidacja cache po usuniêciu
+            InvalidateCache();
             System.Diagnostics.Debug.WriteLine($"Deleted ingredient ID: {id}");
         }
         catch (Exception ex)
@@ -100,6 +127,9 @@ public class IngredientService : IIngredientService
                 {
                     _context.Ingredients.Remove(ing);
                     await _context.SaveChangesAsync();
+                    
+                    // ? NOWE: Invalidacja cache po usuniêciu (fallback)
+                    InvalidateCache();
                     System.Diagnostics.Debug.WriteLine($"Deleted ingredient ID: {id} (fallback method)");
                 }
             }
@@ -109,5 +139,13 @@ public class IngredientService : IIngredientService
                 throw;
             }
         }
+    }
+
+    // ? NOWE: Publiczna metoda do invalidacji cache
+    public void InvalidateCache()
+    {
+        _cachedIngredients = null;
+        _lastCacheTime = DateTime.MinValue;
+        System.Diagnostics.Debug.WriteLine("Ingredients cache invalidated");
     }
 }
