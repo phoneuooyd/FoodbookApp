@@ -188,17 +188,17 @@
                                                     
                                                     <!-- Przycisk usuwania posiłku -->
                                                     <Button Grid.Column="4" 
-                                                            Text="❌" 
+                                                            Text="✕" 
                                                             Command="{Binding BindingContext.RemoveMealCommand, Source={x:Reference ThisPage}}" 
                                                             CommandParameter="{Binding .}" 
-                                                            WidthRequest="26" 
-                                                            HeightRequest="26"
-                                                            CornerRadius="13"
-                                                            BackgroundColor="Transparent"
-                                                            TextColor="Red"
-                                                            FontSize="12"
-                                                            FontAttributes="Bold"
-                                                            BorderWidth="0"
+                                                            WidthRequest="35" 
+                                                            HeightRequest="35"
+                                                            BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}"
+                                                            TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}"
+                                                            FontSize="16"
+                                                            CornerRadius="17"
+                                                            BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}"
+                                                            BorderWidth="1"
                                                             Padding="0" />
                                                 </Grid>
                                             </DataTemplate>

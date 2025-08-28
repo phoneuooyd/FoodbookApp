@@ -48,6 +48,42 @@ public class StringToBoolConverter : IValueConverter
     }
 }
 
+public class DragStateToColorConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var isBeingDragged = (bool?)value;
+        if (isBeingDragged == true)
+        {
+            return Color.FromArgb("#E3F2FD"); // Light blue when being dragged
+        }
+        return Colors.Transparent;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return value;
+    }
+}
+
+public class DropZoneToColorConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var isBeingDraggedOver = (bool?)value;
+        if (isBeingDraggedOver == true)
+        {
+            return Color.FromArgb("#FFF3E0"); // Light orange when item is dragged over
+        }
+        return Colors.Transparent;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return value;
+    }
+}
+
 public class BoolToTextConverter : IValueConverter
 {
     public static readonly BoolToTextConverter Instance = new();
