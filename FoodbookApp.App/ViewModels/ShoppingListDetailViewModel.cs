@@ -150,7 +150,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     {
         var newItem = new Ingredient 
         { 
-            Name = "Nowy sk³adnik", // Give it a default name
+            Name = "", // Empty name instead of default text
             Quantity = 1, // Default quantity
             Unit = Unit.Piece, // Default unit
             Order = UncheckedItems.Count // Set order to the end of unchecked items

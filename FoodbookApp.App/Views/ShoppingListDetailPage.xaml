@@ -14,6 +14,7 @@
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         <converters:DragStateToColorConverter x:Key="DragStateToColorConverter" />
         <converters:DropZoneToColorConverter x:Key="DropZoneToColorConverter" />
+        <converters:DropZoneBorderColorConverter x:Key="DropZoneBorderColorConverter" />
     </ContentPage.Resources>
     
     <ScrollView>
@@ -27,121 +28,100 @@
                        Margin="0,0,0,10"
                        Text="{loc:Translate Resource=ShoppingListDetailPageResources, Key=ToBuy}" />
                 
-                <!-- Nagłówki kolumn dla produktów do kupienia -->
-                <Grid ColumnDefinitions="Auto,Auto,2*,Auto,Auto,Auto" 
-                      Padding="5" 
-                      ColumnSpacing="5" 
-                      BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}">
-                    <Label Grid.Column="0" Text="≡" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" FontSize="16" />
-                    <Label Grid.Column="1" Text="✓" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
-                    <Label Grid.Column="2" Text="{loc:Translate Resource=ShoppingListDetailPageResources, Key=NameHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" />
-                    <Label Grid.Column="3" Text="{loc:Translate Resource=ShoppingListDetailPageResources, Key=QuantityHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
-                    <Label Grid.Column="4" Text="{loc:Translate Resource=ShoppingListDetailPageResources, Key=UnitHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
-                    <Label Grid.Column="5" Text="{loc:Translate Resource=ShoppingListDetailPageResources, Key=ActionsHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
-                </Grid>
-                
                 <!-- Lista produktów do kupienia -->
                 <CollectionView ItemsSource="{Binding UncheckedItems}">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:Ingredient">
-                            <Frame BorderColor="LightGray" 
+                            <Frame BorderColor="{Binding IsBeingDraggedOver, Converter={StaticResource DropZoneBorderColorConverter}}" 
                                    Padding="5" 
                                    Margin="0,2"
-                                   BackgroundColor="{Binding IsBeingDragged, Converter={StaticResource DragStateToColorConverter}}">
-                                <StackLayout>
-                                    <!-- Main item content -->
-                                    <Grid ColumnDefinitions="Auto,Auto,2*,Auto,Auto,Auto" 
-                                          ColumnSpacing="5"
-                                          BackgroundColor="{Binding IsBeingDragged, Converter={StaticResource DragStateToColorConverter}}">
+                                   BackgroundColor="{Binding IsBeingDraggedOver, Converter={StaticResource DropZoneToColorConverter}}"
+                                   CornerRadius="8"
+                                   HasShadow="False">
+                                
+                                <!-- Main item content -->
+                                <Grid ColumnDefinitions="Auto,Auto,2*,Auto,Auto,Auto" 
+                                      ColumnSpacing="5"
+                                      BackgroundColor="{Binding IsBeingDragged, Converter={StaticResource DragStateToColorConverter}}">
                                         
-                                        <!-- Drag Handle -->
-                                        <StackLayout Grid.Column="0" 
-                                                     Orientation="Vertical"
-                                                     WidthRequest="30" 
-                                                     HeightRequest="30"
-                                                     VerticalOptions="Center"
-                                                     HorizontalOptions="Center"
-                                                     Spacing="2"
-                                                     Padding="5">
-                                            <!-- Three horizontal lines to create grip handle effect -->
-                                            <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" 
-                                                     HeightRequest="2" 
-                                                     WidthRequest="20" 
-                                                     CornerRadius="1" />
-                                            <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" 
-                                                     HeightRequest="2" 
-                                                     WidthRequest="20" 
-                                                     CornerRadius="1" />
-                                            <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" 
-                                                     HeightRequest="2" 
-                                                     WidthRequest="20" 
-                                                     CornerRadius="1" />
+                                    <!-- Drag Handle -->
+                                    <StackLayout Grid.Column="0" 
+                                                 Orientation="Vertical"
+                                                 WidthRequest="30" 
+                                                 HeightRequest="30"
+                                                 VerticalOptions="Center"
+                                                 HorizontalOptions="Center"
+                                                 Spacing="2"
+                                                 Padding="5">
+                                        <!-- Three horizontal lines to create grip handle effect -->
+                                        <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" 
+                                                 HeightRequest="2" 
+                                                 WidthRequest="20" 
+                                                 CornerRadius="1" />
+                                        <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" 
+                                                 HeightRequest="2" 
+                                                 WidthRequest="20" 
+                                                 CornerRadius="1" />
+                                        <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" 
+                                                 HeightRequest="2" 
+                                                 WidthRequest="20" 
+                                                 CornerRadius="1" />
                                             
-                                            <!-- Make the drag handle area larger for touch -->
-                                            <StackLayout.GestureRecognizers>
-                                                <DragGestureRecognizer
-                                                    CanDrag="True"
-                                                    DragStartingCommand="{Binding BindingContext.ItemDraggedCommand, Source={x:Reference ThisPage}}"
-                                                    DragStartingCommandParameter="{Binding .}" />
-                                            </StackLayout.GestureRecognizers>
-                                        </StackLayout>
+                                        <!-- Make the drag handle area larger for touch -->
+                                        <StackLayout.GestureRecognizers>
+                                            <DragGestureRecognizer
+                                                CanDrag="True"
+                                                DragStartingCommand="{Binding BindingContext.ItemDraggedCommand, Source={x:Reference ThisPage}}"
+                                                DragStartingCommandParameter="{Binding .}" />
+                                        </StackLayout.GestureRecognizers>
+                                    </StackLayout>
                                         
-                                        <CheckBox Grid.Column="1" IsChecked="{Binding IsChecked}" />
+                                    <CheckBox Grid.Column="1" IsChecked="{Binding IsChecked}" />
 
-                                        <!-- Nazwa składnika -->
-                                        <Entry Grid.Column="2" 
-                                               Text="{Binding Name}" 
-                                               Placeholder="Nazwa" />
+                                    <!-- Nazwa składnika -->
+                                    <Entry Grid.Column="2" 
+                                           Text="{Binding Name}" 
+                                           Placeholder="Nazwa" />
 
-                                        <!-- Ilość -->
-                                        <Entry Grid.Column="3" 
-                                               Text="{Binding Quantity}" 
-                                               Keyboard="Numeric" 
-                                               WidthRequest="60"
-                                               HorizontalTextAlignment="Center" />
+                                    <!-- Ilość -->
+                                    <Entry Grid.Column="3" 
+                                           Text="{Binding Quantity}" 
+                                           Keyboard="Numeric" 
+                                           WidthRequest="60"
+                                           HorizontalTextAlignment="Center" />
 
-                                        <!-- Jednostka -->
-                                        <Picker Grid.Column="4" 
-                                                WidthRequest="80" 
-                                                ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}" 
-                                                SelectedItem="{Binding Unit}" />
+                                    <!-- Jednostka -->
+                                    <Picker Grid.Column="4" 
+                                            WidthRequest="80" 
+                                            ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}" 
+                                            SelectedItem="{Binding Unit}" />
 
-                                        <!-- Przycisk usuwania -->
-                                        <Button Grid.Column="5" 
-                                                Text="✕" 
-                                                Command="{Binding BindingContext.RemoveItemCommand, Source={x:Reference ThisPage}}" 
-                                                CommandParameter="{Binding .}" 
-                                                WidthRequest="35" 
-                                                HeightRequest="35"
-                                                BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}"
-                                                TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}"
-                                                FontSize="16"
-                                                CornerRadius="17"
-                                                BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}"
-                                                BorderWidth="1" />
+                                    <!-- Przycisk usuwania -->
+                                    <Button Grid.Column="5" 
+                                            Text="✕" 
+                                            Command="{Binding BindingContext.RemoveItemCommand, Source={x:Reference ThisPage}}" 
+                                            CommandParameter="{Binding .}" 
+                                            WidthRequest="35" 
+                                            HeightRequest="35"
+                                            BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}"
+                                            TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}"
+                                            FontSize="16"
+                                            CornerRadius="17"
+                                            BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}"
+                                            BorderWidth="1" />
 
-                                        <!-- Additional Drag and Drop Gesture Recognizers for entire row -->
-                                        <Grid.GestureRecognizers>
-                                            <DropGestureRecognizer
-                                                AllowDrop="True"
-                                                DragLeaveCommand="{Binding BindingContext.ItemDragLeaveCommand, Source={x:Reference ThisPage}}"
-                                                DragLeaveCommandParameter="{Binding .}"
-                                                DragOverCommand="{Binding BindingContext.ItemDraggedOverCommand, Source={x:Reference ThisPage}}"
-                                                DragOverCommandParameter="{Binding .}"
-                                                DropCommand="{Binding BindingContext.ItemDroppedCommand, Source={x:Reference ThisPage}}"
-                                                DropCommandParameter="{Binding .}" />
-                                        </Grid.GestureRecognizers>
-                                    </Grid>
-                                    
-                                    <!-- Drop zone indicator -->
-                                    <Frame HeightRequest="4" 
-                                           Margin="0,2,0,0"
-                                           CornerRadius="2"
-                                           Padding="0"
-                                           BackgroundColor="{Binding IsBeingDraggedOver, Converter={StaticResource DropZoneToColorConverter}}"
-                                           BorderColor="Transparent"
-                                           IsVisible="{Binding IsBeingDraggedOver}" />
-                                </StackLayout>
+                                    <!-- Additional Drag and Drop Gesture Recognizers for entire row -->
+                                    <Grid.GestureRecognizers>
+                                        <DropGestureRecognizer
+                                            AllowDrop="True"
+                                            DragLeaveCommand="{Binding BindingContext.ItemDragLeaveCommand, Source={x:Reference ThisPage}}"
+                                            DragLeaveCommandParameter="{Binding .}"
+                                            DragOverCommand="{Binding BindingContext.ItemDraggedOverCommand, Source={x:Reference ThisPage}}"
+                                            DragOverCommandParameter="{Binding .}"
+                                            DropCommand="{Binding BindingContext.ItemDroppedCommand, Source={x:Reference ThisPage}}"
+                                            DropCommandParameter="{Binding .}" />
+                                    </Grid.GestureRecognizers>
+                                </Grid>
                             </Frame>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
@@ -165,126 +145,105 @@
                        Margin="0,0,0,10"
                        Text="{loc:Translate Resource=ShoppingListDetailPageResources, Key=Collected}" />
                 
-                <!-- Nagłówki kolumn dla produktów zebranych -->
-                <Grid ColumnDefinitions="Auto,Auto,2*,Auto,Auto,Auto" 
-                      Padding="5" 
-                      ColumnSpacing="5" 
-                      BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}">
-                    <Label Grid.Column="0" Text="≡" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" FontSize="16" />
-                    <Label Grid.Column="1" Text="✓" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
-                    <Label Grid.Column="2" Text="{loc:Translate Resource=ShoppingListDetailPageResources, Key=NameHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" />
-                    <Label Grid.Column="3" Text="{loc:Translate Resource=ShoppingListDetailPageResources, Key=QuantityHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
-                    <Label Grid.Column="4" Text="{loc:Translate Resource=ShoppingListDetailPageResources, Key=UnitHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
-                    <Label Grid.Column="5" Text="{loc:Translate Resource=ShoppingListDetailPageResources, Key=ActionsHeader}" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
-                </Grid>
-                
                 <!-- Lista produktów zebranych -->
                 <CollectionView ItemsSource="{Binding CheckedItems}">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:Ingredient">
-                            <Frame BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" 
+                            <Frame BorderColor="{Binding IsBeingDraggedOver, Converter={StaticResource DropZoneBorderColorConverter}}" 
                                    Padding="5" 
                                    Margin="0,2"
-                                   BackgroundColor="{AppThemeBinding Light=#F8F8F8, Dark=#2A2A2A}">
-                                <StackLayout>
-                                    <!-- Main item content -->
-                                    <Grid ColumnDefinitions="Auto,Auto,2*,Auto,Auto,Auto" 
-                                          ColumnSpacing="5"
-                                          BackgroundColor="{Binding IsBeingDragged, Converter={StaticResource DragStateToColorConverter}}">
+                                   BackgroundColor="{Binding IsBeingDraggedOver, Converter={StaticResource DropZoneToColorConverter}}"
+                                   CornerRadius="8"
+                                   HasShadow="False">
+                                
+                                <!-- Main item content -->
+                                <Grid ColumnDefinitions="Auto,Auto,2*,Auto,Auto,Auto" 
+                                      ColumnSpacing="5"
+                                      BackgroundColor="{Binding IsBeingDragged, Converter={StaticResource DragStateToColorConverter}}">
                                         
-                                        <!-- Drag Handle -->
-                                        <StackLayout Grid.Column="0" 
-                                                     Orientation="Vertical"
-                                                     WidthRequest="30" 
-                                                     HeightRequest="30"
-                                                     VerticalOptions="Center"
-                                                     HorizontalOptions="Center"
-                                                     Spacing="2"
-                                                     Padding="5">
-                                            <!-- Three horizontal lines to create grip handle effect -->
-                                            <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
-                                                     HeightRequest="2" 
-                                                     WidthRequest="20" 
-                                                     CornerRadius="1" />
-                                            <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
-                                                     HeightRequest="2" 
-                                                     WidthRequest="20" 
-                                                     CornerRadius="1" />
-                                            <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
-                                                     HeightRequest="2" 
-                                                     WidthRequest="20" 
-                                                     CornerRadius="1" />
-                                            
-                                            <!-- Make the drag handle area larger for touch -->
-                                            <StackLayout.GestureRecognizers>
-                                                <DragGestureRecognizer
-                                                    CanDrag="True"
-                                                    DragStartingCommand="{Binding BindingContext.ItemDraggedCommand, Source={x:Reference ThisPage}}"
-                                                    DragStartingCommandParameter="{Binding .}" />
-                                            </StackLayout.GestureRecognizers>
-                                        </StackLayout>
+                                    <!-- Drag Handle -->
+                                    <StackLayout Grid.Column="0" 
+                                                 Orientation="Vertical"
+                                                 WidthRequest="30" 
+                                                 HeightRequest="30"
+                                                 VerticalOptions="Center"
+                                                 HorizontalOptions="Center"
+                                                 Spacing="2"
+                                                 Padding="5">
+                                        <!-- Three horizontal lines to create grip handle effect -->
+                                        <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
+                                                 HeightRequest="2" 
+                                                 WidthRequest="20" 
+                                                 CornerRadius="1" />
+                                        <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
+                                                 HeightRequest="2" 
+                                                 WidthRequest="20" 
+                                                 CornerRadius="1" />
+                                        <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
+                                                 HeightRequest="2" 
+                                                 WidthRequest="20" 
+                                                 CornerRadius="1" />
                                         
-                                        <CheckBox Grid.Column="1" IsChecked="{Binding IsChecked}" />
-
-                                        <!-- Nazwa składnika - przekreślona -->
-                                        <Label Grid.Column="2" 
-                                               Text="{Binding Name}" 
-                                               TextDecorations="Strikethrough" 
-                                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
-                                               VerticalTextAlignment="Center" />
-
-                                        <!-- Ilość - przekreślona -->
-                                        <Label Grid.Column="3" 
-                                               Text="{Binding Quantity}" 
-                                               TextDecorations="Strikethrough" 
-                                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
-                                               VerticalTextAlignment="Center"
-                                               HorizontalTextAlignment="Center" />
-
-                                        <!-- Jednostka - przekreślona -->
-                                        <Label Grid.Column="4" 
-                                               Text="{Binding Unit}" 
-                                               TextDecorations="Strikethrough" 
-                                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
-                                               VerticalTextAlignment="Center"
-                                               HorizontalTextAlignment="Center" />
-
-                                        <!-- Przycisk usuwania -->
-                                        <Button Grid.Column="5" 
-                                                Text="✕" 
-                                                Command="{Binding BindingContext.RemoveItemCommand, Source={x:Reference ThisPage}}" 
-                                                CommandParameter="{Binding .}" 
-                                                WidthRequest="35" 
-                                                HeightRequest="35"
-                                                BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}"
-                                                TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}"
-                                                FontSize="16"
-                                                CornerRadius="17"
-                                                BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}"
-                                                BorderWidth="1" />
-
-                                        <!-- Additional Drag and Drop Gesture Recognizers for entire row -->
-                                        <Grid.GestureRecognizers>
-                                            <DropGestureRecognizer
-                                                AllowDrop="True"
-                                                DragLeaveCommand="{Binding BindingContext.ItemDragLeaveCommand, Source={x:Reference ThisPage}}"
-                                                DragLeaveCommandParameter="{Binding .}"
-                                                DragOverCommand="{Binding BindingContext.ItemDraggedOverCommand, Source={x:Reference ThisPage}}"
-                                                DragOverCommandParameter="{Binding .}"
-                                                DropCommand="{Binding BindingContext.ItemDroppedCommand, Source={x:Reference ThisPage}}"
-                                                DropCommandParameter="{Binding .}" />
-                                        </Grid.GestureRecognizers>
-                                    </Grid>
+                                        <!-- Make the drag handle area larger for touch -->
+                                        <StackLayout.GestureRecognizers>
+                                            <DragGestureRecognizer
+                                                CanDrag="True"
+                                                DragStartingCommand="{Binding BindingContext.ItemDraggedCommand, Source={x:Reference ThisPage}}"
+                                                DragStartingCommandParameter="{Binding .}" />
+                                        </StackLayout.GestureRecognizers>
+                                    </StackLayout>
                                     
-                                    <!-- Drop zone indicator -->
-                                    <Frame HeightRequest="4" 
-                                           Margin="0,2,0,0"
-                                           CornerRadius="2"
-                                           Padding="0"
-                                           BackgroundColor="{Binding IsBeingDraggedOver, Converter={StaticResource DropZoneToColorConverter}}"
-                                           BorderColor="Transparent"
-                                           IsVisible="{Binding IsBeingDraggedOver}" />
-                                </StackLayout>
+                                    <CheckBox Grid.Column="1" IsChecked="{Binding IsChecked}" />
+
+                                    <!-- Nazwa składnika - przekreślona -->
+                                    <Label Grid.Column="2" 
+                                           Text="{Binding Name}" 
+                                           TextDecorations="Strikethrough" 
+                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
+                                           VerticalTextAlignment="Center" />
+
+                                    <!-- Ilość - przekreślona -->
+                                    <Label Grid.Column="3" 
+                                           Text="{Binding Quantity}" 
+                                           TextDecorations="Strikethrough" 
+                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
+                                           VerticalTextAlignment="Center"
+                                           HorizontalTextAlignment="Center" />
+
+                                    <!-- Jednostka - przekreślona -->
+                                    <Label Grid.Column="4" 
+                                           Text="{Binding Unit}" 
+                                           TextDecorations="Strikethrough" 
+                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
+                                           VerticalTextAlignment="Center"
+                                           HorizontalTextAlignment="Center" />
+
+                                    <!-- Przycisk usuwania -->
+                                    <Button Grid.Column="5" 
+                                            Text="✕" 
+                                            Command="{Binding BindingContext.RemoveItemCommand, Source={x:Reference ThisPage}}" 
+                                            CommandParameter="{Binding .}" 
+                                            WidthRequest="35" 
+                                            HeightRequest="35"
+                                            BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}"
+                                            TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}"
+                                            FontSize="16"
+                                            CornerRadius="17"
+                                            BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}"
+                                            BorderWidth="1" />
+
+                                    <!-- Additional Drag and Drop Gesture Recognizers for entire row -->
+                                    <Grid.GestureRecognizers>
+                                        <DropGestureRecognizer
+                                            AllowDrop="True"
+                                            DragLeaveCommand="{Binding BindingContext.ItemDragLeaveCommand, Source={x:Reference ThisPage}}"
+                                            DragLeaveCommandParameter="{Binding .}"
+                                            DragOverCommand="{Binding BindingContext.ItemDraggedOverCommand, Source={x:Reference ThisPage}}"
+                                            DragOverCommandParameter="{Binding .}"
+                                            DropCommand="{Binding BindingContext.ItemDroppedCommand, Source={x:Reference ThisPage}}"
+                                            DropCommandParameter="{Binding .}" />
+                                    </Grid.GestureRecognizers>
+                                </Grid>
                             </Frame>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
