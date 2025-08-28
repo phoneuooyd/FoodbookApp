@@ -225,8 +225,11 @@
                 
                 <!-- Przycisk Zapisz - wyśrodkowany -->
                 <HorizontalStackLayout Spacing="10" Margin="0,20,0,0" HorizontalOptions="Center">
-                    <Button Command="{Binding SaveCommand}"
-                            Text="{loc:Translate Resource=PlannerPageResources, Key=Save}" />
+                    <Button Command="{Binding SaveCommand}">
+                        <Button.ImageSource>
+                            <FileImageSource File="save.png" />
+                        </Button.ImageSource>
+                    </Button>
                 </HorizontalStackLayout>
             </VerticalStackLayout>
         </ScrollView>

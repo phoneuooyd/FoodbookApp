@@ -66,7 +66,7 @@
                                     <TapGestureRecognizer Command="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}" 
                                                           CommandParameter="{Binding .}" />
                                 </Frame.GestureRecognizers>
-                                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                                     <!-- Kolumna z treścią składnika -->
                                     <StackLayout Grid.Column="0">
                                         <Label Text="{Binding Name}" 
@@ -120,19 +120,8 @@
                                         </StackLayout>
                                     </StackLayout>
                                     
-                                    <!-- Ikona edycji - zgodna ze stylem PlannerPage -->
-                                    <Button Grid.Column="1" 
-                                            Text="✎" 
-                                            Command="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}" 
-                                            CommandParameter="{Binding .}" 
-                                            WidthRequest="40" 
-                                            HeightRequest="40"
-                                            TextColor="White"
-                                            FontSize="16"
-                                            CornerRadius="6" />
-                                    
                                     <!-- Przycisk usuwania - zgodny ze stylem ShoppingListDetailPage -->
-                                    <Button Grid.Column="2" 
+                                    <Button Grid.Column="1" 
                                             Text="✕" 
                                             Command="{Binding BindingContext.DeleteCommand, Source={x:Reference ThisPage}}" 
                                             CommandParameter="{Binding .}" 

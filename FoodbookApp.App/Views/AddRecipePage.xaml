@@ -447,11 +447,14 @@
 
                 <!-- Action Buttons - Always visible at bottom -->
                 <StackLayout Spacing="10" Margin="0,20,0,0">
-                    <Button Text="{Binding SaveButtonText}"
-                            Command="{Binding SaveRecipeCommand}"
+                    <Button Command="{Binding SaveRecipeCommand}"
                             HeightRequest="50"
                             FontSize="16"
-                            FontAttributes="Bold" />
+                            FontAttributes="Bold">
+                        <Button.ImageSource>
+                            <FileImageSource File="save.png" />
+                        </Button.ImageSource>
+                    </Button>
                 </StackLayout>
 
                 <!-- Validation Message -->

@@ -21,9 +21,12 @@
 
         <!-- Action Buttons -->
         <StackLayout Spacing="10" Margin="0,20,0,0">
-            <Button Text="{Binding SaveButtonText}"
-                    Command="{Binding SaveCommand}"
-                    HeightRequest="50" />
+            <Button Command="{Binding SaveCommand}"
+                    HeightRequest="50">
+                <Button.ImageSource>
+                    <FileImageSource File="save.png" />
+                </Button.ImageSource>
+            </Button>
         </StackLayout>
 
         <!-- Validation Message -->

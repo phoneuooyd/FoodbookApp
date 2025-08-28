@@ -29,29 +29,28 @@
                                    TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
                         </VerticalStackLayout>
                         
-                        <!-- Przycisk edycji -->
-                        <Button Grid.Column="1" 
-                                Text="✏️" 
-                                Command="{Binding BindingContext.OpenPlanCommand, Source={x:Reference ThisPage}}" 
-                                CommandParameter="{Binding .}" 
-                                WidthRequest="40" 
-                                HeightRequest="40"
-                                TextColor="White"
-                                FontSize="16"
-                                CornerRadius="6" />
-                        
-                        <!-- Przycisk archiwizacji - szary kolor -->
+                        <!-- Przycisk archiwizacji - nowy styl zgodny z delete button -->
                         <Button Grid.Column="2" 
-                                Text="📁" 
                                 Command="{Binding BindingContext.ArchivePlanCommand, Source={x:Reference ThisPage}}" 
                                 CommandParameter="{Binding .}" 
-                                WidthRequest="40" 
-                                HeightRequest="40"
-                                BackgroundColor="Gray"
-                                TextColor="White"
-                                FontSize="16"
-                                CornerRadius="6" />
+                                WidthRequest="35" 
+                                HeightRequest="35"
+                                BackgroundColor="{AppThemeBinding Light=#E6F3FF, Dark=#2C4A6B}"
+                                BorderColor="{AppThemeBinding Light=#CCE6FF, Dark=#4A6B8A}"
+                                BorderWidth="1"
+                                CornerRadius="17"
+                                Padding="0">
+                            <Button.ImageSource>
+                                <FileImageSource File="save.png" />
+                            </Button.ImageSource>
+                        </Button>
                     </Grid>
+                    
+                    <!-- Add tap gesture to the frame for edit functionality -->
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding BindingContext.OpenPlanCommand, Source={x:Reference ThisPage}}" 
+                                              CommandParameter="{Binding .}" />
+                    </Frame.GestureRecognizers>
                 </Frame>
             </DataTemplate>
         </CollectionView.ItemTemplate>

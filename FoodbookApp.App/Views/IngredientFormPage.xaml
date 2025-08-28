@@ -250,15 +250,18 @@
 
                 <!-- Action Buttons - Always visible at bottom -->
                 <StackLayout Spacing="10" Margin="0,20,0,0">
-                    <Button Text="{Binding SaveButtonText}"
-                            Command="{Binding SaveCommand}"
+                    <Button Command="{Binding SaveCommand}"
                             BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                             TextColor="White"
                             HeightRequest="50"
                             FontSize="16"
                             FontAttributes="Bold"
                             CornerRadius="8"
-                            HorizontalOptions="FillAndExpand" />
+                            HorizontalOptions="FillAndExpand">
+                        <Button.ImageSource>
+                            <FileImageSource File="save.png" />
+                        </Button.ImageSource>
+                    </Button>
                 </StackLayout>
                 
                 <!-- Validation Message -->
