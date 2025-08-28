@@ -16,5 +16,8 @@ namespace Foodbook.Models
         
         // Optional: store the quantity for validation purposes
         public double Quantity { get; set; }
+
+        // Order for reordering functionality
+        public int Order { get; set; } = 0;
     }
 }

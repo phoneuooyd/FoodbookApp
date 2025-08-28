@@ -66,7 +66,7 @@
                                     <TapGestureRecognizer Command="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}" 
                                                           CommandParameter="{Binding .}" />
                                 </Frame.GestureRecognizers>
-                                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                                     <!-- Kolumna z treścią składnika -->
                                     <StackLayout Grid.Column="0">
                                         <Label Text="{Binding Name}" 
@@ -120,28 +120,20 @@
                                         </StackLayout>
                                     </StackLayout>
                                     
-                                    <!-- Ikona edycji - zgodna ze stylem PlannerPage -->
+                                    <!-- Przycisk usuwania - zgodny ze stylem ShoppingListDetailPage -->
                                     <Button Grid.Column="1" 
-                                            Text="✎" 
-                                            Command="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}" 
-                                            CommandParameter="{Binding .}" 
-                                            WidthRequest="40" 
-                                            HeightRequest="40"
-                                            TextColor="White"
-                                            FontSize="16"
-                                            CornerRadius="6" />
-                                    
-                                    <!-- Ikona usuwania - zgodna ze stylem PlannerPage -->
-                                    <Button Grid.Column="2" 
-                                            Text="🗑" 
+                                            Text="✕" 
                                             Command="{Binding BindingContext.DeleteCommand, Source={x:Reference ThisPage}}" 
                                             CommandParameter="{Binding .}" 
-                                            WidthRequest="40" 
-                                            HeightRequest="40"
-                                            BackgroundColor="Red"
-                                            TextColor="White"
+                                            WidthRequest="35" 
+                                            HeightRequest="35"
+                                            BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}"
+                                            TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}"
                                             FontSize="16"
-                                            CornerRadius="6" />
+                                            CornerRadius="17"
+                                            BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}"
+                                            BorderWidth="1"
+                                            VerticalOptions="Center" />
                                 </Grid>
                             </Frame>
                         </DataTemplate>

@@ -33,6 +33,41 @@ namespace Foodbook.Models
             } 
         }
 
+        // Drag and drop state properties
+        private bool _isBeingDragged;
+        [NotMapped]
+        public bool IsBeingDragged 
+        { 
+            get => _isBeingDragged; 
+            set 
+            { 
+                if (_isBeingDragged != value)
+                {
+                    _isBeingDragged = value;
+                    OnPropertyChanged();
+                }
+            } 
+        }
+
+        private bool _isBeingDraggedOver;
+        [NotMapped]
+        public bool IsBeingDraggedOver 
+        { 
+            get => _isBeingDraggedOver; 
+            set 
+            { 
+                if (_isBeingDraggedOver != value)
+                {
+                    _isBeingDraggedOver = value;
+                    OnPropertyChanged();
+                }
+            } 
+        }
+
+        // Order for reordering functionality in shopping lists
+        [NotMapped]
+        public int Order { get; set; } = 0;
+        
         // Nutritional information per specified amount/unit
         public double Calories { get; set; }
         public double Protein { get; set; }

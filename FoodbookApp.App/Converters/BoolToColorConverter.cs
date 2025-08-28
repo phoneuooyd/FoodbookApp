@@ -48,6 +48,67 @@ public class StringToBoolConverter : IValueConverter
     }
 }
 
+public class DragStateToColorConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var isBeingDragged = (bool?)value;
+        if (isBeingDragged == true)
+        {
+            return Color.FromArgb("#E3F2FD"); // Light blue when being dragged
+        }
+        return Colors.Transparent;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return value;
+    }
+}
+
+/// <summary>
+/// Converter for drop zone visual feedback - returns border color and background for entire item
+/// </summary>
+public class DropZoneToColorConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var isBeingDraggedOver = (bool?)value;
+        if (isBeingDraggedOver == true)
+        {
+            // Return a more vibrant color for the entire item background
+            return Color.FromArgb("#E8F5E8"); // Light green background for drop zone
+        }
+        return Colors.Transparent;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return value;
+    }
+}
+
+/// <summary>
+/// Converter for drop zone border color
+/// </summary>
+public class DropZoneBorderColorConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var isBeingDraggedOver = (bool?)value;
+        if (isBeingDraggedOver == true)
+        {
+            return Color.FromArgb("#4CAF50"); // Green border for drop zone
+        }
+        return Color.FromArgb("#E0E0E0"); // Default light gray border
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return value;
+    }
+}
+
 public class BoolToTextConverter : IValueConverter
 {
     public static readonly BoolToTextConverter Instance = new();
