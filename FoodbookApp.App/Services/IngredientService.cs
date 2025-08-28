@@ -53,13 +53,20 @@ public class IngredientService : IIngredientService
             _context.Ingredients.Add(ingredient);
             await _context.SaveChangesAsync();
             
-            // ? NOWE: Invalidacja cache po dodaniu
-            InvalidateCache();
-            System.Diagnostics.Debug.WriteLine($"Added ingredient: {ingredient.Name}, ID: {ingredient.Id}");
+            // ? OPTYMALIZACJA: Invaliduj cache tylko gdy to konieczne
+            if (ingredient.RecipeId == null) 
+            {
+                InvalidateCache();
+                System.Diagnostics.Debug.WriteLine($"? Added standalone ingredient: {ingredient.Name}, ID: {ingredient.Id}");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"? Added recipe ingredient: {ingredient.Name}, RecipeId: {ingredient.RecipeId}");
+            }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error adding ingredient: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"? Error adding ingredient: {ex.Message}");
             throw;
         }
     }
@@ -86,18 +93,25 @@ public class IngredientService : IIngredientService
 
                 await _context.SaveChangesAsync();
                 
-                // ? NOWE: Invalidacja cache po aktualizacji
-                InvalidateCache();
-                System.Diagnostics.Debug.WriteLine($"Updated ingredient: {ingredient.Name}, ID: {ingredient.Id}");
+                // ? OPTYMALIZACJA: Invaliduj cache tylko dla standalone ingredients
+                if (existingIngredient.RecipeId == null)
+                {
+                    InvalidateCache();
+                    System.Diagnostics.Debug.WriteLine($"? Updated standalone ingredient: {ingredient.Name}, ID: {ingredient.Id}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"? Updated recipe ingredient: {ingredient.Name}, RecipeId: {existingIngredient.RecipeId}");
+                }
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"Ingredient with ID {ingredient.Id} not found for update");
+                System.Diagnostics.Debug.WriteLine($"? Ingredient with ID {ingredient.Id} not found for update");
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error updating ingredient: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"? Error updating ingredient: {ex.Message}");
             throw;
         }
     }
@@ -106,36 +120,51 @@ public class IngredientService : IIngredientService
     {
         try
         {
-            // More efficient delete - no need to load the entity first
-            var ingredient = new Ingredient { Id = id };
-            _context.Ingredients.Attach(ingredient);
-            _context.Ingredients.Remove(ingredient);
-            await _context.SaveChangesAsync();
+            // ? OPTYMALIZACJA: SprawdŸ czy to standalone ingredient przed usuniêciem
+            var ingredient = await _context.Ingredients.FindAsync(id);
+            bool wasStandalone = ingredient?.RecipeId == null;
             
-            // ? NOWE: Invalidacja cache po usuniêciu
-            InvalidateCache();
-            System.Diagnostics.Debug.WriteLine($"Deleted ingredient ID: {id}");
+            if (ingredient != null)
+            {
+                _context.Ingredients.Remove(ingredient);
+                await _context.SaveChangesAsync();
+                
+                // Invaliduj cache tylko dla standalone ingredients
+                if (wasStandalone)
+                {
+                    InvalidateCache();
+                    System.Diagnostics.Debug.WriteLine($"? Deleted standalone ingredient ID: {id}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"? Deleted recipe ingredient ID: {id}");
+                }
+            }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error deleting ingredient: {ex.Message}");
-            // Fallback to traditional delete if attach/remove fails
+            System.Diagnostics.Debug.WriteLine($"? Error deleting ingredient: {ex.Message}");
+            
+            // Fallback to traditional delete if the above fails
             try
             {
                 var ing = await _context.Ingredients.FindAsync(id);
                 if (ing != null)
                 {
+                    bool wasStandalone = ing.RecipeId == null;
                     _context.Ingredients.Remove(ing);
                     await _context.SaveChangesAsync();
                     
-                    // ? NOWE: Invalidacja cache po usuniêciu (fallback)
-                    InvalidateCache();
-                    System.Diagnostics.Debug.WriteLine($"Deleted ingredient ID: {id} (fallback method)");
+                    if (wasStandalone)
+                    {
+                        InvalidateCache();
+                    }
+                    System.Diagnostics.Debug.WriteLine($"? Deleted ingredient ID: {id} (fallback method)");
                 }
             }
             catch (Exception fallbackEx)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in fallback delete: {fallbackEx.Message}");
+                System.Diagnostics.Debug.WriteLine($"? Error in fallback delete: {fallbackEx.Message}");
                 throw;
             }
         }
