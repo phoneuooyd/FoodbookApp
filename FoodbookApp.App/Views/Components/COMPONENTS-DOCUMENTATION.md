@@ -17,15 +17,11 @@ W odpowiedzi na duplikacjê kodu pomiêdzy stronami `RecipesPage.xaml` i `Ingredie
 - `ClearCommand` (ICommand) - Komenda czyszczenia tekstu
 - `IsVisible` (bool) - Widocznoœæ komponentu
 
-**Przyk³ad u¿ycia**:
-```xaml
-<components:ModernSearchBarComponent 
+**Przyk³ad u¿ycia**:<components:ModernSearchBarComponent 
     SearchText="{Binding SearchText}"
     PlaceholderText="{loc:Translate Resource=RecipesPageResources, Key=SearchPlaceholder}"
     ClearCommand="{Binding ClearSearchCommand}"
     IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
-```
-
 ### 2. GenericListComponent
 **Lokalizacja**: `Views/Components/GenericListComponent.xaml`
 
@@ -40,9 +36,7 @@ W odpowiedzi na duplikacjê kodu pomiêdzy stronami `RecipesPage.xaml` i `Ingredie
 - `EmptyHint` (string) - PodpowiedŸ dla pustej listy
 - `IsVisible` (bool) - Widocznoœæ komponentu
 
-**Przyk³ad u¿ycia**:
-```xaml
-<components:GenericListComponent 
+**Przyk³ad u¿ycia**:<components:GenericListComponent 
     ItemsSource="{Binding Recipes}"
     ItemTemplate="{StaticResource RecipeItemTemplate}"
     IsRefreshing="{Binding IsRefreshing}"
@@ -50,8 +44,6 @@ W odpowiedzi na duplikacjê kodu pomiêdzy stronami `RecipesPage.xaml` i `Ingredie
     EmptyTitle="{loc:Translate Resource=RecipesPageResources, Key=EmptyTitle}"
     EmptyHint="{loc:Translate Resource=RecipesPageResources, Key=EmptyHint}"
     IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
-```
-
 ### 3. FloatingActionButtonComponent
 **Lokalizacja**: `Views/Components/FloatingActionButtonComponent.xaml`
 
@@ -62,131 +54,164 @@ W odpowiedzi na duplikacjê kodu pomiêdzy stronami `RecipesPage.xaml` i `Ingredie
 - `ButtonText` (string) - Tekst przycisku (domyœlnie "+")
 - `IsVisible` (bool) - Widocznoœæ komponentu
 
-**Przyk³ad u¿ycia**:
-```xaml
-<components:FloatingActionButtonComponent 
+**Przyk³ad u¿ycia**:<components:FloatingActionButtonComponent 
     Command="{Binding AddRecipeCommand}"
     IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
-```
+### 4. UniversalListItemComponent ? **NOWY UNIWERSALNY KOMPONENT**
+**Lokalizacja**: `Views/Components/UniversalListItemComponent.xaml`
 
-### 4. RecipeListItemComponent
-**Lokalizacja**: `Views/Components/RecipeListItemComponent.xaml`
-
-**Cel**: Szablon elementu listy przepisów z informacjami od¿ywczymi i przyciskami akcji.
+**Cel**: Uniwersalny szablon elementu listy obs³uguj¹cy zarówno przepisy jak i sk³adniki z konfigurowalnymi elementami UI.
 
 **W³aœciwoœci Bindable**:
 - `EditCommand` (ICommand) - Komenda edycji
 - `DeleteCommand` (ICommand) - Komenda usuniêcia
+- `ShowSubtitle` (bool) - Wyœwietla/ukrywa podtytu³ z iloœci¹ i jednostk¹
 
-**DataContext**: Oczekuje obiektu typu `Recipe`
+**DataContext**: Oczekuje obiektu typu `Recipe` lub `Ingredient` (oba implementuj¹ te same w³aœciwoœci: Name, Calories, Protein, Fat, Carbs)
 
-**Przyk³ad u¿ycia**:
-```xaml
-<DataTemplate x:Key="RecipeItemTemplate" x:DataType="models:Recipe">
-    <components:RecipeListItemComponent 
+**Przyk³ad u¿ycia dla przepisów**:<DataTemplate x:Key="RecipeItemTemplate" x:DataType="models:Recipe">
+    <components:UniversalListItemComponent 
         EditCommand="{Binding BindingContext.EditRecipeCommand, Source={x:Reference ThisPage}}"
-        DeleteCommand="{Binding BindingContext.DeleteRecipeCommand, Source={x:Reference ThisPage}}" />
+        DeleteCommand="{Binding BindingContext.DeleteRecipeCommand, Source={x:Reference ThisPage}}"
+        ShowSubtitle="False" />
 </DataTemplate>
-```
-
-### 5. IngredientListItemComponent
-**Lokalizacja**: `Views/Components/IngredientListItemComponent.xaml`
-
-**Cel**: Szablon elementu listy sk³adników z iloœci¹, jednostk¹, informacjami od¿ywczymi i przyciskami akcji.
-
-**W³aœciwoœci Bindable**:
-- `EditCommand` (ICommand) - Komenda edycji
-- `DeleteCommand` (ICommand) - Komenda usuniêcia
-
-**DataContext**: Oczekuje obiektu typu `Ingredient`
-
-**Przyk³ad u¿ycia**:
-```xaml
-<DataTemplate x:Key="IngredientItemTemplate" x:DataType="models:Ingredient">
-    <components:IngredientListItemComponent 
+**Przyk³ad u¿ycia dla sk³adników**:<DataTemplate x:Key="IngredientItemTemplate" x:DataType="models:Ingredient">
+    <components:UniversalListItemComponent 
         EditCommand="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}"
-        DeleteCommand="{Binding BindingContext.DeleteCommand, Source={x:Reference ThisPage}}" />
+        DeleteCommand="{Binding BindingContext.DeleteCommand, Source={x:Reference ThisPage}}"
+        ShowSubtitle="True" />
 </DataTemplate>
-```
+**Konfiguracja**:
+- **ShowSubtitle="False"** - Dla przepisów (ukrywa iloœæ i jednostkê)
+- **ShowSubtitle="True"** - Dla sk³adników (pokazuje iloœæ i jednostkê)
 
 ## Refaktoryzowane Strony
 
 ### RecipesPage.xaml
-**Przed refaktoryzacj¹**: 105 linii duplikowanego kodu
-**Po refaktoryzacji**: 52 linie z u¿yciem komponentów
+**Przed refaktoryzacj¹**: 105 linii z duplikowanym kodem
+**Po pierwszej refaktoryzacji**: 52 linie z dedykowanymi komponentami
+**Po drugiej refaktoryzacji**: 52 linie z uniwersalnym komponentem
 
 **Zmiany**:
-- Zast¹piono tradycyjny search bar komponentem `ModernSearchBarComponent`
-- Zast¹piono `RefreshView` + `CollectionView` komponentem `GenericListComponent`
-- Zast¹piono inline template komponentem `RecipeListItemComponent`
-- Zast¹piono tradycyjny FAB komponentem `FloatingActionButtonComponent`
+- Zast¹piono `RecipeListItemComponent` uniwersalnym `UniversalListItemComponent` z `ShowSubtitle="False"`
+- Zachowano pe³n¹ funkcjonalnoœæ bez zmian w kodzie biznesowym
 
 ### IngredientsPage.xaml
-**Przed refaktoryzacj¹**: 110 linii duplikowanego kodu
-**Po refaktoryzacji**: 52 linie z u¿yciem komponentów
+**Przed refaktoryzacj¹**: 110 linii z duplikowanym kodem
+**Po pierwszej refaktoryzacji**: 52 linie z dedykowanymi komponentami
+**Po drugiej refaktoryzacji**: 52 linie z uniwersalnym komponentem
 
 **Zmiany**:
-- Identyczne jak w RecipesPage.xaml, z wyj¹tkiem u¿ycia `IngredientListItemComponent`
+- Zast¹piono `IngredientListItemComponent` uniwersalnym `UniversalListItemComponent` z `ShowSubtitle="True"`
+- Zachowano wyœwietlanie iloœci i jednostki dla sk³adników
 
-## Korzyœci z Refaktoryzacji
+## Po³¹czenie Komponentów
 
-### 1. Zgodnoœæ z zasad¹ DRY
-- Eliminacja duplikacji kodu miêdzy stronami
-- Centralizacja logiki UI w komponentach
-- £atwiejsze utrzymanie i aktualizacja
+### Analiza Ró¿nic
+Podczas analizy `RecipeListItemComponent` i `IngredientListItemComponent` zidentyfikowano nastêpuj¹ce ró¿nice:
 
-### 2. Modularnoœæ i Reu¿ywalnoœæ
-- Komponenty mog¹ byæ u¿ywane w innych czêœciach aplikacji
-- £atwe dodawanie nowych stron z podobn¹ funkcjonalnoœci¹
-- Spójny wygl¹d i zachowanie w ca³ej aplikacji
+1. **IngredientListItemComponent** - dodatkowy `Label` z iloœci¹ i jednostk¹ (Quantity + Unit)
+2. **RecipeListItemComponent** - brak podtytu³u z iloœci¹
+3. **Identyczne elementy**: Name, nutrition info (Calories, Protein, Fat, Carbs), delete button, edit gesture
 
-### 3. Parametryzacja
-- Wszystkie komponenty s¹ w pe³ni konfigurowalne
-- Bindable properties umo¿liwiaj¹ elastyczne dostosowanie
-- Zachowanie oryginalnej funkcjonalnoœci
+### Rozwi¹zanie Uniwersalne
+Utworzono `UniversalListItemComponent` który:
+- **£¹czy funkcjonalnoœæ** obu poprzednich komponentów
+- **Parametryzuje ró¿nice** przez w³aœciwoœæ `ShowSubtitle`
+- **Zachowuje wszystkie funkcje** bez utraty funkcjonalnoœci
+- **Upraszcza maintenance** - jeden komponent zamiast dwóch
 
-### 4. £atwoœæ Testowania
-- Komponenty mo¿na testowaæ niezale¿nie
-- Izolacja logiki UI
-- Lepsze pokrycie testami
+### Usuniête Komponenty
+Po implementacji uniwersalnego komponentu usuniêto:
+- ~~`RecipeListItemComponent.xaml`~~
+- ~~`RecipeListItemComponent.xaml.cs`~~
+- ~~`IngredientListItemComponent.xaml`~~
+- ~~`IngredientListItemComponent.xaml.cs`~~
 
-### 5. Konserwacja Kodu
-- Zmiany stylu wymagaj¹ modyfikacji tylko w jednym miejscu
-- £atwiejsze dodawanie nowych funkcji
-- Redukcja b³êdów zwi¹zanych z duplikacj¹
+## Korzyœci z Dalszej Refaktoryzacji
+
+### 1. Jeszcze Wiêksza Zgodnoœæ z DRY
+- **Eliminacja duplikacji** miêdzy dwoma bardzo podobnymi komponentami
+- **Jeden punkt prawdy** dla logiki list item UI
+- **Centralizacja zmian** - modyfikacje w jednym miejscu
+
+### 2. Uproszczona Architektura
+- **Mniej plików** do zarz¹dzania (4 pliki ? 2 pliki)
+- **£atwiejsze testowanie** - jeden komponent do przetestowania
+- **Spójne zachowanie** - identyczna logika dla obu typów danych
+
+### 3. Flexible Configuration
+- **Parametryzacja przez w³aœciwoœci** zamiast osobnych komponentów
+- **£atwe rozszerzanie** - dodanie nowych typów elementów listy
+- **Konfigurowalnoœæ** - dostosowanie do ró¿nych scenariuszy
+
+### 4. Maintenance Benefits
+- **Single Source of Truth** - jeden komponent do aktualizacji
+- **Consistent Styling** - identyczne style dla wszystkich list
+- **Bug Fixes** - poprawki w jednym miejscu wp³ywaj¹ na wszystkie listy
 
 ## Wykorzystanie w Przysz³oœci
 
-Te komponenty mog¹ byæ u¿ywane w:
-- Nowych stronach z podobn¹ funkcjonalnoœci¹ (np. Shopping Lists, Meal Plans)
-- Ró¿nych kontekstach z zachowaniem spójnoœci UI
-- Rozszerzeniach funkcjonalnoœci bez duplikacji kodu
+Nowy `UniversalListItemComponent` mo¿e byæ u¿ywany dla:
+- **Innych typów list** z podobn¹ struktur¹ danych
+- **Nowych modeli** implementuj¹cych w³aœciwoœci Name, Calories, Protein, Fat, Carbs
+- **Ró¿nych konfiguracji** poprzez dodanie nowych parametrów (np. `ShowActions`, `ItemType`)
 
 ## Wzorce Zastosowane
 
-### 1. Composition over Inheritance
-- Komponenty sk³adane razem zamiast dziedziczenia
-- Wiêksza elastycznoœæ i modularnoœæ
+### 1. Template Method Pattern + Configuration
+- Wspólny szablon z konfigurowalnymi czêœciami
+- `ShowSubtitle` jako punkt konfiguracji zachowania
 
-### 2. Bindable Properties Pattern
-- Standardowy wzorzec .NET MAUI dla komponentów
-- Type-safe binding z IntelliSense
+### 2. Single Responsibility with Flexibility
+- Jeden komponent = jedna odpowiedzialnoœæ (wyœwietlanie list item)
+- Elastycznoœæ przez parametryzacjê zamiast inheritence
 
-### 3. Separation of Concerns
-- Ka¿dy komponent ma jedn¹ odpowiedzialnoœæ
-- Czysta separacja miêdzy logik¹ a prezentacj¹
+### 3. Open/Closed Principle
+- Zamkniêty na modyfikacje (stable interface)
+- Otwarty na rozszerzenia (nowe parametry konfiguracji)
 
-### 4. Template Method Pattern
-- GenericListComponent jako szablon z konfigurowalnymi czêœciami
-- ItemTemplate pozwala na dostosowanie bez modyfikacji komponentu
+## Kolejne Kroki i Rozszerzenia
 
-## Podsumowanie
+### Potencjalne Ulepszenia UniversalListItemComponent
 
-Refaktoryzacja zaowocowa³a:
-- **Redukcj¹ kodu o ~50%** w ka¿dej ze stron
-- **Eliminacj¹ duplikacji** miêdzy RecipesPage i IngredientsPage  
-- **Stworzeniem biblioteki** reu¿ywalnych komponentów UI
-- **Zachowaniem pe³nej funkcjonalnoœci** oryginalnych stron
-- **Przygotowaniem fundamentu** dla przysz³ych rozszerzeñ
+1. **Wiêcej Parametrów Konfiguracji**:public bool ShowActions { get; set; } = true;
+public bool ShowNutrition { get; set; } = true;
+public string ItemTypeConfiguration { get; set; } = "Default";
+2. **Templating System**:<StackLayout IsVisible="{Binding ShowCustomContent, Source={x:Reference ItemComponent}}">
+    <ContentPresenter Content="{Binding CustomContent, Source={x:Reference ItemComponent}}" />
+</StackLayout>
+3. **Action Configuration**:public bool ShowEditAction { get; set; } = true;
+public bool ShowDeleteAction { get; set; } = true;
+public ICommand AdditionalCommand { get; set; }
+## Podsumowanie Refaktoryzacji
 
-Wszystkie komponenty s¹ gotowe do u¿ycia w innych czêœciach aplikacji i mog¹ byæ ³atwo rozszerzane o nowe funkcjonalnoœci.
+### Faza 1: Wyodrêbnienie Komponentów
+- **5 komponentów** utworzonych z duplikowanego kodu
+- **Redukcja kodu o ~50%** w ka¿dej stronie
+- **Podstawowa modularnoœæ** osi¹gniêta
+
+### Faza 2: Unifikacja Komponentów ? **AKTUALNA**
+- **Po³¹czenie 2 podobnych komponentów** w 1 uniwersalny
+- **Dodatkowa redukcja z³o¿o¿noœci** o 4 pliki
+- **Flexible configuration** przez `ShowSubtitle`
+- **Zachowanie pe³nej funkcjonalnoœci** bez regresji
+
+### Wyniki Koñcowe
+? **DRY Principle** - Zero duplikacji kodu miêdzy stronami  
+? **SOLID Principles** - Single responsibility, Open/Closed compliance  
+? **Maintenance** - Jeden komponent do zarz¹dzania list items  
+? **Flexibility** - Parametryzacja zamiast dedykowanych komponentów  
+? **Performance** - Bez wp³ywu na wydajnoœæ aplikacji  
+? **Testing** - Mniej komponentów do testowania  
+
+### Struktura Finalna KomponentówViews/Components/
+??? ModernSearchBarComponent.xaml (.cs)
+??? GenericListComponent.xaml (.cs)  
+??? FloatingActionButtonComponent.xaml (.cs)
+??? UniversalListItemComponent.xaml (.cs) ?
+??? COMPONENTS-DOCUMENTATION.md
+**Kompilacja**: ? **Build Successful**  
+**Funkcjonalnoœæ**: ? **Pe³na kompatybilnoœæ**  
+**Kod**: ? **Zero duplikacji**  
+**Komponenty**: ? **Maksymalnie reu¿ywalne**

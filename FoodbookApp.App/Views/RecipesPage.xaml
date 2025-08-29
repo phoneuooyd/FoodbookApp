@@ -15,9 +15,10 @@
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         <DataTemplate x:Key="RecipeItemTemplate" x:DataType="models:Recipe">
-            <components:RecipeListItemComponent 
+            <components:UniversalListItemComponent 
                 EditCommand="{Binding BindingContext.EditRecipeCommand, Source={x:Reference ThisPage}}"
-                DeleteCommand="{Binding BindingContext.DeleteRecipeCommand, Source={x:Reference ThisPage}}" />
+                DeleteCommand="{Binding BindingContext.DeleteRecipeCommand, Source={x:Reference ThisPage}}"
+                ShowSubtitle="False" />
         </DataTemplate>
     </ContentPage.Resources>
 

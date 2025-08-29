@@ -1,22 +1,23 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:models="clr-namespace:Foodbook.Models"
-             x:Class="Foodbook.Views.Components.IngredientListItemComponent"
-             x:Name="IngredientItemComponent"
-             x:DataType="models:Ingredient">
+             x:Class="Foodbook.Views.Components.UniversalListItemComponent"
+             x:Name="ItemComponent">
 
     <ContentView Style="{StaticResource ListItemContainer}">
         <Frame Style="{StaticResource ListItemFrame}">
             <Frame.GestureRecognizers>
-                <TapGestureRecognizer Command="{Binding EditCommand, Source={x:Reference IngredientItemComponent}}" 
+                <TapGestureRecognizer Command="{Binding EditCommand, Source={x:Reference ItemComponent}}" 
                                       CommandParameter="{Binding .}" />
             </Frame.GestureRecognizers>
             <Grid Style="{StaticResource ListItemContentGrid}" ColumnDefinitions="*,Auto">
-                <!-- Ingredient content column -->
+                <!-- Item content column -->
                 <StackLayout Grid.Column="0" Spacing="2">
                     <Label Text="{Binding Name}" Style="{StaticResource ItemTitleLabel}" />
-                    <Label Style="{StaticResource ItemSubtitleLabel}">
+                    
+                    <!-- Subtitle (quantity and unit) - only visible for ingredients -->
+                    <Label Style="{StaticResource ItemSubtitleLabel}"
+                           IsVisible="{Binding ShowSubtitle, Source={x:Reference ItemComponent}}">
                         <Label.Text>
                             <MultiBinding StringFormat="{}{0:F1} {1}">
                                 <Binding Path="Quantity" />
@@ -61,7 +62,7 @@
                 <!-- Delete button -->
                 <Button Grid.Column="1" 
                         Style="{StaticResource DeleteButton}"
-                        Command="{Binding DeleteCommand, Source={x:Reference IngredientItemComponent}}" 
+                        Command="{Binding DeleteCommand, Source={x:Reference ItemComponent}}" 
                         CommandParameter="{Binding .}" />
             </Grid>
         </Frame>
