@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Windows.Input;
 using Foodbook.Services;
 
 namespace Foodbook.ViewModels;
@@ -27,6 +28,37 @@ public class SettingsViewModel : INotifyPropertyChanged
         }
     }
 
+    private bool _isMigrationInProgress;
+    public bool IsMigrationInProgress
+    {
+        get => _isMigrationInProgress;
+        set
+        {
+            if (_isMigrationInProgress == value) return;
+            _isMigrationInProgress = value;
+            OnPropertyChanged(nameof(IsMigrationInProgress));
+            OnPropertyChanged(nameof(CanExecuteMigration));
+        }
+    }
+
+    private string _migrationStatus = string.Empty;
+    public string MigrationStatus
+    {
+        get => _migrationStatus;
+        set
+        {
+            if (_migrationStatus == value) return;
+            _migrationStatus = value;
+            OnPropertyChanged(nameof(MigrationStatus));
+        }
+    }
+
+    public bool CanExecuteMigration => !IsMigrationInProgress;
+
+    // Commands for database operations
+    public ICommand MigrateDatabaseCommand { get; }
+    public ICommand ResetDatabaseCommand { get; }
+
     public SettingsViewModel(LocalizationResourceManager locManager, IPreferencesService preferencesService)
     {
         _locManager = locManager;
@@ -40,6 +72,120 @@ public class SettingsViewModel : INotifyPropertyChanged
         
         // Set the culture without triggering the setter to avoid recursive calls
         _locManager.SetCulture(_selectedCulture);
+
+        // Initialize commands
+        MigrateDatabaseCommand = new Command(async () => await MigrateDatabaseAsync(), () => CanExecuteMigration);
+        ResetDatabaseCommand = new Command(async () => await ResetDatabaseAsync(), () => CanExecuteMigration);
+    }
+
+    private async Task MigrateDatabaseAsync()
+    {
+        try
+        {
+            IsMigrationInProgress = true;
+            MigrationStatus = "Wykonywanie migracji bazy danych...";
+            
+            System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Starting database migration");
+            
+            var success = await FoodbookApp.MauiProgram.MigrateDatabaseAsync();
+            
+            if (success)
+            {
+                MigrationStatus = "Migracja zakoñczona pomyœlnie!";
+                await Application.Current?.MainPage?.DisplayAlert(
+                    "Sukces", 
+                    "Migracja bazy danych zosta³a wykonana pomyœlnie.", 
+                    "OK");
+            }
+            else
+            {
+                MigrationStatus = "Migracja nieudana.";
+                await Application.Current?.MainPage?.DisplayAlert(
+                    "B³¹d", 
+                    "Nie uda³o siê wykonaæ migracji bazy danych. SprawdŸ logi aplikacji.", 
+                    "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Migration error: {ex.Message}");
+            MigrationStatus = $"B³¹d migracji: {ex.Message}";
+            await Application.Current?.MainPage?.DisplayAlert(
+                "B³¹d", 
+                $"Wyst¹pi³ b³¹d podczas migracji: {ex.Message}", 
+                "OK");
+        }
+        finally
+        {
+            IsMigrationInProgress = false;
+            
+            // Clear status after 3 seconds
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(3000);
+                MainThread.BeginInvokeOnMainThread(() => MigrationStatus = string.Empty);
+            });
+        }
+    }
+
+    private async Task ResetDatabaseAsync()
+    {
+        try
+        {
+            bool confirm = await Application.Current?.MainPage?.DisplayAlert(
+                "Resetuj bazê danych", 
+                "Czy na pewno chcesz usun¹æ wszystkie dane? Ta operacja jest nieodwracalna.\n\nWszystkie przepisy, plany i listy zakupów zostan¹ utracone.", 
+                "Tak, resetuj", "Anuluj") == true;
+                
+            if (!confirm) return;
+
+            IsMigrationInProgress = true;
+            MigrationStatus = "Resetowanie bazy danych...";
+            
+            System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Starting database reset");
+            
+            var success = await FoodbookApp.MauiProgram.ResetDatabaseAsync();
+            
+            if (success)
+            {
+                MigrationStatus = "Baza danych zosta³a zresetowana!";
+                await Application.Current?.MainPage?.DisplayAlert(
+                    "Sukces", 
+                    "Baza danych zosta³a zresetowana. Aplikacja zostanie zamkniêta - uruchom j¹ ponownie.", 
+                    "OK");
+                
+                // Close application after reset
+                Application.Current?.Quit();
+            }
+            else
+            {
+                MigrationStatus = "Reset nieudany.";
+                await Application.Current?.MainPage?.DisplayAlert(
+                    "B³¹d", 
+                    "Nie uda³o siê zresetowaæ bazy danych. SprawdŸ logi aplikacji.", 
+                    "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Reset error: {ex.Message}");
+            MigrationStatus = $"B³¹d resetu: {ex.Message}";
+            await Application.Current?.MainPage?.DisplayAlert(
+                "B³¹d", 
+                $"Wyst¹pi³ b³¹d podczas resetowania: {ex.Message}", 
+                "OK");
+        }
+        finally
+        {
+            IsMigrationInProgress = false;
+            
+            // Clear status after 3 seconds
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(3000);
+                MainThread.BeginInvokeOnMainThread(() => MigrationStatus = string.Empty);
+            });
+        }
     }
 
     private string LoadSelectedCulture()

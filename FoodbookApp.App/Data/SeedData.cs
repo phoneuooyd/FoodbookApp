@@ -61,14 +61,27 @@ namespace Foodbook.Data
                     ingredient.RecipeId = null;
                 }
 
-                LogDebug($"Adding {ingredients.Count} ingredients to database");
-                context.Ingredients.AddRange(ingredients);
-                await context.SaveChangesAsync();
-                LogDebug($"Successfully added {ingredients.Count} ingredients to database");
+                // ✅ OPTYMALIZACJA: Batch inserting dla lepszej wydajności
+                LogDebug($"Adding {ingredients.Count} ingredients to database in batches");
+                
+                const int batchSize = 50;
+                for (int i = 0; i < ingredients.Count; i += batchSize)
+                {
+                    var batch = ingredients.Skip(i).Take(batchSize);
+                    context.Ingredients.AddRange(batch);
+                    await context.SaveChangesAsync();
+                    
+                    LogDebug($"✅ Processed batch {i / batchSize + 1}/{(ingredients.Count + batchSize - 1) / batchSize}");
+                    
+                    // Krótka pauza dla UI responsiveness
+                    await Task.Delay(10);
+                }
+                
+                LogDebug($"✅ Successfully added {ingredients.Count} ingredients to database");
             }
             catch (Exception ex)
             {
-                LogError($"Error seeding ingredients: {ex.Message}");
+                LogError($"❌ Error seeding ingredients: {ex.Message}");
                 LogError($"Stack trace: {ex.StackTrace}");
                 LogWarning("Continuing without seeded ingredients - user can add manually");
             }
@@ -81,7 +94,11 @@ namespace Foodbook.Data
         /// <returns>True jeśli dane zostały zaktualizowane, False w przeciwnym przypadku</returns>
         public static async Task<bool> UpdateIngredientWithOpenFoodFactsAsync(Ingredient ingredient)
         {
-            using var httpClient = new HttpClient();
+            // ✅ OPTYMALIZACJA: Timeout dla szybszej odpowiedzi
+            using var httpClient = new HttpClient() 
+            { 
+                Timeout = TimeSpan.FromSeconds(10) // Skrócony timeout
+            };
             
             var url = $"https://world.openfoodfacts.org/cgi/search.pl?search_terms={Uri.EscapeDataString(ingredient.Name)}&search_simple=1&json=1";
 
@@ -150,25 +167,28 @@ namespace Foodbook.Data
 
                 bool wasUpdated = false;
                 
-                if (newCalories >= 0 && Math.Abs(oldCalories - newCalories) > 0.1)
+                // ✅ OPTYMALIZACJA: Większy próg dla unikania nadmiernych zmian
+                var updateThreshold = 0.5; // Zmienione z 0.1 na 0.5
+                
+                if (newCalories >= 0 && Math.Abs(oldCalories - newCalories) > updateThreshold)
                 {
                     ingredient.Calories = newCalories;
                     wasUpdated = true;
                 }
                 
-                if (newProtein >= 0 && Math.Abs(oldProtein - newProtein) > 0.1)
+                if (newProtein >= 0 && Math.Abs(oldProtein - newProtein) > updateThreshold)
                 {
                     ingredient.Protein = newProtein;
                     wasUpdated = true;
                 }
                 
-                if (newFat >= 0 && Math.Abs(oldFat - newFat) > 0.1)
+                if (newFat >= 0 && Math.Abs(oldFat - newFat) > updateThreshold)
                 {
                     ingredient.Fat = newFat;
                     wasUpdated = true;
                 }
                 
-                if (newCarbs >= 0 && Math.Abs(oldCarbs - newCarbs) > 0.1)
+                if (newCarbs >= 0 && Math.Abs(oldCarbs - newCarbs) > updateThreshold)
                 {
                     ingredient.Carbs = newCarbs;
                     wasUpdated = true;
@@ -176,18 +196,18 @@ namespace Foodbook.Data
 
                 if (wasUpdated)
                 {
-                    LogDebug($"{ingredient.Name} updated: kcal={ingredient.Calories}, P={ingredient.Protein}, F={ingredient.Fat}, C={ingredient.Carbs}");
+                    LogDebug($"✅ {ingredient.Name} updated: kcal={ingredient.Calories}, P={ingredient.Protein}, F={ingredient.Fat}, C={ingredient.Carbs}");
                 }
                 else
                 {
-                    LogDebug($"{ingredient.Name}: OpenFoodFacts data identical to current");
+                    LogDebug($"ℹ {ingredient.Name}: OpenFoodFacts data identical to current");
                 }
                 
                 return wasUpdated;
             }
             catch (Exception ex)
             {
-                LogError($"{ingredient.Name}: {ex.Message}");
+                LogError($"❌ {ingredient.Name}: {ex.Message}");
                 return false;
             }
         }

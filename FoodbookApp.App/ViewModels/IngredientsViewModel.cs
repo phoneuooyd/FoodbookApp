@@ -88,6 +88,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
     public ICommand DeleteCommand { get; }
     public ICommand RefreshCommand { get; }
     public ICommand BulkVerifyCommand { get; } // Nowa komenda
+    public ICommand ClearSearchCommand { get; } // Nowa komenda do czyszczenia wyszukiwania
 
     public IngredientsViewModel(IIngredientService service)
     {
@@ -101,6 +102,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
         DeleteCommand = new Command<Ingredient>(async ing => await DeleteIngredientAsync(ing));
         RefreshCommand = new Command(async () => await ReloadAsync());
         BulkVerifyCommand = new Command(async () => await BulkVerifyIngredientsAsync(), () => !IsBulkVerifying && Ingredients.Count > 0);
+        ClearSearchCommand = new Command(() => SearchText = string.Empty); // Komenda do czyszczenia wyszukiwania
     }
 
     /// <summary>
@@ -127,52 +129,61 @@ public class IngredientsViewModel : INotifyPropertyChanged
 
             BulkVerificationStatus = $"Weryfikujê sk³adniki: 0/{totalCount}";
 
-            for (int i = 0; i < Ingredients.Count; i++)
+            // ? OPTYMALIZACJA: Batch processing z throttling
+            const int batchSize = 5; // Mniejsze batche dla API
+            for (int i = 0; i < Ingredients.Count; i += batchSize)
             {
-                var ingredient = Ingredients[i];
+                var batch = Ingredients.Skip(i).Take(batchSize).ToList();
                 
-                try
+                // Process batch
+                foreach (var ingredient in batch)
                 {
-                    BulkVerificationStatus = $"Weryfikujê sk³adniki: {i + 1}/{totalCount} - {ingredient.Name}";
-
-                    // Skopiuj sk³adnik do weryfikacji
-                    var tempIngredient = new Ingredient
+                    try
                     {
-                        Id = ingredient.Id,
-                        Name = ingredient.Name,
-                        Quantity = ingredient.Quantity,
-                        Unit = ingredient.Unit,
-                        Calories = ingredient.Calories,
-                        Protein = ingredient.Protein,
-                        Fat = ingredient.Fat,
-                        Carbs = ingredient.Carbs,
-                        RecipeId = ingredient.RecipeId
-                    };
+                        BulkVerificationStatus = $"Weryfikujê sk³adniki: {i + 1}/{totalCount} - {ingredient.Name}";
 
-                    // Weryfikuj z OpenFoodFacts
-                    bool wasUpdated = await SeedData.UpdateIngredientWithOpenFoodFactsAsync(tempIngredient);
+                        // Skopiuj sk³adnik do weryfikacji
+                        var tempIngredient = new Ingredient
+                        {
+                            Id = ingredient.Id,
+                            Name = ingredient.Name,
+                            Quantity = ingredient.Quantity,
+                            Unit = ingredient.Unit,
+                            Calories = ingredient.Calories,
+                            Protein = ingredient.Protein,
+                            Fat = ingredient.Fat,
+                            Carbs = ingredient.Carbs,
+                            RecipeId = ingredient.RecipeId
+                        };
 
-                    if (wasUpdated)
-                    {
-                        // Aktualizuj sk³adnik w bazie danych
-                        ingredient.Calories = tempIngredient.Calories;
-                        ingredient.Protein = tempIngredient.Protein;
-                        ingredient.Fat = tempIngredient.Fat;
-                        ingredient.Carbs = tempIngredient.Carbs;
+                        // Weryfikuj z OpenFoodFacts
+                        bool wasUpdated = await SeedData.UpdateIngredientWithOpenFoodFactsAsync(tempIngredient);
 
-                        await _service.UpdateIngredientAsync(ingredient);
-                        updatedCount++;
-                        
-                        System.Diagnostics.Debug.WriteLine($"? Zaktualizowano: {ingredient.Name}");
+                        if (wasUpdated)
+                        {
+                            // Aktualizuj sk³adnik w bazie danych
+                            ingredient.Calories = tempIngredient.Calories;
+                            ingredient.Protein = tempIngredient.Protein;
+                            ingredient.Fat = tempIngredient.Fat;
+                            ingredient.Carbs = tempIngredient.Carbs;
+
+                            await _service.UpdateIngredientAsync(ingredient);
+                            updatedCount++;
+                            
+                            System.Diagnostics.Debug.WriteLine($"? Zaktualizowano: {ingredient.Name}");
+                        }
                     }
-
-                    // Ma³e opóŸnienie aby nie przeci¹¿yæ API
-                    await Task.Delay(200);
+                    catch (Exception ex)
+                    {
+                        failedCount++;
+                        System.Diagnostics.Debug.WriteLine($"? B³¹d weryfikacji {ingredient.Name}: {ex.Message}");
+                    }
                 }
-                catch (Exception ex)
+
+                // ? OPTYMALIZACJA: Throttling miêdzy batchami
+                if (i + batchSize < Ingredients.Count)
                 {
-                    failedCount++;
-                    System.Diagnostics.Debug.WriteLine($"? B³¹d weryfikacji {ingredient.Name}: {ex.Message}");
+                    await Task.Delay(1000); // 1 sekunda pauzy miêdzy batchami
                 }
             }
 

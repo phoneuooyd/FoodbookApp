@@ -14,18 +14,44 @@ public class BoolToColorConverter : IValueConverter
             
             return param switch
             {
-                "Text" => boolValue ? Colors.White : Colors.Black,
+                "Text" => boolValue 
+                    ? Application.Current?.RequestedTheme == AppTheme.Dark 
+                        ? Color.FromArgb("#ac99ea") // PrimaryDark for dark theme
+                        : Color.FromArgb("#512BD4")  // Primary for light theme
+                    : Application.Current?.RequestedTheme == AppTheme.Dark
+                        ? Color.FromArgb("#C8C8C8") // Gray200 for dark theme
+                        : Color.FromArgb("#6E6E6E"), // Gray500 for light theme
                 "Bold" => boolValue ? FontAttributes.Bold : FontAttributes.None,
-                _ => boolValue ? Colors.Green : Colors.Gray
+                "TabBackground" => boolValue 
+                    ? Colors.Transparent // Selected tab has transparent background
+                    : Colors.Transparent, // Unselected tab also transparent
+                "TabBorder" => boolValue 
+                    ? Application.Current?.RequestedTheme == AppTheme.Dark 
+                        ? Color.FromArgb("#ac99ea") // PrimaryDark for dark theme
+                        : Color.FromArgb("#512BD4")  // Primary for light theme
+                    : Colors.Transparent, // No border for unselected tabs
+                _ => boolValue 
+                    ? Application.Current?.RequestedTheme == AppTheme.Dark 
+                        ? Color.FromArgb("#ac99ea") // PrimaryDark for dark theme
+                        : Color.FromArgb("#512BD4")  // Primary for light theme
+                    : Application.Current?.RequestedTheme == AppTheme.Dark
+                        ? Color.FromArgb("#404040") // Gray600 for dark theme
+                        : Color.FromArgb("#ACACAC") // Gray300 for light theme
             };
         }
         
         var paramDefault = parameter?.ToString();
         return paramDefault switch
         {
-            "Text" => Colors.Black,
+            "Text" => Application.Current?.RequestedTheme == AppTheme.Dark
+                ? Color.FromArgb("#C8C8C8") // Gray200 for dark theme
+                : Color.FromArgb("#6E6E6E"), // Gray500 for light theme
             "Bold" => FontAttributes.None,
-            _ => Colors.Gray
+            "TabBackground" => Colors.Transparent,
+            "TabBorder" => Colors.Transparent,
+            _ => Application.Current?.RequestedTheme == AppTheme.Dark
+                ? Color.FromArgb("#404040") // Gray600 for dark theme
+                : Color.FromArgb("#ACACAC") // Gray300 for light theme
         };
     }
 
@@ -124,6 +150,19 @@ public class BoolToTextConverter : IValueConverter
             }
         }
         return value?.ToString() ?? string.Empty;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+public class IsNotNullOrEmptyConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return !string.IsNullOrEmpty(value?.ToString());
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
