@@ -52,23 +52,12 @@
         </Frame>
 
         <!-- Content -->
-        <RefreshView Grid.Row="2" 
-                     IsRefreshing="{Binding IsRefreshing}" 
-                     Command="{Binding RefreshCommand}"
-                     IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
-            
-            <Grid RowDefinitions="Auto,*">
-                <!-- Action Buttons Section - Simplified to single button -->
-                <Grid Grid.Row="0" 
-                      Margin="10">
-                    <Button Command="{Binding AddCommand}"
-                            TextColor="White"
-                            HeightRequest="45"
-                            Text="{loc:Translate Resource=IngredientsPageResources, Key=AddButton}" />
-                </Grid>
-
-                <CollectionView Grid.Row="1"
-                                ItemsSource="{Binding Ingredients}"
+        <Grid Grid.Row="2">
+            <RefreshView IsRefreshing="{Binding IsRefreshing}" 
+                         Command="{Binding RefreshCommand}"
+                         IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
+                
+                <CollectionView ItemsSource="{Binding Ingredients}"
                                 ItemSizingStrategy="MeasureFirstItem"
                                 RemainingItemsThreshold="10"
                                 Margin="10,0">
@@ -173,8 +162,13 @@
                     </CollectionView.EmptyView>
                     
                 </CollectionView>
-            </Grid>
-        </RefreshView>
+            </RefreshView>
+            
+            <!-- Floating Action Button -->
+            <Button Style="{StaticResource FloatingActionButton}"
+                    Command="{Binding AddCommand}"
+                    IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+        </Grid>
     </Grid>
 
 </ContentPage>

@@ -32,10 +32,5 @@ namespace Foodbook.Views
                 await _viewModel.ReloadAsync();
             }
         }
-
-        private async void OnAddRecipeClicked(object sender, EventArgs e)
-        {
-            await Shell.Current.GoToAsync(nameof(AddRecipePage));
-        }
     }
 }

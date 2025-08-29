@@ -51,22 +51,12 @@
         </Frame>
 
         <!-- Content -->
-        <RefreshView Grid.Row="2" 
-                     IsRefreshing="{Binding IsRefreshing}" 
-                     Command="{Binding RefreshCommand}"
-                     IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
-            
-            <Grid RowDefinitions="Auto,*">
-                <!-- Action Buttons Section -->
-                <Grid Grid.Row="0" 
-                      Margin="10">
-                    <Button Clicked="OnAddRecipeClicked"
-                            HeightRequest="45"
-                            Text="{loc:Translate Resource=RecipesPageResources, Key=AddButton}" />
-                </Grid>
-
-                <CollectionView Grid.Row="1"
-                                x:Name="RecipesCollectionView" 
+        <Grid Grid.Row="2">
+            <RefreshView IsRefreshing="{Binding IsRefreshing}" 
+                         Command="{Binding RefreshCommand}"
+                         IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
+                
+                <CollectionView x:Name="RecipesCollectionView" 
                                 ItemsSource="{Binding Recipes}"
                                 ItemSizingStrategy="MeasureFirstItem"
                                 RemainingItemsThreshold="10"
@@ -160,8 +150,13 @@
                     </CollectionView.EmptyView>
                     
                 </CollectionView>
-            </Grid>
-        </RefreshView>
+            </RefreshView>
+            
+            <!-- Floating Action Button -->
+            <Button Style="{StaticResource FloatingActionButton}"
+                    Command="{Binding AddRecipeCommand}"
+                    IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+        </Grid>
     </Grid>
 
 </ContentPage>
