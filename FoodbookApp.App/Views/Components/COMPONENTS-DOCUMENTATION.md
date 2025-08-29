@@ -4,7 +4,7 @@ Dokumentacja ponownie u¿ywalnych komponentów UI dla aplikacji FoodbookApp, zgodn
 
 ## Przegl¹d Komponentów
 
-W odpowiedzi na duplikacjê kodu pomiêdzy stronami `RecipesPage.xaml` i `IngredientsPage.xaml`, zosta³y utworzone nastêpuj¹ce komponenty reu¿ywalne:
+W odpowiedzi na duplikacjê kodu pomiêdzy stronami `RecipesPage.xaml`, `IngredientsPage.xaml` i `ShoppingListPage.xaml`, zosta³y utworzone nastêpuj¹ce komponenty reu¿ywalne:
 
 ### 1. ModernSearchBarComponent
 **Lokalizacja**: `Views/Components/ModernSearchBarComponent.xaml`
@@ -57,161 +57,241 @@ W odpowiedzi na duplikacjê kodu pomiêdzy stronami `RecipesPage.xaml` i `Ingredie
 **Przyk³ad u¿ycia**:<components:FloatingActionButtonComponent 
     Command="{Binding AddRecipeCommand}"
     IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
-### 4. UniversalListItemComponent ? **NOWY UNIWERSALNY KOMPONENT**
+### 4. UniversalListItemComponent ? **UNIWERSALNY KOMPONENT MULTI-MODE**
 **Lokalizacja**: `Views/Components/UniversalListItemComponent.xaml`
 
-**Cel**: Uniwersalny szablon elementu listy obs³uguj¹cy zarówno przepisy jak i sk³adniki z konfigurowalnymi elementami UI.
+**Cel**: Ultra-uniwersalny szablon elementu listy obs³uguj¹cy przepisy, sk³adniki i plany zakupów z pe³n¹ konfigurowalnoœci¹.
 
 **W³aœciwoœci Bindable**:
-- `EditCommand` (ICommand) - Komenda edycji
+- `EditCommand` (ICommand) - Komenda edycji/otwarcia
 - `DeleteCommand` (ICommand) - Komenda usuniêcia
+- `ArchiveCommand` (ICommand) - Komenda archiwizacji (dla planów)
 - `ShowSubtitle` (bool) - Wyœwietla/ukrywa podtytu³ z iloœci¹ i jednostk¹
+- `ShowNutritionLayout` (bool) - Wyœwietla/ukrywa informacje od¿ywcze
+- `ShowPlanLayout` (bool) - Wyœwietla/ukrywa informacje o planie (daty)
+- `ShowDeleteButton` (bool) - Wyœwietla/ukrywa przycisk usuwania
+- `ShowArchiveButton` (bool) - Wyœwietla/ukrywa przycisk archiwizacji
 
-**DataContext**: Oczekuje obiektu typu `Recipe` lub `Ingredient` (oba implementuj¹ te same w³aœciwoœci: Name, Calories, Protein, Fat, Carbs)
+**DataContext**: Obs³uguje obiekty typu `Recipe`, `Ingredient` lub `Plan`
 
-**Przyk³ad u¿ycia dla przepisów**:<DataTemplate x:Key="RecipeItemTemplate" x:DataType="models:Recipe">
+### Tryby Konfiguracji
+
+#### **TRYB 1: Recipe Mode** (Przepisy)<DataTemplate x:Key="RecipeItemTemplate" x:DataType="models:Recipe">
     <components:UniversalListItemComponent 
         EditCommand="{Binding BindingContext.EditRecipeCommand, Source={x:Reference ThisPage}}"
         DeleteCommand="{Binding BindingContext.DeleteRecipeCommand, Source={x:Reference ThisPage}}"
-        ShowSubtitle="False" />
+        ShowSubtitle="False"
+        ShowNutritionLayout="True"
+        ShowPlanLayout="False"
+        ShowDeleteButton="True"
+        ShowArchiveButton="False" />
 </DataTemplate>
-**Przyk³ad u¿ycia dla sk³adników**:<DataTemplate x:Key="IngredientItemTemplate" x:DataType="models:Ingredient">
+#### **TRYB 2: Ingredient Mode** (Sk³adniki)<DataTemplate x:Key="IngredientItemTemplate" x:DataType="models:Ingredient">
     <components:UniversalListItemComponent 
         EditCommand="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}"
         DeleteCommand="{Binding BindingContext.DeleteCommand, Source={x:Reference ThisPage}}"
-        ShowSubtitle="True" />
+        ShowSubtitle="True"
+        ShowNutritionLayout="True"
+        ShowPlanLayout="False"
+        ShowDeleteButton="True"
+        ShowArchiveButton="False" />
 </DataTemplate>
-**Konfiguracja**:
-- **ShowSubtitle="False"** - Dla przepisów (ukrywa iloœæ i jednostkê)
-- **ShowSubtitle="True"** - Dla sk³adników (pokazuje iloœæ i jednostkê)
+#### **TRYB 3: Plan Mode** (Plany Zakupów) ? **NOWY**<DataTemplate x:Key="PlanItemTemplate" x:DataType="models:Plan">
+    <components:UniversalListItemComponent 
+        EditCommand="{Binding BindingContext.OpenPlanCommand, Source={x:Reference ThisPage}}"
+        ArchiveCommand="{Binding BindingContext.ArchivePlanCommand, Source={x:Reference ThisPage}}"
+        ShowNutritionLayout="False"
+        ShowPlanLayout="True"
+        ShowDeleteButton="False"
+        ShowArchiveButton="True"
+        ShowSubtitle="False" />
+</DataTemplate>
+### Struktura UI w ró¿nych trybach
+
+| Tryb | Name/Label | Subtitle | Nutrition | Plan Dates | Delete | Archive |
+|------|------------|----------|-----------|------------|--------|---------|
+| **Recipe** | ? Name | ? | ? Calories, P, F, C | ? | ? | ? |
+| **Ingredient** | ? Name | ? Quantity + Unit | ? Calories, P, F, C | ? | ? | ? |
+| **Plan** | ? Label | ? | ? | ? StartDate + EndDate | ? | ? |
 
 ## Refaktoryzowane Strony
 
 ### RecipesPage.xaml
 **Przed refaktoryzacj¹**: 105 linii z duplikowanym kodem
-**Po pierwszej refaktoryzacji**: 52 linie z dedykowanymi komponentami
-**Po drugiej refaktoryzacji**: 52 linie z uniwersalnym komponentem
+**Po trzeciej refaktoryzacji**: 52 linie z uniwersalnym komponentem
 
-**Zmiany**:
-- Zast¹piono `RecipeListItemComponent` uniwersalnym `UniversalListItemComponent` z `ShowSubtitle="False"`
-- Zachowano pe³n¹ funkcjonalnoœæ bez zmian w kodzie biznesowym
+**Konfiguracja**:
+- `ShowNutritionLayout="True"` - wyœwietla kalorie i makro
+- `ShowPlanLayout="False"` - ukrywa informacje o planie
+- `ShowDeleteButton="True"` - pokazuje przycisk usuwania
+- `ShowArchiveButton="False"` - ukrywa przycisk archiwizacji
 
 ### IngredientsPage.xaml
-**Przed refaktoryzacj¹**: 110 linii z duplikowanym kodem
-**Po pierwszej refaktoryzacji**: 52 linie z dedykowanymi komponentami
-**Po drugiej refaktoryzacji**: 52 linie z uniwersalnym komponentem
+**Przed refaktoryzacj¹**: 110 linii z duplikowanym kodem  
+**Po trzeciej refaktoryzacji**: 52 linie z uniwersalnym komponentem
+
+**Konfiguracja**:
+- `ShowSubtitle="True"` - wyœwietla iloœæ i jednostkê
+- `ShowNutritionLayout="True"` - wyœwietla kalorie i makro
+- `ShowDeleteButton="True"` - pokazuje przycisk usuwania
+
+### ShoppingListPage.xaml ? **NOWA REFAKTORYZACJA**
+**Przed refaktoryzacj¹**: 60 linii z dedykowan¹ struktur¹
+**Po refaktoryzacji**: 25 linii z uniwersalnym komponentem
 
 **Zmiany**:
-- Zast¹piono `IngredientListItemComponent` uniwersalnym `UniversalListItemComponent` z `ShowSubtitle="True"`
-- Zachowano wyœwietlanie iloœci i jednostki dla sk³adników
+- Zast¹piono dedykowan¹ strukturê `Frame + Grid + VerticalStackLayout` uniwersalnym komponentem
+- Dodano obs³ugê trybu Plan z datami StartDate/EndDate
+- Zast¹piono zwyk³¹ CollectionView komponentem GenericListComponent
+- Zachowano funkcjonalnoœæ archiwizacji planów
 
-## Po³¹czenie Komponentów
+**Konfiguracja**:
+- `ShowPlanLayout="True"` - wyœwietla daty planu
+- `ShowNutritionLayout="False"` - ukrywa informacje od¿ywcze
+- `ShowArchiveButton="True"` - pokazuje przycisk archiwizacji
+- `ShowDeleteButton="False"` - ukrywa przycisk usuwania
 
-### Analiza Ró¿nic
-Podczas analizy `RecipeListItemComponent` i `IngredientListItemComponent` zidentyfikowano nastêpuj¹ce ró¿nice:
+## Ewolucja Komponentu UniversalListItemComponent
 
-1. **IngredientListItemComponent** - dodatkowy `Label` z iloœci¹ i jednostk¹ (Quantity + Unit)
-2. **RecipeListItemComponent** - brak podtytu³u z iloœci¹
-3. **Identyczne elementy**: Name, nutrition info (Calories, Protein, Fat, Carbs), delete button, edit gesture
+### Faza 1: Podstawowa Unifikacja
+- Po³¹czenie `RecipeListItemComponent` + `IngredientListItemComponent`
+- 1 parametr konfiguracji: `ShowSubtitle`
 
-### Rozwi¹zanie Uniwersalne
-Utworzono `UniversalListItemComponent` który:
-- **£¹czy funkcjonalnoœæ** obu poprzednich komponentów
-- **Parametryzuje ró¿nice** przez w³aœciwoœæ `ShowSubtitle`
-- **Zachowuje wszystkie funkcje** bez utraty funkcjonalnoœci
-- **Upraszcza maintenance** - jeden komponent zamiast dwóch
+### Faza 2: Multi-Mode Extension ? **AKTUALNA**
+- Dodanie obs³ugi `Plan` jako trzeciego typu danych
+- 5 nowych parametrów konfiguracji:
+  - `ShowNutritionLayout` - kontrola wyœwietlania makro
+  - `ShowPlanLayout` - kontrola wyœwietlania dat planu
+  - `ShowDeleteButton` - kontrola przycisku usuwania
+  - `ShowArchiveButton` - kontrola przycisku archiwizacji
+  - `ArchiveCommand` - komenda archiwizacji
 
-### Usuniête Komponenty
-Po implementacji uniwersalnego komponentu usuniêto:
-- ~~`RecipeListItemComponent.xaml`~~
-- ~~`RecipeListItemComponent.xaml.cs`~~
-- ~~`IngredientListItemComponent.xaml`~~
-- ~~`IngredientListItemComponent.xaml.cs`~~
+### Nowe Funkcjonalnoœci
 
-## Korzyœci z Dalszej Refaktoryzacji
+#### 1. Plan Layout Support
+- **Label wyœwietlanie** - tytu³ planu
+- **Date Range** - StartDate i EndDate z formatowaniem
+- **Stylowanie dat** - kolory Primary z AppTheme binding
 
-### 1. Jeszcze Wiêksza Zgodnoœæ z DRY
-- **Eliminacja duplikacji** miêdzy dwoma bardzo podobnymi komponentami
-- **Jeden punkt prawdy** dla logiki list item UI
-- **Centralizacja zmian** - modyfikacje w jednym miejscu
+#### 2. Flexible Action Buttons
+- **Delete Button** - tradycyjny przycisk usuwania (Recipe/Ingredient)
+- **Archive Button** - przycisk archiwizacji z ikon¹ save.png (Plan)
+- **Conditional Visibility** - ka¿dy przycisk mo¿e byæ niezale¿nie ukryty/pokazany
 
-### 2. Uproszczona Architektura
-- **Mniej plików** do zarz¹dzania (4 pliki ? 2 pliki)
-- **£atwiejsze testowanie** - jeden komponent do przetestowania
-- **Spójne zachowanie** - identyczna logika dla obu typów danych
+#### 3. Layout Switching
+- **Nutrition Layout** - horizontalny stack z kaloriami i makro
+- **Plan Layout** - wertykalny stack z datami
+- **Exclusive modes** - jeden typ layoutu na raz
 
-### 3. Flexible Configuration
-- **Parametryzacja przez w³aœciwoœci** zamiast osobnych komponentów
-- **£atwe rozszerzanie** - dodanie nowych typów elementów listy
-- **Konfigurowalnoœæ** - dostosowanie do ró¿nych scenariuszy
+## Korzyœci z Rozszerzenia
 
-### 4. Maintenance Benefits
-- **Single Source of Truth** - jeden komponent do aktualizacji
-- **Consistent Styling** - identyczne style dla wszystkich list
-- **Bug Fixes** - poprawki w jednym miejscu wp³ywaj¹ na wszystkie listy
+### 1. Maksymalna Unifikacja
+- **3 typy danych** w jednym komponencie (Recipe, Ingredient, Plan)
+- **Zero duplikacji** miêdzy wszystkimi stronami list
+- **Spójna architektura** we wszystkich czêœciach aplikacji
+
+### 2. Ultimate Flexibility
+- **8 parametrów konfiguracji** dla pe³nej kontroli
+- **Mix & Match** - dowolne kombinacje funkcjonalnoœci
+- **Future-proof** - ³atwe dodawanie nowych typów danych
+
+### 3. Maintenance Excellence
+- **Single Source of Truth** - wszystkie listy w jednym komponencie
+- **Consistent Behavior** - identyczna logika wszêdzie
+- **Easy Updates** - zmiana w jednym miejscu = update wszystkich list
+
+### 4. Performance & Scalability
+- **Reused Components** - mniej instancji objektów
+- **Consistent Styling** - jednolite style performance
+- **Standardized Interactions** - przewidywalne zachowanie
 
 ## Wykorzystanie w Przysz³oœci
 
-Nowy `UniversalListItemComponent` mo¿e byæ u¿ywany dla:
-- **Innych typów list** z podobn¹ struktur¹ danych
-- **Nowych modeli** implementuj¹cych w³aœciwoœci Name, Calories, Protein, Fat, Carbs
-- **Ró¿nych konfiguracji** poprzez dodanie nowych parametrów (np. `ShowActions`, `ItemType`)
+UniversalListItemComponent mo¿e obs³u¿yæ przysz³e typy danych przez:
+
+### Nowe Typy Danych
+- **PlannedMeal** - zaplanowane posi³ki
+- **ShoppingItem** - elementy listy zakupów  
+- **User** - u¿ytkownicy (jeœli multi-user)
+- **Category** - kategorie przepisów/sk³adników
+
+### Nowe Parametry Konfiguracjipublic bool ShowImageThumbnail { get; set; } = false;
+public bool ShowStatusBadge { get; set; } = false;  
+public bool ShowQuantityPicker { get; set; } = false;
+public string LayoutMode { get; set; } = "Standard"; // Standard, Compact, Expanded
+### Nowe Layout Modes
+- **Compact Mode** - minimalistyczny widok
+- **Expanded Mode** - szczegó³owy widok z dodatkowymi informacjami
+- **Card Mode** - layout w stylu kart
+- **Table Mode** - tabelaryczny layout
 
 ## Wzorce Zastosowane
 
-### 1. Template Method Pattern + Configuration
-- Wspólny szablon z konfigurowalnymi czêœciami
-- `ShowSubtitle` jako punkt konfiguracji zachowania
+### 1. Strategy Pattern + Configuration
+- Ró¿ne strategie wyœwietlania przez parametry boolean
+- Runtime configuration zamiast compile-time inheritance
 
-### 2. Single Responsibility with Flexibility
-- Jeden komponent = jedna odpowiedzialnoœæ (wyœwietlanie list item)
-- Elastycznoœæ przez parametryzacjê zamiast inheritence
+### 2. Template Method Pattern Extended
+- Wspólny szablon z wieloma punktami konfiguracji
+- Conditional rendering przez IsVisible bindings
 
-### 3. Open/Closed Principle
-- Zamkniêty na modyfikacje (stable interface)
-- Otwarty na rozszerzenia (nowe parametry konfiguracji)
+### 3. Open/Closed Principle Maximum
+- Zamkniêty na modyfikacje struktury
+- Maksymalnie otwarty na nowe konfiguracje
+
+### 4. Single Responsibility with Multi-Context
+- Jedna odpowiedzialnoœæ: wyœwietlanie list items
+- Obs³uga wielu kontekstów przez parametryzacjê
 
 ## Kolejne Kroki i Rozszerzenia
 
-### Potencjalne Ulepszenia UniversalListItemComponent
-
-1. **Wiêcej Parametrów Konfiguracji**:public bool ShowActions { get; set; } = true;
-public bool ShowNutrition { get; set; } = true;
-public string ItemTypeConfiguration { get; set; } = "Default";
-2. **Templating System**:<StackLayout IsVisible="{Binding ShowCustomContent, Source={x:Reference ItemComponent}}">
-    <ContentPresenter Content="{Binding CustomContent, Source={x:Reference ItemComponent}}" />
-</StackLayout>
-3. **Action Configuration**:public bool ShowEditAction { get; set; } = true;
-public bool ShowDeleteAction { get; set; } = true;
-public ICommand AdditionalCommand { get; set; }
+### 1. Advanced Configurationpublic enum ComponentMode { Recipe, Ingredient, Plan, Custom }
+public ComponentMode Mode { get; set; } = ComponentMode.Custom;
+// Auto-configure wszystkie w³aœciwoœci based on Mode
+### 2. Custom Content Templates<components:UniversalListItemComponent>
+    <components:UniversalListItemComponent.CustomContent>
+        <DataTemplate>
+            <!-- Custom layout for specific cases -->
+        </DataTemplate>
+    </components:UniversalListItemComponent.CustomContent>
+</components:UniversalListItemComponent>
+### 3. Dynamic Action Configurationpublic ObservableCollection<ActionButtonConfig> ActionButtons { get; set; }
+// Dynamically add/remove action buttons
 ## Podsumowanie Refaktoryzacji
 
-### Faza 1: Wyodrêbnienie Komponentów
-- **5 komponentów** utworzonych z duplikowanego kodu
-- **Redukcja kodu o ~50%** w ka¿dej stronie
+### Faza 1: Wyodrêbnienie Komponentów (5 komponentów)
+- **Redukcja duplikacji o ~50%** w Recipe/Ingredients pages
 - **Podstawowa modularnoœæ** osi¹gniêta
 
-### Faza 2: Unifikacja Komponentów ? **AKTUALNA**
-- **Po³¹czenie 2 podobnych komponentów** w 1 uniwersalny
-- **Dodatkowa redukcja z³o¿o¿noœci** o 4 pliki
+### Faza 2: Unifikacja Recipe/Ingredient (4 komponenty) 
+- **Po³¹czenie podobnych komponentów** w jeden uniwersalny
 - **Flexible configuration** przez `ShowSubtitle`
-- **Zachowanie pe³nej funkcjonalnoœci** bez regresji
+
+### Faza 3: Multi-Mode Extension (4 komponenty) ? **AKTUALNA**
+- **Dodanie obs³ugi Plan** jako trzeciego typu danych
+- **ShoppingListPage refaktoryzacja** z dedykowanej struktury na uniwersalny komponent
+- **5 nowych parametrów** konfiguracji dla maksymalnej elastycznoœci
+- **3 ró¿ne tryby** pracy: Recipe, Ingredient, Plan
 
 ### Wyniki Koñcowe
-? **DRY Principle** - Zero duplikacji kodu miêdzy stronami  
-? **SOLID Principles** - Single responsibility, Open/Closed compliance  
-? **Maintenance** - Jeden komponent do zarz¹dzania list items  
-? **Flexibility** - Parametryzacja zamiast dedykowanych komponentów  
-? **Performance** - Bez wp³ywu na wydajnoœæ aplikacji  
-? **Testing** - Mniej komponentów do testowania  
+? **DRY Principle** - Zero duplikacji miêdzy 3 stronami list  
+? **SOLID Principles** - Single responsibility, Open/Closed maximum compliance  
+? **Maintenance** - Jeden komponent dla wszystkich typów list  
+? **Flexibility** - 8 parametrów konfiguracji dla dowolnych kombinacji  
+? **Performance** - Minimum komponentów, maksimum reu¿ywalnoœci  
+? **Scalability** - £atwe dodawanie nowych typów danych  
+? **Consistency** - Identyczne zachowanie we wszystkich listach  
 
 ### Struktura Finalna KomponentówViews/Components/
 ??? ModernSearchBarComponent.xaml (.cs)
 ??? GenericListComponent.xaml (.cs)  
 ??? FloatingActionButtonComponent.xaml (.cs)
-??? UniversalListItemComponent.xaml (.cs) ?
+??? UniversalListItemComponent.xaml (.cs) ? **MULTI-MODE**
 ??? COMPONENTS-DOCUMENTATION.md
+### Strony Zrefaktoryzowane? RecipesPage.xaml - Recipe Mode
+? IngredientsPage.xaml - Ingredient Mode  
+? ShoppingListPage.xaml - Plan Mode ? **NOWA**
 **Kompilacja**: ? **Build Successful**  
-**Funkcjonalnoœæ**: ? **Pe³na kompatybilnoœæ**  
-**Kod**: ? **Zero duplikacji**  
-**Komponenty**: ? **Maksymalnie reu¿ywalne**
+**Funkcjonalnoœæ**: ? **Pe³na kompatybilnoœæ wszystkich stron**  
+**Kod**: ? **Zero duplikacji w 3 stronach**  
+**Komponenty**: ? **Ultra-reu¿ywalne dla ka¿dego typu danych**

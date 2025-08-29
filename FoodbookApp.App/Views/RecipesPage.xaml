@@ -18,7 +18,11 @@
             <components:UniversalListItemComponent 
                 EditCommand="{Binding BindingContext.EditRecipeCommand, Source={x:Reference ThisPage}}"
                 DeleteCommand="{Binding BindingContext.DeleteRecipeCommand, Source={x:Reference ThisPage}}"
-                ShowSubtitle="False" />
+                ShowSubtitle="False"
+                ShowNutritionLayout="True"
+                ShowPlanLayout="False"
+                ShowDeleteButton="True"
+                ShowArchiveButton="False" />
         </DataTemplate>
     </ContentPage.Resources>
 
