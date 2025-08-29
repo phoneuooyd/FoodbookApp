@@ -545,4 +545,85 @@
         </Setter>
     </Style>
 
+    <!-- List Item Container Styles for proper spacing and alignment -->
+    <Style x:Key="ListItemContainer" TargetType="ContentView">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="0" />
+    </Style>
+
+    <Style x:Key="ListItemFrame" TargetType="Frame">
+        <Setter Property="BorderColor" Value="{AppThemeBinding Light=LightGray, Dark=#555555}" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="12" />
+        <Setter Property="Margin" Value="8,4" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource White}, Dark=#2A2A2A}" />
+        <Setter Property="HasShadow" Value="False" />
+    </Style>
+
+    <Style x:Key="ListCollectionView" TargetType="CollectionView">
+        <Setter Property="ItemSizingStrategy" Value="MeasureFirstItem" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+    </Style>
+
+    <Style x:Key="ListItemContentGrid" TargetType="Grid">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="ColumnSpacing" Value="12" />
+        <Setter Property="RowSpacing" Value="0" />
+    </Style>
+
+    <!-- Delete Button Style - consistent across the app -->
+    <Style x:Key="DeleteButton" TargetType="Button">
+        <Setter Property="Text" Value="✕" />
+        <Setter Property="WidthRequest" Value="36" />
+        <Setter Property="HeightRequest" Value="36" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light=#CC0000, Dark=#FF6666}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="CornerRadius" Value="18" />
+        <Setter Property="BorderColor" Value="{AppThemeBinding Light=#FFCCCC, Dark=#664444}" />
+        <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+    </Style>
+
+    <!-- Nutrition Info Labels -->
+    <Style x:Key="CaloriesLabel" TargetType="Label">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light=DarkOrange, Dark=Orange}" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <Style x:Key="MacroLabel" TargetType="Label">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <!-- Main Content Styles -->
+    <Style x:Key="ItemTitleLabel" TargetType="Label">
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+        <Setter Property="VerticalOptions" Value="Start" />
+    </Style>
+
+    <Style x:Key="ItemSubtitleLabel" TargetType="Label">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+        <Setter Property="VerticalOptions" Value="Start" />
+        <Setter Property="Margin" Value="0,2,0,4" />
+    </Style>
+
+    <!-- Nutrition Info Container -->
+    <Style x:Key="NutritionContainer" TargetType="StackLayout">
+        <Setter Property="Orientation" Value="Horizontal" />
+        <Setter Property="Spacing" Value="15" />
+        <Setter Property="Margin" Value="0,4,0,0" />
+    </Style>
+
 </ResourceDictionary>
