@@ -25,12 +25,31 @@
                           Color="{AppThemeBinding Light=Black, Dark=White}"
                           Margin="10" />
 
-        <!-- Search bar -->
-        <SearchBar Grid.Row="1"
-                   Text="{Binding SearchText}"
-                   Placeholder="{loc:Translate Resource=IngredientsPageResources, Key=SearchPlaceholder}"
-                   Margin="10,0"
-                   IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+        <!-- Modern Search Bar -->
+        <Frame Grid.Row="1"
+               Style="{StaticResource ModernSearchBarFrame}"
+               Margin="15,10"
+               IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
+            <Grid ColumnDefinitions="50,*,Auto" VerticalOptions="Center">
+                <!-- Search Icon -->
+                <Label Grid.Column="0"
+                       Style="{StaticResource SearchIconLabel}" />
+                
+                <!-- Search Entry -->
+                <Entry Grid.Column="1"
+                       Style="{StaticResource ModernSearchEntry}"
+                       Text="{Binding SearchText}"
+                       Placeholder="{loc:Translate Resource=IngredientsPageResources, Key=SearchPlaceholder}"
+                       Margin="0,0,15,0" />
+                
+                <!-- Clear Button -->
+                <Button Grid.Column="2"
+                        Style="{StaticResource ClearSearchButton}"
+                        Command="{Binding ClearSearchCommand}"
+                        IsVisible="{Binding SearchText, Converter={StaticResource StringToBoolConverter}}"
+                        Margin="0,0,10,0" />
+            </Grid>
+        </Frame>
 
         <!-- Content -->
         <RefreshView Grid.Row="2" 

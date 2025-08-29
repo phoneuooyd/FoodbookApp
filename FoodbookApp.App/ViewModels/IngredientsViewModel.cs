@@ -88,6 +88,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
     public ICommand DeleteCommand { get; }
     public ICommand RefreshCommand { get; }
     public ICommand BulkVerifyCommand { get; } // Nowa komenda
+    public ICommand ClearSearchCommand { get; } // Nowa komenda do czyszczenia wyszukiwania
 
     public IngredientsViewModel(IIngredientService service)
     {
@@ -101,6 +102,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
         DeleteCommand = new Command<Ingredient>(async ing => await DeleteIngredientAsync(ing));
         RefreshCommand = new Command(async () => await ReloadAsync());
         BulkVerifyCommand = new Command(async () => await BulkVerifyIngredientsAsync(), () => !IsBulkVerifying && Ingredients.Count > 0);
+        ClearSearchCommand = new Command(() => SearchText = string.Empty); // Komenda do czyszczenia wyszukiwania
     }
 
     /// <summary>

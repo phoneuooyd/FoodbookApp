@@ -62,6 +62,7 @@ namespace Foodbook.ViewModels
         public ICommand EditRecipeCommand { get; }
         public ICommand DeleteRecipeCommand { get; }
         public ICommand RefreshCommand { get; }
+        public ICommand ClearSearchCommand { get; } // Nowa komenda do czyszczenia wyszukiwania
 
         public RecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService)
         {
@@ -75,6 +76,7 @@ namespace Foodbook.ViewModels
             });
             DeleteRecipeCommand = new Command<Recipe>(async r => await DeleteRecipeAsync(r));
             RefreshCommand = new Command(async () => await ReloadAsync());
+            ClearSearchCommand = new Command(() => SearchText = string.Empty);
         }
 
         public async Task LoadRecipesAsync()
@@ -258,6 +260,13 @@ namespace Foodbook.ViewModels
                 System.Diagnostics.Debug.WriteLine($"Error deleting recipe: {ex.Message}");
                 // Could show user-friendly error message here
             }
+        }
+
+        private void ExecuteClearSearchCommand()
+        {
+            SearchText = string.Empty;
+            // Optionally, reload or reset the recipe list here if needed
+            // await LoadRecipesAsync();
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
