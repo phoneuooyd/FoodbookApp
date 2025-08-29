@@ -13,6 +13,9 @@ namespace Foodbook.Views.Components
         public static readonly BindableProperty ArchiveCommandProperty =
             BindableProperty.Create(nameof(ArchiveCommand), typeof(ICommand), typeof(UniversalListItemComponent));
 
+        public static readonly BindableProperty RestoreCommandProperty =
+            BindableProperty.Create(nameof(RestoreCommand), typeof(ICommand), typeof(UniversalListItemComponent));
+
         public static readonly BindableProperty ShowSubtitleProperty =
             BindableProperty.Create(nameof(ShowSubtitle), typeof(bool), typeof(UniversalListItemComponent), false);
 
@@ -27,6 +30,9 @@ namespace Foodbook.Views.Components
 
         public static readonly BindableProperty ShowArchiveButtonProperty =
             BindableProperty.Create(nameof(ShowArchiveButton), typeof(bool), typeof(UniversalListItemComponent), false);
+
+        public static readonly BindableProperty ShowRestoreButtonProperty =
+            BindableProperty.Create(nameof(ShowRestoreButton), typeof(bool), typeof(UniversalListItemComponent), false);
 
         public ICommand EditCommand
         {
@@ -44,6 +50,12 @@ namespace Foodbook.Views.Components
         {
             get => (ICommand)GetValue(ArchiveCommandProperty);
             set => SetValue(ArchiveCommandProperty, value);
+        }
+
+        public ICommand RestoreCommand
+        {
+            get => (ICommand)GetValue(RestoreCommandProperty);
+            set => SetValue(RestoreCommandProperty, value);
         }
 
         public bool ShowSubtitle
@@ -74,6 +86,12 @@ namespace Foodbook.Views.Components
         {
             get => (bool)GetValue(ShowArchiveButtonProperty);
             set => SetValue(ShowArchiveButtonProperty, value);
+        }
+
+        public bool ShowRestoreButton
+        {
+            get => (bool)GetValue(ShowRestoreButtonProperty);
+            set => SetValue(ShowRestoreButtonProperty, value);
         }
 
         public UniversalListItemComponent()

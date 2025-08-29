@@ -10,7 +10,7 @@
                 <TapGestureRecognizer Command="{Binding EditCommand, Source={x:Reference ItemComponent}}" 
                                       CommandParameter="{Binding .}" />
             </Frame.GestureRecognizers>
-            <Grid Style="{StaticResource ListItemContentGrid}" ColumnDefinitions="*,Auto,Auto">
+            <Grid Style="{StaticResource ListItemContentGrid}" ColumnDefinitions="*,Auto,Auto,Auto">
                 <!-- Item content column -->
                 <StackLayout Grid.Column="0" Spacing="2">
                     <Label Text="{Binding Name}" Style="{StaticResource ItemTitleLabel}" 
@@ -76,8 +76,25 @@
                     </StackLayout>
                 </StackLayout>
                 
-                <!-- Archive button - for Plan mode -->
+                <!-- Restore button - for Archive mode -->
                 <Button Grid.Column="1" 
+                        Command="{Binding RestoreCommand, Source={x:Reference ItemComponent}}" 
+                        CommandParameter="{Binding .}" 
+                        WidthRequest="35" 
+                        HeightRequest="35"
+                        BackgroundColor="{AppThemeBinding Light=#E6FFE6, Dark=#2C4A2C}"
+                        BorderColor="{AppThemeBinding Light=#CCFFCC, Dark=#4A664A}"
+                        BorderWidth="1"
+                        CornerRadius="17"
+                        Padding="0"
+                        IsVisible="{Binding ShowRestoreButton, Source={x:Reference ItemComponent}}">
+                    <Button.ImageSource>
+                        <FileImageSource File="redo.png" />
+                    </Button.ImageSource>
+                </Button>
+                
+                <!-- Archive button - for Plan mode -->
+                <Button Grid.Column="2" 
                         Command="{Binding ArchiveCommand, Source={x:Reference ItemComponent}}" 
                         CommandParameter="{Binding .}" 
                         WidthRequest="35" 
@@ -93,8 +110,8 @@
                     </Button.ImageSource>
                 </Button>
                 
-                <!-- Delete button - for Recipe/Ingredient mode -->
-                <Button Grid.Column="2" 
+                <!-- Delete button - for Recipe/Ingredient mode and Archive mode permanent delete -->
+                <Button Grid.Column="3" 
                         Style="{StaticResource DeleteButton}"
                         Command="{Binding DeleteCommand, Source={x:Reference ItemComponent}}" 
                         CommandParameter="{Binding .}"
