@@ -143,9 +143,13 @@ namespace Foodbook.ViewModels
 
         public ObservableCollection<Ingredient> Ingredients { get; set; } = new();
 
-        public string Title => _editingRecipe == null ? "Nowy przepis" : "Edytuj przepis";
+        public string Title => _editingRecipe == null 
+            ? FoodbookApp.Localization.ButtonResources.NewRecipe 
+            : FoodbookApp.Localization.ButtonResources.EditRecipe;
 
-        public string SaveButtonText => _editingRecipe == null ? "Dodaj przepis" : "Zapisz zmiany";
+        public string SaveButtonText => _editingRecipe == null 
+            ? FoodbookApp.Localization.ButtonResources.AddRecipe 
+            : FoodbookApp.Localization.ButtonResources.SaveChanges;
 
         public string ValidationMessage { get => _validationMessage; set { _validationMessage = value; OnPropertyChanged(); } }
         private string _validationMessage = string.Empty;

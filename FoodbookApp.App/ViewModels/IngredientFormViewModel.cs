@@ -60,9 +60,13 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     public string Carbs { get => _carbs; set { _carbs = value; OnPropertyChanged(); ValidateInput(); } }
     private string _carbs = "0";
 
-    public string Title => _ingredient == null ? "Nowy sk³adnik" : "Edytuj sk³adnik";
+    public string Title => _ingredient == null 
+        ? FoodbookApp.Localization.ButtonResources.NewIngredient 
+        : FoodbookApp.Localization.ButtonResources.EditIngredient;
     
-    public string SaveButtonText => _ingredient == null ? "Dodaj sk³adnik" : "Zapisz zmiany";
+    public string SaveButtonText => _ingredient == null 
+        ? FoodbookApp.Localization.ButtonResources.AddIngredient 
+        : FoodbookApp.Localization.ButtonResources.SaveChanges;
 
     public string ValidationMessage { get => _validationMessage; set { _validationMessage = value; OnPropertyChanged(); } }
     private string _validationMessage = string.Empty;
