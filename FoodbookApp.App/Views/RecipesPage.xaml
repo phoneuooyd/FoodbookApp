@@ -13,6 +13,7 @@
     
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        <converters:StringToBoolConverter x:Key="StringToBoolConverter" />
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,Auto,*">
@@ -56,101 +57,99 @@
                          Command="{Binding RefreshCommand}"
                          IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
                 
-                <VerticalStackLayout Padding="15,0" Spacing="0">
-                    <CollectionView x:Name="RecipesCollectionView" 
-                                    ItemsSource="{Binding Recipes}"
-                                    ItemSizingStrategy="MeasureFirstItem"
-                                    RemainingItemsThreshold="10">
-                        
-                        <CollectionView.ItemsLayout>
-                            <LinearItemsLayout Orientation="Vertical" ItemSpacing="5" />
-                        </CollectionView.ItemsLayout>
-                        
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="models:Recipe">
-                                <Frame BorderColor="LightGray" Padding="10" Margin="0,3">
-                                    <Frame.GestureRecognizers>
-                                        <TapGestureRecognizer Command="{Binding BindingContext.EditRecipeCommand, Source={x:Reference ThisPage}}" 
-                                                              CommandParameter="{Binding .}" />
-                                    </Frame.GestureRecognizers>
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                                        <!-- Kolumna z treścią przepisu -->
-                                        <VerticalStackLayout Grid.Column="0">
-                                            <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="18"/>
-                                            
-                                            <!-- Informacje odżywcze w jednej linii -->
-                                            <StackLayout Orientation="Horizontal" Spacing="15" Margin="0,5,0,0">
-                                                <Label FontSize="12" 
-                                                       TextColor="{AppThemeBinding Light=DarkOrange, Dark=Orange}"
-                                                       FontAttributes="Bold">
-                                                    <Label.Text>
-                                                        <MultiBinding StringFormat="{}{0:F0} kcal">
-                                                            <Binding Path="Calories" />
-                                                        </MultiBinding>
-                                                    </Label.Text>
-                                                </Label>
-                                                <Label FontSize="11" 
-                                                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}">
-                                                    <Label.Text>
-                                                        <MultiBinding StringFormat="P: {0:F1}g">
-                                                            <Binding Path="Protein" />
-                                                        </MultiBinding>
-                                                    </Label.Text>
-                                                </Label>
-                                                <Label FontSize="11" 
-                                                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}">
-                                                    <Label.Text>
-                                                        <MultiBinding StringFormat="F: {0:F1}g">
-                                                            <Binding Path="Fat" />
-                                                        </MultiBinding>
-                                                    </Label.Text>
-                                                </Label>
-                                                <Label FontSize="11" 
-                                                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}">
-                                                    <Label.Text>
-                                                        <MultiBinding StringFormat="C: {0:F1}g">
-                                                            <Binding Path="Carbs" />
-                                                        </MultiBinding>
-                                                    </Label.Text>
-                                                </Label>
-                                            </StackLayout>
-                                        </VerticalStackLayout>
+                <CollectionView ItemsSource="{Binding Recipes}"
+                                ItemSizingStrategy="MeasureFirstItem"
+                                RemainingItemsThreshold="10"
+                                Margin="10,0">
+                    
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="5" />
+                    </CollectionView.ItemsLayout>
+                    
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:Recipe">
+                            <Frame BorderColor="LightGray" Padding="10" Margin="0,3">
+                                <Frame.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding BindingContext.EditRecipeCommand, Source={x:Reference ThisPage}}" 
+                                                          CommandParameter="{Binding .}" />
+                                </Frame.GestureRecognizers>
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                    <!-- Kolumna z treścią przepisu -->
+                                    <StackLayout Grid.Column="0">
+                                        <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="18"/>
                                         
-                                        <!-- Przycisk usuwania - zgodny ze stylem ShoppingListDetailPage -->
-                                        <Button Grid.Column="1" 
-                                                Text="✕" 
-                                                Command="{Binding BindingContext.DeleteRecipeCommand, Source={x:Reference ThisPage}}" 
-                                                CommandParameter="{Binding .}" 
-                                                WidthRequest="35" 
-                                                HeightRequest="35"
-                                                BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}"
-                                                TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}"
-                                                FontSize="16"
-                                                CornerRadius="17"
-                                                BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}"
-                                                BorderWidth="1"
-                                                VerticalOptions="Center" />
-                                    </Grid>
-                                </Frame>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                        
-                        <CollectionView.EmptyView>
-                            <StackLayout HorizontalOptions="Center" VerticalOptions="Center" Padding="20">
-                                <Label Text="{loc:Translate Resource=RecipesPageResources, Key=EmptyTitle}"
-                                       FontSize="18"
-                                       HorizontalOptions="Center"
-                                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-                                <Label Text="{loc:Translate Resource=RecipesPageResources, Key=EmptyHint}"
-                                       FontSize="14"
-                                       HorizontalOptions="Center"
-                                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
-                                       Margin="0,10,0,0" />
-                            </StackLayout>
-                        </CollectionView.EmptyView>
-                        
-                    </CollectionView>
-                </VerticalStackLayout>
+                                        <!-- Informacje odżywcze w jednej linii -->
+                                        <StackLayout Orientation="Horizontal" Spacing="15" Margin="0,5,0,0">
+                                            <Label FontSize="12" 
+                                                   TextColor="{AppThemeBinding Light=DarkOrange, Dark=Orange}"
+                                                   FontAttributes="Bold">
+                                                <Label.Text>
+                                                    <MultiBinding StringFormat="{}{0:F0} kcal">
+                                                        <Binding Path="Calories" />
+                                                    </MultiBinding>
+                                                </Label.Text>
+                                            </Label>
+                                            <Label FontSize="11" 
+                                                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}">
+                                                <Label.Text>
+                                                    <MultiBinding StringFormat="P: {0:F1}g">
+                                                        <Binding Path="Protein" />
+                                                    </MultiBinding>
+                                                </Label.Text>
+                                            </Label>
+                                            <Label FontSize="11" 
+                                                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}">
+                                                <Label.Text>
+                                                    <MultiBinding StringFormat="F: {0:F1}g">
+                                                        <Binding Path="Fat" />
+                                                    </MultiBinding>
+                                                </Label.Text>
+                                            </Label>
+                                            <Label FontSize="11" 
+                                                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}">
+                                                <Label.Text>
+                                                    <MultiBinding StringFormat="C: {0:F1}g">
+                                                        <Binding Path="Carbs" />
+                                                    </MultiBinding>
+                                                </Label.Text>
+                                            </Label>
+                                        </StackLayout>
+                                    </StackLayout>
+                                    
+                                    <!-- Przycisk usuwania - zgodny ze stylem ShoppingListDetailPage -->
+                                    <Button Grid.Column="1" 
+                                            Text="✕" 
+                                            Command="{Binding BindingContext.DeleteRecipeCommand, Source={x:Reference ThisPage}}" 
+                                            CommandParameter="{Binding .}" 
+                                            WidthRequest="35" 
+                                            HeightRequest="35"
+                                            BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}"
+                                            TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}"
+                                            FontSize="16"
+                                            CornerRadius="17"
+                                            BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}"
+                                            BorderWidth="1"
+                                            VerticalOptions="Center" />
+                                </Grid>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                    
+                    <CollectionView.EmptyView>
+                        <StackLayout HorizontalOptions="Center" VerticalOptions="Center" Padding="20">
+                            <Label Text="{loc:Translate Resource=RecipesPageResources, Key=EmptyTitle}"
+                                   FontSize="18"
+                                   HorizontalOptions="Center"
+                                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+                            <Label Text="{loc:Translate Resource=RecipesPageResources, Key=EmptyHint}"
+                                   FontSize="14"
+                                   HorizontalOptions="Center"
+                                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
+                                   Margin="0,10,0,0" />
+                        </StackLayout>
+                    </CollectionView.EmptyView>
+                    
+                </CollectionView>
             </RefreshView>
             
             <!-- Floating Action Button -->
