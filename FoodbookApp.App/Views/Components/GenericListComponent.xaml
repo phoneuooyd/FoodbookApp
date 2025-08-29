@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:converters="clr-namespace:Foodbook.Converters"
+             x:Class="Foodbook.Views.Components.GenericListComponent"
+             x:Name="ListComponent">
+    
+    <ContentView.Resources>
+        <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+    </ContentView.Resources>
+
+    <RefreshView IsRefreshing="{Binding IsRefreshing, Source={x:Reference ListComponent}}" 
+                 Command="{Binding RefreshCommand, Source={x:Reference ListComponent}}"
+                 IsVisible="{Binding IsVisible, Source={x:Reference ListComponent}}">
+        
+        <CollectionView ItemsSource="{Binding ItemsSource, Source={x:Reference ListComponent}}"
+                        Style="{StaticResource ListCollectionView}"
+                        RemainingItemsThreshold="10"
+                        ItemTemplate="{Binding ItemTemplate, Source={x:Reference ListComponent}}">
+            
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="0" />
+            </CollectionView.ItemsLayout>
+            
+            <CollectionView.EmptyView>
+                <StackLayout HorizontalOptions="Center" VerticalOptions="Center" Padding="20">
+                    <Label Text="{Binding EmptyTitle, Source={x:Reference ListComponent}}"
+                           FontSize="18"
+                           HorizontalOptions="Center"
+                           TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+                    <Label Text="{Binding EmptyHint, Source={x:Reference ListComponent}}"
+                           FontSize="14"
+                           HorizontalOptions="Center"
+                           TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
+                           Margin="0,10,0,0" />
+                </StackLayout>
+            </CollectionView.EmptyView>
+            
+        </CollectionView>
+    </RefreshView>
+
+</ContentView>

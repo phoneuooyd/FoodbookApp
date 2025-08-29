@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:converters="clr-namespace:Foodbook.Converters"
+             x:Class="Foodbook.Views.Components.ModernSearchBarComponent"
+             x:Name="SearchBarComponent">
+    
+    <ContentView.Resources>
+        <converters:StringToBoolConverter x:Key="StringToBoolConverter" />
+        <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+    </ContentView.Resources>
+
+    <Frame Style="{StaticResource ModernSearchBarFrame}"
+           Margin="15,10"
+           IsVisible="{Binding IsVisible, Source={x:Reference SearchBarComponent}}">
+        <Grid ColumnDefinitions="50,*,Auto" VerticalOptions="Center">
+            <!-- Search Icon -->
+            <Label Grid.Column="0"
+                   Style="{StaticResource SearchIconLabel}" />
+            
+            <!-- Search Entry -->
+            <Entry Grid.Column="1"
+                   Style="{StaticResource ModernSearchEntry}"
+                   Text="{Binding SearchText, Source={x:Reference SearchBarComponent}}"
+                   Placeholder="{Binding PlaceholderText, Source={x:Reference SearchBarComponent}}"
+                   Margin="0,0,15,0" />
+            
+            <!-- Clear Button -->
+            <Button Grid.Column="2"
+                    Style="{StaticResource ClearSearchButton}"
+                    Command="{Binding ClearCommand, Source={x:Reference SearchBarComponent}}"
+                    IsVisible="{Binding SearchText, Source={x:Reference SearchBarComponent}, Converter={StaticResource StringToBoolConverter}}"
+                    Margin="0,0,10,0" />
+        </Grid>
+    </Frame>
+
+</ContentView>
