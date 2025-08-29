@@ -99,13 +99,13 @@ namespace FoodbookApp
         }
 
         /// <summary>
-        /// Publiczna metoda do wykonania migracji bazy danych
+        /// Publiczna metoda do wykonania migracji i walidacji schematu bazy danych
         /// </summary>
         public static async Task<bool> MigrateDatabaseAsync()
         {
             try
             {
-                LogDebug("Starting database migration");
+                LogDebug("Starting database migration and schema validation");
                 
                 if (ServiceProvider == null)
                 {
@@ -116,13 +116,13 @@ namespace FoodbookApp
                 using var scope = ServiceProvider.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 
-                // Sprawdź czy kolumna Order istnieje w tabeli ShoppingListItems
-                await EnsureOrderColumnExistsAsync(db);
+                // Sprawdź i zwaliduj schemat bazy danych
+                await ValidateDatabaseSchemaAsync(db);
                 
                 // Wykonaj inne potrzebne migracje
                 await ApplyDatabaseMigrationsAsync(db);
                 
-                LogDebug("Database migration completed successfully");
+                LogDebug("Database migration and schema validation completed successfully");
                 return true;
             }
             catch (Exception ex)
@@ -167,29 +167,215 @@ namespace FoodbookApp
             }
         }
 
-        private static async Task EnsureOrderColumnExistsAsync(AppDbContext db)
+        private static async Task ValidateDatabaseSchemaAsync(AppDbContext db)
         {
             try
             {
-                LogDebug("Checking if Order column exists in ShoppingListItems table");
+                LogDebug("Starting comprehensive database schema validation");
                 
-                // Sprawdź czy kolumna Order istnieje
-                await db.Database.ExecuteSqlRawAsync(
-                    "SELECT \"Order\" FROM \"ShoppingListItems\" LIMIT 1");
-                LogDebug("Order column already exists");
-            }
-            catch (Microsoft.Data.Sqlite.SqliteException ex) when (ex.Message.Contains("no such column"))
-            {
-                LogDebug("Order column missing, adding it");
-                await db.Database.ExecuteSqlRawAsync(
-                    "ALTER TABLE \"ShoppingListItems\" ADD COLUMN \"Order\" INTEGER NOT NULL DEFAULT 0");
-                LogDebug("Order column added successfully");
+                // Validate all tables and their expected columns
+                await ValidateTableSchemaAsync(db, "Ingredients", new[]
+                {
+                    ("Id", "INTEGER"),
+                    ("Name", "TEXT"),
+                    ("Quantity", "REAL"),
+                    ("Unit", "INTEGER"),
+                    ("Calories", "REAL"),
+                    ("Protein", "REAL"),
+                    ("Fat", "REAL"),
+                    ("Carbs", "REAL"),
+                    ("RecipeId", "INTEGER")
+                });
+
+                await ValidateTableSchemaAsync(db, "Recipes", new[]
+                {
+                    ("Id", "INTEGER"),
+                    ("Name", "TEXT"),
+                    ("Description", "TEXT"),
+                    ("Calories", "REAL"),
+                    ("Protein", "REAL"),
+                    ("Fat", "REAL"),
+                    ("Carbs", "REAL"),
+                    ("IloscPorcji", "INTEGER")
+                });
+
+                await ValidateTableSchemaAsync(db, "Plans", new[]
+                {
+                    ("Id", "INTEGER"),
+                    ("StartDate", "TEXT"),
+                    ("EndDate", "TEXT"),
+                    ("IsArchived", "INTEGER")
+                });
+
+                await ValidateTableSchemaAsync(db, "PlannedMeals", new[]
+                {
+                    ("Id", "INTEGER"),
+                    ("RecipeId", "INTEGER"),
+                    ("Date", "TEXT"),
+                    ("Portions", "INTEGER")
+                });
+
+                await ValidateTableSchemaAsync(db, "ShoppingListItems", new[]
+                {
+                    ("Id", "INTEGER"),
+                    ("PlanId", "INTEGER"),
+                    ("IngredientName", "TEXT"),
+                    ("Unit", "INTEGER"),
+                    ("IsChecked", "INTEGER"),
+                    ("Quantity", "REAL"),
+                    ("Order", "INTEGER")
+                });
+
+                LogDebug("Database schema validation completed successfully");
             }
             catch (Exception ex)
             {
-                LogError($"Error checking/adding Order column: {ex.Message}");
+                LogError($"Error during database schema validation: {ex.Message}");
                 throw;
             }
+        }
+
+        private static async Task ValidateTableSchemaAsync(AppDbContext db, string tableName, (string columnName, string expectedType)[] expectedColumns)
+        {
+            try
+            {
+                LogDebug($"Validating table: {tableName}");
+                
+                // Get current table schema
+                var currentColumns = await GetTableColumnsAsync(db, tableName);
+                
+                if (!currentColumns.Any())
+                {
+                    LogWarning($"Table {tableName} does not exist or has no columns");
+                    return;
+                }
+
+                var missingColumns = new List<string>();
+                var typeConflicts = new List<string>();
+
+                foreach (var (columnName, expectedType) in expectedColumns)
+                {
+                    var existingColumn = currentColumns.FirstOrDefault(c => 
+                        c.name.Equals(columnName, StringComparison.OrdinalIgnoreCase));
+                    
+                    if (existingColumn.name == null)
+                    {
+                        missingColumns.Add($"{columnName} ({expectedType})");
+                    }
+                    else
+                    {
+                        // Check type compatibility (SQLite type mapping)
+                        var actualType = MapSqliteType(existingColumn.type);
+                        var expectedMappedType = MapSqliteType(expectedType);
+                        
+                        if (!actualType.Equals(expectedMappedType, StringComparison.OrdinalIgnoreCase))
+                        {
+                            typeConflicts.Add($"{columnName}: expected {expectedType}, got {existingColumn.type}");
+                        }
+                    }
+                }
+
+                // Add missing columns
+                foreach (var missingColumn in missingColumns)
+                {
+                    var columnParts = missingColumn.Split('(', ')');
+                    var columnName = columnParts[0].Trim();
+                    var columnType = columnParts.Length > 1 ? columnParts[1].Trim() : "TEXT";
+                    
+                    await AddMissingColumnAsync(db, tableName, columnName, columnType);
+                }
+
+                // Log type conflicts (but don't fix them as it could be destructive)
+                foreach (var conflict in typeConflicts)
+                {
+                    LogWarning($"Type conflict in {tableName}: {conflict}");
+                }
+
+                LogDebug($"Table {tableName} validation completed. Missing columns added: {missingColumns.Count}, Type conflicts: {typeConflicts.Count}");
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error validating table {tableName}: {ex.Message}");
+                throw;
+            }
+        }
+
+        private static async Task<List<(string name, string type)>> GetTableColumnsAsync(AppDbContext db, string tableName)
+        {
+            try
+            {
+                var query = $"PRAGMA table_info([{tableName}])";
+                var connection = db.Database.GetDbConnection();
+                
+                if (connection.State != System.Data.ConnectionState.Open)
+                    await connection.OpenAsync();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = query;
+                
+                var columns = new List<(string name, string type)>();
+                using var reader = await command.ExecuteReaderAsync();
+                
+                while (await reader.ReadAsync())
+                {
+                    // PRAGMA table_info returns: cid|name|type|notnull|dflt_value|pk
+                    // We need columns 1 (name) and 2 (type)
+                    var name = reader.GetString(1);
+                    var type = reader.GetString(2);
+                    columns.Add((name, type));
+                }
+
+                return columns;
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error getting columns for table {tableName}: {ex.Message}");
+                return new List<(string, string)>();
+            }
+        }
+
+        private static async Task AddMissingColumnAsync(AppDbContext db, string tableName, string columnName, string columnType)
+        {
+            try
+            {
+                LogDebug($"Adding missing column {columnName} ({columnType}) to table {tableName}");
+                
+                var defaultValue = GetDefaultValueForType(columnType);
+                var sql = $"ALTER TABLE [{tableName}] ADD COLUMN [{columnName}] {columnType} NOT NULL DEFAULT {defaultValue}";
+                
+                await db.Database.ExecuteSqlRawAsync(sql);
+                LogDebug($"Successfully added column {columnName} to table {tableName}");
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error adding column {columnName} to table {tableName}: {ex.Message}");
+                throw;
+            }
+        }
+
+        private static string GetDefaultValueForType(string sqliteType)
+        {
+            return sqliteType.ToUpperInvariant() switch
+            {
+                "INTEGER" => "0",
+                "REAL" => "0.0",
+                "TEXT" => "''",
+                "BLOB" => "''",
+                _ => "''"
+            };
+        }
+
+        private static string MapSqliteType(string type)
+        {
+            // SQLite has dynamic typing, but we normalize to expected types
+            return type.ToUpperInvariant() switch
+            {
+                "INT" or "INTEGER" or "BIGINT" => "INTEGER",
+                "REAL" or "DOUBLE" or "FLOAT" => "REAL", 
+                "TEXT" or "VARCHAR" or "CHAR" => "TEXT",
+                "BLOB" => "BLOB",
+                _ => "TEXT"
+            };
         }
 
         private static async Task ApplyDatabaseMigrationsAsync(AppDbContext db)
@@ -198,8 +384,8 @@ namespace FoodbookApp
             {
                 LogDebug("Applying database migrations");
                 
-                // Tutaj można dodać kolejne migracje w przyszłości
-                // Przykład: dodanie nowych kolumn, indeksów, itp.
+                // Wykonaj walidację schematu bazy danych
+                await ValidateDatabaseSchemaAsync(db);
                 
                 // Sprawdź wersję schematu i wykonaj odpowiednie migracje
                 await EnsureDatabaseVersionAsync(db);
@@ -266,8 +452,8 @@ namespace FoodbookApp
         {
             LogDebug("Migrating to version 1");
             
-            // Migracja do wersji 1: dodanie kolumny Order
-            await EnsureOrderColumnExistsAsync(db);
+            // Migracja do wersji 1: walidacja pełnego schematu bazy danych
+            await ValidateDatabaseSchemaAsync(db);
             
             LogDebug("Migration to version 1 completed");
         }
