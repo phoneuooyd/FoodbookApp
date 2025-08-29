@@ -4,76 +4,33 @@
              xmlns:loc="clr-namespace:Foodbook.Services"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
+             xmlns:components="clr-namespace:Foodbook.Views.Components"
              xmlns:resources="clr-namespace:FoodbookApp.Localization"
              x:Class="Foodbook.Views.ShoppingListPage"
              x:Name="ThisPage"
              x:DataType="vm:ShoppingListViewModel"
              Title="{loc:Translate Resource=ShoppingListPageResources, Key=Title}">
-    <CollectionView ItemsSource="{Binding Plans}" Margin="10" SelectionMode="None">
-        <CollectionView.ItemTemplate>
-            <DataTemplate x:DataType="models:Plan">
-                <Frame BorderColor="LightGray" Padding="10" Margin="0,3">
-                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
-                        <!-- Kolumna z trescia planu -->
-                        <VerticalStackLayout Grid.Column="0">
-                            <Label Text="{Binding Label}" 
-                                   FontAttributes="Bold" 
-                                   FontSize="18" 
-                                   VerticalOptions="Center" />
-                            <Label Text="{Binding StartDate, StringFormat='Od: {0:dd.MM.yyyy}'}" 
-                                   FontSize="14" 
-                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                                   Margin="0,2,0,0" />
-                            <Label Text="{Binding EndDate, StringFormat='Do: {0:dd.MM.yyyy}'}" 
-                                   FontSize="14" 
-                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
-                        </VerticalStackLayout>
-                        
-                        <!-- Przycisk archiwizacji - nowy styl zgodny z delete button -->
-                        <Button Grid.Column="2" 
-                                Command="{Binding BindingContext.ArchivePlanCommand, Source={x:Reference ThisPage}}" 
-                                CommandParameter="{Binding .}" 
-                                WidthRequest="35" 
-                                HeightRequest="35"
-                                BackgroundColor="{AppThemeBinding Light=#E6F3FF, Dark=#2C4A6B}"
-                                BorderColor="{AppThemeBinding Light=#CCE6FF, Dark=#4A6B8A}"
-                                BorderWidth="1"
-                                CornerRadius="17"
-                                Padding="0">
-                            <Button.ImageSource>
-                                <FileImageSource File="save.png" />
-                            </Button.ImageSource>
-                        </Button>
-                    </Grid>
-                    
-                    <!-- Add tap gesture to the frame for edit functionality -->
-                    <Frame.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding BindingContext.OpenPlanCommand, Source={x:Reference ThisPage}}" 
-                                              CommandParameter="{Binding .}" />
-                    </Frame.GestureRecognizers>
-                </Frame>
-            </DataTemplate>
-        </CollectionView.ItemTemplate>
+    
+    <ContentPage.Resources>
+        <DataTemplate x:Key="PlanItemTemplate" x:DataType="models:Plan">
+            <components:UniversalListItemComponent 
+                EditCommand="{Binding BindingContext.OpenPlanCommand, Source={x:Reference ThisPage}}"
+                ArchiveCommand="{Binding BindingContext.ArchivePlanCommand, Source={x:Reference ThisPage}}"
+                ShowNutritionLayout="False"
+                ShowPlanLayout="True"
+                ShowDeleteButton="False"
+                ShowArchiveButton="True"
+                ShowSubtitle="False" />
+        </DataTemplate>
+    </ContentPage.Resources>
+
+    <!-- Generic List Component -->
+    <components:GenericListComponent 
+        ItemsSource="{Binding Plans}"
+        ItemTemplate="{StaticResource PlanItemTemplate}"
+        IsRefreshing="False"
+        EmptyTitle="{loc:Translate Resource=ShoppingListPageResources, Key=EmptyTitle}"
+        EmptyHint="{loc:Translate Resource=ShoppingListPageResources, Key=EmptyHint}"
+        IsVisible="True" />
         
-        <!-- Empty View - wyświetlane gdy brak list zakupów -->
-        <CollectionView.EmptyView>
-            <StackLayout HorizontalOptions="Center" VerticalOptions="Center" Padding="20">
-                <Label Text="🛒" 
-                       FontSize="64" 
-                       HorizontalOptions="Center"
-                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
-                       Margin="0,0,0,20" />
-                <Label Text="{loc:Translate Resource=ShoppingListPageResources, Key=EmptyTitle}"
-                       FontSize="18"
-                       FontAttributes="Bold"
-                       HorizontalOptions="Center"
-                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-                <Label Text="{loc:Translate Resource=ShoppingListPageResources, Key=EmptyHint}"
-                       FontSize="16"
-                       HorizontalOptions="Center"
-                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
-                       Margin="0,10,0,0" />
-            </StackLayout>
-        </CollectionView.EmptyView>
-    </CollectionView>
 </ContentPage>

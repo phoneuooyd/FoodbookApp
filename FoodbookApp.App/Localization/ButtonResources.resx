@@ -129,4 +129,36 @@
     <value>Today</value>
     <comment>DateFilterButton</comment>
   </data>
+  <data name="Save" xml:space="preserve">
+    <value>Save</value>
+    <comment>Save button</comment>
+  </data>
+  <data name="SaveChanges" xml:space="preserve">
+    <value>Save changes</value>
+    <comment>Save changes button</comment>
+  </data>
+  <data name="AddRecipe" xml:space="preserve">
+    <value>Add recipe</value>
+    <comment>Add recipe button</comment>
+  </data>
+  <data name="AddIngredient" xml:space="preserve">
+    <value>Add ingredient</value>
+    <comment>Add ingredient button</comment>
+  </data>
+  <data name="NewRecipe" xml:space="preserve">
+    <value>New recipe</value>
+    <comment>New recipe title</comment>
+  </data>
+  <data name="EditRecipe" xml:space="preserve">
+    <value>Edit recipe</value>
+    <comment>Edit recipe title</comment>
+  </data>
+  <data name="NewIngredient" xml:space="preserve">
+    <value>New ingredient</value>
+    <comment>New ingredient title</comment>
+  </data>
+  <data name="EditIngredient" xml:space="preserve">
+    <value>Edit ingredient</value>
+    <comment>Edit ingredient title</comment>
+  </data>
 </root>

@@ -61,11 +61,83 @@ namespace FoodbookApp.Localization {
         }
         
         /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Add ingredient.
+        /// </summary>
+        internal static string AddIngredient {
+            get {
+                return ResourceManager.GetString("AddIngredient", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Add recipe.
+        /// </summary>
+        internal static string AddRecipe {
+            get {
+                return ResourceManager.GetString("AddRecipe", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         /// Wyszukuje zlokalizowany ciąg podobny do ciągu Custom date.
         /// </summary>
         internal static string CustomDate {
             get {
                 return ResourceManager.GetString("CustomDate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Edit ingredient.
+        /// </summary>
+        internal static string EditIngredient {
+            get {
+                return ResourceManager.GetString("EditIngredient", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Edit recipe.
+        /// </summary>
+        internal static string EditRecipe {
+            get {
+                return ResourceManager.GetString("EditRecipe", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu New ingredient.
+        /// </summary>
+        internal static string NewIngredient {
+            get {
+                return ResourceManager.GetString("NewIngredient", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu New recipe.
+        /// </summary>
+        internal static string NewRecipe {
+            get {
+                return ResourceManager.GetString("NewRecipe", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Save.
+        /// </summary>
+        internal static string Save {
+            get {
+                return ResourceManager.GetString("Save", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Save changes.
+        /// </summary>
+        internal static string SaveChanges {
+            get {
+                return ResourceManager.GetString("SaveChanges", resourceCulture);
             }
         }
         

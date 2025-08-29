@@ -4,8 +4,9 @@
              xmlns:loc="clr-namespace:Foodbook.Services"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
-            xmlns:converters="clr-namespace:Foodbook.Converters"
-            xmlns:resources="clr-namespace:FoodbookApp.Localization"
+             xmlns:converters="clr-namespace:Foodbook.Converters"
+             xmlns:components="clr-namespace:Foodbook.Views.Components"
+             xmlns:resources="clr-namespace:FoodbookApp.Localization"
              x:Class="Foodbook.Views.IngredientsPage"
              x:Name="ThisPage"
              x:DataType="vm:IngredientsViewModel"
@@ -13,7 +14,16 @@
 
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
-        <converters:StringToBoolConverter x:Key="StringToBoolConverter" />
+        <DataTemplate x:Key="IngredientItemTemplate" x:DataType="models:Ingredient">
+            <components:UniversalListItemComponent 
+                EditCommand="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}"
+                DeleteCommand="{Binding BindingContext.DeleteCommand, Source={x:Reference ThisPage}}"
+                ShowSubtitle="True"
+                ShowNutritionLayout="True"
+                ShowPlanLayout="False"
+                ShowDeleteButton="True"
+                ShowArchiveButton="False" />
+        </DataTemplate>
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,Auto,*">
@@ -25,132 +35,29 @@
                           Color="{AppThemeBinding Light=Black, Dark=White}"
                           Margin="10" />
 
-        <!-- Modern Search Bar -->
-        <Frame Grid.Row="1"
-               Style="{StaticResource ModernSearchBarFrame}"
-               Margin="15,10"
-               IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
-            <Grid ColumnDefinitions="50,*,Auto" VerticalOptions="Center">
-                <!-- Search Icon -->
-                <Label Grid.Column="0"
-                       Style="{StaticResource SearchIconLabel}" />
-                
-                <!-- Search Entry -->
-                <Entry Grid.Column="1"
-                       Style="{StaticResource ModernSearchEntry}"
-                       Text="{Binding SearchText}"
-                       Placeholder="{loc:Translate Resource=IngredientsPageResources, Key=SearchPlaceholder}"
-                       Margin="0,0,15,0" />
-                
-                <!-- Clear Button -->
-                <Button Grid.Column="2"
-                        Style="{StaticResource ClearSearchButton}"
-                        Command="{Binding ClearSearchCommand}"
-                        IsVisible="{Binding SearchText, Converter={StaticResource StringToBoolConverter}}"
-                        Margin="0,0,10,0" />
-            </Grid>
-        </Frame>
+        <!-- Modern Search Bar Component -->
+        <components:ModernSearchBarComponent Grid.Row="1"
+                                           SearchText="{Binding SearchText}"
+                                           PlaceholderText="{loc:Translate Resource=IngredientsPageResources, Key=SearchPlaceholder}"
+                                           ClearCommand="{Binding ClearSearchCommand}"
+                                           IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
 
         <!-- Content -->
         <Grid Grid.Row="2">
-            <RefreshView IsRefreshing="{Binding IsRefreshing}" 
-                         Command="{Binding RefreshCommand}"
-                         IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
-                
-                <CollectionView ItemsSource="{Binding Ingredients}"
-                                Style="{StaticResource ListCollectionView}"
-                                RemainingItemsThreshold="10">
-                    
-                    <CollectionView.ItemsLayout>
-                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="0" />
-                    </CollectionView.ItemsLayout>
-                    
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="models:Ingredient">
-                            <ContentView Style="{StaticResource ListItemContainer}">
-                                <Frame Style="{StaticResource ListItemFrame}">
-                                    <Frame.GestureRecognizers>
-                                        <TapGestureRecognizer Command="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}" 
-                                                              CommandParameter="{Binding .}" />
-                                    </Frame.GestureRecognizers>
-                                    <Grid Style="{StaticResource ListItemContentGrid}" ColumnDefinitions="*,Auto">
-                                        <!-- Ingredient content column -->
-                                        <StackLayout Grid.Column="0" Spacing="2">
-                                            <Label Text="{Binding Name}" Style="{StaticResource ItemTitleLabel}" />
-                                            <Label Style="{StaticResource ItemSubtitleLabel}">
-                                                <Label.Text>
-                                                    <MultiBinding StringFormat="{}{0:F1} {1}">
-                                                        <Binding Path="Quantity" />
-                                                        <Binding Path="Unit" />
-                                                    </MultiBinding>
-                                                </Label.Text>
-                                            </Label>
-                                            
-                                            <!-- Nutrition info in horizontal layout -->
-                                            <StackLayout Style="{StaticResource NutritionContainer}">
-                                                <Label Style="{StaticResource CaloriesLabel}">
-                                                    <Label.Text>
-                                                        <MultiBinding StringFormat="{}{0:F0} kcal">
-                                                            <Binding Path="Calories" />
-                                                        </MultiBinding>
-                                                    </Label.Text>
-                                                </Label>
-                                                <Label Style="{StaticResource MacroLabel}">
-                                                    <Label.Text>
-                                                        <MultiBinding StringFormat="P: {0:F1}g">
-                                                            <Binding Path="Protein" />
-                                                        </MultiBinding>
-                                                    </Label.Text>
-                                                </Label>
-                                                <Label Style="{StaticResource MacroLabel}">
-                                                    <Label.Text>
-                                                        <MultiBinding StringFormat="F: {0:F1}g">
-                                                            <Binding Path="Fat" />
-                                                        </MultiBinding>
-                                                    </Label.Text>
-                                                </Label>
-                                                <Label Style="{StaticResource MacroLabel}">
-                                                    <Label.Text>
-                                                        <MultiBinding StringFormat="C: {0:F1}g">
-                                                            <Binding Path="Carbs" />
-                                                        </MultiBinding>
-                                                    </Label.Text>
-                                                </Label>
-                                            </StackLayout>
-                                        </StackLayout>
-                                        
-                                        <!-- Delete button -->
-                                        <Button Grid.Column="1" 
-                                                Style="{StaticResource DeleteButton}"
-                                                Command="{Binding BindingContext.DeleteCommand, Source={x:Reference ThisPage}}" 
-                                                CommandParameter="{Binding .}" />
-                                    </Grid>
-                                </Frame>
-                            </ContentView>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                    
-                    <CollectionView.EmptyView>
-                        <StackLayout HorizontalOptions="Center" VerticalOptions="Center" Padding="20">
-                            <Label Text="{loc:Translate Resource=IngredientsPageResources, Key=EmptyTitle}"
-                                   FontSize="18"
-                                   HorizontalOptions="Center"
-                                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-                            <Label Text="{loc:Translate Resource=IngredientsPageResources, Key=EmptyHint}"
-                                   FontSize="14"
-                                   HorizontalOptions="Center"
-                                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
-                                   Margin="0,10,0,0" />
-                        </StackLayout>
-                    </CollectionView.EmptyView>
-                    
-                </CollectionView>
-            </RefreshView>
+            <!-- Generic List Component -->
+            <components:GenericListComponent 
+                ItemsSource="{Binding Ingredients}"
+                ItemTemplate="{StaticResource IngredientItemTemplate}"
+                IsRefreshing="{Binding IsRefreshing}"
+                RefreshCommand="{Binding RefreshCommand}"
+                EmptyTitle="{loc:Translate Resource=IngredientsPageResources, Key=EmptyTitle}"
+                EmptyHint="{loc:Translate Resource=IngredientsPageResources, Key=EmptyHint}"
+                IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
             
-            <!-- Floating Action Button -->
-            <Button Style="{StaticResource FloatingActionButton}"
-                    Command="{Binding AddCommand}"
-                    IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+            <!-- Floating Action Button Component -->
+            <components:FloatingActionButtonComponent 
+                Command="{Binding AddCommand}"
+                IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
         </Grid>
     </Grid>
 

@@ -126,4 +126,36 @@
   <data name="Today" xml:space="preserve">
     <value>Dzisiaj</value>
   </data>
+  <data name="Save" xml:space="preserve">
+    <value>Zapisz</value>
+    <comment>Save button</comment>
+  </data>
+  <data name="SaveChanges" xml:space="preserve">
+    <value>Zapisz zmiany</value>
+    <comment>Save changes button</comment>
+  </data>
+  <data name="AddRecipe" xml:space="preserve">
+    <value>Dodaj przepis</value>
+    <comment>Add recipe button</comment>
+  </data>
+  <data name="AddIngredient" xml:space="preserve">
+    <value>Dodaj składnik</value>
+    <comment>Add ingredient button</comment>
+  </data>
+  <data name="NewRecipe" xml:space="preserve">
+    <value>Nowy przepis</value>
+    <comment>New recipe title</comment>
+  </data>
+  <data name="EditRecipe" xml:space="preserve">
+    <value>Edytuj przepis</value>
+    <comment>Edit recipe title</comment>
+  </data>
+  <data name="NewIngredient" xml:space="preserve">
+    <value>Nowy składnik</value>
+    <comment>New ingredient title</comment>
+  </data>
+  <data name="EditIngredient" xml:space="preserve">
+    <value>Edytuj składnik</value>
+    <comment>Edit ingredient title</comment>
+  </data>
 </root>
