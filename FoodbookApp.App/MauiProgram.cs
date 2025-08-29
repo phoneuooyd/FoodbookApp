@@ -98,6 +98,180 @@ namespace FoodbookApp
             return app;
         }
 
+        /// <summary>
+        /// Publiczna metoda do wykonania migracji bazy danych
+        /// </summary>
+        public static async Task<bool> MigrateDatabaseAsync()
+        {
+            try
+            {
+                LogDebug("Starting database migration");
+                
+                if (ServiceProvider == null)
+                {
+                    LogError("ServiceProvider is null - cannot perform migration");
+                    return false;
+                }
+                
+                using var scope = ServiceProvider.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                
+                // Sprawdź czy kolumna Order istnieje w tabeli ShoppingListItems
+                await EnsureOrderColumnExistsAsync(db);
+                
+                // Wykonaj inne potrzebne migracje
+                await ApplyDatabaseMigrationsAsync(db);
+                
+                LogDebug("Database migration completed successfully");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError($"Database migration failed: {ex.Message}");
+                LogError($"Stack trace: {ex.StackTrace}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Publiczna metoda do pełnego resetu bazy danych
+        /// </summary>
+        public static async Task<bool> ResetDatabaseAsync()
+        {
+            try
+            {
+                LogDebug("Starting database reset");
+                
+                if (ServiceProvider == null)
+                {
+                    LogError("ServiceProvider is null - cannot perform reset");
+                    return false;
+                }
+                
+                using var scope = ServiceProvider.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                
+                LogDebug("Deleting and recreating database");
+                await db.Database.EnsureDeletedAsync();
+                await db.Database.EnsureCreatedAsync();
+                
+                await SeedData.InitializeAsync(db);
+                LogDebug("Database reset completed successfully");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError($"Database reset failed: {ex.Message}");
+                LogError($"Stack trace: {ex.StackTrace}");
+                return false;
+            }
+        }
+
+        private static async Task EnsureOrderColumnExistsAsync(AppDbContext db)
+        {
+            try
+            {
+                LogDebug("Checking if Order column exists in ShoppingListItems table");
+                
+                // Sprawdź czy kolumna Order istnieje
+                await db.Database.ExecuteSqlRawAsync(
+                    "SELECT \"Order\" FROM \"ShoppingListItems\" LIMIT 1");
+                LogDebug("Order column already exists");
+            }
+            catch (Microsoft.Data.Sqlite.SqliteException ex) when (ex.Message.Contains("no such column"))
+            {
+                LogDebug("Order column missing, adding it");
+                await db.Database.ExecuteSqlRawAsync(
+                    "ALTER TABLE \"ShoppingListItems\" ADD COLUMN \"Order\" INTEGER NOT NULL DEFAULT 0");
+                LogDebug("Order column added successfully");
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error checking/adding Order column: {ex.Message}");
+                throw;
+            }
+        }
+
+        private static async Task ApplyDatabaseMigrationsAsync(AppDbContext db)
+        {
+            try
+            {
+                LogDebug("Applying database migrations");
+                
+                // Tutaj można dodać kolejne migracje w przyszłości
+                // Przykład: dodanie nowych kolumn, indeksów, itp.
+                
+                // Sprawdź wersję schematu i wykonaj odpowiednie migracje
+                await EnsureDatabaseVersionAsync(db);
+                
+                LogDebug("All migrations applied successfully");
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error applying migrations: {ex.Message}");
+                throw;
+            }
+        }
+
+        private static async Task EnsureDatabaseVersionAsync(AppDbContext db)
+        {
+            try
+            {
+                // Sprawdź czy tabela wersji istnieje
+                var tableExists = await db.Database.ExecuteSqlRawAsync(
+                    "CREATE TABLE IF NOT EXISTS \"DatabaseVersion\" (\"Version\" INTEGER PRIMARY KEY)");
+                
+                // Pobierz aktualną wersję
+                var currentVersion = await GetDatabaseVersionAsync(db);
+                LogDebug($"Current database version: {currentVersion}");
+                
+                // Wykonaj migracje w zależności od wersji
+                if (currentVersion < 1)
+                {
+                    await MigrateToVersion1Async(db);
+                    await SetDatabaseVersionAsync(db, 1);
+                }
+                
+                // Kolejne wersje można dodać tutaj
+                // if (currentVersion < 2) { ... }
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error managing database version: {ex.Message}");
+                throw;
+            }
+        }
+
+        private static async Task<int> GetDatabaseVersionAsync(AppDbContext db)
+        {
+            try
+            {
+                var result = await db.Database.SqlQueryRaw<int>(
+                    "SELECT COALESCE(MAX(Version), 0) FROM DatabaseVersion").FirstOrDefaultAsync();
+                return result;
+            }
+            catch
+            {
+                return 0; // Brak tabeli wersji = wersja 0
+            }
+        }
+
+        private static async Task SetDatabaseVersionAsync(AppDbContext db, int version)
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                "INSERT OR REPLACE INTO DatabaseVersion (Version) VALUES ({0})", version);
+        }
+
+        private static async Task MigrateToVersion1Async(AppDbContext db)
+        {
+            LogDebug("Migrating to version 1");
+            
+            // Migracja do wersji 1: dodanie kolumny Order
+            await EnsureOrderColumnExistsAsync(db);
+            
+            LogDebug("Migration to version 1 completed");
+        }
+
         private static async Task SeedDatabaseAsync(IServiceProvider services)
         {
             try
@@ -110,6 +284,9 @@ namespace FoodbookApp
                 LogDebug("Ensuring database is created");
                 await db.Database.EnsureCreatedAsync();
                 LogDebug("Database created successfully");
+
+                // Wykonaj migracje jeśli potrzebne
+                await ApplyDatabaseMigrationsAsync(db);
 
                 await SeedData.InitializeAsync(db);
                 LogDebug("Data initialization completed");

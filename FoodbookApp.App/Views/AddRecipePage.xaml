@@ -448,6 +448,7 @@
                 <!-- Action Buttons - Always visible at bottom -->
                 <StackLayout Spacing="10" Margin="0,20,0,0">
                     <Button Command="{Binding SaveRecipeCommand}"
+                            Text="{Binding SaveButtonText}"
                             HeightRequest="50"
                             FontSize="16"
                             FontAttributes="Bold">

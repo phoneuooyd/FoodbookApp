@@ -195,6 +195,7 @@ namespace Foodbook.ViewModels
                 await ScheduleNutritionalCalculationAsync();
                 ValidateInput();
             };
+
             ValidateInput();
         }
 
@@ -611,7 +612,12 @@ namespace Foodbook.ViewModels
         {
             try
             {
-                return !HasValidationError;
+                // ✅ OPTYMALIZACJA: Bardziej szczegółowa logika CanSave
+                bool isValid = !HasValidationError && !string.IsNullOrWhiteSpace(Name);
+                
+                System.Diagnostics.Debug.WriteLine($"CanSave: {isValid} (HasValidationError: {HasValidationError}, Name: '{Name}')");
+                
+                return isValid;
             }
             catch (Exception ex)
             {
@@ -727,9 +733,14 @@ namespace Foodbook.ViewModels
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine("🔄 SaveRecipeAsync started");
+                
                 ValidateInput();
                 if (HasValidationError)
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ Validation failed: {ValidationMessage}");
                     return;
+                }
 
                 var recipe = _editingRecipe ?? new Recipe();
                 recipe.Name = Name;
@@ -744,10 +755,18 @@ namespace Foodbook.ViewModels
                 
                 recipe.Ingredients = Ingredients.ToList();
 
+                System.Diagnostics.Debug.WriteLine($"💾 Saving recipe: {recipe.Name} (Edit mode: {_editingRecipe != null})");
+
                 if (_editingRecipe == null)
+                {
                     await _recipeService.AddRecipeAsync(recipe);
+                    System.Diagnostics.Debug.WriteLine("✅ Recipe added successfully");
+                }
                 else
+                {
                     await _recipeService.UpdateRecipeAsync(recipe);
+                    System.Diagnostics.Debug.WriteLine("✅ Recipe updated successfully");
+                }
 
                 // Reset form po udanym zapisie tylko w trybie dodawania
                 if (_editingRecipe == null)
@@ -762,15 +781,18 @@ namespace Foodbook.ViewModels
                     ImportUrl = string.Empty;
                     ImportStatus = string.Empty;
                     UseCalculatedValues = true;
+                    
+                    System.Diagnostics.Debug.WriteLine("🔄 Form reset after successful add");
                 }
 
                 // Zawsze wróć do grida po zapisie
+                System.Diagnostics.Debug.WriteLine("🔙 Navigating back");
                 await Shell.Current.GoToAsync("..");
             }
             catch (Exception ex)
             {
                 ValidationMessage = $"Błąd zapisywania: {ex.Message}";
-                System.Diagnostics.Debug.WriteLine($"Error in SaveRecipeAsync: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"❌ Error in SaveRecipeAsync: {ex.Message}");
             }
         }
         

@@ -38,6 +38,28 @@
             <Setter Property="Margin" Value="0,12,0,0" />
         </Style>
         
+        <!-- Migration Button Style -->
+        <Style x:Key="MigrationButtonStyle" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource SecondaryDark}}" />
+            <Setter Property="TextColor" Value="White" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="HeightRequest" Value="40" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Margin" Value="0,8,0,0" />
+        </Style>
+        
+        <!-- Danger Button Style -->
+        <Style x:Key="DangerButtonStyle" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#DC3545, Dark=#C62D3A}" />
+            <Setter Property="TextColor" Value="White" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="HeightRequest" Value="40" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Margin" Value="0,8,0,0" />
+        </Style>
+        
         <!-- Disabled Button Style -->
         <Style x:Key="DisabledButtonStyle" TargetType="Button">
             <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
@@ -70,6 +92,15 @@
             <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}" />
             <Setter Property="Margin" Value="0,4" />
         </Style>
+
+        <!-- Status Label Style -->
+        <Style x:Key="StatusLabelStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="HorizontalTextAlignment" Value="Center" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+            <Setter Property="FontAttributes" Value="Italic" />
+            <Setter Property="Margin" Value="0,8,0,0" />
+        </Style>
     </ContentPage.Resources>
 
     <ScrollView BackgroundColor="Transparent">
@@ -99,7 +130,7 @@
 
             <!-- Settings Grid -->
             <Grid ColumnDefinitions="*,*" 
-                  RowDefinitions="Auto,Auto,Auto"
+                  RowDefinitions="Auto,Auto,Auto,Auto"
                   ColumnSpacing="0"
                   RowSpacing="8">
 
@@ -125,8 +156,43 @@
                     </StackLayout>
                 </Frame>
 
+                <!-- Database Migration Card -->
+                <Frame Grid.Row="1" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
+                    <StackLayout>
+                        <Label Text="Migracja bazy danych" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="Aktualizuj strukturę bazy danych do najnowszej wersji"
+                               Style="{StaticResource DescriptionStyle}" />
+                        <Button Text="Wykonaj migrację"
+                                Style="{StaticResource MigrationButtonStyle}"
+                                Command="{Binding MigrateDatabaseCommand}"
+                                IsEnabled="{Binding CanExecuteMigration}" />
+                        <Label Text="{Binding MigrationStatus}"
+                               Style="{StaticResource StatusLabelStyle}"
+                               IsVisible="{Binding MigrationStatus, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
+                    </StackLayout>
+                </Frame>
+
+                <!-- Database Reset Card -->
+                <Frame Grid.Row="1" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
+                    <StackLayout>
+                        <Label Text="Reset bazy danych" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="⚠️ Usuń wszystkie dane i przywróć ustawienia domyślne"
+                               Style="{StaticResource DescriptionStyle}" />
+                        <Button Text="Resetuj bazę"
+                                Style="{StaticResource DangerButtonStyle}"
+                                Command="{Binding ResetDatabaseCommand}"
+                                IsEnabled="{Binding CanExecuteMigration}" />
+                        <Label Text="Operacja nieodwracalna!"
+                               FontSize="10"
+                               HorizontalTextAlignment="Center"
+                               TextColor="{AppThemeBinding Light=#DC3545, Dark=#C62D3A}"
+                               FontAttributes="Bold"
+                               Margin="0,4,0,0" />
+                    </StackLayout>
+                </Frame>
+
                 <!-- Version Info Card -->
-                <Frame Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
+                <Frame Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=VersionInfoTitle}" Style="{StaticResource CardTitleStyle}" />
                         
@@ -154,7 +220,7 @@
                 </Frame>
 
                 <!-- Data Export Card -->
-                <Frame Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
+                <Frame Grid.Row="3" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DataExportTitle}" Style="{StaticResource CardTitleStyle}" />
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DataExportDescription}"
