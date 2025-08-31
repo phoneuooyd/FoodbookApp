@@ -9,12 +9,14 @@ namespace FoodbookApp
         private readonly ILocalizationService _localizationService;
         private readonly IPreferencesService _preferencesService;
         private readonly IThemeService _themeService;
+        private readonly IFontService _fontService;
 
-        public App(ILocalizationService localizationService, IPreferencesService preferencesService, IThemeService themeService)
+        public App(ILocalizationService localizationService, IPreferencesService preferencesService, IThemeService themeService, IFontService fontService)
         {
             _localizationService = localizationService;
             _preferencesService = preferencesService;
             _themeService = themeService;
+            _fontService = fontService;
             
             // Load saved language preference or use system default
             var savedCulture = LoadSavedCulture();
@@ -23,6 +25,9 @@ namespace FoodbookApp
             // Load and apply saved theme
             var savedTheme = LoadSavedTheme();
             _themeService.SetTheme(savedTheme);
+            
+            // Load and apply saved font settings
+            LoadSavedFontSettings();
             
             InitializeComponent();
         }
@@ -66,6 +71,22 @@ namespace FoodbookApp
             {
                 System.Diagnostics.Debug.WriteLine($"[App] Failed to load theme preference: {ex.Message}");
                 return Foodbook.Models.AppTheme.System; // Default to system theme if everything fails
+            }
+        }
+
+        private void LoadSavedFontSettings()
+        {
+            try
+            {
+                // Load saved font settings from preferences
+                _fontService.LoadSavedSettings();
+                
+                System.Diagnostics.Debug.WriteLine($"[App] Font settings loaded successfully");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[App] Failed to load font settings: {ex.Message}");
+                // FontService will use defaults if loading fails
             }
         }
 

@@ -48,6 +48,42 @@
   <data name="LanguagePolish" xml:space="preserve">
     <value>Polish</value>
   </data>
+  <data name="FontFamilyTitle" xml:space="preserve">
+    <value>Font Family</value>
+  </data>
+  <data name="FontFamilyDescription" xml:space="preserve">
+    <value>Text typeface</value>
+  </data>
+  <data name="FontFamilyDefault" xml:space="preserve">
+    <value>System Default</value>
+  </data>
+  <data name="FontFamilySansSerif" xml:space="preserve">
+    <value>Sans-serif</value>
+  </data>
+  <data name="FontFamilySerif" xml:space="preserve">
+    <value>Serif</value>
+  </data>
+  <data name="FontFamilyMonospace" xml:space="preserve">
+    <value>Monospace</value>
+  </data>
+  <data name="FontSizeTitle" xml:space="preserve">
+    <value>Font Size</value>
+  </data>
+  <data name="FontSizeDescription" xml:space="preserve">
+    <value>Text size</value>
+  </data>
+  <data name="FontSizeSmall" xml:space="preserve">
+    <value>Small</value>
+  </data>
+  <data name="FontSizeDefault" xml:space="preserve">
+    <value>Default</value>
+  </data>
+  <data name="FontSizeLarge" xml:space="preserve">
+    <value>Large</value>
+  </data>
+  <data name="FontSizeExtraLarge" xml:space="preserve">
+    <value>Extra Large</value>
+  </data>
   <data name="VersionInfoTitle" xml:space="preserve">
     <value>Version info</value>
   </data>

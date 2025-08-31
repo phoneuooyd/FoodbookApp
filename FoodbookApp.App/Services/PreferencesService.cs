@@ -9,6 +9,9 @@ public class PreferencesService : IPreferencesService
 {
     private const string SelectedCultureKey = "SelectedCulture";
     private const string SelectedThemeKey = "SelectedTheme";
+    private const string SelectedFontFamilyKey = "SelectedFontFamily";
+    private const string SelectedFontSizeKey = "SelectedFontSize";
+    
     private static readonly string[] SupportedCultures = { "en", "pl-PL" };
 
     /// <inheritdoc/>
@@ -94,6 +97,126 @@ public class PreferencesService : IPreferencesService
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to save theme preference: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc/>
+    public AppFontFamily GetSavedFontFamily()
+    {
+        try
+        {
+            var savedFontFamilyString = Preferences.Get(SelectedFontFamilyKey, AppFontFamily.Default.ToString());
+            
+            if (Enum.TryParse<AppFontFamily>(savedFontFamilyString, out var fontFamily))
+            {
+                System.Diagnostics.Debug.WriteLine($"[PreferencesService] Retrieved saved font family: {fontFamily}");
+                return fontFamily;
+            }
+            
+            System.Diagnostics.Debug.WriteLine("[PreferencesService] No valid saved font family found, using Default");
+            return AppFontFamily.Default;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to get saved font family: {ex.Message}");
+            return AppFontFamily.Default;
+        }
+    }
+
+    /// <inheritdoc/>
+    public void SaveFontFamily(AppFontFamily fontFamily)
+    {
+        try
+        {
+            Preferences.Set(SelectedFontFamilyKey, fontFamily.ToString());
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved font family preference: {fontFamily}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to save font family preference: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc/>
+    public AppFontSize GetSavedFontSize()
+    {
+        try
+        {
+            var savedFontSizeString = Preferences.Get(SelectedFontSizeKey, AppFontSize.Default.ToString());
+            
+            if (Enum.TryParse<AppFontSize>(savedFontSizeString, out var fontSize))
+            {
+                System.Diagnostics.Debug.WriteLine($"[PreferencesService] Retrieved saved font size: {fontSize}");
+                return fontSize;
+            }
+            
+            System.Diagnostics.Debug.WriteLine("[PreferencesService] No valid saved font size found, using Default");
+            return AppFontSize.Default;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to get saved font size: {ex.Message}");
+            return AppFontSize.Default;
+        }
+    }
+
+    /// <inheritdoc/>
+    public void SaveFontSize(AppFontSize fontSize)
+    {
+        try
+        {
+            Preferences.Set(SelectedFontSizeKey, fontSize.ToString());
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved font size preference: {fontSize}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to save font size preference: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc/>
+    public FontSettings GetFontSettings()
+    {
+        try
+        {
+            var fontFamily = GetSavedFontFamily();
+            var fontSize = GetSavedFontSize();
+            
+            var settings = new FontSettings
+            {
+                FontFamily = fontFamily,
+                FontSize = fontSize
+            };
+            
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Retrieved font settings: {fontFamily}, {fontSize}");
+            return settings;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to get font settings: {ex.Message}");
+            return new FontSettings(); // Returns default settings
+        }
+    }
+
+    /// <inheritdoc/>
+    public void SaveFontSettings(FontSettings settings)
+    {
+        try
+        {
+            if (settings == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[PreferencesService] Cannot save null font settings");
+                return;
+            }
+            
+            SaveFontFamily(settings.FontFamily);
+            SaveFontSize(settings.FontSize);
+            
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved complete font settings: {settings.FontFamily}, {settings.FontSize}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to save font settings: {ex.Message}");
         }
     }
 }

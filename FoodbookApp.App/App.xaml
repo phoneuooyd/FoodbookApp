@@ -9,6 +9,15 @@
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            
+            <!-- Font Settings - Dynamic Resources for runtime font changes -->
+            <!-- These will be set by FontService -->
+            <x:String x:Key="AppFontFamily">Default</x:String>
+            <x:Double x:Key="AppFontSize">16</x:Double>
+            <x:Double x:Key="AppSmallFontSize">14</x:Double>
+            <x:Double x:Key="AppLargeFontSize">20</x:Double>
+            <x:Double x:Key="AppTitleFontSize">24</x:Double>
+            
         </ResourceDictionary>
     </Application.Resources>
 </Application>

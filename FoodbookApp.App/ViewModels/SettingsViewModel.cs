@@ -12,9 +12,12 @@ public class SettingsViewModel : INotifyPropertyChanged
     private readonly LocalizationResourceManager _locManager;
     private readonly IPreferencesService _preferencesService;
     private readonly IThemeService _themeService;
+    private readonly IFontService _fontService;
 
     public ObservableCollection<string> SupportedCultures { get; }
     public ObservableCollection<Foodbook.Models.AppTheme> SupportedThemes { get; }
+    public ObservableCollection<AppFontFamily> SupportedFontFamilies { get; }
+    public ObservableCollection<AppFontSize> SupportedFontSizes { get; }
 
     private string _selectedCulture;
     public string SelectedCulture
@@ -50,6 +53,36 @@ public class SettingsViewModel : INotifyPropertyChanged
         }
     }
 
+    private AppFontFamily _selectedFontFamily;
+    public AppFontFamily SelectedFontFamily
+    {
+        get => _selectedFontFamily;
+        set
+        {
+            if (_selectedFontFamily == value) return;
+            _selectedFontFamily = value;
+            OnPropertyChanged(nameof(SelectedFontFamily));
+            
+            // Apply the font family immediately
+            _fontService.SetFontFamily(value);
+        }
+    }
+
+    private AppFontSize _selectedFontSize;
+    public AppFontSize SelectedFontSize
+    {
+        get => _selectedFontSize;
+        set
+        {
+            if (_selectedFontSize == value) return;
+            _selectedFontSize = value;
+            OnPropertyChanged(nameof(SelectedFontSize));
+            
+            // Apply the font size immediately
+            _fontService.SetFontSize(value);
+        }
+    }
+
     private bool _isMigrationInProgress;
     public bool IsMigrationInProgress
     {
@@ -81,11 +114,12 @@ public class SettingsViewModel : INotifyPropertyChanged
     public ICommand MigrateDatabaseCommand { get; }
     public ICommand ResetDatabaseCommand { get; }
 
-    public SettingsViewModel(LocalizationResourceManager locManager, IPreferencesService preferencesService, IThemeService themeService)
+    public SettingsViewModel(LocalizationResourceManager locManager, IPreferencesService preferencesService, IThemeService themeService, IFontService fontService)
     {
         _locManager = locManager;
         _preferencesService = preferencesService;
         _themeService = themeService;
+        _fontService = fontService;
         
         // Initialize supported cultures from preferences service
         SupportedCultures = new ObservableCollection<string>(_preferencesService.GetSupportedCultures());
@@ -98,19 +132,31 @@ public class SettingsViewModel : INotifyPropertyChanged
             Foodbook.Models.AppTheme.Dark 
         };
         
+        // Initialize supported font families
+        SupportedFontFamilies = new ObservableCollection<AppFontFamily>(_fontService.GetAvailableFontFamilies());
+        
+        // Initialize supported font sizes
+        SupportedFontSizes = new ObservableCollection<AppFontSize>(_fontService.GetAvailableFontSizes());
+        
         // Load the saved preferences
         _selectedCulture = LoadSelectedCulture();
         _selectedTheme = LoadSelectedTheme();
+        LoadSelectedFontSettings();
         
         // Set the culture without triggering the setter to avoid recursive calls
         _locManager.SetCulture(_selectedCulture);
         
         // Apply saved theme
         _themeService.SetTheme(_selectedTheme);
+        
+        // Apply saved font settings
+        _fontService.LoadSavedSettings();
 
         // Initialize commands
         MigrateDatabaseCommand = new Command(async () => await MigrateDatabaseAsync(), () => CanExecuteMigration);
         ResetDatabaseCommand = new Command(async () => await ResetDatabaseAsync(), () => CanExecuteMigration);
+        
+        System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Initialized with font support");
     }
 
     private async Task MigrateDatabaseAsync()
@@ -262,6 +308,24 @@ public class SettingsViewModel : INotifyPropertyChanged
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Failed to load theme preference: {ex.Message}");
             return Foodbook.Models.AppTheme.System; // Default to system theme
+        }
+    }
+
+    private void LoadSelectedFontSettings()
+    {
+        try
+        {
+            var savedFontSettings = _preferencesService.GetFontSettings();
+            _selectedFontFamily = savedFontSettings.FontFamily;
+            _selectedFontSize = savedFontSettings.FontSize;
+            
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Loaded saved font settings: Family={savedFontSettings.FontFamily}, Size={savedFontSettings.FontSize}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Failed to load font settings: {ex.Message}");
+            _selectedFontFamily = AppFontFamily.Default;
+            _selectedFontSize = AppFontSize.Default;
         }
     }
 
