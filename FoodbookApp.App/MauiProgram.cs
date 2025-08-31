@@ -44,6 +44,7 @@ namespace FoodbookApp
             builder.Services.AddSingleton<ILocalizationService, LocalizationService>();
             builder.Services.AddSingleton<LocalizationResourceManager>();
             builder.Services.AddSingleton<IPreferencesService, PreferencesService>(); // Added PreferencesService
+            builder.Services.AddSingleton<IThemeService, ThemeService>(); // Added ThemeService
 
             builder.Services.AddScoped<RecipeViewModel>();
             builder.Services.AddTransient<AddRecipeViewModel>(); // Zmieniono na Transient

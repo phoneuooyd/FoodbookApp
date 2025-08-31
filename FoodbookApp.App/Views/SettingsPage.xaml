@@ -3,12 +3,18 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:loc="clr-namespace:Foodbook.Services"
+             xmlns:converters="clr-namespace:Foodbook.Converters"
              x:Class="Foodbook.Views.SettingsPage"
              x:DataType="vm:SettingsViewModel"
              Title="{loc:Translate Resource=SettingsPageResources, Key=Title}"
              BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}">
     
     <ContentPage.Resources>
+        <!-- Converters -->
+        <converters:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter" />
+        <converters:CultureCodeToLocalizedNameConverter x:Key="CultureCodeToLocalizedNameConverter" />
+        <converters:AppThemeToLocalizedStringConverter x:Key="AppThemeToLocalizedStringConverter" />
+        
         <!-- Enhanced Card Style with better separation -->
         <Style x:Key="DashboardCardStyle" TargetType="Frame">
             <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}" />
@@ -130,7 +136,7 @@
 
             <!-- Settings Grid -->
             <Grid ColumnDefinitions="*,*" 
-                  RowDefinitions="Auto,Auto,Auto,Auto"
+                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
                   ColumnSpacing="0"
                   RowSpacing="8">
 
@@ -140,9 +146,9 @@
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ThemeTitle}" Style="{StaticResource CardTitleStyle}" />
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ThemeDescription}"
                                Style="{StaticResource DescriptionStyle}" />
-                        <Button Style="{StaticResource DisabledButtonStyle}"
-                                IsEnabled="False"
-                                Text="{loc:Translate Resource=SettingsPageResources, Key=ComingSoon}" />
+                        <Picker ItemsSource="{Binding SupportedThemes}" 
+                                SelectedItem="{Binding SelectedTheme}"
+                                ItemDisplayBinding="{Binding ., Converter={StaticResource AppThemeToLocalizedStringConverter}}" />
                     </StackLayout>
                 </Frame>
 
@@ -152,47 +158,14 @@
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=LanguageTitle}" Style="{StaticResource CardTitleStyle}" />
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=LanguageDescription}"
                                Style="{StaticResource DescriptionStyle}" />
-                        <Picker ItemsSource="{Binding SupportedCultures}" SelectedItem="{Binding SelectedCulture}"/>
-                    </StackLayout>
-                </Frame>
-
-                <!-- Database Migration Card -->
-                <Frame Grid.Row="1" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
-                    <StackLayout>
-                        <Label Text="Migracja bazy danych" Style="{StaticResource CardTitleStyle}" />
-                        <Label Text="Aktualizuj strukturę bazy danych do najnowszej wersji"
-                               Style="{StaticResource DescriptionStyle}" />
-                        <Button Text="Wykonaj migrację"
-                                Style="{StaticResource MigrationButtonStyle}"
-                                Command="{Binding MigrateDatabaseCommand}"
-                                IsEnabled="{Binding CanExecuteMigration}" />
-                        <Label Text="{Binding MigrationStatus}"
-                               Style="{StaticResource StatusLabelStyle}"
-                               IsVisible="{Binding MigrationStatus, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
-                    </StackLayout>
-                </Frame>
-
-                <!-- Database Reset Card -->
-                <Frame Grid.Row="1" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
-                    <StackLayout>
-                        <Label Text="Reset bazy danych" Style="{StaticResource CardTitleStyle}" />
-                        <Label Text="⚠️ Usuń wszystkie dane i przywróć ustawienia domyślne"
-                               Style="{StaticResource DescriptionStyle}" />
-                        <Button Text="Resetuj bazę"
-                                Style="{StaticResource DangerButtonStyle}"
-                                Command="{Binding ResetDatabaseCommand}"
-                                IsEnabled="{Binding CanExecuteMigration}" />
-                        <Label Text="Operacja nieodwracalna!"
-                               FontSize="10"
-                               HorizontalTextAlignment="Center"
-                               TextColor="{AppThemeBinding Light=#DC3545, Dark=#C62D3A}"
-                               FontAttributes="Bold"
-                               Margin="0,4,0,0" />
+                        <Picker ItemsSource="{Binding SupportedCultures}" 
+                                SelectedItem="{Binding SelectedCulture}"
+                                ItemDisplayBinding="{Binding ., Converter={StaticResource CultureCodeToLocalizedNameConverter}}" />
                     </StackLayout>
                 </Frame>
 
                 <!-- Version Info Card -->
-                <Frame Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
+                <Frame Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=VersionInfoTitle}" Style="{StaticResource CardTitleStyle}" />
                         
@@ -220,7 +193,7 @@
                 </Frame>
 
                 <!-- Data Export Card -->
-                <Frame Grid.Row="3" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
+                <Frame Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DataExportTitle}" Style="{StaticResource CardTitleStyle}" />
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DataExportDescription}"
@@ -228,6 +201,47 @@
                         <Button Style="{StaticResource DisabledButtonStyle}"
                                 IsEnabled="False"
                                 Text="{loc:Translate Resource=SettingsPageResources, Key=ComingSoon}" />
+                    </StackLayout>
+                </Frame>
+
+                <!-- Separator for database operations -->
+                <BoxView Grid.Row="3" Grid.ColumnSpan="2" 
+                         HeightRequest="2" 
+                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" 
+                         Margin="20,20,20,10" />
+
+                <!-- Database Migration Card -->
+                <Frame Grid.Row="4" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
+                    <StackLayout>
+                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseMigrationTitle}" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseMigrationDescription}"
+                               Style="{StaticResource DescriptionStyle}" />
+                        <Button Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseMigrationButton}"
+                                Style="{StaticResource MigrationButtonStyle}"
+                                Command="{Binding MigrateDatabaseCommand}"
+                                IsEnabled="{Binding CanExecuteMigration}" />
+                        <Label Text="{Binding MigrationStatus}"
+                               Style="{StaticResource StatusLabelStyle}"
+                               IsVisible="{Binding MigrationStatus, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
+                    </StackLayout>
+                </Frame>
+
+                <!-- Database Reset Card -->
+                <Frame Grid.Row="4" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
+                    <StackLayout>
+                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseResetTitle}" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseResetDescription}"
+                               Style="{StaticResource DescriptionStyle}" />
+                        <Button Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseResetButton}"
+                                Style="{StaticResource DangerButtonStyle}"
+                                Command="{Binding ResetDatabaseCommand}"
+                                IsEnabled="{Binding CanExecuteMigration}" />
+                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseResetWarning}"
+                               FontSize="10"
+                               HorizontalTextAlignment="Center"
+                               TextColor="{AppThemeBinding Light=#DC3545, Dark=#C62D3A}"
+                               FontAttributes="Bold"
+                               Margin="0,4,0,0" />
                     </StackLayout>
                 </Frame>
 

@@ -1,3 +1,5 @@
+using Foodbook.Models;
+
 namespace Foodbook.Services;
 
 /// <summary>
@@ -22,4 +24,16 @@ public interface IPreferencesService
     /// </summary>
     /// <returns>Array of supported culture codes</returns>
     string[] GetSupportedCultures();
+    
+    /// <summary>
+    /// Gets the saved theme preference
+    /// </summary>
+    /// <returns>The saved theme or System if not set</returns>
+    Foodbook.Models.AppTheme GetSavedTheme();
+    
+    /// <summary>
+    /// Saves the selected theme preference
+    /// </summary>
+    /// <param name="theme">The theme to save</param>
+    void SaveTheme(Foodbook.Models.AppTheme theme);
 }

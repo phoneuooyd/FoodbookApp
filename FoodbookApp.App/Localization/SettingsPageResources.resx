@@ -27,11 +27,26 @@
   <data name="ThemeDescription" xml:space="preserve">
     <value>Light / dark</value>
   </data>
+  <data name="ThemeLight" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="ThemeDark" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="ThemeSystem" xml:space="preserve">
+    <value>System</value>
+  </data>
   <data name="LanguageTitle" xml:space="preserve">
     <value>Language</value>
   </data>
   <data name="LanguageDescription" xml:space="preserve">
-    <value>PL / EN</value>
+    <value>Interface language</value>
+  </data>
+  <data name="LanguageEnglish" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="LanguagePolish" xml:space="preserve">
+    <value>Polish</value>
   </data>
   <data name="VersionInfoTitle" xml:space="preserve">
     <value>Version info</value>
@@ -56,5 +71,26 @@
   </data>
   <data name="ComingSoon" xml:space="preserve">
     <value>Soon</value>
+  </data>
+  <data name="DatabaseMigrationTitle" xml:space="preserve">
+    <value>Database Migration</value>
+  </data>
+  <data name="DatabaseMigrationDescription" xml:space="preserve">
+    <value>Update database structure to the latest version</value>
+  </data>
+  <data name="DatabaseMigrationButton" xml:space="preserve">
+    <value>Execute Migration</value>
+  </data>
+  <data name="DatabaseResetTitle" xml:space="preserve">
+    <value>Database Reset</value>
+  </data>
+  <data name="DatabaseResetDescription" xml:space="preserve">
+    <value>⚠️ Delete all data and restore default settings</value>
+  </data>
+  <data name="DatabaseResetButton" xml:space="preserve">
+    <value>Reset Database</value>
+  </data>
+  <data name="DatabaseResetWarning" xml:space="preserve">
+    <value>Irreversible operation!</value>
   </data>
 </root>

@@ -8,15 +8,21 @@ namespace FoodbookApp
     {
         private readonly ILocalizationService _localizationService;
         private readonly IPreferencesService _preferencesService;
+        private readonly IThemeService _themeService;
 
-        public App(ILocalizationService localizationService, IPreferencesService preferencesService)
+        public App(ILocalizationService localizationService, IPreferencesService preferencesService, IThemeService themeService)
         {
             _localizationService = localizationService;
             _preferencesService = preferencesService;
+            _themeService = themeService;
             
             // Load saved language preference or use system default
             var savedCulture = LoadSavedCulture();
             _localizationService.SetCulture(savedCulture);
+            
+            // Load and apply saved theme
+            var savedTheme = LoadSavedTheme();
+            _themeService.SetTheme(savedTheme);
             
             InitializeComponent();
         }
@@ -45,6 +51,21 @@ namespace FoodbookApp
             {
                 System.Diagnostics.Debug.WriteLine($"[App] Failed to load culture preference: {ex.Message}");
                 return "en"; // Default to English if everything fails
+            }
+        }
+
+        private Foodbook.Models.AppTheme LoadSavedTheme()
+        {
+            try
+            {
+                var savedTheme = _preferencesService.GetSavedTheme();
+                System.Diagnostics.Debug.WriteLine($"[App] Loaded saved theme preference: {savedTheme}");
+                return savedTheme;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[App] Failed to load theme preference: {ex.Message}");
+                return Foodbook.Models.AppTheme.System; // Default to system theme if everything fails
             }
         }
 

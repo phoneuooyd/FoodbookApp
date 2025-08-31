@@ -1,3 +1,5 @@
+using Foodbook.Models;
+
 namespace Foodbook.Services;
 
 /// <summary>
@@ -6,6 +8,7 @@ namespace Foodbook.Services;
 public class PreferencesService : IPreferencesService
 {
     private const string SelectedCultureKey = "SelectedCulture";
+    private const string SelectedThemeKey = "SelectedTheme";
     private static readonly string[] SupportedCultures = { "en", "pl-PL" };
 
     /// <inheritdoc/>
@@ -55,5 +58,42 @@ public class PreferencesService : IPreferencesService
     public string[] GetSupportedCultures()
     {
         return SupportedCultures;
+    }
+
+    /// <inheritdoc/>
+    public Foodbook.Models.AppTheme GetSavedTheme()
+    {
+        try
+        {
+            var savedThemeString = Preferences.Get(SelectedThemeKey, Foodbook.Models.AppTheme.System.ToString());
+            
+            if (Enum.TryParse<Foodbook.Models.AppTheme>(savedThemeString, out var theme))
+            {
+                System.Diagnostics.Debug.WriteLine($"[PreferencesService] Retrieved saved theme: {theme}");
+                return theme;
+            }
+            
+            System.Diagnostics.Debug.WriteLine("[PreferencesService] No valid saved theme found, using System");
+            return Foodbook.Models.AppTheme.System;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to get saved theme: {ex.Message}");
+            return Foodbook.Models.AppTheme.System;
+        }
+    }
+
+    /// <inheritdoc/>
+    public void SaveTheme(Foodbook.Models.AppTheme theme)
+    {
+        try
+        {
+            Preferences.Set(SelectedThemeKey, theme.ToString());
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved theme preference: {theme}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to save theme preference: {ex.Message}");
+        }
     }
 }

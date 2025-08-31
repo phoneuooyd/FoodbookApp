@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Input;
+using Foodbook.Models;
 using Foodbook.Services;
+using FoodbookApp.Localization;
 
 namespace Foodbook.ViewModels;
 
@@ -9,8 +11,10 @@ public class SettingsViewModel : INotifyPropertyChanged
 {
     private readonly LocalizationResourceManager _locManager;
     private readonly IPreferencesService _preferencesService;
+    private readonly IThemeService _themeService;
 
     public ObservableCollection<string> SupportedCultures { get; }
+    public ObservableCollection<Foodbook.Models.AppTheme> SupportedThemes { get; }
 
     private string _selectedCulture;
     public string SelectedCulture
@@ -25,6 +29,24 @@ public class SettingsViewModel : INotifyPropertyChanged
             
             // Save the selected culture to preferences
             _preferencesService.SaveLanguage(value);
+        }
+    }
+
+    private Foodbook.Models.AppTheme _selectedTheme;
+    public Foodbook.Models.AppTheme SelectedTheme
+    {
+        get => _selectedTheme;
+        set
+        {
+            if (_selectedTheme == value) return;
+            _selectedTheme = value;
+            OnPropertyChanged(nameof(SelectedTheme));
+            
+            // Apply the theme immediately
+            _themeService.SetTheme(value);
+            
+            // Save the selected theme to preferences
+            _preferencesService.SaveTheme(value);
         }
     }
 
@@ -59,19 +81,32 @@ public class SettingsViewModel : INotifyPropertyChanged
     public ICommand MigrateDatabaseCommand { get; }
     public ICommand ResetDatabaseCommand { get; }
 
-    public SettingsViewModel(LocalizationResourceManager locManager, IPreferencesService preferencesService)
+    public SettingsViewModel(LocalizationResourceManager locManager, IPreferencesService preferencesService, IThemeService themeService)
     {
         _locManager = locManager;
         _preferencesService = preferencesService;
+        _themeService = themeService;
         
         // Initialize supported cultures from preferences service
         SupportedCultures = new ObservableCollection<string>(_preferencesService.GetSupportedCultures());
         
-        // Load the saved culture preference or use system default
+        // Initialize supported themes
+        SupportedThemes = new ObservableCollection<Foodbook.Models.AppTheme> 
+        { 
+            Foodbook.Models.AppTheme.System, 
+            Foodbook.Models.AppTheme.Light, 
+            Foodbook.Models.AppTheme.Dark 
+        };
+        
+        // Load the saved preferences
         _selectedCulture = LoadSelectedCulture();
+        _selectedTheme = LoadSelectedTheme();
         
         // Set the culture without triggering the setter to avoid recursive calls
         _locManager.SetCulture(_selectedCulture);
+        
+        // Apply saved theme
+        _themeService.SetTheme(_selectedTheme);
 
         // Initialize commands
         MigrateDatabaseCommand = new Command(async () => await MigrateDatabaseAsync(), () => CanExecuteMigration);
@@ -212,6 +247,21 @@ public class SettingsViewModel : INotifyPropertyChanged
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Failed to load culture preference: {ex.Message}");
             return _preferencesService.GetSupportedCultures()[0]; // Default to first supported culture
+        }
+    }
+
+    private Foodbook.Models.AppTheme LoadSelectedTheme()
+    {
+        try
+        {
+            var savedTheme = _preferencesService.GetSavedTheme();
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Loaded saved theme preference: {savedTheme}");
+            return savedTheme;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Failed to load theme preference: {ex.Message}");
+            return Foodbook.Models.AppTheme.System; // Default to system theme
         }
     }
 
