@@ -90,6 +90,11 @@
             <AutoGen>True</AutoGen>
             <DependentUpon>TabBarResources.resx</DependentUpon>
           </Compile>
+          <Compile Update="Localization\UnitResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>UnitResources.resx</DependentUpon>
+          </Compile>
         </ItemGroup>
 
         <ItemGroup>
@@ -206,6 +211,10 @@
           <EmbeddedResource Update="Localization\SettingsPageResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>SettingsPageResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
+          <EmbeddedResource Update="Localization\UnitResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>UnitResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
         </ItemGroup>
 

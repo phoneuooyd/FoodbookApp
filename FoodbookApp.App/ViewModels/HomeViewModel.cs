@@ -512,40 +512,58 @@ public class HomeViewModel : INotifyPropertyChanged
         {
             // Pobierz pe³ny przepis ze sk³adnikami z serwisu
             var fullRecipe = await _recipeService.GetRecipeAsync(meal.Recipe.Id);
-            if (fullRecipe?.Ingredients == null || !fullRecipe.Ingredients.Any())
+            if (fullRecipe == null)
             {
                 await Application.Current.MainPage.DisplayAlert(
-                    "Sk³adniki", 
-                    "Ten przepis nie ma zdefiniowanych sk³adników.", 
+                    "B³¹d", 
+                    "Nie uda³o siê pobraæ przepisu.", 
                     "OK");
                 return;
             }
 
-            // Przygotuj listê sk³adników z uwzglêdnieniem liczby porcji
-            var ingredientsList = fullRecipe.Ingredients
-                .Select(ing => 
-                {
-                    var adjustedQuantity = (ing.Quantity * meal.Portions) / fullRecipe.IloscPorcji;
-                    var unitText = GetUnitText(ing.Unit);
-                    return $"• {ing.Name}: {adjustedQuantity:F1} {unitText}";
-                })
-                .ToList();
-
-            var ingredientsText = string.Join("\n", ingredientsList);
-            
-            var title = $"Sk³adniki - {fullRecipe.Name}";
+            // Przygotuj nag³ówek
+            var title = $"{fullRecipe.Name}";
             if (meal.Portions != fullRecipe.IloscPorcji)
             {
                 title += $" ({meal.Portions} porcji)";
             }
 
-            await Application.Current.MainPage.DisplayAlert(title, ingredientsText, "OK");
+            // Przygotuj treœæ
+            var content = "";
+
+            // Dodaj sk³adniki jeœli istniej¹
+            if (fullRecipe.Ingredients != null && fullRecipe.Ingredients.Any())
+            {
+                content += "SK£ADNIKI:\n";
+                var ingredientsList = fullRecipe.Ingredients
+                    .Select(ing => 
+                    {
+                        var adjustedQuantity = (ing.Quantity * meal.Portions) / fullRecipe.IloscPorcji;
+                        var unitText = GetUnitText(ing.Unit);
+                        return $"• {ing.Name}: {adjustedQuantity:F1} {unitText}";
+                    })
+                    .ToList();
+                content += string.Join("\n", ingredientsList);
+            }
+            else
+            {
+                content += "SK£ADNIKI:\nBrak zdefiniowanych sk³adników.";
+            }
+
+            // Dodaj sposób wykonania jeœli istnieje
+            if (!string.IsNullOrWhiteSpace(fullRecipe.Description))
+            {
+                content += "\n\nSPOSÓB WYKONANIA:\n";
+                content += fullRecipe.Description;
+            }
+
+            await Application.Current.MainPage.DisplayAlert(title, content, "OK");
         }
         catch (Exception ex)
         {
             await Application.Current.MainPage.DisplayAlert(
                 "B³¹d", 
-                "Nie uda³o siê pobraæ sk³adników przepisu.", 
+                "Nie uda³o siê pobraæ szczegó³ów przepisu.", 
                 "OK");
             System.Diagnostics.Debug.WriteLine($"Error showing recipe ingredients: {ex.Message}");
         }
@@ -555,9 +573,9 @@ public class HomeViewModel : INotifyPropertyChanged
     {
         return unit switch
         {
-            Unit.Gram => "g",
-            Unit.Milliliter => "ml", 
-            Unit.Piece => "szt",
+            Unit.Gram => FoodbookApp.Localization.UnitResources.GramShort,
+            Unit.Milliliter => FoodbookApp.Localization.UnitResources.MilliliterShort, 
+            Unit.Piece => FoodbookApp.Localization.UnitResources.PieceShort,
             _ => ""
         };
     }

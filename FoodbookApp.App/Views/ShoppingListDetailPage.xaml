@@ -15,6 +15,7 @@
         <converters:DragStateToColorConverter x:Key="DragStateToColorConverter" />
         <converters:DropZoneToColorConverter x:Key="DropZoneToColorConverter" />
         <converters:DropZoneBorderColorConverter x:Key="DropZoneBorderColorConverter" />
+        <converters:UnitToLocalizedStringConverter x:Key="UnitToLocalizedStringConverter" />
     </ContentPage.Resources>
     
     <ScrollView>
@@ -94,7 +95,8 @@
                                     <Picker Grid.Column="4" 
                                             WidthRequest="80" 
                                             ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}" 
-                                            SelectedItem="{Binding Unit}" />
+                                            SelectedItem="{Binding Unit}"
+                                            ItemDisplayBinding="{Binding ., Converter={StaticResource UnitToLocalizedStringConverter}}" />
 
                                     <!-- Przycisk usuwania -->
                                     <Button Grid.Column="5" 
@@ -212,7 +214,7 @@
 
                                     <!-- Jednostka - przekreślona -->
                                     <Label Grid.Column="4" 
-                                           Text="{Binding Unit}" 
+                                           Text="{Binding Unit, Converter={StaticResource UnitToLocalizedStringConverter}}" 
                                            TextDecorations="Strikethrough" 
                                            TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
                                            VerticalTextAlignment="Center"
