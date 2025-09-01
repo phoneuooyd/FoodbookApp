@@ -17,6 +17,7 @@ namespace Foodbook.ViewModels
     {
         private readonly IRecipeService _recipeService;
         private readonly IIngredientService _ingredientService;
+        private readonly IEventBus _eventBus;
         private bool _isLoading;
         private bool _isRefreshing;
         private string _searchText = string.Empty;
@@ -64,10 +65,11 @@ namespace Foodbook.ViewModels
         public ICommand RefreshCommand { get; }
         public ICommand ClearSearchCommand { get; } // Nowa komenda do czyszczenia wyszukiwania
 
-        public RecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService)
+        public RecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService, IEventBus eventBus)
         {
             _recipeService = recipeService;
             _ingredientService = ingredientService;
+            _eventBus = eventBus;
             AddRecipeCommand = new Command(async () => await Shell.Current.GoToAsync(nameof(AddRecipePage)));
             EditRecipeCommand = new Command<Recipe>(async r =>
             {
@@ -254,6 +256,10 @@ namespace Foodbook.ViewModels
                 await _recipeService.DeleteRecipeAsync(recipe.Id);
                 Recipes.Remove(recipe);
                 _allRecipes.Remove(recipe);
+                
+                // Notify other ViewModels that a recipe was deleted
+                _eventBus.PublishDataChanged("Recipe", "Deleted", recipe);
+                System.Diagnostics.Debug.WriteLine($"[RecipeViewModel] Published Recipe Deleted event for recipe {recipe.Name}");
             }
             catch (Exception ex)
             {

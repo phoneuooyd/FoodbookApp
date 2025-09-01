@@ -14,6 +14,7 @@ public class PlannerViewModel : INotifyPropertyChanged
     private readonly IPlannerService _plannerService;
     private readonly IRecipeService _recipeService;
     private readonly IPlanService _planService;
+    private readonly IEventBus _eventBus;
 
     public ObservableCollection<Recipe> Recipes { get; } = new();
     public ObservableCollection<PlannerDay> Days { get; } = new();
@@ -108,11 +109,12 @@ public class PlannerViewModel : INotifyPropertyChanged
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
 
-    public PlannerViewModel(IPlannerService plannerService, IRecipeService recipeService, IPlanService planService)
+    public PlannerViewModel(IPlannerService plannerService, IRecipeService recipeService, IPlanService planService, IEventBus eventBus)
     {
         _plannerService = plannerService ?? throw new ArgumentNullException(nameof(plannerService));
         _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
         _planService = planService ?? throw new ArgumentNullException(nameof(planService));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
 
         AddMealCommand = new Command<PlannerDay>(AddMeal);
         RemoveMealCommand = new Command<PlannedMeal>(RemoveMeal);
@@ -478,6 +480,10 @@ public class PlannerViewModel : INotifyPropertyChanged
                         });
                 }
             }
+
+            // Notify other ViewModels that a plan was created
+            _eventBus.PublishDataChanged("Plan", "Created", plan);
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Published Plan Created event for plan {plan.Id}");
 
             // Wyczyść cache po zapisie - nie wywołuj Reset() który może powodować konflikty
             ClearCache();
