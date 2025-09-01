@@ -21,6 +21,27 @@
   <data name="HeaderSubtitle" xml:space="preserve">
     <value>Personalizuj swoją aplikację</value>
   </data>
+  <data name="ColorThemeTitle" xml:space="preserve">
+    <value>Motyw kolorystyczny</value>
+  </data>
+  <data name="ColorThemeDescription" xml:space="preserve">
+    <value>Paleta kolorów aplikacji</value>
+  </data>
+  <data name="ColorThemeDefault" xml:space="preserve">
+    <value>Domyślny</value>
+  </data>
+  <data name="ColorThemeNature" xml:space="preserve">
+    <value>Natura</value>
+  </data>
+  <data name="ColorThemeWarm" xml:space="preserve">
+    <value>Ciepły</value>
+  </data>
+  <data name="ColorThemeVibrant" xml:space="preserve">
+    <value>Żywy</value>
+  </data>
+  <data name="ColorThemeMonochrome" xml:space="preserve">
+    <value>Monochromatyczny</value>
+  </data>
   <data name="ThemeTitle" xml:space="preserve">
     <value>Motyw</value>
   </data>

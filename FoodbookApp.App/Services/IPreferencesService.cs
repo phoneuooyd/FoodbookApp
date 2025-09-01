@@ -38,6 +38,18 @@ public interface IPreferencesService
     void SaveTheme(Foodbook.Models.AppTheme theme);
     
     /// <summary>
+    /// Gets the saved color theme preference
+    /// </summary>
+    /// <returns>The saved color theme or Default if not set</returns>
+    AppColorTheme GetSavedColorTheme();
+    
+    /// <summary>
+    /// Saves the selected color theme preference
+    /// </summary>
+    /// <param name="colorTheme">The color theme to save</param>
+    void SaveColorTheme(AppColorTheme colorTheme);
+    
+    /// <summary>
     /// Gets the saved font family preference
     /// </summary>
     /// <returns>The saved font family or Default if not set</returns>

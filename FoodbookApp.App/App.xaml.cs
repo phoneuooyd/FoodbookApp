@@ -1,6 +1,7 @@
 ﻿using Microsoft.Maui;
 using Microsoft.Extensions.DependencyInjection;
 using Foodbook.Services;
+using Foodbook.Models;
 
 namespace FoodbookApp
 {
@@ -13,23 +14,39 @@ namespace FoodbookApp
 
         public App(ILocalizationService localizationService, IPreferencesService preferencesService, IThemeService themeService, IFontService fontService)
         {
-            _localizationService = localizationService;
-            _preferencesService = preferencesService;
-            _themeService = themeService;
-            _fontService = fontService;
-            
-            // Load saved language preference or use system default
-            var savedCulture = LoadSavedCulture();
-            _localizationService.SetCulture(savedCulture);
-            
-            // Load and apply saved theme
-            var savedTheme = LoadSavedTheme();
-            _themeService.SetTheme(savedTheme);
-            
-            // Load and apply saved font settings
-            LoadSavedFontSettings();
-            
-            InitializeComponent();
+            try
+            {
+                // Initialize XAML components first
+                InitializeComponent();
+                
+                _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
+                _preferencesService = preferencesService ?? throw new ArgumentNullException(nameof(preferencesService));
+                _themeService = themeService ?? throw new ArgumentNullException(nameof(themeService));
+                _fontService = fontService ?? throw new ArgumentNullException(nameof(fontService));
+                
+                // Load saved language preference or use system default
+                var savedCulture = LoadSavedCulture();
+                _localizationService.SetCulture(savedCulture);
+                
+                // Load and apply saved theme
+                var savedTheme = LoadSavedTheme();
+                _themeService.SetTheme(savedTheme);
+                
+                // Load and apply saved color theme
+                var savedColorTheme = LoadSavedColorTheme();
+                _themeService.SetColorTheme(savedColorTheme);
+                
+                // Load and apply saved font settings
+                LoadSavedFontSettings();
+                
+                System.Diagnostics.Debug.WriteLine("[App] Application initialization completed successfully");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[App] Critical error during initialization: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[App] Stack trace: {ex.StackTrace}");
+                throw; // Re-throw to let the framework handle it
+            }
         }
 
         private string LoadSavedCulture()
@@ -71,6 +88,21 @@ namespace FoodbookApp
             {
                 System.Diagnostics.Debug.WriteLine($"[App] Failed to load theme preference: {ex.Message}");
                 return Foodbook.Models.AppTheme.System; // Default to system theme if everything fails
+            }
+        }
+
+        private AppColorTheme LoadSavedColorTheme()
+        {
+            try
+            {
+                var savedColorTheme = _preferencesService.GetSavedColorTheme();
+                System.Diagnostics.Debug.WriteLine($"[App] Loaded saved color theme preference: {savedColorTheme}");
+                return savedColorTheme;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[App] Failed to load color theme preference: {ex.Message}");
+                return AppColorTheme.Default; // Default to default color theme if everything fails
             }
         }
 

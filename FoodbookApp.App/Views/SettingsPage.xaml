@@ -14,6 +14,8 @@
         <converters:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter" />
         <converters:CultureCodeToLocalizedNameConverter x:Key="CultureCodeToLocalizedNameConverter" />
         <converters:AppThemeToLocalizedStringConverter x:Key="AppThemeToLocalizedStringConverter" />
+        <converters:AppColorThemeToLocalizedStringConverter x:Key="AppColorThemeToLocalizedStringConverter" />
+        <converters:ThemeToColorConverter x:Key="ThemeToColorConverter" />
         <converters:FontFamilyToLocalizedStringConverter x:Key="FontFamilyToLocalizedStringConverter" />
         <converters:FontSizeToLocalizedStringConverter x:Key="FontSizeToLocalizedStringConverter" />
         
@@ -32,7 +34,7 @@
             <Setter Property="FontSize" Value="{DynamicResource AppFontSize}" />
             <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
             <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={DynamicResource Primary}, Dark={DynamicResource Primary}}" />
             <Setter Property="Margin" Value="0,0,0,12" />
             <Setter Property="HorizontalTextAlignment" Value="Center"/>
         </Style>
@@ -50,7 +52,7 @@
         
         <!-- Migration Button Style -->
         <Style x:Key="MigrationButtonStyle" TargetType="Button">
-            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource SecondaryDark}}" />
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={DynamicResource Secondary}, Dark={DynamicResource Secondary}}" />
             <Setter Property="TextColor" Value="White" />
             <Setter Property="FontSize" Value="{DynamicResource AppFontSize}" />
             <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
@@ -113,7 +115,7 @@
             <Setter Property="FontSize" Value="{DynamicResource AppSmallFontSize}" />
             <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
             <Setter Property="HorizontalTextAlignment" Value="Center" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={DynamicResource Primary}, Dark={DynamicResource Primary}}" />
             <Setter Property="FontAttributes" Value="Italic" />
             <Setter Property="Margin" Value="0,8,0,0" />
         </Style>
@@ -135,7 +137,7 @@
                            FontFamily="{DynamicResource AppFontFamily}"
                            FontAttributes="Bold"
                            HorizontalTextAlignment="Center"
-                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                           TextColor="{AppThemeBinding Light={DynamicResource Primary}, Dark={DynamicResource Primary}}"
                            Margin="0,4" />
                     <Label Text="{loc:Translate Resource=SettingsPageResources, Key=HeaderSubtitle}"
                            FontSize="{DynamicResource AppSmallFontSize}"
@@ -152,8 +154,35 @@
                   ColumnSpacing="0"
                   RowSpacing="8">
 
-                <!-- Theme Settings Card -->
+                <!-- Color Theme Settings Card -->
                 <Frame Grid.Row="0" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
+                    <StackLayout>
+                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ColorThemeTitle}" Style="{StaticResource CardTitleStyle}" />
+                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ColorThemeDescription}"
+                               Style="{StaticResource DescriptionStyle}" />
+                        <Picker ItemsSource="{Binding SupportedColorThemes}" 
+                                SelectedItem="{Binding SelectedColorTheme}"
+                                FontSize="{DynamicResource AppFontSize}"
+                                FontFamily="{DynamicResource AppFontFamily}"
+                                ItemDisplayBinding="{Binding ., Converter={StaticResource AppColorThemeToLocalizedStringConverter}}" />
+                        
+                        <!-- Theme Preview -->
+                        <Grid Margin="0,12,0,0" HeightRequest="40" ColumnDefinitions="*,*,*">
+                            <Ellipse Grid.Column="0" 
+                                     Fill="{Binding SelectedColorTheme, Converter={StaticResource ThemeToColorConverter}, ConverterParameter=Primary}"
+                                     WidthRequest="32" HeightRequest="32" />
+                            <Ellipse Grid.Column="1"
+                                     Fill="{Binding SelectedColorTheme, Converter={StaticResource ThemeToColorConverter}, ConverterParameter=Secondary}"
+                                     WidthRequest="32" HeightRequest="32" />
+                            <Ellipse Grid.Column="2"
+                                     Fill="{Binding SelectedColorTheme, Converter={StaticResource ThemeToColorConverter}, ConverterParameter=Tertiary}"
+                                     WidthRequest="32" HeightRequest="32" />
+                        </Grid>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Theme Settings Card -->
+                <Frame Grid.Row="0" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ThemeTitle}" Style="{StaticResource CardTitleStyle}" />
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ThemeDescription}"
@@ -167,7 +196,7 @@
                 </Frame>
 
                 <!-- Language Settings Card -->
-                <Frame Grid.Row="0" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
+                <Frame Grid.Row="1" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=LanguageTitle}" Style="{StaticResource CardTitleStyle}" />
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=LanguageDescription}"
@@ -181,7 +210,7 @@
                 </Frame>
 
                 <!-- Font Family Settings Card -->
-                <Frame Grid.Row="1" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
+                <Frame Grid.Row="1" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FontFamilyTitle}" Style="{StaticResource CardTitleStyle}" />
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FontFamilyDescription}"
@@ -195,7 +224,7 @@
                 </Frame>
 
                 <!-- Font Size Settings Card -->
-                <Frame Grid.Row="1" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
+                <Frame Grid.Row="2" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FontSizeTitle}" Style="{StaticResource CardTitleStyle}" />
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FontSizeDescription}"
@@ -209,7 +238,7 @@
                 </Frame>
 
                 <!-- Version Info Card -->
-                <Frame Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
+                <Frame Grid.Row="2" Grid.Column="1" Grid.RowSpan="1" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=VersionInfoTitle}" Style="{StaticResource CardTitleStyle}" />
                         
@@ -219,7 +248,7 @@
                                    FontFamily="{DynamicResource AppFontFamily}"
                                    FontAttributes="Bold"
                                    HorizontalTextAlignment="Center"
-                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                                   TextColor="{AppThemeBinding Light={DynamicResource Primary}, Dark={DynamicResource Primary}}" />
                             
                             <Label Text="{loc:Translate Resource=SettingsPageResources, Key=AuthorLabel}"
                                    Style="{StaticResource InfoTextStyle}" />

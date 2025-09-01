@@ -9,6 +9,7 @@ public class PreferencesService : IPreferencesService
 {
     private const string SelectedCultureKey = "SelectedCulture";
     private const string SelectedThemeKey = "SelectedTheme";
+    private const string SelectedColorThemeKey = "SelectedColorTheme";
     private const string SelectedFontFamilyKey = "SelectedFontFamily";
     private const string SelectedFontSizeKey = "SelectedFontSize";
     
@@ -97,6 +98,43 @@ public class PreferencesService : IPreferencesService
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to save theme preference: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc/>
+    public AppColorTheme GetSavedColorTheme()
+    {
+        try
+        {
+            var savedColorThemeString = Preferences.Get(SelectedColorThemeKey, AppColorTheme.Default.ToString());
+            
+            if (Enum.TryParse<AppColorTheme>(savedColorThemeString, out var colorTheme))
+            {
+                System.Diagnostics.Debug.WriteLine($"[PreferencesService] Retrieved saved color theme: {colorTheme}");
+                return colorTheme;
+            }
+            
+            System.Diagnostics.Debug.WriteLine("[PreferencesService] No valid saved color theme found, using Default");
+            return AppColorTheme.Default;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to get saved color theme: {ex.Message}");
+            return AppColorTheme.Default;
+        }
+    }
+
+    /// <inheritdoc/>
+    public void SaveColorTheme(AppColorTheme colorTheme)
+    {
+        try
+        {
+            Preferences.Set(SelectedColorThemeKey, colorTheme.ToString());
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved color theme preference: {colorTheme}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to save color theme preference: {ex.Message}");
         }
     }
 

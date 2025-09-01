@@ -16,6 +16,7 @@ public class SettingsViewModel : INotifyPropertyChanged
 
     public ObservableCollection<string> SupportedCultures { get; }
     public ObservableCollection<Foodbook.Models.AppTheme> SupportedThemes { get; }
+    public ObservableCollection<AppColorTheme> SupportedColorThemes { get; }
     public ObservableCollection<AppFontFamily> SupportedFontFamilies { get; }
     public ObservableCollection<AppFontSize> SupportedFontSizes { get; }
 
@@ -50,6 +51,24 @@ public class SettingsViewModel : INotifyPropertyChanged
             
             // Save the selected theme to preferences
             _preferencesService.SaveTheme(value);
+        }
+    }
+
+    private AppColorTheme _selectedColorTheme;
+    public AppColorTheme SelectedColorTheme
+    {
+        get => _selectedColorTheme;
+        set
+        {
+            if (_selectedColorTheme == value) return;
+            _selectedColorTheme = value;
+            OnPropertyChanged(nameof(SelectedColorTheme));
+            
+            // Apply the color theme immediately
+            _themeService.SetColorTheme(value);
+            
+            // Save the selected color theme to preferences
+            _preferencesService.SaveColorTheme(value);
         }
     }
 
@@ -132,6 +151,16 @@ public class SettingsViewModel : INotifyPropertyChanged
             Foodbook.Models.AppTheme.Dark 
         };
         
+        // Initialize supported color themes
+        SupportedColorThemes = new ObservableCollection<AppColorTheme>
+        {
+            AppColorTheme.Default,
+            AppColorTheme.Nature,
+            AppColorTheme.Warm,
+            AppColorTheme.Vibrant,
+            AppColorTheme.Monochrome
+        };
+        
         // Initialize supported font families
         SupportedFontFamilies = new ObservableCollection<AppFontFamily>(_fontService.GetAvailableFontFamilies());
         
@@ -141,13 +170,15 @@ public class SettingsViewModel : INotifyPropertyChanged
         // Load the saved preferences
         _selectedCulture = LoadSelectedCulture();
         _selectedTheme = LoadSelectedTheme();
+        _selectedColorTheme = LoadSelectedColorTheme();
         LoadSelectedFontSettings();
         
         // Set the culture without triggering the setter to avoid recursive calls
         _locManager.SetCulture(_selectedCulture);
         
-        // Apply saved theme
+        // Apply saved theme and color theme
         _themeService.SetTheme(_selectedTheme);
+        _themeService.SetColorTheme(_selectedColorTheme);
         
         // Apply saved font settings
         _fontService.LoadSavedSettings();
@@ -156,7 +187,7 @@ public class SettingsViewModel : INotifyPropertyChanged
         MigrateDatabaseCommand = new Command(async () => await MigrateDatabaseAsync(), () => CanExecuteMigration);
         ResetDatabaseCommand = new Command(async () => await ResetDatabaseAsync(), () => CanExecuteMigration);
         
-        System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Initialized with font support");
+        System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Initialized with color theme support");
     }
 
     private async Task MigrateDatabaseAsync()
@@ -308,6 +339,21 @@ public class SettingsViewModel : INotifyPropertyChanged
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Failed to load theme preference: {ex.Message}");
             return Foodbook.Models.AppTheme.System; // Default to system theme
+        }
+    }
+
+    private AppColorTheme LoadSelectedColorTheme()
+    {
+        try
+        {
+            var savedColorTheme = _preferencesService.GetSavedColorTheme();
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Loaded saved color theme preference: {savedColorTheme}");
+            return savedColorTheme;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Failed to load color theme preference: {ex.Message}");
+            return AppColorTheme.Default; // Default to default color theme
         }
     }
 
