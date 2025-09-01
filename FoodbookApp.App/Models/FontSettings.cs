@@ -24,6 +24,23 @@ namespace Foodbook.Models
             AppFontFamily.SansSerif => "Sans-serif",
             AppFontFamily.Serif => "Serif", 
             AppFontFamily.Monospace => "Monospace",
+            AppFontFamily.OpenSansRegular => "OpenSans Regular",
+            AppFontFamily.OpenSansSemibold => "OpenSans Semibold",
+            AppFontFamily.BarlowCondensed => "Barlow Condensed",
+            AppFontFamily.BarlowCondensedLight => "Barlow Condensed Light",
+            AppFontFamily.BarlowCondensedMedium => "Barlow Condensed Medium",
+            AppFontFamily.BarlowCondensedSemibold => "Barlow Condensed Semibold",
+            AppFontFamily.CherryBombOne => "Cherry Bomb One",
+            AppFontFamily.DynaPuff => "DynaPuff",
+            AppFontFamily.DynaPuffMedium => "DynaPuff Medium",
+            AppFontFamily.DynaPuffSemibold => "DynaPuff Semibold",
+            AppFontFamily.Gruppo => "Gruppo",
+            AppFontFamily.JustMeAgainDownHere => "Just Me Again Down Here",
+            AppFontFamily.Kalam => "Kalam",
+            AppFontFamily.PoiretOne => "Poiret One",
+            AppFontFamily.SendFlowers => "Send Flowers",
+            AppFontFamily.Slabo27px => "Slabo 27px",
+            AppFontFamily.Yellowtail => "Yellowtail",
             _ => "Unknown"
         };
         
@@ -48,6 +65,26 @@ namespace Foodbook.Models
             AppFontFamily.SansSerif => GetPlatformSansSerif(),
             AppFontFamily.Serif => GetPlatformSerif(),
             AppFontFamily.Monospace => GetPlatformMonospace(),
+            
+            // Custom fonts registered in MauiProgram
+            AppFontFamily.OpenSansRegular => "OpenSansRegular",
+            AppFontFamily.OpenSansSemibold => "OpenSansSemibold",
+            AppFontFamily.BarlowCondensed => "BarlowCondensedRegular",
+            AppFontFamily.BarlowCondensedLight => "BarlowCondensedLight",
+            AppFontFamily.BarlowCondensedMedium => "BarlowCondensedMedium",
+            AppFontFamily.BarlowCondensedSemibold => "BarlowCondensedSemibold",
+            AppFontFamily.CherryBombOne => "CherryBombOneRegular",
+            AppFontFamily.DynaPuff => "DynaPuffRegular",
+            AppFontFamily.DynaPuffMedium => "DynaPuffMedium",
+            AppFontFamily.DynaPuffSemibold => "DynaPuffSemibold",
+            AppFontFamily.Gruppo => "GruppoRegular",
+            AppFontFamily.JustMeAgainDownHere => "JustMeAgainDownHereRegular",
+            AppFontFamily.Kalam => "KalamRegular",
+            AppFontFamily.PoiretOne => "PoiretOneRegular",
+            AppFontFamily.SendFlowers => "SendFlowersRegular",
+            AppFontFamily.Slabo27px => "Slabo27pxRegular",
+            AppFontFamily.Yellowtail => "YellowtailRegular",
+            
             _ => null
         };
         
