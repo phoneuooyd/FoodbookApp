@@ -1,6 +1,7 @@
 using Microsoft.Maui.Controls;
 using Foodbook.ViewModels;
 using Foodbook.Data;
+using Foodbook.Views.Base;
 using Microsoft.Extensions.DependencyInjection;
 using FoodbookApp;
 
@@ -9,6 +10,7 @@ namespace Foodbook.Views;
 public partial class IngredientsPage : ContentPage
 {
     private readonly IngredientsViewModel _viewModel;
+    private readonly PageThemeHelper _themeHelper;
     private bool _isInitialized;
 
     public IngredientsPage(IngredientsViewModel vm)
@@ -16,11 +18,15 @@ public partial class IngredientsPage : ContentPage
         InitializeComponent();
         _viewModel = vm;
         BindingContext = _viewModel;
+        _themeHelper = new PageThemeHelper();
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        
+        // Initialize theme and font handling
+        _themeHelper.Initialize();
         
         // Only load once or if explicitly needed
         if (!_isInitialized)
@@ -40,6 +46,14 @@ public partial class IngredientsPage : ContentPage
             // This handles cases where ingredients might have been added/modified
             await _viewModel.ReloadAsync();
         }
+    }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+        
+        // Cleanup theme and font handling
+        _themeHelper.Cleanup();
     }
 
     private async Task HandleEmptyIngredientsAsync()

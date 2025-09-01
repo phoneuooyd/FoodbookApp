@@ -6,7 +6,15 @@
     xmlns:views="clr-namespace:Foodbook.Views"
     xmlns:tabbar="clr-namespace:FoodbookApp.Localization"
     xmlns:loc="clr-namespace:Foodbook.Services"
-    Title="FoodbookApp">
+    Title="FoodbookApp"
+    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
+    ForegroundColor="{DynamicResource PrimaryText}"
+    TabBarForegroundColor="{DynamicResource Primary}"
+    TabBarBackgroundColor="{DynamicResource Secondary}"
+    TabBarTitleColor="{DynamicResource Primary}"
+    TabBarDisabledColor="{StaticResource Gray300}"
+    TabBarUnselectedColor="{StaticResource Gray500}"
+    TitleColor="{DynamicResource Primary}">
 
     <TabBar>
         <ShellContent

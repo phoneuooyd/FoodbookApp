@@ -1,5 +1,6 @@
 using Microsoft.Maui.Controls;
 using Foodbook.ViewModels;
+using Foodbook.Views.Base;
 using System.Threading.Tasks;
 using Foodbook.Models;
 using FoodbookApp;
@@ -10,11 +11,29 @@ namespace Foodbook.Views;
 public partial class IngredientFormPage : ContentPage
 {
     private IngredientFormViewModel ViewModel => BindingContext as IngredientFormViewModel;
+    private readonly PageThemeHelper _themeHelper;
 
     public IngredientFormPage(IngredientFormViewModel vm)
     {
         InitializeComponent();
         BindingContext = vm;
+        _themeHelper = new PageThemeHelper();
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        
+        // Initialize theme and font handling
+        _themeHelper.Initialize();
+    }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+        
+        // Cleanup theme and font handling
+        _themeHelper.Cleanup();
     }
 
     private int _itemId;

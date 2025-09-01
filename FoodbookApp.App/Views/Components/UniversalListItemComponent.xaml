@@ -35,11 +35,11 @@
                     <StackLayout IsVisible="{Binding ShowPlanLayout, Source={x:Reference ItemComponent}}" Spacing="2">
                         <Label Text="{Binding StartDate, StringFormat='Od: {0:dd.MM.yyyy}'}" 
                                FontSize="14" 
-                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                               TextColor="{DynamicResource Primary}"
                                Margin="0,2,0,0" />
                         <Label Text="{Binding EndDate, StringFormat='Do: {0:dd.MM.yyyy}'}" 
                                FontSize="14" 
-                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                               TextColor="{DynamicResource Primary}" />
                     </StackLayout>
                     
                     <!-- Nutrition info in horizontal layout - for Recipe/Ingredient mode -->

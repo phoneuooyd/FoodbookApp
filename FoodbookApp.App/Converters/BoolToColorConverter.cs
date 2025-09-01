@@ -6,167 +6,150 @@ namespace Foodbook.Converters;
 
 public class BoolToColorConverter : IValueConverter
 {
+    private static Color GetAppColor(string key, Color fallback)
+    {
+        if (Application.Current?.Resources.TryGetValue(key, out var val) == true && val is Color c)
+            return c;
+        return fallback;
+    }
+
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if (value is bool boolValue)
+        var isTrue = value is bool b && b;
+        var param = parameter?.ToString();
+
+        // Resolve dynamic theme colors
+        var primary = GetAppColor("Primary", Color.FromArgb("#512BD4"));
+        var primaryDark = GetAppColor("PrimaryDark", Color.FromArgb("#ac99ea"));
+        var secondary = GetAppColor("Secondary", Color.FromArgb("#DFD8F7"));
+        var gray200 = GetAppColor("Gray200", Color.FromArgb("#C8C8C8"));
+        var gray300 = GetAppColor("Gray300", Color.FromArgb("#ACACAC"));
+        var gray400 = GetAppColor("Gray400", Color.FromArgb("#919191"));
+        var gray500 = GetAppColor("Gray500", Color.FromArgb("#6E6E6E"));
+        var gray600 = GetAppColor("Gray600", Color.FromArgb("#404040"));
+
+        bool dark = Application.Current?.RequestedTheme == AppTheme.Dark;
+        Color primaryActive = dark ? primaryDark : primary;
+
+        return param switch
         {
-            var param = parameter?.ToString();
-            
-            return param switch
-            {
-                "Text" => boolValue 
-                    ? Application.Current?.RequestedTheme == AppTheme.Dark 
-                        ? Color.FromArgb("#ac99ea") // PrimaryDark for dark theme
-                        : Color.FromArgb("#512BD4")  // Primary for light theme
-                    : Application.Current?.RequestedTheme == AppTheme.Dark
-                        ? Color.FromArgb("#C8C8C8") // Gray200 for dark theme
-                        : Color.FromArgb("#6E6E6E"), // Gray500 for light theme
-                "Bold" => boolValue ? FontAttributes.Bold : FontAttributes.None,
-                "TabBackground" => boolValue 
-                    ? Colors.Transparent // Selected tab has transparent background
-                    : Colors.Transparent, // Unselected tab also transparent
-                "TabBorder" => boolValue 
-                    ? Application.Current?.RequestedTheme == AppTheme.Dark 
-                        ? Color.FromArgb("#ac99ea") // PrimaryDark for dark theme
-                        : Color.FromArgb("#512BD4")  // Primary for light theme
-                    : Colors.Transparent, // No border for unselected tabs
-                _ => boolValue 
-                    ? Application.Current?.RequestedTheme == AppTheme.Dark 
-                        ? Color.FromArgb("#ac99ea") // PrimaryDark for dark theme
-                        : Color.FromArgb("#512BD4")  // Primary for light theme
-                    : Application.Current?.RequestedTheme == AppTheme.Dark
-                        ? Color.FromArgb("#404040") // Gray600 for dark theme
-                        : Color.FromArgb("#ACACAC") // Gray300 for light theme
-            };
-        }
-        
-        var paramDefault = parameter?.ToString();
-        return paramDefault switch
-        {
-            "Text" => Application.Current?.RequestedTheme == AppTheme.Dark
-                ? Color.FromArgb("#C8C8C8") // Gray200 for dark theme
-                : Color.FromArgb("#6E6E6E"), // Gray500 for light theme
-            "Bold" => FontAttributes.None,
+            // Text color for selected / unselected
+            "Text" => isTrue ? primaryActive : (dark ? gray200 : gray500),
+            // Font weight
+            "Bold" => isTrue ? FontAttributes.Bold : FontAttributes.None,
+            // Underline (tab border) color
+            "TabBorder" => isTrue ? primaryActive : Colors.Transparent,
+            // Tab background (keep transparent)
             "TabBackground" => Colors.Transparent,
-            "TabBorder" => Colors.Transparent,
-            _ => Application.Current?.RequestedTheme == AppTheme.Dark
-                ? Color.FromArgb("#404040") // Gray600 for dark theme
-                : Color.FromArgb("#ACACAC") // Gray300 for light theme
+            // Segmented button selected background
+            "SegmentSelectedBg" => isTrue ? (dark ? primaryDark.WithAlpha(0.25f) : secondary) : Colors.Transparent,
+            // Segmented button unselected background
+            "SegmentUnselectedBg" => !isTrue ? (dark ? gray600 : gray300) : (dark ? primaryDark.WithAlpha(0.25f) : secondary),
+            // Segmented text color
+            "SegmentText" => isTrue ? (dark ? primaryDark : primary) : (dark ? gray200 : gray500),
+            _ => isTrue ? primaryActive : (dark ? gray600 : gray300)
         };
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotImplementedException();
 }
 
 public class StringToBoolConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-        return !string.IsNullOrWhiteSpace(value?.ToString());
-    }
+        => !string.IsNullOrWhiteSpace(value?.ToString());
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotImplementedException();
 }
 
 public class DragStateToColorConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        var isBeingDragged = (bool?)value;
-        if (isBeingDragged == true)
+        if (value is bool { } isDragged && isDragged)
         {
-            return Color.FromArgb("#E3F2FD"); // Light blue when being dragged
+            // Light highlight using Secondary color if available
+            var secondary = BoolToColorConverter_Get("Secondary", Color.FromArgb("#DFD8F7"));
+            return secondary.WithAlpha(0.35f);
         }
         return Colors.Transparent;
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    private static Color BoolToColorConverter_Get(string key, Color fallback)
     {
-        return value;
+        if (Application.Current?.Resources.TryGetValue(key, out var val) == true && val is Color c)
+            return c;
+        return fallback;
     }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => value;
 }
 
-/// <summary>
-/// Converter for drop zone visual feedback - returns border color and background for entire item
-/// </summary>
 public class DropZoneToColorConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        var isBeingDraggedOver = (bool?)value;
-        if (isBeingDraggedOver == true)
+        if (value is bool { } over && over)
         {
-            // Return a more vibrant color for the entire item background
-            return Color.FromArgb("#E8F5E8"); // Light green background for drop zone
+            var primary = BoolToColorConverter_Get("Primary", Color.FromArgb("#512BD4"));
+            return primary.WithAlpha(0.15f);
         }
         return Colors.Transparent;
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    private static Color BoolToColorConverter_Get(string key, Color fallback)
     {
-        return value;
+        if (Application.Current?.Resources.TryGetValue(key, out var val) == true && val is Color c)
+            return c;
+        return fallback;
     }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => value;
 }
 
-/// <summary>
-/// Converter for drop zone border color
-/// </summary>
 public class DropZoneBorderColorConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        var isBeingDraggedOver = (bool?)value;
-        if (isBeingDraggedOver == true)
+        if (value is bool { } over && over)
         {
-            return Color.FromArgb("#4CAF50"); // Green border for drop zone
+            var primary = BoolToColorConverter_Get("Primary", Color.FromArgb("#512BD4"));
+            return primary;
         }
-        return Color.FromArgb("#E0E0E0"); // Default light gray border
+        var gray = BoolToColorConverter_Get("Gray200", Color.FromArgb("#C8C8C8"));
+        return gray;
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    private static Color BoolToColorConverter_Get(string key, Color fallback)
     {
-        return value;
+        if (Application.Current?.Resources.TryGetValue(key, out var val) == true && val is Color c)
+            return c;
+        return fallback;
     }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => value;
 }
 
 public class BoolToTextConverter : IValueConverter
 {
     public static readonly BoolToTextConverter Instance = new();
-    
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is bool isTrue && parameter is string param)
         {
             var texts = param.Split('|');
             if (texts.Length == 2)
-            {
                 return isTrue ? texts[0] : texts[1];
-            }
         }
         return value?.ToString() ?? string.Empty;
     }
-
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
 }
 
 public class IsNotNullOrEmptyConverter : IValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-        return !string.IsNullOrEmpty(value?.ToString());
-    }
-
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => !string.IsNullOrEmpty(value?.ToString());
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
 }
