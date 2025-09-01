@@ -33,9 +33,9 @@ namespace Foodbook.Views
             }
             else
             {
-                // If we're returning to the page, just refresh if needed
-                // This handles cases where recipes might have been added/modified
-                await _viewModel.ReloadAsync();
+                // Zamiast ReloadAsync (ustawia IsRefreshing) u¿ywamy ponownie LoadRecipesAsync
+                // aby nie wchodziæ w stan ci¹g³ego odœwie¿ania pull-to-refresh.
+                await _viewModel.LoadRecipesAsync();
             }
         }
 

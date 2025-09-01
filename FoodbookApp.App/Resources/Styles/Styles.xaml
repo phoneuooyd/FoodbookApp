@@ -25,7 +25,7 @@
     </Style>
 
     <Style TargetType="Button">
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource PrimaryTextDark}}" />
+        <Setter Property="TextColor" Value="{DynamicResource ButtonPrimaryText}" />
         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
         <Setter Property="FontFamily" Value="OpenSansRegular"/>
         <Setter Property="FontSize" Value="14"/>
@@ -40,7 +40,7 @@
                     <VisualState x:Name="Normal" />
                     <VisualState x:Name="Disabled">
                         <VisualState.Setters>
-                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray950}, Dark={StaticResource Gray200}}" />
+                            <Setter Property="TextColor" Value="{DynamicResource ButtonDisabledText}" />
                             <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
                         </VisualState.Setters>
                     </VisualState>
@@ -424,19 +424,16 @@
     </Style>
 
     <Style TargetType="Shell" ApplyToDerivedTypes="True">
-        <!-- Background stays neutral, still respects dark mode -->
         <Setter Property="Shell.BackgroundColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
-        <!-- Use dynamic resources so they refresh when ThemeService swaps palette -->
         <Setter Property="Shell.ForegroundColor" Value="{DynamicResource PrimaryText}" />
         <Setter Property="Shell.TitleColor" Value="{DynamicResource Primary}" />
         <Setter Property="Shell.DisabledColor" Value="{StaticResource Gray200}" />
-        <Setter Property="Shell.UnselectedColor" Value="{StaticResource Gray400}" />
+        <Setter Property="Shell.UnselectedColor" Value="{DynamicResource TabBarUnselected}" />
         <Setter Property="Shell.NavBarHasShadow" Value="False" />
-        <!-- TabBar colors bound to dynamic theme colors -->
-        <Setter Property="Shell.TabBarBackgroundColor" Value="{DynamicResource Secondary}" />
-        <Setter Property="Shell.TabBarForegroundColor" Value="{DynamicResource Primary}" />
-        <Setter Property="Shell.TabBarTitleColor" Value="{DynamicResource Primary}" />
-        <Setter Property="Shell.TabBarUnselectedColor" Value="{StaticResource Gray500}" />
+        <Setter Property="Shell.TabBarBackgroundColor" Value="{DynamicResource TabBarBackground}" />
+        <Setter Property="Shell.TabBarForegroundColor" Value="{DynamicResource TabBarForeground}" />
+        <Setter Property="Shell.TabBarTitleColor" Value="{DynamicResource TabBarTitle}" />
+        <Setter Property="Shell.TabBarUnselectedColor" Value="{DynamicResource TabBarUnselected}" />
     </Style>
 
     <Style TargetType="NavigationPage">
