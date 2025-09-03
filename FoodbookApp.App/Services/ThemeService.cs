@@ -1,5 +1,11 @@
 using Foodbook.Models;
 using Application = Microsoft.Maui.Controls.Application;
+#if ANDROID
+using Android.OS;
+using Android.Views;
+using Microsoft.Maui.Platform;
+using AndroidX.Core.View;
+#endif
 
 namespace Foodbook.Services
 {
@@ -32,7 +38,7 @@ namespace Foodbook.Services
                     Foodbook.Models.AppTheme.Dark => Microsoft.Maui.ApplicationModel.AppTheme.Dark,
                     _ => Microsoft.Maui.ApplicationModel.AppTheme.Unspecified
                 };
-                ApplyColorTheme(_currentColorTheme); // reapply palette
+                ApplyColorTheme(_currentColorTheme); // reapply palette (also updates system bars)
             }
             catch (Exception ex)
             {
@@ -46,7 +52,28 @@ namespace Foodbook.Services
             ApplyColorTheme(colorTheme);
         }
 
-        // --- Enhanced Contrast helpers ---
+        public void UpdateSystemBars()
+        {
+            try
+            {
+                var app = Application.Current;
+                if (app?.Resources == null) return;
+                var shellBg = TryGetColor(app, "ShellBackgroundColor") ?? TryGetColor(app, "Primary");
+                if (shellBg is null) return;
+                ApplySystemBars(shellBg); // shellBg is a reference type color
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ThemeService] UpdateSystemBars error: {ex.Message}");
+            }
+        }
+
+        private static Color? TryGetColor(Application app, string key)
+        {
+            if (app.Resources.TryGetValue(key, out var obj) && obj is Color c) return c; return null;
+        }
+
+        // --- Helpers ---
         private static double RelativeLuminance(Color c)
         {
             double Channel(double ch) { ch /= 255.0; return ch <= 0.03928 ? ch / 12.92 : Math.Pow((ch + 0.055) / 1.055, 2.4); }
@@ -72,40 +99,13 @@ namespace Foodbook.Services
         private static (Color active, Color unselected) GetOptimalTabBarColors(Color background, bool isDark, AppColorTheme colorTheme)
         {
             var luminance = RelativeLuminance(background);
-            System.Diagnostics.Debug.WriteLine($"[ThemeService] GetOptimalTabBarColors - Background: {background}, Luminance: {luminance:F3}, isDark: {isDark}");
-            
             Color active, unselected;
-            
-            if (luminance > 0.4) // Light background
-            {
-                active = Color.FromArgb("#000000");
-                unselected = Color.FromArgb("#424242");
-            }
-            else
-            {
-                active = Color.FromArgb("#FFFFFF");
-                unselected = Color.FromArgb("#E0E0E0");
-            }
-            
-            if (colorTheme == AppColorTheme.Monochrome && isDark && luminance < 0.3)
-            {
-                active = Color.FromArgb("#FFFFFF");
-                unselected = Color.FromArgb("#CCCCCC");
-            }
-            
-            var activeContrast = ContrastRatio(active, background);
-            var unselectedContrast = ContrastRatio(unselected, background);
-            
-            if (activeContrast < 4.5)
-            {
-                active = luminance > 0.5 ? Color.FromArgb("#000000") : Color.FromArgb("#FFFFFF");
-            }
-            
-            if (unselectedContrast < 3.0)
-            {
-                unselected = luminance > 0.5 ? Color.FromArgb("#424242") : Color.FromArgb("#E0E0E0");
-            }
-            
+            if (luminance > 0.4) { active = Color.FromArgb("#000000"); unselected = Color.FromArgb("#424242"); }
+            else { active = Color.FromArgb("#FFFFFF"); unselected = Color.FromArgb("#E0E0E0"); }
+            if (colorTheme == AppColorTheme.Monochrome && isDark && luminance < 0.3) { active = Color.FromArgb("#FFFFFF"); unselected = Color.FromArgb("#CCCCCC"); }
+            var activeContrast = ContrastRatio(active, background); var unselectedContrast = ContrastRatio(unselected, background);
+            if (activeContrast < 4.5) active = luminance > 0.5 ? Color.FromArgb("#000000") : Color.FromArgb("#FFFFFF");
+            if (unselectedContrast < 3.0) unselected = luminance > 0.5 ? Color.FromArgb("#424242") : Color.FromArgb("#E0E0E0");
             return (active, unselected);
         }
 
@@ -118,13 +118,9 @@ namespace Foodbook.Services
                 var themeColors = GetThemeColors(colorTheme);
                 
                 bool isDark;
-                if (_currentTheme == Foodbook.Models.AppTheme.Light)
-                    isDark = false;
-                else if (_currentTheme == Foodbook.Models.AppTheme.Dark)
-                    isDark = true;
-                else
-                    isDark = app.UserAppTheme == Microsoft.Maui.ApplicationModel.AppTheme.Dark ||
-                             (app.UserAppTheme == Microsoft.Maui.ApplicationModel.AppTheme.Unspecified && app.RequestedTheme == Microsoft.Maui.ApplicationModel.AppTheme.Dark);
+                if (_currentTheme == Foodbook.Models.AppTheme.Light) isDark = false;
+                else if (_currentTheme == Foodbook.Models.AppTheme.Dark) isDark = true;
+                else isDark = app.UserAppTheme == Microsoft.Maui.ApplicationModel.AppTheme.Dark || (app.UserAppTheme == Microsoft.Maui.ApplicationModel.AppTheme.Unspecified && app.RequestedTheme == Microsoft.Maui.ApplicationModel.AppTheme.Dark);
 
                 var primary = isDark ? themeColors.PrimaryDark : themeColors.PrimaryLight;
                 var secondary = isDark ? themeColors.SecondaryDark : themeColors.SecondaryLight;
@@ -146,40 +142,29 @@ namespace Foodbook.Services
                 var buttonPrimaryText = ChooseReadableEnhanced(primary, Colors.White, Color.FromArgb("#000000"));
                 var alt = RelativeLuminance(primary) > 0.45 ? Colors.Black : Colors.White;
                 buttonPrimaryText = EnsureContrastEnhanced(buttonPrimaryText, primary, alt);
-                if (colorTheme == AppColorTheme.Monochrome && isDark)
-                    buttonPrimaryText = Color.FromArgb("#000000");
+                if (colorTheme == AppColorTheme.Monochrome && isDark) buttonPrimaryText = Color.FromArgb("#000000");
                 app.Resources["ButtonPrimaryText"] = buttonPrimaryText;
 
                 var disabledBg = isDark ? Color.FromArgb("#404040") : Color.FromArgb("#C8C8C8");
                 var disabledText = ChooseReadableEnhanced(disabledBg, Colors.White, Color.FromArgb("#000000"));
                 disabledText = EnsureContrastEnhanced(disabledText, disabledBg, RelativeLuminance(disabledBg) > 0.45 ? Colors.Black : Colors.White);
-                if (colorTheme == AppColorTheme.Monochrome && isDark)
-                    disabledText = Color.FromArgb("#E0E0E0");
+                if (colorTheme == AppColorTheme.Monochrome && isDark) disabledText = Color.FromArgb("#E0E0E0");
                 app.Resources["ButtonDisabledText"] = disabledText;
 
                 var tabBarBg = secondary;
                 var (activeColor, unselectedColor) = GetOptimalTabBarColors(tabBarBg, isDark, colorTheme);
-
-                // W jasnym motywie wymuszamy czarny kolor aktywny i tytu³u, aby zapewniæ czytelnoœæ
-                if (!isDark)
-                {
-                    activeColor = Color.FromArgb("#000000");
-                    unselectedColor = Color.FromArgb("#424242");
-                }
-                
+                if (!isDark) { activeColor = Color.FromArgb("#000000"); unselectedColor = Color.FromArgb("#424242"); }
                 var shellTitleBg = primary;
                 var shellTitleColor = ChooseReadableEnhanced(shellTitleBg, Colors.White, Color.FromArgb("#000000"));
                 shellTitleColor = EnsureContrastEnhanced(shellTitleColor, shellTitleBg, RelativeLuminance(shellTitleBg) > 0.45 ? Colors.Black : Colors.White);
-                
-                System.Diagnostics.Debug.WriteLine($"[ThemeService] TabBar Background: {tabBarBg}, Active: {activeColor}, Unselected: {unselectedColor}");
-                System.Diagnostics.Debug.WriteLine($"[ThemeService] Shell Title Background: {shellTitleBg}, Title Color: {shellTitleColor}");
-                
                 app.Resources["TabBarBackground"] = tabBarBg;
-                app.Resources["TabBarForeground"] = activeColor; // aktywna ikona/tekst
-                app.Resources["TabBarTitle"] = activeColor;      // tytu³ aktywnej zak³adki
-                app.Resources["TabBarUnselected"] = unselectedColor; // nieaktywne ikony/teksty
+                app.Resources["TabBarForeground"] = activeColor;
+                app.Resources["TabBarTitle"] = activeColor;
+                app.Resources["TabBarUnselected"] = unselectedColor;
                 app.Resources["ShellTitleColor"] = shellTitleColor;
                 app.Resources["ShellBackgroundColor"] = shellTitleBg;
+
+                ApplySystemBars(shellTitleBg);
             }
             catch (Exception ex)
             {
@@ -187,10 +172,66 @@ namespace Foodbook.Services
             }
         }
 
+        // Platform-specific system bars update (status + navigation) - Android only
+        private void ApplySystemBars(Color background)
+        {
+#if ANDROID
+            try
+            {
+                var activity = Application.Current?.Handler?.MauiContext?.Services.GetService(typeof(Android.App.Activity)) as Android.App.Activity
+                               ?? Application.Current?.Windows?.FirstOrDefault()?.Handler?.PlatformView as Android.App.Activity;
+                if (activity?.Window == null) return;
+                var window = activity.Window;
+
+                window.SetStatusBarColor(background.ToPlatform());
+                if (Build.VERSION.SdkInt >= BuildVersionCodes.Lollipop)
+                {
+                    window.SetNavigationBarColor(background.ToPlatform());
+                }
+
+                var luminance = RelativeLuminance(background);
+                var useDarkIcons = luminance > 0.55; // threshold
+                var decorView = window.DecorView;
+
+                if (Build.VERSION.SdkInt >= BuildVersionCodes.R)
+                {
+                    var controller = ViewCompat.GetWindowInsetsController(decorView);
+                    if (controller != null)
+                    {
+                        controller.AppearanceLightStatusBars = useDarkIcons;
+                        controller.AppearanceLightNavigationBars = useDarkIcons;
+                    }
+                }
+                else if (Build.VERSION.SdkInt >= BuildVersionCodes.M)
+                {
+                    var flags = (StatusBarVisibility)decorView.SystemUiVisibility;
+                    if (useDarkIcons)
+                        flags |= (StatusBarVisibility)SystemUiFlags.LightStatusBar;
+                    else
+                        flags &= ~(StatusBarVisibility)SystemUiFlags.LightStatusBar;
+
+                    if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
+                    {
+                        if (useDarkIcons)
+                            flags |= (StatusBarVisibility)SystemUiFlags.LightNavigationBar;
+                        else
+                            flags &= ~(StatusBarVisibility)SystemUiFlags.LightNavigationBar;
+                    }
+                    decorView.SystemUiVisibility = flags;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ThemeService] ApplySystemBars error: {ex.Message}");
+            }
+#endif
+        }
+
         private Dictionary<AppColorTheme, ThemeColors> InitializeThemes()
         {
             return new Dictionary<AppColorTheme, ThemeColors>
             {
+                // Default Purple Theme
                 [AppColorTheme.Default] = new ThemeColors
                 {
                     Name = "Default",
@@ -198,6 +239,7 @@ namespace Foodbook.Services
                     PrimaryDark = Color.FromArgb("#ac99ea"), SecondaryDark = Color.FromArgb("#B8A7E8"), TertiaryDark = Color.FromArgb("#7c4dff"), AccentDark = Color.FromArgb("#ac99ea"),
                     PrimaryTextLight = Color.FromArgb("#242424"), SecondaryTextLight = Color.FromArgb("#666666"), PrimaryTextDark = Color.FromArgb("#FFFFFF"), SecondaryTextDark = Color.FromArgb("#E0E0E0")
                 },
+                // Nature Green Theme
                 [AppColorTheme.Nature] = new ThemeColors
                 {
                     Name = "Nature",
@@ -205,6 +247,7 @@ namespace Foodbook.Services
                     PrimaryDark = Color.FromArgb("#81C784"), SecondaryDark = Color.FromArgb("#4CAF50"), TertiaryDark = Color.FromArgb("#66BB6A"), AccentDark = Color.FromArgb("#81C784"),
                     PrimaryTextLight = Color.FromArgb("#1B5E20"), SecondaryTextLight = Color.FromArgb("#2E7D32"), PrimaryTextDark = Color.FromArgb("#E8F5E8"), SecondaryTextDark = Color.FromArgb("#C8E6C9")
                 },
+                // Warm Theme
                 [AppColorTheme.Warm] = new ThemeColors
                 {
                     Name = "Warm",
@@ -212,6 +255,7 @@ namespace Foodbook.Services
                     PrimaryDark = Color.FromArgb("#FFCC02"), SecondaryDark = Color.FromArgb("#FFB74D"), TertiaryDark = Color.FromArgb("#FF8F00"), AccentDark = Color.FromArgb("#FFCC02"),
                     PrimaryTextLight = Color.FromArgb("#E65100"), SecondaryTextLight = Color.FromArgb("#F57C00"), PrimaryTextDark = Color.FromArgb("#FFF8E1"), SecondaryTextDark = Color.FromArgb("#FFCC80")
                 },
+                // Vibrant Theme
                 [AppColorTheme.Vibrant] = new ThemeColors
                 {
                     Name = "Vibrant",
@@ -219,6 +263,7 @@ namespace Foodbook.Services
                     PrimaryDark = Color.FromArgb("#F48FB1"), SecondaryDark = Color.FromArgb("#EC407A"), TertiaryDark = Color.FromArgb("#AD1457"), AccentDark = Color.FromArgb("#F48FB1"),
                     PrimaryTextLight = Color.FromArgb("#B71C1C"), SecondaryTextLight = Color.FromArgb("#C2185B"), PrimaryTextDark = Color.FromArgb("#FCE4EC"), SecondaryTextDark = Color.FromArgb("#F8BBD9")
                 },
+                // Monochrome Theme
                 [AppColorTheme.Monochrome] = new ThemeColors
                 {
                     Name = "Monochrome",

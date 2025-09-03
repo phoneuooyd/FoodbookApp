@@ -40,5 +40,10 @@ namespace Foodbook.Services
         /// <param name="colorTheme">The color theme</param>
         /// <returns>Theme colors</returns>
         ThemeColors GetThemeColors(AppColorTheme colorTheme);
+
+        /// <summary>
+        /// Refreshes system status/navigation bar colors after external changes
+        /// </summary>
+        void UpdateSystemBars();
     }
 }
