@@ -27,10 +27,15 @@
     <Color x:Key="ButtonDisabledText">#919191</Color>
 
     <!-- TabBar Colors - Dynamic based on theme -->
+    <!-- W jasnym motywie aktywne i tytuł zawsze czarne (wymuszone w ThemeService) -->
     <Color x:Key="TabBarBackground">#DFD8F7</Color>
     <Color x:Key="TabBarForeground">#000000</Color>
     <Color x:Key="TabBarTitle">#000000</Color>
     <Color x:Key="TabBarUnselected">#424242</Color>
+
+    <!-- Shell Title Colors - Dynamic based on theme -->
+    <Color x:Key="ShellTitleColor">#FFFFFF</Color>
+    <Color x:Key="ShellBackgroundColor">#512BD4</Color>
 
     <!-- Static Colors -->
     <Color x:Key="White">White</Color>
