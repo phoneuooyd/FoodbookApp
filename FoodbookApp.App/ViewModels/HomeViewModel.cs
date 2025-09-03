@@ -15,7 +15,6 @@ public class HomeViewModel : INotifyPropertyChanged
     private readonly IPlanService _planService;
     private readonly IPlannerService _plannerService;
     private readonly ILocalizationService _localizationService;
-    private readonly IEventBus _eventBus;
 
     private int _recipeCount;
     public int RecipeCount
@@ -171,23 +170,44 @@ public class HomeViewModel : INotifyPropertyChanged
     public ICommand ChangeNutritionPeriodCommand { get; }
     public ICommand ChangePlannedMealsPeriodCommand { get; }
 
-    public HomeViewModel(IRecipeService recipeService, IPlanService planService, IPlannerService plannerService, ILocalizationService localizationService, IEventBus eventBus)
+    public HomeViewModel(IRecipeService recipeService, IPlanService planService, IPlannerService plannerService, ILocalizationService localizationService)
     {
         _recipeService = recipeService;
         _planService = planService;
         _plannerService = plannerService;
         _localizationService = localizationService;
-        _eventBus = eventBus;
         
         // Subscribe to culture changes to refresh display properties
         _localizationService.CultureChanged += OnCultureChanged;
         
-        // Subscribe to data changes from other ViewModels
-        _eventBus.DataChanged += OnDataChanged;
+        // Subscribe to plan change events (new/updated/archived plans or planned meals changes)
+        Foodbook.Services.AppEvents.PlanChangedAsync += OnPlanChangedAsync;
         
         ShowRecipeIngredientsCommand = new Command<PlannedMeal>(async (meal) => await ShowRecipeIngredientsAsync(meal));
         ChangeNutritionPeriodCommand = new Command(async () => await ShowNutritionPeriodPickerAsync());
         ChangePlannedMealsPeriodCommand = new Command(async () => await ShowPlannedMealsPeriodPickerAsync());
+    }
+
+    private async Task OnPlanChangedAsync()
+    {
+        try
+        {
+            // Reload planned meals and nutrition stats silently (without toggling IsLoading)
+            await LoadPlannedMealsAsync();
+            await CalculateNutritionStatsAsync();
+            
+            // Recount plans (active/archived) in case of archive action
+            var allPlans = await _planService.GetPlansAsync();
+            if (allPlans != null)
+            {
+                PlanCount = allPlans.Count(p => !p.IsArchived);
+                ArchivedPlanCount = allPlans.Count(p => p.IsArchived);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error handling plan changed event: {ex.Message}");
+        }
     }
 
     public async Task LoadAsync()
@@ -608,78 +628,16 @@ public class HomeViewModel : INotifyPropertyChanged
         }
     }
 
-    /// <summary>
-    /// Handles data change events from other ViewModels
-    /// </summary>
-    private async void OnDataChanged(object? sender, DataChangedEventArgs e)
-    {
-        try
-        {
-            System.Diagnostics.Debug.WriteLine($"[HomeViewModel] Received data change event: {e.DataType} - {e.Action}");
-            
-            // Handle different types of data changes
-            switch (e.DataType.ToLowerInvariant())
-            {
-                case "plan":
-                case "plannedmeal":
-                    // Plan or planned meals changed - refresh all data
-                    await MainThread.InvokeOnMainThreadAsync(async () =>
-                    {
-                        await LoadAsync();
-                    });
-                    break;
-                    
-                case "recipe":
-                    // Recipe changed - refresh recipe count and nutrition stats
-                    await MainThread.InvokeOnMainThreadAsync(async () =>
-                    {
-                        var recipes = await _recipeService.GetRecipesAsync();
-                        RecipeCount = recipes?.Count ?? 0;
-                        await CalculateNutritionStatsAsync();
-                    });
-                    break;
-                    
-                default:
-                    System.Diagnostics.Debug.WriteLine($"[HomeViewModel] Unknown data type changed: {e.DataType}");
-                    break;
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[HomeViewModel] Error handling data change event: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Cleanup method to unsubscribe from events and prevent memory leaks
-    /// </summary>
-    public void Cleanup()
-    {
-        try
-        {
-            // Unsubscribe from culture changes
-            if (_localizationService != null)
-            {
-                _localizationService.CultureChanged -= OnCultureChanged;
-            }
-            
-            // Unsubscribe from data changes
-            if (_eventBus != null)
-            {
-                _eventBus.DataChanged -= OnDataChanged;
-            }
-            
-            System.Diagnostics.Debug.WriteLine("[HomeViewModel] Cleanup completed - events unsubscribed");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[HomeViewModel] Error during cleanup: {ex.Message}");
-        }
-    }
-
     public event PropertyChangedEventHandler? PropertyChanged;
     private void OnPropertyChanged([CallerMemberName] string? name = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+    ~HomeViewModel()
+    {
+        // Unsubscribe from events to prevent memory leaks
+        _localizationService.CultureChanged -= OnCultureChanged;
+        Foodbook.Services.AppEvents.PlanChangedAsync -= OnPlanChangedAsync;
+    }
 }
 
 // Klasa pomocnicza do grupowania zaplanowanych posi³ków

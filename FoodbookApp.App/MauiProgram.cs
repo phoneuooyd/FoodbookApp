@@ -75,7 +75,6 @@ namespace FoodbookApp
             builder.Services.AddSingleton<IPreferencesService, PreferencesService>(); // Added PreferencesService
             builder.Services.AddSingleton<IThemeService, ThemeService>(); // Added ThemeService
             builder.Services.AddSingleton<IFontService, FontService>(); // Added FontService
-            builder.Services.AddSingleton<IEventBus, EventBus>(); // Added EventBus for ViewModel communication
 
             builder.Services.AddScoped<RecipeViewModel>();
             builder.Services.AddTransient<AddRecipeViewModel>(); // Zmieniono na Transient

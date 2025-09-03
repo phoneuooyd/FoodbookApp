@@ -176,14 +176,12 @@ namespace Foodbook.ViewModels
         private readonly IRecipeService _recipeService;
         private readonly IIngredientService _ingredientService;
         private readonly RecipeImporter _importer;
-        private readonly IEventBus _eventBus;
 
-        public AddRecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService, RecipeImporter importer, IEventBus eventBus)
+        public AddRecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService, RecipeImporter importer)
         {
             _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
             _ingredientService = ingredientService ?? throw new ArgumentNullException(nameof(ingredientService));
             _importer = importer ?? throw new ArgumentNullException(nameof(importer));
-            _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
 
             AddIngredientCommand = new Command(AddIngredient);
             RemoveIngredientCommand = new Command<Ingredient>(RemoveIngredient);
@@ -763,23 +761,16 @@ namespace Foodbook.ViewModels
 
                 System.Diagnostics.Debug.WriteLine($"💾 Saving recipe: {recipe.Name} (Edit mode: {_editingRecipe != null})");
 
-                string action;
                 if (_editingRecipe == null)
                 {
                     await _recipeService.AddRecipeAsync(recipe);
-                    action = "Created";
                     System.Diagnostics.Debug.WriteLine("✅ Recipe added successfully");
                 }
                 else
                 {
                     await _recipeService.UpdateRecipeAsync(recipe);
-                    action = "Updated";
                     System.Diagnostics.Debug.WriteLine("✅ Recipe updated successfully");
                 }
-
-                // Notify other ViewModels that a recipe was created/updated
-                _eventBus.PublishDataChanged("Recipe", action, recipe);
-                System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Published Recipe {action} event for recipe {recipe.Name}");
 
                 // Reset form po udanym zapisie tylko w trybie dodawania
                 if (_editingRecipe == null)

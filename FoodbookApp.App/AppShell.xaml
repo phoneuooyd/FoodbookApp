@@ -9,11 +9,11 @@
     Title="FoodbookApp"
     BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
     ForegroundColor="{DynamicResource PrimaryText}"
-    TabBarForegroundColor="{DynamicResource Primary}"
-    TabBarBackgroundColor="{DynamicResource Secondary}"
-    TabBarTitleColor="{DynamicResource Primary}"
+    TabBarForegroundColor="{DynamicResource TabBarForeground}"
+    TabBarBackgroundColor="{DynamicResource TabBarBackground}"
+    TabBarTitleColor="{DynamicResource TabBarTitle}"
     TabBarDisabledColor="{StaticResource Gray300}"
-    TabBarUnselectedColor="{StaticResource Gray500}"
+    TabBarUnselectedColor="{DynamicResource TabBarUnselected}"
     TitleColor="{DynamicResource Primary}">
 
     <TabBar>

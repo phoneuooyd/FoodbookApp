@@ -22,6 +22,16 @@
     <Color x:Key="PrimaryTextDark">#FFFFFF</Color>
     <Color x:Key="SecondaryTextDark">#E0E0E0</Color>
 
+    <!-- Button Colors - Dynamic based on theme -->
+    <Color x:Key="ButtonPrimaryText">#FFFFFF</Color>
+    <Color x:Key="ButtonDisabledText">#919191</Color>
+
+    <!-- TabBar Colors - Dynamic based on theme -->
+    <Color x:Key="TabBarBackground">#DFD8F7</Color>
+    <Color x:Key="TabBarForeground">#000000</Color>
+    <Color x:Key="TabBarTitle">#000000</Color>
+    <Color x:Key="TabBarUnselected">#424242</Color>
+
     <!-- Static Colors -->
     <Color x:Key="White">White</Color>
     <Color x:Key="Black">Black</Color>

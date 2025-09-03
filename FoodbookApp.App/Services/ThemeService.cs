@@ -46,18 +46,82 @@ namespace Foodbook.Services
             ApplyColorTheme(colorTheme);
         }
 
-        // --- Contrast helpers ---
+        // --- Enhanced Contrast helpers ---
         private static double RelativeLuminance(Color c)
         {
             double Channel(double ch) { ch /= 255.0; return ch <= 0.03928 ? ch / 12.92 : Math.Pow((ch + 0.055) / 1.055, 2.4); }
             return 0.2126 * Channel(c.Red) + 0.7152 * Channel(c.Green) + 0.0722 * Channel(c.Blue);
         }
+        
         private static double ContrastRatio(Color a, Color b)
         {
             var l1 = RelativeLuminance(a) + 0.05; var l2 = RelativeLuminance(b) + 0.05; return l1 > l2 ? l1 / l2 : l2 / l1;
         }
-        private static Color ChooseReadable(Color background, Color preferredLight, Color preferredDark) => RelativeLuminance(background) > 0.55 ? preferredDark : preferredLight;
-        private static Color EnsureContrast(Color foreground, Color background, Color fallback) => ContrastRatio(foreground, background) < 3.0 ? fallback : foreground;
+        
+        /// <summary>
+        /// Enhanced readable color selection with higher contrast thresholds for better readability
+        /// </summary>
+        private static Color ChooseReadableEnhanced(Color background, Color preferredLight, Color preferredDark) 
+        {
+            var luminance = RelativeLuminance(background);
+            // Lowered threshold from 0.55 to 0.45 for more aggressive contrast selection
+            return luminance > 0.45 ? preferredDark : preferredLight;
+        }
+        
+        /// <summary>
+        /// Ensures minimum contrast ratio of 4.5:1 (WCAG AA standard) instead of 3.0:1
+        /// </summary>
+        private static Color EnsureContrastEnhanced(Color foreground, Color background, Color fallback) 
+        {
+            // Enhanced minimum contrast ratio from 3.0 to 4.5 for better readability
+            return ContrastRatio(foreground, background) < 4.5 ? fallback : foreground;
+        }
+        
+        /// <summary>
+        /// Gets high contrast text colors optimized for TabBar visibility
+        /// </summary>
+        private static (Color active, Color unselected) GetOptimalTabBarColors(Color background, bool isDark, AppColorTheme colorTheme)
+        {
+            var luminance = RelativeLuminance(background);
+            
+            Color active, unselected;
+            
+            if (luminance > 0.4) // Light background - use very dark text
+            {
+                // For light backgrounds, use pure black or very dark gray for maximum contrast
+                active = Color.FromArgb("#000000"); // Pure black for active
+                unselected = Color.FromArgb("#424242"); // Dark gray for unselected
+            }
+            else // Dark background - use very light text
+            {
+                // For dark backgrounds, use pure white or very light gray for maximum contrast
+                active = Color.FromArgb("#FFFFFF"); // Pure white for active
+                unselected = Color.FromArgb("#E0E0E0"); // Light gray for unselected
+            }
+            
+            // Special handling for Monochrome theme in dark mode
+            if (colorTheme == AppColorTheme.Monochrome && isDark)
+            {
+                if (luminance < 0.3) 
+                {
+                    active = Color.FromArgb("#FFFFFF"); // Pure white for maximum contrast
+                    unselected = Color.FromArgb("#CCCCCC"); // Light gray for unselected
+                }
+            }
+            
+            // Ensure minimum contrast ratios are met
+            if (ContrastRatio(active, background) < 4.5)
+            {
+                active = luminance > 0.5 ? Color.FromArgb("#000000") : Color.FromArgb("#FFFFFF");
+            }
+            
+            if (ContrastRatio(unselected, background) < 3.0)
+            {
+                unselected = luminance > 0.5 ? Color.FromArgb("#424242") : Color.FromArgb("#E0E0E0");
+            }
+            
+            return (active, unselected);
+        }
 
         private void ApplyColorTheme(AppColorTheme colorTheme)
         {
@@ -86,40 +150,34 @@ namespace Foodbook.Services
                 app.Resources["SecondaryBrush"] = new SolidColorBrush(secondary);
                 app.Resources["TertiaryBrush"] = new SolidColorBrush(tertiary);
 
-                // Button text (primary buttons)
-                var buttonPrimaryText = ChooseReadable(primary, Colors.White, Color.FromArgb("#202020"));
-                var alt = RelativeLuminance(primary) > 0.55 ? Colors.Black : Colors.White;
-                buttonPrimaryText = EnsureContrast(buttonPrimaryText, primary, alt);
+                // Button text (primary buttons) - using enhanced contrast methods
+                var buttonPrimaryText = ChooseReadableEnhanced(primary, Colors.White, Color.FromArgb("#000000"));
+                var alt = RelativeLuminance(primary) > 0.45 ? Colors.Black : Colors.White;
+                buttonPrimaryText = EnsureContrastEnhanced(buttonPrimaryText, primary, alt);
 
                 // Monochrome DARK special case: force dark text on light primary (#E0E0E0) to meet user request
                 if (colorTheme == AppColorTheme.Monochrome && isDark)
                 {
-                    buttonPrimaryText = Color.FromArgb("#1A1A1A"); // very dark gray (better than pure black for glare)
+                    buttonPrimaryText = Color.FromArgb("#000000"); // Pure black for maximum contrast
                 }
                 app.Resources["ButtonPrimaryText"] = buttonPrimaryText;
 
-                // Disabled button text: ensure readable on disabled backgrounds (Gray200 light / Gray600 dark)
+                // Disabled button text: ensure readable on disabled backgrounds using enhanced contrast
                 var disabledBg = isDark ? Color.FromArgb("#404040") : Color.FromArgb("#C8C8C8");
-                var disabledText = ChooseReadable(disabledBg, Colors.White, Color.FromArgb("#202020"));
-                disabledText = EnsureContrast(disabledText, disabledBg, RelativeLuminance(disabledBg) > 0.55 ? Colors.Black : Colors.White);
+                var disabledText = ChooseReadableEnhanced(disabledBg, Colors.White, Color.FromArgb("#000000"));
+                disabledText = EnsureContrastEnhanced(disabledText, disabledBg, RelativeLuminance(disabledBg) > 0.45 ? Colors.Black : Colors.White);
                 if (colorTheme == AppColorTheme.Monochrome && isDark)
                     disabledText = Color.FromArgb("#E0E0E0"); // light text on dark disabled background
                 app.Resources["ButtonDisabledText"] = disabledText;
 
-                // TabBar colors
+                // TabBar colors - using optimized high-contrast method
                 var tabBarBg = secondary;
-                var active = ChooseReadable(tabBarBg, Colors.White, Color.FromArgb("#202020"));
-                active = EnsureContrast(active, tabBarBg, RelativeLuminance(tabBarBg) > 0.5 ? Colors.Black : Colors.White);
-                var unselected = RelativeLuminance(tabBarBg) > 0.5 ? Color.FromArgb("#404040") : Color.FromArgb("#E0E0E0");
-                if (colorTheme == AppColorTheme.Monochrome && isDark)
-                {
-                    // In monochrome dark keep active white for emphasis but slightly off-white if background dark
-                    if (RelativeLuminance(tabBarBg) < 0.35) active = Color.FromArgb("#F2F2F2");
-                }
+                var (activeColor, unselectedColor) = GetOptimalTabBarColors(tabBarBg, isDark, colorTheme);
+                
                 app.Resources["TabBarBackground"] = tabBarBg;
-                app.Resources["TabBarForeground"] = active;
-                app.Resources["TabBarTitle"] = active;
-                app.Resources["TabBarUnselected"] = unselected;
+                app.Resources["TabBarForeground"] = activeColor;
+                app.Resources["TabBarTitle"] = activeColor;
+                app.Resources["TabBarUnselected"] = unselectedColor;
             }
             catch (Exception ex)
             {

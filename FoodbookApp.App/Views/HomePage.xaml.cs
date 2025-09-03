@@ -35,12 +35,6 @@ public partial class HomePage : ContentPage
         
         // Unsubscribe from events to prevent memory leaks
         CleanupThemeAndFontHandling();
-        
-        // Cleanup ViewModel events
-        if (ViewModel != null)
-        {
-            ViewModel.Cleanup();
-        }
     }
 
     private void InitializeThemeAndFontHandling()
