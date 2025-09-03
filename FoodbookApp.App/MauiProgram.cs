@@ -20,8 +20,37 @@ namespace FoodbookApp
                 .UseMauiApp<App>() // <-- App.xaml.cs
                 .ConfigureFonts(fonts =>
                 {
+                    // OpenSans fonts (original)
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                    
+                    // Barlow Condensed font family - multiple weights
+                    fonts.AddFont("BarlowCondensed-Regular.ttf", "BarlowCondensedRegular");
+                    fonts.AddFont("BarlowCondensed-Light.ttf", "BarlowCondensedLight");
+                    fonts.AddFont("BarlowCondensed-Medium.ttf", "BarlowCondensedMedium");
+                    fonts.AddFont("BarlowCondensed-SemiBold.ttf", "BarlowCondensedSemibold");
+                    fonts.AddFont("BarlowCondensed-ExtraLight.ttf", "BarlowCondensedExtraLight");
+                    fonts.AddFont("BarlowCondensed-Thin.ttf", "BarlowCondensedThin");
+                    
+                    // Decorative and display fonts
+                    fonts.AddFont("CherryBombOne-Regular.ttf", "CherryBombOneRegular");
+                    fonts.AddFont("DynaPuff-Regular.ttf", "DynaPuffRegular");
+                    fonts.AddFont("DynaPuff-Medium.ttf", "DynaPuffMedium");
+                    fonts.AddFont("DynaPuff-SemiBold.ttf", "DynaPuffSemibold");
+                    fonts.AddFont("DynaPuff-Bold.ttf", "DynaPuffBold");
+                    
+                    // Modern and geometric fonts
+                    fonts.AddFont("Gruppo-Regular.ttf", "GruppoRegular");
+                    fonts.AddFont("PoiretOne-Regular.ttf", "PoiretOneRegular");
+                    
+                    // Handwritten and script fonts
+                    fonts.AddFont("JustMeAgainDownHere-Regular.ttf", "JustMeAgainDownHereRegular");
+                    fonts.AddFont("Kalam-Regular.ttf", "KalamRegular");
+                    fonts.AddFont("SendFlowers-Regular.ttf", "SendFlowersRegular");
+                    fonts.AddFont("Yellowtail-Regular.ttf", "YellowtailRegular");
+                    
+                    // Serif font
+                    fonts.AddFont("Slabo27px-Regular.ttf", "Slabo27pxRegular");
                 });
 
 #if DEBUG
@@ -44,6 +73,8 @@ namespace FoodbookApp
             builder.Services.AddSingleton<ILocalizationService, LocalizationService>();
             builder.Services.AddSingleton<LocalizationResourceManager>();
             builder.Services.AddSingleton<IPreferencesService, PreferencesService>(); // Added PreferencesService
+            builder.Services.AddSingleton<IThemeService, ThemeService>(); // Added ThemeService
+            builder.Services.AddSingleton<IFontService, FontService>(); // Added FontService
 
             builder.Services.AddScoped<RecipeViewModel>();
             builder.Services.AddTransient<AddRecipeViewModel>(); // Zmieniono na Transient

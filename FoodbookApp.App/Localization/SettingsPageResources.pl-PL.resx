@@ -19,7 +19,28 @@
     <value>Ustawienia</value>
   </data>
   <data name="HeaderSubtitle" xml:space="preserve">
-    <value>Personalizuj swoja aplikacje</value>
+    <value>Personalizuj swoją aplikację</value>
+  </data>
+  <data name="ColorThemeTitle" xml:space="preserve">
+    <value>Motyw kolorystyczny</value>
+  </data>
+  <data name="ColorThemeDescription" xml:space="preserve">
+    <value>Paleta kolorów aplikacji</value>
+  </data>
+  <data name="ColorThemeDefault" xml:space="preserve">
+    <value>Domyślny</value>
+  </data>
+  <data name="ColorThemeNature" xml:space="preserve">
+    <value>Natura</value>
+  </data>
+  <data name="ColorThemeWarm" xml:space="preserve">
+    <value>Ciepły</value>
+  </data>
+  <data name="ColorThemeVibrant" xml:space="preserve">
+    <value>Żywy</value>
+  </data>
+  <data name="ColorThemeMonochrome" xml:space="preserve">
+    <value>Monochromatyczny</value>
   </data>
   <data name="ThemeTitle" xml:space="preserve">
     <value>Motyw</value>
@@ -27,11 +48,62 @@
   <data name="ThemeDescription" xml:space="preserve">
     <value>Jasny / ciemny</value>
   </data>
+  <data name="ThemeLight" xml:space="preserve">
+    <value>Jasny</value>
+  </data>
+  <data name="ThemeDark" xml:space="preserve">
+    <value>Ciemny</value>
+  </data>
+  <data name="ThemeSystem" xml:space="preserve">
+    <value>Systemowy</value>
+  </data>
   <data name="LanguageTitle" xml:space="preserve">
-    <value>Jezyk</value>
+    <value>Język</value>
   </data>
   <data name="LanguageDescription" xml:space="preserve">
-    <value>PL / EN</value>
+    <value>Język interfejsu</value>
+  </data>
+  <data name="LanguageEnglish" xml:space="preserve">
+    <value>Angielski</value>
+  </data>
+  <data name="LanguagePolish" xml:space="preserve">
+    <value>Polski</value>
+  </data>
+  <data name="FontFamilyTitle" xml:space="preserve">
+    <value>Rodzina czcionki</value>
+  </data>
+  <data name="FontFamilyDescription" xml:space="preserve">
+    <value>Krój pisma</value>
+  </data>
+  <data name="FontFamilyDefault" xml:space="preserve">
+    <value>Systemowa</value>
+  </data>
+  <data name="FontFamilySansSerif" xml:space="preserve">
+    <value>Bezszeryfowa</value>
+  </data>
+  <data name="FontFamilySerif" xml:space="preserve">
+    <value>Szeryfowa</value>
+  </data>
+  <data name="FontFamilyMonospace" xml:space="preserve">
+    <value>Monospace</value>
+  </data>
+  <data name="FontSizeTitle" xml:space="preserve">
+    <value>Rozmiar czcionki</value>
+  </data>
+  <data name="FontSizeDescription" xml:space="preserve">
+    <value>Wielkość tekstu</value>
+  </data>
+  <data name="FontSizeSmall" xml:space="preserve">
+    <value>Mały</value>
+  </data>
+  <data name="FontSizeDefault" xml:space="preserve">
+    <value>Domyślny</value>
+  </data>
+  <data name="FontSizeLarge" xml:space="preserve">
+    <value>Duży</value>
+  </data>
+  <data name="FontSizeExtraLarge" xml:space="preserve">
+    <value>Bardzo duży</value>
   </data>
   <data name="VersionInfoTitle" xml:space="preserve">
     <value>Informacje o wersji</value>
@@ -40,7 +112,7 @@
     <value>Wersja 1.0</value>
   </data>
   <data name="AuthorLabel" xml:space="preserve">
-    <value>Autor: Przemyslaw Przybyszewski</value>
+    <value>Autor: Przemysław Przybyszewski</value>
   </data>
   <data name="RightsLabel" xml:space="preserve">
     <value>All rights reserved 2025</value>
@@ -56,6 +128,27 @@
   </data>
   <data name="ComingSoon" xml:space="preserve">
     <value>Wkrótce</value>
+  </data>
+  <data name="DatabaseMigrationTitle" xml:space="preserve">
+    <value>Migracja bazy danych</value>
+  </data>
+  <data name="DatabaseMigrationDescription" xml:space="preserve">
+    <value>Aktualizuj strukturę bazy danych do najnowszej wersji</value>
+  </data>
+  <data name="DatabaseMigrationButton" xml:space="preserve">
+    <value>Wykonaj migrację</value>
+  </data>
+  <data name="DatabaseResetTitle" xml:space="preserve">
+    <value>Reset bazy danych</value>
+  </data>
+  <data name="DatabaseResetDescription" xml:space="preserve">
+    <value>⚠️ Usuń wszystkie dane i przywróć ustawienia domyślne</value>
+  </data>
+  <data name="DatabaseResetButton" xml:space="preserve">
+    <value>Resetuj bazę</value>
+  </data>
+  <data name="DatabaseResetWarning" xml:space="preserve">
+    <value>Operacja nieodwracalna!</value>
   </data>
 
 </root>

@@ -6,8 +6,17 @@
     xmlns:views="clr-namespace:Foodbook.Views"
     xmlns:tabbar="clr-namespace:FoodbookApp.Localization"
     xmlns:loc="clr-namespace:Foodbook.Services"
-    Title="FoodbookApp">
+    Title="FoodbookApp"
+    BackgroundColor="{DynamicResource ShellBackgroundColor}"
+    ForegroundColor="{DynamicResource PrimaryText}"
+    TabBarForegroundColor="{DynamicResource TabBarForeground}"
+    TabBarBackgroundColor="{DynamicResource TabBarBackground}"
+    TabBarTitleColor="{DynamicResource TabBarTitle}"
+    TabBarDisabledColor="{StaticResource Gray300}"
+    TabBarUnselectedColor="{DynamicResource TabBarUnselected}"
+    TitleColor="{DynamicResource ShellTitleColor}">
 
+    <!-- Upewnij się, że czcionka w jasnym motywie jest zawsze czarna (ThemeService wymusza) -->
     <TabBar>
         <ShellContent
             Title="{loc:Translate Resource=TabBarResources, Key=Ingredients}"

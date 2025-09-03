@@ -10,7 +10,8 @@
              x:Class="Foodbook.Views.IngredientsPage"
              x:Name="ThisPage"
              x:DataType="vm:IngredientsViewModel"
-             Title="{loc:Translate Resource=IngredientsPageResources, Key=Title}">
+             Title="{loc:Translate Resource=IngredientsPageResources, Key=Title}"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}">
 
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />

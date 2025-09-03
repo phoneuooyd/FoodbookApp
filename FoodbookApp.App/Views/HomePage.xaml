@@ -28,7 +28,8 @@
         <Style x:Key="CardTitleStyle" TargetType="Label">
             <Setter Property="FontSize" Value="18" />
             <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+            <!-- Use single dynamic resource so ThemeService runtime updates propagate -->
+            <Setter Property="TextColor" Value="{DynamicResource Primary}" />
             <Setter Property="Margin" Value="0,0,0,12" />
         </Style>
         
@@ -37,7 +38,7 @@
             <Setter Property="FontSize" Value="32" />
             <Setter Property="FontAttributes" Value="Bold" />
             <Setter Property="HorizontalTextAlignment" Value="Center" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+            <Setter Property="TextColor" Value="{DynamicResource Primary}" />
             <Setter Property="Margin" Value="0,4" />
         </Style>
         
@@ -57,6 +58,7 @@
             <Setter Property="HeightRequest" Value="40" />
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Margin" Value="0,12,0,0" />
+            <Setter Property="BackgroundColor" Value="{DynamicResource Primary}" />
         </Style>
         
         <!-- Disabled Button Style -->
@@ -88,7 +90,7 @@
         <Style x:Key="DateHeaderStyle" TargetType="Label">
             <Setter Property="FontSize" Value="16" />
             <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+            <Setter Property="TextColor" Value="{DynamicResource Primary}" />
             <Setter Property="Margin" Value="0,8,0,4" />
         </Style>
 
@@ -123,7 +125,7 @@
                            FontSize="26"
                            FontAttributes="Bold"
                            HorizontalTextAlignment="Center"
-                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                           TextColor="{DynamicResource Primary}"
                            Margin="0,4" />
                     <Label Text="{loc:Translate Resource=HomePageResources, Key=Subtitle}"
                            FontSize="14"
@@ -136,7 +138,7 @@
             <!-- Loading indicator -->
             <ActivityIndicator IsVisible="{Binding IsLoading}" 
                              IsRunning="{Binding IsLoading}" 
-                             Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                             Color="{DynamicResource Primary}"
                              HorizontalOptions="Center"
                              HeightRequest="60"
                              WidthRequest="60"
@@ -188,7 +190,7 @@
                         <!-- Period Selection Button for Planned Meals -->
                         <Button Text="{Binding PlannedMealsPeriodDisplay, StringFormat='📅 {0}'}"
                                 Command="{Binding ChangePlannedMealsPeriodCommand}"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                BackgroundColor="{DynamicResource Primary}"
                                 TextColor="White"
                                 FontSize="14"
                                 FontAttributes="Bold"
@@ -228,7 +230,7 @@
                                                             <StackLayout Orientation="Horizontal">
                                                                 <Label Text="•" 
                                                                        FontSize="14"
-                                                                       TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                                                       TextColor="{DynamicResource Primary}"
                                                                        VerticalOptions="Center"
                                                                        Margin="0,0,8,0" />
                                                                 <Label Text="{Binding Recipe.Name}" 
@@ -266,7 +268,7 @@
                         <!-- Period Selection Button -->
                         <Button Text="{Binding NutritionPeriodDisplay, StringFormat='📅 {0}'}"
                                 Command="{Binding ChangeNutritionPeriodCommand}"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                BackgroundColor="{DynamicResource Primary}"
                                 TextColor="White"
                                 FontSize="14"
                                 FontAttributes="Bold"
@@ -294,7 +296,7 @@
                                        FontSize="28"
                                        FontAttributes="Bold"
                                        HorizontalTextAlignment="Center"
-                                       TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                                       TextColor="{DynamicResource Primary}" />
                             </StackLayout>
                         </Frame>
                         
@@ -376,7 +378,6 @@
                         <Label Text="{loc:Translate Resource=HomePageResources, Key=InArchive}" Style="{StaticResource StatDescriptionStyle}" />
                         <Button Clicked="OnArchiveClicked"
                                 Style="{StaticResource CardButtonStyle}"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                                 Text="{loc:Translate Resource=HomePageResources, Key=GoToArchive}" />
                     </StackLayout>
                 </Frame>
@@ -389,7 +390,6 @@
                         <Label Text="🛠️" Style="{StaticResource StatNumberStyle}" />
                         <Label Text="{loc:Translate Resource=HomePageResources, Key=Customize}" Style="{StaticResource StatDescriptionStyle}" />
                         <Button Style="{StaticResource CardButtonStyle}"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                                 Text="{loc:Translate Resource=HomePageResources, Key=GoToSettings}"
                                 Clicked="OnSettingsClicked" />
                     </StackLayout>

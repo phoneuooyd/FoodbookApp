@@ -5,6 +5,7 @@
              x:Name="FabComponent">
 
     <Button Style="{StaticResource FloatingActionButton}"
+            BackgroundColor="{DynamicResource Primary}"
             Command="{Binding Command, Source={x:Reference FabComponent}}"
             Text="{Binding ButtonText, Source={x:Reference FabComponent}}"
             IsVisible="{Binding IsVisible, Source={x:Reference FabComponent}}" />

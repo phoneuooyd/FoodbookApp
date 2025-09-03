@@ -9,7 +9,8 @@
              x:Class="Foodbook.Views.ShoppingListPage"
              x:Name="ThisPage"
              x:DataType="vm:ShoppingListViewModel"
-             Title="{loc:Translate Resource=ShoppingListPageResources, Key=Title}">
+             Title="{loc:Translate Resource=ShoppingListPageResources, Key=Title}"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}">
     
     <ContentPage.Resources>
         <DataTemplate x:Key="PlanItemTemplate" x:DataType="models:Plan">

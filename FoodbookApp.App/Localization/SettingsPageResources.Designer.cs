@@ -48,7 +48,7 @@ namespace FoodbookApp.Localization {
         
         /// <summary>
         ///   Przesłania właściwość CurrentUICulture bieżącego wątku dla wszystkich
-        ///   przypadków przeszukiwania zasobów za pomocą tej klasy zasobów wymagającej zdefiniowania typu.
+        ///   przypadków przeszukiwania zasobów za pomocą tej klasy zasobów wymagającej zdefiniowana typu.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
@@ -104,6 +104,69 @@ namespace FoodbookApp.Localization {
                 return ResourceManager.GetString("DataExportTitle", resourceCulture);
             }
         }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Execute Migration.
+        /// </summary>
+        internal static string DatabaseMigrationButton {
+            get {
+                return ResourceManager.GetString("DatabaseMigrationButton", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Update database structure to the latest version.
+        /// </summary>
+        internal static string DatabaseMigrationDescription {
+            get {
+                return ResourceManager.GetString("DatabaseMigrationDescription", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Database Migration.
+        /// </summary>
+        internal static string DatabaseMigrationTitle {
+            get {
+                return ResourceManager.GetString("DatabaseMigrationTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Reset Database.
+        /// </summary>
+        internal static string DatabaseResetButton {
+            get {
+                return ResourceManager.GetString("DatabaseResetButton", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu ⚠️ Delete all data and restore default settings.
+        /// </summary>
+        internal static string DatabaseResetDescription {
+            get {
+                return ResourceManager.GetString("DatabaseResetDescription", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Database Reset.
+        /// </summary>
+        internal static string DatabaseResetTitle {
+            get {
+                return ResourceManager.GetString("DatabaseResetTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Irreversible operation!.
+        /// </summary>
+        internal static string DatabaseResetWarning {
+            get {
+                return ResourceManager.GetString("DatabaseResetWarning", resourceCulture);
+            }
+        }
         
         /// <summary>
         /// Wyszukuje zlokalizowany ciąg podobny do ciągu Personalize your application.
@@ -124,11 +187,29 @@ namespace FoodbookApp.Localization {
         }
         
         /// <summary>
-        /// Wyszukuje zlokalizowany ciąg podobny do ciągu PL / EN.
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Interface language.
         /// </summary>
         internal static string LanguageDescription {
             get {
                 return ResourceManager.GetString("LanguageDescription", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu English.
+        /// </summary>
+        internal static string LanguageEnglish {
+            get {
+                return ResourceManager.GetString("LanguageEnglish", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Polish.
+        /// </summary>
+        internal static string LanguagePolish {
+            get {
+                return ResourceManager.GetString("LanguagePolish", resourceCulture);
             }
         }
         
@@ -156,6 +237,33 @@ namespace FoodbookApp.Localization {
         internal static string ThemeDescription {
             get {
                 return ResourceManager.GetString("ThemeDescription", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Dark.
+        /// </summary>
+        internal static string ThemeDark {
+            get {
+                return ResourceManager.GetString("ThemeDark", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Light.
+        /// </summary>
+        internal static string ThemeLight {
+            get {
+                return ResourceManager.GetString("ThemeLight", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu System.
+        /// </summary>
+        internal static string ThemeSystem {
+            get {
+                return ResourceManager.GetString("ThemeSystem", resourceCulture);
             }
         }
         

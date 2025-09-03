@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using Foodbook.Views.Base;
 
 namespace Foodbook.Views.Components
 {
@@ -12,6 +13,8 @@ namespace Foodbook.Views.Components
 
         public static readonly BindableProperty IsVisibleProperty =
             BindableProperty.Create(nameof(IsVisible), typeof(bool), typeof(FloatingActionButtonComponent), true);
+
+        private readonly PageThemeHelper _themeHelper;
 
         public ICommand Command
         {
@@ -34,6 +37,21 @@ namespace Foodbook.Views.Components
         public FloatingActionButtonComponent()
         {
             InitializeComponent();
+            _themeHelper = new PageThemeHelper();
+            
+            // Initialize theme handling when component is loaded
+            Loaded += OnComponentLoaded;
+            Unloaded += OnComponentUnloaded;
+        }
+
+        private void OnComponentLoaded(object? sender, EventArgs e)
+        {
+            _themeHelper.Initialize();
+        }
+
+        private void OnComponentUnloaded(object? sender, EventArgs e)
+        {
+            _themeHelper.Cleanup();
         }
     }
 }

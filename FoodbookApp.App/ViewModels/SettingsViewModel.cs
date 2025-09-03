@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Input;
+using Foodbook.Models;
 using Foodbook.Services;
+using FoodbookApp.Localization;
 
 namespace Foodbook.ViewModels;
 
@@ -9,8 +11,14 @@ public class SettingsViewModel : INotifyPropertyChanged
 {
     private readonly LocalizationResourceManager _locManager;
     private readonly IPreferencesService _preferencesService;
+    private readonly IThemeService _themeService;
+    private readonly IFontService _fontService;
 
     public ObservableCollection<string> SupportedCultures { get; }
+    public ObservableCollection<Foodbook.Models.AppTheme> SupportedThemes { get; }
+    public ObservableCollection<AppColorTheme> SupportedColorThemes { get; }
+    public ObservableCollection<AppFontFamily> SupportedFontFamilies { get; }
+    public ObservableCollection<AppFontSize> SupportedFontSizes { get; }
 
     private string _selectedCulture;
     public string SelectedCulture
@@ -25,6 +33,72 @@ public class SettingsViewModel : INotifyPropertyChanged
             
             // Save the selected culture to preferences
             _preferencesService.SaveLanguage(value);
+        }
+    }
+
+    private Foodbook.Models.AppTheme _selectedTheme;
+    public Foodbook.Models.AppTheme SelectedTheme
+    {
+        get => _selectedTheme;
+        set
+        {
+            if (_selectedTheme == value) return;
+            _selectedTheme = value;
+            OnPropertyChanged(nameof(SelectedTheme));
+            
+            // Apply the theme immediately
+            _themeService.SetTheme(value);
+            
+            // Save the selected theme to preferences
+            _preferencesService.SaveTheme(value);
+        }
+    }
+
+    private AppColorTheme _selectedColorTheme;
+    public AppColorTheme SelectedColorTheme
+    {
+        get => _selectedColorTheme;
+        set
+        {
+            if (_selectedColorTheme == value) return;
+            _selectedColorTheme = value;
+            OnPropertyChanged(nameof(SelectedColorTheme));
+            
+            // Apply the color theme immediately
+            _themeService.SetColorTheme(value);
+            
+            // Save the selected color theme to preferences
+            _preferencesService.SaveColorTheme(value);
+        }
+    }
+
+    private AppFontFamily _selectedFontFamily;
+    public AppFontFamily SelectedFontFamily
+    {
+        get => _selectedFontFamily;
+        set
+        {
+            if (_selectedFontFamily == value) return;
+            _selectedFontFamily = value;
+            OnPropertyChanged(nameof(SelectedFontFamily));
+            
+            // Apply the font family immediately
+            _fontService.SetFontFamily(value);
+        }
+    }
+
+    private AppFontSize _selectedFontSize;
+    public AppFontSize SelectedFontSize
+    {
+        get => _selectedFontSize;
+        set
+        {
+            if (_selectedFontSize == value) return;
+            _selectedFontSize = value;
+            OnPropertyChanged(nameof(SelectedFontSize));
+            
+            // Apply the font size immediately
+            _fontService.SetFontSize(value);
         }
     }
 
@@ -59,23 +133,61 @@ public class SettingsViewModel : INotifyPropertyChanged
     public ICommand MigrateDatabaseCommand { get; }
     public ICommand ResetDatabaseCommand { get; }
 
-    public SettingsViewModel(LocalizationResourceManager locManager, IPreferencesService preferencesService)
+    public SettingsViewModel(LocalizationResourceManager locManager, IPreferencesService preferencesService, IThemeService themeService, IFontService fontService)
     {
         _locManager = locManager;
         _preferencesService = preferencesService;
+        _themeService = themeService;
+        _fontService = fontService;
         
         // Initialize supported cultures from preferences service
         SupportedCultures = new ObservableCollection<string>(_preferencesService.GetSupportedCultures());
         
-        // Load the saved culture preference or use system default
+        // Initialize supported themes
+        SupportedThemes = new ObservableCollection<Foodbook.Models.AppTheme> 
+        { 
+            Foodbook.Models.AppTheme.System, 
+            Foodbook.Models.AppTheme.Light, 
+            Foodbook.Models.AppTheme.Dark 
+        };
+        
+        // Initialize supported color themes
+        SupportedColorThemes = new ObservableCollection<AppColorTheme>
+        {
+            AppColorTheme.Default,
+            AppColorTheme.Nature,
+            AppColorTheme.Warm,
+            AppColorTheme.Vibrant,
+            AppColorTheme.Monochrome
+        };
+        
+        // Initialize supported font families
+        SupportedFontFamilies = new ObservableCollection<AppFontFamily>(_fontService.GetAvailableFontFamilies());
+        
+        // Initialize supported font sizes
+        SupportedFontSizes = new ObservableCollection<AppFontSize>(_fontService.GetAvailableFontSizes());
+        
+        // Load the saved preferences
         _selectedCulture = LoadSelectedCulture();
+        _selectedTheme = LoadSelectedTheme();
+        _selectedColorTheme = LoadSelectedColorTheme();
+        LoadSelectedFontSettings();
         
         // Set the culture without triggering the setter to avoid recursive calls
         _locManager.SetCulture(_selectedCulture);
+        
+        // Apply saved theme and color theme
+        _themeService.SetTheme(_selectedTheme);
+        _themeService.SetColorTheme(_selectedColorTheme);
+        
+        // Apply saved font settings
+        _fontService.LoadSavedSettings();
 
         // Initialize commands
         MigrateDatabaseCommand = new Command(async () => await MigrateDatabaseAsync(), () => CanExecuteMigration);
         ResetDatabaseCommand = new Command(async () => await ResetDatabaseAsync(), () => CanExecuteMigration);
+        
+        System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Initialized with color theme support");
     }
 
     private async Task MigrateDatabaseAsync()
@@ -212,6 +324,54 @@ public class SettingsViewModel : INotifyPropertyChanged
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Failed to load culture preference: {ex.Message}");
             return _preferencesService.GetSupportedCultures()[0]; // Default to first supported culture
+        }
+    }
+
+    private Foodbook.Models.AppTheme LoadSelectedTheme()
+    {
+        try
+        {
+            var savedTheme = _preferencesService.GetSavedTheme();
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Loaded saved theme preference: {savedTheme}");
+            return savedTheme;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Failed to load theme preference: {ex.Message}");
+            return Foodbook.Models.AppTheme.System; // Default to system theme
+        }
+    }
+
+    private AppColorTheme LoadSelectedColorTheme()
+    {
+        try
+        {
+            var savedColorTheme = _preferencesService.GetSavedColorTheme();
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Loaded saved color theme preference: {savedColorTheme}");
+            return savedColorTheme;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Failed to load color theme preference: {ex.Message}");
+            return AppColorTheme.Default; // Default to default color theme
+        }
+    }
+
+    private void LoadSelectedFontSettings()
+    {
+        try
+        {
+            var savedFontSettings = _preferencesService.GetFontSettings();
+            _selectedFontFamily = savedFontSettings.FontFamily;
+            _selectedFontSize = savedFontSettings.FontSize;
+            
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Loaded saved font settings: Family={savedFontSettings.FontFamily}, Size={savedFontSettings.FontSize}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Failed to load font settings: {ex.Message}");
+            _selectedFontFamily = AppFontFamily.Default;
+            _selectedFontSize = AppFontSize.Default;
         }
     }
 

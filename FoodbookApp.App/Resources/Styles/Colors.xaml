@@ -6,14 +6,38 @@
 
     <!-- Note: For Android please see also Platforms\Android\Resources\values\colors.xml -->
 
+    <!-- Theme Colors - These will be updated dynamically by ThemeService -->
     <Color x:Key="Primary">#512BD4</Color>
     <Color x:Key="PrimaryDark">#ac99ea</Color>
-    <Color x:Key="PrimaryDarkText">#242424</Color>
     <Color x:Key="Secondary">#DFD8F7</Color>
     <Color x:Key="SecondaryDark">#B8A7E8</Color>
-    <Color x:Key="SecondaryDarkText">#9880e5</Color>
     <Color x:Key="Tertiary">#2B0B98</Color>
+    <Color x:Key="TertiaryDark">#7c4dff</Color>
+    <Color x:Key="Accent">#512BD4</Color>
+    <Color x:Key="AccentDark">#ac99ea</Color>
+    
+    <!-- Text Colors - Dynamic based on theme -->
+    <Color x:Key="PrimaryText">#242424</Color>
+    <Color x:Key="SecondaryText">#666666</Color>
+    <Color x:Key="PrimaryTextDark">#FFFFFF</Color>
+    <Color x:Key="SecondaryTextDark">#E0E0E0</Color>
 
+    <!-- Button Colors - Dynamic based on theme -->
+    <Color x:Key="ButtonPrimaryText">#FFFFFF</Color>
+    <Color x:Key="ButtonDisabledText">#919191</Color>
+
+    <!-- TabBar Colors - Dynamic based on theme -->
+    <!-- W jasnym motywie aktywne i tytuł zawsze czarne (wymuszone w ThemeService) -->
+    <Color x:Key="TabBarBackground">#DFD8F7</Color>
+    <Color x:Key="TabBarForeground">#000000</Color>
+    <Color x:Key="TabBarTitle">#000000</Color>
+    <Color x:Key="TabBarUnselected">#424242</Color>
+
+    <!-- Shell Title Colors - Dynamic based on theme -->
+    <Color x:Key="ShellTitleColor">#FFFFFF</Color>
+    <Color x:Key="ShellBackgroundColor">#512BD4</Color>
+
+    <!-- Static Colors -->
     <Color x:Key="White">White</Color>
     <Color x:Key="Black">Black</Color>
     <Color x:Key="Magenta">#D600AA</Color>
@@ -29,9 +53,15 @@
     <Color x:Key="Gray900">#212121</Color>
     <Color x:Key="Gray950">#141414</Color>
 
-    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}"/>
-    <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource Secondary}"/>
-    <SolidColorBrush x:Key="TertiaryBrush" Color="{StaticResource Tertiary}"/>
+    <!-- Dynamic Brushes - These will be updated when color theme changes -->
+    <SolidColorBrush x:Key="PrimaryBrush" Color="{DynamicResource Primary}"/>
+    <SolidColorBrush x:Key="SecondaryBrush" Color="{DynamicResource Secondary}"/>
+    <SolidColorBrush x:Key="TertiaryBrush" Color="{DynamicResource Tertiary}"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="{DynamicResource Accent}"/>
+    <SolidColorBrush x:Key="PrimaryTextBrush" Color="{DynamicResource PrimaryText}"/>
+    <SolidColorBrush x:Key="SecondaryTextBrush" Color="{DynamicResource SecondaryText}"/>
+    
+    <!-- Static Brushes -->
     <SolidColorBrush x:Key="WhiteBrush" Color="{StaticResource White}"/>
     <SolidColorBrush x:Key="BlackBrush" Color="{StaticResource Black}"/>
 

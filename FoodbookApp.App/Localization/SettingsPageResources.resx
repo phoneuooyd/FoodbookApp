@@ -21,17 +21,89 @@
   <data name="HeaderSubtitle" xml:space="preserve">
     <value>Personalize your application</value>
   </data>
+  <data name="ColorThemeTitle" xml:space="preserve">
+    <value>Color Theme</value>
+  </data>
+  <data name="ColorThemeDescription" xml:space="preserve">
+    <value>App color palette</value>
+  </data>
+  <data name="ColorThemeDefault" xml:space="preserve">
+    <value>Default</value>
+  </data>
+  <data name="ColorThemeNature" xml:space="preserve">
+    <value>Nature</value>
+  </data>
+  <data name="ColorThemeWarm" xml:space="preserve">
+    <value>Warm</value>
+  </data>
+  <data name="ColorThemeVibrant" xml:space="preserve">
+    <value>Vibrant</value>
+  </data>
+  <data name="ColorThemeMonochrome" xml:space="preserve">
+    <value>Monochrome</value>
+  </data>
   <data name="ThemeTitle" xml:space="preserve">
     <value>Theme</value>
   </data>
   <data name="ThemeDescription" xml:space="preserve">
     <value>Light / dark</value>
   </data>
+  <data name="ThemeLight" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="ThemeDark" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="ThemeSystem" xml:space="preserve">
+    <value>System</value>
+  </data>
   <data name="LanguageTitle" xml:space="preserve">
     <value>Language</value>
   </data>
   <data name="LanguageDescription" xml:space="preserve">
-    <value>PL / EN</value>
+    <value>Interface language</value>
+  </data>
+  <data name="LanguageEnglish" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="LanguagePolish" xml:space="preserve">
+    <value>Polish</value>
+  </data>
+  <data name="FontFamilyTitle" xml:space="preserve">
+    <value>Font Family</value>
+  </data>
+  <data name="FontFamilyDescription" xml:space="preserve">
+    <value>Text typeface</value>
+  </data>
+  <data name="FontFamilyDefault" xml:space="preserve">
+    <value>System Default</value>
+  </data>
+  <data name="FontFamilySansSerif" xml:space="preserve">
+    <value>Sans-serif</value>
+  </data>
+  <data name="FontFamilySerif" xml:space="preserve">
+    <value>Serif</value>
+  </data>
+  <data name="FontFamilyMonospace" xml:space="preserve">
+    <value>Monospace</value>
+  </data>
+  <data name="FontSizeTitle" xml:space="preserve">
+    <value>Font Size</value>
+  </data>
+  <data name="FontSizeDescription" xml:space="preserve">
+    <value>Text size</value>
+  </data>
+  <data name="FontSizeSmall" xml:space="preserve">
+    <value>Small</value>
+  </data>
+  <data name="FontSizeDefault" xml:space="preserve">
+    <value>Default</value>
+  </data>
+  <data name="FontSizeLarge" xml:space="preserve">
+    <value>Large</value>
+  </data>
+  <data name="FontSizeExtraLarge" xml:space="preserve">
+    <value>Extra Large</value>
   </data>
   <data name="VersionInfoTitle" xml:space="preserve">
     <value>Version info</value>
@@ -56,5 +128,26 @@
   </data>
   <data name="ComingSoon" xml:space="preserve">
     <value>Soon</value>
+  </data>
+  <data name="DatabaseMigrationTitle" xml:space="preserve">
+    <value>Database Migration</value>
+  </data>
+  <data name="DatabaseMigrationDescription" xml:space="preserve">
+    <value>Update database structure to the latest version</value>
+  </data>
+  <data name="DatabaseMigrationButton" xml:space="preserve">
+    <value>Execute Migration</value>
+  </data>
+  <data name="DatabaseResetTitle" xml:space="preserve">
+    <value>Database Reset</value>
+  </data>
+  <data name="DatabaseResetDescription" xml:space="preserve">
+    <value>⚠️ Delete all data and restore default settings</value>
+  </data>
+  <data name="DatabaseResetButton" xml:space="preserve">
+    <value>Reset Database</value>
+  </data>
+  <data name="DatabaseResetWarning" xml:space="preserve">
+    <value>Irreversible operation!</value>
   </data>
 </root>

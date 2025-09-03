@@ -481,6 +481,9 @@ public class PlannerViewModel : INotifyPropertyChanged
 
             // Wyczyść cache po zapisie - nie wywołuj Reset() który może powodować konflikty
             ClearCache();
+
+            // Notify other parts of the app (e.g., HomeViewModel) that plan data changed
+            Foodbook.Services.AppEvents.RaisePlanChanged();
             
             return plan;
         }

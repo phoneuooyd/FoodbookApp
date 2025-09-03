@@ -2,6 +2,7 @@ using Microsoft.Maui.Controls;
 using Foodbook.Services;
 using Foodbook.ViewModels;
 using Foodbook.Models;
+using Foodbook.Views.Base;
 using System.Threading.Tasks;
 
 namespace Foodbook.Views
@@ -12,14 +13,16 @@ namespace Foodbook.Views
         public IEnumerable<Foodbook.Models.Unit> Units => Enum.GetValues(typeof(Foodbook.Models.Unit)).Cast<Foodbook.Models.Unit>();
 
         private AddRecipeViewModel ViewModel => BindingContext as AddRecipeViewModel;
+        private readonly PageThemeHelper _themeHelper;
         
-        // ? NOWE: Debouncing timer dla zmian wartoœci
+        // ?? NOWE: Debouncing timer dla zmian wartoœci
         private IDispatcherTimer? _valueChangeTimer;
 
         public AddRecipePage(AddRecipeViewModel vm)
         {
             InitializeComponent();
             BindingContext = vm;
+            _themeHelper = new PageThemeHelper();
         }
 
         protected override async void OnAppearing()
@@ -27,6 +30,9 @@ namespace Foodbook.Views
             try
             {
                 base.OnAppearing();
+                
+                // Initialize theme and font handling
+                _themeHelper.Initialize();
                 
                 // Zawsze resetuj stan ViewModelu na pocz¹tku
                 ViewModel?.Reset();
@@ -45,6 +51,14 @@ namespace Foodbook.Views
                     ViewModel.ValidationMessage = $"B³¹d ³adowania strony: {ex.Message}";
                 }
             }
+        }
+
+        protected override void OnDisappearing()
+        {
+            base.OnDisappearing();
+            
+            // Cleanup theme and font handling
+            _themeHelper.Cleanup();
         }
 
         private int _recipeId;
@@ -107,7 +121,7 @@ namespace Foodbook.Views
             }
         }
 
-        // ? ZOPTYMALIZOWANE: Debounced przeliczenia z u¿yciem nowej async metody
+        // ?? ZOPTYMALIZOWANE: Debounced przeliczenia z u¿yciem nowej async metody
         private void OnIngredientValueChanged(object sender, EventArgs e)
         {
             try
@@ -123,7 +137,7 @@ namespace Foodbook.Views
                     try
                     {
                         _valueChangeTimer.Stop();
-                        // ? U¿ywa nowej asynchronicznej metody
+                        // ?? U¿ywa nowej asynchronicznej metody
                         if (ViewModel != null)
                         {
                             await ViewModel.RecalculateNutritionalValuesAsync();
