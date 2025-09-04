@@ -7,6 +7,7 @@ using Foodbook.Views;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http;
+using CommunityToolkit.Maui;
 
 namespace FoodbookApp
 {
@@ -18,6 +19,7 @@ namespace FoodbookApp
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>() // <-- App.xaml.cs
+                .UseMauiCommunityToolkit()
                 .ConfigureFonts(fonts =>
                 {
                     // OpenSans fonts (original)
@@ -122,6 +124,18 @@ namespace FoodbookApp
             // Build aplikacji
             var app = builder.Build();
             ServiceProvider = app.Services;
+
+            // --- NEW: Force early initialization of settings/theme so notification panel (system bars) reflects user prefs at startup ---
+            try
+            {
+                var settingsVm = app.Services.GetService<SettingsViewModel>(); // ctor applies saved theme/color/font
+                var themeService = app.Services.GetService<IThemeService>();
+                themeService?.UpdateSystemBars(); // ensure system bars updated immediately
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MauiProgram] Early theme init failed: {ex.Message}");
+            }
 
             // Inicjalizacja bazy danych w tle
             Task.Run(() => SeedDatabaseAsync(app.Services));

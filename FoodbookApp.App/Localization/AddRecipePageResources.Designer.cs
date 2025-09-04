@@ -97,6 +97,15 @@ namespace FoodbookApp.Localization {
         }
         
         /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu 📝 Basics.
+        /// </summary>
+        internal static string BasicInfoTab {
+            get {
+                return ResourceManager.GetString("BasicInfoTab", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         /// Wyszukuje zlokalizowany ciąg podobny do ciągu Nutrition calculation.
         /// </summary>
         internal static string CalcModeLabel {
@@ -142,7 +151,7 @@ namespace FoodbookApp.Localization {
         }
         
         /// <summary>
-        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Description.
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Instructions.
         /// </summary>
         internal static string DescriptionLabel {
             get {
@@ -151,7 +160,7 @@ namespace FoodbookApp.Localization {
         }
         
         /// <summary>
-        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Enter recipe description.
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Enter preparation instructions.
         /// </summary>
         internal static string DescriptionPlaceholder {
             get {
@@ -210,6 +219,15 @@ namespace FoodbookApp.Localization {
         internal static string IngredientsHeader {
             get {
                 return ResourceManager.GetString("IngredientsHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu 🥕 Ingredients.
+        /// </summary>
+        internal static string IngredientsTab {
+            get {
+                return ResourceManager.GetString("IngredientsTab", resourceCulture);
             }
         }
         
@@ -273,6 +291,15 @@ namespace FoodbookApp.Localization {
         internal static string NutritionHeader {
             get {
                 return ResourceManager.GetString("NutritionHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu ⚡ Nutrition.
+        /// </summary>
+        internal static string NutritionTab {
+            get {
+                return ResourceManager.GetString("NutritionTab", resourceCulture);
             }
         }
         
