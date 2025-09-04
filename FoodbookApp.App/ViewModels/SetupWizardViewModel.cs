@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Foodbook.Data;
 using Foodbook.Models;
 using Foodbook.Services;
-using FoodbookApp; // ADD: for AppShell
+using FoodbookApp;
 
 namespace Foodbook.ViewModels;
 
