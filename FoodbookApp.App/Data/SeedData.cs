@@ -24,6 +24,8 @@ namespace Foodbook.Data
             if (hasRecipes)
                 return;
 
+#if DEBUG
+            // Only seed example recipe in DEBUG mode
             var recipe = new Recipe
             {
                 Name = "Prosta sałatka",
@@ -41,6 +43,10 @@ namespace Foodbook.Data
 
             context.Recipes.Add(recipe);
             await context.SaveChangesAsync();
+            LogDebug("DEBUG: Added example recipe 'Prosta sałatka'");
+#else
+            LogDebug("RELEASE: Skipping example recipe seeding");
+#endif
         }
 
         public static async Task SeedIngredientsAsync(AppDbContext context)
