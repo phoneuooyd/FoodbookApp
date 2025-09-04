@@ -91,6 +91,33 @@ public class HomeViewModel : INotifyPropertyChanged
 
     public string PlannedMealsPeriodDisplay => GetPlannedMealsPeriodDisplay();
 
+    // Available plans for filtering nutrition stats
+    private ObservableCollection<Plan> _availablePlans = new();
+    public ObservableCollection<Plan> AvailablePlans
+    {
+        get => _availablePlans;
+        set { if (_availablePlans != value) { _availablePlans = value; OnPropertyChanged(); } }
+    }
+
+    private Plan? _selectedPlan;
+    public Plan? SelectedPlan
+    {
+        get => _selectedPlan;
+        set 
+        { 
+            if (_selectedPlan != value) 
+            { 
+                _selectedPlan = value; 
+                OnPropertyChanged(); 
+                OnPropertyChanged(nameof(NutritionPeriodDisplay));
+                
+                // ENHANCED: More robust refresh with logging
+                System.Diagnostics.Debug.WriteLine($"[HomeViewModel] SelectedPlan changed to: {(_selectedPlan?.StartDate.ToString("dd.MM.yyyy") ?? "null")}");
+                _ = Task.Run(async () => await RefreshNutritionDataAsync()); // Force async refresh
+            } 
+        }
+    }
+
     // Nutrition statistics properties
     private double _totalCalories;
     public double TotalCalories
@@ -120,7 +147,7 @@ public class HomeViewModel : INotifyPropertyChanged
         set { if (Math.Abs(_totalCarbs - value) > 0.1) { _totalCarbs = value; OnPropertyChanged(); OnPropertyChanged(nameof(CarbsDisplay)); } }
     }
 
-    // Nutrition period settings
+    // Nutrition period settings - SIMPLIFIED (removed Custom from main menu)
     private NutritionPeriod _selectedNutritionPeriod = NutritionPeriod.Day;
     public NutritionPeriod SelectedNutritionPeriod
     {
@@ -132,7 +159,15 @@ public class HomeViewModel : INotifyPropertyChanged
                 _selectedNutritionPeriod = value; 
                 OnPropertyChanged(); 
                 OnPropertyChanged(nameof(NutritionPeriodDisplay));
-                _ = CalculateNutritionStatsAsync(); 
+                
+                // Reset selected plan when switching away from Plan mode
+                if (value != NutritionPeriod.Plan)
+                {
+                    _selectedPlan = null;
+                    OnPropertyChanged(nameof(SelectedPlan));
+                }
+                
+                _ = RefreshNutritionDataAsync(); // Auto refresh data
             } 
         }
     }
@@ -141,14 +176,14 @@ public class HomeViewModel : INotifyPropertyChanged
     public DateTime CustomStartDate
     {
         get => _customStartDate;
-        set { if (_customStartDate != value) { _customStartDate = value; OnPropertyChanged(); if (SelectedNutritionPeriod == NutritionPeriod.Custom) _ = CalculateNutritionStatsAsync(); } }
+        set { if (_customStartDate != value) { _customStartDate = value; OnPropertyChanged(); if (SelectedNutritionPeriod == NutritionPeriod.Custom) _ = RefreshNutritionDataAsync(); } }
     }
 
     private DateTime _customEndDate = DateTime.Today;
     public DateTime CustomEndDate
     {
         get => _customEndDate;
-        set { if (_customEndDate != value) { _customEndDate = value; OnPropertyChanged(); if (SelectedNutritionPeriod == NutritionPeriod.Custom) _ = CalculateNutritionStatsAsync(); } }
+        set { if (_customEndDate != value) { _customEndDate = value; OnPropertyChanged(); if (SelectedNutritionPeriod == NutritionPeriod.Custom) _ = RefreshNutritionDataAsync(); } }
     }
 
     private bool _hasNutritionData;
@@ -188,13 +223,44 @@ public class HomeViewModel : INotifyPropertyChanged
         ChangePlannedMealsPeriodCommand = new Command(async () => await ShowPlannedMealsPeriodPickerAsync());
     }
 
+    /// <summary>
+    /// Centralized method to refresh nutrition data - called after every filter change
+    /// </summary>
+    private async Task RefreshNutritionDataAsync()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"[HomeViewModel] RefreshNutritionDataAsync started - Period: {SelectedNutritionPeriod}, Plan: {(_selectedPlan?.StartDate.ToString("dd.MM") ?? "null")}");
+            
+            await CalculateNutritionStatsAsync();
+            
+            // Force UI update by notifying all display properties
+            OnPropertyChanged(nameof(CaloriesDisplay));
+            OnPropertyChanged(nameof(ProteinDisplay));
+            OnPropertyChanged(nameof(FatDisplay));
+            OnPropertyChanged(nameof(CarbsDisplay));
+            OnPropertyChanged(nameof(HasNutritionData));
+            OnPropertyChanged(nameof(NutritionPeriodDisplay));
+            
+            System.Diagnostics.Debug.WriteLine($"[HomeViewModel] Nutrition data refreshed - Calories: {CaloriesDisplay}, HasData: {HasNutritionData}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HomeViewModel] Error refreshing nutrition data: {ex.Message}");
+            ResetNutritionStats();
+        }
+    }
+
     private async Task OnPlanChangedAsync()
     {
         try
         {
+            // Reload available plans
+            await LoadAvailablePlansAsync();
+            
             // Reload planned meals and nutrition stats silently (without toggling IsLoading)
             await LoadPlannedMealsAsync();
-            await CalculateNutritionStatsAsync();
+            await RefreshNutritionDataAsync(); // Use centralized refresh method
             
             // Recount plans (active/archived) in case of archive action
             var allPlans = await _planService.GetPlansAsync();
@@ -233,11 +299,14 @@ public class HomeViewModel : INotifyPropertyChanged
                 ArchivedPlanCount = 0;
             }
 
+            // Load available plans for filtering
+            await LoadAvailablePlansAsync();
+
             // £aduj zaplanowane posi³ki
             await LoadPlannedMealsAsync();
             
             // Oblicz statystyki ¿ywieniowe
-            await CalculateNutritionStatsAsync();
+            await RefreshNutritionDataAsync(); // Use centralized refresh method
         }
         catch (Exception ex)
         {
@@ -247,6 +316,7 @@ public class HomeViewModel : INotifyPropertyChanged
             ArchivedPlanCount = 0;
             PlannedMealHistory.Clear();
             HasPlannedMeals = false;
+            AvailablePlans.Clear();
             ResetNutritionStats();
             
             // Log b³êdu (opcjonalne)
@@ -255,6 +325,254 @@ public class HomeViewModel : INotifyPropertyChanged
         finally
         {
             IsLoading = false;
+        }
+    }
+
+    private async Task LoadAvailablePlansAsync()
+    {
+        try
+        {
+            var plans = await _planService.GetPlansAsync();
+            var activePlans = plans?.Where(p => !p.IsArchived).OrderByDescending(p => p.StartDate).ToList() ?? new List<Plan>();
+            
+            AvailablePlans.Clear();
+            foreach (var plan in activePlans)
+            {
+                AvailablePlans.Add(plan);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error loading available plans: {ex.Message}");
+            AvailablePlans.Clear();
+        }
+    }
+
+    private async Task CalculateNutritionStatsAsync()
+    {
+        try
+        {
+            var (startDate, endDate) = GetNutritionDateRange();
+            
+            var plannedMeals = await _plannerService.GetPlannedMealsAsync(startDate, endDate);
+            var mealsWithRecipes = plannedMeals?.Where(m => m.Recipe != null).ToList() ?? new List<PlannedMeal>();
+
+            if (!mealsWithRecipes.Any())
+            {
+                ResetNutritionStats();
+                return;
+            }
+
+            double totalCalories = 0;
+            double totalProtein = 0;
+            double totalFat = 0;
+            double totalCarbs = 0;
+
+            foreach (var meal in mealsWithRecipes)
+            {
+                if (meal.Recipe == null) continue;
+
+                // Pobierz pe³ny przepis ze sk³adnikami
+                var fullRecipe = await _recipeService.GetRecipeAsync(meal.Recipe.Id);
+                if (fullRecipe == null) continue;
+
+                // Oblicz wartoœci na podstawie liczby porcji
+                var portionMultiplier = (double)meal.Portions / fullRecipe.IloscPorcji;
+
+                totalCalories += fullRecipe.Calories * portionMultiplier;
+                totalProtein += fullRecipe.Protein * portionMultiplier;
+                totalFat += fullRecipe.Fat * portionMultiplier;
+                totalCarbs += fullRecipe.Carbs * portionMultiplier;
+            }
+
+            TotalCalories = totalCalories;
+            TotalProtein = totalProtein;
+            TotalFat = totalFat;
+            TotalCarbs = totalCarbs;
+            HasNutritionData = true;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error calculating nutrition stats: {ex.Message}");
+            ResetNutritionStats();
+        }
+    }
+
+    private (DateTime startDate, DateTime endDate) GetNutritionDateRange()
+    {
+        return SelectedNutritionPeriod switch
+        {
+            NutritionPeriod.Day => (DateTime.Today, DateTime.Today.AddDays(1).AddSeconds(-1)),
+            NutritionPeriod.Week => (DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek), DateTime.Today.AddDays(7 - (int)DateTime.Today.DayOfWeek).AddSeconds(-1)),
+            NutritionPeriod.Plan => SelectedPlan != null ? (SelectedPlan.StartDate, SelectedPlan.EndDate.AddDays(1).AddSeconds(-1)) : (DateTime.Today, DateTime.Today.AddDays(1).AddSeconds(-1)),
+            NutritionPeriod.Custom => (CustomStartDate, CustomEndDate.AddDays(1).AddSeconds(-1)),
+            _ => (DateTime.Today, DateTime.Today.AddDays(1).AddSeconds(-1))
+        };
+    }
+
+    private void ResetNutritionStats()
+    {
+        TotalCalories = 0;
+        TotalProtein = 0;
+        TotalFat = 0;
+        TotalCarbs = 0;
+        HasNutritionData = false;
+    }
+
+    private string GetNutritionPeriodDisplay()
+    {
+        return SelectedNutritionPeriod switch
+        {
+            NutritionPeriod.Day => ButtonResources.Today,
+            NutritionPeriod.Week => ButtonResources.ThisWeek,
+            NutritionPeriod.Plan => SelectedPlan != null ? $"Plan: {SelectedPlan.StartDate:dd.MM} - {SelectedPlan.EndDate:dd.MM}" : "Plan: Wybierz plan",
+            NutritionPeriod.Custom => $"{CustomStartDate:dd.MM} - {CustomEndDate:dd.MM}",
+            _ => ButtonResources.Today
+        };
+    }
+
+    /// <summary>
+    /// RESTORED: Added Custom option back to main picker with simplified date input
+    /// </summary>
+    private async Task ShowNutritionPeriodPickerAsync()
+    {
+        var options = new List<string>
+        {
+            ButtonResources.Today,
+            ButtonResources.ThisWeek
+        };
+        
+        // Add plan option if plans are available
+        if (AvailablePlans.Any())
+        {
+            options.Add("Plan");
+        }
+        
+        // RESTORED: Add custom date option back
+        options.Add(ButtonResources.CustomDate);
+
+        var choice = await Application.Current.MainPage.DisplayActionSheet(
+            "Wybierz okres dla statystyk", 
+            "Anuluj", 
+            null, 
+            options.ToArray());
+
+        switch (choice)
+        {
+            case var today when today == ButtonResources.Today:
+                SelectedNutritionPeriod = NutritionPeriod.Day;
+                break;
+            case var thisWeek when thisWeek == ButtonResources.ThisWeek:
+                SelectedNutritionPeriod = NutritionPeriod.Week;
+                break;
+            case "Plan":
+                await ShowPlanPickerAsync();
+                break;
+            case var customDate when customDate == ButtonResources.CustomDate:
+                await ShowCustomDateRangePickerAsync();
+                break;
+        }
+    }
+
+    private async Task ShowPlanPickerAsync()
+    {
+        if (!AvailablePlans.Any())
+        {
+            await Application.Current.MainPage.DisplayAlert("Brak planów", "Nie ma dostêpnych planów do wyboru.", "OK");
+            return;
+        }
+
+        var planOptions = AvailablePlans.Select(p => $"{p.StartDate:dd.MM.yyyy} - {p.EndDate:dd.MM.yyyy}").ToArray();
+        
+        var choice = await Application.Current.MainPage.DisplayActionSheet(
+            "Wybierz plan", 
+            "Anuluj", 
+            null, 
+            planOptions);
+
+        if (!string.IsNullOrEmpty(choice) && choice != "Anuluj")
+        {
+            var selectedIndex = Array.IndexOf(planOptions, choice);
+            if (selectedIndex >= 0 && selectedIndex < AvailablePlans.Count)
+            {
+                SelectedPlan = AvailablePlans[selectedIndex];
+                SelectedNutritionPeriod = NutritionPeriod.Plan;
+                
+                // FIXED: Force immediate refresh after plan selection
+                await RefreshNutritionDataAsync();
+                
+                System.Diagnostics.Debug.WriteLine($"[HomeViewModel] Plan selected: {SelectedPlan.StartDate:dd.MM} - {SelectedPlan.EndDate:dd.MM}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// SIMPLIFIED: Simple custom date picker using basic input dialogs
+    /// </summary>
+    private async Task ShowCustomDateRangePickerAsync()
+    {
+        try
+        {
+            // Simple input dialog approach for better reliability
+            var startDateInput = await Application.Current.MainPage.DisplayPromptAsync(
+                "?? Data pocz¹tkowa", 
+                "Podaj datê pocz¹tkow¹ (dd.mm.yyyy):", 
+                "OK",
+                "Anuluj",
+                placeholder: "np. 01.01.2024",
+                initialValue: CustomStartDate.ToString("dd.MM.yyyy"));
+
+            if (string.IsNullOrEmpty(startDateInput))
+                return;
+
+            if (DateTime.TryParseExact(startDateInput, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out var startDate))
+            {
+                var endDateInput = await Application.Current.MainPage.DisplayPromptAsync(
+                    "?? Data koñcowa", 
+                    "Podaj datê koñcow¹ (dd.mm.yyyy):", 
+                    "OK",
+                    "Anuluj",
+                    placeholder: "np. 07.01.2024",
+                    initialValue: CustomEndDate.ToString("dd.MM.yyyy"));
+
+                if (string.IsNullOrEmpty(endDateInput))
+                    return;
+
+                if (DateTime.TryParseExact(endDateInput, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out var endDate))
+                {
+                    if (endDate >= startDate)
+                    {
+                        CustomStartDate = startDate;
+                        CustomEndDate = endDate;
+                        SelectedNutritionPeriod = NutritionPeriod.Custom;
+                        
+                        // FORCE refresh after setting custom dates
+                        await RefreshNutritionDataAsync();
+                        
+                        await Application.Current.MainPage.DisplayAlert(
+                            "? Zakres ustawiony", 
+                            $"Filtr ustawiony na okres:\n{startDate:dd.MM.yyyy} - {endDate:dd.MM.yyyy}", 
+                            "OK");
+                    }
+                    else
+                    {
+                        await Application.Current.MainPage.DisplayAlert("? B³¹d", "Data koñcowa musi byæ póŸniejsza lub równa dacie pocz¹tkowej", "OK");
+                    }
+                }
+                else
+                {
+                    await Application.Current.MainPage.DisplayAlert("? B³¹d", "Nieprawid³owy format daty koñcowej. U¿yj formatu dd.mm.yyyy", "OK");
+                }
+            }
+            else
+            {
+                await Application.Current.MainPage.DisplayAlert("? B³¹d", "Nieprawid³owy format daty pocz¹tkowej. U¿yj formatu dd.mm.yyyy", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error showing custom date range picker: {ex.Message}");
+            await Application.Current.MainPage.DisplayAlert("? B³¹d", "Wyst¹pi³ b³¹d podczas ustawiania zakresu dat", "OK");
         }
     }
 
@@ -386,148 +704,6 @@ public class HomeViewModel : INotifyPropertyChanged
         }
     }
 
-    private async Task CalculateNutritionStatsAsync()
-    {
-        try
-        {
-            var (startDate, endDate) = GetNutritionDateRange();
-            
-            var plannedMeals = await _plannerService.GetPlannedMealsAsync(startDate, endDate);
-            var mealsWithRecipes = plannedMeals?.Where(m => m.Recipe != null).ToList() ?? new List<PlannedMeal>();
-
-            if (!mealsWithRecipes.Any())
-            {
-                ResetNutritionStats();
-                return;
-            }
-
-            double totalCalories = 0;
-            double totalProtein = 0;
-            double totalFat = 0;
-            double totalCarbs = 0;
-
-            foreach (var meal in mealsWithRecipes)
-            {
-                if (meal.Recipe == null) continue;
-
-                // Pobierz pe³ny przepis ze sk³adnikami
-                var fullRecipe = await _recipeService.GetRecipeAsync(meal.Recipe.Id);
-                if (fullRecipe == null) continue;
-
-                // Oblicz wartoœci na podstawie liczby porcji
-                var portionMultiplier = (double)meal.Portions / fullRecipe.IloscPorcji;
-
-                totalCalories += fullRecipe.Calories * portionMultiplier;
-                totalProtein += fullRecipe.Protein * portionMultiplier;
-                totalFat += fullRecipe.Fat * portionMultiplier;
-                totalCarbs += fullRecipe.Carbs * portionMultiplier;
-            }
-
-            TotalCalories = totalCalories;
-            TotalProtein = totalProtein;
-            TotalFat = totalFat;
-            TotalCarbs = totalCarbs;
-            HasNutritionData = true;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error calculating nutrition stats: {ex.Message}");
-            ResetNutritionStats();
-        }
-    }
-
-    private (DateTime startDate, DateTime endDate) GetNutritionDateRange()
-    {
-        return SelectedNutritionPeriod switch
-        {
-            NutritionPeriod.Day => (DateTime.Today, DateTime.Today.AddDays(1).AddSeconds(-1)),
-            NutritionPeriod.Week => (DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek), DateTime.Today.AddDays(7 - (int)DateTime.Today.DayOfWeek).AddSeconds(-1)),
-            NutritionPeriod.Custom => (CustomStartDate, CustomEndDate.AddDays(1).AddSeconds(-1)),
-            _ => (DateTime.Today, DateTime.Today.AddDays(1).AddSeconds(-1))
-        };
-    }
-
-    private void ResetNutritionStats()
-    {
-        TotalCalories = 0;
-        TotalProtein = 0;
-        TotalFat = 0;
-        TotalCarbs = 0;
-        HasNutritionData = false;
-    }
-
-    private string GetNutritionPeriodDisplay()
-    {
-        return SelectedNutritionPeriod switch
-        {
-            NutritionPeriod.Day => ButtonResources.Today,
-            NutritionPeriod.Week => ButtonResources.ThisWeek,
-            NutritionPeriod.Custom => $"{CustomStartDate:dd.MM} - {CustomEndDate:dd.MM}",
-            _ => ButtonResources.Today
-        };
-    }
-
-    private async Task ShowNutritionPeriodPickerAsync()
-    {
-        var options = new[]
-        {
-            ButtonResources.Today,
-            ButtonResources.ThisWeek, 
-            ButtonResources.CustomDate
-        };
-
-        var choice = await Application.Current.MainPage.DisplayActionSheet(
-            "Wybierz okres dla statystyk", 
-            "Anuluj", 
-            null, 
-            options);
-
-        switch (choice)
-        {
-            case var today when today == ButtonResources.Today:
-                SelectedNutritionPeriod = NutritionPeriod.Day;
-                break;
-            case var thisWeek when thisWeek == ButtonResources.ThisWeek:
-                SelectedNutritionPeriod = NutritionPeriod.Week;
-                break;
-            case var customDate when customDate == ButtonResources.CustomDate:
-                await ShowCustomDateRangePickerAsync();
-                break;
-        }
-    }
-
-    private async Task ShowCustomDateRangePickerAsync()
-    {
-        // Dla uproszczenia, u¿yjemy prostego input dialog
-        // W bardziej zaawansowanej wersji mo¿na by stworzyæ dedykowany popup
-        var startDateInput = await Application.Current.MainPage.DisplayPromptAsync(
-            "Data pocz¹tkowa", 
-            "Podaj datê pocz¹tkow¹ (dd.mm.yyyy):", 
-            initialValue: CustomStartDate.ToString("dd.MM.yyyy"));
-
-        if (DateTime.TryParseExact(startDateInput, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out var startDate))
-        {
-            var endDateInput = await Application.Current.MainPage.DisplayPromptAsync(
-                "Data koñcowa", 
-                "Podaj datê koñcow¹ (dd.mm.yyyy):", 
-                initialValue: CustomEndDate.ToString("dd.MM.yyyy"));
-
-            if (DateTime.TryParseExact(endDateInput, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out var endDate))
-            {
-                if (endDate >= startDate)
-                {
-                    CustomStartDate = startDate;
-                    CustomEndDate = endDate;
-                    SelectedNutritionPeriod = NutritionPeriod.Custom;
-                }
-                else
-                {
-                    await Application.Current.MainPage.DisplayAlert("B³¹d", "Data koñcowa musi byæ póŸniejsza ni¿ pocz¹tkowa", "OK");
-                }
-            }
-        }
-    }
-
     private async Task ShowRecipeIngredientsAsync(PlannedMeal meal)
     {
         if (meal?.Recipe == null)
@@ -648,12 +824,13 @@ public class PlannedMealGroup
     public ObservableCollection<PlannedMeal> Meals { get; set; } = new();
 }
 
-// Enum dla okresów statystyk ¿ywieniowych
+// SIMPLIFIED: Enum dla okresów statystyk ¿ywieniowych - Custom handled separately
 public enum NutritionPeriod
 {
     Day,
     Week,
-    Custom
+    Plan,      // Filter by specific saved plan
+    Custom     // Now handled separately from main menu
 }
 
 // Enum dla okresów zaplanowanych posi³ków

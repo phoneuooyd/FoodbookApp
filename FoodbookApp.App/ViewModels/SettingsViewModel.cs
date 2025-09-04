@@ -14,6 +14,13 @@ public class SettingsViewModel : INotifyPropertyChanged
     private readonly IThemeService _themeService;
     private readonly IFontService _fontService;
 
+    // Expose if current build is DEBUG so UI can hide dev-only actions in Release
+#if DEBUG
+    public bool IsDebugBuild => true;
+#else
+    public bool IsDebugBuild => false;
+#endif
+
     public ObservableCollection<string> SupportedCultures { get; }
     public ObservableCollection<Foodbook.Models.AppTheme> SupportedThemes { get; }
     public ObservableCollection<AppColorTheme> SupportedColorThemes { get; }

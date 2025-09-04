@@ -257,7 +257,7 @@
                     </StackLayout>
                 </Frame>
 
-                <!-- Nutrition Stats Card -->
+                <!-- FIXED: Nutrition Stats Card - removed ugly custom date picker, back to simple single button -->
                 <Frame Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="8" Margin="0,0,0,16">
@@ -265,7 +265,7 @@
                             <Label Text="{loc:Translate Resource=HomePageResources, Key=NutritionStatsHeader}" Style="{StaticResource CardTitleStyle}" Margin="0" />
                         </StackLayout>
                         
-                        <!-- Period Selection Button -->
+                        <!-- BACK TO SIMPLE: Single Period Selection Button -->
                         <Button Text="{Binding NutritionPeriodDisplay, StringFormat='📅 {0}'}"
                                 Command="{Binding ChangeNutritionPeriodCommand}"
                                 BackgroundColor="{DynamicResource Primary}"

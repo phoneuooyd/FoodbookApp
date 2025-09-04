@@ -7,6 +7,7 @@ using Foodbook.Views;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http;
+using CommunityToolkit.Maui;
 
 namespace FoodbookApp
 {
@@ -18,6 +19,7 @@ namespace FoodbookApp
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>() // <-- App.xaml.cs
+                .UseMauiCommunityToolkit()
                 .ConfigureFonts(fonts =>
                 {
                     // OpenSans fonts (original)
@@ -72,12 +74,12 @@ namespace FoodbookApp
             builder.Services.AddScoped<IIngredientService, IngredientService>();
             builder.Services.AddSingleton<ILocalizationService, LocalizationService>();
             builder.Services.AddSingleton<LocalizationResourceManager>();
-            builder.Services.AddSingleton<IPreferencesService, PreferencesService>(); // Added PreferencesService
-            builder.Services.AddSingleton<IThemeService, ThemeService>(); // Added ThemeService
-            builder.Services.AddSingleton<IFontService, FontService>(); // Added FontService
+            builder.Services.AddSingleton<IPreferencesService, PreferencesService>(); 
+            builder.Services.AddSingleton<IThemeService, ThemeService>(); 
+            builder.Services.AddSingleton<IFontService, FontService>(); 
 
             builder.Services.AddScoped<RecipeViewModel>();
-            builder.Services.AddTransient<AddRecipeViewModel>(); // Zmieniono na Transient
+            builder.Services.AddTransient<AddRecipeViewModel>();
             builder.Services.AddScoped<PlannerViewModel>();
             builder.Services.AddScoped<HomeViewModel>();
             builder.Services.AddScoped<ShoppingListViewModel>();
@@ -85,27 +87,27 @@ namespace FoodbookApp
             builder.Services.AddScoped<IngredientsViewModel>();
             builder.Services.AddScoped<IngredientFormViewModel>();
             builder.Services.AddScoped<PlannedMealFormViewModel>();
-            builder.Services.AddScoped<ArchiveViewModel>(); // Dodany ArchiveViewModel
+            builder.Services.AddScoped<ArchiveViewModel>(); 
             builder.Services.AddSingleton<SettingsViewModel>();
 
             // Rejestracja HttpClient i RecipeImporter
             builder.Services.AddScoped<HttpClient>();
             builder.Services.AddScoped<RecipeImporter>();
 
-            // Rejestracja widoków (Pages), jeśli używasz DI do ich tworzenia
+            // Rejestracja widoków 
             builder.Services.AddScoped<HomePage>();
             builder.Services.AddScoped<RecipesPage>();
-            builder.Services.AddTransient<AddRecipePage>(); // Zmieniono na Transient
+            builder.Services.AddTransient<AddRecipePage>(); 
             builder.Services.AddScoped<IngredientsPage>();
             builder.Services.AddScoped<IngredientFormPage>();
             builder.Services.AddScoped<PlannerPage>();
             builder.Services.AddScoped<MealFormPage>();
             builder.Services.AddScoped<ShoppingListPage>();
             builder.Services.AddScoped<ShoppingListDetailPage>();
-            builder.Services.AddScoped<ArchivePage>(); // Dodana ArchivePage
-            builder.Services.AddScoped<SettingsPage>(); // Dodana SettingsPage
+            builder.Services.AddScoped<ArchivePage>(); 
+            builder.Services.AddScoped<SettingsPage>(); 
 
-            // Rejestracja routów do Shell (opcjonalne, jeśli używasz Shell)
+            // Rejestracja routów do Shell
             Routing.RegisterRoute(nameof(HomePage), typeof(HomePage));
             Routing.RegisterRoute(nameof(RecipesPage), typeof(RecipesPage));
             Routing.RegisterRoute(nameof(AddRecipePage), typeof(AddRecipePage));
@@ -115,13 +117,25 @@ namespace FoodbookApp
             Routing.RegisterRoute(nameof(MealFormPage), typeof(MealFormPage));
             Routing.RegisterRoute(nameof(ShoppingListPage), typeof(ShoppingListPage));
             Routing.RegisterRoute(nameof(ShoppingListDetailPage), typeof(ShoppingListDetailPage));
-            Routing.RegisterRoute(nameof(ArchivePage), typeof(ArchivePage)); // Dodana rejestracja routingu dla ArchivePage
-            Routing.RegisterRoute(nameof(SettingsPage), typeof(SettingsPage)); // Dodana rejestracja routingu dla SettingsPage
+            Routing.RegisterRoute(nameof(ArchivePage), typeof(ArchivePage)); 
+            Routing.RegisterRoute(nameof(SettingsPage), typeof(SettingsPage)); 
             
 
             // Build aplikacji
             var app = builder.Build();
             ServiceProvider = app.Services;
+
+            // --- NEW: Force early initialization of settings/theme so notification panel (system bars) reflects user prefs at startup ---
+            try
+            {
+                var settingsVm = app.Services.GetService<SettingsViewModel>(); // ctor applies saved theme/color/font
+                var themeService = app.Services.GetService<IThemeService>();
+                themeService?.UpdateSystemBars(); // ensure system bars updated immediately
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MauiProgram] Early theme init failed: {ex.Message}");
+            }
 
             // Inicjalizacja bazy danych w tle
             Task.Run(() => SeedDatabaseAsync(app.Services));
