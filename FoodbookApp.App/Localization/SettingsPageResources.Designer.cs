@@ -48,7 +48,7 @@ namespace FoodbookApp.Localization {
         
         /// <summary>
         ///   Przesłania właściwość CurrentUICulture bieżącego wątku dla wszystkich
-        ///   przypadków przeszukiwania zasobów za pomocą tej klasy zasobów wymagającej zdefiniowana typu.
+        ///   przypadków przeszukiwania zasobów za pomocą tej klasy zasobów wymagającej zdefiniowania typu.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
@@ -79,11 +79,173 @@ namespace FoodbookApp.Localization {
         }
         
         /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Background.
+        /// </summary>
+        internal static string ColorfulBackgroundOption {
+            get {
+                return ResourceManager.GetString("ColorfulBackgroundOption", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Autumn.
+        /// </summary>
+        internal static string ColorThemeAutumn {
+            get {
+                return ResourceManager.GetString("ColorThemeAutumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Default.
+        /// </summary>
+        internal static string ColorThemeDefault {
+            get {
+                return ResourceManager.GetString("ColorThemeDefault", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu App color palette.
+        /// </summary>
+        internal static string ColorThemeDescription {
+            get {
+                return ResourceManager.GetString("ColorThemeDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Mint.
+        /// </summary>
+        internal static string ColorThemeMint {
+            get {
+                return ResourceManager.GetString("ColorThemeMint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Monochrome.
+        /// </summary>
+        internal static string ColorThemeMonochrome {
+            get {
+                return ResourceManager.GetString("ColorThemeMonochrome", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Nature.
+        /// </summary>
+        internal static string ColorThemeNature {
+            get {
+                return ResourceManager.GetString("ColorThemeNature", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Navy.
+        /// </summary>
+        internal static string ColorThemeNavy {
+            get {
+                return ResourceManager.GetString("ColorThemeNavy", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Color Theme.
+        /// </summary>
+        internal static string ColorThemeTitle {
+            get {
+                return ResourceManager.GetString("ColorThemeTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Vibrant.
+        /// </summary>
+        internal static string ColorThemeVibrant {
+            get {
+                return ResourceManager.GetString("ColorThemeVibrant", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Warm.
+        /// </summary>
+        internal static string ColorThemeWarm {
+            get {
+                return ResourceManager.GetString("ColorThemeWarm", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         /// Wyszukuje zlokalizowany ciąg podobny do ciągu Soon.
         /// </summary>
         internal static string ComingSoon {
             get {
                 return ResourceManager.GetString("ComingSoon", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Execute Migration.
+        /// </summary>
+        internal static string DatabaseMigrationButton {
+            get {
+                return ResourceManager.GetString("DatabaseMigrationButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Update database structure to the latest version.
+        /// </summary>
+        internal static string DatabaseMigrationDescription {
+            get {
+                return ResourceManager.GetString("DatabaseMigrationDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Database Migration.
+        /// </summary>
+        internal static string DatabaseMigrationTitle {
+            get {
+                return ResourceManager.GetString("DatabaseMigrationTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Reset Database.
+        /// </summary>
+        internal static string DatabaseResetButton {
+            get {
+                return ResourceManager.GetString("DatabaseResetButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu ⚠️ Delete all data and restore default settings.
+        /// </summary>
+        internal static string DatabaseResetDescription {
+            get {
+                return ResourceManager.GetString("DatabaseResetDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Database Reset.
+        /// </summary>
+        internal static string DatabaseResetTitle {
+            get {
+                return ResourceManager.GetString("DatabaseResetTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Irreversible operation!.
+        /// </summary>
+        internal static string DatabaseResetWarning {
+            get {
+                return ResourceManager.GetString("DatabaseResetWarning", resourceCulture);
             }
         }
         
@@ -104,67 +266,112 @@ namespace FoodbookApp.Localization {
                 return ResourceManager.GetString("DataExportTitle", resourceCulture);
             }
         }
-
+        
         /// <summary>
-        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Execute Migration.
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu System Default.
         /// </summary>
-        internal static string DatabaseMigrationButton {
+        internal static string FontFamilyDefault {
             get {
-                return ResourceManager.GetString("DatabaseMigrationButton", resourceCulture);
+                return ResourceManager.GetString("FontFamilyDefault", resourceCulture);
             }
         }
-
+        
         /// <summary>
-        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Update database structure to the latest version.
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Text typeface.
         /// </summary>
-        internal static string DatabaseMigrationDescription {
+        internal static string FontFamilyDescription {
             get {
-                return ResourceManager.GetString("DatabaseMigrationDescription", resourceCulture);
+                return ResourceManager.GetString("FontFamilyDescription", resourceCulture);
             }
         }
-
+        
         /// <summary>
-        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Database Migration.
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Monospace.
         /// </summary>
-        internal static string DatabaseMigrationTitle {
+        internal static string FontFamilyMonospace {
             get {
-                return ResourceManager.GetString("DatabaseMigrationTitle", resourceCulture);
+                return ResourceManager.GetString("FontFamilyMonospace", resourceCulture);
             }
         }
-
+        
         /// <summary>
-        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Reset Database.
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Sans-serif.
         /// </summary>
-        internal static string DatabaseResetButton {
+        internal static string FontFamilySansSerif {
             get {
-                return ResourceManager.GetString("DatabaseResetButton", resourceCulture);
+                return ResourceManager.GetString("FontFamilySansSerif", resourceCulture);
             }
         }
-
+        
         /// <summary>
-        /// Wyszukuje zlokalizowany ciąg podobny do ciągu ⚠️ Delete all data and restore default settings.
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Serif.
         /// </summary>
-        internal static string DatabaseResetDescription {
+        internal static string FontFamilySerif {
             get {
-                return ResourceManager.GetString("DatabaseResetDescription", resourceCulture);
+                return ResourceManager.GetString("FontFamilySerif", resourceCulture);
             }
         }
-
+        
         /// <summary>
-        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Database Reset.
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Font Family.
         /// </summary>
-        internal static string DatabaseResetTitle {
+        internal static string FontFamilyTitle {
             get {
-                return ResourceManager.GetString("DatabaseResetTitle", resourceCulture);
+                return ResourceManager.GetString("FontFamilyTitle", resourceCulture);
             }
         }
-
+        
         /// <summary>
-        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Irreversible operation!.
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Default.
         /// </summary>
-        internal static string DatabaseResetWarning {
+        internal static string FontSizeDefault {
             get {
-                return ResourceManager.GetString("DatabaseResetWarning", resourceCulture);
+                return ResourceManager.GetString("FontSizeDefault", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Text size.
+        /// </summary>
+        internal static string FontSizeDescription {
+            get {
+                return ResourceManager.GetString("FontSizeDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Extra Large.
+        /// </summary>
+        internal static string FontSizeExtraLarge {
+            get {
+                return ResourceManager.GetString("FontSizeExtraLarge", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Large.
+        /// </summary>
+        internal static string FontSizeLarge {
+            get {
+                return ResourceManager.GetString("FontSizeLarge", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Small.
+        /// </summary>
+        internal static string FontSizeSmall {
+            get {
+                return ResourceManager.GetString("FontSizeSmall", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Font Size.
+        /// </summary>
+        internal static string FontSizeTitle {
+            get {
+                return ResourceManager.GetString("FontSizeTitle", resourceCulture);
             }
         }
         
@@ -194,7 +401,7 @@ namespace FoodbookApp.Localization {
                 return ResourceManager.GetString("LanguageDescription", resourceCulture);
             }
         }
-
+        
         /// <summary>
         /// Wyszukuje zlokalizowany ciąg podobny do ciągu English.
         /// </summary>
@@ -203,7 +410,7 @@ namespace FoodbookApp.Localization {
                 return ResourceManager.GetString("LanguageEnglish", resourceCulture);
             }
         }
-
+        
         /// <summary>
         /// Wyszukuje zlokalizowany ciąg podobny do ciągu Polish.
         /// </summary>
@@ -232,15 +439,6 @@ namespace FoodbookApp.Localization {
         }
         
         /// <summary>
-        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Light / dark.
-        /// </summary>
-        internal static string ThemeDescription {
-            get {
-                return ResourceManager.GetString("ThemeDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
         /// Wyszukuje zlokalizowany ciąg podobny do ciągu Dark.
         /// </summary>
         internal static string ThemeDark {
@@ -248,7 +446,16 @@ namespace FoodbookApp.Localization {
                 return ResourceManager.GetString("ThemeDark", resourceCulture);
             }
         }
-
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Light / dark.
+        /// </summary>
+        internal static string ThemeDescription {
+            get {
+                return ResourceManager.GetString("ThemeDescription", resourceCulture);
+            }
+        }
+        
         /// <summary>
         /// Wyszukuje zlokalizowany ciąg podobny do ciągu Light.
         /// </summary>
@@ -257,7 +464,7 @@ namespace FoodbookApp.Localization {
                 return ResourceManager.GetString("ThemeLight", resourceCulture);
             }
         }
-
+        
         /// <summary>
         /// Wyszukuje zlokalizowany ciąg podobny do ciągu System.
         /// </summary>

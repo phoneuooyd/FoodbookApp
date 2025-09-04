@@ -186,7 +186,10 @@ public class SettingsViewModel : INotifyPropertyChanged
             AppColorTheme.Nature,
             AppColorTheme.Warm,
             AppColorTheme.Vibrant,
-            AppColorTheme.Monochrome
+            AppColorTheme.Monochrome,
+            AppColorTheme.Navy,     // NEW: Navy theme
+            AppColorTheme.Autumn,   // NEW: Autumn theme
+            AppColorTheme.Mint      // NEW: Mint theme
         };
         
         // Initialize supported font families
