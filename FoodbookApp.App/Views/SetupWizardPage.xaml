@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Foodbook.ViewModels"
+             x:Class="Foodbook.Views.SetupWizardPage"
+             x:DataType="vm:SetupWizardViewModel"
+             Title="Welcome to FoodBook"
+             BackgroundColor="{DynamicResource PageBackgroundColor}"
+             Shell.NavBarIsVisible="False">
+
+    <ScrollView Padding="20">
+        <VerticalStackLayout Spacing="30">
+
+            <!-- Welcome Header -->
+            <VerticalStackLayout Spacing="10" Margin="0,20,0,0">
+                <Label Text="Welcome to FoodBook"
+                       FontSize="32"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       TextColor="{DynamicResource Primary}" />
+                
+                <Label Text="Let's set up your app"
+                       FontSize="18"
+                       HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       TextColor="{DynamicResource Gray600}" />
+            </VerticalStackLayout>
+
+            <!-- Language Selection -->
+            <Frame BackgroundColor="{DynamicResource Gray100}"
+                   BorderColor="{DynamicResource Gray300}"
+                   CornerRadius="10"
+                   Padding="20">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="Choose your language"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           TextColor="{DynamicResource Primary}" />
+                    
+                    <Label Text="Select the language for the application interface"
+                           FontSize="14"
+                           TextColor="{DynamicResource Gray600}" />
+                    
+                    <Picker ItemsSource="{Binding AvailableLanguages}"
+                            SelectedItem="{Binding SelectedLanguage}"
+                            FontSize="16"
+                            BackgroundColor="{DynamicResource White}"
+                            TextColor="{DynamicResource Black}" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Basic Ingredients Section -->
+            <Frame BackgroundColor="{DynamicResource Gray100}"
+                   BorderColor="{DynamicResource Gray300}"
+                   CornerRadius="10"
+                   Padding="20">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="Basic ingredients"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           TextColor="{DynamicResource Primary}" />
+                    
+                    <Label Text="Would you like to install a set of basic ingredients to get started?"
+                           FontSize="14"
+                           TextColor="{DynamicResource Gray600}" />
+                    
+                    <Label Text="This will add common ingredients like eggs, milk, flour, etc. with nutritional information. You can always add your own ingredients later."
+                           FontSize="12"
+                           TextColor="{DynamicResource Gray500}"
+                           Margin="0,5,0,10" />
+                    
+                    <VerticalStackLayout Spacing="10">
+                        <RadioButton Content="Yes, install basic ingredients"
+                                     IsChecked="{Binding InstallBasicIngredients}"
+                                     GroupName="IngredientsChoice"
+                                     FontSize="14"
+                                     TextColor="{DynamicResource Black}" />
+                        
+                        <RadioButton Content="No, I'll add my own"
+                                     IsChecked="{Binding InstallBasicIngredients, Converter={StaticResource InvertedBoolConverter}}"
+                                     GroupName="IngredientsChoice"
+                                     FontSize="14"
+                                     TextColor="{DynamicResource Black}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Status Message -->
+            <Label Text="{Binding StatusMessage}"
+                   FontSize="14"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center"
+                   TextColor="{DynamicResource Primary}"
+                   IsVisible="{Binding StatusMessage, Converter={StaticResource StringIsNotNullOrEmptyConverter}}"
+                   Margin="0,10,0,0" />
+
+            <!-- Complete Setup Button -->
+            <Button Text="Complete Setup"
+                    Command="{Binding CompleteSetupCommand}"
+                    IsEnabled="{Binding IsCompleting, Converter={StaticResource InvertedBoolConverter}}"
+                    BackgroundColor="{DynamicResource Primary}"
+                    TextColor="{DynamicResource White}"
+                    FontSize="18"
+                    FontAttributes="Bold"
+                    HeightRequest="50"
+                    CornerRadius="25"
+                    Margin="0,20,0,40" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

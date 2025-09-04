@@ -13,6 +13,8 @@ public class PreferencesService : IPreferencesService
     private const string ColorfulBackgroundEnabledKey = "ColorfulBackgroundEnabled"; // NEW
     private const string SelectedFontFamilyKey = "SelectedFontFamily";
     private const string SelectedFontSizeKey = "SelectedFontSize";
+    private const string IsFirstLaunchKey = "IsFirstLaunch";
+    private const string InstallBasicIngredientsKey = "InstallBasicIngredients";
     
     private static readonly string[] SupportedCultures = { "en", "pl-PL" };
 
@@ -286,6 +288,81 @@ public class PreferencesService : IPreferencesService
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to save font settings: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc/>
+    public bool IsFirstLaunch()
+    {
+        try
+        {
+            // Domyœlnie true - jeœli nie ma zapisanej preferencji, to oznacza pierwszy start
+            var isFirstLaunch = Preferences.Get(IsFirstLaunchKey, true);
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Is first launch: {isFirstLaunch}");
+            return isFirstLaunch;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to check first launch: {ex.Message}");
+            return true; // W razie b³êdu, zak³adamy ¿e to pierwszy start
+        }
+    }
+
+    /// <inheritdoc/>
+    public void MarkInitialSetupCompleted()
+    {
+        try
+        {
+            Preferences.Set(IsFirstLaunchKey, false);
+            System.Diagnostics.Debug.WriteLine("[PreferencesService] Marked initial setup as completed");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to mark setup completed: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc/>
+    public void ResetToFirstLaunch()
+    {
+        try
+        {
+            Preferences.Set(IsFirstLaunchKey, true);
+            System.Diagnostics.Debug.WriteLine("[PreferencesService] Reset application to first launch state");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to reset to first launch: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc/>
+    public bool GetInstallBasicIngredients()
+    {
+        try
+        {
+            var install = Preferences.Get(InstallBasicIngredientsKey, true); // Domyœlnie true
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Install basic ingredients: {install}");
+            return install;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to get install basic ingredients preference: {ex.Message}");
+            return true;
+        }
+    }
+
+    /// <inheritdoc/>
+    public void SaveInstallBasicIngredients(bool install)
+    {
+        try
+        {
+            Preferences.Set(InstallBasicIngredientsKey, install);
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved install basic ingredients preference: {install}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to save install basic ingredients preference: {ex.Message}");
         }
     }
 }

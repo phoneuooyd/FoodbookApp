@@ -16,42 +16,32 @@ namespace FoodbookApp
         public static IServiceProvider? ServiceProvider { get; private set; }
         public static MauiApp CreateMauiApp()
         {
+            System.Diagnostics.Debug.WriteLine("[MauiProgram] CreateMauiApp start");
             var builder = MauiApp.CreateBuilder();
             builder
-                .UseMauiApp<App>() // <-- App.xaml.cs
+                .UseMauiApp<App>()
                 .UseMauiCommunityToolkit()
                 .ConfigureFonts(fonts =>
                 {
-                    // OpenSans fonts (original)
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-                    
-                    // Barlow Condensed font family - multiple weights
                     fonts.AddFont("BarlowCondensed-Regular.ttf", "BarlowCondensedRegular");
                     fonts.AddFont("BarlowCondensed-Light.ttf", "BarlowCondensedLight");
                     fonts.AddFont("BarlowCondensed-Medium.ttf", "BarlowCondensedMedium");
                     fonts.AddFont("BarlowCondensed-SemiBold.ttf", "BarlowCondensedSemibold");
                     fonts.AddFont("BarlowCondensed-ExtraLight.ttf", "BarlowCondensedExtraLight");
                     fonts.AddFont("BarlowCondensed-Thin.ttf", "BarlowCondensedThin");
-                    
-                    // Decorative and display fonts
                     fonts.AddFont("CherryBombOne-Regular.ttf", "CherryBombOneRegular");
                     fonts.AddFont("DynaPuff-Regular.ttf", "DynaPuffRegular");
                     fonts.AddFont("DynaPuff-Medium.ttf", "DynaPuffMedium");
                     fonts.AddFont("DynaPuff-SemiBold.ttf", "DynaPuffSemibold");
                     fonts.AddFont("DynaPuff-Bold.ttf", "DynaPuffBold");
-                    
-                    // Modern and geometric fonts
                     fonts.AddFont("Gruppo-Regular.ttf", "GruppoRegular");
                     fonts.AddFont("PoiretOne-Regular.ttf", "PoiretOneRegular");
-                    
-                    // Handwritten and script fonts
                     fonts.AddFont("JustMeAgainDownHere-Regular.ttf", "JustMeAgainDownHereRegular");
                     fonts.AddFont("Kalam-Regular.ttf", "KalamRegular");
                     fonts.AddFont("SendFlowers-Regular.ttf", "SendFlowersRegular");
                     fonts.AddFont("Yellowtail-Regular.ttf", "YellowtailRegular");
-                    
-                    // Serif font
                     fonts.AddFont("Slabo27px-Regular.ttf", "Slabo27pxRegular");
                 });
 
@@ -59,14 +49,14 @@ namespace FoodbookApp
             builder.Logging.AddDebug();
 #endif
 
-            // Rejestracja EFCore DbContext
+            System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering DbContext");
             builder.Services.AddDbContext<AppDbContext>(options =>
             {
                 var dbPath = Path.Combine(FileSystem.AppDataDirectory, "foodbook.db");
                 options.UseSqlite($"Filename={dbPath}");
             });
 
-            // Rejestracja serwisów i VM
+            System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering services & view models");
             builder.Services.AddScoped<IRecipeService, RecipeService>();
             builder.Services.AddScoped<IPlannerService, PlannerService>();
             builder.Services.AddScoped<IShoppingListService, ShoppingListService>();
@@ -74,10 +64,9 @@ namespace FoodbookApp
             builder.Services.AddScoped<IIngredientService, IngredientService>();
             builder.Services.AddSingleton<ILocalizationService, LocalizationService>();
             builder.Services.AddSingleton<LocalizationResourceManager>();
-            builder.Services.AddSingleton<IPreferencesService, PreferencesService>(); 
-            builder.Services.AddSingleton<IThemeService, ThemeService>(); 
-            builder.Services.AddSingleton<IFontService, FontService>(); 
-
+            builder.Services.AddSingleton<IPreferencesService, PreferencesService>();
+            builder.Services.AddSingleton<IThemeService, ThemeService>();
+            builder.Services.AddSingleton<IFontService, FontService>();
             builder.Services.AddScoped<RecipeViewModel>();
             builder.Services.AddTransient<AddRecipeViewModel>();
             builder.Services.AddScoped<PlannerViewModel>();
@@ -87,27 +76,29 @@ namespace FoodbookApp
             builder.Services.AddScoped<IngredientsViewModel>();
             builder.Services.AddScoped<IngredientFormViewModel>();
             builder.Services.AddScoped<PlannedMealFormViewModel>();
-            builder.Services.AddScoped<ArchiveViewModel>(); 
+            builder.Services.AddScoped<ArchiveViewModel>();
             builder.Services.AddSingleton<SettingsViewModel>();
+            builder.Services.AddTransient<SetupWizardViewModel>();
 
-            // Rejestracja HttpClient i RecipeImporter
+            // Http / import
             builder.Services.AddScoped<HttpClient>();
             builder.Services.AddScoped<RecipeImporter>();
 
-            // Rejestracja widoków 
+            System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering pages");
             builder.Services.AddScoped<HomePage>();
             builder.Services.AddScoped<RecipesPage>();
-            builder.Services.AddTransient<AddRecipePage>(); 
+            builder.Services.AddTransient<AddRecipePage>();
             builder.Services.AddScoped<IngredientsPage>();
             builder.Services.AddScoped<IngredientFormPage>();
             builder.Services.AddScoped<PlannerPage>();
             builder.Services.AddScoped<MealFormPage>();
             builder.Services.AddScoped<ShoppingListPage>();
             builder.Services.AddScoped<ShoppingListDetailPage>();
-            builder.Services.AddScoped<ArchivePage>(); 
-            builder.Services.AddScoped<SettingsPage>(); 
+            builder.Services.AddScoped<ArchivePage>();
+            builder.Services.AddScoped<SettingsPage>();
+            builder.Services.AddScoped<SetupWizardPage>(); // zmiana: Scoped zamiast Transient aby uniknąć wielokrotnej inicjalizacji w trakcie pierwszego startu
 
-            // Rejestracja routów do Shell
+            System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering routes");
             Routing.RegisterRoute(nameof(HomePage), typeof(HomePage));
             Routing.RegisterRoute(nameof(RecipesPage), typeof(RecipesPage));
             Routing.RegisterRoute(nameof(AddRecipePage), typeof(AddRecipePage));
@@ -117,29 +108,32 @@ namespace FoodbookApp
             Routing.RegisterRoute(nameof(MealFormPage), typeof(MealFormPage));
             Routing.RegisterRoute(nameof(ShoppingListPage), typeof(ShoppingListPage));
             Routing.RegisterRoute(nameof(ShoppingListDetailPage), typeof(ShoppingListDetailPage));
-            Routing.RegisterRoute(nameof(ArchivePage), typeof(ArchivePage)); 
-            Routing.RegisterRoute(nameof(SettingsPage), typeof(SettingsPage)); 
-            
+            Routing.RegisterRoute(nameof(ArchivePage), typeof(ArchivePage));
+            Routing.RegisterRoute(nameof(SettingsPage), typeof(SettingsPage));
+            Routing.RegisterRoute(nameof(SetupWizardPage), typeof(SetupWizardPage));
 
-            // Build aplikacji
+            System.Diagnostics.Debug.WriteLine("[MauiProgram] Building app");
             var app = builder.Build();
             ServiceProvider = app.Services;
+            System.Diagnostics.Debug.WriteLine("[MauiProgram] ServiceProvider created");
 
-            // --- NEW: Force early initialization of settings/theme so notification panel (system bars) reflects user prefs at startup ---
             try
             {
-                var settingsVm = app.Services.GetService<SettingsViewModel>(); // ctor applies saved theme/color/font
+                System.Diagnostics.Debug.WriteLine("[MauiProgram] Early theme init start");
+                var settingsVm = app.Services.GetService<SettingsViewModel>();
                 var themeService = app.Services.GetService<IThemeService>();
-                themeService?.UpdateSystemBars(); // ensure system bars updated immediately
+                themeService?.UpdateSystemBars();
+                System.Diagnostics.Debug.WriteLine("[MauiProgram] Early theme init done");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[MauiProgram] Early theme init failed: {ex.Message}");
             }
 
-            // Inicjalizacja bazy danych w tle
+            System.Diagnostics.Debug.WriteLine("[MauiProgram] Starting background DB seed");
             Task.Run(() => SeedDatabaseAsync(app.Services));
 
+            System.Diagnostics.Debug.WriteLine("[MauiProgram] CreateMauiApp finished");
             return app;
         }
 
@@ -398,30 +392,8 @@ namespace FoodbookApp
             }
         }
 
-        private static string GetDefaultValueForType(string sqliteType)
-        {
-            return sqliteType.ToUpperInvariant() switch
-            {
-                "INTEGER" => "0",
-                "REAL" => "0.0",
-                "TEXT" => "''",
-                "BLOB" => "''",
-                _ => "''"
-            };
-        }
-
-        private static string MapSqliteType(string type)
-        {
-            // SQLite has dynamic typing, but we normalize to expected types
-            return type.ToUpperInvariant() switch
-            {
-                "INT" or "INTEGER" or "BIGINT" => "INTEGER",
-                "REAL" or "DOUBLE" or "FLOAT" => "REAL", 
-                "TEXT" or "VARCHAR" or "CHAR" => "TEXT",
-                "BLOB" => "BLOB",
-                _ => "TEXT"
-            };
-        }
+        private static string GetDefaultValueForType(string sqliteType) => sqliteType.ToUpperInvariant() switch { "INTEGER" => "0", "REAL" => "0.0", "TEXT" => "''", "BLOB" => "''", _ => "''" };
+        private static string MapSqliteType(string type) => type.ToUpperInvariant() switch { "INT" or "INTEGER" or "BIGINT" => "INTEGER", "REAL" or "DOUBLE" or "FLOAT" => "REAL", "TEXT" or "VARCHAR" or "CHAR" => "TEXT", "BLOB" => "BLOB", _ => "TEXT" };
 
         private static async Task ApplyDatabaseMigrationsAsync(AppDbContext db)
         {
@@ -429,10 +401,7 @@ namespace FoodbookApp
             {
                 LogDebug("Applying database migrations");
                 
-                // Wykonaj walidację schematu bazy danych
-                await ValidateDatabaseSchemaAsync(db);
-                
-                // Sprawdź wersję schematu i wykonaj odpowiednie migracje
+                // usunięto podwójne wywołanie ValidateDatabaseSchemaAsync aby nie dublować operacji
                 await EnsureDatabaseVersionAsync(db);
                 
                 LogDebug("All migrations applied successfully");
@@ -448,15 +417,11 @@ namespace FoodbookApp
         {
             try
             {
-                // Sprawdź czy tabela wersji istnieje
-                var tableExists = await db.Database.ExecuteSqlRawAsync(
-                    "CREATE TABLE IF NOT EXISTS \"DatabaseVersion\" (\"Version\" INTEGER PRIMARY KEY)");
+                _ = await db.Database.ExecuteSqlRawAsync("CREATE TABLE IF NOT EXISTS \"DatabaseVersion\" (\"Version\" INTEGER PRIMARY KEY)");
                 
-                // Pobierz aktualną wersję
                 var currentVersion = await GetDatabaseVersionAsync(db);
                 LogDebug($"Current database version: {currentVersion}");
                 
-                // Wykonaj migracje w zależności od wersji
                 if (currentVersion < 1)
                 {
                     await MigrateToVersion1Async(db);
@@ -487,21 +452,9 @@ namespace FoodbookApp
             }
         }
 
-        private static async Task SetDatabaseVersionAsync(AppDbContext db, int version)
-        {
-            await db.Database.ExecuteSqlRawAsync(
+        private static async Task SetDatabaseVersionAsync(AppDbContext db, int version) => await db.Database.ExecuteSqlRawAsync(
                 "INSERT OR REPLACE INTO DatabaseVersion (Version) VALUES ({0})", version);
-        }
-
-        private static async Task MigrateToVersion1Async(AppDbContext db)
-        {
-            LogDebug("Migrating to version 1");
-            
-            // Migracja do wersji 1: walidacja pełnego schematu bazy danych
-            await ValidateDatabaseSchemaAsync(db);
-            
-            LogDebug("Migration to version 1 completed");
-        }
+        private static async Task MigrateToVersion1Async(AppDbContext db) { LogDebug("Migrating to version 1"); await ValidateDatabaseSchemaAsync(db); LogDebug("Migration to version 1 completed"); }
 
         private static async Task SeedDatabaseAsync(IServiceProvider services)
         {
@@ -531,19 +484,8 @@ namespace FoodbookApp
         }
 
         // Centralized logging methods
-        private static void LogDebug(string message)
-        {
-            System.Diagnostics.Debug.WriteLine($"[MauiProgram] {message}");
-        }
-
-        private static void LogWarning(string message)
-        {
-            System.Diagnostics.Debug.WriteLine($"[MauiProgram] WARNING: {message}");
-        }
-
-        private static void LogError(string message)
-        {
-            System.Diagnostics.Debug.WriteLine($"[MauiProgram] ERROR: {message}");
-        }
+        private static void LogDebug(string message) => System.Diagnostics.Debug.WriteLine($"[MauiProgram] {message}");
+        private static void LogWarning(string message) => System.Diagnostics.Debug.WriteLine($"[MauiProgram] WARNING: {message}");
+        private static void LogError(string message) => System.Diagnostics.Debug.WriteLine($"[MauiProgram] ERROR: {message}");
     }
 }

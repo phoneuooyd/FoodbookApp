@@ -96,4 +96,32 @@ public interface IPreferencesService
     /// </summary>
     /// <param name="settings">The font settings to save</param>
     void SaveFontSettings(FontSettings settings);
+
+    /// <summary>
+    /// Checks if this is the first time the application is launched
+    /// </summary>
+    /// <returns>True if first launch, false otherwise</returns>
+    bool IsFirstLaunch();
+    
+    /// <summary>
+    /// Marks the application as having completed the initial setup
+    /// </summary>
+    void MarkInitialSetupCompleted();
+    
+    /// <summary>
+    /// Resets the application to first launch state (for testing purposes)
+    /// </summary>
+    void ResetToFirstLaunch();
+    
+    /// <summary>
+    /// Gets whether the user chose to install basic ingredients
+    /// </summary>
+    /// <returns>True if basic ingredients should be installed</returns>
+    bool GetInstallBasicIngredients();
+    
+    /// <summary>
+    /// Saves the user's choice about installing basic ingredients
+    /// </summary>
+    /// <param name="install">True if basic ingredients should be installed</param>
+    void SaveInstallBasicIngredients(bool install);
 }

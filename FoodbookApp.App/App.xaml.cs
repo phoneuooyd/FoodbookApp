@@ -2,6 +2,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Foodbook.Services;
 using Foodbook.Models;
+using Foodbook.Views;
+using Foodbook.ViewModels;
 
 namespace FoodbookApp
 {
@@ -11,45 +13,70 @@ namespace FoodbookApp
         private readonly IPreferencesService _preferencesService;
         private readonly IThemeService _themeService;
         private readonly IFontService _fontService;
+        private bool _globalHandlersRegistered = false;
 
         public App(ILocalizationService localizationService, IPreferencesService preferencesService, IThemeService themeService, IFontService fontService)
         {
             try
             {
-                // Initialize XAML components first
+                System.Diagnostics.Debug.WriteLine("[App][Ctor] Starting constructor");
                 InitializeComponent();
-                
+                System.Diagnostics.Debug.WriteLine("[App][Ctor] XAML components initialized");
                 _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
                 _preferencesService = preferencesService ?? throw new ArgumentNullException(nameof(preferencesService));
                 _themeService = themeService ?? throw new ArgumentNullException(nameof(themeService));
                 _fontService = fontService ?? throw new ArgumentNullException(nameof(fontService));
-                
-                // Load saved language preference or use system default
+
+                RegisterGlobalExceptionHandlers();
+
                 var savedCulture = LoadSavedCulture();
                 _localizationService.SetCulture(savedCulture);
-                
-                // Load and apply saved theme
+                System.Diagnostics.Debug.WriteLine($"[App][Ctor] Culture applied: {savedCulture}");
+
                 var savedTheme = LoadSavedTheme();
                 _themeService.SetTheme(savedTheme);
-                
-                // Load and apply saved color theme
+                System.Diagnostics.Debug.WriteLine($"[App][Ctor] Theme applied: {savedTheme}");
+
                 var savedColorTheme = LoadSavedColorTheme();
                 _themeService.SetColorTheme(savedColorTheme);
-                
-                // Load and apply saved colorful background setting
+                System.Diagnostics.Debug.WriteLine($"[App][Ctor] Color theme applied: {savedColorTheme}");
+
                 var isColorfulBackgroundEnabled = LoadSavedColorfulBackgroundSetting();
                 _themeService.SetColorfulBackground(isColorfulBackgroundEnabled);
-                
-                // Load and apply saved font settings
+                System.Diagnostics.Debug.WriteLine($"[App][Ctor] Colorful background: {isColorfulBackgroundEnabled}");
+
                 LoadSavedFontSettings();
-                
                 System.Diagnostics.Debug.WriteLine("[App] Application initialization completed successfully");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[App] Critical error during initialization: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"[App] Stack trace: {ex.StackTrace}");
-                throw; // Re-throw to let the framework handle it
+                throw;
+            }
+        }
+
+        private void RegisterGlobalExceptionHandlers()
+        {
+            if (_globalHandlersRegistered) return;
+            try
+            {
+                AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+                {
+                    var ex = e.ExceptionObject as Exception;
+                    System.Diagnostics.Debug.WriteLine($"[Global][AppDomain] Unhandled: {ex?.Message}\n{ex?.StackTrace}");
+                };
+                TaskScheduler.UnobservedTaskException += (s, e) =>
+                {
+                    System.Diagnostics.Debug.WriteLine($"[Global][TaskScheduler] Unobserved: {e.Exception.Message}\n{e.Exception.StackTrace}");
+                    e.SetObserved();
+                };
+                _globalHandlersRegistered = true;
+                System.Diagnostics.Debug.WriteLine("[App] Global exception handlers registered");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[App] Failed to register global handlers: {ex.Message}");
             }
         }
 
@@ -58,25 +85,21 @@ namespace FoodbookApp
             try
             {
                 var savedCulture = _preferencesService.GetSavedLanguage();
-                
                 if (!string.IsNullOrEmpty(savedCulture))
                 {
                     System.Diagnostics.Debug.WriteLine($"[App] Loaded saved culture preference: {savedCulture}");
                     return savedCulture;
                 }
-                
-                // Fall back to system culture if no preference saved
                 var systemCulture = System.Globalization.CultureInfo.CurrentUICulture.Name;
                 var supportedCultures = _preferencesService.GetSupportedCultures();
                 var fallbackCulture = supportedCultures.Contains(systemCulture) ? systemCulture : supportedCultures[0];
-                
                 System.Diagnostics.Debug.WriteLine($"[App] No saved preference, using fallback: {fallbackCulture}");
                 return fallbackCulture;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[App] Failed to load culture preference: {ex.Message}");
-                return "en"; // Default to English if everything fails
+                return "en";
             }
         }
 
@@ -91,7 +114,7 @@ namespace FoodbookApp
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[App] Failed to load theme preference: {ex.Message}");
-                return Foodbook.Models.AppTheme.System; // Default to system theme if everything fails
+                return Foodbook.Models.AppTheme.System;
             }
         }
 
@@ -106,7 +129,7 @@ namespace FoodbookApp
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[App] Failed to load color theme preference: {ex.Message}");
-                return AppColorTheme.Default; // Default to default color theme if everything fails
+                return AppColorTheme.Default;
             }
         }
 
@@ -114,19 +137,15 @@ namespace FoodbookApp
         {
             try
             {
-                // Load saved font settings from preferences
                 _fontService.LoadSavedSettings();
-                
-                System.Diagnostics.Debug.WriteLine($"[App] Font settings loaded successfully");
+                System.Diagnostics.Debug.WriteLine("[App] Font settings loaded successfully");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[App] Failed to load font settings: {ex.Message}");
-                // FontService will use defaults if loading fails
             }
         }
 
-        // NEW: Load saved colorful background setting
         private bool LoadSavedColorfulBackgroundSetting()
         {
             try
@@ -138,13 +157,35 @@ namespace FoodbookApp
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[App] Failed to load colorful background preference: {ex.Message}");
-                return false; // Default to gray backgrounds if everything fails
+                return false;
             }
         }
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            return new Window(new AppShell());
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("[App] CreateWindow invoked");
+                if (_preferencesService.IsFirstLaunch())
+                {
+                    System.Diagnostics.Debug.WriteLine("[App] First launch detected - resolving SetupWizardPage from DI");
+                    var setupPage = MauiProgram.ServiceProvider?.GetService<SetupWizardPage>();
+                    if (setupPage == null)
+                    {
+                        System.Diagnostics.Debug.WriteLine("[App] DI failed to resolve SetupWizardPage - fallback manual creation");
+                        var vm = MauiProgram.ServiceProvider?.GetRequiredService<SetupWizardViewModel>();
+                        setupPage = new SetupWizardPage(vm!);
+                    }
+                    return new Window(setupPage);
+                }
+                System.Diagnostics.Debug.WriteLine("[App] Returning user - showing main shell");
+                return new Window(new AppShell());
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[App] CreateWindow crash: {ex.Message}\n{ex.StackTrace}");
+                throw;
+            }
         }
     }
 }

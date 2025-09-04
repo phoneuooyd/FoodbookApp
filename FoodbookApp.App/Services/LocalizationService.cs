@@ -31,6 +31,7 @@ public class LocalizationService : ILocalizationService
         PlannerPageResources.Culture = culture;
         RecipesPageResources.Culture = culture;
         SettingsPageResources.Culture = culture;
+        SetupWizardResources.Culture = culture;
         ShoppingListDetailPageResources.Culture = culture;
         ShoppingListPageResources.Culture = culture;
         TabBarResources.Culture = culture;
