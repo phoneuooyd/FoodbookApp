@@ -45,5 +45,17 @@ namespace Foodbook.Services
         /// Refreshes system status/navigation bar colors after external changes
         /// </summary>
         void UpdateSystemBars();
+
+        /// <summary>
+        /// Sets whether to use colorful page backgrounds instead of neutral gray
+        /// </summary>
+        /// <param name="useColorfulBackground">True for colorful, false for gray</param>
+        void SetColorfulBackground(bool useColorfulBackground);
+        
+        /// <summary>
+        /// Gets whether colorful page backgrounds are enabled
+        /// </summary>
+        /// <returns>True if colorful backgrounds are enabled</returns>
+        bool GetIsColorfulBackgroundEnabled();
     }
 }

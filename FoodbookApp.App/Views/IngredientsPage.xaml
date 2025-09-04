@@ -11,7 +11,7 @@
              x:Name="ThisPage"
              x:DataType="vm:IngredientsViewModel"
              Title="{loc:Translate Resource=IngredientsPageResources, Key=Title}"
-             BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}">
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
 
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />

@@ -36,6 +36,10 @@ namespace FoodbookApp
                 var savedColorTheme = LoadSavedColorTheme();
                 _themeService.SetColorTheme(savedColorTheme);
                 
+                // Load and apply saved colorful background setting
+                var isColorfulBackgroundEnabled = LoadSavedColorfulBackgroundSetting();
+                _themeService.SetColorfulBackground(isColorfulBackgroundEnabled);
+                
                 // Load and apply saved font settings
                 LoadSavedFontSettings();
                 
@@ -119,6 +123,22 @@ namespace FoodbookApp
             {
                 System.Diagnostics.Debug.WriteLine($"[App] Failed to load font settings: {ex.Message}");
                 // FontService will use defaults if loading fails
+            }
+        }
+
+        // NEW: Load saved colorful background setting
+        private bool LoadSavedColorfulBackgroundSetting()
+        {
+            try
+            {
+                var isEnabled = _preferencesService.GetIsColorfulBackgroundEnabled();
+                System.Diagnostics.Debug.WriteLine($"[App] Loaded colorful background preference: {isEnabled}");
+                return isEnabled;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[App] Failed to load colorful background preference: {ex.Message}");
+                return false; // Default to gray backgrounds if everything fails
             }
         }
 

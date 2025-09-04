@@ -13,6 +13,7 @@ namespace Foodbook.Services
     {
         private Foodbook.Models.AppTheme _currentTheme = Foodbook.Models.AppTheme.System;
         private AppColorTheme _currentColorTheme = AppColorTheme.Default;
+        private bool _isColorfulBackgroundEnabled = false; // NEW: colorful background option
         private readonly Dictionary<AppColorTheme, ThemeColors> _availableColorThemes;
 
         public ThemeService()
@@ -24,6 +25,17 @@ namespace Foodbook.Services
         public AppColorTheme GetCurrentColorTheme() => _currentColorTheme;
         public Dictionary<AppColorTheme, ThemeColors> GetAvailableColorThemes() => _availableColorThemes;
         public ThemeColors GetThemeColors(AppColorTheme colorTheme) => _availableColorThemes.TryGetValue(colorTheme, out var colors) ? colors : _availableColorThemes[AppColorTheme.Default];
+        
+        // NEW: Colorful background methods
+        public bool GetIsColorfulBackgroundEnabled() => _isColorfulBackgroundEnabled;
+        
+        public void SetColorfulBackground(bool useColorfulBackground)
+        {
+            _isColorfulBackgroundEnabled = useColorfulBackground;
+            // Immediately reapply color theme to update background colors
+            ApplyColorTheme(_currentColorTheme);
+            System.Diagnostics.Debug.WriteLine($"[ThemeService] Colorful background set to: {useColorfulBackground}");
+        }
 
         public void SetTheme(Foodbook.Models.AppTheme theme)
         {
@@ -139,6 +151,25 @@ namespace Foodbook.Services
                 app.Resources["SecondaryBrush"] = new SolidColorBrush(secondary);
                 app.Resources["TertiaryBrush"] = new SolidColorBrush(tertiary);
 
+                // NEW: Dynamic page background colors based on colorful background setting with improved intensity
+                Color pageBackground;
+                if (_isColorfulBackgroundEnabled)
+                {
+                    // ENHANCED: Better intensity balance for light/dark themes
+                    var secondaryColor = secondary;
+                    pageBackground = isDark ? 
+                        Color.FromRgba(secondaryColor.Red, secondaryColor.Green, secondaryColor.Blue, 0.25) : // Dark themes: intense/visible tint
+                        Color.FromRgba(secondaryColor.Red, secondaryColor.Green, secondaryColor.Blue, 0.36);   // Light themes: MUCH MORE visible color (3x increase - 200% boost!)
+                }
+                else
+                {
+                    // Default neutral gray backgrounds
+                    pageBackground = isDark ? Color.FromArgb("#121212") : Color.FromArgb("#F5F5F5"); // Gray100/Gray950 equivalent
+                }
+                
+                app.Resources["PageBackgroundColor"] = pageBackground;
+                app.Resources["PageBackgroundBrush"] = new SolidColorBrush(pageBackground);
+
                 var buttonPrimaryText = ChooseReadableEnhanced(primary, Colors.White, Color.FromArgb("#000000"));
                 var alt = RelativeLuminance(primary) > 0.45 ? Colors.Black : Colors.White;
                 buttonPrimaryText = EnsureContrastEnhanced(buttonPrimaryText, primary, alt);
@@ -165,6 +196,8 @@ namespace Foodbook.Services
                 app.Resources["ShellBackgroundColor"] = shellTitleBg;
 
                 ApplySystemBars(shellTitleBg);
+                
+                System.Diagnostics.Debug.WriteLine($"[ThemeService] Applied color theme {colorTheme} with colorful background: {_isColorfulBackgroundEnabled}");
             }
             catch (Exception ex)
             {
@@ -270,6 +303,30 @@ namespace Foodbook.Services
                     PrimaryLight = Color.FromArgb("#424242"), SecondaryLight = Color.FromArgb("#F5F5F5"), TertiaryLight = Color.FromArgb("#212121"), AccentLight = Color.FromArgb("#757575"),
                     PrimaryDark = Color.FromArgb("#E0E0E0"), SecondaryDark = Color.FromArgb("#616161"), TertiaryDark = Color.FromArgb("#9E9E9E"), AccentDark = Color.FromArgb("#BDBDBD"),
                     PrimaryTextLight = Color.FromArgb("#212121"), SecondaryTextLight = Color.FromArgb("#616161"), PrimaryTextDark = Color.FromArgb("#FFFFFF"), SecondaryTextDark = Color.FromArgb("#E0E0E0")
+                },
+                // NEW: Navy Theme (Ciemny Niebieski)
+                [AppColorTheme.Navy] = new ThemeColors
+                {
+                    Name = "Navy",
+                    PrimaryLight = Color.FromArgb("#1565C0"), SecondaryLight = Color.FromArgb("#E3F2FD"), TertiaryLight = Color.FromArgb("#0D47A1"), AccentLight = Color.FromArgb("#1976D2"),
+                    PrimaryDark = Color.FromArgb("#64B5F6"), SecondaryDark = Color.FromArgb("#42A5F5"), TertiaryDark = Color.FromArgb("#2196F3"), AccentDark = Color.FromArgb("#64B5F6"),
+                    PrimaryTextLight = Color.FromArgb("#0D47A1"), SecondaryTextLight = Color.FromArgb("#1565C0"), PrimaryTextDark = Color.FromArgb("#E3F2FD"), SecondaryTextDark = Color.FromArgb("#BBDEFB")
+                },
+                // NEW: Autumn Theme (Br¹zowy Jesienny)
+                [AppColorTheme.Autumn] = new ThemeColors
+                {
+                    Name = "Autumn",
+                    PrimaryLight = Color.FromArgb("#8D6E63"), SecondaryLight = Color.FromArgb("#EFEBE9"), TertiaryLight = Color.FromArgb("#5D4037"), AccentLight = Color.FromArgb("#A1887F"),
+                    PrimaryDark = Color.FromArgb("#BCAAA4"), SecondaryDark = Color.FromArgb("#A1887F"), TertiaryDark = Color.FromArgb("#8D6E63"), AccentDark = Color.FromArgb("#BCAAA4"),
+                    PrimaryTextLight = Color.FromArgb("#3E2723"), SecondaryTextLight = Color.FromArgb("#5D4037"), PrimaryTextDark = Color.FromArgb("#EFEBE9"), SecondaryTextDark = Color.FromArgb("#D7CCC8")
+                },
+                // NEW: Mint Theme (Miêtowy)
+                [AppColorTheme.Mint] = new ThemeColors
+                {
+                    Name = "Mint",
+                    PrimaryLight = Color.FromArgb("#00ACC1"), SecondaryLight = Color.FromArgb("#E0F7FA"), TertiaryLight = Color.FromArgb("#006064"), AccentLight = Color.FromArgb("#26C6DA"),
+                    PrimaryDark = Color.FromArgb("#4DD0E1"), SecondaryDark = Color.FromArgb("#26C6DA"), TertiaryDark = Color.FromArgb("#00BCD4"), AccentDark = Color.FromArgb("#4DD0E1"),
+                    PrimaryTextLight = Color.FromArgb("#006064"), SecondaryTextLight = Color.FromArgb("#00838F"), PrimaryTextDark = Color.FromArgb("#E0F7FA"), SecondaryTextDark = Color.FromArgb("#B2EBF2")
                 }
             };
         }

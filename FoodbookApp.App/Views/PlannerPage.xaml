@@ -10,7 +10,7 @@
              x:Name="ThisPage"
              x:DataType="vm:PlannerViewModel"
              Title="{loc:Translate Resource=PlannerPageResources, Key=Title}"
-             BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}">
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
     </ContentPage.Resources>

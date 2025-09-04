@@ -10,7 +10,7 @@
              x:Name="HomePageView"
              x:DataType="vm:HomeViewModel"
              Title="{loc:Translate Resource=HomePageResources, Key=Title}"
-             BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}">
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         
@@ -112,7 +112,7 @@
 
     <ScrollView BackgroundColor="Transparent">
         <StackLayout Padding="16" Spacing="0" 
-                     BackgroundColor="Transparent">
+                     BackgroundColor="{DynamicResource PageBackgroundColor}">
             
             <!-- Header with gradient-like effect -->
             <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}" 

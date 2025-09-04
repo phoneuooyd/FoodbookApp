@@ -61,6 +61,13 @@
     <SolidColorBrush x:Key="PrimaryTextBrush" Color="{DynamicResource PrimaryText}"/>
     <SolidColorBrush x:Key="SecondaryTextBrush" Color="{DynamicResource SecondaryText}"/>
     
+    <!-- NEW: Dynamic Page Background Colors - Controlled by Settings > Colorful Backgrounds -->
+    <!-- When enabled: Uses tinted theme colors for page backgrounds -->
+    <!-- When disabled: Uses neutral gray backgrounds (default) -->
+    <!-- Updated dynamically by ThemeService.SetColorfulBackground() -->
+    <Color x:Key="PageBackgroundColor">#F5F5F5</Color>
+    <SolidColorBrush x:Key="PageBackgroundBrush" Color="{DynamicResource PageBackgroundColor}"/>
+    
     <!-- Static Brushes -->
     <SolidColorBrush x:Key="WhiteBrush" Color="{StaticResource White}"/>
     <SolidColorBrush x:Key="BlackBrush" Color="{StaticResource Black}"/>

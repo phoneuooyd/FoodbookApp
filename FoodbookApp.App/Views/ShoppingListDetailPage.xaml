@@ -9,7 +9,8 @@
              x:Class="Foodbook.Views.ShoppingListDetailPage"
              x:Name="ThisPage"
              x:DataType="vm:ShoppingListDetailViewModel"
-             Title="{loc:Translate Resource=ShoppingListDetailPageResources, Key=Title}">
+             Title="{loc:Translate Resource=ShoppingListDetailPageResources, Key=Title}"
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         <converters:DragStateToColorConverter x:Key="DragStateToColorConverter" />
