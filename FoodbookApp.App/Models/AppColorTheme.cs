@@ -6,6 +6,9 @@ namespace Foodbook.Models
         Nature,
         Warm,
         Vibrant,
-        Monochrome
+        Monochrome,
+        Navy,      // NEW: Ciemny niebieski
+        Autumn,    // NEW: Br¹zowy jesienny  
+        Mint       // NEW: Miêtowy
     }
 }

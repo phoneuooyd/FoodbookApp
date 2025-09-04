@@ -7,7 +7,7 @@
              x:Class="Foodbook.Views.SettingsPage"
              x:DataType="vm:SettingsViewModel"
              Title="{loc:Translate Resource=SettingsPageResources, Key=Title}"
-             BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}">
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
     
     <ContentPage.Resources>
         <!-- Converters -->
@@ -123,7 +123,7 @@
 
     <ScrollView BackgroundColor="Transparent">
         <StackLayout Padding="16" Spacing="0" 
-                     BackgroundColor="Transparent">
+                     BackgroundColor="{DynamicResource PageBackgroundColor}">
             
             <!-- Header with gradient-like effect -->
             <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}" 
@@ -165,6 +165,19 @@
                                 FontSize="{DynamicResource AppFontSize}"
                                 FontFamily="{DynamicResource AppFontFamily}"
                                 ItemDisplayBinding="{Binding ., Converter={StaticResource AppColorThemeToLocalizedStringConverter}}" />
+                        
+                        <!-- NEW: Colorful Background CheckBox -->
+                        <StackLayout Orientation="Horizontal" Margin="0,12,0,0" HorizontalOptions="Center">
+                            <CheckBox IsChecked="{Binding IsColorfulBackgroundEnabled}"
+                                      Color="{DynamicResource Primary}"
+                                      VerticalOptions="Center" />
+                            <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ColorfulBackgroundOption}"
+                                   FontSize="{DynamicResource AppSmallFontSize}"
+                                   FontFamily="{DynamicResource AppFontFamily}"
+                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"
+                                   VerticalOptions="Center"
+                                   Margin="8,0,0,0" />
+                        </StackLayout>
                         
                         <!-- Theme Preview -->
                         <Grid Margin="0,12,0,0" HeightRequest="40" ColumnDefinitions="*,*,*">

@@ -50,6 +50,18 @@ public interface IPreferencesService
     void SaveColorTheme(AppColorTheme colorTheme);
     
     /// <summary>
+    /// Gets the saved colorful background preference
+    /// </summary>
+    /// <returns>True if colorful backgrounds are enabled, false for gray</returns>
+    bool GetIsColorfulBackgroundEnabled();
+    
+    /// <summary>
+    /// Saves the colorful background preference
+    /// </summary>
+    /// <param name="isEnabled">True for colorful, false for gray</param>
+    void SaveColorfulBackground(bool isEnabled);
+    
+    /// <summary>
     /// Gets the saved font family preference
     /// </summary>
     /// <returns>The saved font family or Default if not set</returns>

@@ -10,6 +10,7 @@ public class PreferencesService : IPreferencesService
     private const string SelectedCultureKey = "SelectedCulture";
     private const string SelectedThemeKey = "SelectedTheme";
     private const string SelectedColorThemeKey = "SelectedColorTheme";
+    private const string ColorfulBackgroundEnabledKey = "ColorfulBackgroundEnabled"; // NEW
     private const string SelectedFontFamilyKey = "SelectedFontFamily";
     private const string SelectedFontSizeKey = "SelectedFontSize";
     
@@ -135,6 +136,36 @@ public class PreferencesService : IPreferencesService
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to save color theme preference: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc/>
+    public bool GetIsColorfulBackgroundEnabled()
+    {
+        try
+        {
+            var isEnabled = Preferences.Get(ColorfulBackgroundEnabledKey, false); // Default to false (gray backgrounds)
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Retrieved colorful background setting: {isEnabled}");
+            return isEnabled;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to get colorful background setting: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <inheritdoc/>
+    public void SaveColorfulBackground(bool isEnabled)
+    {
+        try
+        {
+            Preferences.Set(ColorfulBackgroundEnabledKey, isEnabled);
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved colorful background preference: {isEnabled}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to save colorful background preference: {ex.Message}");
         }
     }
 

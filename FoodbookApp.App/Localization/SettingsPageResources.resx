@@ -27,6 +27,9 @@
   <data name="ColorThemeDescription" xml:space="preserve">
     <value>App color palette</value>
   </data>
+  <data name="ColorfulBackgroundOption" xml:space="preserve">
+    <value>Colorful backgrounds</value>
+  </data>
   <data name="ColorThemeDefault" xml:space="preserve">
     <value>Default</value>
   </data>
@@ -41,6 +44,15 @@
   </data>
   <data name="ColorThemeMonochrome" xml:space="preserve">
     <value>Monochrome</value>
+  </data>
+  <data name="ColorThemeNavy" xml:space="preserve">
+    <value>Navy</value>
+  </data>
+  <data name="ColorThemeAutumn" xml:space="preserve">
+    <value>Autumn</value>
+  </data>
+  <data name="ColorThemeMint" xml:space="preserve">
+    <value>Mint</value>
   </data>
   <data name="ThemeTitle" xml:space="preserve">
     <value>Theme</value>

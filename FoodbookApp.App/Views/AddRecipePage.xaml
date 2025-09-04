@@ -9,7 +9,8 @@
              x:Class="Foodbook.Views.AddRecipePage"
              x:Name="ThisPage"
              x:DataType="vm:AddRecipeViewModel"
-             Title="{Binding Title}">
+             Title="{Binding Title}"
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         <converters:BoolToColorConverter x:Key="BoolToColorConverter" />

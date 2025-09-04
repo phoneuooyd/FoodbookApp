@@ -6,7 +6,8 @@
              x:Class="Foodbook.Views.MealFormPage"
              x:Name="ThisPage"
              x:DataType="vm:PlannedMealFormViewModel"
-             Title="Plan Meal">
+             Title="Plan Meal"
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
     <VerticalStackLayout Padding="20" Spacing="10">
 
         <!-- Header -->

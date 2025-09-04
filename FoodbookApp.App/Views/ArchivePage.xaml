@@ -9,7 +9,7 @@
              x:Name="ThisPage"
              x:DataType="vm:ArchiveViewModel"
              Title="{loc:Translate Resource=ArchivePageResources, Key=Title}"
-             BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}">
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
     
     <ContentPage.Resources>
         <DataTemplate x:Key="ArchivedPlanItemTemplate" x:DataType="models:Plan">

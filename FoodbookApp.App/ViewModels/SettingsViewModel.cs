@@ -79,6 +79,27 @@ public class SettingsViewModel : INotifyPropertyChanged
         }
     }
 
+    // NEW: Colorful background property
+    private bool _isColorfulBackgroundEnabled;
+    public bool IsColorfulBackgroundEnabled
+    {
+        get => _isColorfulBackgroundEnabled;
+        set
+        {
+            if (_isColorfulBackgroundEnabled == value) return;
+            _isColorfulBackgroundEnabled = value;
+            OnPropertyChanged(nameof(IsColorfulBackgroundEnabled));
+            
+            // Apply the colorful background setting immediately
+            _themeService.SetColorfulBackground(value);
+            
+            // Save the colorful background preference
+            _preferencesService.SaveColorfulBackground(value);
+            
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Colorful background changed to: {value}");
+        }
+    }
+
     private AppFontFamily _selectedFontFamily;
     public AppFontFamily SelectedFontFamily
     {
@@ -178,6 +199,7 @@ public class SettingsViewModel : INotifyPropertyChanged
         _selectedCulture = LoadSelectedCulture();
         _selectedTheme = LoadSelectedTheme();
         _selectedColorTheme = LoadSelectedColorTheme();
+        _isColorfulBackgroundEnabled = LoadColorfulBackgroundSetting(); // NEW
         LoadSelectedFontSettings();
         
         // Set the culture without triggering the setter to avoid recursive calls
@@ -186,6 +208,7 @@ public class SettingsViewModel : INotifyPropertyChanged
         // Apply saved theme and color theme
         _themeService.SetTheme(_selectedTheme);
         _themeService.SetColorTheme(_selectedColorTheme);
+        _themeService.SetColorfulBackground(_isColorfulBackgroundEnabled); // NEW: Apply saved colorful background setting
         
         // Apply saved font settings
         _fontService.LoadSavedSettings();
@@ -194,7 +217,7 @@ public class SettingsViewModel : INotifyPropertyChanged
         MigrateDatabaseCommand = new Command(async () => await MigrateDatabaseAsync(), () => CanExecuteMigration);
         ResetDatabaseCommand = new Command(async () => await ResetDatabaseAsync(), () => CanExecuteMigration);
         
-        System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Initialized with color theme support");
+        System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Initialized with color theme and colorful background support");
     }
 
     private async Task MigrateDatabaseAsync()
@@ -361,6 +384,22 @@ public class SettingsViewModel : INotifyPropertyChanged
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Failed to load color theme preference: {ex.Message}");
             return AppColorTheme.Default; // Default to default color theme
+        }
+    }
+
+    // NEW: Load colorful background setting
+    private bool LoadColorfulBackgroundSetting()
+    {
+        try
+        {
+            var isEnabled = _preferencesService.GetIsColorfulBackgroundEnabled();
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Loaded colorful background preference: {isEnabled}");
+            return isEnabled;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Failed to load colorful background preference: {ex.Message}");
+            return false; // Default to false (gray backgrounds)
         }
     }
 

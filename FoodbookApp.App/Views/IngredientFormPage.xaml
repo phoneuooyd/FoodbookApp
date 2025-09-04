@@ -8,7 +8,8 @@
              x:Class="Foodbook.Views.IngredientFormPage"
              x:Name="ThisPage"
              x:DataType="vm:IngredientFormViewModel"
-             Title="{Binding Title}">
+             Title="{Binding Title}"
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
     <ContentPage.Resources>
         <converters:StringToBoolConverter x:Key="StringToBoolConverter" />
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
