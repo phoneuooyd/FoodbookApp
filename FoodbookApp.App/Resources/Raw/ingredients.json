@@ -1,6 +1,7 @@
 [
   {
-    "name": "Jajka",
+    "name_pl": "Jajka",
+    "name_en": "Eggs",
     "calories": 77,
     "protein": 6.3,
     "fat": 5.3,
@@ -9,7 +10,8 @@
     "unit": "Piece"
   },
   {
-    "name": "Mleko 3.2",
+    "name_pl": "Mleko 3.2",
+    "name_en": "Milk 3.2%",
     "calories": 64,
     "protein": 3.4,
     "fat": 3.5,
@@ -18,7 +20,8 @@
     "unit": "Milliliter"
   },
   {
-    "name": "Mleko 2.0",
+    "name_pl": "Mleko 2.0",
+    "name_en": "Milk 2.0%",
     "calories": 48,
     "protein": 3.4,
     "fat": 2.0,
@@ -27,7 +30,8 @@
     "unit": "Milliliter"
   },
   {
-    "name": "Mleko 1.5",
+    "name_pl": "Mleko 1.5",
+    "name_en": "Milk 1.5%",
     "calories": 45,
     "protein": 3.4,
     "fat": 1.5,
@@ -36,7 +40,8 @@
     "unit": "Milliliter"
   },
   {
-    "name": "Masło",
+    "name_pl": "Masło",
+    "name_en": "Butter",
     "calories": 717,
     "protein": 0.9,
     "fat": 81.0,
@@ -45,7 +50,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Cukier",
+    "name_pl": "Cukier",
+    "name_en": "Sugar",
     "calories": 387,
     "protein": 0.0,
     "fat": 0.0,
@@ -54,7 +60,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Sól",
+    "name_pl": "Sól",
+    "name_en": "Salt",
     "calories": 0,
     "protein": 0.0,
     "fat": 0.0,
@@ -63,7 +70,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Mąka",
+    "name_pl": "Mąka",
+    "name_en": "Flour",
     "calories": 364,
     "protein": 10.0,
     "fat": 1.0,
@@ -72,7 +80,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Pierś z kurczaka",
+    "name_pl": "Pierś z kurczaka",
+    "name_en": "Chicken breast",
     "calories": 99,
     "protein": 22.0,
     "fat": 1.0,
@@ -81,7 +90,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Oliwa z oliwek",
+    "name_pl": "Oliwa z oliwek",
+    "name_en": "Olive oil",
     "calories": 884,
     "protein": 0.0,
     "fat": 100.0,
@@ -90,7 +100,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Czosnek",
+    "name_pl": "Czosnek",
+    "name_en": "Garlic",
     "calories": 150,
     "protein": 6.4,
     "fat": 0.5,
@@ -99,7 +110,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Cebula",
+    "name_pl": "Cebula",
+    "name_en": "Onion",
     "calories": 40,
     "protein": 1.1,
     "fat": 0.1,
@@ -108,7 +120,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Pomidor",
+    "name_pl": "Pomidor",
+    "name_en": "Tomato",
     "calories": 18,
     "protein": 0.9,
     "fat": 0.2,
@@ -117,7 +130,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Ziemniak surowy",
+    "name_pl": "Ziemniak surowy",
+    "name_en": "Raw potato",
     "calories": 77,
     "protein": 2.0,
     "fat": 0.1,
@@ -126,7 +140,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Ziemniak ugotowany",
+    "name_pl": "Ziemniak ugotowany",
+    "name_en": "Cooked potato",
     "calories": 70,
     "protein": 2.0,
     "fat": 0.1,
@@ -135,7 +150,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Marchew",
+    "name_pl": "Marchew",
+    "name_en": "Carrot",
     "calories": 41,
     "protein": 1.0,
     "fat": 0.2,
@@ -144,7 +160,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Ser żółty",
+    "name_pl": "Ser żółty",
+    "name_en": "Cheddar cheese",
     "calories": 350,
     "protein": 25.0,
     "fat": 27.0,
@@ -153,7 +170,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Ryż basmati",
+    "name_pl": "Ryż basmati",
+    "name_en": "Basmati rice",
     "calories": 349,
     "protein": 7,
     "fat": 1.2,
@@ -162,7 +180,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Ryż parboiled",
+    "name_pl": "Ryż parboiled",
+    "name_en": "Parboiled rice",
     "calories": 360,
     "protein": 7.5,
     "fat": 0.7,
@@ -171,7 +190,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Makaron",
+    "name_pl": "Makaron",
+    "name_en": "Pasta",
     "calories": 371,
     "protein": 13.0,
     "fat": 1.5,
@@ -180,7 +200,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Wołowina",
+    "name_pl": "Wołowina",
+    "name_en": "Beef",
     "calories": 250,
     "protein": 26.0,
     "fat": 15.0,
@@ -189,7 +210,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Wieprzowina",
+    "name_pl": "Wieprzowina",
+    "name_en": "Pork",
     "calories": 242,
     "protein": 21.0,
     "fat": 17.0,
@@ -198,7 +220,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Ryba",
+    "name_pl": "Ryba",
+    "name_en": "Fish",
     "calories": 150,
     "protein": 20.0,
     "fat": 5.0,
@@ -207,7 +230,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Jabłko",
+    "name_pl": "Jabłko",
+    "name_en": "Apple",
     "calories": 52,
     "protein": 0.3,
     "fat": 0.2,
@@ -216,7 +240,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Banan",
+    "name_pl": "Banan",
+    "name_en": "Banana",
     "calories": 89,
     "protein": 1.1,
     "fat": 0.3,
@@ -225,7 +250,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Pomarańcza",
+    "name_pl": "Pomarańcza",
+    "name_en": "Orange",
     "calories": 47,
     "protein": 0.9,
     "fat": 0.1,
@@ -234,7 +260,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Cytryna",
+    "name_pl": "Cytryna",
+    "name_en": "Lemon",
     "calories": 29,
     "protein": 1.1,
     "fat": 0.3,
@@ -243,7 +270,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Papryka",
+    "name_pl": "Papryka",
+    "name_en": "Bell pepper",
     "calories": 31,
     "protein": 1.0,
     "fat": 0.3,
@@ -252,7 +280,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Ogórek",
+    "name_pl": "Ogórek",
+    "name_en": "Cucumber",
     "calories": 15,
     "protein": 0.7,
     "fat": 0.1,
@@ -261,7 +290,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Sałata",
+    "name_pl": "Sałata",
+    "name_en": "Lettuce",
     "calories": 15,
     "protein": 1.4,
     "fat": 0.2,
@@ -270,7 +300,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Szpinak",
+    "name_pl": "Szpinak",
+    "name_en": "Spinach",
     "calories": 23,
     "protein": 2.9,
     "fat": 0.4,
@@ -279,7 +310,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Brokuł",
+    "name_pl": "Brokuł",
+    "name_en": "Broccoli",
     "calories": 31,
     "protein": 2.8,
     "fat": 0.4,
@@ -288,7 +320,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Kalafior",
+    "name_pl": "Kalafior",
+    "name_en": "Cauliflower",
     "calories": 25,
     "protein": 1.9,
     "fat": 0.3,
@@ -297,7 +330,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Pieczarka",
+    "name_pl": "Pieczarka",
+    "name_en": "Mushrooms",
     "calories": 22,
     "protein": 3.1,
     "fat": 0.3,
@@ -306,7 +340,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Śmietana",
+    "name_pl": "Śmietana",
+    "name_en": "Cream",
     "calories": 283,
     "protein": 2.1,
     "fat": 30.0,
@@ -315,7 +350,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Boczek",
+    "name_pl": "Boczek",
+    "name_en": "Bacon",
     "calories": 393,
     "protein": 14.0,
     "fat": 37.0,
@@ -324,7 +360,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Szynka",
+    "name_pl": "Szynka",
+    "name_en": "Ham",
     "calories": 150,
     "protein": 20.0,
     "fat": 7.0,
@@ -333,7 +370,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Kiełbasa",
+    "name_pl": "Kiełbasa",
+    "name_en": "Sausage",
     "calories": 260,
     "protein": 14.0,
     "fat": 22.0,
@@ -342,7 +380,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Indyk",
+    "name_pl": "Indyk",
+    "name_en": "Turkey",
     "calories": 107,
     "protein": 24.0,
     "fat": 1.0,
@@ -351,7 +390,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Olej",
+    "name_pl": "Olej",
+    "name_en": "Oil",
     "calories": 884,
     "protein": 0.0,
     "fat": 100.0,
@@ -360,7 +400,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Łosoś",
+    "name_pl": "Łosoś",
+    "name_en": "Salmon",
     "calories": 208,
     "protein": 20.4,
     "fat": 13.4,
@@ -369,7 +410,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Tuńczyk",
+    "name_pl": "Tuńczyk",
+    "name_en": "Tuna",
     "calories": 144,
     "protein": 23.3,
     "fat": 4.9,
@@ -378,7 +420,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Chleb",
+    "name_pl": "Chleb",
+    "name_en": "Bread",
     "calories": 265,
     "protein": 9.0,
     "fat": 1.5,
@@ -387,7 +430,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Bułka",
+    "name_pl": "Bułka",
+    "name_en": "Roll",
     "calories": 265,
     "protein": 9.0,
     "fat": 1.5,
@@ -396,7 +440,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Bagietka",
+    "name_pl": "Bagietka",
+    "name_en": "Baguette",
     "calories": 270,
     "protein": 9.0,
     "fat": 1.0,
@@ -405,7 +450,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Kukurydza",
+    "name_pl": "Kukurydza",
+    "name_en": "Corn",
     "calories": 86,
     "protein": 3.2,
     "fat": 1.2,
@@ -414,7 +460,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Groszek",
+    "name_pl": "Groszek",
+    "name_en": "Peas",
     "calories": 81,
     "protein": 5.4,
     "fat": 0.4,
@@ -423,7 +470,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Fasola",
+    "name_pl": "Fasola",
+    "name_en": "Beans",
     "calories": 127,
     "protein": 8.7,
     "fat": 0.5,
@@ -432,7 +480,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Soczewica",
+    "name_pl": "Soczewica",
+    "name_en": "Lentils",
     "calories": 116,
     "protein": 9.0,
     "fat": 0.4,
@@ -441,7 +490,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Ciecierzyca",
+    "name_pl": "Ciecierzyca",
+    "name_en": "Chickpeas",
     "calories": 164,
     "protein": 8.9,
     "fat": 2.6,
@@ -450,7 +500,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Dynia",
+    "name_pl": "Dynia",
+    "name_en": "Pumpkin",
     "calories": 26,
     "protein": 1.0,
     "fat": 0.0,
@@ -459,7 +510,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Cukinia",
+    "name_pl": "Cukinia",
+    "name_en": "Zucchini",
     "calories": 17,
     "protein": 1.2,
     "fat": 0.3,
@@ -468,7 +520,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Bakłażan",
+    "name_pl": "Bakłażan",
+    "name_en": "Eggplant",
     "calories": 24,
     "protein": 1.0,
     "fat": 0.2,
@@ -477,7 +530,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Awokado",
+    "name_pl": "Awokado",
+    "name_en": "Avocado",
     "calories": 160,
     "protein": 2.0,
     "fat": 15.0,
@@ -486,7 +540,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Ananas",
+    "name_pl": "Ananas",
+    "name_en": "Pineapple",
     "calories": 60,
     "protein": 2.7,
     "fat": 1.2,
@@ -495,7 +550,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Truskawka",
+    "name_pl": "Truskawka",
+    "name_en": "Strawberry",
     "calories": 32,
     "protein": 0.7,
     "fat": 0.3,
@@ -504,7 +560,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Borówka",
+    "name_pl": "Borówka",
+    "name_en": "Blueberry",
     "calories": 57,
     "protein": 0.7,
     "fat": 0.3,
@@ -513,7 +570,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Malina",
+    "name_pl": "Malina",
+    "name_en": "Raspberry",
     "calories": 52,
     "protein": 1.2,
     "fat": 0.7,
@@ -522,7 +580,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Winogrono",
+    "name_pl": "Winogrono",
+    "name_en": "Grapes",
     "calories": 69,
     "protein": 0.72,
     "fat": 0.16,
@@ -531,7 +590,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Arbuz",
+    "name_pl": "Arbuz",
+    "name_en": "Watermelon",
     "calories": 30,
     "protein": 0.6,
     "fat": 0.2,
@@ -540,7 +600,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Melon",
+    "name_pl": "Melon",
+    "name_en": "Melon",
     "calories": 34,
     "protein": 0.8,
     "fat": 0.2,
@@ -549,7 +610,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Kiwi",
+    "name_pl": "Kiwi",
+    "name_en": "Kiwi",
     "calories": 61,
     "protein": 1.1,
     "fat": 0.5,
@@ -558,7 +620,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Mango",
+    "name_pl": "Mango",
+    "name_en": "Mango",
     "calories": 60,
     "protein": 0.8,
     "fat": 0.4,
@@ -567,7 +630,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Kokos",
+    "name_pl": "Kokos",
+    "name_en": "Coconut",
     "calories": 354,
     "protein": 3.3,
     "fat": 33.5,
@@ -576,7 +640,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Orzech włoski",
+    "name_pl": "Orzech włoski",
+    "name_en": "Walnut",
     "calories": 654,
     "protein": 15.2,
     "fat": 65.2,
@@ -585,7 +650,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Orzech laskowy",
+    "name_pl": "Orzech laskowy",
+    "name_en": "Hazelnut",
     "calories": 628,
     "protein": 15.0,
     "fat": 61.0,
@@ -594,7 +660,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Migdały",
+    "name_pl": "Migdały",
+    "name_en": "Almonds",
     "calories": 579,
     "protein": 21.2,
     "fat": 49.9,
@@ -603,7 +670,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Orzech ziemny",
+    "name_pl": "Orzech ziemny",
+    "name_en": "Peanut",
     "calories": 567,
     "protein": 25.8,
     "fat": 49.2,
@@ -612,7 +680,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Nerkowce",
+    "name_pl": "Nerkowce",
+    "name_en": "Cashews",
     "calories": 553,
     "protein": 18.2,
     "fat": 43.8,
@@ -621,7 +690,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Pistacje",
+    "name_pl": "Pistacje",
+    "name_en": "Pistachios",
     "calories": 562,
     "protein": 20.3,
     "fat": 45.4,
@@ -630,7 +700,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Pestki słonecznika",
+    "name_pl": "Pestki słonecznika",
+    "name_en": "Sunflower seeds",
     "calories": 584,
     "protein": 20.8,
     "fat": 51.5,
@@ -639,7 +710,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Pestki dyni",
+    "name_pl": "Pestki dyni",
+    "name_en": "Pumpkin seeds",
     "calories": 559,
     "protein": 30.2,
     "fat": 49.1,
@@ -648,7 +720,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Sezam",
+    "name_pl": "Sezam",
+    "name_en": "Sesame seeds",
     "calories": 573,
     "protein": 17.0,
     "fat": 50.0,
@@ -657,7 +730,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Nasiona chia",
+    "name_pl": "Nasiona chia",
+    "name_en": "Chia seeds",
     "calories": 486,
     "protein": 16.5,
     "fat": 30.7,
@@ -666,7 +740,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Miód",
+    "name_pl": "Miód",
+    "name_en": "Honey",
     "calories": 304,
     "protein": 0.3,
     "fat": 0.0,
@@ -675,7 +750,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Ketchup",
+    "name_pl": "Ketchup",
+    "name_en": "Ketchup",
     "calories": 112,
     "protein": 1.8,
     "fat": 0.1,
@@ -684,7 +760,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Majonez",
+    "name_pl": "Majonez",
+    "name_en": "Mayonnaise",
     "calories": 680,
     "protein": 1.0,
     "fat": 75.0,
@@ -693,7 +770,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Musztarda",
+    "name_pl": "Musztarda",
+    "name_en": "Mustard",
     "calories": 150,
     "protein": 5.0,
     "fat": 7.0,
@@ -702,7 +780,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Ocet",
+    "name_pl": "Ocet",
+    "name_en": "Vinegar",
     "calories": 21,
     "protein": 0.0,
     "fat": 0.0,
@@ -711,7 +790,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Sos sojowy",
+    "name_pl": "Sos sojowy",
+    "name_en": "Soy sauce",
     "calories": 150,
     "protein": 1.0,
     "fat": 10.0,
@@ -720,7 +800,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Tabasco",
+    "name_pl": "Tabasco",
+    "name_en": "Tabasco sauce",
     "calories": 150,
     "protein": 1.0,
     "fat": 10.0,
@@ -729,7 +810,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Curry",
+    "name_pl": "Curry",
+    "name_en": "Curry powder",
     "calories": 100,
     "protein": 2.0,
     "fat": 2.0,
@@ -738,7 +820,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Papryka słodka",
+    "name_pl": "Papryka słodka",
+    "name_en": "Sweet paprika",
     "calories": 25,
     "protein": 1.0,
     "fat": 0.0,
@@ -747,7 +830,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Oregano",
+    "name_pl": "Oregano",
+    "name_en": "Oregano",
     "calories": 25,
     "protein": 1.0,
     "fat": 0.0,
@@ -756,7 +840,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Bazylia",
+    "name_pl": "Bazylia",
+    "name_en": "Basil",
     "calories": 25,
     "protein": 1.0,
     "fat": 0.0,
@@ -765,7 +850,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Tymianek",
+    "name_pl": "Tymianek",
+    "name_en": "Thyme",
     "calories": 100,
     "protein": 2.0,
     "fat": 2.0,
@@ -774,7 +860,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Rozmaryn",
+    "name_pl": "Rozmaryn",
+    "name_en": "Rosemary",
     "calories": 25,
     "protein": 1.0,
     "fat": 0.0,
@@ -783,7 +870,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Koperek",
+    "name_pl": "Koperek",
+    "name_en": "Dill",
     "calories": 25,
     "protein": 1.0,
     "fat": 0.0,
@@ -792,7 +880,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Pietruszka",
+    "name_pl": "Pietruszka",
+    "name_en": "Parsley",
     "calories": 25,
     "protein": 1.0,
     "fat": 0.0,
@@ -801,7 +890,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Szczypiorek",
+    "name_pl": "Szczypiorek",
+    "name_en": "Chives",
     "calories": 25,
     "protein": 1.0,
     "fat": 0.0,
@@ -810,7 +900,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Mięta",
+    "name_pl": "Mięta",
+    "name_en": "Mint",
     "calories": 25,
     "protein": 1.0,
     "fat": 0.0,
@@ -819,7 +910,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Cynamon",
+    "name_pl": "Cynamon",
+    "name_en": "Cinnamon",
     "calories": 40,
     "protein": 3.0,
     "fat": 1.0,
@@ -828,7 +920,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Gałka muszkatołowa",
+    "name_pl": "Gałka muszkatołowa",
+    "name_en": "Nutmeg",
     "calories": 40,
     "protein": 3.0,
     "fat": 1.0,
@@ -837,7 +930,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Goździki",
+    "name_pl": "Goździki",
+    "name_en": "Cloves",
     "calories": 40,
     "protein": 3.0,
     "fat": 1.0,
@@ -846,7 +940,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Imbir",
+    "name_pl": "Imbir",
+    "name_en": "Ginger",
     "calories": 40,
     "protein": 3.0,
     "fat": 1.0,
@@ -855,7 +950,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Kardamon",
+    "name_pl": "Kardamon",
+    "name_en": "Cardamom",
     "calories": 40,
     "protein": 3.0,
     "fat": 1.0,
@@ -864,7 +960,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Wanilia",
+    "name_pl": "Wanilia",
+    "name_en": "Vanilla",
     "calories": 40,
     "protein": 3.0,
     "fat": 1.0,
@@ -873,7 +970,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Czekolada",
+    "name_pl": "Czekolada",
+    "name_en": "Chocolate",
     "calories": 350,
     "protein": 4.0,
     "fat": 20.0,
@@ -882,7 +980,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Kakao",
+    "name_pl": "Kakao",
+    "name_en": "Cocoa powder",
     "calories": 350,
     "protein": 4.0,
     "fat": 20.0,
@@ -891,7 +990,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Kawa",
+    "name_pl": "Kawa",
+    "name_en": "Coffee",
     "calories": 2,
     "protein": 0.0,
     "fat": 0.0,
@@ -900,7 +1000,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Herbata",
+    "name_pl": "Herbata",
+    "name_en": "Tea",
     "calories": 0,
     "protein": 0.0,
     "fat": 0.0,
@@ -909,7 +1010,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Sok",
+    "name_pl": "Sok",
+    "name_en": "Juice",
     "calories": 50,
     "protein": 0.0,
     "fat": 0.0,
@@ -918,7 +1020,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Woda",
+    "name_pl": "Woda",
+    "name_en": "Water",
     "calories": 0,
     "protein": 0.0,
     "fat": 0.0,
@@ -927,7 +1030,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Napój gazowany",
+    "name_pl": "Napój gazowany",
+    "name_en": "Soda",
     "calories": 40,
     "protein": 0.0,
     "fat": 0.0,
@@ -936,7 +1040,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Wino",
+    "name_pl": "Wino",
+    "name_en": "Wine",
     "calories": 85,
     "protein": 0.1,
     "fat": 0.0,
@@ -945,7 +1050,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Piwo",
+    "name_pl": "Piwo",
+    "name_en": "Beer",
     "calories": 43,
     "protein": 0.4,
     "fat": 0.0,
@@ -954,7 +1060,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Lody",
+    "name_pl": "Lody",
+    "name_en": "Ice cream",
     "calories": 350,
     "protein": 4.0,
     "fat": 20.0,
@@ -963,7 +1070,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Tarta",
+    "name_pl": "Tarta",
+    "name_en": "Tart",
     "calories": 350,
     "protein": 10.0,
     "fat": 2.0,
@@ -972,7 +1080,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Gofr",
+    "name_pl": "Gofr",
+    "name_en": "Waffle",
     "calories": 350,
     "protein": 10.0,
     "fat": 2.0,
@@ -981,7 +1090,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Pączek",
+    "name_pl": "Pączek",
+    "name_en": "Doughnut",
     "calories": 350,
     "protein": 10.0,
     "fat": 2.0,
@@ -990,7 +1100,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Rogal",
+    "name_pl": "Rogal",
+    "name_en": "Croissant",
     "calories": 350,
     "protein": 10.0,
     "fat": 2.0,
@@ -999,7 +1110,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Bajgiel",
+    "name_pl": "Bajgiel",
+    "name_en": "Bagel",
     "calories": 350,
     "protein": 10.0,
     "fat": 2.0,
@@ -1008,7 +1120,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Sos pomidorowy",
+    "name_pl": "Sos pomidorowy",
+    "name_en": "Tomato sauce",
     "calories": 150,
     "protein": 1.0,
     "fat": 10.0,
@@ -1017,7 +1130,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Mozzarella",
+    "name_pl": "Mozzarella",
+    "name_en": "Mozzarella",
     "calories": 280,
     "protein": 27.5,
     "fat": 17.1,
@@ -1026,7 +1140,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Parmezan",
+    "name_pl": "Parmezan",
+    "name_en": "Parmesan",
     "calories": 431,
     "protein": 36.0,
     "fat": 29.0,
@@ -1035,7 +1150,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Feta",
+    "name_pl": "Feta",
+    "name_en": "Feta",
     "calories": 265,
     "protein": 14.2,
     "fat": 21.5,
@@ -1044,7 +1160,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Ser pleśniowy",
+    "name_pl": "Ser pleśniowy",
+    "name_en": "Blue cheese",
     "calories": 366,
     "protein": 20.0,
     "fat": 31.0,
@@ -1053,7 +1170,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Ser kozi",
+    "name_pl": "Ser kozi",
+    "name_en": "Goat cheese",
     "calories": 364,
     "protein": 21.0,
     "fat": 30.0,
@@ -1062,7 +1180,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Ricotta",
+    "name_pl": "Ricotta",
+    "name_en": "Ricotta",
     "calories": 174,
     "protein": 11.0,
     "fat": 13.0,
@@ -1071,7 +1190,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Twaróg tłusty",
+    "name_pl": "Twaróg tłusty",
+    "name_en": "Fat cheese",
     "calories": 155,
     "protein": 18.0,
     "fat": 9.0,
@@ -1080,7 +1200,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Twaróg półtłusty",
+    "name_pl": "Twaróg półtłusty",
+    "name_en": "Semi-fat cheese",
     "calories": 134,
     "protein": 18.0,
     "fat": 4.5,
@@ -1089,7 +1210,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Twaróg chudy",
+    "name_pl": "Twaróg chudy",
+    "name_en": "Lean cheese",
     "calories": 100,
     "protein": 20.0,
     "fat": 0.5,
@@ -1098,7 +1220,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Serek śmietankowy",
+    "name_pl": "Serek śmietankowy",
+    "name_en": "Cream cheese",
     "calories": 243,
     "protein": 6.0,
     "fat": 23.0,
@@ -1107,7 +1230,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Śmietana kwaśna",
+    "name_pl": "Śmietana kwaśna",
+    "name_en": "Sour cream",
     "calories": 189,
     "protein": 2.5,
     "fat": 18.0,
@@ -1116,7 +1240,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Tofu wędzone",
+    "name_pl": "Tofu wędzone",
+    "name_en": "Smoked tofu",
     "calories": 138,
     "protein": 14.0,
     "fat": 8.0,
@@ -1125,7 +1250,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Tofu naturalne",
+    "name_pl": "Tofu naturalne",
+    "name_en": "Natural tofu",
     "calories": 125,
     "protein": 12.0,
     "fat": 7.5,
@@ -1134,7 +1260,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Mleko sojowe",
+    "name_pl": "Mleko sojowe",
+    "name_en": "Soy milk",
     "calories": 35,
     "protein": 3.7,
     "fat": 1.4,
@@ -1143,7 +1270,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Mleko migdałowe",
+    "name_pl": "Mleko migdałowe",
+    "name_en": "Almond milk",
     "calories": 17,
     "protein": 0.5,
     "fat": 1.4,
@@ -1152,7 +1280,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Mleko kokosowe",
+    "name_pl": "Mleko kokosowe",
+    "name_en": "Coconut milk",
     "calories": 20,
     "protein": 0.2,
     "fat": 0.9,
@@ -1161,7 +1290,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Mleko owsiane",
+    "name_pl": "Mleko owsiane",
+    "name_en": "Oat milk",
     "calories": 37,
     "protein": 0.4,
     "fat": 1.3,
@@ -1170,7 +1300,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Syrop klonowy",
+    "name_pl": "Syrop klonowy",
+    "name_en": "Maple syrup",
     "calories": 265,
     "protein": 0.1,
     "fat": 0.1,
@@ -1179,7 +1310,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Melasa",
+    "name_pl": "Melasa",
+    "name_en": "Molasses",
     "calories": 290,
     "protein": 0.0,
     "fat": 0.1,
@@ -1188,7 +1320,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Syrop z agawy",
+    "name_pl": "Syrop z agawy",
+    "name_en": "Agave syrup",
     "calories": 310,
     "protein": 0.0,
     "fat": 0.5,
@@ -1197,7 +1330,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Komosa ryżowa",
+    "name_pl": "Komosa ryżowa",
+    "name_en": "Quinoa",
     "calories": 368,
     "protein": 14.1,
     "fat": 6.1,
@@ -1206,7 +1340,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Kuskus",
+    "name_pl": "Kuskus",
+    "name_en": "Couscous",
     "calories": 361,
     "protein": 13.0,
     "fat": 1.0,
@@ -1215,7 +1350,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Jęczmień",
+    "name_pl": "Jęczmień",
+    "name_en": "Barley",
     "calories": 353,
     "protein": 10.0,
     "fat": 1.4,
@@ -1224,7 +1360,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Gryka",
+    "name_pl": "Gryka",
+    "name_en": "Buckwheat",
     "calories": 343,
     "protein": 13.3,
     "fat": 3.4,
@@ -1233,7 +1370,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Tapioka",
+    "name_pl": "Tapioka",
+    "name_en": "Tapioca",
     "calories": 358,
     "protein": 0.2,
     "fat": 0.0,
@@ -1242,7 +1380,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Makaron ryżowy",
+    "name_pl": "Makaron ryżowy",
+    "name_en": "Rice noodle",
     "calories": 351,
     "protein": 6.5,
     "fat": 0.3,
@@ -1251,7 +1390,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Makaron udon",
+    "name_pl": "Makaron udon",
+    "name_en": "Udon noodle",
     "calories": 359,
     "protein": 12.5,
     "fat": 1.2,
@@ -1260,7 +1400,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Makaron soba",
+    "name_pl": "Makaron soba",
+    "name_en": "Soba noodle",
     "calories": 355,
     "protein": 14.6,
     "fat": 1.0,
@@ -1269,7 +1410,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Makaron ramen",
+    "name_pl": "Makaron ramen",
+    "name_en": "Ramen noodle",
     "calories": 359,
     "protein": 12.5,
     "fat": 1.2,
@@ -1278,7 +1420,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Makaron lasagne",
+    "name_pl": "Makaron lasagne",
+    "name_en": "Lasagna noodle",
     "calories": 362,
     "protein": 12.0,
     "fat": 2.0,
@@ -1287,7 +1430,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Tortilla",
+    "name_pl": "Tortilla",
+    "name_en": "Tortilla",
     "calories": 308,
     "protein": 9.2,
     "fat": 6.6,
@@ -1296,7 +1440,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Chleb pita",
+    "name_pl": "Chleb pita",
+    "name_en": "Pita bread",
     "calories": 275,
     "protein": 9.1,
     "fat": 1.2,
@@ -1305,7 +1450,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Pita",
+    "name_pl": "Pita",
+    "name_en": "Pita",
     "calories": 275,
     "protein": 9.1,
     "fat": 1.2,
@@ -1314,7 +1460,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Passata pomidorowa",
+    "name_pl": "Passata pomidorowa",
+    "name_en": "Tomato passata",
     "calories": 33,
     "protein": 1.6,
     "fat": 0.2,
@@ -1323,7 +1470,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Koncentrat pomidorowy 30%",
+    "name_pl": "Koncentrat pomidorowy 30%",
+    "name_en": "Tomato paste 30%",
     "calories": 82,
     "protein": 4.3,
     "fat": 0.5,
@@ -1332,7 +1480,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Przecier pomidorowy",
+    "name_pl": "Przecier pomidorowy",
+    "name_en": "Tomato puree",
     "calories": 38,
     "protein": 1.5,
     "fat": 0.4,
@@ -1341,7 +1490,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Pomidory suszone w oleju",
+    "name_pl": "Pomidory suszone w oleju",
+    "name_en": "Sun-dried tomatoes in oil",
     "calories": 258,
     "protein": 5.1,
     "fat": 14.0,
@@ -1350,7 +1500,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Kefir",
+    "name_pl": "Kefir",
+    "name_en": "Kefir",
     "calories": 51,
     "protein": 3.4,
     "fat": 1.5,
@@ -1359,7 +1510,8 @@
     "unit": "Milliliter"
   },
   {
-    "name": "Maślanka",
+    "name_pl": "Maślanka",
+    "name_en": "Buttermilk",
     "calories": 35,
     "protein": 3.0,
     "fat": 0.5,
@@ -1368,7 +1520,8 @@
     "unit": "Milliliter"
   },
   {
-    "name": "Jogurt nat. Pilos",
+    "name_pl": "Jogurt nat. Pilos",
+    "name_en": "Natural yogurt Pilos",
     "calories": 69,
     "protein": 4.9,
     "fat": 3.0,
@@ -1377,7 +1530,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Jogurt grecki Pilos",
+    "name_pl": "Jogurt grecki Pilos",
+    "name_en": "Greek yogurt Pilos",
     "calories": 124,
     "protein": 3.5,
     "fat": 10.0,
@@ -1386,7 +1540,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Ser biały tłusty",
+    "name_pl": "Ser biały tłusty",
+    "name_en": "Fat white cheese",
     "calories": 155,
     "protein": 18.0,
     "fat": 9.0,
@@ -1395,7 +1550,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Serek wiejski",
+    "name_pl": "Serek wiejski",
+    "name_en": "Cottage cheese",
     "calories": 98,
     "protein": 11.0,
     "fat": 4.3,
@@ -1404,7 +1560,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Pasztet drobiowy",
+    "name_pl": "Pasztet drobiowy",
+    "name_en": "Poultry pâté",
     "calories": 269,
     "protein": 11.0,
     "fat": 24.0,
@@ -1413,7 +1570,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Sardynki w oleju",
+    "name_pl": "Sardynki w oleju",
+    "name_en": "Sardines in oil",
     "calories": 208,
     "protein": 25.0,
     "fat": 11.0,
@@ -1422,7 +1580,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Makrela w pomidorach",
+    "name_pl": "Makrela w pomidorach",
+    "name_en": "Mackerel in tomato sauce",
     "calories": 191,
     "protein": 19.0,
     "fat": 12.0,
@@ -1431,7 +1590,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Pomidory w puszce",
+    "name_pl": "Pomidory w puszce",
+    "name_en": "Canned tomatoes",
     "calories": 21,
     "protein": 1.0,
     "fat": 0.2,
@@ -1440,7 +1600,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Pomidory krojone w puszce",
+    "name_pl": "Pomidory krojone w puszce",
+    "name_en": "Canned diced tomatoes",
     "calories": 22,
     "protein": 1.1,
     "fat": 0.1,
@@ -1449,7 +1610,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Ciecierzyca z puszki",
+    "name_pl": "Ciecierzyca z puszki",
+    "name_en": "Canned chickpeas",
     "calories": 119,
     "protein": 6.3,
     "fat": 2.1,
@@ -1458,7 +1620,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Fasola czerwona z puszki",
+    "name_pl": "Fasola czerwona z puszki",
+    "name_en": "Canned red beans",
     "calories": 110,
     "protein": 7.5,
     "fat": 0.6,
@@ -1467,7 +1630,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Groszek konserwowy",
+    "name_pl": "Groszek konserwowy",
+    "name_en": "Canned peas",
     "calories": 69,
     "protein": 5.0,
     "fat": 0.4,
@@ -1476,7 +1640,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Kukurydza konserwowa",
+    "name_pl": "Kukurydza konserwowa",
+    "name_en": "Canned corn",
     "calories": 96,
     "protein": 3.2,
     "fat": 1.5,
@@ -1485,7 +1650,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Pesto zielone",
+    "name_pl": "Pesto zielone",
+    "name_en": "Green pesto",
     "calories": 470,
     "protein": 7.0,
     "fat": 47.0,
@@ -1494,7 +1660,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Pesto czerwone",
+    "name_pl": "Pesto czerwone",
+    "name_en": "Red pesto",
     "calories": 410,
     "protein": 5.0,
     "fat": 40.0,
@@ -1503,7 +1670,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Sos sojowy jasny",
+    "name_pl": "Sos sojowy jasny",
+    "name_en": "Light soy sauce",
     "calories": 53,
     "protein": 8.0,
     "fat": 0.6,
@@ -1512,7 +1680,8 @@
     "unit": "Milliliter"
   },
   {
-    "name": "Sos sojowy ciemny",
+    "name_pl": "Sos sojowy ciemny",
+    "name_en": "Dark soy sauce",
     "calories": 70,
     "protein": 8.0,
     "fat": 0.8,
@@ -1521,7 +1690,8 @@
     "unit": "Milliliter"
   },
   {
-    "name": "Pasta curry czerwona",
+    "name_pl": "Pasta curry czerwona",
+    "name_en": "Red curry paste",
     "calories": 120,
     "protein": 3.0,
     "fat": 10.0,
@@ -1530,7 +1700,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Pasta curry zielona",
+    "name_pl": "Pasta curry zielona",
+    "name_en": "Green curry paste",
     "calories": 130,
     "protein": 3.0,
     "fat": 11.0,
@@ -1539,7 +1710,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Pasta curry żółta",
+    "name_pl": "Pasta curry żółta",
+    "name_en": "Yellow curry paste",
     "calories": 145,
     "protein": 3.0,
     "fat": 9.0,
@@ -1548,7 +1720,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Ocet balsamiczny",
+    "name_pl": "Ocet balsamiczny",
+    "name_en": "Balsamic vinegar",
     "calories": 88,
     "protein": 0.5,
     "fat": 0.0,
@@ -1557,7 +1730,8 @@
     "unit": "Milliliter"
   },
   {
-    "name": "Ocet jabłkowy",
+    "name_pl": "Ocet jabłkowy",
+    "name_en": "Apple cider vinegar",
     "calories": 21,
     "protein": 0.0,
     "fat": 0.0,
@@ -1566,7 +1740,8 @@
     "unit": "Milliliter"
   },
   {
-    "name": "Ocet winny czerwony",
+    "name_pl": "Ocet winny czerwony",
+    "name_en": "Red wine vinegar",
     "calories": 19,
     "protein": 0.0,
     "fat": 0.0,
@@ -1575,7 +1750,8 @@
     "unit": "Milliliter"
   },
   {
-    "name": "Ocet winny biały",
+    "name_pl": "Ocet winny biały",
+    "name_en": "White wine vinegar",
     "calories": 17,
     "protein": 0.0,
     "fat": 0.0,
@@ -1584,7 +1760,8 @@
     "unit": "Milliliter"
   },
   {
-    "name": "Ocet ryżowy",
+    "name_pl": "Ocet ryżowy",
+    "name_en": "Rice vinegar",
     "calories": 24,
     "protein": 0.0,
     "fat": 0.0,
@@ -1593,7 +1770,8 @@
     "unit": "Milliliter"
   },
   {
-    "name": "Pieprz czarny mielony",
+    "name_pl": "Pieprz czarny mielony",
+    "name_en": "Ground black pepper",
     "calories": 279,
     "protein": 10.4,
     "fat": 3.3,
@@ -1602,7 +1780,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Papryka ostra",
+    "name_pl": "Papryka ostra",
+    "name_en": "Hot paprika",
     "calories": 282,
     "protein": 13.0,
     "fat": 14.0,
@@ -1611,7 +1790,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Chili w proszku",
+    "name_pl": "Chili w proszku",
+    "name_en": "Chili powder",
     "calories": 282,
     "protein": 13.0,
     "fat": 14.0,
@@ -1620,7 +1800,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Czosnek granulowany",
+    "name_pl": "Czosnek granulowany",
+    "name_en": "Garlic powder",
     "calories": 331,
     "protein": 16.0,
     "fat": 1.0,
@@ -1629,7 +1810,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Cebula suszona",
+    "name_pl": "Cebula suszona",
+    "name_en": "Dried onion",
     "calories": 349,
     "protein": 9.0,
     "fat": 0.5,
@@ -1638,7 +1820,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Kurkuma",
+    "name_pl": "Kurkuma",
+    "name_en": "Turmeric",
     "calories": 354,
     "protein": 8.0,
     "fat": 10.0,
@@ -1647,7 +1830,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Imbir suszony",
+    "name_pl": "Imbir suszony",
+    "name_en": "Dried ginger",
     "calories": 350,
     "protein": 0.0,
     "fat": 0.0,
@@ -1656,7 +1840,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Liść laurowy",
+    "name_pl": "Liść laurowy",
+    "name_en": "Bay leaf",
     "calories": 316,
     "protein": 8.0,
     "fat": 8.1,
@@ -1665,7 +1850,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Ziele angielskie",
+    "name_pl": "Ziele angielskie",
+    "name_en": "Allspice",
     "calories": 262,
     "protein": 6.0,
     "fat": 9.0,
@@ -1674,7 +1860,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Kminek mielony",
+    "name_pl": "Kminek mielony",
+    "name_en": "Ground cumin",
     "calories": 375,
     "protein": 17.8,
     "fat": 22.3,
@@ -1683,7 +1870,8 @@
     "unit": "Gram"
   },
   {
-    "name": "Kolendra mielona",
+    "name_pl": "Kolendra mielona",
+    "name_en": "Ground coriander",
     "calories": 298,
     "protein": 12.4,
     "fat": 14.6,

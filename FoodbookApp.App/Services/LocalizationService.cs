@@ -22,6 +22,7 @@ public class LocalizationService : ILocalizationService
         CultureInfo.DefaultThreadCurrentUICulture = culture;
         CurrentCulture = culture;
 
+        // Update all resource managers with the new culture
         AddRecipePageResources.Culture = culture;
         ArchivePageResources.Culture = culture;
         HomePageResources.Culture = culture;
@@ -31,11 +32,14 @@ public class LocalizationService : ILocalizationService
         PlannerPageResources.Culture = culture;
         RecipesPageResources.Culture = culture;
         SettingsPageResources.Culture = culture;
-        SetupWizardResources.Culture = culture;
+        SetupWizardPageResources.Culture = culture; // ensure setup wizard page resources update
         ShoppingListDetailPageResources.Culture = culture;
         ShoppingListPageResources.Culture = culture;
         TabBarResources.Culture = culture;
+        ButtonResources.Culture = culture;
+        UnitResources.Culture = culture;
 
+        System.Diagnostics.Debug.WriteLine($"[LocalizationService] Culture changed to: {cultureName}");
         CultureChanged?.Invoke(this, EventArgs.Empty);
     }
 

@@ -16,19 +16,29 @@ namespace Foodbook.ViewModels;
 public class SetupWizardViewModel : INotifyPropertyChanged
 {
     private readonly IPreferencesService _preferencesService;
-    private readonly ILocalizationService _localizationService;
+    private readonly ILocalizationService _localizationService; // kept for persistence only
+    private readonly LocalizationResourceManager _localizationManager; // used to broadcast dynamic changes
     private LanguageOption _selectedLanguage;
     private bool _installBasicIngredients = true;
     private bool _isCompleting = false;
     private string _statusMessage = string.Empty;
 
-    public SetupWizardViewModel(IPreferencesService preferencesService, ILocalizationService localizationService)
+    public SetupWizardViewModel(IPreferencesService preferencesService,
+                                ILocalizationService localizationService,
+                                LocalizationResourceManager localizationManager)
     {
         _preferencesService = preferencesService ?? throw new ArgumentNullException(nameof(preferencesService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
-        
+        _localizationManager = localizationManager ?? throw new ArgumentNullException(nameof(localizationManager));
+        _localizationManager.PropertyChanged += OnLocalizationManagerPropertyChanged;
         InitializeLanguages();
         CompleteSetupCommand = new Command(async () => await CompleteSetupAsync(), () => !IsCompleting);
+    }
+
+    private void OnLocalizationManagerPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // Force refresh of labels whose values come purely from TranslateExtension but might cache
+        OnPropertyChanged(string.Empty); // broadcast change
     }
 
     #region Properties
@@ -40,16 +50,22 @@ public class SetupWizardViewModel : INotifyPropertyChanged
         get => _selectedLanguage;
         set
         {
-            if (_selectedLanguage != value)
+            if (_selectedLanguage != value && value != null)
             {
                 _selectedLanguage = value;
                 OnPropertyChanged();
-                
-                // Natychmiast zmieñ jêzyk w aplikacji
-                if (value != null)
+                // Change culture via manager (fires PropertyChanged(null) to all TranslateExtension bindings)
+                MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    _localizationService.SetCulture(value.CultureCode);
-                }
+                    try
+                    {
+                        _localizationManager.SetCulture(value.CultureCode);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[SetupWizardViewModel] Failed to set culture: {ex.Message}");
+                    }
+                });
             }
         }
     }
@@ -109,58 +125,62 @@ public class SetupWizardViewModel : INotifyPropertyChanged
         try
         {
             var supportedCultures = _preferencesService.GetSupportedCultures();
-            
+
             foreach (var culture in supportedCultures)
             {
                 var languageOption = culture switch
                 {
-                    "en" => new LanguageOption 
-                    { 
-                        CultureCode = "en", 
-                        DisplayName = "English", 
-                        NativeName = "English" 
+                    "en" => new LanguageOption
+                    {
+                        CultureCode = "en",
+                        DisplayName = "English",
+                        NativeName = "English"
                     },
-                    "pl-PL" => new LanguageOption 
-                    { 
-                        CultureCode = "pl-PL", 
-                        DisplayName = "Polish", 
-                        NativeName = "Polski" 
+                    "pl-PL" => new LanguageOption
+                    {
+                        CultureCode = "pl-PL",
+                        DisplayName = "Polish",
+                        NativeName = "Polski"
                     },
-                    _ => new LanguageOption 
-                    { 
-                        CultureCode = culture, 
-                        DisplayName = culture, 
-                        NativeName = culture 
+                    _ => new LanguageOption
+                    {
+                        CultureCode = culture,
+                        DisplayName = culture,
+                        NativeName = culture
                     }
                 };
-                
+
                 AvailableLanguages.Add(languageOption);
             }
 
-            // Ustaw domyœlny jêzyk na systemowy lub pierwszy dostêpny
-            var systemCulture = System.Globalization.CultureInfo.CurrentUICulture.Name;
-            var defaultLanguage = AvailableLanguages.FirstOrDefault(l => l.CultureCode == systemCulture) 
-                                 ?? AvailableLanguages.FirstOrDefault();
-            
-            if (defaultLanguage != null)
+            var saved = _preferencesService.GetSavedLanguage();
+            LanguageOption? defaultLanguage = null;
+            if (!string.IsNullOrWhiteSpace(saved))
+                defaultLanguage = AvailableLanguages.FirstOrDefault(l => l.CultureCode == saved);
+
+            if (defaultLanguage == null)
             {
-                SelectedLanguage = defaultLanguage;
+                var systemCulture = System.Globalization.CultureInfo.CurrentUICulture.Name;
+                defaultLanguage = AvailableLanguages.FirstOrDefault(l => l.CultureCode == systemCulture)
+                                   ?? AvailableLanguages.FirstOrDefault();
             }
+
+            if (defaultLanguage != null)
+                SelectedLanguage = defaultLanguage;
 
             System.Diagnostics.Debug.WriteLine($"[SetupWizardViewModel] Initialized {AvailableLanguages.Count} languages, selected: {SelectedLanguage?.CultureCode}");
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[SetupWizardViewModel] Error initializing languages: {ex.Message}");
-            
-            // Fallback - dodaj przynajmniej angielski
+
             if (!AvailableLanguages.Any())
             {
-                AvailableLanguages.Add(new LanguageOption 
-                { 
-                    CultureCode = "en", 
-                    DisplayName = "English", 
-                    NativeName = "English" 
+                AvailableLanguages.Add(new LanguageOption
+                {
+                    CultureCode = "en",
+                    DisplayName = "English",
+                    NativeName = "English"
                 });
                 SelectedLanguage = AvailableLanguages.First();
             }
@@ -175,7 +195,6 @@ public class SetupWizardViewModel : INotifyPropertyChanged
             IsCompleting = true;
             StatusMessage = "Completing setup...";
 
-            // Zapisz wybrane ustawienia
             if (SelectedLanguage != null)
             {
                 System.Diagnostics.Debug.WriteLine($"[SetupWizardViewModel] Saving language: {SelectedLanguage.CultureCode}");
@@ -187,24 +206,23 @@ public class SetupWizardViewModel : INotifyPropertyChanged
             System.Diagnostics.Debug.WriteLine($"[SetupWizardViewModel] Saving install ingredients: {InstallBasicIngredients}");
             _preferencesService.SaveInstallBasicIngredients(InstallBasicIngredients);
 
-            // Jeœli u¿ytkownik wybra³ instalacjê sk³adników, uruchom seedowanie
             if (InstallBasicIngredients)
             {
                 StatusMessage = "Installing basic ingredients...";
                 await Task.Delay(100);
-                
-                // Uruchom seedowanie sk³adników w tle
+
+                var lang = SelectedLanguage?.CultureCode;
                 _ = Task.Run(async () =>
                 {
                     try
                     {
-                        System.Diagnostics.Debug.WriteLine("[SetupWizardViewModel] Starting ingredient seeding");
+                        System.Diagnostics.Debug.WriteLine("[SetupWizardViewModel] Starting ingredient seeding with language override: " + lang);
                         var services = FoodbookApp.MauiProgram.ServiceProvider;
                         if (services != null)
                         {
                             using var scope = services.CreateScope();
                             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                            await SeedData.SeedIngredientsAsync(dbContext);
+                            await SeedData.SeedIngredientsAsync(dbContext, lang);
                             System.Diagnostics.Debug.WriteLine("[SetupWizardViewModel] Ingredient seeding completed");
                         }
                         else
@@ -222,29 +240,21 @@ public class SetupWizardViewModel : INotifyPropertyChanged
             StatusMessage = "Finalizing setup...";
             await Task.Delay(100);
 
-            // Oznacz setup jako zakoñczony
             System.Diagnostics.Debug.WriteLine("[SetupWizardViewModel] Marking setup as completed");
             _preferencesService.MarkInitialSetupCompleted();
 
             StatusMessage = "Setup completed!";
             await Task.Delay(500);
 
-            // Nawiguj do g³ównej strony aplikacji - zast¹p ca³e okno Shell'em
             System.Diagnostics.Debug.WriteLine("[SetupWizardViewModel] Navigating to main shell");
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
                 try
                 {
-                    // Zast¹p aktualne okno nowym Shell'em
                     var app = Application.Current;
                     if (app?.MainPage != null)
                     {
-                        System.Diagnostics.Debug.WriteLine("[SetupWizardViewModel] Replacing MainPage with AppShell");
                         app.MainPage = new AppShell();
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine("[SetupWizardViewModel] Application.Current.MainPage is null");
                     }
                 }
                 catch (Exception ex)
@@ -261,8 +271,7 @@ public class SetupWizardViewModel : INotifyPropertyChanged
             System.Diagnostics.Debug.WriteLine($"[SetupWizardViewModel] Stack trace: {ex.StackTrace}");
             StatusMessage = "Setup completed with some issues, but you can continue using the app.";
             await Task.Delay(1000);
-            
-            // Fallback navigation - try to replace MainPage
+
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
                 try
@@ -297,4 +306,19 @@ public class SetupWizardViewModel : INotifyPropertyChanged
     }
 
     #endregion
+}
+
+/// <summary>
+/// Represents a language option for the setup wizard
+/// </summary>
+public class LanguageOption
+{
+    public string CultureCode { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string NativeName { get; set; } = string.Empty;
+
+    public override string ToString()
+    {
+        return NativeName;
+    }
 }

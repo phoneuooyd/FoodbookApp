@@ -2,9 +2,10 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
+             xmlns:loc="clr-namespace:Foodbook.Services"
              x:Class="Foodbook.Views.SetupWizardPage"
              x:DataType="vm:SetupWizardViewModel"
-             Title="Welcome to FoodBook"
+             Title="{loc:Translate Resource=SetupWizardPageResources, Key=PageTitle}"
              BackgroundColor="{DynamicResource PageBackgroundColor}"
              Shell.NavBarIsVisible="False">
 
@@ -13,14 +14,14 @@
 
             <!-- Welcome Header -->
             <VerticalStackLayout Spacing="10" Margin="0,20,0,0">
-                <Label Text="Welcome to FoodBook"
+                <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=HeaderTitle}"
                        FontSize="32"
                        FontAttributes="Bold"
                        HorizontalOptions="Center"
                        HorizontalTextAlignment="Center"
                        TextColor="{DynamicResource Primary}" />
                 
-                <Label Text="Let's set up your app"
+                <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=HeaderSubtitle}"
                        FontSize="18"
                        HorizontalOptions="Center"
                        HorizontalTextAlignment="Center"
@@ -33,17 +34,18 @@
                    CornerRadius="10"
                    Padding="20">
                 <VerticalStackLayout Spacing="15">
-                    <Label Text="Choose your language"
+                    <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=LanguageSectionTitle}"
                            FontSize="20"
                            FontAttributes="Bold"
                            TextColor="{DynamicResource Primary}" />
                     
-                    <Label Text="Select the language for the application interface"
+                    <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=LanguageSectionDescription}"
                            FontSize="14"
                            TextColor="{DynamicResource Gray600}" />
                     
                     <Picker ItemsSource="{Binding AvailableLanguages}"
                             SelectedItem="{Binding SelectedLanguage}"
+                            ItemDisplayBinding="{Binding NativeName}"
                             FontSize="16"
                             BackgroundColor="{DynamicResource White}"
                             TextColor="{DynamicResource Black}" />
@@ -56,28 +58,28 @@
                    CornerRadius="10"
                    Padding="20">
                 <VerticalStackLayout Spacing="15">
-                    <Label Text="Basic ingredients"
+                    <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=IngredientsSectionTitle}"
                            FontSize="20"
                            FontAttributes="Bold"
                            TextColor="{DynamicResource Primary}" />
                     
-                    <Label Text="Would you like to install a set of basic ingredients to get started?"
+                    <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=IngredientsSectionQuestion}"
                            FontSize="14"
                            TextColor="{DynamicResource Gray600}" />
                     
-                    <Label Text="This will add common ingredients like eggs, milk, flour, etc. with nutritional information. You can always add your own ingredients later."
+                    <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=IngredientsSectionInfo}"
                            FontSize="12"
                            TextColor="{DynamicResource Gray500}"
                            Margin="0,5,0,10" />
                     
                     <VerticalStackLayout Spacing="10">
-                        <RadioButton Content="Yes, install basic ingredients"
+                        <RadioButton Content="{loc:Translate Resource=SetupWizardPageResources, Key=IngredientsYes}"
                                      IsChecked="{Binding InstallBasicIngredients}"
                                      GroupName="IngredientsChoice"
                                      FontSize="14"
                                      TextColor="{DynamicResource Black}" />
                         
-                        <RadioButton Content="No, I'll add my own"
+                        <RadioButton Content="{loc:Translate Resource=SetupWizardPageResources, Key=IngredientsNo}"
                                      IsChecked="{Binding InstallBasicIngredients, Converter={StaticResource InvertedBoolConverter}}"
                                      GroupName="IngredientsChoice"
                                      FontSize="14"
@@ -96,7 +98,7 @@
                    Margin="0,10,0,0" />
 
             <!-- Complete Setup Button -->
-            <Button Text="Complete Setup"
+            <Button Text="{loc:Translate Resource=SetupWizardPageResources, Key=CompleteSetupButton}"
                     Command="{Binding CompleteSetupCommand}"
                     IsEnabled="{Binding IsCompleting, Converter={StaticResource InvertedBoolConverter}}"
                     BackgroundColor="{DynamicResource Primary}"

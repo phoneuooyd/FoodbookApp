@@ -114,6 +114,12 @@
             <AutoGen>True</AutoGen>
             <DependentUpon>SetupWizardResources.resx</DependentUpon>
           </Compile>
+          <!-- NEW SetupWizardPage resources -->
+          <Compile Update="Localization\SetupWizardPageResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>SetupWizardPageResources.resx</DependentUpon>
+          </Compile>
         </ItemGroup>
 
         <ItemGroup>
@@ -129,6 +135,13 @@
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>SetupWizardResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
+          <!-- Embed main setup wizard page resource -->
+          <EmbeddedResource Update="Localization\SetupWizardPageResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>SetupWizardPageResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
+          <!-- Polish satellite file (no generator needed) -->
+          <EmbeddedResource Update="Localization\SetupWizardPageResources.pl-PL.resx" />
         </ItemGroup>
 
         <!-- Localization resources for individual pages -->
