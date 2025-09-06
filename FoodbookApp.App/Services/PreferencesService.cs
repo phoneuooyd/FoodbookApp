@@ -16,7 +16,7 @@ public class PreferencesService : IPreferencesService
     private const string IsFirstLaunchKey = "IsFirstLaunch";
     private const string InstallBasicIngredientsKey = "InstallBasicIngredients";
     
-    private static readonly string[] SupportedCultures = { "en", "pl-PL" };
+    private static readonly string[] SupportedCultures = { "en", "pl-PL", "de-DE", "es-ES", "fr-FR" };
 
     /// <inheritdoc/>
     public string GetSavedLanguage()
@@ -341,7 +341,7 @@ public class PreferencesService : IPreferencesService
     {
         try
         {
-            var install = Preferences.Get(InstallBasicIngredientsKey, true); // Domyœlnie true
+            var install = Preferences.Get(InstallBasicIngredientsKey, true); // Default to true
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Install basic ingredients: {install}");
             return install;
         }

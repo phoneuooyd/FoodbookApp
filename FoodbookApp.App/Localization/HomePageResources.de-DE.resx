@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Title" xml:space="preserve"><value>Ubersicht</value></data>
+  <data name="Welcome" xml:space="preserve"><value>Willkommen bei Foodbook</value></data>
+  <data name="Subtitle" xml:space="preserve"><value>Dein personlicher Kochassistent</value></data>
+  <data name="Recipes" xml:space="preserve"><value>Rezepte</value></data>
+  <data name="SavedRecipes" xml:space="preserve"><value>Gespeicherte Rezepte</value></data>
+  <data name="Plans" xml:space="preserve"><value>Plane</value></data>
+  <data name="ActiveLists" xml:space="preserve"><value>Aktive Listen</value></data>
+  <data name="PlannedMealsHeader" xml:space="preserve"><value>Geplante Mahlzeiten</value></data>
+  <data name="ClickRecipeHint" xml:space="preserve"><value>Tippe ein Rezept an fur Zutaten</value></data>
+  <data name="NutritionStatsHeader" xml:space="preserve"><value>Ernahrungsstatistiken</value></data>
+  <data name="Calories" xml:space="preserve"><value>Kalorien</value></data>
+  <data name="Protein" xml:space="preserve"><value>Protein</value></data>
+  <data name="Carbs" xml:space="preserve"><value>Kohlenhydrate</value></data>
+  <data name="Fats" xml:space="preserve"><value>Fette</value></data>
+  <data name="NoNutritionData" xml:space="preserve"><value>Keine Daten - plane Mahlzeiten</value></data>
+  <data name="Archive" xml:space="preserve"><value>Archiv</value></data>
+  <data name="InArchive" xml:space="preserve"><value>Im Archiv</value></data>
+  <data name="GoToArchive" xml:space="preserve"><value>Offnen</value></data>
+  <data name="Settings" xml:space="preserve"><value>Einstellungen</value></data>
+  <data name="Customize" xml:space="preserve"><value>Anpassen</value></data>
+  <data name="ComingSoon" xml:space="preserve"><value>Bald</value></data>
+  <data name="GoToSettings" xml:space="preserve"><value>Offnen</value></data>
+</root>

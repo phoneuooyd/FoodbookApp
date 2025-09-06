@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Title" xml:space="preserve"><value>Ajustes</value></data>
+  <data name="HeaderTitle" xml:space="preserve"><value>Ajustes</value></data>
+  <data name="HeaderSubtitle" xml:space="preserve"><value>Personaliza tu aplicacion</value></data>
+  <data name="ColorThemeTitle" xml:space="preserve"><value>Tema de Color</value></data>
+  <data name="ColorThemeDescription" xml:space="preserve"><value>Paleta de la app</value></data>
+  <data name="ColorfulBackgroundOption" xml:space="preserve"><value>Fondo</value></data>
+  <data name="ColorThemeDefault" xml:space="preserve"><value>Predeterminado</value></data>
+  <data name="ColorThemeNature" xml:space="preserve"><value>Naturaleza</value></data>
+  <data name="ColorThemeWarm" xml:space="preserve"><value>Calido</value></data>
+  <data name="ColorThemeVibrant" xml:space="preserve"><value>Vibrante</value></data>
+  <data name="ColorThemeMonochrome" xml:space="preserve"><value>Monocromo</value></data>
+  <data name="ColorThemeNavy" xml:space="preserve"><value>Marino</value></data>
+  <data name="ColorThemeAutumn" xml:space="preserve"><value>Otono</value></data>
+  <data name="ColorThemeMint" xml:space="preserve"><value>Mentol</value></data>
+  <data name="ThemeTitle" xml:space="preserve"><value>Tema</value></data>
+  <data name="ThemeDescription" xml:space="preserve"><value>Claro / oscuro</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>Claro</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>Oscuro</value></data>
+  <data name="ThemeSystem" xml:space="preserve"><value>Sistema</value></data>
+  <data name="LanguageTitle" xml:space="preserve"><value>Idioma</value></data>
+  <data name="LanguageDescription" xml:space="preserve"><value>Idioma de la interfaz</value></data>
+  <data name="LanguageEnglish" xml:space="preserve"><value>Ingles</value></data>
+  <data name="LanguagePolish" xml:space="preserve"><value>Polaco</value></data>
+  <data name="FontFamilyTitle" xml:space="preserve"><value>Tipografia</value></data>
+  <data name="FontFamilyDescription" xml:space="preserve"><value>Tipo de letra</value></data>
+  <data name="FontFamilyDefault" xml:space="preserve"><value>Predeterminada</value></data>
+  <data name="FontFamilySansSerif" xml:space="preserve"><value>Sans-serif</value></data>
+  <data name="FontFamilySerif" xml:space="preserve"><value>Serif</value></data>
+  <data name="FontFamilyMonospace" xml:space="preserve"><value>Monoespaciada</value></data>
+  <data name="FontSizeTitle" xml:space="preserve"><value>Tamano de Fuente</value></data>
+  <data name="FontSizeDescription" xml:space="preserve"><value>Tamano del texto</value></data>
+  <data name="FontSizeSmall" xml:space="preserve"><value>Pequena</value></data>
+  <data name="FontSizeDefault" xml:space="preserve"><value>Normal</value></data>
+  <data name="FontSizeLarge" xml:space="preserve"><value>Grande</value></data>
+  <data name="FontSizeExtraLarge" xml:space="preserve"><value>Muy grande</value></data>
+  <data name="VersionInfoTitle" xml:space="preserve"><value>Informacion de version</value></data>
+  <data name="VersionNumber" xml:space="preserve"><value>Version 1.0</value></data>
+  <data name="AuthorLabel" xml:space="preserve"><value>Autor: Przemyslaw Przybyszewski</value></data>
+  <data name="RightsLabel" xml:space="preserve"><value>Todos los derechos reservados 2025</value></data>
+  <data name="AppName" xml:space="preserve"><value>FoodBook App</value></data>
+  <data name="DataExportTitle" xml:space="preserve"><value>Exportar datos</value></data>
+  <data name="DataExportDescription" xml:space="preserve"><value>Guardar recetas y planes</value></data>
+  <data name="ComingSoon" xml:space="preserve"><value>Pronto</value></data>
+  <data name="DatabaseMigrationTitle" xml:space="preserve"><value>Migracion de Base de Datos</value></data>
+  <data name="DatabaseMigrationDescription" xml:space="preserve"><value>Actualizar estructura de base de datos</value></data>
+  <data name="DatabaseMigrationButton" xml:space="preserve"><value>Ejecutar Migracion</value></data>
+  <data name="DatabaseResetTitle" xml:space="preserve"><value>Restablecer Base de Datos</value></data>
+  <data name="DatabaseResetDescription" xml:space="preserve"><value>Eliminar todos los datos</value></data>
+  <data name="DatabaseResetButton" xml:space="preserve"><value>Restablecer</value></data>
+  <data name="DatabaseResetWarning" xml:space="preserve"><value>Operacion irreversible!</value></data>
+</root>
