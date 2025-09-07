@@ -130,24 +130,13 @@ public class SetupWizardViewModel : INotifyPropertyChanged
             {
                 var languageOption = culture switch
                 {
-                    "en" => new LanguageOption
-                    {
-                        CultureCode = "en",
-                        DisplayName = "English",
-                        NativeName = "English"
-                    },
-                    "pl-PL" => new LanguageOption
-                    {
-                        CultureCode = "pl-PL",
-                        DisplayName = "Polish",
-                        NativeName = "Polski"
-                    },
-                    _ => new LanguageOption
-                    {
-                        CultureCode = culture,
-                        DisplayName = culture,
-                        NativeName = culture
-                    }
+                    "en" => new LanguageOption { CultureCode = "en", DisplayName = "English", NativeName = "English" },
+                    "pl-PL" => new LanguageOption { CultureCode = "pl-PL", DisplayName = "Polish", NativeName = "Polski" },
+                    "de-DE" => new LanguageOption { CultureCode = "de-DE", DisplayName = "German", NativeName = "Deutsch" },
+                    "es-ES" => new LanguageOption { CultureCode = "es-ES", DisplayName = "Spanish", NativeName = "Espanol" },
+                    "fr-FR" => new LanguageOption { CultureCode = "fr-FR", DisplayName = "French", NativeName = "Francais" },
+                    "ko-KR" => new LanguageOption { CultureCode = "ko-KR", DisplayName = "Korean", NativeName = "???" },
+                    _ => new LanguageOption { CultureCode = culture, DisplayName = culture, NativeName = culture }
                 };
 
                 AvailableLanguages.Add(languageOption);

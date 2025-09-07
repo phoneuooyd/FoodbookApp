@@ -16,7 +16,7 @@ public class PreferencesService : IPreferencesService
     private const string IsFirstLaunchKey = "IsFirstLaunch";
     private const string InstallBasicIngredientsKey = "InstallBasicIngredients";
     
-    private static readonly string[] SupportedCultures = { "en", "pl-PL", "de-DE", "es-ES", "fr-FR" };
+    private static readonly string[] SupportedCultures = { "en", "pl-PL", "de-DE", "es-ES", "fr-FR", "ko-KR" };
 
     /// <inheritdoc/>
     public string GetSavedLanguage()

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Title" xml:space="preserve"><value>Add Recipe</value></data>
+  <data name="BasicInfoTab" xml:space="preserve"><value>Basic</value></data>
+  <data name="IngredientsTab" xml:space="preserve"><value>Ingredients</value></data>
+  <data name="NutritionTab" xml:space="preserve"><value>Nutrition</value></data>
+  <data name="ModeSelection" xml:space="preserve"><value>Input mode</value></data>
+  <data name="Manual" xml:space="preserve"><value>Manual</value></data>
+  <data name="FromLink" xml:space="preserve"><value>From link</value></data>
+  <data name="ImportHeader" xml:space="preserve"><value>Import from Internet</value></data>
+  <data name="UrlLabel" xml:space="preserve"><value>Recipe URL *</value></data>
+  <data name="UrlPlaceholder" xml:space="preserve"><value>Paste recipe link</value></data>
+  <data name="ImportButton" xml:space="preserve"><value>Import recipe</value></data>
+  <data name="BasicInfoHeader" xml:space="preserve"><value>Basic info</value></data>
+  <data name="NameLabel" xml:space="preserve"><value>Recipe name *</value></data>
+  <data name="NamePlaceholder" xml:space="preserve"><value>Enter recipe name</value></data>
+  <data name="DescriptionLabel" xml:space="preserve"><value>Instructions</value></data>
+  <data name="DescriptionPlaceholder" xml:space="preserve"><value>Enter instructions</value></data>
+  <data name="PortionsLabel" xml:space="preserve"><value>Default portions *</value></data>
+  <data name="IngredientsHeader" xml:space="preserve"><value>Ingredients</value></data>
+  <data name="AddIngredient" xml:space="preserve"><value>Add ingredient</value></data>
+  <data name="NutritionHeader" xml:space="preserve"><value>Nutrition (per portion)</value></data>
+  <data name="CalcModeLabel" xml:space="preserve"><value>Nutrition calculation</value></data>
+  <data name="AutoButton" xml:space="preserve"><value>Auto</value></data>
+  <data name="ManualButton" xml:space="preserve"><value>Manual</value></data>
+  <data name="AutoCalculatedInfo" xml:space="preserve"><value>Auto calculated:</value></data>
+  <data name="ManualInputLabel" xml:space="preserve"><value>Enter values manually:</value></data>
+  <data name="CopyCalculated" xml:space="preserve"><value>Copy calculated</value></data>
+  <data name="CaloriesLabel" xml:space="preserve"><value>Calories</value></data>
+  <data name="ProteinLabel" xml:space="preserve"><value>Protein (g)</value></data>
+  <data name="FatLabel" xml:space="preserve"><value>Fat (g)</value></data>
+  <data name="CarbsLabel" xml:space="preserve"><value>Carbs (g)</value></data>
+  <data name="IngredientLabel" xml:space="preserve"><value>Ingredient</value></data>
+  <data name="ChooseIngredient" xml:space="preserve"><value>Choose ingredient</value></data>
+  <data name="QuantityLabelShort" xml:space="preserve"><value>Qty</value></data>
+  <data name="UnitLabelShort" xml:space="preserve"><value>Unit</value></data>
+</root>

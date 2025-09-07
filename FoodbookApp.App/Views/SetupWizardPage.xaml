@@ -3,11 +3,19 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:loc="clr-namespace:Foodbook.Services"
+             xmlns:converters="clr-namespace:Foodbook.Converters"
              x:Class="Foodbook.Views.SetupWizardPage"
              x:DataType="vm:SetupWizardViewModel"
              Title="{loc:Translate Resource=SetupWizardPageResources, Key=PageTitle}"
              BackgroundColor="{DynamicResource PageBackgroundColor}"
              Shell.NavBarIsVisible="False">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:CultureCodeToNativeNameConverter x:Key="CultureCodeToNativeNameConverter" />
+            <converters:CultureCodeToDisplayNameConverter x:Key="CultureCodeToDisplayNameConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
 
     <ScrollView Padding="20">
         <VerticalStackLayout Spacing="30">
@@ -45,7 +53,7 @@
                     
                     <Picker ItemsSource="{Binding AvailableLanguages}"
                             SelectedItem="{Binding SelectedLanguage}"
-                            ItemDisplayBinding="{Binding NativeName}"
+                            ItemDisplayBinding="{Binding CultureCode, Converter={StaticResource CultureCodeToNativeNameConverter}}"
                             FontSize="16"
                             BackgroundColor="{DynamicResource White}"
                             TextColor="{DynamicResource Black}" />
