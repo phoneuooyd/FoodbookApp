@@ -394,5 +394,16 @@ namespace Foodbook.ViewModels
         public event PropertyChangedEventHandler PropertyChanged;
         void OnPropertyChanged([CallerMemberName] string name = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+        // Move dragged recipe one level up (to parent of current folder, or root when no parent)
+        public async Task MoveRecipeUpAsync(Recipe recipe)
+        {
+            if (recipe == null) return;
+            if (_currentFolder == null) return; // at root, nothing to move up to
+
+            recipe.FolderId = _currentFolder.ParentFolderId; // null when parent is root
+            await _recipeService.UpdateRecipeAsync(recipe);
+            FilterItems();
+        }
     }
 }

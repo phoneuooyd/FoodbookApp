@@ -50,8 +50,22 @@
 
         <!-- Breadcrumb with Back button under search bar -->
         <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Padding="8,4" BackgroundColor="{AppThemeBinding Light=#F2F2F2, Dark=#2B2B2B}">
-            <!-- Lower the back button slightly -->
-            <Button Text="◀" Command="{Binding GoBackCommand}" IsEnabled="{Binding CanGoBack}" WidthRequest="34" HeightRequest="20" Padding="0" Margin="0,0,8,0" />
+            <Grid.GestureRecognizers>
+                <!-- Drop anywhere on breadcrumb area; code-behind checks if over back button -->
+                <DropGestureRecognizer AllowDrop="True" Drop="OnBreadcrumbDrop" />
+            </Grid.GestureRecognizers>
+
+            <!-- Back button (tap to navigate up) -->
+            <Button x:Name="BackButton"
+                    Text="◀"
+                    Command="{Binding GoBackCommand}"
+                    IsEnabled="{Binding CanGoBack}"
+                    WidthRequest="34"
+                    HeightRequest="20"
+                    Padding="0"
+                    Margin="0,0,8,0"
+                    Clicked="OnBackClicked" />
+
             <Label Grid.Column="1" Text="{Binding CurrentPathDisplay}" FontSize="13" TextColor="{AppThemeBinding Light=#444, Dark=#CCC}" VerticalTextAlignment="Center"/>
         </Grid>
 

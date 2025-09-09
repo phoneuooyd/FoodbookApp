@@ -1,6 +1,8 @@
 using Microsoft.Maui.Controls;
 using Foodbook.ViewModels;
 using Foodbook.Views.Base;
+using System.Threading.Tasks;
+using Foodbook.Models;
 
 namespace Foodbook.Views
 {
@@ -65,6 +67,41 @@ namespace Foodbook.Views
             // Cleanup theme and font handling
             _themeHelper.Cleanup();
             MessagingCenter.Unsubscribe<RecipeViewModel>(this, "FabCollapse");
+        }
+
+        private void OnBackClicked(object? sender, System.EventArgs e)
+        {
+            if (_viewModel.GoBackCommand?.CanExecute(null) == true)
+                _viewModel.GoBackCommand.Execute(null);
+        }
+
+        // Handle dropping a recipe onto the back button: move up one level
+        private async void OnBackDrop(object? sender, DropEventArgs e)
+        {
+            try
+            {
+                if (e?.Data?.Properties?.TryGetValue("SourceItem", out var source) == true && source is Recipe recipe)
+                {
+                    await _viewModel.MoveRecipeUpAsync(recipe);
+                }
+            }
+            catch
+            {
+                // ignore errors
+            }
+        }
+
+        // Drop anywhere on breadcrumb area moves up one level
+        private async void OnBreadcrumbDrop(object? sender, DropEventArgs e)
+        {
+            try
+            {
+                if (e?.Data?.Properties?.TryGetValue("SourceItem", out var source) == true && source is Recipe recipe)
+                {
+                    await _viewModel.MoveRecipeUpAsync(recipe);
+                }
+            }
+            catch { }
         }
     }
 }
