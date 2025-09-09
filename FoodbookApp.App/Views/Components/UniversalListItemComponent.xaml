@@ -11,19 +11,29 @@
     </ContentView.GestureRecognizers>
 
     <ContentView Style="{StaticResource ListItemContainer}">
-        <Grid ColumnDefinitions="Auto,*">
-            <!-- Ribbon shown only for folders -->
-            <BoxView WidthRequest="6"
-                     Margin="0"
-                     BackgroundColor="{DynamicResource Primary}"
-                     IsVisible="{Binding ., Converter={converters:IsFolderConverter}}" />
+        <!-- Frame as the outer card; ribbon moved INSIDE and flush with the card's left edge -->
+        <Frame Style="{StaticResource ListItemFrame}" Padding="0">
+            <Frame.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding EditCommand, Source={x:Reference ItemComponent}}"
+                                      CommandParameter="{Binding .}" />
+            </Frame.GestureRecognizers>
 
-            <Frame Grid.Column="1" Style="{StaticResource ListItemFrame}" Padding="12">
-                <Frame.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding EditCommand, Source={x:Reference ItemComponent}}" 
-                                          CommandParameter="{Binding .}" />
-                </Frame.GestureRecognizers>
-                <Grid Style="{StaticResource ListItemContentGrid}" ColumnDefinitions="*,Auto">
+            <!-- Layout: narrow left ribbon column + content -->
+            <Grid ColumnDefinitions="Auto,*">
+                <!-- Ribbon shown only for folders; collapses when not a folder -->
+                <BoxView Grid.Column="0"
+                         WidthRequest="6"
+                         BackgroundColor="{DynamicResource Primary}"
+                         IsVisible="{Binding ., Converter={converters:IsFolderConverter}}">
+                    <BoxView.Triggers>
+                        <DataTrigger TargetType="BoxView" Binding="{Binding ., Converter={converters:IsFolderConverter}}" Value="False">
+                            <Setter Property="WidthRequest" Value="0" />
+                        </DataTrigger>
+                    </BoxView.Triggers>
+                </BoxView>
+
+                <!-- Content area (keeps inner spacing) -->
+                <Grid Grid.Column="1" Margin="12" Style="{StaticResource ListItemContentGrid}" ColumnDefinitions="*,Auto">
                     <StackLayout Grid.Column="0" Spacing="2">
                         <Label Text="{Binding Name}" Style="{StaticResource ItemTitleLabel}" />
 
@@ -61,22 +71,21 @@
                         </StackLayout>
                     </StackLayout>
 
-                    <Button Grid.Column="1" 
+                    <Button Grid.Column="1"
                             Style="{StaticResource DeleteButton}"
-                            Command="{Binding DeleteCommand, Source={x:Reference ItemComponent}}" 
+                            Command="{Binding DeleteCommand, Source={x:Reference ItemComponent}}"
                             CommandParameter="{Binding .}"
                             IsVisible="{Binding ShowDeleteButton, Source={x:Reference ItemComponent}}" />
                 </Grid>
+            </Grid>
 
-                <Frame.Triggers>
-                    <!-- Slightly bigger height/padding for folders -->
-                    <DataTrigger TargetType="Frame" Binding="{Binding ., Converter={converters:IsFolderConverter}}" Value="True">
-                        <Setter Property="Padding" Value="14" />
-                        <Setter Property="MinimumHeightRequest" Value="66" />
-                    </DataTrigger>
-                </Frame.Triggers>
-            </Frame>
-        </Grid>
+            <Frame.Triggers>
+                <!-- Slightly bigger height for folders; padding handled by inner content margin -->
+                <DataTrigger TargetType="Frame" Binding="{Binding ., Converter={converters:IsFolderConverter}}" Value="True">
+                    <Setter Property="MinimumHeightRequest" Value="66" />
+                </DataTrigger>
+            </Frame.Triggers>
+        </Frame>
     </ContentView>
 
 </ContentView>

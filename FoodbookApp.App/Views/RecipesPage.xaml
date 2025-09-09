@@ -45,7 +45,8 @@
 
         <!-- Breadcrumb with Back button under search bar -->
         <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Padding="8,4" BackgroundColor="{AppThemeBinding Light=#F2F2F2, Dark=#2B2B2B}">
-            <Button Text="◀" Command="{Binding GoBackCommand}" IsEnabled="{Binding CanGoBack}" WidthRequest="34" HeightRequest="28" Padding="0" Margin="0,0,8,0" />
+            <!-- Lower the back button slightly -->
+            <Button Text="◀" Command="{Binding GoBackCommand}" IsEnabled="{Binding CanGoBack}" WidthRequest="34" HeightRequest="20" Padding="0" Margin="0,0,8,0" />
             <Label Grid.Column="1" Text="{Binding CurrentPathDisplay}" FontSize="13" TextColor="{AppThemeBinding Light=#444, Dark=#CCC}" VerticalTextAlignment="Center"/>
         </Grid>
 
