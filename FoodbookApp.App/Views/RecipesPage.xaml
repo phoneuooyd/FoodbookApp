@@ -22,7 +22,12 @@
                 ShowNutritionLayout="True"
                 ShowPlanLayout="False"
                 ShowDeleteButton="True"
-                ShowArchiveButton="False" />
+                ShowArchiveButton="False"
+                ShowDragAndDrop="True"
+                DragStartingCommand="{Binding BindingContext.DragStartingCommand, Source={x:Reference ThisPage}}"
+                DragOverCommand="{Binding BindingContext.DragOverCommand, Source={x:Reference ThisPage}}"
+                DragLeaveCommand="{Binding BindingContext.DragLeaveCommand, Source={x:Reference ThisPage}}"
+                DropCommand="{Binding BindingContext.DropCommand, Source={x:Reference ThisPage}}" />
         </DataTemplate>
     </ContentPage.Resources>
 

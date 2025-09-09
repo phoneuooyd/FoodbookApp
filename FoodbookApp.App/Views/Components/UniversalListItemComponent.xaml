@@ -16,6 +16,9 @@
             <Frame.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding EditCommand, Source={x:Reference ItemComponent}}"
                                       CommandParameter="{Binding .}" />
+                <!-- Drag & Drop support -->
+                <DragGestureRecognizer DragStarting="OnDragStarting" CanDrag="True" />
+                <DropGestureRecognizer AllowDrop="True" DragOver="OnDragOver" DragLeave="OnDragLeave" Drop="OnDrop" />
             </Frame.GestureRecognizers>
 
             <!-- Layout: narrow left ribbon column + content -->

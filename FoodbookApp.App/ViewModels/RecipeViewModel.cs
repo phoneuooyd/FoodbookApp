@@ -12,7 +12,7 @@ using System.Linq;
 
 namespace Foodbook.ViewModels
 {
-    public class RecipeViewModel : INotifyPropertyChanged
+    public partial class RecipeViewModel : INotifyPropertyChanged
     {
         private readonly IRecipeService _recipeService;
         private readonly IIngredientService _ingredientService;
@@ -128,6 +128,8 @@ namespace Foodbook.ViewModels
 
             RefreshCommand = new Command(async () => await ReloadAsync());
             ClearSearchCommand = new Command(() => SearchText = string.Empty);
+
+            InitializeDragDrop();
         }
 
         private async Task GoBackAsync()
@@ -313,6 +315,80 @@ namespace Foodbook.ViewModels
             {
                 System.Diagnostics.Debug.WriteLine($"Error deleting recipe: {ex.Message}");
             }
+        }
+
+        // New drag & drop commands
+        public ICommand DragStartingCommand { get; private set; }
+        public ICommand DragOverCommand { get; private set; }
+        public ICommand DragLeaveCommand { get; private set; }
+        public ICommand DropCommand { get; private set; }
+
+        private object? _dragSource;
+
+        private void InitializeDragDrop()
+        {
+            DragStartingCommand = new Command<object>(o =>
+            {
+                _dragSource = o;
+                if (o is Recipe r)
+                {
+                    r.IsBeingDragged = true;
+                }
+            });
+
+            DragOverCommand = new Command<object>(o =>
+            {
+                if (o is Folder f)
+                {
+                    f.IsBeingDraggedOver = true;
+                }
+            });
+
+            DragLeaveCommand = new Command<object>(o =>
+            {
+                if (o is Folder f)
+                {
+                    f.IsBeingDraggedOver = false;
+                }
+            });
+
+            DropCommand = new Command<object>(async payload =>
+            {
+                try
+                {
+                    // payload may be a DragDropInfo or direct target binding context
+                    if (_dragSource is not Recipe dragged)
+                        return;
+
+                    Folder? targetFolder = null;
+                    switch (payload)
+                    {
+                        case Foodbook.Views.Components.DragDropInfo info:
+                            targetFolder = info.Target as Folder;
+                            break;
+                        case Folder f:
+                            targetFolder = f;
+                            break;
+                    }
+
+                    if (targetFolder == null)
+                        return; // we only allow dropping onto folders
+
+                    // Update folder id and persist
+                    dragged.FolderId = targetFolder.Id;
+                    await _recipeService.UpdateRecipeAsync(dragged);
+
+                    // Refresh lists locally without full reload
+                    FilterItems();
+                }
+                finally
+                {
+                    // clear flags
+                    if (_dragSource is Recipe r2) r2.IsBeingDragged = false;
+                    if (payload is Folder f2) f2.IsBeingDraggedOver = false;
+                    _dragSource = null;
+                }
+            });
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

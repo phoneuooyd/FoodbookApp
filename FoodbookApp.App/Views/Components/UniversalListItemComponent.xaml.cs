@@ -1,8 +1,11 @@
 using System.Windows.Input;
 using Foodbook.Views.Base;
+using Microsoft.Maui.Controls;
 
 namespace Foodbook.Views.Components
 {
+    public record DragDropInfo(object? Source, object? Target);
+
     public partial class UniversalListItemComponent : ContentView
     {
         public static readonly BindableProperty EditCommandProperty =
@@ -166,7 +169,13 @@ namespace Foodbook.Views.Components
         // Handlers to forward gestures to bound commands
         private void OnDragStarting(object? sender, DragStartingEventArgs e)
         {
-            if (ShowDragAndDrop && DragStartingCommand?.CanExecute(BindingContext) == true)
+            if (!ShowDragAndDrop) { e.Cancel = true; return; }
+
+            // Store source item in the drag data so it is available on drop
+            e.Data.Properties["SourceItem"] = BindingContext;
+            // RequestedOperation is not available in MAUI cross-platform DataPackage; skip
+
+            if (DragStartingCommand?.CanExecute(BindingContext) == true)
             {
                 DragStartingCommand.Execute(BindingContext);
             }
@@ -174,7 +183,8 @@ namespace Foodbook.Views.Components
 
         private void OnDragOver(object? sender, DragEventArgs e)
         {
-            if (ShowDragAndDrop && DragOverCommand?.CanExecute(BindingContext) == true)
+            if (!ShowDragAndDrop) return;
+            if (DragOverCommand?.CanExecute(BindingContext) == true)
             {
                 DragOverCommand.Execute(BindingContext);
             }
@@ -182,7 +192,8 @@ namespace Foodbook.Views.Components
 
         private void OnDragLeave(object? sender, DragEventArgs e)
         {
-            if (ShowDragAndDrop && DragLeaveCommand?.CanExecute(BindingContext) == true)
+            if (!ShowDragAndDrop) return;
+            if (DragLeaveCommand?.CanExecute(BindingContext) == true)
             {
                 DragLeaveCommand.Execute(BindingContext);
             }
@@ -190,9 +201,13 @@ namespace Foodbook.Views.Components
 
         private void OnDrop(object? sender, DropEventArgs e)
         {
-            if (ShowDragAndDrop && DropCommand?.CanExecute(BindingContext) == true)
+            if (!ShowDragAndDrop) return;
+
+            e.Data.Properties.TryGetValue("SourceItem", out var source);
+            var payload = new DragDropInfo(source, BindingContext);
+            if (DropCommand?.CanExecute(payload) == true)
             {
-                DropCommand.Execute(BindingContext);
+                DropCommand.Execute(payload);
             }
         }
     }
