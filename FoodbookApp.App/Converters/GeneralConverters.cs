@@ -1,6 +1,7 @@
 using System.Globalization;
 using Microsoft.Maui.Controls;
 using System.Linq;
+using Foodbook.Models;
 
 namespace Foodbook.Converters
 {
@@ -26,5 +27,27 @@ namespace Foodbook.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => value != null;
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+    }
+
+    public class IsRecipeConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return value is Recipe;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => throw new NotSupportedException();
+    }
+
+    public class IsFolderConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return value is Folder;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => throw new NotSupportedException();
     }
 }

@@ -16,6 +16,25 @@ namespace Foodbook.Views
             _viewModel = viewModel;
             BindingContext = _viewModel;
             _themeHelper = new PageThemeHelper();
+
+            MessagingCenter.Subscribe<RecipeViewModel>(this, "FabCollapse", async _ =>
+            {
+                try
+                {
+                    var fab = this.FindByName<Foodbook.Views.Components.FloatingActionButtonComponent>("RecipesFab");
+                    if (fab != null)
+                    {
+                        // Use InvokeOnMainThread to ensure UI thread
+                        await MainThread.InvokeOnMainThreadAsync(async () =>
+                        {
+                            var method = fab.GetType().GetMethod("CollapseAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                            if (method != null)
+                                await (Task)method.Invoke(fab, null);
+                        });
+                    }
+                }
+                catch { }
+            });
         }
 
         protected override async void OnAppearing()
@@ -45,6 +64,7 @@ namespace Foodbook.Views
             
             // Cleanup theme and font handling
             _themeHelper.Cleanup();
+            MessagingCenter.Unsubscribe<RecipeViewModel>(this, "FabCollapse");
         }
     }
 }

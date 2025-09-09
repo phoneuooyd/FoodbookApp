@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:Foodbook.Services"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
-             xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:converters="clr-namespace:Foodbook.Converters"
              xmlns:components="clr-namespace:Foodbook.Views.Components"
              xmlns:resources="clr-namespace:FoodbookApp.Localization"
@@ -27,7 +26,8 @@
         </DataTemplate>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto,Auto,*">
+    <!-- Rows: 0 Loading, 1 Search, 2 Breadcrumb, 3 Content -->
+    <Grid RowDefinitions="Auto,Auto,Auto,*">
         
         <!-- Loading indicator -->
         <ActivityIndicator Grid.Row="0" 
@@ -43,8 +43,14 @@
                                            ClearCommand="{Binding ClearSearchCommand}"
                                            IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
 
+        <!-- Breadcrumb with Back button under search bar -->
+        <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Padding="8,4" BackgroundColor="{AppThemeBinding Light=#F2F2F2, Dark=#2B2B2B}">
+            <Button Text="◀" Command="{Binding GoBackCommand}" IsEnabled="{Binding CanGoBack}" WidthRequest="34" HeightRequest="28" Padding="0" Margin="0,0,8,0" />
+            <Label Grid.Column="1" Text="{Binding CurrentPathDisplay}" FontSize="13" TextColor="{AppThemeBinding Light=#444, Dark=#CCC}" VerticalTextAlignment="Center"/>
+        </Grid>
+
         <!-- Content -->
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="3">
             <!-- Generic List Component -->
             <components:GenericListComponent 
                 ItemsSource="{Binding Items}"
@@ -56,7 +62,7 @@
                 IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
             
             <!-- Floating Action Button (expandable) -->
-            <components:FloatingActionButtonComponent 
+            <components:FloatingActionButtonComponent x:Name="RecipesFab"
                 IsExpandable="True"
                 IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
                 ButtonText="+">

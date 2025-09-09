@@ -1,68 +1,82 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:converters="clr-namespace:Foodbook.Converters"
              x:Class="Foodbook.Views.Components.UniversalListItemComponent"
              x:Name="ItemComponent">
 
+    <ContentView.GestureRecognizers>
+        <TapGestureRecognizer Command="{Binding EditCommand, Source={x:Reference ItemComponent}}"
+                              CommandParameter="{Binding .}" />
+    </ContentView.GestureRecognizers>
+
     <ContentView Style="{StaticResource ListItemContainer}">
-        <Frame Style="{StaticResource ListItemFrame}">
-            <Frame.GestureRecognizers>
-                <TapGestureRecognizer Command="{Binding EditCommand, Source={x:Reference ItemComponent}}" 
-                                      CommandParameter="{Binding .}" />
-            </Frame.GestureRecognizers>
-            <Grid Style="{StaticResource ListItemContentGrid}" ColumnDefinitions="*,Auto,Auto,Auto">
-                <Grid.GestureRecognizers>
-                    <DragGestureRecognizer CanDrag="{Binding ShowDragAndDrop, Source={x:Reference ItemComponent}}"
-                                           DragStarting="OnDragStarting" />
-                    <DropGestureRecognizer AllowDrop="{Binding ShowDragAndDrop, Source={x:Reference ItemComponent}}"
-                                           DragOver="OnDragOver"
-                                           DragLeave="OnDragLeave"
-                                           Drop="OnDrop" />
-                </Grid.GestureRecognizers>
+        <Grid ColumnDefinitions="Auto,*">
+            <!-- Ribbon shown only for folders -->
+            <BoxView WidthRequest="6"
+                     Margin="0"
+                     BackgroundColor="{DynamicResource Primary}"
+                     IsVisible="{Binding ., Converter={converters:IsFolderConverter}}" />
 
-                <StackLayout Grid.Column="0" Spacing="2">
-                    <Label Text="{Binding Name}" Style="{StaticResource ItemTitleLabel}" />
+            <Frame Grid.Column="1" Style="{StaticResource ListItemFrame}" Padding="12">
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding EditCommand, Source={x:Reference ItemComponent}}" 
+                                          CommandParameter="{Binding .}" />
+                </Frame.GestureRecognizers>
+                <Grid Style="{StaticResource ListItemContentGrid}" ColumnDefinitions="*,Auto">
+                    <StackLayout Grid.Column="0" Spacing="2">
+                        <Label Text="{Binding Name}" Style="{StaticResource ItemTitleLabel}" />
 
-                    <StackLayout Style="{StaticResource NutritionContainer}"
-                                 IsVisible="{Binding ShowNutritionLayout, Source={x:Reference ItemComponent}}">
-                        <Label Style="{StaticResource CaloriesLabel}">
-                            <Label.Text>
-                                <MultiBinding StringFormat="{}{0:F0} kcal">
-                                    <Binding Path="Calories" />
-                                </MultiBinding>
-                            </Label.Text>
-                        </Label>
-                        <Label Style="{StaticResource MacroLabel}">
-                            <Label.Text>
-                                <MultiBinding StringFormat="P: {0:F1}g">
-                                    <Binding Path="Protein" />
-                                </MultiBinding>
-                            </Label.Text>
-                        </Label>
-                        <Label Style="{StaticResource MacroLabel}">
-                            <Label.Text>
-                                <MultiBinding StringFormat="F: {0:F1}g">
-                                    <Binding Path="Fat" />
-                                </MultiBinding>
-                            </Label.Text>
-                        </Label>
-                        <Label Style="{StaticResource MacroLabel}">
-                            <Label.Text>
-                                <MultiBinding StringFormat="C: {0:F1}g">
-                                    <Binding Path="Carbs" />
-                                </MultiBinding>
-                            </Label.Text>
-                        </Label>
+                        <!-- Macros only for recipes -->
+                        <StackLayout Style="{StaticResource NutritionContainer}"
+                                     IsVisible="{Binding ., Converter={converters:IsRecipeConverter}}">
+                            <Label Style="{StaticResource CaloriesLabel}">
+                                <Label.Text>
+                                    <MultiBinding StringFormat="{}{0:F0} kcal">
+                                        <Binding Path="Calories" />
+                                    </MultiBinding>
+                                </Label.Text>
+                            </Label>
+                            <Label Style="{StaticResource MacroLabel}">
+                                <Label.Text>
+                                    <MultiBinding StringFormat="P: {0:F1}g">
+                                        <Binding Path="Protein" />
+                                    </MultiBinding>
+                                </Label.Text>
+                            </Label>
+                            <Label Style="{StaticResource MacroLabel}">
+                                <Label.Text>
+                                    <MultiBinding StringFormat="F: {0:F1}g">
+                                        <Binding Path="Fat" />
+                                    </MultiBinding>
+                                </Label.Text>
+                            </Label>
+                            <Label Style="{StaticResource MacroLabel}">
+                                <Label.Text>
+                                    <MultiBinding StringFormat="C: {0:F1}g">
+                                        <Binding Path="Carbs" />
+                                    </MultiBinding>
+                                </Label.Text>
+                            </Label>
+                        </StackLayout>
                     </StackLayout>
-                </StackLayout>
 
-                <Button Grid.Column="3" 
-                        Style="{StaticResource DeleteButton}"
-                        Command="{Binding DeleteCommand, Source={x:Reference ItemComponent}}" 
-                        CommandParameter="{Binding .}"
-                        IsVisible="{Binding ShowDeleteButton, Source={x:Reference ItemComponent}}" />
-            </Grid>
-        </Frame>
+                    <Button Grid.Column="1" 
+                            Style="{StaticResource DeleteButton}"
+                            Command="{Binding DeleteCommand, Source={x:Reference ItemComponent}}" 
+                            CommandParameter="{Binding .}"
+                            IsVisible="{Binding ShowDeleteButton, Source={x:Reference ItemComponent}}" />
+                </Grid>
+
+                <Frame.Triggers>
+                    <!-- Slightly bigger height/padding for folders -->
+                    <DataTrigger TargetType="Frame" Binding="{Binding ., Converter={converters:IsFolderConverter}}" Value="True">
+                        <Setter Property="Padding" Value="14" />
+                        <Setter Property="MinimumHeightRequest" Value="66" />
+                    </DataTrigger>
+                </Frame.Triggers>
+            </Frame>
+        </Grid>
     </ContentView>
 
 </ContentView>

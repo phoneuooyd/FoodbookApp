@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 namespace Foodbook.Views
 {
     [QueryProperty(nameof(RecipeId), "id")]
+    [QueryProperty(nameof(FolderId), "folderId")]
     public partial class AddRecipePage : ContentPage
     {
         public IEnumerable<Foodbook.Models.Unit> Units => Enum.GetValues(typeof(Foodbook.Models.Unit)).Cast<Foodbook.Models.Unit>();
@@ -15,7 +16,6 @@ namespace Foodbook.Views
         private AddRecipeViewModel ViewModel => BindingContext as AddRecipeViewModel;
         private readonly PageThemeHelper _themeHelper;
         
-        // ?? NOWE: Debouncing timer dla zmian wartoœci
         private IDispatcherTimer? _valueChangeTimer;
 
         public AddRecipePage(AddRecipeViewModel vm)
@@ -30,18 +30,17 @@ namespace Foodbook.Views
             try
             {
                 base.OnAppearing();
-                
-                // Initialize theme and font handling
                 _themeHelper.Initialize();
-                
-                // Zawsze resetuj stan ViewModelu na pocz¹tku
+
                 ViewModel?.Reset();
-                
                 await ViewModel.LoadAvailableIngredientsAsync();
-                
-                // Tylko jeœli mamy RecipeId > 0, za³aduj przepis do edycji
+
                 if (RecipeId > 0)
                     await ViewModel.LoadRecipeAsync(RecipeId);
+
+                // If navigation passed FolderId, preselect it
+                if (FolderId > 0 && ViewModel != null)
+                    ViewModel.SelectedFolderId = FolderId;
             }
             catch (Exception ex)
             {
@@ -56,17 +55,14 @@ namespace Foodbook.Views
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
-            
-            // Cleanup theme and font handling
             _themeHelper.Cleanup();
         }
 
         private int _recipeId;
-        public int RecipeId
-        {
-            get => _recipeId;
-            set => _recipeId = value;
-        }
+        public int RecipeId { get => _recipeId; set => _recipeId = value; }
+
+        private int _folderId;
+        public int FolderId { get => _folderId; set => _folderId = value; }
 
         protected override bool OnBackButtonPressed()
         {
@@ -121,15 +117,11 @@ namespace Foodbook.Views
             }
         }
 
-        // ?? ZOPTYMALIZOWANE: Debounced przeliczenia z u¿yciem nowej async metody
         private void OnIngredientValueChanged(object sender, EventArgs e)
         {
             try
             {
-                // Anuluj poprzedni timer
                 _valueChangeTimer?.Stop();
-                
-                // Utwórz nowy timer z 500ms opóŸnieniem
                 _valueChangeTimer = Application.Current.Dispatcher.CreateTimer();
                 _valueChangeTimer.Interval = TimeSpan.FromMilliseconds(500);
                 _valueChangeTimer.Tick += async (s, args) =>
@@ -137,7 +129,6 @@ namespace Foodbook.Views
                     try
                     {
                         _valueChangeTimer.Stop();
-                        // ?? U¿ywa nowej asynchronicznej metody
                         if (ViewModel != null)
                         {
                             await ViewModel.RecalculateNutritionalValuesAsync();
@@ -162,7 +153,6 @@ namespace Foodbook.Views
             {
                 if (sender is Picker picker && picker.BindingContext is Ingredient ingredient)
                 {
-                    // Aktualizuj wartoœci od¿ywcze sk³adnika na podstawie wybranej nazwy
                     await ViewModel.UpdateIngredientNutritionalValuesAsync(ingredient);
                 }
             }

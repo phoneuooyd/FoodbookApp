@@ -5,7 +5,6 @@ using System.Windows.Input;
 using Foodbook.Models;
 using Foodbook.Services;
 using Foodbook.Views;
-using Foodbook.Data;
 using Microsoft.Maui.Controls;
 using System.Threading.Tasks;
 using System.Linq;
@@ -23,49 +22,37 @@ namespace Foodbook.ViewModels
         private string _searchText = string.Empty;
         private List<Recipe> _allRecipes = new();
         private List<Folder> _allFolders = new();
+        private Folder? _currentFolder;
 
         // Mixed list: folders on top, then recipes
         public ObservableCollection<object> Items { get; } = new();
+        public ObservableCollection<Folder> Breadcrumb { get; } = new();
 
         public ObservableCollection<Recipe> Recipes { get; } = new(); // kept for compatibility if used elsewhere
 
         public ICommand AddFolderCommand { get; }
         public ICommand EditItemCommand { get; }
         public ICommand DeleteItemCommand { get; }
+        public ICommand BreadcrumbNavigateCommand { get; }
+        public ICommand GoBackCommand { get; }
 
         public bool IsLoading
         {
             get => _isLoading;
-            set
-            {
-                if (_isLoading == value) return;
-                _isLoading = value;
-                OnPropertyChanged();
-            }
+            set { if (_isLoading == value) return; _isLoading = value; OnPropertyChanged(); }
         }
-
         public bool IsRefreshing
         {
             get => _isRefreshing;
-            set
-            {
-                if (_isRefreshing == value) return;
-                _isRefreshing = value;
-                OnPropertyChanged();
-            }
+            set { if (_isRefreshing == value) return; _isRefreshing = value; OnPropertyChanged(); }
         }
-
         public string SearchText
         {
             get => _searchText;
-            set
-            {
-                if (_searchText == value) return;
-                _searchText = value;
-                OnPropertyChanged();
-                FilterItems();
-            }
+            set { if (_searchText == value) return; _searchText = value; OnPropertyChanged(); FilterItems(); }
         }
+
+        public bool CanGoBack => Breadcrumb.Count > 0;
 
         public ICommand AddRecipeCommand { get; }
         public ICommand EditRecipeCommand { get; }
@@ -73,14 +60,26 @@ namespace Foodbook.ViewModels
         public ICommand RefreshCommand { get; }
         public ICommand ClearSearchCommand { get; }
 
+        public string CurrentPathDisplay => Breadcrumb.Count == 0 ? "/" : string.Join(" / ", Breadcrumb.Select(b => b.Name));
+
         public RecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService, IFolderService folderService)
         {
             _recipeService = recipeService;
             _ingredientService = ingredientService;
             _folderService = folderService;
 
-            AddRecipeCommand = new Command(async () => await Shell.Current.GoToAsync(nameof(AddRecipePage)));
-            AddFolderCommand = new Command(async () => await CreateFolderAsync());
+            AddRecipeCommand = new Command(async () =>
+            {
+                var param = _currentFolder?.Id > 0 ? $"?folderId={_currentFolder.Id}" : string.Empty;
+                await Shell.Current.GoToAsync($"{nameof(AddRecipePage)}{param}");
+                MessagingCenter.Send(this, "FabCollapse");
+            });
+
+            AddFolderCommand = new Command(async () =>
+            {
+                await CreateFolderAsync();
+                MessagingCenter.Send(this, "FabCollapse");
+            });
 
             EditRecipeCommand = new Command<Recipe>(async r =>
             {
@@ -94,12 +93,10 @@ namespace Foodbook.ViewModels
                 switch (o)
                 {
                     case Recipe r:
-                        if (r != null)
-                            await Shell.Current.GoToAsync($"{nameof(AddRecipePage)}?id={r.Id}");
+                        await Shell.Current.GoToAsync($"{nameof(AddRecipePage)}?id={r.Id}");
                         break;
                     case Folder f:
-                        // For now, maybe later navigate to folder details; currently no-op or future page
-                        await Application.Current.MainPage.DisplayAlert("Folder", $"Folder: {f.Name}", "OK");
+                        await NavigateIntoFolderAsync(f);
                         break;
                 }
             });
@@ -126,8 +123,43 @@ namespace Foodbook.ViewModels
                 }
             });
 
+            BreadcrumbNavigateCommand = new Command<Folder>(async f => await NavigateToBreadcrumbAsync(f));
+            GoBackCommand = new Command(async () => await GoBackAsync(), () => CanGoBack);
+
             RefreshCommand = new Command(async () => await ReloadAsync());
             ClearSearchCommand = new Command(() => SearchText = string.Empty);
+        }
+
+        private async Task GoBackAsync()
+        {
+            if (Breadcrumb.Count == 0)
+                return;
+
+            Breadcrumb.RemoveAt(Breadcrumb.Count - 1);
+            _currentFolder = Breadcrumb.LastOrDefault();
+            FilterItems();
+            await Task.CompletedTask;
+        }
+
+        private async Task NavigateIntoFolderAsync(Folder f)
+        {
+            _currentFolder = f;
+            Breadcrumb.Add(f);
+            FilterItems();
+            await Task.CompletedTask;
+        }
+
+        private async Task NavigateToBreadcrumbAsync(Folder f)
+        {
+            for (int i = Breadcrumb.Count - 1; i >= 0; i--)
+            {
+                if (Breadcrumb[i].Id == f.Id)
+                    break;
+                Breadcrumb.RemoveAt(i);
+            }
+            _currentFolder = f;
+            FilterItems();
+            await Task.CompletedTask;
         }
 
         private async Task CreateFolderAsync()
@@ -135,7 +167,7 @@ namespace Foodbook.ViewModels
             string result = await Shell.Current.DisplayPromptAsync("Nowy folder", "Podaj nazwê folderu", "Utwórz", "Anuluj", maxLength: 200, keyboard: Keyboard.Text);
             if (string.IsNullOrWhiteSpace(result)) return;
 
-            var folder = new Folder { Name = result.Trim() };
+            var folder = new Folder { Name = result.Trim(), ParentFolderId = _currentFolder?.Id };
             await _folderService.AddFolderAsync(folder);
             await LoadRecipesAsync();
         }
@@ -151,17 +183,10 @@ namespace Foodbook.ViewModels
                 await RecalculateNutritionalValuesForRecipes(recipes);
                 _allRecipes = recipes;
 
-                // Folders
                 _allFolders = await _folderService.GetFoldersAsync();
 
-                // Fill both typed collections
                 Recipes.Clear();
                 foreach (var r in _allRecipes) Recipes.Add(r);
-
-                // Fill mixed list (folders first, then recipes)
-                Items.Clear();
-                foreach (var f in _allFolders) Items.Add(f);
-                foreach (var r in _allRecipes) Items.Add(r);
 
                 FilterItems();
             }
@@ -177,7 +202,17 @@ namespace Foodbook.ViewModels
 
         private void FilterItems()
         {
-            IEnumerable<object> src = _allFolders.Cast<object>().Concat(_allRecipes);
+            IEnumerable<object> src;
+            if (_currentFolder == null)
+            {
+                src = _allFolders.Where(f => f.ParentFolderId == null).Cast<object>()
+                      .Concat(_allRecipes.Where(r => r.FolderId == null));
+            }
+            else
+            {
+                src = _allFolders.Where(f => f.ParentFolderId == _currentFolder.Id).Cast<object>()
+                      .Concat(_allRecipes.Where(r => r.FolderId == _currentFolder.Id));
+            }
 
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
@@ -190,6 +225,10 @@ namespace Foodbook.ViewModels
             Items.Clear();
             foreach (var o in src)
                 Items.Add(o);
+
+            OnPropertyChanged(nameof(CurrentPathDisplay));
+            OnPropertyChanged(nameof(CanGoBack));
+            (GoBackCommand as Command)?.ChangeCanExecute();
         }
 
         private async Task RecalculateNutritionalValuesForRecipes(List<Recipe> recipes)
@@ -201,11 +240,7 @@ namespace Foodbook.ViewModels
                 {
                     if (recipe.Ingredients?.Any() == true)
                     {
-                        double totalCalories = 0;
-                        double totalProtein = 0;
-                        double totalFat = 0;
-                        double totalCarbs = 0;
-
+                        double totalCalories = 0, totalProtein = 0, totalFat = 0, totalCarbs = 0;
                         foreach (var ingredient in recipe.Ingredients)
                         {
                             var dbIngredient = allIngredients.FirstOrDefault(i => i.Name == ingredient.Name);
@@ -216,14 +251,12 @@ namespace Foodbook.ViewModels
                                 ingredient.Fat = dbIngredient.Fat;
                                 ingredient.Carbs = dbIngredient.Carbs;
                             }
-
                             double factor = GetUnitConversionFactor(ingredient.Unit, ingredient.Quantity);
                             totalCalories += ingredient.Calories * factor;
                             totalProtein += ingredient.Protein * factor;
                             totalFat += ingredient.Fat * factor;
                             totalCarbs += ingredient.Carbs * factor;
                         }
-
                         recipe.Calories = totalCalories;
                         recipe.Protein = totalProtein;
                         recipe.Fat = totalFat;
@@ -237,16 +270,13 @@ namespace Foodbook.ViewModels
             }
         }
 
-        private double GetUnitConversionFactor(Unit unit, double quantity)
+        private double GetUnitConversionFactor(Unit unit, double quantity) => unit switch
         {
-            return unit switch
-            {
-                Unit.Gram => quantity / 100.0,
-                Unit.Milliliter => quantity / 100.0,
-                Unit.Piece => quantity,
-                _ => quantity / 100.0
-            };
-        }
+            Unit.Gram => quantity / 100.0,
+            Unit.Milliliter => quantity / 100.0,
+            Unit.Piece => quantity,
+            _ => quantity / 100.0
+        };
 
         public async Task ReloadAsync()
         {
