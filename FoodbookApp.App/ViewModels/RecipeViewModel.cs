@@ -17,12 +17,15 @@ namespace Foodbook.ViewModels
     {
         private readonly IRecipeService _recipeService;
         private readonly IIngredientService _ingredientService;
+        private readonly IFolderService _folderService;
         private bool _isLoading;
         private bool _isRefreshing;
         private string _searchText = string.Empty;
         private List<Recipe> _allRecipes = new();
 
         public ObservableCollection<Recipe> Recipes { get; } = new();
+
+        public ICommand AddFolderCommand { get; }
 
         public bool IsLoading
         {
@@ -64,11 +67,13 @@ namespace Foodbook.ViewModels
         public ICommand RefreshCommand { get; }
         public ICommand ClearSearchCommand { get; } // Nowa komenda do czyszczenia wyszukiwania
 
-        public RecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService)
+        public RecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService, IFolderService folderService)
         {
             _recipeService = recipeService;
             _ingredientService = ingredientService;
+            _folderService = folderService;
             AddRecipeCommand = new Command(async () => await Shell.Current.GoToAsync(nameof(AddRecipePage)));
+            AddFolderCommand = new Command(async () => await CreateFolderAsync());
             EditRecipeCommand = new Command<Recipe>(async r =>
             {
                 if (r != null)
@@ -77,6 +82,16 @@ namespace Foodbook.ViewModels
             DeleteRecipeCommand = new Command<Recipe>(async r => await DeleteRecipeAsync(r));
             RefreshCommand = new Command(async () => await ReloadAsync());
             ClearSearchCommand = new Command(() => SearchText = string.Empty);
+        }
+
+        private async Task CreateFolderAsync()
+        {
+            string result = await Shell.Current.DisplayPromptAsync("Nowy folder", "Podaj nazwê folderu", "Utwórz", "Anuluj", maxLength: 200, keyboard: Keyboard.Text);
+            if (string.IsNullOrWhiteSpace(result)) return;
+
+            var folder = new Folder { Name = result.Trim() };
+            await _folderService.AddFolderAsync(folder);
+            // Optionally reload content if you show folders on this page
         }
 
         public async Task LoadRecipesAsync()

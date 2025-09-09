@@ -4,10 +4,34 @@
              x:Class="Foodbook.Views.Components.FloatingActionButtonComponent"
              x:Name="FabComponent">
 
-    <Button Style="{StaticResource FloatingActionButton}"
-            BackgroundColor="{DynamicResource Primary}"
-            Command="{Binding Command, Source={x:Reference FabComponent}}"
-            Text="{Binding ButtonText, Source={x:Reference FabComponent}}"
-            IsVisible="{Binding IsVisible, Source={x:Reference FabComponent}}" />
+    <Grid>
+        <!-- Overlay to close the menu (only used in expandable mode) -->
+        <BoxView x:Name="Overlay"
+                 IsVisible="False"
+                 BackgroundColor="Black"
+                 Opacity="0.2">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnOverlayTapped" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
 
+        <!-- Actions + Main FAB anchored bottom-right -->
+        <Grid Padding="16"
+              VerticalOptions="End"
+              HorizontalOptions="End">
+            <VerticalStackLayout x:Name="ActionsStack"
+                                 Spacing="8"
+                                 Margin="0,0,0,72"
+                                 IsVisible="False"
+                                 Opacity="0" />
+
+            <!-- Main FAB button -->
+            <Button x:Name="MainFab"
+                    Style="{StaticResource FloatingActionButton}"
+                    BackgroundColor="{DynamicResource Primary}"
+                    Text="{Binding ButtonText, Source={x:Reference FabComponent}}"
+                    Clicked="OnMainFabClicked"
+                    IsVisible="{Binding IsVisible, Source={x:Reference FabComponent}}" />
+        </Grid>
+    </Grid>
 </ContentView>

@@ -55,10 +55,16 @@
                 EmptyHint="{loc:Translate Resource=RecipesPageResources, Key=EmptyHint}"
                 IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
             
-            <!-- Floating Action Button Component -->
+            <!-- Single/Expandable Floating Action Button Component -->
             <components:FloatingActionButtonComponent 
-                Command="{Binding AddRecipeCommand}"
-                IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+                IsExpandable="True"
+                IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+                ButtonText="+">
+                <components:FloatingActionButtonComponent.Actions>
+                    <components:FabActionItem Text="Dodaj folder" Command="{Binding AddFolderCommand}" />
+                    <components:FabActionItem Text="Dodaj przepis" Command="{Binding AddRecipeCommand}" />
+                </components:FloatingActionButtonComponent.Actions>
+            </components:FloatingActionButtonComponent>
         </Grid>
     </Grid>
 
