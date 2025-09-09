@@ -11,6 +11,16 @@
                                       CommandParameter="{Binding .}" />
             </Frame.GestureRecognizers>
             <Grid Style="{StaticResource ListItemContentGrid}" ColumnDefinitions="*,Auto,Auto,Auto">
+                <!-- Drag & Drop gesture layer -->
+                <Grid.GestureRecognizers>
+                    <DragGestureRecognizer CanDrag="{Binding ShowDragAndDrop, Source={x:Reference ItemComponent}}"
+                                           DragStarting="OnDragStarting" />
+                    <DropGestureRecognizer AllowDrop="{Binding ShowDragAndDrop, Source={x:Reference ItemComponent}}"
+                                           DragOver="OnDragOver"
+                                           DragLeave="OnDragLeave"
+                                           Drop="OnDrop" />
+                </Grid.GestureRecognizers>
+
                 <!-- Item content column -->
                 <StackLayout Grid.Column="0" Spacing="2">
                     <Label Text="{Binding Name}" Style="{StaticResource ItemTitleLabel}" 

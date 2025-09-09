@@ -35,6 +35,22 @@ namespace Foodbook.Views.Components
         public static readonly BindableProperty ShowRestoreButtonProperty =
             BindableProperty.Create(nameof(ShowRestoreButton), typeof(bool), typeof(UniversalListItemComponent), false);
 
+        // Drag & Drop support
+        public static readonly BindableProperty ShowDragAndDropProperty =
+            BindableProperty.Create(nameof(ShowDragAndDrop), typeof(bool), typeof(UniversalListItemComponent), false);
+
+        public static readonly BindableProperty DragStartingCommandProperty =
+            BindableProperty.Create(nameof(DragStartingCommand), typeof(ICommand), typeof(UniversalListItemComponent));
+
+        public static readonly BindableProperty DragOverCommandProperty =
+            BindableProperty.Create(nameof(DragOverCommand), typeof(ICommand), typeof(UniversalListItemComponent));
+
+        public static readonly BindableProperty DragLeaveCommandProperty =
+            BindableProperty.Create(nameof(DragLeaveCommand), typeof(ICommand), typeof(UniversalListItemComponent));
+
+        public static readonly BindableProperty DropCommandProperty =
+            BindableProperty.Create(nameof(DropCommand), typeof(ICommand), typeof(UniversalListItemComponent));
+
         private readonly PageThemeHelper _themeHelper;
 
         public ICommand EditCommand
@@ -97,6 +113,36 @@ namespace Foodbook.Views.Components
             set => SetValue(ShowRestoreButtonProperty, value);
         }
 
+        public bool ShowDragAndDrop
+        {
+            get => (bool)GetValue(ShowDragAndDropProperty);
+            set => SetValue(ShowDragAndDropProperty, value);
+        }
+
+        public ICommand? DragStartingCommand
+        {
+            get => (ICommand?)GetValue(DragStartingCommandProperty);
+            set => SetValue(DragStartingCommandProperty, value);
+        }
+
+        public ICommand? DragOverCommand
+        {
+            get => (ICommand?)GetValue(DragOverCommandProperty);
+            set => SetValue(DragOverCommandProperty, value);
+        }
+
+        public ICommand? DragLeaveCommand
+        {
+            get => (ICommand?)GetValue(DragLeaveCommandProperty);
+            set => SetValue(DragLeaveCommandProperty, value);
+        }
+
+        public ICommand? DropCommand
+        {
+            get => (ICommand?)GetValue(DropCommandProperty);
+            set => SetValue(DropCommandProperty, value);
+        }
+
         public UniversalListItemComponent()
         {
             InitializeComponent();
@@ -115,6 +161,39 @@ namespace Foodbook.Views.Components
         private void OnComponentUnloaded(object? sender, EventArgs e)
         {
             _themeHelper.Cleanup();
+        }
+
+        // Handlers to forward gestures to bound commands
+        private void OnDragStarting(object? sender, DragStartingEventArgs e)
+        {
+            if (ShowDragAndDrop && DragStartingCommand?.CanExecute(BindingContext) == true)
+            {
+                DragStartingCommand.Execute(BindingContext);
+            }
+        }
+
+        private void OnDragOver(object? sender, DragEventArgs e)
+        {
+            if (ShowDragAndDrop && DragOverCommand?.CanExecute(BindingContext) == true)
+            {
+                DragOverCommand.Execute(BindingContext);
+            }
+        }
+
+        private void OnDragLeave(object? sender, DragEventArgs e)
+        {
+            if (ShowDragAndDrop && DragLeaveCommand?.CanExecute(BindingContext) == true)
+            {
+                DragLeaveCommand.Execute(BindingContext);
+            }
+        }
+
+        private void OnDrop(object? sender, DropEventArgs e)
+        {
+            if (ShowDragAndDrop && DropCommand?.CanExecute(BindingContext) == true)
+            {
+                DropCommand.Execute(BindingContext);
+            }
         }
     }
 }

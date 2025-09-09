@@ -10,6 +10,7 @@ namespace Foodbook.Data
         public DbSet<PlannedMeal> PlannedMeals => Set<PlannedMeal>();
         public DbSet<Plan> Plans => Set<Plan>();
         public DbSet<ShoppingListItem> ShoppingListItems => Set<ShoppingListItem>();
+        public DbSet<Folder> Folders => Set<Folder>();
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -61,6 +62,31 @@ namespace Foodbook.Data
                 .HasIndex(sli => new { sli.PlanId, sli.IngredientName, sli.Unit })
                 .IsUnique()
                 .HasDatabaseName("IX_ShoppingListItems_PlanId_IngredientName_Unit");
+
+            // Folders
+            modelBuilder.Entity<Folder>()
+                .HasOne(f => f.ParentFolder)
+                .WithMany(f => f.SubFolders)
+                .HasForeignKey(f => f.ParentFolderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Folder>()
+                .HasIndex(f => f.ParentFolderId)
+                .HasDatabaseName("IX_Folders_ParentFolderId");
+
+            modelBuilder.Entity<Folder>()
+                .HasIndex(f => f.Name)
+                .HasDatabaseName("IX_Folders_Name");
+
+            modelBuilder.Entity<Recipe>()
+                .HasOne(r => r.Folder)
+                .WithMany(f => f.Recipes)
+                .HasForeignKey(r => r.FolderId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Recipe>()
+                .HasIndex(r => r.FolderId)
+                .HasDatabaseName("IX_Recipes_FolderId");
 
             base.OnModelCreating(modelBuilder);
         }

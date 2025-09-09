@@ -13,6 +13,14 @@ namespace Foodbook.Models
         public double Carbs { get; set; }
         public int IloscPorcji { get; set; } = 2; // Domyœlna wartoœæ 2 porcje
 
+        // Folder relation
+        public int? FolderId { get; set; }
+        public Folder? Folder { get; set; }
+
+        // Drag & Drop helpers (UI state)
+        public bool IsBeingDragged { get; set; }
+        public bool IsBeingDraggedOver { get; set; }
+
         public List<Ingredient> Ingredients { get; set; } = new List<Ingredient>();
     }
 }
