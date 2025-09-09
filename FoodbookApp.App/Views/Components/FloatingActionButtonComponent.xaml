@@ -29,6 +29,7 @@
             <Button x:Name="MainFab"
                     Style="{StaticResource FloatingActionButton}"
                     BackgroundColor="{DynamicResource Primary}"
+                    Command="{Binding Command, Source={x:Reference FabComponent}}"
                     Text="{Binding ButtonText, Source={x:Reference FabComponent}}"
                     Clicked="OnMainFabClicked"
                     IsVisible="{Binding IsVisible, Source={x:Reference FabComponent}}" />

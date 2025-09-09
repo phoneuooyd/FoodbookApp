@@ -22,10 +22,16 @@ namespace Foodbook.ViewModels
         private bool _isRefreshing;
         private string _searchText = string.Empty;
         private List<Recipe> _allRecipes = new();
+        private List<Folder> _allFolders = new();
 
-        public ObservableCollection<Recipe> Recipes { get; } = new();
+        // Mixed list: folders on top, then recipes
+        public ObservableCollection<object> Items { get; } = new();
+
+        public ObservableCollection<Recipe> Recipes { get; } = new(); // kept for compatibility if used elsewhere
 
         public ICommand AddFolderCommand { get; }
+        public ICommand EditItemCommand { get; }
+        public ICommand DeleteItemCommand { get; }
 
         public bool IsLoading
         {
@@ -57,7 +63,7 @@ namespace Foodbook.ViewModels
                 if (_searchText == value) return;
                 _searchText = value;
                 OnPropertyChanged();
-                FilterRecipes();
+                FilterItems();
             }
         }
 
@@ -65,21 +71,61 @@ namespace Foodbook.ViewModels
         public ICommand EditRecipeCommand { get; }
         public ICommand DeleteRecipeCommand { get; }
         public ICommand RefreshCommand { get; }
-        public ICommand ClearSearchCommand { get; } // Nowa komenda do czyszczenia wyszukiwania
+        public ICommand ClearSearchCommand { get; }
 
         public RecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService, IFolderService folderService)
         {
             _recipeService = recipeService;
             _ingredientService = ingredientService;
             _folderService = folderService;
+
             AddRecipeCommand = new Command(async () => await Shell.Current.GoToAsync(nameof(AddRecipePage)));
             AddFolderCommand = new Command(async () => await CreateFolderAsync());
+
             EditRecipeCommand = new Command<Recipe>(async r =>
             {
                 if (r != null)
                     await Shell.Current.GoToAsync($"{nameof(AddRecipePage)}?id={r.Id}");
             });
             DeleteRecipeCommand = new Command<Recipe>(async r => await DeleteRecipeAsync(r));
+
+            EditItemCommand = new Command<object>(async o =>
+            {
+                switch (o)
+                {
+                    case Recipe r:
+                        if (r != null)
+                            await Shell.Current.GoToAsync($"{nameof(AddRecipePage)}?id={r.Id}");
+                        break;
+                    case Folder f:
+                        // For now, maybe later navigate to folder details; currently no-op or future page
+                        await Application.Current.MainPage.DisplayAlert("Folder", $"Folder: {f.Name}", "OK");
+                        break;
+                }
+            });
+
+            DeleteItemCommand = new Command<object>(async o =>
+            {
+                switch (o)
+                {
+                    case Recipe r:
+                        await DeleteRecipeAsync(r);
+                        break;
+                    case Folder f:
+                        bool confirm = await Shell.Current.DisplayAlert(
+                            "Usuwanie folderu",
+                            $"Czy na pewno chcesz usun¹æ folder '{f.Name}'? Przepisy zostan¹ przeniesione do folderu nadrzêdnego (lub root).",
+                            "Tak",
+                            "Nie");
+                        if (confirm)
+                        {
+                            await _folderService.DeleteFolderAsync(f.Id);
+                            await LoadRecipesAsync();
+                        }
+                        break;
+                }
+            });
+
             RefreshCommand = new Command(async () => await ReloadAsync());
             ClearSearchCommand = new Command(() => SearchText = string.Empty);
         }
@@ -91,7 +137,7 @@ namespace Foodbook.ViewModels
 
             var folder = new Folder { Name = result.Trim() };
             await _folderService.AddFolderAsync(folder);
-            // Optionally reload content if you show folders on this page
+            await LoadRecipesAsync();
         }
 
         public async Task LoadRecipesAsync()
@@ -102,38 +148,26 @@ namespace Foodbook.ViewModels
             try
             {
                 var recipes = await _recipeService.GetRecipesAsync();
-                
-                // Recalculate nutritional values for all recipes to ensure accuracy
                 await RecalculateNutritionalValuesForRecipes(recipes);
-                
                 _allRecipes = recipes;
-                
-                // Clear and add in batches to improve UI responsiveness
+
+                // Folders
+                _allFolders = await _folderService.GetFoldersAsync();
+
+                // Fill both typed collections
                 Recipes.Clear();
-                
-                // Add items in smaller batches to prevent UI blocking
-                const int batchSize = 50;
-                for (int i = 0; i < recipes.Count; i += batchSize)
-                {
-                    var batch = recipes.Skip(i).Take(batchSize);
-                    foreach (var recipe in batch)
-                    {
-                        Recipes.Add(recipe);
-                    }
-                    
-                    // Allow UI to update between batches
-                    if (i + batchSize < recipes.Count)
-                    {
-                        await Task.Delay(1);
-                    }
-                }
-                
-                FilterRecipes();
+                foreach (var r in _allRecipes) Recipes.Add(r);
+
+                // Fill mixed list (folders first, then recipes)
+                Items.Clear();
+                foreach (var f in _allFolders) Items.Add(f);
+                foreach (var r in _allRecipes) Items.Add(r);
+
+                FilterItems();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading recipes: {ex.Message}");
-                // Could show user-friendly error message here
+                System.Diagnostics.Debug.WriteLine($"Error loading recipes/folders: {ex.Message}");
             }
             finally
             {
@@ -141,13 +175,28 @@ namespace Foodbook.ViewModels
             }
         }
 
+        private void FilterItems()
+        {
+            IEnumerable<object> src = _allFolders.Cast<object>().Concat(_allRecipes);
+
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                src = src.Where(o => o is Recipe rr && (
+                                         rr.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                                         (rr.Description?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false))
+                                      || o is Folder ff && ff.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+            }
+
+            Items.Clear();
+            foreach (var o in src)
+                Items.Add(o);
+        }
+
         private async Task RecalculateNutritionalValuesForRecipes(List<Recipe> recipes)
         {
             try
             {
-                // Get all ingredients from the database for reference
                 var allIngredients = await _ingredientService.GetIngredientsAsync();
-                
                 foreach (var recipe in recipes)
                 {
                     if (recipe.Ingredients?.Any() == true)
@@ -159,27 +208,22 @@ namespace Foodbook.ViewModels
 
                         foreach (var ingredient in recipe.Ingredients)
                         {
-                            // Find the ingredient in the database to get current nutritional values
                             var dbIngredient = allIngredients.FirstOrDefault(i => i.Name == ingredient.Name);
                             if (dbIngredient != null)
                             {
-                                // Update ingredient with current nutritional values from database
                                 ingredient.Calories = dbIngredient.Calories;
                                 ingredient.Protein = dbIngredient.Protein;
                                 ingredient.Fat = dbIngredient.Fat;
                                 ingredient.Carbs = dbIngredient.Carbs;
                             }
 
-                            // Calculate conversion factor based on unit
                             double factor = GetUnitConversionFactor(ingredient.Unit, ingredient.Quantity);
-                            
                             totalCalories += ingredient.Calories * factor;
                             totalProtein += ingredient.Protein * factor;
                             totalFat += ingredient.Fat * factor;
                             totalCarbs += ingredient.Carbs * factor;
                         }
 
-                        // Update recipe nutritional values with calculated totals
                         recipe.Calories = totalCalories;
                         recipe.Protein = totalProtein;
                         recipe.Fat = totalFat;
@@ -195,13 +239,11 @@ namespace Foodbook.ViewModels
 
         private double GetUnitConversionFactor(Unit unit, double quantity)
         {
-            // Same conversion logic as in AddRecipeViewModel
-            // Assumption: nutritional values in database are per 100g/100ml/1 piece
             return unit switch
             {
-                Unit.Gram => quantity / 100.0,        // values per 100g
-                Unit.Milliliter => quantity / 100.0,  // values per 100ml  
-                Unit.Piece => quantity,               // values per 1 piece
+                Unit.Gram => quantity / 100.0,
+                Unit.Milliliter => quantity / 100.0,
+                Unit.Piece => quantity,
                 _ => quantity / 100.0
             };
         }
@@ -209,7 +251,6 @@ namespace Foodbook.ViewModels
         public async Task ReloadAsync()
         {
             if (IsRefreshing) return;
-            
             IsRefreshing = true;
             try
             {
@@ -221,67 +262,27 @@ namespace Foodbook.ViewModels
             }
         }
 
-        private void FilterRecipes()
-        {
-            if (string.IsNullOrWhiteSpace(SearchText))
-            {
-                // If no search text, show all recipes
-                if (Recipes.Count != _allRecipes.Count)
-                {
-                    Recipes.Clear();
-                    foreach (var recipe in _allRecipes)
-                    {
-                        Recipes.Add(recipe);
-                    }
-                }
-            }
-            else
-            {
-                // Filter recipes based on search text (name and description)
-                var filtered = _allRecipes
-                    .Where(r => r.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                               (r.Description?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false))
-                    .ToList();
-                
-                Recipes.Clear();
-                foreach (var recipe in filtered)
-                {
-                    Recipes.Add(recipe);
-                }
-            }
-        }
-
         private async Task DeleteRecipeAsync(Recipe? recipe)
         {
             if (recipe == null) return;
-            
-            // Add confirmation dialog
             bool confirm = await Shell.Current.DisplayAlert(
-                "Usuwanie przepisu", 
-                $"Czy na pewno chcesz usun¹æ przepis '{recipe.Name}'?", 
-                "Tak", 
+                "Usuwanie przepisu",
+                $"Czy na pewno chcesz usun¹æ przepis '{recipe.Name}'?",
+                "Tak",
                 "Nie");
-                
             if (!confirm) return;
-            
+
             try
             {
                 await _recipeService.DeleteRecipeAsync(recipe.Id);
                 Recipes.Remove(recipe);
                 _allRecipes.Remove(recipe);
+                Items.Remove(recipe);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error deleting recipe: {ex.Message}");
-                // Could show user-friendly error message here
             }
-        }
-
-        private void ExecuteClearSearchCommand()
-        {
-            SearchText = string.Empty;
-            // Optionally, reload or reset the recipe list here if needed
-            // await LoadRecipesAsync();
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

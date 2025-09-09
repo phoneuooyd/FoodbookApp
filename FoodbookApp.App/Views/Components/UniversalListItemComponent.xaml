@@ -11,7 +11,6 @@
                                       CommandParameter="{Binding .}" />
             </Frame.GestureRecognizers>
             <Grid Style="{StaticResource ListItemContentGrid}" ColumnDefinitions="*,Auto,Auto,Auto">
-                <!-- Drag & Drop gesture layer -->
                 <Grid.GestureRecognizers>
                     <DragGestureRecognizer CanDrag="{Binding ShowDragAndDrop, Source={x:Reference ItemComponent}}"
                                            DragStarting="OnDragStarting" />
@@ -21,38 +20,9 @@
                                            Drop="OnDrop" />
                 </Grid.GestureRecognizers>
 
-                <!-- Item content column -->
                 <StackLayout Grid.Column="0" Spacing="2">
-                    <Label Text="{Binding Name}" Style="{StaticResource ItemTitleLabel}" 
-                           IsVisible="{Binding ShowNutritionLayout, Source={x:Reference ItemComponent}}" />
-                    
-                    <!-- Plan Title - for Plan mode -->
-                    <Label Text="{Binding Label}" Style="{StaticResource ItemTitleLabel}"
-                           IsVisible="{Binding ShowPlanLayout, Source={x:Reference ItemComponent}}" />
-                    
-                    <!-- Subtitle (quantity and unit) - only visible for ingredients -->
-                    <Label Style="{StaticResource ItemSubtitleLabel}"
-                           IsVisible="{Binding ShowSubtitle, Source={x:Reference ItemComponent}}">
-                        <Label.Text>
-                            <MultiBinding StringFormat="{}{0:F1} {1}">
-                                <Binding Path="Quantity" />
-                                <Binding Path="Unit" />
-                            </MultiBinding>
-                        </Label.Text>
-                    </Label>
-                    
-                    <!-- Plan Date Info - for Plan mode -->
-                    <StackLayout IsVisible="{Binding ShowPlanLayout, Source={x:Reference ItemComponent}}" Spacing="2">
-                        <Label Text="{Binding StartDate, StringFormat='Od: {0:dd.MM.yyyy}'}" 
-                               FontSize="14" 
-                               TextColor="{DynamicResource Primary}"
-                               Margin="0,2,0,0" />
-                        <Label Text="{Binding EndDate, StringFormat='Do: {0:dd.MM.yyyy}'}" 
-                               FontSize="14" 
-                               TextColor="{DynamicResource Primary}" />
-                    </StackLayout>
-                    
-                    <!-- Nutrition info in horizontal layout - for Recipe/Ingredient mode -->
+                    <Label Text="{Binding Name}" Style="{StaticResource ItemTitleLabel}" />
+
                     <StackLayout Style="{StaticResource NutritionContainer}"
                                  IsVisible="{Binding ShowNutritionLayout, Source={x:Reference ItemComponent}}">
                         <Label Style="{StaticResource CaloriesLabel}">
@@ -85,42 +55,7 @@
                         </Label>
                     </StackLayout>
                 </StackLayout>
-                
-                <!-- Restore button - for Archive mode -->
-                <Button Grid.Column="1" 
-                        Command="{Binding RestoreCommand, Source={x:Reference ItemComponent}}" 
-                        CommandParameter="{Binding .}" 
-                        WidthRequest="35" 
-                        HeightRequest="35"
-                        BackgroundColor="{AppThemeBinding Light=#E6FFE6, Dark=#2C4A2C}"
-                        BorderColor="{AppThemeBinding Light=#CCFFCC, Dark=#4A664A}"
-                        BorderWidth="1"
-                        CornerRadius="17"
-                        Padding="0"
-                        IsVisible="{Binding ShowRestoreButton, Source={x:Reference ItemComponent}}">
-                    <Button.ImageSource>
-                        <FileImageSource File="redo.png" />
-                    </Button.ImageSource>
-                </Button>
-                
-                <!-- Archive button - for Plan mode -->
-                <Button Grid.Column="2" 
-                        Command="{Binding ArchiveCommand, Source={x:Reference ItemComponent}}" 
-                        CommandParameter="{Binding .}" 
-                        WidthRequest="35" 
-                        HeightRequest="35"
-                        BackgroundColor="{AppThemeBinding Light=#E6F3FF, Dark=#2C4A6B}"
-                        BorderColor="{AppThemeBinding Light=#CCE6FF, Dark=#4A6B8A}"
-                        BorderWidth="1"
-                        CornerRadius="17"
-                        Padding="0"
-                        IsVisible="{Binding ShowArchiveButton, Source={x:Reference ItemComponent}}">
-                    <Button.ImageSource>
-                        <FileImageSource File="save.png" />
-                    </Button.ImageSource>
-                </Button>
-                
-                <!-- Delete button - for Recipe/Ingredient mode and Archive mode permanent delete -->
+
                 <Button Grid.Column="3" 
                         Style="{StaticResource DeleteButton}"
                         Command="{Binding DeleteCommand, Source={x:Reference ItemComponent}}" 
