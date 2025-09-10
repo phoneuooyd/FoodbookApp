@@ -96,6 +96,7 @@ namespace Foodbook.Services
                 existingRecipe.Fat = recipe.Fat;
                 existingRecipe.Carbs = recipe.Carbs;
                 existingRecipe.IloscPorcji = recipe.IloscPorcji;
+                existingRecipe.FolderId = recipe.FolderId; // FIX: persist folder assignment
 
                 // ? OPTYMALIZACJA: Zarz¹dzanie sk³adnikami bez tracking conflicts
                 
