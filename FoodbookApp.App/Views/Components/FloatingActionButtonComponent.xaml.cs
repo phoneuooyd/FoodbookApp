@@ -102,7 +102,8 @@ namespace Foodbook.Views.Components
                     WidthRequest = _uniformActionWidth,
                     Padding = new Thickness(16, 10),
                     FontSize = 16,
-                    FontAttributes = FontAttributes.Bold
+                    FontAttributes = FontAttributes.Bold,
+                    Style = (Style)Application.Current?.Resources["FabActionButton"]
                 };
 
                 // Dynamic theme resources (will update when theme/colors change)
