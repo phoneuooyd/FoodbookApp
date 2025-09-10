@@ -87,7 +87,7 @@ namespace Foodbook.Views.Components
 
             // Approximate width: char count * factor + padding
             int maxChars = Actions.Max(a => (a.Text?.Length ?? 0));
-            _uniformActionWidth = Math.Max(120, maxChars * 10 + 32); // 10px per char + horizontal padding
+            _uniformActionWidth = Math.Max(120, maxChars * 10 + 32);
 
             foreach (var action in Actions)
             {
@@ -101,12 +101,28 @@ namespace Foodbook.Views.Components
                     HeightRequest = 48,
                     WidthRequest = _uniformActionWidth,
                     Padding = new Thickness(16, 10),
-                    BackgroundColor = (Color)Application.Current?.Resources["Primary"] ?? Colors.Blue,
-                    TextColor = Colors.White,
                     FontSize = 16,
                     FontAttributes = FontAttributes.Bold
                 };
-                if (!string.IsNullOrWhiteSpace(action.Icon)) btn.ImageSource = ImageSource.FromFile(action.Icon);
+
+                // Dynamic theme resources (will update when theme/colors change)
+                btn.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
+                btn.SetDynamicResource(Button.TextColorProperty, "ButtonPrimaryText");
+
+                // Optional pressed visual feedback using VisualStateManager
+                var states = new VisualStateGroupList();
+                var common = new VisualStateGroup { Name = "CommonStates" };
+                var normal = new VisualState { Name = "Normal" };
+                var pressed = new VisualState { Name = "Pressed" };
+                pressed.Setters.Add(new Setter { Property = Button.ScaleProperty, Value = 0.97 });
+                pressed.Setters.Add(new Setter { Property = Button.BackgroundColorProperty, Value = Application.Current?.Resources["Secondary"] });
+                common.States.Add(normal);
+                common.States.Add(pressed);
+                VisualStateManager.SetVisualStateGroups(btn, states);
+                states.Add(common);
+
+                if (!string.IsNullOrWhiteSpace(action.Icon))
+                    btn.ImageSource = ImageSource.FromFile(action.Icon);
                 ActionsStack.Children.Add(btn);
             }
         }
