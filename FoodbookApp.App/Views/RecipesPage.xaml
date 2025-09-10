@@ -18,6 +18,7 @@
             <components:UniversalListItemComponent 
                 EditCommand="{Binding BindingContext.EditItemCommand, Source={x:Reference ThisPage}}"
                 DeleteCommand="{Binding BindingContext.DeleteItemCommand, Source={x:Reference ThisPage}}"
+                FolderEditCommand="{Binding BindingContext.FolderEditCommand, Source={x:Reference ThisPage}}"
                 ShowSubtitle="False"
                 ShowNutritionLayout="True"
                 ShowPlanLayout="False"

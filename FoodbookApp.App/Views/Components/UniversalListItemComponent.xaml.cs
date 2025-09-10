@@ -54,6 +54,13 @@ namespace Foodbook.Views.Components
         public static readonly BindableProperty DropCommandProperty =
             BindableProperty.Create(nameof(DropCommand), typeof(ICommand), typeof(UniversalListItemComponent));
 
+        // New: folder edit support
+        public static readonly BindableProperty FolderEditCommandProperty =
+            BindableProperty.Create(nameof(FolderEditCommand), typeof(ICommand), typeof(UniversalListItemComponent));
+
+        public static readonly BindableProperty ShowFolderEditButtonProperty =
+            BindableProperty.Create(nameof(ShowFolderEditButton), typeof(bool), typeof(UniversalListItemComponent), false);
+
         private readonly PageThemeHelper _themeHelper;
 
         public ICommand EditCommand
@@ -144,6 +151,18 @@ namespace Foodbook.Views.Components
         {
             get => (ICommand?)GetValue(DropCommandProperty);
             set => SetValue(DropCommandProperty, value);
+        }
+
+        public ICommand? FolderEditCommand
+        {
+            get => (ICommand?)GetValue(FolderEditCommandProperty);
+            set => SetValue(FolderEditCommandProperty, value);
+        }
+
+        public bool ShowFolderEditButton
+        {
+            get => (bool)GetValue(ShowFolderEditButtonProperty);
+            set => SetValue(ShowFolderEditButtonProperty, value);
         }
 
         public UniversalListItemComponent()

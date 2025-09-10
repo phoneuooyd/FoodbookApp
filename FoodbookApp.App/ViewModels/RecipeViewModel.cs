@@ -8,6 +8,8 @@ using Foodbook.Views;
 using Microsoft.Maui.Controls;
 using System.Threading.Tasks;
 using System.Linq;
+using FoodbookApp.Localization;
+using FoodbookApp.Localization;
 
 
 namespace Foodbook.ViewModels
@@ -35,6 +37,7 @@ namespace Foodbook.ViewModels
         public ICommand DeleteItemCommand { get; }
         public ICommand BreadcrumbNavigateCommand { get; }
         public ICommand GoBackCommand { get; }
+        public ICommand FolderEditCommand { get; }
 
         public bool IsLoading
         {
@@ -128,6 +131,31 @@ namespace Foodbook.ViewModels
 
             RefreshCommand = new Command(async () => await ReloadAsync());
             ClearSearchCommand = new Command(() => SearchText = string.Empty);
+
+            FolderEditCommand = new Command<object>(async o =>
+            {
+                if (o is Folder f)
+                {
+                    var title = FolderResources.RenameFolderTitle;
+                    var prompt = FolderResources.RenameFolderPrompt;
+                    var descTitle = FolderResources.EditDescriptionTitle;
+                    var descPrompt = FolderResources.EditDescriptionPrompt;
+
+                    string newName = await Shell.Current.DisplayPromptAsync(title, prompt, initialValue: f.Name, maxLength: 200);
+                    if (newName == null) return; // user cancelled
+                    newName = newName.Trim();
+                    if (string.IsNullOrWhiteSpace(newName))
+                    {
+                        await Shell.Current.DisplayAlert(title, FolderResources.ValidationNameRequired, "OK");
+                        return;
+                    }
+                    string newDesc = await Shell.Current.DisplayPromptAsync(descTitle, descPrompt, initialValue: f.Description ?? string.Empty, maxLength: 1000);
+                    f.Name = newName;
+                    f.Description = string.IsNullOrWhiteSpace(newDesc) ? null : newDesc.Trim();
+                    await _folderService.UpdateFolderAsync(f);
+                    FilterItems();
+                }
+            });
 
             InitializeDragDrop();
         }

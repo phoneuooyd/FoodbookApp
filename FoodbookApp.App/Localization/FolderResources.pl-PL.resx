@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="RenameFolderTitle" xml:space="preserve">
+    <value>Zmień nazwę folderu</value>
+  </data>
+  <data name="RenameFolderPrompt" xml:space="preserve">
+    <value>Podaj nową nazwę folderu</value>
+  </data>
+  <data name="EditDescriptionTitle" xml:space="preserve">
+    <value>Opis folderu</value>
+  </data>
+  <data name="EditDescriptionPrompt" xml:space="preserve">
+    <value>Podaj opis (opcjonalnie)</value>
+  </data>
+  <data name="ValidationNameRequired" xml:space="preserve">
+    <value>Nazwa nie może być pusta.</value>
+  </data>
+</root>
