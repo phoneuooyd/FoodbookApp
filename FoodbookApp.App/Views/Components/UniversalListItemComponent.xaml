@@ -38,7 +38,14 @@
                 <!-- Content area (keeps inner spacing) -->
                 <Grid Grid.Column="1" Margin="12" Style="{StaticResource ListItemContentGrid}" ColumnDefinitions="*,Auto">
                     <StackLayout Grid.Column="0" Spacing="2">
-                        <Label Text="{Binding Name}" Style="{StaticResource ItemTitleLabel}" />
+                        <Label x:Name="TitleLabel" Text="{Binding Name}" Style="{StaticResource ItemTitleLabel}">
+                            <Label.Triggers>
+                                <!-- Folder: increase font size by +4pt (18 -> 22) -->
+                                <DataTrigger TargetType="Label" Binding="{Binding ., Converter={converters:IsFolderConverter}}" Value="True">
+                                    <Setter Property="FontSize" Value="22" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
 
                         <!-- Macros only for recipes -->
                         <StackLayout Style="{StaticResource NutritionContainer}"
@@ -83,9 +90,10 @@
             </Grid>
 
             <Frame.Triggers>
-                <!-- Slightly bigger height for folders; padding handled by inner content margin -->
+                <!-- Folder: increase overall height by +10px (66 -> 76) -->
                 <DataTrigger TargetType="Frame" Binding="{Binding ., Converter={converters:IsFolderConverter}}" Value="True">
-                    <Setter Property="MinimumHeightRequest" Value="66" />
+                    <Setter Property="MinimumHeightRequest" Value="76" />
+                    <Setter Property="HeightRequest" Value="76" />
                 </DataTrigger>
             </Frame.Triggers>
         </Frame>

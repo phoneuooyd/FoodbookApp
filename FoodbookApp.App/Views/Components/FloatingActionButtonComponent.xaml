@@ -22,6 +22,8 @@
             <VerticalStackLayout x:Name="ActionsStack"
                                  Spacing="8"
                                  Margin="0,0,0,72"
+                                 TranslationX="-5"
+                                 TranslationY="-5"
                                  IsVisible="False"
                                  Opacity="0" />
 
