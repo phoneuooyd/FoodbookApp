@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
@@ -12,11 +11,10 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
     private readonly IRecipeService _recipeService;
     private readonly IFolderService _folderService;
     
-    private bool _isExpanded;
-    private Recipe? _selectedRecipe;
-    private Folder? _currentFolder;
     private List<Recipe> _allRecipes = new();
     private List<Folder> _allFolders = new();
+    private Folder? _currentFolder;
+    private List<Folder> _breadcrumb = new();
 
     public static readonly BindableProperty SelectedRecipeProperty = 
         BindableProperty.Create(nameof(SelectedRecipe), typeof(Recipe), typeof(FolderAwarePickerComponent), 
@@ -25,13 +23,7 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
     public static readonly BindableProperty PlaceholderTextProperty = 
         BindableProperty.Create(nameof(PlaceholderText), typeof(string), typeof(FolderAwarePickerComponent), "Select recipe...");
 
-    public ObservableCollection<object> Items { get; } = new();
-    public ObservableCollection<Folder> Breadcrumb { get; } = new();
-
-    public ICommand ToggleCommand { get; }
-    public ICommand FolderTapCommand { get; }
-    public ICommand RecipeTapCommand { get; }
-    public ICommand GoBackCommand { get; }
+    public ICommand OpenSelectionDialogCommand { get; }
 
     public Recipe? SelectedRecipe
     {
@@ -45,21 +37,6 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
         set => SetValue(PlaceholderTextProperty, value);
     }
 
-    public bool IsExpanded
-    {
-        get => _isExpanded;
-        set
-        {
-            if (_isExpanded == value) return;
-            _isExpanded = value;
-            OnPropertyChanged();
-        }
-    }
-
-    public bool ShowBreadcrumb => Breadcrumb.Count > 0;
-    public bool CanGoBack => Breadcrumb.Count > 0;
-    public string CurrentPathDisplay => Breadcrumb.Count == 0 ? "/" : string.Join(" / ", Breadcrumb.Select(b => b.Name));
-    
     public string DisplayText => SelectedRecipe?.Name ?? PlaceholderText;
 
     public FolderAwarePickerComponent()
@@ -70,11 +47,8 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
         _folderService = IPlatformApplication.Current?.Services?.GetService<IFolderService>() 
                         ?? throw new InvalidOperationException("IFolderService not found");
 
-        ToggleCommand = new Command(() => IsExpanded = !IsExpanded);
-        FolderTapCommand = new Command<Folder>(NavigateIntoFolder);
-        RecipeTapCommand = new Command<Recipe>(SelectRecipe);
-        GoBackCommand = new Command(GoBack, () => CanGoBack);
-
+        OpenSelectionDialogCommand = new Command(async () => await OpenSelectionDialog());
+        
         InitializeComponent();
         _ = LoadDataAsync();
     }
@@ -83,7 +57,6 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
     {
         if (bindable is FolderAwarePickerComponent component)
         {
-            component._selectedRecipe = newValue as Recipe;
             component.OnPropertyChanged(nameof(DisplayText));
         }
     }
@@ -94,7 +67,6 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
         {
             _allRecipes = await _recipeService.GetRecipesAsync();
             _allFolders = await _folderService.GetFoldersAsync();
-            FilterItems();
         }
         catch (Exception ex)
         {
@@ -102,76 +74,124 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
         }
     }
 
-    private void NavigateIntoFolder(Folder? folder)
+    private async Task OpenSelectionDialog()
     {
-        if (folder == null) return;
-        
+        try
+        {
+            // Reset to root when opening
+            _currentFolder = null;
+            _breadcrumb.Clear();
+            
+            await ShowFolderContentsDialog();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error opening recipe selection dialog: {ex.Message}");
+        }
+    }
+
+    private async Task ShowFolderContentsDialog()
+    {
+        // Get current folder contents
+        var folders = _currentFolder == null 
+            ? _allFolders.Where(f => f.ParentFolderId == null).ToList()
+            : _allFolders.Where(f => f.ParentFolderId == _currentFolder.Id).ToList();
+
+        var recipes = _currentFolder == null
+            ? _allRecipes.Where(r => r.FolderId == null).ToList()
+            : _allRecipes.Where(r => r.FolderId == _currentFolder.Id).ToList();
+
+        // Build options list
+        var options = new List<string>();
+        var actions = new List<Func<Task>>();
+
+        // Add breadcrumb/back option if not at root
+        if (_breadcrumb.Count > 0)
+        {
+            options.Add("? Back");
+            actions.Add(async () => await GoBack());
+        }
+
+        // Add clear selection option
+        options.Add("? Clear Selection");
+        actions.Add(async () => 
+        {
+            SelectedRecipe = null;
+            await Task.CompletedTask;
+        });
+
+        // Add folders (with folder icon)
+        foreach (var folder in folders)
+        {
+            options.Add($"[FOLDER] {folder.Name}");
+            actions.Add(async () => await NavigateToFolder(folder));
+        }
+
+        // Add recipes (with recipe icon)
+        foreach (var recipe in recipes)
+        {
+            options.Add($"[RECIPE] {recipe.Name}");
+            actions.Add(async () => 
+            {
+                SelectedRecipe = recipe;
+                await Task.CompletedTask;
+            });
+        }
+
+        if (!options.Any())
+        {
+            await Shell.Current.DisplayAlert("Empty Folder", "This folder is empty.", "OK");
+            return;
+        }
+
+        // Show dialog
+        var title = _currentFolder?.Name ?? "Select Recipe";
+        if (_breadcrumb.Count > 0)
+        {
+            title = $"{string.Join(" / ", _breadcrumb.Select(b => b.Name))} / {title}";
+        }
+
+        var result = await Shell.Current.DisplayActionSheet(
+            title, 
+            "Cancel", 
+            null, 
+            options.ToArray());
+
+        if (result == "Cancel" || string.IsNullOrEmpty(result))
+            return;
+
+        // Execute corresponding action
+        var index = options.IndexOf(result);
+        if (index >= 0 && index < actions.Count)
+        {
+            await actions[index]();
+            
+            // If action was selecting a recipe, we're done
+            // If action was navigation, show dialog again
+            if (result.StartsWith("?") || result.StartsWith("[FOLDER]"))
+            {
+                await ShowFolderContentsDialog();
+            }
+        }
+    }
+
+    private async Task NavigateToFolder(Folder folder)
+    {
+        _breadcrumb.Add(_currentFolder ?? new Folder { Name = "Root", Id = 0 });
         _currentFolder = folder;
-        Breadcrumb.Add(folder);
-        FilterItems();
-        UpdateBreadcrumbProperties();
+        await Task.CompletedTask;
     }
 
-    private void SelectRecipe(Recipe? recipe)
+    private async Task GoBack()
     {
-        if (recipe == null) return;
-        
-        SelectedRecipe = recipe;
-        IsExpanded = false;
-        
-        // Navigate back to root after selection for better UX
-        Breadcrumb.Clear();
-        _currentFolder = null;
-        FilterItems();
-        UpdateBreadcrumbProperties();
-    }
-
-    private void GoBack()
-    {
-        if (Breadcrumb.Count == 0) return;
-        
-        Breadcrumb.RemoveAt(Breadcrumb.Count - 1);
-        _currentFolder = Breadcrumb.LastOrDefault();
-        FilterItems();
-        UpdateBreadcrumbProperties();
-    }
-
-    private void FilterItems()
-    {
-        IEnumerable<object> items;
-        
-        if (_currentFolder == null)
+        if (_breadcrumb.Count > 0)
         {
-            // Root level: show folders without parent and recipes without folder
-            var folders = _allFolders.Where(f => f.ParentFolderId == null).Cast<object>();
-            var recipes = _allRecipes.Where(r => r.FolderId == null).Cast<object>();
+            var previous = _breadcrumb.Last();
+            _breadcrumb.RemoveAt(_breadcrumb.Count - 1);
             
-            // Folders first, then recipes
-            items = folders.Concat(recipes);
+            _currentFolder = previous.Id == 0 ? null : previous;
         }
-        else
-        {
-            // Inside folder: show subfolders and recipes in this folder
-            var subfolders = _allFolders.Where(f => f.ParentFolderId == _currentFolder.Id).Cast<object>();
-            var recipesInFolder = _allRecipes.Where(r => r.FolderId == _currentFolder.Id).Cast<object>();
-            
-            // Folders first, then recipes
-            items = subfolders.Concat(recipesInFolder);
-        }
-
-        Items.Clear();
-        foreach (var item in items)
-        {
-            Items.Add(item);
-        }
-    }
-
-    private void UpdateBreadcrumbProperties()
-    {
-        OnPropertyChanged(nameof(ShowBreadcrumb));
-        OnPropertyChanged(nameof(CanGoBack));
-        OnPropertyChanged(nameof(CurrentPathDisplay));
-        (GoBackCommand as Command)?.ChangeCanExecute();
+        await Task.CompletedTask;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

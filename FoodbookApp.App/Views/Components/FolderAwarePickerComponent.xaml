@@ -1,136 +1,40 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:loc="clr-namespace:Foodbook.Services"
-             xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:converters="clr-namespace:Foodbook.Converters"
              x:Class="Foodbook.Views.Components.FolderAwarePickerComponent"
              x:Name="ThisComponent">
-    
+
     <ContentView.Resources>
-        <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
-        
-        <!-- Template for folders -->
-        <DataTemplate x:Key="FolderTemplate">
-            <Grid x:DataType="models:Folder" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" Padding="12,8" HeightRequest="44" BackgroundColor="Transparent">
-                <Grid.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding FolderTapCommand, Source={x:Reference ThisComponent}}" CommandParameter="{Binding .}" />
-                </Grid.GestureRecognizers>
-                <!-- Folder icon -->
-                <Image Grid.Column="0" 
-                       Source="menu_book.png" 
-                       WidthRequest="20" 
-                       HeightRequest="20" 
-                       VerticalOptions="Center" />
-                <Label Grid.Column="1" Text="{Binding Name}" FontSize="14" VerticalOptions="Center" TextColor="{DynamicResource Primary}" FontAttributes="Bold" />
-                <Label Grid.Column="2" Text="?" FontSize="12" VerticalOptions="Center" TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-            </Grid>
-        </DataTemplate>
-        
-        <!-- Template for recipes -->
-        <DataTemplate x:Key="RecipeTemplate">
-            <Grid x:DataType="models:Recipe" ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="12,8" HeightRequest="44" BackgroundColor="Transparent">
-                <Grid.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding RecipeTapCommand, Source={x:Reference ThisComponent}}" CommandParameter="{Binding .}" />
-                </Grid.GestureRecognizers>
-                <!-- Recipe icon -->
-                <Image Grid.Column="0" 
-                       Source="chef_hat.png" 
-                       WidthRequest="16" 
-                       HeightRequest="16" 
-                       VerticalOptions="Center" />
-                <Label Grid.Column="1" Text="{Binding Name}" FontSize="14" VerticalOptions="Center" />
-            </Grid>
-        </DataTemplate>
-        
-        <!-- Template selector -->
-        <converters:FolderRecipeTemplateSelector x:Key="TemplateSelector"
-                                                FolderTemplate="{StaticResource FolderTemplate}"
-                                                RecipeTemplate="{StaticResource RecipeTemplate}" />
+        <converters:IsNotNullToColorConverter x:Key="IsNotNullToColorConverter" />
     </ContentView.Resources>
 
-    <!-- Main layout -->
+    <!-- Simple picker-like interface that opens a dialog -->
     <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#2B2B2B}"
             Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#404040}"
             StrokeThickness="1"
-            StrokeShape="RoundRectangle 6">
+            StrokeShape="RoundRectangle 6"
+            MinimumHeightRequest="44">
         
-        <Grid RowDefinitions="Auto,*">
+        <Grid ColumnDefinitions="*,Auto" Padding="12,8">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding OpenSelectionDialogCommand, Source={x:Reference ThisComponent}}" />
+            </Grid.GestureRecognizers>
             
-            <!-- Header with breadcrumb and selected recipe display -->
-            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="12,8" BackgroundColor="{AppThemeBinding Light=#F8F8F8, Dark=#333333}">
-                <Grid.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding ToggleCommand, Source={x:Reference ThisComponent}}" />
-                </Grid.GestureRecognizers>
-                
-                <!-- Current selection or breadcrumb -->
-                <Label Grid.Column="0" FontSize="14" VerticalOptions="Center" LineBreakMode="TailTruncation" Text="{Binding DisplayText, Source={x:Reference ThisComponent}}" />
-                
-                <!-- Toggle button -->
-                <Label Grid.Column="1" 
-                       Text="?"
-                       FontSize="14"
-                       VerticalOptions="Center"
-                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}">
-                    <Label.Triggers>
-                        <DataTrigger TargetType="Label" Binding="{Binding IsExpanded, Source={x:Reference ThisComponent}}" Value="True">
-                            <Setter Property="Text" Value="?" />
-                        </DataTrigger>
-                        <DataTrigger TargetType="Label" Binding="{Binding IsExpanded, Source={x:Reference ThisComponent}}" Value="False">
-                            <Setter Property="Text" Value="?" />
-                        </DataTrigger>
-                    </Label.Triggers>
-                </Label>
-            </Grid>
+            <!-- Display text -->
+            <Label Grid.Column="0" 
+                   FontSize="14" 
+                   VerticalOptions="Center" 
+                   LineBreakMode="TailTruncation" 
+                   Text="{Binding DisplayText, Source={x:Reference ThisComponent}}" 
+                   TextColor="{Binding SelectedRecipe, Source={x:Reference ThisComponent}, Converter={StaticResource IsNotNullToColorConverter}}" />
             
-            <!-- Expandable content -->
-            <Grid Grid.Row="1" IsVisible="{Binding IsExpanded, Source={x:Reference ThisComponent}}">
-                <Grid RowDefinitions="Auto,*" MaximumHeightRequest="300">
-                    
-                    <!-- Breadcrumb navigation -->
-                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Padding="8,4" BackgroundColor="{AppThemeBinding Light=#F2F2F2, Dark=#404040}" IsVisible="{Binding ShowBreadcrumb, Source={x:Reference ThisComponent}}">
-                        
-                        <!-- Back button -->
-                        <Button Grid.Column="0"
-                                Text="?"
-                                Command="{Binding GoBackCommand, Source={x:Reference ThisComponent}}"
-                                IsEnabled="{Binding CanGoBack, Source={x:Reference ThisComponent}}"
-                                WidthRequest="30"
-                                HeightRequest="24"
-                                Padding="0"
-                                FontSize="12"
-                                Margin="0,0,8,0"
-                                BackgroundColor="Transparent" />
-
-                        <!-- Breadcrumb path -->
-                        <Label Grid.Column="1" 
-                               Text="{Binding CurrentPathDisplay, Source={x:Reference ThisComponent}}" 
-                               FontSize="12" 
-                               TextColor="{AppThemeBinding Light=#666, Dark=#CCC}" 
-                               VerticalTextAlignment="Center" />
-                    </Grid>
-
-                    <!-- Items list -->
-                    <ScrollView Grid.Row="1">
-                        <CollectionView ItemsSource="{Binding Items, Source={x:Reference ThisComponent}}"
-                                       ItemTemplate="{StaticResource TemplateSelector}"
-                                       BackgroundColor="{AppThemeBinding Light=White, Dark=#2B2B2B}">
-                            <CollectionView.ItemsLayout>
-                                <LinearItemsLayout Orientation="Vertical" ItemSpacing="1" />
-                            </CollectionView.ItemsLayout>
-                            
-                            <CollectionView.EmptyView>
-                                <StackLayout HorizontalOptions="Center" VerticalOptions="Center" Padding="20">
-                                    <Label Text="No items"
-                                           FontSize="14"
-                                           HorizontalOptions="Center"
-                                           TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-                                </StackLayout>
-                            </CollectionView.EmptyView>
-                        </CollectionView>
-                    </ScrollView>
-                </Grid>
-            </Grid>
+            <!-- Dropdown arrow -->
+            <Label Grid.Column="1" 
+                   Text="?"
+                   FontSize="14"
+                   VerticalOptions="Center"
+                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
         </Grid>
     </Border>
 </ContentView>
