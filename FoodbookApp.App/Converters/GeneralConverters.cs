@@ -50,4 +50,20 @@ namespace Foodbook.Converters
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
             => throw new NotSupportedException();
     }
+
+    public class FolderRecipeTemplateSelector : DataTemplateSelector
+    {
+        public DataTemplate? FolderTemplate { get; set; }
+        public DataTemplate? RecipeTemplate { get; set; }
+
+        protected override DataTemplate? OnSelectTemplate(object item, BindableObject container)
+        {
+            return item switch
+            {
+                Folder => FolderTemplate,
+                Recipe => RecipeTemplate,
+                _ => null
+            };
+        }
+    }
 }
