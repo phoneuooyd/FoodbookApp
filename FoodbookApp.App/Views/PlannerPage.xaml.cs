@@ -36,9 +36,8 @@ namespace Foodbook.Views
             }
             else
             {
-                // Subsequent loads - force reload recipes to include any newly added ones
-                System.Diagnostics.Debug.WriteLine("?? PlannerPage: Refreshing recipes");
-                await _viewModel.LoadAsync(forceReload: true);
+                // Do not auto-refresh on subsequent appearances (e.g., after popup close)
+                System.Diagnostics.Debug.WriteLine("?? PlannerPage: Skipping auto refresh on re-appear");
             }
         }
 

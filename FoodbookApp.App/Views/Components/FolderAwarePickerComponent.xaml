@@ -31,7 +31,7 @@
             
             <!-- Dropdown arrow -->
             <Label Grid.Column="1" 
-                   Text="?"
+                   Text="⏷"
                    FontSize="14"
                    VerticalOptions="Center"
                    TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />

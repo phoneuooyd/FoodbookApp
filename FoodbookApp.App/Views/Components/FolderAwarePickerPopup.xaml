@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<mct:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+           xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+           xmlns:mct="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui"
+           xmlns:converters="clr-namespace:Foodbook.Converters"
+           x:Class="Foodbook.Views.Components.FolderAwarePickerPopup"
+           x:Name="ThisPopup"
+           CanBeDismissedByTappingOutsideOfPopup="True">
+
+    <mct:Popup.Resources>
+        <ResourceDictionary>
+            <converters:ItemTypeToColorConverter x:Key="ItemTypeToColorConverter" />
+        </ResourceDictionary>
+    </mct:Popup.Resources>
+
+    <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#1F1F1F}"
+            Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#404040}"
+            StrokeThickness="2"
+            StrokeShape="RoundRectangle 16"
+            Padding="0"
+            WidthRequest="380"
+            HeightRequest="500">
+        
+        <Grid RowDefinitions="Auto,*,Auto">
+            
+            <!-- Header -->
+            <Border Grid.Row="0" 
+                    BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#2A2A2A}"
+                    Padding="20,16">
+                
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackLayout Grid.Column="0" Orientation="Vertical" Spacing="4">
+                        <Label Text="{Binding Title, Source={x:Reference ThisPopup}}"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light=#1F1F1F, Dark=#E0E0E0}" />
+                        
+                        <Label Text="{Binding BreadcrumbText, Source={x:Reference ThisPopup}}"
+                               FontSize="14"
+                               TextColor="{AppThemeBinding Light=#666666, Dark=#B0B0B0}"
+                               IsVisible="{Binding HasBreadcrumb, Source={x:Reference ThisPopup}}" />
+                    </StackLayout>
+                    
+                    <Button Grid.Column="1"
+                            Text="X"
+                            FontSize="16"
+                            WidthRequest="32"
+                            HeightRequest="32"
+                            CornerRadius="16"
+                            BackgroundColor="Transparent"
+                            TextColor="{AppThemeBinding Light=#666666, Dark=#B0B0B0}"
+                            Command="{Binding CloseCommand, Source={x:Reference ThisPopup}}" />
+                </Grid>
+            </Border>
+            
+            <!-- Content -->
+            <ScrollView Grid.Row="1" Padding="20">
+                <StackLayout BindableLayout.ItemsSource="{Binding Items, Source={x:Reference ThisPopup}}"
+                             Spacing="8">
+                    
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="16,12"
+                                    Margin="0,4"
+                                    StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 8">
+                                
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Style.Triggers>
+                                            <DataTrigger TargetType="Border" 
+                                                       Binding="{Binding ItemType}" 
+                                                       Value="Navigation">
+                                                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#EBF8FF, Dark=#1E3A8A}" />
+                                                <Setter Property="Stroke" Value="{AppThemeBinding Light=#3B82F6, Dark=#60A5FA}" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Border" 
+                                                       Binding="{Binding ItemType}" 
+                                                       Value="Folder">
+                                                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FEF3C7, Dark=#92400E}" />
+                                                <Setter Property="Stroke" Value="{AppThemeBinding Light=#F59E0B, Dark=#FBBF24}" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Border" 
+                                                       Binding="{Binding ItemType}" 
+                                                       Value="Recipe">
+                                                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=White, Dark=#374151}" />
+                                                <Setter Property="Stroke" Value="{AppThemeBinding Light=#E5E7EB, Dark=#4B5563}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding TapCommand, Source={x:Reference ThisPopup}}"
+                                                        CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                                
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <!-- Icon -->
+                                    <Label Grid.Column="0"
+                                           VerticalOptions="Center"
+                                           FontSize="20"
+                                           Margin="0,0,12,0"
+                                           Text="{Binding Icon}"
+                                           TextColor="{Binding ItemType, Converter={StaticResource ItemTypeToColorConverter}}" />
+                                    
+                                    <!-- Content -->
+                                    <StackLayout Grid.Column="1" 
+                                               VerticalOptions="Center"
+                                               Spacing="2">
+                                        <Label Text="{Binding DisplayName}"
+                                               FontSize="16"
+                                               FontAttributes="{Binding FontAttributes}"
+                                               TextColor="{AppThemeBinding Light=#1F1F1F, Dark=#E0E0E0}"
+                                               LineBreakMode="TailTruncation" />
+                                        
+                                        <Label Text="{Binding Description}"
+                                               FontSize="12"
+                                               TextColor="{AppThemeBinding Light=#666666, Dark=#B0B0B0}"
+                                               IsVisible="{Binding HasDescription}"
+                                               LineBreakMode="TailTruncation" />
+                                    </StackLayout>
+                                    
+                                    <!-- Arrow for folders -->
+                                    <Label Grid.Column="2"
+                                           Text="&#8250;"
+                                           FontSize="18"
+                                           VerticalOptions="Center"
+                                           TextColor="{AppThemeBinding Light=#9CA3AF, Dark=#6B7280}"
+                                           IsVisible="{Binding ShowArrow}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </StackLayout>
+            </ScrollView>
+            
+            <!-- Footer -->
+            <Border Grid.Row="2"
+                    BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#2A2A2A}"
+                    Padding="20,12">
+                
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Grid.Column="0"
+                           Text="Wybierz przepis lub przejdz do folderu"
+                           FontSize="12"
+                           VerticalOptions="Center"
+                           TextColor="{AppThemeBinding Light=#666666, Dark=#B0B0B0}" />
+                    
+                    <Button Grid.Column="1"
+                            Text="Anuluj"
+                            FontSize="14"
+                            BackgroundColor="Transparent"
+                            TextColor="{AppThemeBinding Light=#666666, Dark=#B0B0B0}"
+                            Command="{Binding CloseCommand, Source={x:Reference ThisPopup}}" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</mct:Popup>

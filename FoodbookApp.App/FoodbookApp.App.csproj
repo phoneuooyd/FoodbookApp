@@ -40,6 +40,16 @@
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
                 <NeutralLanguage>en</NeutralLanguage>
+		
+		<!-- Fix for AOT GUID issues -->
+		<AndroidUseDefaultAotProfile Condition="'$(Configuration)' == 'Debug'">false</AndroidUseDefaultAotProfile>
+		<RunAOTCompilation Condition="'$(Configuration)' == 'Debug'">false</RunAOTCompilation>
+	</PropertyGroup>
+
+	<!-- Disable Android AOT in Release to avoid EF Core GUID mismatch on device -->
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-android' and '$(Configuration)' == 'Release'">
+		<RunAOTCompilation>false</RunAOTCompilation>
+		<UseInterpreter>true</UseInterpreter>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -270,6 +280,9 @@
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Views\Components\FolderAwarePickerComponent.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Components\FolderAwarePickerPopup.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Views\Components\FolderListComponent.xaml">
