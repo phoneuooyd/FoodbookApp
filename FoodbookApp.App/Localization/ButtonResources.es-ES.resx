@@ -9,10 +9,11 @@
   <data name="Today" xml:space="preserve"><value>Hoy</value></data>
   <data name="Save" xml:space="preserve"><value>Guardar</value></data>
   <data name="SaveChanges" xml:space="preserve"><value>Guardar cambios</value></data>
-  <data name="AddRecipe" xml:space="preserve"><value>A?adir receta</value></data>
-  <data name="AddIngredient" xml:space="preserve"><value>A?adir ingrediente</value></data>
+  <data name="AddRecipe" xml:space="preserve"><value>Agregar receta</value></data>
+  <data name="AddIngredient" xml:space="preserve"><value>Agregar ingrediente</value></data>
   <data name="NewRecipe" xml:space="preserve"><value>Nueva receta</value></data>
   <data name="EditRecipe" xml:space="preserve"><value>Editar receta</value></data>
   <data name="NewIngredient" xml:space="preserve"><value>Nuevo ingrediente</value></data>
   <data name="EditIngredient" xml:space="preserve"><value>Editar ingrediente</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Cancelar</value></data>
 </root>

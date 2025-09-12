@@ -44,6 +44,7 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
     public ICommand TapCommand { get; }
     public ICommand CloseCommand { get; }
     public ICommand RefreshCommand { get; }
+    public ICommand BackCommand { get; }
 
     public Task<object?> ResultTask => _tcs.Task;
 
@@ -58,6 +59,7 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
         TapCommand = new Command<FolderPickerItem>(OnItemTapped);
         CloseCommand = new Command(() => CloseWithResult(null));
         RefreshCommand = new Command(async () => await RefreshDataAsync());
+        BackCommand = new Command(GoBack);
         
         InitializeComponent();
         

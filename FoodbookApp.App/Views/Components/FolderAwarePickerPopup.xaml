@@ -3,10 +3,12 @@
            xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
            xmlns:mct="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui"
            xmlns:converters="clr-namespace:Foodbook.Converters"
+           xmlns:loc="clr-namespace:Foodbook.Services"
            x:Class="Foodbook.Views.Components.FolderAwarePickerPopup"
            x:Name="ThisPopup"
            CanBeDismissedByTappingOutsideOfPopup="True"
-           Padding="0">
+           Padding="0"
+		   Margin="0">
 
     <mct:Popup.Resources>
         <ResourceDictionary>
@@ -14,45 +16,53 @@
         </ResourceDictionary>
     </mct:Popup.Resources>
 
-    <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#1F1F1F}"
+    <Border BackgroundColor="{DynamicResource PageBackgroundColor}"
             StrokeShape="RoundRectangle 12"
-            StrokeThickness="0"
-            MinimumWidthRequest="272"
-            MaximumWidthRequest="360"
-			MinimumHeightRequest="550"
-            MaximumHeightRequest="560">
+            StrokeThickness="1"
+            Stroke="{DynamicResource Secondary}"
+            MinimumWidthRequest="300"
+            MaximumWidthRequest="400"
+			MinimumHeightRequest="350"
+            MaximumHeightRequest="600">
         
         <Grid RowDefinitions="Auto,*,Auto">
             
             <!-- Header -->
 			<StackLayout Grid.Row="0"
-                        BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#2A2A2A}"
-                        Padding="6,4">
+                        BackgroundColor="{DynamicResource ShellBackgroundColor}"
 
-				<Grid ColumnDefinitions="*,Auto,Auto">
-					<StackLayout Grid.Column="0" Orientation="Vertical" Spacing="4">
-						<Label Text="{Binding Title, Source={x:Reference ThisPopup}}"
-                               FontSize="18"
-                               FontAttributes="Bold"
-                               TextColor="{AppThemeBinding Light=#1F1F1F, Dark=#E0E0E0}" />
+                        Padding="12,10"
+						Margin="0,0">
 
-						<Label Text="{Binding BreadcrumbText, Source={x:Reference ThisPopup}}"
-                               FontSize="14"
-                               TextColor="{AppThemeBinding Light=#666666, Dark=#B0B0B0}"
-                               IsVisible="{Binding HasBreadcrumb, Source={x:Reference ThisPopup}}" />
-					</StackLayout>
-
-					<Button Grid.Column="1"
-                            Text="↻"
+                <Grid ColumnDefinitions="Auto,*,Auto" Padding="6,6">
+                    <!-- Back button -->
+                    <Button Grid.Column="0"
+                            Text="←"
                             FontSize="16"
                             WidthRequest="32"
                             HeightRequest="32"
                             CornerRadius="16"
                             BackgroundColor="Transparent"
-                            TextColor="{AppThemeBinding Light=#666666, Dark=#B0B0B0}"
-                            Command="{Binding RefreshCommand, Source={x:Reference ThisPopup}}"
+                            TextColor="{DynamicResource ShellTitleColor}"
+                            Command="{Binding BackCommand, Source={x:Reference ThisPopup}}"
+                            IsVisible="{Binding HasBreadcrumb, Source={x:Reference ThisPopup}}"
                             Margin="0,0,8,0" />
 
+					<StackLayout Grid.Column="1" Orientation="Vertical" Spacing="4">
+                        <!-- Localized title -->
+						<Label FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource ShellTitleColor}">
+                            <Label.Text>
+                                <loc:Translate Resource="FolderResources" Key="ChooseRecipeTitle" />
+                            </Label.Text>
+                        </Label>
+
+						<Label Text="{Binding BreadcrumbText, Source={x:Reference ThisPopup}}"
+                               FontSize="14"
+                               TextColor="{DynamicResource SecondaryText}"
+                               IsVisible="{Binding HasBreadcrumb, Source={x:Reference ThisPopup}}" />
+					</StackLayout>
+
+                    <!-- Close button -->
 					<Button Grid.Column="2"
                             Text="X"
                             FontSize="16"
@@ -60,23 +70,23 @@
                             HeightRequest="32"
                             CornerRadius="16"
                             BackgroundColor="Transparent"
-                            TextColor="{AppThemeBinding Light=#666666, Dark=#B0B0B0}"
+                            TextColor="{DynamicResource ShellTitleColor}"
                             Command="{Binding CloseCommand, Source={x:Reference ThisPopup}}" />
 				</Grid>
 			</StackLayout>
             
             <!-- Content -->
             <ScrollView Grid.Row="1" 
-                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1F1F1F}"
-                        Padding="0"
-                        MaximumHeightRequest="380">
+                        BackgroundColor="{DynamicResource PageBackgroundColor}"
+                        Padding="6,4"
+                        MaximumHeightRequest="600">
                 <StackLayout BindableLayout.ItemsSource="{Binding Items, Source={x:Reference ThisPopup}}"
                              Spacing="8">
                     
                     <BindableLayout.ItemTemplate>
                         <DataTemplate>
-                            <Border Padding="6,4"
-                                    Margin="0,4"
+                            <Border Padding="16,14"
+                                    Margin="2,4"
                                     StrokeThickness="1"
                                     StrokeShape="RoundRectangle 8">
                                 <Border.Style>
@@ -85,20 +95,20 @@
                                             <DataTrigger TargetType="Border" 
                                                        Binding="{Binding ItemType}" 
                                                        Value="Folder">
-                                                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FEF3C7, Dark=#92400E}" />
-                                                <Setter Property="Stroke" Value="{AppThemeBinding Light=#F59E0B, Dark=#FBBF24}" />
+                                                <Setter Property="BackgroundColor" Value="{DynamicResource FolderCardBackgroundColor}" />
+                                                <Setter Property="Stroke" Value="{DynamicResource FolderCardStrokeColor}" />
                                             </DataTrigger>
                                             <DataTrigger TargetType="Border" 
                                                        Binding="{Binding ItemType}" 
                                                        Value="Recipe">
-                                                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=White, Dark=#374151}" />
-                                                <Setter Property="Stroke" Value="{AppThemeBinding Light=#E5E7EB, Dark=#4B5563}" />
+                                                <Setter Property="BackgroundColor" Value="{DynamicResource PageBackgroundColor}" />
+                                                <Setter Property="Stroke" Value="{DynamicResource Secondary}" />
                                             </DataTrigger>
                                             <DataTrigger TargetType="Border" 
                                                        Binding="{Binding ItemType}" 
                                                        Value="Navigation">
-                                                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#F3F4F6, Dark=#4B5563}" />
-                                                <Setter Property="Stroke" Value="{AppThemeBinding Light=#D1D5DB, Dark=#6B7280}" />
+                                                <Setter Property="BackgroundColor" Value="{DynamicResource FolderCardBackgroundColor}" />
+                                                <Setter Property="Stroke" Value="{DynamicResource FolderCardStrokeColor}" />
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
@@ -116,7 +126,8 @@
                                            FontSize="18"
                                            VerticalOptions="Center"
                                            Margin="0,0,12,0"
-                                           IsVisible="{Binding HasIcon}" />
+                                           IsVisible="{Binding HasIcon}"
+                                           TextColor="{DynamicResource PrimaryText}" />
                                     
                                     <!-- Content -->
                                     <StackLayout Grid.Column="1" 
@@ -125,12 +136,12 @@
                                         <Label Text="{Binding DisplayName}"
                                                FontSize="17"
                                                FontAttributes="{Binding FontAttributes}"
-                                               TextColor="{AppThemeBinding Light=#1F1F1F, Dark=#E0E0E0}"
+                                               TextColor="{DynamicResource PrimaryText}"
                                                LineBreakMode="TailTruncation" />
                                         
                                         <Label Text="{Binding Description}"
                                                FontSize="13"
-                                               TextColor="{AppThemeBinding Light=#666666, Dark=#B0B0B0}"
+                                               TextColor="{DynamicResource SecondaryText}"
                                                IsVisible="{Binding HasDescription}"
                                                LineBreakMode="TailTruncation" />
                                     </StackLayout>
@@ -140,7 +151,7 @@
                                            Text="&#8250;"
                                            FontSize="20"
                                            VerticalOptions="Center"
-                                           TextColor="{AppThemeBinding Light=#9CA3AF, Dark=#6B7280}"
+                                           TextColor="{DynamicResource SecondaryText}"
                                            IsVisible="{Binding ShowArrow}" />
                                 </Grid>
                             </Border>
@@ -155,17 +166,17 @@
                             <Label Text="📁"
                                    FontSize="48"
                                    HorizontalOptions="Center"
-                                   TextColor="{AppThemeBinding Light=#9CA3AF, Dark=#6B7280}" />
-                            <Label Text="Brak przepisów w tym folderze"
-                                   FontSize="16"
-                                   HorizontalOptions="Center"
-                                   TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}"
-                                   HorizontalTextAlignment="Center" />
-                            <Label Text="Dodaj przepisy lub przejdź do innego folderu"
-                                   FontSize="14"
-                                   HorizontalOptions="Center"
-                                   TextColor="{AppThemeBinding Light=#9CA3AF, Dark=#6B7280}"
-                                   HorizontalTextAlignment="Center" />
+                                   TextColor="{DynamicResource SecondaryText}" />
+                            <Label FontSize="16" HorizontalOptions="Center" TextColor="{DynamicResource PrimaryText}" HorizontalTextAlignment="Center">
+                                <Label.Text>
+                                    <loc:Translate Resource="FolderResources" Key="EmptyFolderTitle" />
+                                </Label.Text>
+                            </Label>
+                            <Label FontSize="14" HorizontalOptions="Center" TextColor="{DynamicResource SecondaryText}" HorizontalTextAlignment="Center">
+                                <Label.Text>
+                                    <loc:Translate Resource="FolderResources" Key="EmptyFolderHint" />
+                                </Label.Text>
+                            </Label>
                         </StackLayout>
                     </BindableLayout.EmptyView>
                 </StackLayout>
@@ -173,23 +184,25 @@
             
             <!-- Footer -->
             <StackLayout Grid.Row="2"
-                        BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#2A2A2A}"
-                        Padding="6,4"
-						>
+                        BackgroundColor="{DynamicResource ShellBackgroundColor}"
+                        Padding="6,4">
                 
                 <Grid ColumnDefinitions="*,Auto">
-                    <Label Grid.Column="0"
-                           Text="Wybierz przepis lub przejdź do folderu"
-                           FontSize="12"
-                           VerticalOptions="Center"
-                           TextColor="{AppThemeBinding Light=#666666, Dark=#B0B0B0}" />
+                    <Label Grid.Column="0" FontSize="12" VerticalOptions="Center" TextColor="{DynamicResource SecondaryText}">
+                        <Label.Text>
+                            <loc:Translate Resource="FolderResources" Key="FooterHint" />
+                        </Label.Text>
+                    </Label>
                     
                     <Button Grid.Column="1"
-                            Text="Anuluj"
                             FontSize="14"
                             BackgroundColor="Transparent"
-                            TextColor="{AppThemeBinding Light=#666666, Dark=#B0B0B0}"
-                            Command="{Binding CloseCommand, Source={x:Reference ThisPopup}}" />
+                            TextColor="{DynamicResource ShellTitleColor}"
+                            Command="{Binding CloseCommand, Source={x:Reference ThisPopup}}">
+                        <Button.Text>
+                            <loc:Translate Resource="ButtonResources" Key="Cancel" />
+                        </Button.Text>
+                    </Button>
                 </Grid>
             </StackLayout>
         </Grid>

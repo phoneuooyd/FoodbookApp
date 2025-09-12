@@ -9,4 +9,10 @@
   <data name="EditDescriptionTitle" xml:space="preserve"><value>Description du dossier</value></data>
   <data name="EditDescriptionPrompt" xml:space="preserve"><value>Entrez une description (optionnel)</value></data>
   <data name="ValidationNameRequired" xml:space="preserve"><value>Le nom ne peut pas être vide.</value></data>
+  <!-- Popup -->
+  <data name="ChooseRecipeTitle" xml:space="preserve"><value>Sélectionner une recette</value></data>
+  <data name="EmptyFolderTitle" xml:space="preserve"><value>Aucune recette dans ce dossier</value></data>
+  <data name="EmptyFolderHint" xml:space="preserve"><value>Ajoutez des recettes ou accédez à un autre dossier</value></data>
+  <data name="FooterHint" xml:space="preserve"><value>Sélectionnez une recette ou accédez à un dossier</value></data>
+  <data name="Root" xml:space="preserve"><value>Racine</value></data>
 </root>

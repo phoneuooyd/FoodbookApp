@@ -9,4 +9,10 @@
   <data name="EditDescriptionTitle" xml:space="preserve"><value>Ordnerbeschreibung</value></data>
   <data name="EditDescriptionPrompt" xml:space="preserve"><value>Beschreibung eingeben (optional)</value></data>
   <data name="ValidationNameRequired" xml:space="preserve"><value>Name darf nicht leer sein.</value></data>
+  <!-- Popup -->
+  <data name="ChooseRecipeTitle" xml:space="preserve"><value>Rezept auswählen</value></data>
+  <data name="EmptyFolderTitle" xml:space="preserve"><value>Keine Rezepte in diesem Ordner</value></data>
+  <data name="EmptyFolderHint" xml:space="preserve"><value>Fügen Sie Rezepte hinzu oder wechseln Sie zu einem anderen Ordner</value></data>
+  <data name="FooterHint" xml:space="preserve"><value>Wählen Sie ein Rezept oder navigieren Sie zu einem Ordner</value></data>
+  <data name="Root" xml:space="preserve"><value>Stammverzeichnis</value></data>
 </root>

@@ -158,4 +158,7 @@
     <value>Edytuj składnik</value>
     <comment>Edit ingredient title</comment>
   </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Anuluj</value>
+  </data>
 </root>
