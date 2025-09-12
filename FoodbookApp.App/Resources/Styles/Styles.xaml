@@ -651,32 +651,20 @@
         <Setter Property="Margin" Value="0,4,0,0" />
     </Style>
 
-    <!-- Archive icon button (primary-themed, round, 36x36) -->
-    <Style x:Key="ArchiveIconButton" TargetType="Button">
-        <Setter Property="WidthRequest" Value="36" />
-        <Setter Property="HeightRequest" Value="36" />
-        <Setter Property="CornerRadius" Value="18" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#E6F0FF, Dark=#2A3A4A}" />
-        <Setter Property="BorderColor" Value="{AppThemeBinding Light=#B3D1FF, Dark=#3A5570}" />
-        <Setter Property="BorderWidth" Value="1" />
-        <Setter Property="TextColor" Value="{AppThemeBinding Light=#004A99, Dark=#66B2FF}" />
-        <Setter Property="HorizontalOptions" Value="Center" />
-        <Setter Property="VerticalOptions" Value="Center" />
-        <Setter Property="ContentLayout" Value="Top,0" />
+    <!-- Plan Date Label -->
+    <Style x:Key="PlanDateLabel" TargetType="Label">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+        <Setter Property="VerticalOptions" Value="Start" />
+        <Setter Property="FontAttributes" Value="None" />
     </Style>
 
-    <!-- Archive icon button (primary-themed, round, 36x36) for list actions -->
-    <Style x:Key="ListActionImageButton" TargetType="ImageButton">
-        <Setter Property="WidthRequest" Value="36" />
-        <Setter Property="HeightRequest" Value="36" />
-        <Setter Property="CornerRadius" Value="18" />
-        <Setter Property="Padding" Value="6" />
-        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#E6F0FF, Dark=#2A3A3A}" />
-        <Setter Property="BorderColor" Value="{AppThemeBinding Light=#B3D1FF, Dark=#3A5570}" />
-        <Setter Property="BorderWidth" Value="1" />
-        <Setter Property="HorizontalOptions" Value="Center" />
-        <Setter Property="VerticalOptions" Value="Center" />
+    <!-- Subtitle Label for Ingredients -->
+    <Style x:Key="SubtitleLabel" TargetType="Label">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+        <Setter Property="VerticalOptions" Value="Start" />
+        <Setter Property="Margin" Value="0,2,0,4" />
     </Style>
 
 </ResourceDictionary>

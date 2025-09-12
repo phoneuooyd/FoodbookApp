@@ -70,6 +70,17 @@ namespace Foodbook.Converters
             => throw new NotSupportedException();
     }
 
+    public class IsPlanConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return value is Plan;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => throw new NotSupportedException();
+    }
+
     public class FolderRecipeTemplateSelector : DataTemplateSelector
     {
         public DataTemplate? FolderTemplate { get; set; }
