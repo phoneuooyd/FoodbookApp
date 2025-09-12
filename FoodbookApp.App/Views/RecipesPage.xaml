@@ -50,7 +50,7 @@
                                            IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
 
         <!-- Breadcrumb with Back button under search bar -->
-        <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Padding="8,4" BackgroundColor="{AppThemeBinding Light=#F2F2F2, Dark=#2B2B2B}">
+        <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Padding="8,4" BackgroundColor="{AppThemeBinding Light=#F2F2F2, Dark={StaticResource OffBlack}}">
             <Grid.GestureRecognizers>
                 <!-- Drop anywhere on breadcrumb area moves recipe one level up -->
                 <DropGestureRecognizer AllowDrop="True" Drop="OnBreadcrumbDrop" />
