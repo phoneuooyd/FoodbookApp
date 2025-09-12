@@ -15,6 +15,7 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
     private Folder? _currentFolder;
     private readonly List<Folder> _breadcrumb = new();
     private readonly TaskCompletionSource<object?> _tcs = new();
+    private readonly Func<Task<(List<Recipe> recipes, List<Folder> folders)>>? _dataRefreshFunc;
     
     public static readonly BindableProperty TitleProperty = 
         BindableProperty.Create(nameof(Title), typeof(string), typeof(FolderAwarePickerPopup), "Select Recipe");
@@ -42,18 +43,21 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
 
     public ICommand TapCommand { get; }
     public ICommand CloseCommand { get; }
+    public ICommand RefreshCommand { get; }
 
     public Task<object?> ResultTask => _tcs.Task;
 
-    public FolderAwarePickerPopup(List<Recipe> recipes, List<Folder> folders)
+    public FolderAwarePickerPopup(List<Recipe> recipes, List<Folder> folders, Func<Task<(List<Recipe> recipes, List<Folder> folders)>>? dataRefreshFunc = null)
     {
         _allRecipes = recipes ?? new List<Recipe>();
         _allFolders = folders ?? new List<Folder>();
+        _dataRefreshFunc = dataRefreshFunc;
         Items = new ObservableCollection<FolderPickerItem>();
         Title = "Wybierz przepis";
         
         TapCommand = new Command<FolderPickerItem>(OnItemTapped);
         CloseCommand = new Command(() => CloseWithResult(null));
+        RefreshCommand = new Command(async () => await RefreshDataAsync());
         
         InitializeComponent();
         
@@ -87,18 +91,6 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
                 TapAction = GoBack
             });
         }
-
-        // Add clear selection option
-        Items.Add(new FolderPickerItem
-        {
-            ItemType = FolderPickerItemType.Navigation,
-            DisplayName = "Wyczyœæ wybór",
-            Description = "Usuñ wybrany przepis",
-            Icon = "\u2716", // Unicode heavy multiplication X
-            FontAttributes = FontAttributes.None,
-            ShowArrow = false,
-            TapAction = () => CloseWithResult(null)
-        });
 
         // Get current folder contents
         var folders = _currentFolder == null 
@@ -180,6 +172,38 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
         LoadCurrentFolderContents();
     }
 
+    private async Task RefreshDataAsync()
+    {
+        if (_dataRefreshFunc == null) return;
+
+        try
+        {
+            var (recipes, folders) = await _dataRefreshFunc();
+            
+            // Update internal data
+            _allRecipes.Clear();
+            _allRecipes.AddRange(recipes);
+            
+            _allFolders.Clear();
+            _allFolders.AddRange(folders);
+            
+            // Reload current folder contents with fresh data
+            LoadCurrentFolderContents();
+        }
+        catch (Exception ex)
+        {
+            // Handle refresh error - could show toast or log
+            System.Diagnostics.Debug.WriteLine($"Error refreshing data: {ex.Message}");
+        }
+    }
+
+    public async Task<object?> ShowAndRefreshAsync()
+    {
+        // Auto refresh data when popup is shown
+        await RefreshDataAsync();
+        return await ResultTask;
+    }
+
     public event PropertyChangedEventHandler? PropertyChanged;
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
@@ -203,6 +227,7 @@ public class FolderPickerItem
     public FontAttributes FontAttributes { get; set; }
     public bool ShowArrow { get; set; }
     public bool HasDescription => !string.IsNullOrEmpty(Description);
+    public bool HasIcon => !string.IsNullOrEmpty(Icon);
     public object? Data { get; set; }
     public Action? TapAction { get; set; }
 }
