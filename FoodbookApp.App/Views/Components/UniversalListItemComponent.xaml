@@ -73,9 +73,15 @@
                             </Label.Text>
                         </Label>
 
-                        <!-- Macros for recipes/ingredients -->
+                        <!-- Macros for recipes/ingredients (hidden for folders and when ShowNutritionLayout is false) -->
                         <StackLayout Style="{StaticResource NutritionContainer}"
                                      IsVisible="{Binding ShowNutritionLayout, Source={x:Reference ItemComponent}}">
+                            <StackLayout.Triggers>
+                                <!-- Hide nutrition information for folders regardless of ShowNutritionLayout -->
+                                <DataTrigger TargetType="StackLayout" Binding="{Binding ., Converter={StaticResource IsFolderConverter}}" Value="True">
+                                    <Setter Property="IsVisible" Value="False" />
+                                </DataTrigger>
+                            </StackLayout.Triggers>
                             <Label Style="{StaticResource CaloriesLabel}">
                                 <Label.Text>
                                     <MultiBinding StringFormat="{}{0:F0} kcal">
@@ -142,10 +148,12 @@
             </Grid>
 
             <Frame.Triggers>
-                <!-- Folder: increase overall height by +10px (66 -> 76) -->
+                <!-- Folder: increase overall height by +10px (66 -> 76) and apply yellowish background -->
                 <DataTrigger TargetType="Frame" Binding="{Binding ., Converter={StaticResource IsFolderConverter}}" Value="True">
                     <Setter Property="MinimumHeightRequest" Value="76" />
                     <Setter Property="HeightRequest" Value="76" />
+                    <Setter Property="BackgroundColor" Value="{DynamicResource FolderCardBackgroundColor}" />
+                    <Setter Property="BorderColor" Value="{DynamicResource FolderCardStrokeColor}" />
                 </DataTrigger>
             </Frame.Triggers>
         </Frame>
