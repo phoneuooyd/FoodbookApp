@@ -6,6 +6,7 @@
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:converters="clr-namespace:Foodbook.Converters"
              xmlns:resources="clr-namespace:FoodbookApp.Localization"
+             xmlns:controls="clr-namespace:Foodbook.Views.Components"
              x:Class="Foodbook.Views.AddRecipePage"
              x:Name="ThisPage"
              x:DataType="vm:AddRecipeViewModel"
@@ -86,7 +87,11 @@
                                     <Grid ColumnDefinitions="2*,*,Auto,Auto" ColumnSpacing="8" RowDefinitions="Auto,Auto" RowSpacing="8">
                                         <StackLayout Grid.Row="0" Grid.Column="0" Spacing="3">
                                             <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=IngredientLabel}" FontSize="12" FontAttributes="Bold" />
-                                            <Picker Title="{loc:Translate Resource=AddRecipePageResources, Key=ChooseIngredient}" ItemsSource="{Binding BindingContext.AvailableIngredientNames, Source={x:Reference ThisPage}}" SelectedItem="{Binding Name}" SelectedIndexChanged="OnIngredientNameChanged" />
+                                            <controls:SearchablePickerComponent
+                                                PlaceholderText="{loc:Translate Resource=AddRecipePageResources, Key=ChooseIngredient}"
+                                                ItemsSource="{Binding BindingContext.AvailableIngredientNames, Source={x:Reference ThisPage}}"
+                                                SelectedItem="{Binding Name}"
+                                                SelectionChanged="OnIngredientNameChanged" />
                                         </StackLayout>
                                         <StackLayout Grid.Row="0" Grid.Column="1" Spacing="3">
                                             <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=QuantityLabelShort}" FontSize="12" FontAttributes="Bold" />
@@ -175,7 +180,7 @@
                     </StackLayout>
                 </StackLayout>
                 <StackLayout Spacing="10" Margin="0,20,0,0">
-                    <Button Command="{Binding SaveRecipeCommand}" Text="{Binding SaveButtonText}" BackgroundColor="{DynamicResource Primary}" HeightRequest="50" FontSize="16" FontAttributes="Bold">
+                    <Button Command="{Binding SaveRecipeCommand}}" Text="{Binding SaveButtonText}" BackgroundColor="{DynamicResource Primary}" HeightRequest="50" FontSize="16" FontAttributes="Bold">
                         <Button.ImageSource>
                             <FileImageSource File="save.png" />
                         </Button.ImageSource>

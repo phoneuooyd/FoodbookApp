@@ -300,6 +300,12 @@
 	  <MauiXaml Update="Views\Components\RecipeListItemComponent.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="Views\Components\SearchablePickerComponent.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Components\SearchablePickerPopup.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Views\Components\UniversalListItemComponent.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

@@ -4,6 +4,7 @@ using Foodbook.ViewModels;
 using Foodbook.Models;
 using Foodbook.Views.Base;
 using System.Threading.Tasks;
+using Foodbook.Views.Components;
 
 namespace Foodbook.Views
 {
@@ -151,9 +152,16 @@ namespace Foodbook.Views
         {
             try
             {
-                if (sender is Picker picker && picker.BindingContext is Ingredient ingredient)
+                // Support both native Picker and custom SearchablePickerComponent
+                if (sender is Picker picker && picker.BindingContext is Ingredient ingredientFromPicker)
+                {
+                    await ViewModel.UpdateIngredientNutritionalValuesAsync(ingredientFromPicker);
+                    return;
+                }
+                if (sender is SearchablePickerComponent comp && comp.BindingContext is Ingredient ingredient)
                 {
                     await ViewModel.UpdateIngredientNutritionalValuesAsync(ingredient);
+                    return;
                 }
             }
             catch (Exception ex)

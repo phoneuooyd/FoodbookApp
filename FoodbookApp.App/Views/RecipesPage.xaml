@@ -50,7 +50,7 @@
                                            IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
 
         <!-- Breadcrumb with Back button under search bar -->
-        <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Padding="8,4" BackgroundColor="{AppThemeBinding Light=#F2F2F2, Dark={StaticResource OffBlack}}">
+        <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Padding="8,4" BackgroundColor="{DynamicResource PageBackgroundColor}">
             <Grid.GestureRecognizers>
                 <!-- Drop anywhere on breadcrumb area moves recipe one level up -->
                 <DropGestureRecognizer AllowDrop="True" Drop="OnBreadcrumbDrop" />
@@ -61,12 +61,18 @@
                     Text="◀"
                     Command="{Binding GoBackCommand}"
                     IsEnabled="{Binding CanGoBack}"
+                    BackgroundColor="{DynamicResource Primary}"
+                    TextColor="{DynamicResource ButtonPrimaryText}"
                     WidthRequest="34"
                     HeightRequest="20"
                     Padding="0"
                     Margin="0,0,8,0" />
 
-            <Label Grid.Column="1" Text="{Binding CurrentPathDisplay}" FontSize="13" TextColor="{AppThemeBinding Light=#444, Dark=#CCC}" VerticalTextAlignment="Center"/>
+            <Label Grid.Column="1" 
+                   Text="{Binding CurrentPathDisplay}" 
+                   FontSize="13" 
+                   TextColor="{DynamicResource PrimaryText}" 
+                   VerticalTextAlignment="Center"/>
         </Grid>
 
         <!-- Content -->
