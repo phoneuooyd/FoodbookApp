@@ -29,6 +29,7 @@ namespace Foodbook.Services
         public async Task<List<Folder>> GetFoldersAsync(CancellationToken ct = default)
         {
             return await _db.Folders
+                .AsNoTracking()
                 .Include(f => f.SubFolders)
                 .Include(f => f.Recipes)
                 .OrderBy(f => f.Name)
@@ -48,6 +49,7 @@ namespace Foodbook.Services
         public async Task<Folder?> GetFolderByIdAsync(int id, CancellationToken ct = default)
         {
             return await _db.Folders
+                .AsNoTracking()
                 .Include(f => f.SubFolders)
                 .Include(f => f.Recipes)
                 .FirstOrDefaultAsync(f => f.Id == id, ct);
@@ -55,13 +57,30 @@ namespace Foodbook.Services
 
         public async Task<Folder> AddFolderAsync(Folder folder, CancellationToken ct = default)
         {
-            _db.Folders.Add(folder);
-            await _db.SaveChangesAsync(ct);
-            return folder;
+            // Ensure database/tables exist (device may still be initializing DB)
+            await _db.Database.EnsureCreatedAsync(ct);
+
+            // sanitize required fields to avoid SaveChanges failure on devices with older DB
+            folder.Name = folder.Name?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(folder.Name))
+                throw new ArgumentException("Folder name is required", nameof(folder));
+
+            try
+            {
+                _db.Folders.Add(folder);
+                await _db.SaveChangesAsync(ct);
+                return folder;
+            }
+            catch (DbUpdateException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FolderService] AddFolder failed: {ex.InnerException?.Message ?? ex.Message}");
+                throw new InvalidOperationException(ex.InnerException?.Message ?? ex.Message, ex);
+            }
         }
 
         public async Task UpdateFolderAsync(Folder folder, CancellationToken ct = default)
         {
+            folder.Name = folder.Name?.Trim() ?? string.Empty;
             _db.Folders.Update(folder);
             await _db.SaveChangesAsync(ct);
         }
@@ -166,7 +185,7 @@ namespace Foodbook.Services
             void AssignMeta(Folder folder, int level)
             {
                 folder.Level = level;
-                folder.DisplayName = new string('•', Math.Max(0, level)) + (level > 0 ? " " : string.Empty) + folder.Name;
+                folder.DisplayName = new string('·', Math.Max(0, level)) + (level > 0 ? " " : string.Empty) + folder.Name;
                 foreach (var child in folder.SubFolders.OrderBy(x => x.Name))
                     AssignMeta(child, level + 1);
             }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Foodbook.Models
 {
@@ -24,13 +25,18 @@ namespace Foodbook.Models
         public ICollection<Folder> SubFolders { get; set; } = new Collection<Folder>();
         public ICollection<Recipe> Recipes { get; set; } = new Collection<Recipe>();
 
-        // Drag & Drop helpers
+        // Drag & Drop helpers (UI-only, do not persist)
+        [NotMapped]
         public bool IsBeingDragged { get; set; }
+        [NotMapped]
         public bool IsBeingDraggedOver { get; set; }
 
-        // UI helpers
+        // UI helpers (do not persist)
+        [NotMapped]
         public int Level { get; set; }
+        [NotMapped]
         public string DisplayName { get; set; } = string.Empty;
+        [NotMapped]
         public bool IsExpanded { get; set; }
     }
 }

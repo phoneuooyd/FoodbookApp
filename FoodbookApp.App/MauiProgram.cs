@@ -213,6 +213,16 @@ namespace FoodbookApp
             {
                 LogDebug("Starting comprehensive database schema validation");
                 
+                // Ensure missing tables are created explicitly (device may have older DB)
+                await EnsureTableExistsAsync(db, "Folders",
+                    "CREATE TABLE IF NOT EXISTS [Folders] (\n" +
+                    "[Id] INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\n" +
+                    "[Name] TEXT NOT NULL,\n" +
+                    "[Description] TEXT,\n" +
+                    "[ParentFolderId] INTEGER,\n" +
+                    "[CreatedAt] TEXT NOT NULL DEFAULT ''\n)"
+                );
+
                 // Validate all tables and their expected columns
                 await ValidateTableSchemaAsync(db, "Ingredients", new[]
                 {
@@ -236,7 +246,8 @@ namespace FoodbookApp
                     ("Protein", "REAL"),
                     ("Fat", "REAL"),
                     ("Carbs", "REAL"),
-                    ("IloscPorcji", "INTEGER")
+                    ("IloscPorcji", "INTEGER"),
+                    ("FolderId", "INTEGER")
                 });
 
                 await ValidateTableSchemaAsync(db, "Plans", new[]
@@ -264,6 +275,15 @@ namespace FoodbookApp
                     ("IsChecked", "INTEGER"),
                     ("Quantity", "REAL"),
                     ("Order", "INTEGER")
+                });
+
+                await ValidateTableSchemaAsync(db, "Folders", new[]
+                {
+                    ("Id", "INTEGER"),
+                    ("Name", "TEXT"),
+                    ("Description", "TEXT"),
+                    ("ParentFolderId", "INTEGER"),
+                    ("CreatedAt", "TEXT")
                 });
 
                 LogDebug("Database schema validation completed successfully");
@@ -389,6 +409,25 @@ namespace FoodbookApp
             catch (Exception ex)
             {
                 LogError($"Error adding column {columnName} to table {tableName}: {ex.Message}");
+                throw;
+            }
+        }
+
+        private static async Task EnsureTableExistsAsync(AppDbContext db, string tableName, string createSql)
+        {
+            try
+            {
+                var exists = await db.Database.SqlQueryRaw<int>($"SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name={{0}}", tableName).FirstOrDefaultAsync();
+                if (exists == 0)
+                {
+                    LogWarning($"Table {tableName} is missing. Creating it now.");
+                    await db.Database.ExecuteSqlRawAsync(createSql);
+                    LogDebug($"Table {tableName} created.");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error ensuring table {tableName} exists: {ex.Message}");
                 throw;
             }
         }
