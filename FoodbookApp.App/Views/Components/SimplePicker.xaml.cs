@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using CommunityToolkit.Maui.Views;
 using CommunityToolkit.Maui.Extensions;
+using System.Collections; // Added for IEnumerable
 
 namespace Foodbook.Views.Components;
 
@@ -12,7 +13,7 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
     private bool _isPopupOpen = false; // Protection against multiple opens
 
     public static readonly BindableProperty ItemsSourceProperty =
-        BindableProperty.Create(nameof(ItemsSource), typeof(IEnumerable<object>), typeof(SimplePicker), null);
+        BindableProperty.Create(nameof(ItemsSource), typeof(IEnumerable), typeof(SimplePicker), null);
 
     public static readonly BindableProperty SelectedItemProperty =
         BindableProperty.Create(nameof(SelectedItem), typeof(object), typeof(SimplePicker), null, BindingMode.TwoWay, propertyChanged: OnSelectedItemChanged);
@@ -26,9 +27,9 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
     public static readonly BindableProperty PlaceholderTextProperty =
         BindableProperty.Create(nameof(PlaceholderText), typeof(string), typeof(SimplePicker), "Wybierz...");
 
-    public IEnumerable<object>? ItemsSource
+    public IEnumerable? ItemsSource
     {
-        get => (IEnumerable<object>?)GetValue(ItemsSourceProperty);
+        get => (IEnumerable?)GetValue(ItemsSourceProperty);
         set => SetValue(ItemsSourceProperty, value);
     }
 

@@ -171,7 +171,7 @@
                         
                         <!-- Plany -->
                         <StackLayout Grid.Column="2">
-                            <Label Text="📋" Style="{StaticResource EmojiStyle}" />
+                           
                             <Label Text="{loc:Translate Resource=HomePageResources, Key=Plans}" Style="{StaticResource CardTitleStyle}" />
                             <Label Text="{Binding PlanCount}" Style="{StaticResource StatNumberStyle}" />
                             <Label Text="{loc:Translate Resource=HomePageResources, Key=ActiveLists}" Style="{StaticResource StatDescriptionStyle}" />

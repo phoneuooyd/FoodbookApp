@@ -16,7 +16,7 @@
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
         <converters:StringToBoolConverter x:Key="StringToBoolConverter" />
-        <converters:UnitToStringConverter x:Key="UnitToStringConverter" />
+        <converters:UnitToLocalizedStringConverter x:Key="UnitToStringConverter" />
     </ContentPage.Resources>
     <Grid RowDefinitions="Auto,*">
         <Grid Grid.Row="0" RowDefinitions="*,3" ColumnDefinitions="*,*,*" HeightRequest="{OnPlatform Default=60, iOS=70}" BackgroundColor="{AppThemeBinding Light=White, Dark=#2D2D30}">
@@ -103,7 +103,7 @@
                                             <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=UnitLabelShort}" Style="{StaticResource FieldLabel}" />
                                             <controls:SimplePicker ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}"
                                                                    SelectedItem="{Binding Unit}"
-                                                                   ItemDisplayBinding="{Binding ., Converter={StaticResource UnitToStringConverter}}"
+                                                                   ItemDisplayBinding="{Binding Converter={StaticResource UnitToStringConverter}}"
                                                                    Title="Jednostka" />
                                         </StackLayout>
                                         <Button Grid.Row="0" Grid.Column="3" Style="{StaticResource DeleteButton}" Command="{Binding BindingContext.RemoveIngredientCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" VerticalOptions="End" HorizontalOptions="Center" />

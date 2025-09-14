@@ -18,6 +18,7 @@ public class HomeViewModel : INotifyPropertyChanged
     private readonly IPlannerService _plannerService;
     private readonly ILocalizationService _localizationService;
     private bool _isRecipeIngredientsPopupOpen = false; // Protection against multiple opens
+    private bool _isMealsPopupOpen = false; // Protection against multiple opens for meals popup
 
     private int _recipeCount;
     public int RecipeCount
@@ -223,7 +224,7 @@ public class HomeViewModel : INotifyPropertyChanged
         Foodbook.Services.AppEvents.PlanChangedAsync += OnPlanChangedAsync;
         
         ShowRecipeIngredientsCommand = new Command<PlannedMeal>(async (meal) => await ShowRecipeIngredientsAsync(meal), (meal) => !_isRecipeIngredientsPopupOpen);
-        ShowMealsPopupCommand = new Command(async () => await ShowMealsPopupAsync());
+        ShowMealsPopupCommand = new Command(async () => await ShowMealsPopupAsync(), () => !_isMealsPopupOpen);
         ChangeNutritionPeriodCommand = new Command(async () => await ShowNutritionPeriodPickerAsync());
         ChangePlannedMealsPeriodCommand = new Command(async () => await ShowPlannedMealsPeriodPickerAsync());
     }
@@ -852,8 +853,18 @@ public class HomeViewModel : INotifyPropertyChanged
 
     private async Task ShowMealsPopupAsync()
     {
+        // Protection against multiple opens
+        if (_isMealsPopupOpen)
+        {
+            System.Diagnostics.Debug.WriteLine("?? HomeViewModel: Meals popup already open, ignoring request");
+            return;
+        }
+
         try
         {
+            _isMealsPopupOpen = true;
+            ((Command)ShowMealsPopupCommand).ChangeCanExecute();
+
             var page = Application.Current?.MainPage;
             if (page == null) return;
 
@@ -912,6 +923,12 @@ public class HomeViewModel : INotifyPropertyChanged
                     System.Diagnostics.Debug.WriteLine($"?? HomeViewModel: Could not handle popup blocking: {modalEx.Message}");
                 }
             }
+        }
+        finally
+        {
+            _isMealsPopupOpen = false;
+            ((Command)ShowMealsPopupCommand).ChangeCanExecute();
+            System.Diagnostics.Debug.WriteLine("?? HomeViewModel: Meals popup protection released");
         }
     }
 
