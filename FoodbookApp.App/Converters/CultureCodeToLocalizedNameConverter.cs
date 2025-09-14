@@ -1,5 +1,5 @@
 using System.Globalization;
-using FoodbookApp.Localization;
+using Foodbook.Services;
 
 namespace Foodbook.Converters
 {
@@ -9,12 +9,26 @@ namespace Foodbook.Converters
         {
             if (value is string cultureCode)
             {
-                return cultureCode switch
+                try
                 {
-                    "en" => SettingsPageResources.LanguageEnglish,
-                    "pl-PL" => SettingsPageResources.LanguagePolish,
-                    _ => cultureCode
-                };
+                    var loc = FoodbookApp.MauiProgram.ServiceProvider?.GetService<ILocalizationService>();
+                    string Res(string key) => loc?.GetString("SettingsPageResources", key) ?? key;
+
+                    return cultureCode switch
+                    {
+                        "en" => Res("LanguageEnglish"),
+                        "pl-PL" => Res("LanguagePolish"),
+                        "de-DE" => Res("LanguageGerman"),
+                        "es-ES" => Res("LanguageSpanish"),
+                        "fr-FR" => Res("LanguageFrench"),
+                        "ko-KR" => Res("LanguageKorean"),
+                        _ => cultureCode
+                    };
+                }
+                catch
+                {
+                    return cultureCode;
+                }
             }
             
             return value?.ToString() ?? string.Empty;
@@ -22,13 +36,22 @@ namespace Foodbook.Converters
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            if (value is string localizedName)
+            try
             {
-                if (localizedName == SettingsPageResources.LanguageEnglish)
-                    return "en";
-                if (localizedName == SettingsPageResources.LanguagePolish)
-                    return "pl-PL";
+                var loc = FoodbookApp.MauiProgram.ServiceProvider?.GetService<ILocalizationService>();
+                string Res(string key) => loc?.GetString("SettingsPageResources", key) ?? key;
+
+                if (value is string localizedName)
+                {
+                    if (localizedName == Res("LanguageEnglish")) return "en";
+                    if (localizedName == Res("LanguagePolish")) return "pl-PL";
+                    if (localizedName == Res("LanguageGerman")) return "de-DE";
+                    if (localizedName == Res("LanguageSpanish")) return "es-ES";
+                    if (localizedName == Res("LanguageFrench")) return "fr-FR";
+                    if (localizedName == Res("LanguageKorean")) return "ko-KR";
+                }
             }
+            catch { }
             
             return "en"; // Default fallback
         }
