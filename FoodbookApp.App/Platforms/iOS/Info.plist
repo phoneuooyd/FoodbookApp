@@ -36,5 +36,6 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>pl</string>
 	<key>CFBundleDisplayName</key>
+	<string>Foodbook App</string>
 </dict>
 </plist>

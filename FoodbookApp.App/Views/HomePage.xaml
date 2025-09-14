@@ -6,6 +6,7 @@
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:converters="clr-namespace:Foodbook.Converters"
              xmlns:resources="clr-namespace:FoodbookApp.Localization"
+             xmlns:controls="clr-namespace:Foodbook.Views.Components"
              x:Class="Foodbook.Views.HomePage"
              x:Name="HomePageView"
              x:DataType="vm:HomeViewModel"
@@ -224,8 +225,7 @@
                                                     <DataTemplate x:DataType="{x:Type models:PlannedMeal}">
                                                         <Frame Style="{StaticResource ClickableMealItemStyle}">
                                                             <Frame.GestureRecognizers>
-                                                                <TapGestureRecognizer Command="{Binding Source={x:Reference Name=HomePageView}, Path=BindingContext.ShowRecipeIngredientsCommand}"
-                                                                                      CommandParameter="{Binding .}" />
+                                                                <TapGestureRecognizer Command="{Binding Source={x:Reference Name=HomePageView}, Path=BindingContext.ShowMealsPopupCommand}" />
                                                             </Frame.GestureRecognizers>
                                                             <StackLayout Orientation="Horizontal">
                                                                 <Label Text="•" 

@@ -45,15 +45,14 @@ namespace FoodbookApp
                     fonts.AddFont("Slabo27px-Regular.ttf", "Slabo27pxRegular");
                 });
 
-#if DEBUG
+            // Enable debug logger also in Release to aid diagnostics
             builder.Logging.AddDebug();
-#endif
 
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering DbContext");
             builder.Services.AddDbContext<AppDbContext>(options =>
             {
                 var dbPath = Path.Combine(FileSystem.AppDataDirectory, "foodbook.db");
-                options.UseSqlite($"Filename={dbPath}");
+                options.UseSqlite($"Filename={dbPath};Cache=Shared;Pooling=True;Default Timeout=5");
             });
 
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering services & view models");
@@ -131,11 +130,77 @@ namespace FoodbookApp
                 System.Diagnostics.Debug.WriteLine($"[MauiProgram] Early theme init failed: {ex.Message}");
             }
 
-            System.Diagnostics.Debug.WriteLine("[MauiProgram] Starting background DB seed");
-            Task.Run(() => SeedDatabaseAsync(app.Services));
+            // Initialize database synchronously at startup to avoid concurrent DDL/DML
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("[MauiProgram] Initializing database synchronously");
+                using var scope = app.Services.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+                // Open and enable WAL mode to reduce locking contention
+                var conn = db.Database.GetDbConnection();
+                if (conn.State != System.Data.ConnectionState.Open)
+                    conn.Open();
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "PRAGMA journal_mode=WAL;";
+                    cmd.ExecuteNonQuery();
+                }
+
+                // Apply EF Core migrations (instead of EnsureCreated)
+                db.Database.Migrate();
+
+                // Additional schema validation/migrations layered on top if needed
+                ApplyDatabaseMigrationsAsync(db).GetAwaiter().GetResult();
+
+                // Seed base data
+                SeedData.InitializeAsync(db).GetAwaiter().GetResult();
+
+                System.Diagnostics.Debug.WriteLine("[MauiProgram] Database initialization finished");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MauiProgram] DB init failed: {ex.Message}\n{ex.StackTrace}");
+            }
 
             System.Diagnostics.Debug.WriteLine("[MauiProgram] CreateMauiApp finished");
             return app;
+        }
+
+        /// <summary>
+        /// Publiczna metoda do wykonania migracji i walidacji schematu bazy danych
+        /// Można wywołać ją z ViewModels jeśli wystąpią problemy z bazą danych
+        /// </summary>
+        public static async Task<bool> EnsureDatabaseSchemaAsync()
+        {
+            try
+            {
+                LogDebug("Starting emergency database schema validation");
+                
+                if (ServiceProvider == null)
+                {
+                    LogError("ServiceProvider is null - cannot perform schema validation");
+                    return false;
+                }
+                
+                using var scope = ServiceProvider.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                
+                // Ensure database exists
+                await db.Database.EnsureCreatedAsync();
+                
+                // Validate and fix schema
+                await ValidateDatabaseSchemaAsync(db);
+                
+                LogDebug("Emergency database schema validation completed successfully");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError($"Emergency database schema validation failed: {ex.Message}");
+                LogError($"Stack trace: {ex.StackTrace}");
+                return false;
+            }
         }
 
         /// <summary>
@@ -220,7 +285,7 @@ namespace FoodbookApp
                     "[Name] TEXT NOT NULL,\n" +
                     "[Description] TEXT,\n" +
                     "[ParentFolderId] INTEGER,\n" +
-                    "[CreatedAt] TEXT NOT NULL DEFAULT ''\n)"
+                    "[CreatedAt] TEXT NOT NULL DEFAULT '0001-01-01T00:00:00Z'\n)"
                 );
 
                 // Validate all tables and their expected columns
@@ -400,9 +465,19 @@ namespace FoodbookApp
             {
                 LogDebug($"Adding missing column {columnName} ({columnType}) to table {tableName}");
                 
-                var defaultValue = GetDefaultValueForType(columnType);
+                string defaultValue;
+                if (tableName.Equals("Folders", StringComparison.OrdinalIgnoreCase) &&
+                    columnName.Equals("CreatedAt", StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(columnType, "TEXT", StringComparison.OrdinalIgnoreCase))
+                {
+                    defaultValue = "'0001-01-01T00:00:00Z'";
+                }
+                else
+                {
+                    defaultValue = GetDefaultValueForType(columnType);
+                }
+
                 var sql = $"ALTER TABLE [{tableName}] ADD COLUMN [{columnName}] {columnType} NOT NULL DEFAULT {defaultValue}";
-                
                 await db.Database.ExecuteSqlRawAsync(sql);
                 LogDebug($"Successfully added column {columnName} to table {tableName}");
             }
@@ -509,8 +584,11 @@ namespace FoodbookApp
                 await db.Database.EnsureCreatedAsync();
                 LogDebug("Database created successfully");
 
-                // Wykonaj migracje jeśli potrzebne
+                // ✅ CRITICAL: Execute migrations and schema validation FIRST
+                // This ensures all tables exist before any ViewModels try to access them
+                LogDebug("Applying database migrations and schema validation");
                 await ApplyDatabaseMigrationsAsync(db);
+                LogDebug("Database migrations completed successfully");
 
                 await SeedData.InitializeAsync(db);
                 LogDebug("Data initialization completed");

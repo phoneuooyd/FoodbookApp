@@ -1,0 +1,159 @@
+using CommunityToolkit.Maui.Views;
+using Microsoft.Maui.Controls;
+using Microsoft.Maui.Graphics;
+using System.Windows.Input;
+
+namespace Foodbook.Views.Components;
+
+public partial class SimpleListPopup : Popup
+{
+    private readonly TaskCompletionSource<object?> _tcs = new();
+    public Task<object?> ResultTask => _tcs.Task;
+
+    public static readonly BindableProperty TitleTextProperty =
+        BindableProperty.Create(nameof(TitleText), typeof(string), typeof(SimpleListPopup), "");
+
+    public static readonly BindableProperty ItemsProperty =
+        BindableProperty.Create(nameof(Items), typeof(IEnumerable<object>), typeof(SimpleListPopup), null);
+
+    public static readonly BindableProperty IsBulletedProperty =
+        BindableProperty.Create(nameof(IsBulleted), typeof(bool), typeof(SimpleListPopup), false);
+
+    public string TitleText
+    {
+        get => (string)GetValue(TitleTextProperty);
+        set => SetValue(TitleTextProperty, value);
+    }
+
+    public IEnumerable<object>? Items
+    {
+        get => (IEnumerable<object>?)GetValue(ItemsProperty);
+        set => SetValue(ItemsProperty, value);
+    }
+
+    public bool IsBulleted
+    {
+        get => (bool)GetValue(IsBulletedProperty);
+        set => SetValue(IsBulletedProperty, value);
+    }
+
+    public ICommand CloseCommand { get; }
+
+    public SimpleListPopup()
+    {
+        CloseCommand = new Command(async () => await CloseWithResultAsync(null));
+        InitializeComponent();
+        Loaded += (_, __) => BuildItems();
+    }
+
+    private void BuildItems()
+    {
+        try
+        {
+            TitleLabel.Text = TitleText ?? string.Empty;
+            var host = ItemsHost;
+            if (host == null) return;
+            host.Children.Clear();
+
+            var data = Items?.ToList() ?? new List<object>();
+            var primaryText = Application.Current?.Resources.TryGetValue("PrimaryText", out var v1) == true && v1 is Color c1 ? c1 : Colors.Black;
+
+            foreach (var obj in data)
+            {
+                if (obj is string s)
+                {
+                    var row = CreateRow(s, primaryText);
+                    host.Children.Add(row);
+                }
+                else if (obj is IEnumerable<string> group)
+                {
+                    foreach (var s2 in group)
+                    {
+                        var row = CreateRow(s2, primaryText);
+                        host.Children.Add(row);
+                    }
+                }
+                else
+                {
+                    var row = CreateRow(obj?.ToString() ?? string.Empty, primaryText);
+                    host.Children.Add(row);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error building SimpleListPopup items: {ex.Message}");
+        }
+    }
+
+    private View CreateRow(string text, Color primaryText)
+    {
+        if (IsBulleted)
+        {
+            var grid = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitionCollection
+                {
+                    new ColumnDefinition{ Width = GridLength.Auto },
+                    new ColumnDefinition{ Width = GridLength.Star }
+                },
+                ColumnSpacing = 8
+            };
+
+            var bullet = new Label { Text = "•", TextColor = (Color)Application.Current?.Resources["Primary"]!, FontSize = 14, VerticalOptions = LayoutOptions.Center };
+            var textLabel = new Label { Text = text, TextColor = primaryText, FontSize = 14, LineBreakMode = LineBreakMode.WordWrap };
+            Grid.SetColumn(textLabel, 1);
+            grid.Add(bullet);
+            grid.Add(textLabel);
+            return grid;
+        }
+        else
+        {
+            return new Label
+            {
+                Text = text,
+                TextColor = primaryText,
+                FontSize = 14,
+                LineBreakMode = LineBreakMode.WordWrap,
+                Margin = new Thickness(2, 4)
+            };
+        }
+    }
+
+    private async Task CloseWithResultAsync(object? result)
+    {
+        try
+        {
+            if (!_tcs.Task.IsCompleted)
+                _tcs.SetResult(result);
+            await CloseAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error closing SimpleListPopup: {ex.Message}");
+            
+            // Handle specific popup exception
+            if (ex.Message.Contains("PopupBlockedException") || ex.Message.Contains("blocked by the Modal Page"))
+            {
+                System.Diagnostics.Debug.WriteLine("?? SimpleListPopup: Attempting to handle popup blocking");
+                
+                try
+                {
+                    // Try to clear the result and force close
+                    if (!_tcs.Task.IsCompleted)
+                        _tcs.SetResult(null);
+                        
+                    // Try to dismiss any existing modal pages
+                    if (Application.Current?.MainPage?.Navigation?.ModalStack?.Count > 0)
+                    {
+                        await Application.Current.MainPage.Navigation.PopModalAsync(false);
+                    }
+                }
+                catch (Exception modalEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"?? SimpleListPopup: Could not handle popup blocking: {modalEx.Message}");
+                }
+            }
+        }
+    }
+}

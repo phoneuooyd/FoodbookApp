@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<mct:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+           xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+           xmlns:mct="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui"
+           x:Class="Foodbook.Views.Components.SimpleListPopup"
+           x:Name="ThisPopup"
+           CanBeDismissedByTappingOutsideOfPopup="True"
+           Padding="0"
+           Margin="0">
+    <Border BackgroundColor="{DynamicResource PageBackgroundColor}"
+            StrokeShape="RoundRectangle 12"
+            StrokeThickness="1"
+            Stroke="{DynamicResource Secondary}"
+            MinimumWidthRequest="280"
+            MaximumWidthRequest="500"
+            MinimumHeightRequest="220"
+            MaximumHeightRequest="600">
+        <Grid RowDefinitions="Auto,* ,Auto" Padding="0">
+            <!-- Header -->
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="12,10" BackgroundColor="{DynamicResource ShellBackgroundColor}">
+                <Label Grid.Column="0"
+                       x:Name="TitleLabel"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       TextColor="{DynamicResource ShellTitleColor}" />
+                <Button Grid.Column="1"
+                        Text="X"
+                        FontSize="16"
+                        WidthRequest="32"
+                        HeightRequest="32"
+                        CornerRadius="16"
+                        BackgroundColor="Transparent"
+                        TextColor="{DynamicResource ShellTitleColor}"
+                        Command="{Binding CloseCommand, Source={x:Reference ThisPopup}}" />
+            </Grid>
+
+            <!-- List -->
+            <ScrollView Grid.Row="1" Padding="8,6">
+                <StackLayout x:Name="ItemsHost" Spacing="6" />
+            </ScrollView>
+
+            <!-- Footer -->
+            <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Padding="8,6" BackgroundColor="{DynamicResource ShellBackgroundColor}">
+                <Label Grid.Column="0" TextColor="{DynamicResource SecondaryText}" FontSize="12" Text=" "/>
+                <Button Grid.Column="1"
+                        FontSize="14"
+                        BackgroundColor="Transparent"
+                        TextColor="{DynamicResource ShellTitleColor}"
+                        Command="{Binding CloseCommand, Source={x:Reference ThisPopup}}"
+                        Text="Anuluj" />
+            </Grid>
+        </Grid>
+    </Border>
+</mct:Popup>

@@ -5,6 +5,7 @@ using Microsoft.Maui.Storage;
 using Newtonsoft.Json;
 using System.Reflection;
 using System.Globalization;
+using Newtonsoft.Json.Linq;
 
 namespace Foodbook.Data
 {
@@ -172,30 +173,31 @@ namespace Foodbook.Data
                     return false;
                 }
                 var content = await response.Content.ReadAsStringAsync();
-                dynamic? result = JsonConvert.DeserializeObject(content);
-                if (result?.products == null || result.products.Count == 0)
+
+                // Parse with strongly-typed JObject to avoid nullability warnings
+                var root = JsonConvert.DeserializeObject<JObject>(content);
+                var products = root?["products"] as JArray;
+                if (products == null || products.Count == 0)
                 {
                     LogWarning($"{ingredient.Name}: Product not found in OpenFoodFacts");
                     return false;
                 }
-                var product = result.products[0];
-                var nutriments = product.nutriments;
+
+                var product = products[0] as JObject;
+                var nutriments = product?["nutriments"] as JObject;
                 if (nutriments == null)
                 {
                     LogWarning($"{ingredient.Name}: No nutritional data in found product");
                     return false;
                 }
-                double TryGet(dynamic src, string key)
+
+                double TryGet(JObject src, string key)
                 {
-                    try
-                    {
-                        var value = src?[key];
-                        if (value == null) return -1;
-                        if (double.TryParse(value.ToString(), out double parsed)) return parsed;
-                        return -1;
-                    }
-                    catch { return -1; }
+                    var token = src[key];
+                    if (token == null) return -1;
+                    return double.TryParse(token.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed) ? parsed : -1;
                 }
+
                 var oldCalories = ingredient.Calories;
                 var oldProtein = ingredient.Protein;
                 var oldFat = ingredient.Fat;
@@ -280,7 +282,7 @@ namespace Foodbook.Data
                         Path.Combine(FileSystem.AppDataDirectory, "ingredients.json")
                     };
                     LogDebug("Trying file system paths");
-                    json = null;
+                    json = string.Empty; // avoid assigning null to non-nullable
                     foreach (var path in paths)
                     {
                         LogDebug($"Checking path: {path}");

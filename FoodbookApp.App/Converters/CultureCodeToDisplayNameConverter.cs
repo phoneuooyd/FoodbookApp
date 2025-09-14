@@ -6,7 +6,7 @@ namespace Foodbook.Converters;
 
 public sealed class CultureCodeToDisplayNameConverter : IValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         var code = value as string;
         if (string.IsNullOrWhiteSpace(code)) return string.Empty;
@@ -30,5 +30,5 @@ public sealed class CultureCodeToDisplayNameConverter : IValueConverter
         }
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotSupportedException();
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }

@@ -217,6 +217,7 @@ namespace Foodbook.ViewModels
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine("[AddRecipeViewModel] Loading available folders...");
                 var roots = await _folderService.GetFolderHierarchyAsync();
                 var flat = new List<Folder>();
                 void Flatten(Folder f)
@@ -235,10 +236,63 @@ namespace Foodbook.ViewModels
                     foreach (var f in flat)
                         AvailableFolders.Add(f);
                 });
+                
+                System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Loaded {flat.Count} folders successfully");
+            }
+            catch (Exception ex) when (ex.Message.Contains("no such table: Folders"))
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Folders table missing, attempting emergency schema fix...");
+                
+                try
+                {
+                    // Try to fix the database schema
+                    var schemaFixed = await FoodbookApp.MauiProgram.EnsureDatabaseSchemaAsync();
+                    if (schemaFixed)
+                    {
+                        System.Diagnostics.Debug.WriteLine("[AddRecipeViewModel] Database schema fixed, retrying folder load...");
+                        // Retry loading folders after schema fix
+                        var roots = await _folderService.GetFolderHierarchyAsync();
+                        var flat = new List<Folder>();
+                        void Flatten(Folder f)
+                        {
+                            flat.Add(f);
+                            if (f.SubFolders != null)
+                                foreach (var c in f.SubFolders)
+                                    Flatten(c);
+                        }
+                        foreach (var r in roots)
+                            Flatten(r);
+
+                        MainThread.BeginInvokeOnMainThread(() =>
+                        {
+                            AvailableFolders.Clear();
+                            foreach (var f in flat)
+                                AvailableFolders.Add(f);
+                        });
+                        
+                        System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Successfully loaded {flat.Count} folders after schema fix");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("[AddRecipeViewModel] Schema fix failed, continuing without folders");
+                        MainThread.BeginInvokeOnMainThread(() => AvailableFolders.Clear());
+                    }
+                }
+                catch (Exception retryEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Retry after schema fix failed: {retryEx.Message}");
+                    MainThread.BeginInvokeOnMainThread(() => AvailableFolders.Clear());
+                }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading folders: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Error loading folders: {ex.Message}");
+                // Don't throw - just log the error and continue without folders
+                // This allows the app to work even if folders feature isn't available
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    AvailableFolders.Clear();
+                });
             }
         }
 

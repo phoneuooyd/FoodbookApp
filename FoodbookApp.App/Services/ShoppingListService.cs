@@ -10,7 +10,7 @@ public class ShoppingListService : IShoppingListService
 
     public ShoppingListService(AppDbContext context)
     {
-        _context = context;
+        _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
     public async Task<List<Ingredient>> GetShoppingListAsync(DateTime from, DateTime to)
@@ -101,6 +101,8 @@ public class ShoppingListService : IShoppingListService
 
     public async Task SaveShoppingListItemStateAsync(int planId, string ingredientName, Unit unit, bool isChecked, double quantity)
     {
+        if (ingredientName == null) throw new ArgumentNullException(nameof(ingredientName));
+
         var existingItem = await _context.ShoppingListItems
             .FirstOrDefaultAsync(sli => sli.PlanId == planId && 
                                       sli.IngredientName == ingredientName && 
@@ -129,6 +131,8 @@ public class ShoppingListService : IShoppingListService
 
     public async Task RemoveShoppingListItemAsync(int planId, string ingredientName, Unit unit)
     {
+        if (ingredientName == null) return;
+
         var existingItem = await _context.ShoppingListItems
             .FirstOrDefaultAsync(sli => sli.PlanId == planId && 
                                       sli.IngredientName == ingredientName && 
@@ -143,13 +147,15 @@ public class ShoppingListService : IShoppingListService
 
     public async Task SaveAllShoppingListStatesAsync(int planId, List<Ingredient> ingredients)
     {
+        var safeIngredients = ingredients ?? new List<Ingredient>();
+
         // Get existing saved states for this plan
         var existingItems = await _context.ShoppingListItems
             .Where(sli => sli.PlanId == planId)
             .ToListAsync();
 
         // Process each ingredient
-        foreach (var ingredient in ingredients)
+        foreach (var ingredient in safeIngredients)
         {
             var existingItem = existingItems.FirstOrDefault(sli => 
                 sli.IngredientName == ingredient.Name && sli.Unit == ingredient.Unit);
@@ -179,7 +185,7 @@ public class ShoppingListService : IShoppingListService
         // Don't remove manually added items that user created
         var itemsToRemove = existingItems.Where(existing => 
             string.IsNullOrWhiteSpace(existing.IngredientName) ||
-            (!ingredients.Any(i => i.Name == existing.IngredientName && i.Unit == existing.Unit) &&
+            (!safeIngredients.Any(i => i.Name == existing.IngredientName && i.Unit == existing.Unit) &&
              !IsManuallyAddedItem(existing.IngredientName)))
             .ToList();
 

@@ -233,32 +233,43 @@ public class SettingsViewModel : INotifyPropertyChanged
             System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Starting database migration");
             
             var success = await FoodbookApp.MauiProgram.MigrateDatabaseAsync();
-            
+
+            var page = Application.Current?.MainPage;
             if (success)
             {
                 MigrationStatus = "Migracja zakoñczona pomyœlnie!";
-                await Application.Current?.MainPage?.DisplayAlert(
-                    "Sukces", 
-                    "Migracja bazy danych zosta³a wykonana pomyœlnie.", 
-                    "OK");
+                if (page != null)
+                {
+                    await page.DisplayAlert(
+                        "Sukces", 
+                        "Migracja bazy danych zosta³a wykonana pomyœlnie.", 
+                        "OK");
+                }
             }
             else
             {
                 MigrationStatus = "Migracja nieudana.";
-                await Application.Current?.MainPage?.DisplayAlert(
-                    "B³¹d", 
-                    "Nie uda³o siê wykonaæ migracji bazy danych. SprawdŸ logi aplikacji.", 
-                    "OK");
+                if (page != null)
+                {
+                    await page.DisplayAlert(
+                        "B³¹d", 
+                        "Nie uda³o siê wykonaæ migracji bazy danych. SprawdŸ logi aplikacji.", 
+                        "OK");
+                }
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Migration error: {ex.Message}");
             MigrationStatus = $"B³¹d migracji: {ex.Message}";
-            await Application.Current?.MainPage?.DisplayAlert(
-                "B³¹d", 
-                $"Wyst¹pi³ b³¹d podczas migracji: {ex.Message}", 
-                "OK");
+            var page = Application.Current?.MainPage;
+            if (page != null)
+            {
+                await page.DisplayAlert(
+                    "B³¹d", 
+                    $"Wyst¹pi³ b³¹d podczas migracji: {ex.Message}", 
+                    "OK");
+            }
         }
         finally
         {
@@ -277,10 +288,13 @@ public class SettingsViewModel : INotifyPropertyChanged
     {
         try
         {
-            bool confirm = await Application.Current?.MainPage?.DisplayAlert(
+            var page = Application.Current?.MainPage;
+            if (page == null) return;
+
+            bool confirm = await page.DisplayAlert(
                 "Resetuj bazê danych", 
                 "Czy na pewno chcesz usun¹æ wszystkie dane? Ta operacja jest nieodwracalna.\n\nWszystkie przepisy, plany i listy zakupów zostan¹ utracone.", 
-                "Tak, resetuj", "Anuluj") == true;
+                "Tak, resetuj", "Anuluj");
                 
             if (!confirm) return;
 
@@ -294,7 +308,7 @@ public class SettingsViewModel : INotifyPropertyChanged
             if (success)
             {
                 MigrationStatus = "Baza danych zosta³a zresetowana!";
-                await Application.Current?.MainPage?.DisplayAlert(
+                await page.DisplayAlert(
                     "Sukces", 
                     "Baza danych zosta³a zresetowana. Aplikacja zostanie zamkniêta - uruchom j¹ ponownie.", 
                     "OK");
@@ -305,7 +319,7 @@ public class SettingsViewModel : INotifyPropertyChanged
             else
             {
                 MigrationStatus = "Reset nieudany.";
-                await Application.Current?.MainPage?.DisplayAlert(
+                await page.DisplayAlert(
                     "B³¹d", 
                     "Nie uda³o siê zresetowaæ bazy danych. SprawdŸ logi aplikacji.", 
                     "OK");
@@ -315,10 +329,14 @@ public class SettingsViewModel : INotifyPropertyChanged
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Reset error: {ex.Message}");
             MigrationStatus = $"B³¹d resetu: {ex.Message}";
-            await Application.Current?.MainPage?.DisplayAlert(
-                "B³¹d", 
-                $"Wyst¹pi³ b³¹d podczas resetowania: {ex.Message}", 
-                "OK");
+            var page = Application.Current?.MainPage;
+            if (page != null)
+            {
+                await page.DisplayAlert(
+                    "B³¹d", 
+                    $"Wyst¹pi³ b³¹d podczas resetowania: {ex.Message}", 
+                    "OK");
+            }
         }
         finally
         {

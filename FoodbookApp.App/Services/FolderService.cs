@@ -26,39 +26,103 @@ namespace Foodbook.Services
             _db = db;
         }
 
+        private async Task EnsureFoldersTableExistsAsync(CancellationToken ct = default)
+        {
+            try
+            {
+                // Test if table exists by trying a simple query
+                await _db.Folders.Take(1).ToListAsync(ct);
+            }
+            catch (Exception ex) when (ex.Message.Contains("no such table: Folders"))
+            {
+                System.Diagnostics.Debug.WriteLine("[FolderService] Folders table missing, creating it now...");
+                
+                try
+                {
+                    // Create the Folders table manually
+                    await _db.Database.ExecuteSqlRawAsync(@"
+                        CREATE TABLE IF NOT EXISTS [Folders] (
+                            [Id] INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                            [Name] TEXT NOT NULL,
+                            [Description] TEXT,
+                            [ParentFolderId] INTEGER,
+                            [CreatedAt] TEXT NOT NULL DEFAULT ''
+                        )", ct);
+                    
+                    System.Diagnostics.Debug.WriteLine("[FolderService] Folders table created successfully");
+                }
+                catch (Exception createEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[FolderService] Failed to create Folders table: {createEx.Message}");
+                    throw;
+                }
+            }
+        }
+
         public async Task<List<Folder>> GetFoldersAsync(CancellationToken ct = default)
         {
-            return await _db.Folders
-                .AsNoTracking()
-                .Include(f => f.SubFolders)
-                .Include(f => f.Recipes)
-                .OrderBy(f => f.Name)
-                .ToListAsync(ct);
+            try
+            {
+                await EnsureFoldersTableExistsAsync(ct);
+                
+                return await _db.Folders
+                    .AsNoTracking()
+                    .Include(f => f.SubFolders)
+                    .Include(f => f.Recipes)
+                    .OrderBy(f => f.Name)
+                    .ToListAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FolderService] GetFoldersAsync failed: {ex.Message}");
+                return new List<Folder>(); // Return empty list on error
+            }
         }
 
         public async Task<List<Folder>> GetFolderHierarchyAsync(CancellationToken ct = default)
         {
-            var folders = await _db.Folders
-                .AsNoTracking()
-                .Include(f => f.Recipes)
-                .ToListAsync(ct);
+            try
+            {
+                await EnsureFoldersTableExistsAsync(ct);
+                
+                var folders = await _db.Folders
+                    .AsNoTracking()
+                    .Include(f => f.Recipes)
+                    .ToListAsync(ct);
 
-            return BuildHierarchy(folders);
+                return BuildHierarchy(folders);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FolderService] GetFolderHierarchyAsync failed: {ex.Message}");
+                return new List<Folder>(); // Return empty list on error
+            }
         }
 
         public async Task<Folder?> GetFolderByIdAsync(int id, CancellationToken ct = default)
         {
-            return await _db.Folders
-                .AsNoTracking()
-                .Include(f => f.SubFolders)
-                .Include(f => f.Recipes)
-                .FirstOrDefaultAsync(f => f.Id == id, ct);
+            try
+            {
+                await EnsureFoldersTableExistsAsync(ct);
+                
+                return await _db.Folders
+                    .AsNoTracking()
+                    .Include(f => f.SubFolders)
+                    .Include(f => f.Recipes)
+                    .FirstOrDefaultAsync(f => f.Id == id, ct);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FolderService] GetFolderByIdAsync failed: {ex.Message}");
+                return null;
+            }
         }
 
         public async Task<Folder> AddFolderAsync(Folder folder, CancellationToken ct = default)
         {
             // Ensure database/tables exist (device may still be initializing DB)
             await _db.Database.EnsureCreatedAsync(ct);
+            await EnsureFoldersTableExistsAsync(ct);
 
             // sanitize required fields to avoid SaveChanges failure on devices with older DB
             folder.Name = folder.Name?.Trim() ?? string.Empty;
@@ -80,84 +144,134 @@ namespace Foodbook.Services
 
         public async Task UpdateFolderAsync(Folder folder, CancellationToken ct = default)
         {
-            folder.Name = folder.Name?.Trim() ?? string.Empty;
-            _db.Folders.Update(folder);
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await EnsureFoldersTableExistsAsync(ct);
+                
+                folder.Name = folder.Name?.Trim() ?? string.Empty;
+                _db.Folders.Update(folder);
+                await _db.SaveChangesAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FolderService] UpdateFolderAsync failed: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task DeleteFolderAsync(int id, CancellationToken ct = default)
         {
-            var folder = await _db.Folders
-                .Include(f => f.SubFolders)
-                .Include(f => f.Recipes)
-                .FirstOrDefaultAsync(f => f.Id == id, ct);
-            if (folder == null) return;
-
-            // Move recipes to parent folder (or root)
-            foreach (var recipe in folder.Recipes)
+            try
             {
-                recipe.FolderId = folder.ParentFolderId; // may be null => move to root
+                await EnsureFoldersTableExistsAsync(ct);
+                
+                var folder = await _db.Folders
+                    .Include(f => f.SubFolders)
+                    .Include(f => f.Recipes)
+                    .FirstOrDefaultAsync(f => f.Id == id, ct);
+                if (folder == null) return;
+
+                // Move recipes to parent folder (or root)
+                foreach (var recipe in folder.Recipes)
+                {
+                    recipe.FolderId = folder.ParentFolderId; // may be null => move to root
+                }
+
+                await _db.SaveChangesAsync(ct);
+
+                // Ensure no child folders remain attached to this parent to satisfy Restrict behavior
+                foreach (var sub in folder.SubFolders)
+                {
+                    sub.ParentFolderId = folder.ParentFolderId;
+                }
+
+                await _db.SaveChangesAsync(ct);
+
+                _db.Folders.Remove(folder);
+                await _db.SaveChangesAsync(ct);
             }
-
-            await _db.SaveChangesAsync(ct);
-
-            // Ensure no child folders remain attached to this parent to satisfy Restrict behavior
-            foreach (var sub in folder.SubFolders)
+            catch (Exception ex)
             {
-                sub.ParentFolderId = folder.ParentFolderId;
+                System.Diagnostics.Debug.WriteLine($"[FolderService] DeleteFolderAsync failed: {ex.Message}");
+                throw;
             }
-
-            await _db.SaveChangesAsync(ct);
-
-            _db.Folders.Remove(folder);
-            await _db.SaveChangesAsync(ct);
         }
 
         public async Task<bool> MoveFolderAsync(int folderId, int? newParentFolderId, CancellationToken ct = default)
         {
-            if (!await IsValidFolderMoveAsync(folderId, newParentFolderId, ct))
+            try
+            {
+                await EnsureFoldersTableExistsAsync(ct);
+                
+                if (!await IsValidFolderMoveAsync(folderId, newParentFolderId, ct))
+                    return false;
+
+                var folder = await _db.Folders.FirstOrDefaultAsync(f => f.Id == folderId, ct);
+                if (folder == null) return false;
+
+                folder.ParentFolderId = newParentFolderId;
+                await _db.SaveChangesAsync(ct);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FolderService] MoveFolderAsync failed: {ex.Message}");
                 return false;
-
-            var folder = await _db.Folders.FirstOrDefaultAsync(f => f.Id == folderId, ct);
-            if (folder == null) return false;
-
-            folder.ParentFolderId = newParentFolderId;
-            await _db.SaveChangesAsync(ct);
-            return true;
+            }
         }
 
         public async Task<bool> MoveRecipeToFolderAsync(int recipeId, int? targetFolderId, CancellationToken ct = default)
         {
-            var recipe = await _db.Recipes.FirstOrDefaultAsync(r => r.Id == recipeId, ct);
-            if (recipe == null) return false;
-
-            if (targetFolderId.HasValue)
+            try
             {
-                var target = await _db.Folders.AnyAsync(f => f.Id == targetFolderId.Value, ct);
-                if (!target) return false;
-            }
+                await EnsureFoldersTableExistsAsync(ct);
+                
+                var recipe = await _db.Recipes.FirstOrDefaultAsync(r => r.Id == recipeId, ct);
+                if (recipe == null) return false;
 
-            recipe.FolderId = targetFolderId; // null => root
-            await _db.SaveChangesAsync(ct);
-            return true;
+                if (targetFolderId.HasValue)
+                {
+                    var target = await _db.Folders.AnyAsync(f => f.Id == targetFolderId.Value, ct);
+                    if (!target) return false;
+                }
+
+                recipe.FolderId = targetFolderId; // null => root
+                await _db.SaveChangesAsync(ct);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FolderService] MoveRecipeToFolderAsync failed: {ex.Message}");
+                return false;
+            }
         }
 
         public async Task<bool> IsValidFolderMoveAsync(int folderId, int? newParentFolderId, CancellationToken ct = default)
         {
-            if (folderId == newParentFolderId) return false; // cannot move under itself
-            if (!newParentFolderId.HasValue) return true; // move to root allowed
-
-            // prevent cycles: new parent cannot be a descendant of folderId
-            var folders = await _db.Folders.AsNoTracking().ToListAsync(ct);
-            var map = folders.ToDictionary(f => f.Id, f => f.ParentFolderId);
-
-            int? current = newParentFolderId;
-            while (current.HasValue)
+            try
             {
-                if (current.Value == folderId) return false; // cycle detected
-                map.TryGetValue(current.Value, out current);
+                await EnsureFoldersTableExistsAsync(ct);
+                
+                if (folderId == newParentFolderId) return false; // cannot move under itself
+                if (!newParentFolderId.HasValue) return true; // move to root allowed
+
+                // prevent cycles: new parent cannot be a descendant of folderId
+                var folders = await _db.Folders.AsNoTracking().ToListAsync(ct);
+                var map = folders.ToDictionary(f => f.Id, f => f.ParentFolderId);
+
+                int? current = newParentFolderId;
+                while (current.HasValue)
+                {
+                    if (current.Value == folderId) return false; // cycle detected
+                    map.TryGetValue(current.Value, out current);
+                }
+                return true;
             }
-            return true;
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FolderService] IsValidFolderMoveAsync failed: {ex.Message}");
+                return false;
+            }
         }
 
         // Build a hierarchical tree with Level/DisplayName populated
@@ -185,7 +299,7 @@ namespace Foodbook.Services
             void AssignMeta(Folder folder, int level)
             {
                 folder.Level = level;
-                folder.DisplayName = new string('·', Math.Max(0, level)) + (level > 0 ? " " : string.Empty) + folder.Name;
+                folder.DisplayName = new string('?', Math.Max(0, level)) + (level > 0 ? " " : string.Empty) + folder.Name;
                 foreach (var child in folder.SubFolders.OrderBy(x => x.Name))
                     AssignMeta(child, level + 1);
             }

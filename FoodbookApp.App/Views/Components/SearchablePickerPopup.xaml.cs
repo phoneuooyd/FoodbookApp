@@ -1,5 +1,6 @@
 using CommunityToolkit.Maui.Views;
 using Microsoft.Maui.Controls;
+using System.Windows.Input;
 
 namespace Foodbook.Views.Components;
 
@@ -10,16 +11,29 @@ public partial class SearchablePickerPopup : Popup
 
     public Task<object?> ResultTask => _tcs.Task;
 
+    // Expose a CloseCommand for X and Cancel buttons in XAML
+    public ICommand CloseCommand { get; }
+
     public SearchablePickerPopup(List<string> allItems, string? selected)
     {
         _allItems = allItems ?? new List<string>();
+        CloseCommand = new Command(async () => await CloseWithResultAsync(null));
         InitializeComponent();
         Populate(_allItems);
     }
 
     private void Populate(IEnumerable<string> items)
     {
-        ItemsHost.Children.Clear();
+        var host = ItemsHost;
+        if (host == null)
+            return;
+
+        host.Children.Clear();
+
+        var app = Application.Current;
+        var primaryText = (app?.Resources?.TryGetValue("PrimaryText", out var v1) == true && v1 is Color c1) ? c1 : Colors.Black;
+        var secondary = (app?.Resources?.TryGetValue("Secondary", out var v2) == true && v2 is Color c2) ? c2 : Colors.Gray;
+
         foreach (var item in items)
         {
             var btn = new Button
@@ -27,15 +41,15 @@ public partial class SearchablePickerPopup : Popup
                 Text = item,
                 HorizontalOptions = LayoutOptions.Fill,
                 BackgroundColor = Colors.Transparent,
-                TextColor = (Color)Application.Current.Resources["PrimaryText"],
-                BorderColor = (Color)Application.Current.Resources["Secondary"],
+                TextColor = primaryText,
+                BorderColor = secondary,
                 BorderWidth = 1,
                 CornerRadius = 8,
                 Padding = new Thickness(12, 10),
                 Margin = new Thickness(2, 3)
             };
             btn.Clicked += async (_, __) => await CloseWithResultAsync(item);
-            ItemsHost.Children.Add(btn);
+            host.Children.Add(btn);
         }
     }
 

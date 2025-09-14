@@ -3,6 +3,7 @@ using Foodbook.ViewModels;
 using Foodbook.Views.Base;
 using System.Threading.Tasks;
 using Foodbook.Models;
+using CommunityToolkit.Mvvm.Messaging;
 
 namespace Foodbook.Views
 {
@@ -19,19 +20,21 @@ namespace Foodbook.Views
             BindingContext = _viewModel;
             _themeHelper = new PageThemeHelper();
 
-            MessagingCenter.Subscribe<RecipeViewModel>(this, "FabCollapse", async _ =>
+            // Register for FAB collapse message via WeakReferenceMessenger (replaces deprecated MessagingCenter)
+            WeakReferenceMessenger.Default.Register<FabCollapseMessage>(this, async (_, __) =>
             {
                 try
                 {
                     var fab = this.FindByName<Foodbook.Views.Components.FloatingActionButtonComponent>("RecipesFab");
                     if (fab != null)
                     {
-                        // Use InvokeOnMainThread to ensure UI thread
                         await MainThread.InvokeOnMainThreadAsync(async () =>
                         {
                             var method = fab.GetType().GetMethod("CollapseAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                             if (method != null)
-                                await (Task)method.Invoke(fab, null);
+                            {
+                                if (method.Invoke(fab, null) is Task t) await t;
+                            }
                         });
                     }
                 }
@@ -54,8 +57,6 @@ namespace Foodbook.Views
             }
             else
             {
-                // Zamiast ReloadAsync (ustawia IsRefreshing) u¿ywamy ponownie LoadRecipesAsync
-                // aby nie wchodziæ w stan ci¹g³ego odœwie¿ania pull-to-refresh.
                 await _viewModel.LoadRecipesAsync();
             }
         }
@@ -66,7 +67,7 @@ namespace Foodbook.Views
             
             // Cleanup theme and font handling
             _themeHelper.Cleanup();
-            MessagingCenter.Unsubscribe<RecipeViewModel>(this, "FabCollapse");
+            WeakReferenceMessenger.Default.Unregister<FabCollapseMessage>(this);
         }
 
         private void OnBackClicked(object? sender, System.EventArgs e)

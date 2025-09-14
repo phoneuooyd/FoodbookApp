@@ -222,9 +222,10 @@ namespace Foodbook.Services
                 if (activity?.Window == null) return;
                 var window = activity.Window;
 
-                window.SetStatusBarColor(background.ToPlatform());
+                // Guard platform APIs by OS version to satisfy platform compatibility analyzers
                 if (Build.VERSION.SdkInt >= BuildVersionCodes.Lollipop)
                 {
+                    window.SetStatusBarColor(background.ToPlatform());
                     window.SetNavigationBarColor(background.ToPlatform());
                 }
 
@@ -232,31 +233,12 @@ namespace Foodbook.Services
                 var useDarkIcons = luminance > 0.55; // threshold
                 var decorView = window.DecorView;
 
-                if (Build.VERSION.SdkInt >= BuildVersionCodes.R)
+                // Use AndroidX WindowInsetsControllerCompat to avoid deprecated APIs and handle pre/post R consistently
+                var controller = new WindowInsetsControllerCompat(window, decorView);
+                controller.AppearanceLightStatusBars = useDarkIcons;
+                if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
                 {
-                    var controller = ViewCompat.GetWindowInsetsController(decorView);
-                    if (controller != null)
-                    {
-                        controller.AppearanceLightStatusBars = useDarkIcons;
-                        controller.AppearanceLightNavigationBars = useDarkIcons;
-                    }
-                }
-                else if (Build.VERSION.SdkInt >= BuildVersionCodes.M)
-                {
-                    var flags = (StatusBarVisibility)decorView.SystemUiVisibility;
-                    if (useDarkIcons)
-                        flags |= (StatusBarVisibility)SystemUiFlags.LightStatusBar;
-                    else
-                        flags &= ~(StatusBarVisibility)SystemUiFlags.LightStatusBar;
-
-                    if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
-                    {
-                        if (useDarkIcons)
-                            flags |= (StatusBarVisibility)SystemUiFlags.LightNavigationBar;
-                        else
-                            flags &= ~(StatusBarVisibility)SystemUiFlags.LightNavigationBar;
-                    }
-                    decorView.SystemUiVisibility = flags;
+                    controller.AppearanceLightNavigationBars = useDarkIcons;
                 }
             }
             catch (Exception ex)

@@ -5,6 +5,7 @@
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:converters="clr-namespace:Foodbook.Converters"
              xmlns:resources="clr-namespace:FoodbookApp.Localization"
+             xmlns:controls="clr-namespace:Foodbook.Views.Components"
              x:Class="Foodbook.Views.IngredientFormPage"
              x:Name="ThisPage"
              x:DataType="vm:IngredientFormViewModel"
@@ -62,7 +63,8 @@
                         <Frame Grid.Column="1" BorderColor="LightGray" Padding="8" CornerRadius="8">
                             <StackLayout Spacing="5">
                                 <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=UnitLabel}" FontAttributes="Bold" FontSize="14" />
-                                <Picker Title="{loc:Translate Resource=IngredientFormPageResources, Key=UnitPickerTitle}" ItemsSource="{Binding Units}" SelectedItem="{Binding SelectedUnit}" FontSize="16" />
+                                <controls:SimplePicker ItemsSource="{Binding Units}"
+                                                       SelectedItem="{Binding SelectedUnit}" />
                             </StackLayout>
                         </Frame>
                     </Grid>

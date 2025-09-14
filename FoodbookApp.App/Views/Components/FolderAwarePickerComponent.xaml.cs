@@ -15,6 +15,7 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
     
     private List<Recipe> _allRecipes = new();
     private List<Folder> _allFolders = new();
+    private bool _isPopupOpen = false; // Protection against multiple opens
 
     public static readonly BindableProperty SelectedRecipeProperty = 
         BindableProperty.Create(nameof(SelectedRecipe), typeof(Recipe), typeof(FolderAwarePickerComponent), 
@@ -47,7 +48,7 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
         _folderService = IPlatformApplication.Current?.Services?.GetService<IFolderService>() 
                         ?? throw new InvalidOperationException("IFolderService not found");
 
-        OpenSelectionDialogCommand = new Command(async () => await OpenSelectionDialog());
+        OpenSelectionDialogCommand = new Command(async () => await OpenSelectionDialog(), () => !_isPopupOpen);
         
         InitializeComponent();
         _ = LoadDataAsync();
@@ -76,13 +77,32 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
 
     private async Task OpenSelectionDialog()
     {
+        // Protection against multiple opens
+        if (_isPopupOpen)
+        {
+            System.Diagnostics.Debug.WriteLine("?? FolderAwarePickerComponent: Popup already open, ignoring request");
+            return;
+        }
+
         try
         {
+            _isPopupOpen = true;
+            ((Command)OpenSelectionDialogCommand).ChangeCanExecute();
+
             // Create and show the popup
             var popup = new FolderAwarePickerPopup(_allRecipes, _allFolders);
             
             // Show the popup and get the result
-            var showTask = Application.Current.MainPage.ShowPopupAsync(popup);
+            var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (page == null)
+            {
+                await Shell.Current.DisplayAlert("Error", "Unable to resolve current page.", "OK");
+                return;
+            }
+
+            System.Diagnostics.Debug.WriteLine("?? FolderAwarePickerComponent: Opening popup");
+
+            var showTask = page.ShowPopupAsync(popup);
             var resultTask = popup.ResultTask;
             
             // Wait for either the popup to be dismissed or a result to be set
@@ -90,6 +110,8 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
             
             // Get the result
             var result = resultTask.IsCompleted ? await resultTask : null;
+            
+            System.Diagnostics.Debug.WriteLine($"? FolderAwarePickerComponent: Popup result: {result?.GetType().Name}");
             
             // Handle the result
             if (result is Recipe selectedRecipe)
@@ -104,15 +126,44 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error opening recipe selection dialog: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"? FolderAwarePickerComponent: Error opening popup: {ex.Message}");
+            
+            // Handle specific popup exception
+            if (ex.Message.Contains("PopupBlockedException") || ex.Message.Contains("blocked by the Modal Page"))
+            {
+                System.Diagnostics.Debug.WriteLine("?? FolderAwarePickerComponent: Attempting to close any existing modal pages");
+                
+                try
+                {
+                    // Try to dismiss any existing modal pages
+                    while (Application.Current?.MainPage?.Navigation?.ModalStack?.Count > 0)
+                    {
+                        await Application.Current.MainPage.Navigation.PopModalAsync(false);
+                    }
+                    
+                    System.Diagnostics.Debug.WriteLine("? FolderAwarePickerComponent: Modal stack cleared");
+                }
+                catch (Exception modalEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"?? FolderAwarePickerComponent: Could not clear modal stack: {modalEx.Message}");
+                }
+            }
+            
             // Fallback to display alert
             await Shell.Current.DisplayAlert("Error", "Could not open recipe selection dialog", "OK");
         }
+        finally
+        {
+            _isPopupOpen = false;
+            ((Command)OpenSelectionDialogCommand).ChangeCanExecute();
+            System.Diagnostics.Debug.WriteLine("?? FolderAwarePickerComponent: Popup protection released");
+        }
     }
 
-    public event PropertyChangedEventHandler? PropertyChanged;
-    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    public new event PropertyChangedEventHandler? PropertyChanged;
+    protected override void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        base.OnPropertyChanged(propertyName);
     }
 }

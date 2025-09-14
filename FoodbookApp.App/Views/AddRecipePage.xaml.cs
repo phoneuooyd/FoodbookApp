@@ -12,12 +12,12 @@ namespace Foodbook.Views
     [QueryProperty(nameof(FolderId), "folderId")]
     public partial class AddRecipePage : ContentPage
     {
-        public IEnumerable<Foodbook.Models.Unit> Units => Enum.GetValues(typeof(Foodbook.Models.Unit)).Cast<Foodbook.Models.Unit>();
-
-        private AddRecipeViewModel ViewModel => BindingContext as AddRecipeViewModel;
+        private AddRecipeViewModel? ViewModel => BindingContext as AddRecipeViewModel;
         private readonly PageThemeHelper _themeHelper;
         
         private IDispatcherTimer? _valueChangeTimer;
+        private bool _isInitialized;
+        private bool _hasEverLoaded;
 
         public AddRecipePage(AddRecipeViewModel vm)
         {
@@ -33,15 +33,29 @@ namespace Foodbook.Views
                 base.OnAppearing();
                 _themeHelper.Initialize();
 
-                ViewModel?.Reset();
-                await ViewModel.LoadAvailableIngredientsAsync();
+                if (!_hasEverLoaded)
+                {
+                    // First time loading - perform full initialization
+                    System.Diagnostics.Debug.WriteLine("?? AddRecipePage: First load - performing full initialization");
+                    
+                    ViewModel?.Reset();
+                    await (ViewModel?.LoadAvailableIngredientsAsync() ?? Task.CompletedTask);
 
-                if (RecipeId > 0)
-                    await ViewModel.LoadRecipeAsync(RecipeId);
+                    if (RecipeId > 0 && ViewModel != null)
+                        await ViewModel.LoadRecipeAsync(RecipeId);
 
-                // If navigation passed FolderId, preselect it
-                if (FolderId > 0 && ViewModel != null)
-                    ViewModel.SelectedFolderId = FolderId;
+                    // If navigation passed FolderId, preselect it
+                    if (FolderId > 0 && ViewModel != null)
+                        ViewModel.SelectedFolderId = FolderId;
+                        
+                    _hasEverLoaded = true;
+                    _isInitialized = true;
+                }
+                else
+                {
+                    // Subsequent appearances (e.g., after popup close) - do not reset
+                    System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Skipping reset on re-appear");
+                }
             }
             catch (Exception ex)
             {
@@ -57,6 +71,8 @@ namespace Foodbook.Views
         {
             base.OnDisappearing();
             _themeHelper.Cleanup();
+            
+            System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Disappearing - preserving current state");
         }
 
         private int _recipeId;
@@ -123,7 +139,10 @@ namespace Foodbook.Views
             try
             {
                 _valueChangeTimer?.Stop();
-                _valueChangeTimer = Application.Current.Dispatcher.CreateTimer();
+                var dispatcher = Application.Current?.Dispatcher ?? this.Dispatcher;
+                _valueChangeTimer = dispatcher?.CreateTimer();
+                if (_valueChangeTimer == null) return;
+
                 _valueChangeTimer.Interval = TimeSpan.FromMilliseconds(500);
                 _valueChangeTimer.Tick += async (s, args) =>
                 {
@@ -155,13 +174,23 @@ namespace Foodbook.Views
                 // Support both native Picker and custom SearchablePickerComponent
                 if (sender is Picker picker && picker.BindingContext is Ingredient ingredientFromPicker)
                 {
-                    await ViewModel.UpdateIngredientNutritionalValuesAsync(ingredientFromPicker);
+                    await (ViewModel?.UpdateIngredientNutritionalValuesAsync(ingredientFromPicker) ?? Task.CompletedTask);
                     return;
                 }
                 if (sender is SearchablePickerComponent comp && comp.BindingContext is Ingredient ingredient)
                 {
-                    await ViewModel.UpdateIngredientNutritionalValuesAsync(ingredient);
+                    await (ViewModel?.UpdateIngredientNutritionalValuesAsync(ingredient) ?? Task.CompletedTask);
                     return;
+                }
+                
+                // Alternative approach: try to get the ingredient from binding context of parent
+                if (sender is View element)
+                {
+                    var ingredientFromElement = element.BindingContext as Ingredient;
+                    if (ingredientFromElement != null)
+                    {
+                        await (ViewModel?.UpdateIngredientNutritionalValuesAsync(ingredientFromElement) ?? Task.CompletedTask);
+                    }
                 }
             }
             catch (Exception ex)

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:converters="clr-namespace:Foodbook.Converters"
+             x:Class="Foodbook.Views.Components.SimplePicker"
+             x:Name="ThisPicker">
+    <ContentView.Resources>
+        <converters:UnitToStringConverter x:Key="UnitToStringConverter" />
+    </ContentView.Resources>
+    
+    <Border Style="{StaticResource ModernBorder}">
+        <Button x:Name="PickerButton"
+                Text="{Binding DisplayText, Source={x:Reference ThisPicker}}"
+                Command="{Binding OpenSelectionDialogCommand, Source={x:Reference ThisPicker}}"
+                HorizontalOptions="FillAndExpand"
+                BackgroundColor="Transparent"
+                BorderWidth="0"
+                FontSize="14"
+                TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                Padding="12,8" />
+    </Border>
+</ContentView>

@@ -10,10 +10,17 @@ using System.Threading.Tasks;
 using System.Linq;
 using FoodbookApp.Localization;
 using FoodbookApp.Localization;
-
+using CommunityToolkit.Mvvm.Messaging;
 
 namespace Foodbook.ViewModels
 {
+    // Messenger message to collapse FAB
+    public sealed class FabCollapseMessage
+    {
+        public static readonly FabCollapseMessage Instance = new();
+        private FabCollapseMessage() { }
+    }
+
     public partial class RecipeViewModel : INotifyPropertyChanged
     {
         private readonly IRecipeService _recipeService;
@@ -75,13 +82,13 @@ namespace Foodbook.ViewModels
             {
                 var param = _currentFolder?.Id > 0 ? $"?folderId={_currentFolder.Id}" : string.Empty;
                 await Shell.Current.GoToAsync($"{nameof(AddRecipePage)}{param}");
-                MessagingCenter.Send(this, "FabCollapse");
+                WeakReferenceMessenger.Default.Send(FabCollapseMessage.Instance);
             });
 
             AddFolderCommand = new Command(async () =>
             {
                 await CreateFolderAsync();
-                MessagingCenter.Send(this, "FabCollapse");
+                WeakReferenceMessenger.Default.Send(FabCollapseMessage.Instance);
             });
 
             EditRecipeCommand = new Command<Recipe>(async r =>
@@ -134,7 +141,7 @@ namespace Foodbook.ViewModels
 
             FolderEditCommand = new Command<object>(async o =>
             {
-                if (o is Folder f)
+                if ( o is Folder f)
                 {
                     var title = FolderResources.RenameFolderTitle;
                     var prompt = FolderResources.RenameFolderPrompt;

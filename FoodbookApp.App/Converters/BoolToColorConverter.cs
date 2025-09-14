@@ -13,7 +13,7 @@ public class BoolToColorConverter : IValueConverter
         return fallback;
     }
 
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         var isTrue = value is bool b && b;
         var param = parameter?.ToString();
@@ -51,22 +51,22 @@ public class BoolToColorConverter : IValueConverter
         };
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotImplementedException();
 }
 
 public class StringToBoolConverter : IValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         => !string.IsNullOrWhiteSpace(value?.ToString());
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotImplementedException();
 }
 
 public class DragStateToColorConverter : IValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is bool { } isDragged && isDragged)
         {
@@ -84,12 +84,12 @@ public class DragStateToColorConverter : IValueConverter
         return fallback;
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => value;
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => value;
 }
 
 public class DropZoneToColorConverter : IValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is bool { } over && over)
         {
@@ -106,12 +106,12 @@ public class DropZoneToColorConverter : IValueConverter
         return fallback;
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => value;
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => value;
 }
 
 public class DropZoneBorderColorConverter : IValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is bool { } over && over)
         {
@@ -129,13 +129,13 @@ public class DropZoneBorderColorConverter : IValueConverter
         return fallback;
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => value;
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => value;
 }
 
 public class BoolToTextConverter : IValueConverter
 {
     public static readonly BoolToTextConverter Instance = new();
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is bool isTrue && parameter is string param)
         {
@@ -145,11 +145,11 @@ public class BoolToTextConverter : IValueConverter
         }
         return value?.ToString() ?? string.Empty;
     }
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotImplementedException();
 }
 
 public class IsNotNullOrEmptyConverter : IValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => !string.IsNullOrEmpty(value?.ToString());
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) => !string.IsNullOrEmpty(value?.ToString());
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotImplementedException();
 }
