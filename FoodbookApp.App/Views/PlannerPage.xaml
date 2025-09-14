@@ -70,7 +70,7 @@
                                                         </Button.Triggers>
                                                     </Button>
                                                     <Label Grid.Column="2" Text="{Binding Portions}" VerticalOptions="Center" HorizontalOptions="Center" FontSize="14" FontAttributes="Bold" TextColor="{DynamicResource Primary}" WidthRequest="24" HorizontalTextAlignment="Center" />
-                                                    <Button Grid.Column="3" Text="➕" Command="{Binding BindingContext.IncreasePortionsCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" WidthRequest="30" HeightRequest="30" CornerRadius="15" FontSize="16" FontAttributes="Bold" BorderWidth="0" Padding="0" BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource PrimaryDark}}" TextColor="{AppThemeBinding Light=Black, Dark=White}">
+                                                    <Button Grid.Column="3" Text="➕" Command="{Binding BindingContext.IncreasePortionsCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" WidthRequest="30" HeightRequest="30" CornerRadius="15" FontSize="16" FontAttributes="Bold" BorderWidth="0" Padding="0" BackgroundColor="{DynamicResource Primary}" TextColor="{DynamicResource ButtonPrimaryText}">
                                                         <Button.Triggers>
                                                             <DataTrigger TargetType="Button" Binding="{Binding Portions}" Value="20">
                                                                 <Setter Property="IsEnabled" Value="False" />
