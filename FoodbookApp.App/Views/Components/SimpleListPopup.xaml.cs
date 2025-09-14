@@ -91,20 +91,21 @@ public partial class SimpleListPopup : Popup
                 return new Label
                 {
                     Text = header.Text,
-                    FontSize = 16,
+                    FontSize = 18,
                     FontAttributes = FontAttributes.Bold,
                     TextColor = (Color)(Application.Current?.Resources["Primary"] ?? Colors.Purple),
-                    Margin = new Thickness(0, 10, 0, 6)
+                    Margin = new Thickness(0, 16, 0, 8)
                 };
 
             case MealTitle title:
                 return new Label
                 {
                     Text = title.Text,
-                    FontSize = 15,
+                    FontSize = 17,
                     FontAttributes = FontAttributes.Bold,
                     TextColor = primaryText,
-                    Margin = new Thickness(2, 2, 2, 2)
+                    Margin = new Thickness(0, 4, 0, 4),
+                    LineBreakMode = LineBreakMode.WordWrap
                 };
 
             case MacroRow macros:
@@ -112,14 +113,14 @@ public partial class SimpleListPopup : Popup
                     var secondary = (Color)(Application.Current?.Resources["SecondaryText"] ?? Colors.Gray);
                     var layout = new HorizontalStackLayout
                     {
-                        Spacing = 16,
-                        Margin = new Thickness(2, 0, 2, 2)
+                        Spacing = 20,
+                        Margin = new Thickness(0, 2, 0, 6)
                     };
 
-                    layout.Children.Add(new Label { Text = $"? {macros.Calories:F0} kcal", FontSize = 12, TextColor = secondary });
-                    layout.Children.Add(new Label { Text = $"?? {macros.Protein:F1}g", FontSize = 12, TextColor = secondary });
-                    layout.Children.Add(new Label { Text = $"?? {macros.Fat:F1}g", FontSize = 12, TextColor = secondary });
-                    layout.Children.Add(new Label { Text = $"?? {macros.Carbs:F1}g", FontSize = 12, TextColor = secondary });
+                    layout.Children.Add(new Label { Text = $"K: {macros.Calories:F0} kcal", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondary });
+                    layout.Children.Add(new Label { Text = $"B: {macros.Protein:F1}g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondary });
+                    layout.Children.Add(new Label { Text = $"T: {macros.Fat:F1}g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondary });
+                    layout.Children.Add(new Label { Text = $"W: {macros.Carbs:F1}g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondary });
                     return layout;
                 }
 
@@ -127,17 +128,17 @@ public partial class SimpleListPopup : Popup
                 return new Label
                 {
                     Text = desc.Text,
-                    FontSize = 13,
+                    FontSize = 14,
                     TextColor = (Color)(Application.Current?.Resources["SecondaryText"] ?? Colors.Gray),
                     LineBreakMode = LineBreakMode.WordWrap,
-                    Margin = new Thickness(2, 0, 2, 10)
+                    Margin = new Thickness(0, 4, 0, 16)
                 };
 
             case string s:
                 return CreateRow(s, primaryText);
 
             case IEnumerable<string> group:
-                var container = new VerticalStackLayout { Spacing = 4 };
+                var container = new VerticalStackLayout { Spacing = 6 };
                 foreach (var s2 in group)
                     container.Children.Add(CreateRow(s2, primaryText));
                 return container;
@@ -158,11 +159,11 @@ public partial class SimpleListPopup : Popup
                     new ColumnDefinition{ Width = GridLength.Auto },
                     new ColumnDefinition{ Width = GridLength.Star }
                 },
-                ColumnSpacing = 8
+                ColumnSpacing = 12
             };
 
-            var bullet = new Label { Text = "•", TextColor = (Color)Application.Current?.Resources["Primary"]!, FontSize = 14, VerticalOptions = LayoutOptions.Center };
-            var textLabel = new Label { Text = text, TextColor = primaryText, FontSize = 14, LineBreakMode = LineBreakMode.WordWrap };
+            var bullet = new Label { Text = "•", TextColor = (Color)Application.Current?.Resources["Primary"]!, FontSize = 16, VerticalOptions = LayoutOptions.Center };
+            var textLabel = new Label { Text = text, TextColor = primaryText, FontSize = 15, LineBreakMode = LineBreakMode.WordWrap };
             Grid.SetColumn(textLabel, 1);
             grid.Add(bullet);
             grid.Add(textLabel);
@@ -174,9 +175,9 @@ public partial class SimpleListPopup : Popup
             {
                 Text = text,
                 TextColor = primaryText,
-                FontSize = 14,
+                FontSize = 15,
                 LineBreakMode = LineBreakMode.WordWrap,
-                Margin = new Thickness(2, 4)
+                Margin = new Thickness(0, 6)
             };
         }
     }
