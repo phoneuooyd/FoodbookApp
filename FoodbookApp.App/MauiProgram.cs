@@ -117,18 +117,7 @@ namespace FoodbookApp
             ServiceProvider = app.Services;
             System.Diagnostics.Debug.WriteLine("[MauiProgram] ServiceProvider created");
 
-            try
-            {
-                System.Diagnostics.Debug.WriteLine("[MauiProgram] Early theme init start");
-                var settingsVm = app.Services.GetService<SettingsViewModel>();
-                var themeService = app.Services.GetService<IThemeService>();
-                themeService?.UpdateSystemBars();
-                System.Diagnostics.Debug.WriteLine("[MauiProgram] Early theme init done");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[MauiProgram] Early theme init failed: {ex.Message}");
-            }
+            // Removed early theme system bar update to avoid overriding saved theme before window exists.
 
             // Initialize database synchronously at startup to avoid concurrent DDL/DML
             try

@@ -14,6 +14,8 @@
         <ResourceDictionary>
             <converters:CultureCodeToNativeNameConverter x:Key="CultureCodeToNativeNameConverter" />
             <converters:CultureCodeToDisplayNameConverter x:Key="CultureCodeToDisplayNameConverter" />
+            <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <converters:StringIsNotNullOrEmptyConverter x:Key="StringIsNotNullOrEmptyConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -33,12 +35,12 @@
                        FontSize="18"
                        HorizontalOptions="Center"
                        HorizontalTextAlignment="Center"
-                       TextColor="{DynamicResource Gray600}" />
+                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
             </VerticalStackLayout>
 
             <!-- Language Selection -->
-            <Frame BackgroundColor="{DynamicResource Gray100}"
-                   BorderColor="{DynamicResource Gray300}"
+            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                   BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
                    CornerRadius="10"
                    Padding="20">
                 <VerticalStackLayout Spacing="15">
@@ -49,20 +51,20 @@
                     
                     <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=LanguageSectionDescription}"
                            FontSize="14"
-                           TextColor="{DynamicResource Gray600}" />
+                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
                     
                     <Picker ItemsSource="{Binding AvailableLanguages}"
                             SelectedItem="{Binding SelectedLanguage}"
                             ItemDisplayBinding="{Binding CultureCode, Converter={StaticResource CultureCodeToNativeNameConverter}}"
                             FontSize="16"
-                            BackgroundColor="{DynamicResource White}"
-                            TextColor="{DynamicResource Black}" />
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}"
+                            TextColor="{AppThemeBinding Light=Black, Dark=White}" />
                 </VerticalStackLayout>
             </Frame>
 
             <!-- Basic Ingredients Section -->
-            <Frame BackgroundColor="{DynamicResource Gray100}"
-                   BorderColor="{DynamicResource Gray300}"
+            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                   BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
                    CornerRadius="10"
                    Padding="20">
                 <VerticalStackLayout Spacing="15">
@@ -73,11 +75,11 @@
                     
                     <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=IngredientsSectionQuestion}"
                            FontSize="14"
-                           TextColor="{DynamicResource Gray600}" />
+                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
                     
                     <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=IngredientsSectionInfo}"
                            FontSize="12"
-                           TextColor="{DynamicResource Gray500}"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
                            Margin="0,5,0,10" />
                     
                     <VerticalStackLayout Spacing="10">
@@ -85,13 +87,13 @@
                                      IsChecked="{Binding InstallBasicIngredients}"
                                      GroupName="IngredientsChoice"
                                      FontSize="14"
-                                     TextColor="{DynamicResource Black}" />
+                                     TextColor="{AppThemeBinding Light=Black, Dark=White}" />
                         
                         <RadioButton Content="{loc:Translate Resource=SetupWizardPageResources, Key=IngredientsNo}"
                                      IsChecked="{Binding InstallBasicIngredients, Converter={StaticResource InvertedBoolConverter}}"
                                      GroupName="IngredientsChoice"
                                      FontSize="14"
-                                     TextColor="{DynamicResource Black}" />
+                                     TextColor="{AppThemeBinding Light=Black, Dark=White}" />
                     </VerticalStackLayout>
                 </VerticalStackLayout>
             </Frame>
@@ -110,7 +112,7 @@
                     Command="{Binding CompleteSetupCommand}"
                     IsEnabled="{Binding IsCompleting, Converter={StaticResource InvertedBoolConverter}}"
                     BackgroundColor="{DynamicResource Primary}"
-                    TextColor="{DynamicResource White}"
+                    TextColor="{DynamicResource ButtonPrimaryText}"
                     FontSize="18"
                     FontAttributes="Bold"
                     HeightRequest="50"

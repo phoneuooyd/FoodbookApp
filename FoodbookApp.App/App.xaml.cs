@@ -166,6 +166,7 @@ namespace FoodbookApp
             try
             {
                 System.Diagnostics.Debug.WriteLine("[App] CreateWindow invoked");
+                Window window;
                 if (_preferencesService.IsFirstLaunch())
                 {
                     System.Diagnostics.Debug.WriteLine("[App] First launch detected - resolving SetupWizardPage from DI");
@@ -176,15 +177,40 @@ namespace FoodbookApp
                         var vm = MauiProgram.ServiceProvider?.GetRequiredService<SetupWizardViewModel>();
                         setupPage = new SetupWizardPage(vm!);
                     }
-                    return new Window(setupPage);
+                    window = new Window(setupPage);
                 }
-                System.Diagnostics.Debug.WriteLine("[App] Returning user - showing main shell");
-                return new Window(new AppShell());
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[App] Returning user - showing main shell");
+                    window = new Window(new AppShell());
+                }
+
+                // Ensure system bars use the saved theme colors once the platform window exists
+                window.Created += OnWindowCreated;
+
+                return window;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[App] CreateWindow crash: {ex.Message}\n{ex.StackTrace}");
                 throw;
+            }
+        }
+
+        private void OnWindowCreated(object? sender, EventArgs e)
+        {
+            try
+            {
+                // Re-apply current color theme to force system bars update when window is ready
+                var currentColorTheme = _themeService.GetCurrentColorTheme();
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    _themeService.SetColorTheme(currentColorTheme);
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[App] OnWindowCreated error: {ex.Message}");
             }
         }
     }
