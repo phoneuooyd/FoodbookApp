@@ -16,7 +16,7 @@
             StrokeShape="RoundRectangle 6"
             MinimumHeightRequest="44">
         
-        <Grid ColumnDefinitions="*,Auto" Padding="12,8">
+        <Grid ColumnDefinitions="*" Padding="12,8">
             <Grid.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding OpenSelectionDialogCommand, Source={x:Reference ThisComponent}}" />
             </Grid.GestureRecognizers>
@@ -28,13 +28,6 @@
                    LineBreakMode="TailTruncation"
                    Text="{Binding DisplayText, Source={x:Reference ThisComponent}}"
                    TextColor="{Binding SelectedItem, Source={x:Reference ThisComponent}, Converter={StaticResource IsNotNullToColorConverter}}" />
-
-            <!-- Dropdown/search icon -->
-            <Label Grid.Column="1"
-                   Text="?"
-                   FontSize="14"
-                   VerticalOptions="Center"
-                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
         </Grid>
     </Border>
 </ContentView>

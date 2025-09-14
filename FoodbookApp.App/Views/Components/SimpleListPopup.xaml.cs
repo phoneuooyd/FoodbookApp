@@ -39,6 +39,18 @@ public partial class SimpleListPopup : Popup
 
     public ICommand CloseCommand { get; }
 
+    // Structured item models for richer rendering
+    public class SectionHeader { public string Text { get; set; } = string.Empty; }
+    public class MealTitle { public string Text { get; set; } = string.Empty; }
+    public class MacroRow 
+    { 
+        public double Calories { get; set; } 
+        public double Protein { get; set; } 
+        public double Fat { get; set; } 
+        public double Carbs { get; set; } 
+    }
+    public class Description { public string Text { get; set; } = string.Empty; }
+
     public SimpleListPopup()
     {
         CloseCommand = new Command(async () => await CloseWithResultAsync(null));
@@ -60,29 +72,78 @@ public partial class SimpleListPopup : Popup
 
             foreach (var obj in data)
             {
-                if (obj is string s)
-                {
-                    var row = CreateRow(s, primaryText);
-                    host.Children.Add(row);
-                }
-                else if (obj is IEnumerable<string> group)
-                {
-                    foreach (var s2 in group)
-                    {
-                        var row = CreateRow(s2, primaryText);
-                        host.Children.Add(row);
-                    }
-                }
-                else
-                {
-                    var row = CreateRow(obj?.ToString() ?? string.Empty, primaryText);
-                    host.Children.Add(row);
-                }
+                var view = CreateViewForItem(obj, primaryText);
+                if (view != null)
+                    host.Children.Add(view);
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error building SimpleListPopup items: {ex.Message}");
+        }
+    }
+
+    private View? CreateViewForItem(object obj, Color primaryText)
+    {
+        switch (obj)
+        {
+            case SectionHeader header:
+                return new Label
+                {
+                    Text = header.Text,
+                    FontSize = 16,
+                    FontAttributes = FontAttributes.Bold,
+                    TextColor = (Color)(Application.Current?.Resources["Primary"] ?? Colors.Purple),
+                    Margin = new Thickness(0, 10, 0, 6)
+                };
+
+            case MealTitle title:
+                return new Label
+                {
+                    Text = title.Text,
+                    FontSize = 15,
+                    FontAttributes = FontAttributes.Bold,
+                    TextColor = primaryText,
+                    Margin = new Thickness(2, 2, 2, 2)
+                };
+
+            case MacroRow macros:
+                {
+                    var secondary = (Color)(Application.Current?.Resources["SecondaryText"] ?? Colors.Gray);
+                    var layout = new HorizontalStackLayout
+                    {
+                        Spacing = 16,
+                        Margin = new Thickness(2, 0, 2, 2)
+                    };
+
+                    layout.Children.Add(new Label { Text = $"? {macros.Calories:F0} kcal", FontSize = 12, TextColor = secondary });
+                    layout.Children.Add(new Label { Text = $"?? {macros.Protein:F1}g", FontSize = 12, TextColor = secondary });
+                    layout.Children.Add(new Label { Text = $"?? {macros.Fat:F1}g", FontSize = 12, TextColor = secondary });
+                    layout.Children.Add(new Label { Text = $"?? {macros.Carbs:F1}g", FontSize = 12, TextColor = secondary });
+                    return layout;
+                }
+
+            case Description desc:
+                return new Label
+                {
+                    Text = desc.Text,
+                    FontSize = 13,
+                    TextColor = (Color)(Application.Current?.Resources["SecondaryText"] ?? Colors.Gray),
+                    LineBreakMode = LineBreakMode.WordWrap,
+                    Margin = new Thickness(2, 0, 2, 10)
+                };
+
+            case string s:
+                return CreateRow(s, primaryText);
+
+            case IEnumerable<string> group:
+                var container = new VerticalStackLayout { Spacing = 4 };
+                foreach (var s2 in group)
+                    container.Children.Add(CreateRow(s2, primaryText));
+                return container;
+
+            default:
+                return CreateRow(obj?.ToString() ?? string.Empty, primaryText);
         }
     }
 
