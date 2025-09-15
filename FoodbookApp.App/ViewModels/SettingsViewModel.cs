@@ -36,10 +36,19 @@ public class SettingsViewModel : INotifyPropertyChanged
             if (_selectedCulture == value) return;
             _selectedCulture = value;
             OnPropertyChanged(nameof(SelectedCulture));
+
+            // Change app culture via resource manager
             _locManager.SetCulture(value);
-            
-            // Save the selected culture to preferences
+
+            // Save preference
             _preferencesService.SaveLanguage(value);
+
+            // Refresh pickers so ItemDisplayBinding converters re-evaluate with new culture
+            RefreshCollectionsForLocalization();
+            OnPropertyChanged(nameof(SelectedTheme));
+            OnPropertyChanged(nameof(SelectedColorTheme));
+            OnPropertyChanged(nameof(SelectedFontFamily));
+            OnPropertyChanged(nameof(SelectedFontSize));
         }
     }
 
@@ -221,6 +230,35 @@ public class SettingsViewModel : INotifyPropertyChanged
         ResetDatabaseCommand = new Command(async () => await ResetDatabaseAsync(), () => CanExecuteMigration);
         
         System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Initialized with color theme and colorful background support");
+    }
+
+    private void RefreshCollectionsForLocalization()
+    {
+        // Cultures
+        SupportedCultures.Clear();
+        foreach (var c in _preferencesService.GetSupportedCultures())
+            SupportedCultures.Add(c);
+
+        // Themes
+        var themes = new[] { Foodbook.Models.AppTheme.System, Foodbook.Models.AppTheme.Light, Foodbook.Models.AppTheme.Dark };
+        SupportedThemes.Clear();
+        foreach (var t in themes)
+            SupportedThemes.Add(t);
+
+        // Color themes
+        var colorThemes = new[] { AppColorTheme.Default, AppColorTheme.Nature, AppColorTheme.Warm, AppColorTheme.Vibrant, AppColorTheme.Monochrome, AppColorTheme.Navy, AppColorTheme.Autumn, AppColorTheme.Mint };
+        SupportedColorThemes.Clear();
+        foreach (var ct in colorThemes)
+            SupportedColorThemes.Add(ct);
+
+        // Fonts
+        SupportedFontFamilies.Clear();
+        foreach (var ff in _fontService.GetAvailableFontFamilies())
+            SupportedFontFamilies.Add(ff);
+
+        SupportedFontSizes.Clear();
+        foreach (var fs in _fontService.GetAvailableFontSizes())
+            SupportedFontSizes.Add(fs);
     }
 
     private async Task MigrateDatabaseAsync()

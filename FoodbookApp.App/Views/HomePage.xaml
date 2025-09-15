@@ -225,7 +225,7 @@
                                                     <DataTemplate x:DataType="{x:Type models:PlannedMeal}">
                                                         <Frame Style="{StaticResource ClickableMealItemStyle}">
                                                             <Frame.GestureRecognizers>
-                                                                <TapGestureRecognizer Command="{Binding Source={x:Reference Name=HomePageView}, Path=BindingContext.ShowMealsPopupCommand}" />
+                                                                <TapGestureRecognizer Command="{Binding Source={x:Reference Name=HomePageView}, Path=BindingContext.ShowMealDetailsPopupCommand}" CommandParameter="{Binding .}" />
                                                             </Frame.GestureRecognizers>
                                                             <StackLayout Orientation="Horizontal">
                                                                 <Label Text="•" 

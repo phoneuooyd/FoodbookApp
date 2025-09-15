@@ -207,6 +207,7 @@ public class HomeViewModel : INotifyPropertyChanged
     // Commands
     public ICommand ShowRecipeIngredientsCommand { get; }
     public ICommand ShowMealsPopupCommand { get; }
+    public ICommand ShowMealDetailsPopupCommand { get; }
     public ICommand ChangeNutritionPeriodCommand { get; }
     public ICommand ChangePlannedMealsPeriodCommand { get; }
 
@@ -225,6 +226,7 @@ public class HomeViewModel : INotifyPropertyChanged
         
         ShowRecipeIngredientsCommand = new Command<PlannedMeal>(async (meal) => await ShowRecipeIngredientsAsync(meal), (meal) => !_isRecipeIngredientsPopupOpen);
         ShowMealsPopupCommand = new Command(async () => await ShowMealsPopupAsync(), () => !_isMealsPopupOpen);
+        ShowMealDetailsPopupCommand = new Command<PlannedMeal>(async (meal) => await ShowMealDetailsPopupAsync(meal), (meal) => !_isMealsPopupOpen);
         ChangeNutritionPeriodCommand = new Command(async () => await ShowNutritionPeriodPickerAsync());
         ChangePlannedMealsPeriodCommand = new Command(async () => await ShowPlannedMealsPeriodPickerAsync());
     }
@@ -772,6 +774,107 @@ public class HomeViewModel : INotifyPropertyChanged
             _isRecipeIngredientsPopupOpen = false;
             ((Command<PlannedMeal>)ShowRecipeIngredientsCommand).ChangeCanExecute();
             System.Diagnostics.Debug.WriteLine("?? HomeViewModel: Recipe ingredients popup protection released");
+        }
+    }
+
+    private async Task ShowMealDetailsPopupAsync(PlannedMeal meal)
+    {
+        if (_isMealsPopupOpen)
+        {
+            System.Diagnostics.Debug.WriteLine("?? HomeViewModel: Meals popup already open, ignoring request");
+            return;
+        }
+        if (meal?.Recipe == null) return;
+
+        var page = Application.Current?.MainPage;
+        if (page == null) return;
+
+        try
+        {
+            _isMealsPopupOpen = true;
+            ((Command)ShowMealsPopupCommand).ChangeCanExecute();
+            ((Command<PlannedMeal>)ShowMealDetailsPopupCommand).ChangeCanExecute();
+
+            // Fetch full recipe details
+            var fullRecipe = await _recipeService.GetRecipeAsync(meal.Recipe.Id);
+            if (fullRecipe == null) return;
+
+            var items = new List<object>();
+
+            // Date header
+            items.Add(new Views.Components.SimpleListPopup.SectionHeader { Text = GetDateLabel(meal.Date.Date) });
+
+            // Title
+            var title = meal.Portions != fullRecipe.IloscPorcji
+                ? $"{fullRecipe.Name} ({meal.Portions} porcji)"
+                : fullRecipe.Name;
+            items.Add(new Views.Components.SimpleListPopup.MealTitle { Text = title });
+
+            // Macro
+            var portionMultiplier = (double)meal.Portions / Math.Max(fullRecipe.IloscPorcji, 1);
+            items.Add(new Views.Components.SimpleListPopup.MacroRow
+            {
+                Calories = fullRecipe.Calories * portionMultiplier,
+                Protein = fullRecipe.Protein * portionMultiplier,
+                Fat = fullRecipe.Fat * portionMultiplier,
+                Carbs = fullRecipe.Carbs * portionMultiplier
+            });
+
+            // Ingredients
+            items.Add(new Views.Components.SimpleListPopup.SectionHeader { Text = "SK£ADNIKI" });
+            if (fullRecipe.Ingredients != null && fullRecipe.Ingredients.Any())
+            {
+                foreach (var ing in fullRecipe.Ingredients)
+                {
+                    var adjustedQuantity = (ing.Quantity * meal.Portions) / Math.Max(fullRecipe.IloscPorcji, 1);
+                    var unitText = GetUnitText(ing.Unit);
+                    items.Add($"{ing.Name}: {adjustedQuantity:F1} {unitText}");
+                }
+            }
+            else
+            {
+                items.Add("Brak zdefiniowanych sk³adników.");
+            }
+
+            // Description
+            if (!string.IsNullOrWhiteSpace(fullRecipe.Description))
+            {
+                items.Add(new Views.Components.SimpleListPopup.SectionHeader { Text = "SPOSÓB WYKONANIA" });
+                items.Add(new Views.Components.SimpleListPopup.Description { Text = fullRecipe.Description! });
+            }
+
+            var popup = new Views.Components.SimpleListPopup
+            {
+                TitleText = GetDateLabel(meal.Date.Date),
+                Items = items,
+                IsBulleted = true
+            };
+
+            System.Diagnostics.Debug.WriteLine("?? HomeViewModel: Opening single-meal details popup");
+            var showTask = page.ShowPopupAsync(popup);
+            var resultTask = popup.ResultTask;
+            await Task.WhenAny(showTask, resultTask);
+            var _ = resultTask.IsCompleted ? await resultTask : null;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"? HomeViewModel: Error showing meal details popup: {ex.Message}");
+            if (ex.Message.Contains("PopupBlockedException") || ex.Message.Contains("blocked by the Modal Page"))
+            {
+                try
+                {
+                    if (Application.Current?.MainPage?.Navigation?.ModalStack?.Count > 0)
+                        await Application.Current.MainPage.Navigation.PopModalAsync(false);
+                }
+                catch { }
+            }
+        }
+        finally
+        {
+            _isMealsPopupOpen = false;
+            ((Command)ShowMealsPopupCommand).ChangeCanExecute();
+            ((Command<PlannedMeal>)ShowMealDetailsPopupCommand).ChangeCanExecute();
+            System.Diagnostics.Debug.WriteLine("?? HomeViewModel: Meals popup protection released");
         }
     }
 
