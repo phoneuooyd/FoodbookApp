@@ -52,18 +52,26 @@
 		<Authors>Foodbook App Przemyslaw Przybyszewski </Authors>
 		<Product>Foodbook App</Product>
 		<Copyright>Przemyslaw Przybyszewski all rights reserved 2025</Copyright>
+
+		<!-- Disable trimming globally across all TFMs -->
+		<PublishTrimmed>false</PublishTrimmed>
 	</PropertyGroup>
 
 	<!-- Disable Android AOT in Release to avoid EF Core GUID mismatch on device -->
 	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-android' and '$(Configuration)' == 'Release'">
 		<RunAOTCompilation>false</RunAOTCompilation>
 		<UseInterpreter>true</UseInterpreter>
-		<!-- Safer linker mode for Release to avoid trimming app code -->
-		<AndroidLinkMode>SdkOnly</AndroidLinkMode>
+		<!-- Fully disable linker/trimming on Android in Release -->
+		<AndroidLinkMode>None</AndroidLinkMode>
 	</PropertyGroup>
 
-	<!-- Disable trimming for iOS and MacCatalyst Release for maximum stability -->
-	<PropertyGroup Condition="'$(Configuration)' == 'Release' and ('$(TargetFramework)' == 'net9.0-ios' or '$(TargetFramework)' == 'net9.0-maccatalyst')">
+	<!-- Ensure linker is disabled on Android in Debug as well -->
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-android' and '$(Configuration)' == 'Debug'">
+		<AndroidLinkMode>None</AndroidLinkMode>
+	</PropertyGroup>
+
+	<!-- Disable trimming for iOS and MacCatalyst for maximum stability -->
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-ios' or '$(TargetFramework)' == 'net9.0-maccatalyst'">
 		<PublishTrimmed>false</PublishTrimmed>
 	</PropertyGroup>
 
@@ -294,11 +302,6 @@
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
         </ItemGroup>
-
-    <!-- Linker/Trimmer descriptor (for when trimming is enabled) -->
-    <ItemGroup>
-      <TrimmerRootDescriptor Include="Trimming\TrimmerRoots.xml" />
-    </ItemGroup>
 
 	<ItemGroup>
 	  <MauiXaml Update="Views\AddRecipePage.xaml">
