@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Foodbook.ViewModels
 {
@@ -28,6 +29,7 @@ namespace Foodbook.ViewModels
 
         // ✅ Folder support
         private readonly IFolderService _folderService;
+        private readonly IDatabaseService _databaseService;
         public ObservableCollection<Folder> AvailableFolders { get; } = new();
         public int? SelectedFolderId { get => _selectedFolderId; set { _selectedFolderId = value; OnPropertyChanged(); } }
         private int? _selectedFolderId;
@@ -183,12 +185,14 @@ namespace Foodbook.ViewModels
         private readonly IIngredientService _ingredientService;
         private readonly RecipeImporter _importer;
 
-        public AddRecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService, RecipeImporter importer, IFolderService folderService)
+        public AddRecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService, RecipeImporter importer, IFolderService folderService, IDatabaseService? databaseService = null)
         {
             _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
             _ingredientService = ingredientService ?? throw new ArgumentNullException(nameof(ingredientService));
             _importer = importer ?? throw new ArgumentNullException(nameof(importer));
             _folderService = folderService ?? throw new ArgumentNullException(nameof(folderService));
+
+            _databaseService = databaseService ?? ResolveDatabaseService() ?? new NullDatabaseService();
 
             AddIngredientCommand = new Command(AddIngredient);
             RemoveIngredientCommand = new Command<Ingredient>(RemoveIngredient);
@@ -211,6 +215,26 @@ namespace Foodbook.ViewModels
             _ = LoadAvailableFoldersAsync();
 
             ValidateInput();
+        }
+
+        private IDatabaseService? ResolveDatabaseService()
+        {
+            try
+            {
+                return Application.Current?.Handler?.MauiContext?.Services?.GetService<IDatabaseService>();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private sealed class NullDatabaseService : IDatabaseService
+        {
+            public Task InitializeAsync() => Task.CompletedTask;
+            public Task<bool> EnsureDatabaseSchemaAsync() => Task.FromResult(true);
+            public Task<bool> MigrateDatabaseAsync() => Task.FromResult(true);
+            public Task<bool> ResetDatabaseAsync() => Task.FromResult(true);
         }
 
         public async Task LoadAvailableFoldersAsync()
@@ -246,7 +270,7 @@ namespace Foodbook.ViewModels
                 try
                 {
                     // Try to fix the database schema
-                    var schemaFixed = await FoodbookApp.MauiProgram.EnsureDatabaseSchemaAsync();
+                    var schemaFixed = await _databaseService.EnsureDatabaseSchemaAsync();
                     if (schemaFixed)
                     {
                         System.Diagnostics.Debug.WriteLine("[AddRecipeViewModel] Database schema fixed, retrying folder load...");

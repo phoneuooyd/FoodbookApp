@@ -13,6 +13,7 @@ public class SettingsViewModel : INotifyPropertyChanged
     private readonly IPreferencesService _preferencesService;
     private readonly IThemeService _themeService;
     private readonly IFontService _fontService;
+    private readonly IDatabaseService _databaseService;
 
     // Expose if current build is DEBUG so UI can hide dev-only actions in Release
 #if DEBUG
@@ -170,12 +171,13 @@ public class SettingsViewModel : INotifyPropertyChanged
     public ICommand MigrateDatabaseCommand { get; }
     public ICommand ResetDatabaseCommand { get; }
 
-    public SettingsViewModel(LocalizationResourceManager locManager, IPreferencesService preferencesService, IThemeService themeService, IFontService fontService)
+    public SettingsViewModel(LocalizationResourceManager locManager, IPreferencesService preferencesService, IThemeService themeService, IFontService fontService, IDatabaseService databaseService)
     {
         _locManager = locManager;
         _preferencesService = preferencesService;
         _themeService = themeService;
         _fontService = fontService;
+        _databaseService = databaseService;
         
         // Initialize supported cultures from preferences service
         SupportedCultures = new ObservableCollection<string>(_preferencesService.GetSupportedCultures());
@@ -270,7 +272,7 @@ public class SettingsViewModel : INotifyPropertyChanged
             
             System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Starting database migration");
             
-            var success = await FoodbookApp.MauiProgram.MigrateDatabaseAsync();
+            var success = await _databaseService.MigrateDatabaseAsync();
 
             var page = Application.Current?.MainPage;
             if (success)
@@ -341,7 +343,7 @@ public class SettingsViewModel : INotifyPropertyChanged
             
             System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Starting database reset");
             
-            var success = await FoodbookApp.MauiProgram.ResetDatabaseAsync();
+            var success = await _databaseService.ResetDatabaseAsync();
             
             if (success)
             {
