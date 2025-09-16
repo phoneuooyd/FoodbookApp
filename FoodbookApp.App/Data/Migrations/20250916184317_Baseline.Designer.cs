@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FoodbookApp.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250913211855_Baseline")]
+    [Migration("20250916184317_Baseline")]
     partial class Baseline
     {
         /// <inheritdoc />

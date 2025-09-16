@@ -49,12 +49,8 @@ namespace FoodbookApp
             builder.Logging.AddDebug();
 
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering DbContext");
-            builder.Services.AddDbContext<AppDbContext>(options =>
-            {
-                var dbPath = Path.Combine(FileSystem.AppDataDirectory, "foodbook.db");
-                // Configure connection string to enable WAL and shared cache; EF manages connections itself
-                options.UseSqlite($"Data Source={dbPath};Cache=Shared;Pooling=True;Default Timeout=5;Journal Mode=WAL;Foreign Keys=True");
-            });
+            // Use extension to add AppDbContext
+            builder.Services.AddAppDbContext();
 
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering services & view models");
             builder.Services.AddScoped<IRecipeService, RecipeService>();
@@ -119,7 +115,7 @@ namespace FoodbookApp
             ServiceProvider = app.Services;
             System.Diagnostics.Debug.WriteLine("[MauiProgram] ServiceProvider created");
 
-            // Initialize DB via DatabaseService
+            // Initialize DB via DatabaseService synchronously to avoid async signature here
             try
             {
                 var dbService = app.Services.GetRequiredService<IDatabaseService>();

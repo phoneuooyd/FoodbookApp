@@ -26,45 +26,10 @@ namespace Foodbook.Services
             _db = db;
         }
 
-        private async Task EnsureFoldersTableExistsAsync(CancellationToken ct = default)
-        {
-            try
-            {
-                // Test if table exists by trying a simple query
-                await _db.Folders.Take(1).ToListAsync(ct);
-            }
-            catch (Exception ex) when (ex.Message.Contains("no such table: Folders"))
-            {
-                System.Diagnostics.Debug.WriteLine("[FolderService] Folders table missing, creating it now...");
-                
-                try
-                {
-                    // Create the Folders table manually
-                    await _db.Database.ExecuteSqlRawAsync(@"
-                        CREATE TABLE IF NOT EXISTS [Folders] (
-                            [Id] INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                            [Name] TEXT NOT NULL,
-                            [Description] TEXT,
-                            [ParentFolderId] INTEGER,
-                            [CreatedAt] TEXT NOT NULL DEFAULT ''
-                        )", ct);
-                    
-                    System.Diagnostics.Debug.WriteLine("[FolderService] Folders table created successfully");
-                }
-                catch (Exception createEx)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[FolderService] Failed to create Folders table: {createEx.Message}");
-                    throw;
-                }
-            }
-        }
-
         public async Task<List<Folder>> GetFoldersAsync(CancellationToken ct = default)
         {
             try
             {
-                await EnsureFoldersTableExistsAsync(ct);
-                
                 return await _db.Folders
                     .AsNoTracking()
                     .Include(f => f.SubFolders)
@@ -83,8 +48,6 @@ namespace Foodbook.Services
         {
             try
             {
-                await EnsureFoldersTableExistsAsync(ct);
-                
                 var folders = await _db.Folders
                     .AsNoTracking()
                     .Include(f => f.Recipes)
@@ -103,8 +66,6 @@ namespace Foodbook.Services
         {
             try
             {
-                await EnsureFoldersTableExistsAsync(ct);
-                
                 return await _db.Folders
                     .AsNoTracking()
                     .Include(f => f.SubFolders)
@@ -120,11 +81,7 @@ namespace Foodbook.Services
 
         public async Task<Folder> AddFolderAsync(Folder folder, CancellationToken ct = default)
         {
-            // Ensure database/tables exist (device may still be initializing DB)
-            await _db.Database.EnsureCreatedAsync(ct);
-            await EnsureFoldersTableExistsAsync(ct);
-
-            // sanitize required fields to avoid SaveChanges failure on devices with older DB
+            // sanitize required fields
             folder.Name = folder.Name?.Trim() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(folder.Name))
                 throw new ArgumentException("Folder name is required", nameof(folder));
@@ -146,8 +103,6 @@ namespace Foodbook.Services
         {
             try
             {
-                await EnsureFoldersTableExistsAsync(ct);
-                
                 folder.Name = folder.Name?.Trim() ?? string.Empty;
                 _db.Folders.Update(folder);
                 await _db.SaveChangesAsync(ct);
@@ -163,8 +118,6 @@ namespace Foodbook.Services
         {
             try
             {
-                await EnsureFoldersTableExistsAsync(ct);
-                
                 var folder = await _db.Folders
                     .Include(f => f.SubFolders)
                     .Include(f => f.Recipes)
@@ -201,8 +154,6 @@ namespace Foodbook.Services
         {
             try
             {
-                await EnsureFoldersTableExistsAsync(ct);
-                
                 if (!await IsValidFolderMoveAsync(folderId, newParentFolderId, ct))
                     return false;
 
@@ -224,8 +175,6 @@ namespace Foodbook.Services
         {
             try
             {
-                await EnsureFoldersTableExistsAsync(ct);
-                
                 var recipe = await _db.Recipes.FirstOrDefaultAsync(r => r.Id == recipeId, ct);
                 if (recipe == null) return false;
 
@@ -250,8 +199,6 @@ namespace Foodbook.Services
         {
             try
             {
-                await EnsureFoldersTableExistsAsync(ct);
-                
                 if (folderId == newParentFolderId) return false; // cannot move under itself
                 if (!newParentFolderId.HasValue) return true; // move to root allowed
 

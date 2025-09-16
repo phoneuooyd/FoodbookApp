@@ -3,9 +3,25 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Foodbook.Data;
+using System.IO;
+using Microsoft.Maui.Storage;
 
 namespace Foodbook.Services
 {
+    public static class ServiceCollectionDbExtensions
+    {
+        // Registers AppDbContext with the default SQLite connection used by the app
+        public static IServiceCollection AddAppDbContext(this IServiceCollection services)
+        {
+            services.AddDbContext<AppDbContext>(options =>
+            {
+                var dbPath = Path.Combine(FileSystem.AppDataDirectory, "foodbookapp.db");
+                options.UseSqlite($"Data Source={dbPath};Cache=Shared;Pooling=True;Default Timeout=20;Foreign Keys=True");
+            });
+            return services;
+        }
+    }
+
     public class DatabaseService : IDatabaseService
     {
         private readonly IServiceProvider _services;
@@ -25,6 +41,17 @@ namespace Foodbook.Services
 
                 // Apply EF Core migrations (creates DB/tables if missing and updates schema)
                 await db.Database.MigrateAsync();
+
+                // Apply PRAGMAs after migrations
+                try
+                {
+                    await db.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys=ON;");
+                    await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
+                }
+                catch (Exception pragmaEx)
+                {
+                    LogWarning($"PRAGMA setup skipped/failed: {pragmaEx.Message}");
+                }
 
                 // Optional seeding outside of migrations
                 await SeedData.InitializeAsync(db);
@@ -65,6 +92,16 @@ namespace Foodbook.Services
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
                 await db.Database.MigrateAsync();
+                // Reapply PRAGMAs just in case
+                try
+                {
+                    await db.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys=ON;");
+                    await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
+                }
+                catch (Exception pragmaEx)
+                {
+                    LogWarning($"PRAGMA setup skipped/failed: {pragmaEx.Message}");
+                }
                 return true;
             }
             catch (Exception ex)
@@ -85,6 +122,15 @@ namespace Foodbook.Services
 
                 await db.Database.EnsureDeletedAsync();
                 await db.Database.MigrateAsync();
+                try
+                {
+                    await db.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys=ON;");
+                    await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
+                }
+                catch (Exception pragmaEx)
+                {
+                    LogWarning($"PRAGMA setup skipped/failed: {pragmaEx.Message}");
+                }
                 await SeedData.InitializeAsync(db);
                 LogDebug("Database reset completed successfully");
                 return true;
