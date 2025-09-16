@@ -52,7 +52,8 @@ namespace FoodbookApp
             builder.Services.AddDbContext<AppDbContext>(options =>
             {
                 var dbPath = Path.Combine(FileSystem.AppDataDirectory, "foodbook.db");
-                options.UseSqlite($"Filename={dbPath};Cache=Shared;Pooling=True;Default Timeout=5");
+                // Configure connection string to enable WAL and shared cache; EF manages connections itself
+                options.UseSqlite($"Data Source={dbPath};Cache=Shared;Pooling=True;Default Timeout=5;Journal Mode=WAL;Foreign Keys=True");
             });
 
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering services & view models");
