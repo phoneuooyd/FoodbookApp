@@ -13,7 +13,7 @@ namespace Foodbook.Views.Components
             BindableProperty.Create(nameof(ItemTemplate), typeof(DataTemplate), typeof(GenericListComponent));
 
         public static readonly BindableProperty IsRefreshingProperty =
-            BindableProperty.Create(nameof(IsRefreshing), typeof(bool), typeof(GenericListComponent), false);
+            BindableProperty.Create(nameof(IsRefreshing), typeof(bool), typeof(GenericListComponent), false, propertyChanged: OnIsRefreshingChanged);
 
         public static readonly BindableProperty RefreshCommandProperty =
             BindableProperty.Create(nameof(RefreshCommand), typeof(ICommand), typeof(GenericListComponent));
@@ -28,6 +28,8 @@ namespace Foodbook.Views.Components
             BindableProperty.Create(nameof(IsVisible), typeof(bool), typeof(GenericListComponent), true);
 
         private readonly PageThemeHelper _themeHelper;
+        private CancellationTokenSource? _refreshCts;
+        private static readonly TimeSpan RefreshHardTimeout = TimeSpan.FromSeconds(15);
 
         public IEnumerable ItemsSource
         {
@@ -89,6 +91,57 @@ namespace Foodbook.Views.Components
         private void OnComponentUnloaded(object? sender, EventArgs e)
         {
             _themeHelper.Cleanup();
+            CancelRefreshTimeout();
+        }
+
+        private static void OnIsRefreshingChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (bindable is GenericListComponent self)
+            {
+                if (newValue is bool refreshing && refreshing)
+                {
+                    self.StartRefreshTimeout();
+                }
+                else
+                {
+                    self.CancelRefreshTimeout();
+                }
+            }
+        }
+
+        private async void StartRefreshTimeout()
+        {
+            CancelRefreshTimeout();
+            _refreshCts = new CancellationTokenSource();
+            try
+            {
+                await Task.Delay(RefreshHardTimeout, _refreshCts.Token);
+                if (!_refreshCts.IsCancellationRequested)
+                {
+                    MainThread.BeginInvokeOnMainThread(() => IsRefreshing = false);
+                }
+            }
+            catch (TaskCanceledException) { }
+        }
+
+        private void CancelRefreshTimeout()
+        {
+            try { _refreshCts?.Cancel(); } catch { }
+            _refreshCts?.Dispose();
+            _refreshCts = null;
+        }
+
+        // Fired by RefreshView.Refreshing to ensure Command runs and timeout starts even if binding hiccups occur
+        private void OnRefreshing(object? sender, EventArgs e)
+        {
+            try
+            {
+                if (RefreshCommand?.CanExecute(null) == true)
+                    RefreshCommand.Execute(null);
+                // Ensure two-way sync sets IsRefreshing to true
+                if (!IsRefreshing) IsRefreshing = true;
+            }
+            catch { }
         }
     }
 }

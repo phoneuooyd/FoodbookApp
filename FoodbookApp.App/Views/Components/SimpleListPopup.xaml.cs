@@ -68,11 +68,26 @@ public partial class SimpleListPopup : Popup
             host.Children.Clear();
 
             var data = Items?.ToList() ?? new List<object>();
-            var primaryText = Application.Current?.Resources.TryGetValue("PrimaryText", out var v1) == true && v1 is Color c1 ? c1 : Colors.Black;
+
+            // Determine effective colors with better contrast in dark mode on tinted backgrounds
+            var app = Application.Current;
+            bool isDark = false;
+            if (app != null)
+            {
+                var user = app.UserAppTheme;
+                isDark = user == AppTheme.Dark || (user == AppTheme.Unspecified && app.RequestedTheme == AppTheme.Dark);
+            }
+
+            var primaryTextRes = app?.Resources.TryGetValue("PrimaryText", out var v1) == true && v1 is Color c1 ? c1 : Colors.Black;
+            var secondaryTextRes = app?.Resources.TryGetValue("SecondaryText", out var v2) == true && v2 is Color c2 ? c2 : Colors.Gray;
+
+            // In dark mode, use dark foregrounds to improve contrast against light-tinted popup backgrounds
+            var contentPrimary = isDark ? Colors.Black : primaryTextRes;
+            var contentSecondary = isDark ? Color.FromArgb("#333333") : secondaryTextRes;
 
             foreach (var obj in data)
             {
-                var view = CreateViewForItem(obj, primaryText);
+                var view = CreateViewForItem(obj, contentPrimary, contentSecondary);
                 if (view != null)
                     host.Children.Add(view);
             }
@@ -83,7 +98,7 @@ public partial class SimpleListPopup : Popup
         }
     }
 
-    private View? CreateViewForItem(object obj, Color primaryText)
+    private View? CreateViewForItem(object obj, Color primaryText, Color secondaryText)
     {
         switch (obj)
         {
@@ -93,7 +108,7 @@ public partial class SimpleListPopup : Popup
                     Text = header.Text,
                     FontSize = 18,
                     FontAttributes = FontAttributes.Bold,
-                    TextColor = (Color)(Application.Current?.Resources["Primary"] ?? Colors.Purple),
+                    TextColor = primaryText, // use readable primary text instead of accent color
                     Margin = new Thickness(0, 16, 0, 8)
                 };
 
@@ -110,17 +125,16 @@ public partial class SimpleListPopup : Popup
 
             case MacroRow macros:
                 {
-                    var secondary = (Color)(Application.Current?.Resources["SecondaryText"] ?? Colors.Gray);
                     var layout = new HorizontalStackLayout
                     {
                         Spacing = 20,
                         Margin = new Thickness(0, 2, 0, 6)
                     };
 
-                    layout.Children.Add(new Label { Text = $"K: {macros.Calories:F0} kcal", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondary });
-                    layout.Children.Add(new Label { Text = $"B: {macros.Protein:F1}g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondary });
-                    layout.Children.Add(new Label { Text = $"T: {macros.Fat:F1}g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondary });
-                    layout.Children.Add(new Label { Text = $"W: {macros.Carbs:F1}g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondary });
+                    layout.Children.Add(new Label { Text = $"K: {macros.Calories:F0} kcal", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText });
+                    layout.Children.Add(new Label { Text = $"B: {macros.Protein:F1}g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText });
+                    layout.Children.Add(new Label { Text = $"T: {macros.Fat:F1}g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText });
+                    layout.Children.Add(new Label { Text = $"W: {macros.Carbs:F1}g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText });
                     return layout;
                 }
 
@@ -129,7 +143,7 @@ public partial class SimpleListPopup : Popup
                 {
                     Text = desc.Text,
                     FontSize = 14,
-                    TextColor = (Color)(Application.Current?.Resources["SecondaryText"] ?? Colors.Gray),
+                    TextColor = secondaryText,
                     LineBreakMode = LineBreakMode.WordWrap,
                     Margin = new Thickness(0, 4, 0, 16)
                 };
@@ -162,7 +176,7 @@ public partial class SimpleListPopup : Popup
                 ColumnSpacing = 12
             };
 
-            var bullet = new Label { Text = "•", TextColor = (Color)Application.Current?.Resources["Primary"]!, FontSize = 16, VerticalOptions = LayoutOptions.Center };
+            var bullet = new Label { Text = "•", TextColor = primaryText, FontSize = 16, VerticalOptions = LayoutOptions.Center };
             var textLabel = new Label { Text = text, TextColor = primaryText, FontSize = 15, LineBreakMode = LineBreakMode.WordWrap };
             Grid.SetColumn(textLabel, 1);
             grid.Add(bullet);

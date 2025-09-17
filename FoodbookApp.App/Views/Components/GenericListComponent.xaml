@@ -9,9 +9,11 @@
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
     </ContentView.Resources>
 
-    <RefreshView IsRefreshing="{Binding IsRefreshing, Source={x:Reference ListComponent}}" 
+    <RefreshView x:Name="RefreshHost"
+                 IsRefreshing="{Binding IsRefreshing, Source={x:Reference ListComponent}, Mode=TwoWay}"
                  Command="{Binding RefreshCommand, Source={x:Reference ListComponent}}"
-                 IsVisible="{Binding IsVisible, Source={x:Reference ListComponent}}">
+                 IsVisible="{Binding IsVisible, Source={x:Reference ListComponent}}"
+                 Refreshing="OnRefreshing">
         
         <CollectionView ItemsSource="{Binding ItemsSource, Source={x:Reference ListComponent}}"
                         Style="{StaticResource ListCollectionView}"

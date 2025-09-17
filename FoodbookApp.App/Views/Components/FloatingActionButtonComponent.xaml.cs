@@ -31,11 +31,13 @@ namespace Foodbook.Views.Components
 
     public partial class FloatingActionButtonComponent : ContentView
     {
-        public static readonly BindableProperty CommandProperty = BindableProperty.Create(nameof(Command), typeof(ICommand), typeof(FloatingActionButtonComponent));
+        public static readonly BindableProperty CommandProperty = BindableProperty.Create(
+            nameof(Command), typeof(ICommand), typeof(FloatingActionButtonComponent), propertyChanged: OnComponentCommandChanged);
         public static readonly BindableProperty ButtonTextProperty = BindableProperty.Create(nameof(ButtonText), typeof(string), typeof(FloatingActionButtonComponent), "+");
         public static readonly BindableProperty IsVisibleProperty = BindableProperty.Create(nameof(IsVisible), typeof(bool), typeof(FloatingActionButtonComponent), true);
         public static readonly BindableProperty IsExpandableProperty = BindableProperty.Create(nameof(IsExpandable), typeof(bool), typeof(FloatingActionButtonComponent), false, propertyChanged: OnIsExpandableChanged);
-        public static readonly BindableProperty ActionsProperty = BindableProperty.Create(nameof(Actions), typeof(ObservableCollection<FabActionItem>), typeof(FloatingActionButtonComponent), defaultValueCreator: _ => new ObservableCollection<FabActionItem>(), propertyChanged: OnActionsChanged);
+        public static readonly BindableProperty ActionsProperty = BindableProperty.Create(
+            nameof(Actions), typeof(ObservableCollection<FabActionItem>), typeof(FloatingActionButtonComponent), defaultValueCreator: _ => new ObservableCollection<FabActionItem>(), propertyChanged: OnActionsChanged);
 
         private readonly PageThemeHelper _themeHelper;
         private bool _isExpanded;
@@ -102,6 +104,7 @@ namespace Foodbook.Views.Components
                 WidthRequest = 56,
                 HeightRequest = 56,
                 Padding = new Thickness(0),
+                Command = new Command(OnMainFabCommandProxy) // proxy to avoid double-exec with Command binding
             };
             // Bind to dynamic resources so color updates with theme changes
             _mainFab.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
@@ -118,18 +121,52 @@ namespace Foodbook.Views.Components
             Content = root;
         }
 
+        private void OnMainFabCommandProxy()
+        {
+            // No-op: Clicked handler will decide what to do. This prevents Command binding from double-firing on some platforms.
+        }
+
         private void OnComponentLoaded(object? sender, EventArgs e)
         {
             _themeHelper.Initialize();
             AttachActions();
             BuildActions();
+            // Ensure correct command hookup on load
+            UpdateMainButtonCommandBinding();
         }
         private void OnComponentUnloaded(object? sender, EventArgs e) => _themeHelper.Cleanup();
 
         private static void OnIsExpandableChanged(BindableObject bindable, object oldValue, object newValue)
-        { if (bindable is FloatingActionButtonComponent fab) fab.UpdateVisualStateForMode(); }
+        {
+            if (bindable is FloatingActionButtonComponent fab)
+            {
+                fab.UpdateVisualStateForMode();
+                fab.UpdateMainButtonCommandBinding();
+            }
+        }
         private static void OnActionsChanged(BindableObject bindable, object oldValue, object newValue)
         { if (bindable is FloatingActionButtonComponent fab) { fab.AttachActions(); fab.BuildActions(); } }
+        private static void OnComponentCommandChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (bindable is FloatingActionButtonComponent fab)
+            {
+                fab.UpdateMainButtonCommandBinding();
+            }
+        }
+
+        private void UpdateMainButtonCommandBinding()
+        {
+            if (_mainFab == null) return;
+            if (!IsExpandable)
+            {
+                // Avoid binding Command directly to prevent double Execute; use Clicked handler to execute
+                _mainFab.Command = new Command(OnMainFabCommandProxy);
+            }
+            else
+            {
+                _mainFab.Command = new Command(OnMainFabCommandProxy); // still keep proxy; expand/collapse handled in Clicked
+            }
+        }
 
         private void AttachActions()
         {
@@ -190,7 +227,15 @@ namespace Foodbook.Views.Components
 
         private async void OnMainFabClicked(object? sender, EventArgs e)
         {
-            if (!IsExpandable) return;
+            if (!IsExpandable)
+            {
+                // Execute bound command when not expandable (single action mode) - prevent double navigation
+                if (Command?.CanExecute(null) == true)
+                {
+                    try { Command.Execute(null); } catch { }
+                }
+                return;
+            }
             if (_isExpanded) await CollapseAsync(); else await ExpandAsync();
         }
         private async void OnOverlayTapped(object? sender, TappedEventArgs e) { if (_isExpanded) await CollapseAsync(); }

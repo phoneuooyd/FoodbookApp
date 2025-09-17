@@ -209,6 +209,20 @@ namespace Foodbook.ViewModels
             await LoadRecipesAsync();
         }
 
+        private async Task FetchAsync()
+        {
+            var recipes = await _recipeService.GetRecipesAsync();
+            await RecalculateNutritionalValuesForRecipes(recipes);
+            _allRecipes = recipes;
+
+            _allFolders = await _folderService.GetFoldersAsync();
+
+            Recipes.Clear();
+            foreach (var r in _allRecipes) Recipes.Add(r);
+
+            FilterItems();
+        }
+
         public async Task LoadRecipesAsync()
         {
             if (IsLoading) return;
@@ -216,16 +230,7 @@ namespace Foodbook.ViewModels
             IsLoading = true;
             try
             {
-                var recipes = await _recipeService.GetRecipesAsync();
-                await RecalculateNutritionalValuesForRecipes(recipes);
-                _allRecipes = recipes;
-
-                _allFolders = await _folderService.GetFoldersAsync();
-
-                Recipes.Clear();
-                foreach (var r in _allRecipes) Recipes.Add(r);
-
-                FilterItems();
+                await FetchAsync();
             }
             catch (Exception ex)
             {
@@ -321,7 +326,22 @@ namespace Foodbook.ViewModels
             IsRefreshing = true;
             try
             {
-                await LoadRecipesAsync();
+                // Hard timeout to ensure RefreshView spinner stops and avoid global loader
+                var fetchTask = FetchAsync();
+                var timeoutTask = Task.Delay(15000); // 15s max
+                var completed = await Task.WhenAny(fetchTask, timeoutTask);
+                if (completed == fetchTask)
+                {
+                    await fetchTask; // surface exceptions
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[RecipeViewModel] Refresh timeout reached - stopping spinner");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[RecipeViewModel] Reload error: {ex.Message}");
             }
             finally
             {
