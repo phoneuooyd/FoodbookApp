@@ -38,4 +38,5 @@
   <data name="ChooseIngredient" xml:space="preserve"><value>Seleccionar ingrediente</value></data>
   <data name="QuantityLabelShort" xml:space="preserve"><value>Cant.</value></data>
   <data name="UnitLabelShort" xml:space="preserve"><value>Unidad</value></data>
+  <data name="SelectIngredientPlaceholder" xml:space="preserve"><value>Seleccionar ingrediente...</value></data>
 </root>

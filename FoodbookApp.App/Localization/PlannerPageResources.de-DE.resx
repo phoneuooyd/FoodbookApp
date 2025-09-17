@@ -11,4 +11,5 @@
   <data name="MealsPerDay" xml:space="preserve"><value>Mahlzeiten pro Tag:</value></data>
   <data name="AddMeal" xml:space="preserve"><value>Mahlzeit hinzufugen</value></data>
   <data name="Save" xml:space="preserve"><value>Speichern</value></data>
+  <data name="SelectRecipePlaceholder" xml:space="preserve"><value>Rezept auswählen...</value></data>
 </root>

@@ -38,4 +38,5 @@
   <data name="ChooseIngredient" xml:space="preserve"><value>Zutat auswahlen</value></data>
   <data name="QuantityLabelShort" xml:space="preserve"><value>Menge</value></data>
   <data name="UnitLabelShort" xml:space="preserve"><value>Einheit</value></data>
+  <data name="SelectIngredientPlaceholder" xml:space="preserve"><value>Zutat auswählen...</value></data>
 </root>
