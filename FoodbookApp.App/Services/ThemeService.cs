@@ -170,9 +170,9 @@ namespace Foodbook.Services
                 app.Resources["PageBackgroundColor"] = pageBackground;
                 app.Resources["PageBackgroundBrush"] = new SolidColorBrush(pageBackground);
 
-                // Yellowish folder cards resources (consistent across themes)
-                var folderBg = isDark ? Color.FromArgb("#92400E") : Color.FromArgb("#FEF3C7");
-                var folderStroke = isDark ? Color.FromArgb("#FBBF24") : Color.FromArgb("#F59E0B");
+                // UPDATED: Folder card colors derived from Primary (pale/translucent) to follow theme
+                var folderBg = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 0.12);
+                var folderStroke = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 0.32);
                 app.Resources["FolderCardBackgroundColor"] = folderBg;
                 app.Resources["FolderCardStrokeColor"] = folderStroke;
 

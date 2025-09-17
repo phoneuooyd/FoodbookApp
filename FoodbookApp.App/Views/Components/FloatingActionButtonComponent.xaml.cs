@@ -98,15 +98,18 @@ namespace Foodbook.Views.Components
             _mainFab = new Button
             {
                 Text = ButtonText,
+                CornerRadius = 24,
+                WidthRequest = 56,
+                HeightRequest = 56,
+                Padding = new Thickness(0),
             };
-            // Try apply FloatingActionButton style if exists
+            // Bind to dynamic resources so color updates with theme changes
+            _mainFab.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
+            _mainFab.SetDynamicResource(Button.TextColorProperty, "ButtonPrimaryText");
+            // Try apply FloatingActionButton style if exists (will not override dynamic colors)
             if (Application.Current?.Resources.TryGetValue("FloatingActionButton", out var styleObj) == true && styleObj is Style style)
             {
                 _mainFab.Style = style;
-            }
-            if (Application.Current?.Resources.TryGetValue("Primary", out var pri) == true && pri is Color priColor)
-            {
-                _mainFab.BackgroundColor = priColor;
             }
             _mainFab.Clicked += OnMainFabClicked;
             anchor.Add(_mainFab);
