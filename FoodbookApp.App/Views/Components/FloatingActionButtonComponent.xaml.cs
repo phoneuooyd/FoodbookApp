@@ -130,8 +130,11 @@ namespace Foodbook.Views.Components
 
         private async void OnMainFabClicked(object? sender, EventArgs e)
         {
+            // If not expandable, rely on the Button.Command bound in XAML to execute once.
             if (!IsExpandable)
-            { if (Command?.CanExecute(null) == true) Command.Execute(null); return; }
+            {
+                return;
+            }
             if (_isExpanded) await CollapseAsync(); else await ExpandAsync();
         }
         private async void OnOverlayTapped(object? sender, TappedEventArgs e) { if (_isExpanded) await CollapseAsync(); }

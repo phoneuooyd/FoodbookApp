@@ -88,7 +88,7 @@
                                         <StackLayout Grid.Row="0" Grid.Column="0" Spacing="3">
                                             <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=IngredientLabel}" Style="{StaticResource FieldLabel}" />
                                             <controls:SearchablePickerComponent
-                                                PlaceholderText="{loc:Translate Resource=AddRecipePageResources, Key=ChooseIngredient}"
+                                                PlaceholderText="{loc:Translate Resource=AddRecipePageResources, Key=SelectIngredientPlaceholder}"
                                                 ItemsSource="{Binding BindingContext.AvailableIngredientNames, Source={x:Reference ThisPage}}"
                                                 SelectedItem="{Binding Name}"
                                                 SelectionChanged="OnIngredientNameChanged" />

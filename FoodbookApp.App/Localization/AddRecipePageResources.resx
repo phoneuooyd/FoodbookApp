@@ -219,4 +219,7 @@
   <data name="UnitLabelShort" xml:space="preserve">
     <value>Unit</value>
   </data>
+  <data name="SelectIngredientPlaceholder" xml:space="preserve">
+    <value>Select ingredient...</value>
+  </data>
 </root>

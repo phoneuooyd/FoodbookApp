@@ -378,10 +378,10 @@ namespace Foodbook.ViewModels
             {
                 await EnsureIngredientsAreCachedAsync();
                 
-                var name = AvailableIngredientNames.FirstOrDefault() ?? string.Empty;
+                // Do not preselect the first available ingredient; start with empty name and defaults
                 var ingredient = new Ingredient 
                 { 
-                    Name = name, 
+                    Name = string.Empty, 
                     Quantity = 1, 
                     Unit = Unit.Gram, 
                     Calories = 0, 
@@ -389,19 +389,6 @@ namespace Foodbook.ViewModels
                     Fat = 0, 
                     Carbs = 0 
                 };
-                
-                // ✅ ZOPTYMALIZOWANE: Używa cache zamiast pobierania z bazy
-                if (!string.IsNullOrEmpty(name))
-                {
-                    var existingIngredient = _cachedIngredients.FirstOrDefault(i => i.Name == name);
-                    if (existingIngredient != null)
-                    {
-                        ingredient.Calories = existingIngredient.Calories;
-                        ingredient.Protein = existingIngredient.Protein;
-                        ingredient.Fat = existingIngredient.Fat;
-                        ingredient.Carbs = existingIngredient.Carbs;
-                    }
-                }
                 
                 Ingredients.Add(ingredient);
                 ValidateInput();
