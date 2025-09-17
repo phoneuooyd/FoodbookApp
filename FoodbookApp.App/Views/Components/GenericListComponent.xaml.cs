@@ -28,6 +28,10 @@ namespace Foodbook.Views.Components
         public static readonly BindableProperty IsVisibleProperty =
             BindableProperty.Create(nameof(IsVisible), typeof(bool), typeof(GenericListComponent), true);
 
+        // New: disable refresh when list is empty (prevents deadlocks on some platforms)
+        public static readonly BindableProperty DisableRefreshWhenEmptyProperty =
+            BindableProperty.Create(nameof(DisableRefreshWhenEmpty), typeof(bool), typeof(GenericListComponent), true);
+
         private readonly PageThemeHelper _themeHelper;
         private CancellationTokenSource? _refreshCts;
         private static readonly TimeSpan RefreshHardTimeout = TimeSpan.FromSeconds(15);
@@ -77,6 +81,12 @@ namespace Foodbook.Views.Components
             set => SetValue(IsVisibleProperty, value);
         }
 
+        public bool DisableRefreshWhenEmpty
+        {
+            get => (bool)GetValue(DisableRefreshWhenEmptyProperty);
+            set => SetValue(DisableRefreshWhenEmptyProperty, value);
+        }
+
         public GenericListComponent()
         {
             InitializeComponent();
@@ -106,6 +116,12 @@ namespace Foodbook.Views.Components
             {
                 if (newValue is bool refreshing && refreshing)
                 {
+                    // Guard: cancel refresh if empty and protection enabled
+                    if (self.DisableRefreshWhenEmpty && self.IsItemsSourceEmpty())
+                    {
+                        self.IsRefreshing = false;
+                        return;
+                    }
                     self.StartRefreshTimeout();
                 }
                 else
@@ -142,12 +158,34 @@ namespace Foodbook.Views.Components
         {
             try
             {
+                if (DisableRefreshWhenEmpty && IsItemsSourceEmpty())
+                {
+                    // Immediately stop refresh if list is empty
+                    if (IsRefreshing) IsRefreshing = false;
+                    return;
+                }
+
                 if (RefreshCommand?.CanExecute(null) == true)
                     RefreshCommand.Execute(null);
                 // Ensure two-way sync sets IsRefreshing to true
                 if (!IsRefreshing) IsRefreshing = true;
             }
             catch { }
+        }
+
+        private bool IsItemsSourceEmpty()
+        {
+            try
+            {
+                var enumerable = ItemsSource;
+                if (enumerable == null) return true;
+                var enumerator = enumerable.GetEnumerator();
+                using (enumerator as IDisposable)
+                {
+                    return !enumerator.MoveNext();
+                }
+            }
+            catch { return true; }
         }
 
         // Expose a method to be called by the page when VM raises DataLoaded
