@@ -19,6 +19,18 @@ public partial class IngredientsPage : ContentPage
         _viewModel = vm;
         BindingContext = _viewModel;
         _themeHelper = new PageThemeHelper();
+
+        // Stop pull-to-refresh spinner exactly when data fully loaded
+        _viewModel.DataLoaded += (_, __) =>
+        {
+            try
+            {
+                // Find the GenericListComponent and request stop
+                var list = this.FindByName<Foodbook.Views.Components.GenericListComponent>("ListComponent");
+                list?.RequestStopRefreshing();
+            }
+            catch { }
+        };
     }
 
     protected override async void OnAppearing()

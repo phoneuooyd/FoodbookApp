@@ -18,6 +18,8 @@ public class IngredientsViewModel : INotifyPropertyChanged
     private string _searchText = string.Empty;
     private List<Ingredient> _allIngredients = new();
 
+    public event EventHandler? DataLoaded; // Raised when all data finished loading
+
     // W³aœciwoœci dla masowej weryfikacji
     private bool _isBulkVerifying;
     public bool IsBulkVerifying
@@ -105,6 +107,11 @@ public class IngredientsViewModel : INotifyPropertyChanged
         ClearSearchCommand = new Command(() => SearchText = string.Empty); // Komenda do czyszczenia wyszukiwania
     }
 
+    private void RaiseDataLoaded()
+    {
+        try { DataLoaded?.Invoke(this, EventArgs.Empty); } catch { }
+    }
+
     /// <summary>
     /// Core data fetch without toggling UI loader flags. Used by both LoadAsync and ReloadAsync.
     /// </summary>
@@ -135,6 +142,9 @@ public class IngredientsViewModel : INotifyPropertyChanged
 
         FilterIngredients();
         ((Command)BulkVerifyCommand).ChangeCanExecute(); // Refresh command state
+
+        // Signal that all data required by the view is ready
+        RaiseDataLoaded();
     }
 
     /// <summary>
@@ -161,7 +171,6 @@ public class IngredientsViewModel : INotifyPropertyChanged
 
             BulkVerificationStatus = $"Weryfikujê sk³adniki: 0/{totalCount}";
 
-            // ? OPTYMALIZACJA: Batch processing z throttling
             const int batchSize = 5; // Mniejsze batche dla API
             for (int i = 0; i < Ingredients.Count; i += batchSize)
             {
@@ -212,7 +221,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
                     }
                 }
 
-                // ? OPTYMALIZACJA: Throttling miêdzy batchami
+                // Throttling miêdzy batchami
                 if (i + batchSize < Ingredients.Count)
                 {
                     await Task.Delay(1000); // 1 sekunda pauzy miêdzy batchami
@@ -220,10 +229,11 @@ public class IngredientsViewModel : INotifyPropertyChanged
             }
 
             // Poka¿ wyniki
-            var successMessage = $"Weryfikacja zakoñczona!\n\n" +
-                               $"? Zaktualizowano: {updatedCount} sk³adników\n" +
-                               $"• Bez zmian: {totalCount - updatedCount - failedCount} sk³adników\n" +
-                               (failedCount > 0 ? $"? B³êdy/nie znaleziono: {failedCount} sk³adników" : "");
+            var successMessage =
+                "Weryfikacja zakoñczona!\n\n" +
+                $"? Zaktualizowano: {updatedCount} sk³adników\n" +
+                $"• Bez zmian: {totalCount - updatedCount - failedCount} sk³adników\n" +
+                (failedCount > 0 ? $"? B³êdy/nie znaleziono: {failedCount} sk³adników" : "");
 
             BulkVerificationStatus = $"? Zakoñczono - zaktualizowano {updatedCount}/{totalCount} sk³adników";
 
@@ -275,7 +285,6 @@ public class IngredientsViewModel : INotifyPropertyChanged
         IsRefreshing = true;
         try
         {
-            // Enforce a maximum timeout to always end the RefreshView animation and avoid global loader
             var fetchTask = FetchIngredientsAsync();
             var timeoutTask = Task.Delay(15000); // 15s hard timeout
             var completed = await Task.WhenAny(fetchTask, timeoutTask);

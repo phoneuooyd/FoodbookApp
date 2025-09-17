@@ -33,6 +33,8 @@ namespace Foodbook.ViewModels
         private List<Folder> _allFolders = new();
         private Folder? _currentFolder;
 
+        public event EventHandler? DataLoaded; // Raised when recipes and folders are loaded and filtered
+
         // Mixed list: folders on top, then recipes
         public ObservableCollection<object> Items { get; } = new();
         public ObservableCollection<Folder> Breadcrumb { get; } = new();
@@ -167,6 +169,11 @@ namespace Foodbook.ViewModels
             InitializeDragDrop();
         }
 
+        private void RaiseDataLoaded()
+        {
+            try { DataLoaded?.Invoke(this, EventArgs.Empty); } catch { }
+        }
+
         private async Task GoBackAsync()
         {
             if (Breadcrumb.Count == 0)
@@ -221,6 +228,9 @@ namespace Foodbook.ViewModels
             foreach (var r in _allRecipes) Recipes.Add(r);
 
             FilterItems();
+
+            // All data ready for the page
+            RaiseDataLoaded();
         }
 
         public async Task LoadRecipesAsync()
@@ -326,7 +336,6 @@ namespace Foodbook.ViewModels
             IsRefreshing = true;
             try
             {
-                // Hard timeout to ensure RefreshView spinner stops and avoid global loader
                 var fetchTask = FetchAsync();
                 var timeoutTask = Task.Delay(15000); // 15s max
                 var completed = await Task.WhenAny(fetchTask, timeoutTask);

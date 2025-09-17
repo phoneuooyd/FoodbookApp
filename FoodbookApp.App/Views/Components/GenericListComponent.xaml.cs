@@ -1,4 +1,5 @@
 using System.Collections;
+using System.ComponentModel;
 using System.Windows.Input;
 using Foodbook.Views.Base;
 
@@ -30,6 +31,9 @@ namespace Foodbook.Views.Components
         private readonly PageThemeHelper _themeHelper;
         private CancellationTokenSource? _refreshCts;
         private static readonly TimeSpan RefreshHardTimeout = TimeSpan.FromSeconds(15);
+
+        // NEW: an event to allow VM to explicitly stop spinner when data is fully ready
+        public event EventHandler? StopRefreshRequested;
 
         public IEnumerable ItemsSource
         {
@@ -81,6 +85,8 @@ namespace Foodbook.Views.Components
             // Initialize theme handling when component is loaded
             Loaded += OnComponentLoaded;
             Unloaded += OnComponentUnloaded;
+
+            StopRefreshRequested += (_, __) => MainThread.BeginInvokeOnMainThread(() => IsRefreshing = false);
         }
 
         private void OnComponentLoaded(object? sender, EventArgs e)
@@ -142,6 +148,12 @@ namespace Foodbook.Views.Components
                 if (!IsRefreshing) IsRefreshing = true;
             }
             catch { }
+        }
+
+        // Expose a method to be called by the page when VM raises DataLoaded
+        public void RequestStopRefreshing()
+        {
+            StopRefreshRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 }

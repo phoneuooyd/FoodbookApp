@@ -46,7 +46,7 @@
         <!-- Content -->
         <Grid Grid.Row="2">
             <!-- Generic List Component -->
-            <components:GenericListComponent 
+            <components:GenericListComponent x:Name="ListComponent"
                 ItemsSource="{Binding Ingredients}"
                 ItemTemplate="{StaticResource IngredientItemTemplate}"
                 IsRefreshing="{Binding IsRefreshing}"

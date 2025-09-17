@@ -78,7 +78,7 @@
         <!-- Content -->
         <Grid Grid.Row="3">
             <!-- Generic List Component -->
-            <components:GenericListComponent 
+            <components:GenericListComponent x:Name="ListComponent"
                 ItemsSource="{Binding Items}"
                 ItemTemplate="{StaticResource RecipeItemTemplate}"
                 IsRefreshing="{Binding IsRefreshing}"
