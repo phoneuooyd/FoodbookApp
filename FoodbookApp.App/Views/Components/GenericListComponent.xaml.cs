@@ -13,12 +13,13 @@ namespace Foodbook.Views.Components
         public static readonly BindableProperty ItemTemplateProperty =
             BindableProperty.Create(nameof(ItemTemplate), typeof(DataTemplate), typeof(GenericListComponent));
 
+        // Re-introduced as no-op bindable properties for compatibility with existing XAML usages
         public static readonly BindableProperty IsRefreshingProperty =
-            BindableProperty.Create(nameof(IsRefreshing), typeof(bool), typeof(GenericListComponent), false, propertyChanged: OnIsRefreshingChanged);
+            BindableProperty.Create(nameof(IsRefreshing), typeof(bool), typeof(GenericListComponent), false);
 
         public static readonly BindableProperty RefreshCommandProperty =
             BindableProperty.Create(nameof(RefreshCommand), typeof(ICommand), typeof(GenericListComponent));
-
+        
         public static readonly BindableProperty EmptyTitleProperty =
             BindableProperty.Create(nameof(EmptyTitle), typeof(string), typeof(GenericListComponent), "No items found");
 
@@ -28,16 +29,11 @@ namespace Foodbook.Views.Components
         public static readonly BindableProperty IsVisibleProperty =
             BindableProperty.Create(nameof(IsVisible), typeof(bool), typeof(GenericListComponent), true);
 
-        // New: disable refresh when list is empty (prevents deadlocks on some platforms)
+        // Kept for compatibility but no longer used internally
         public static readonly BindableProperty DisableRefreshWhenEmptyProperty =
             BindableProperty.Create(nameof(DisableRefreshWhenEmpty), typeof(bool), typeof(GenericListComponent), true);
 
         private readonly PageThemeHelper _themeHelper;
-        private CancellationTokenSource? _refreshCts;
-        private static readonly TimeSpan RefreshHardTimeout = TimeSpan.FromSeconds(15);
-
-        // NEW: an event to allow VM to explicitly stop spinner when data is fully ready
-        public event EventHandler? StopRefreshRequested;
 
         public IEnumerable ItemsSource
         {
@@ -51,6 +47,7 @@ namespace Foodbook.Views.Components
             set => SetValue(ItemTemplateProperty, value);
         }
 
+        // No-op properties so bindings compile but have no effect
         public bool IsRefreshing
         {
             get => (bool)GetValue(IsRefreshingProperty);
@@ -92,11 +89,8 @@ namespace Foodbook.Views.Components
             InitializeComponent();
             _themeHelper = new PageThemeHelper();
             
-            // Initialize theme handling when component is loaded
             Loaded += OnComponentLoaded;
             Unloaded += OnComponentUnloaded;
-
-            StopRefreshRequested += (_, __) => MainThread.BeginInvokeOnMainThread(() => IsRefreshing = false);
         }
 
         private void OnComponentLoaded(object? sender, EventArgs e)
@@ -107,70 +101,6 @@ namespace Foodbook.Views.Components
         private void OnComponentUnloaded(object? sender, EventArgs e)
         {
             _themeHelper.Cleanup();
-            CancelRefreshTimeout();
-        }
-
-        private static void OnIsRefreshingChanged(BindableObject bindable, object oldValue, object newValue)
-        {
-            if (bindable is GenericListComponent self)
-            {
-                if (newValue is bool refreshing && refreshing)
-                {
-                    // Guard: cancel refresh if empty and protection enabled
-                    if (self.DisableRefreshWhenEmpty && self.IsItemsSourceEmpty())
-                    {
-                        self.IsRefreshing = false;
-                        return;
-                    }
-                    self.StartRefreshTimeout();
-                }
-                else
-                {
-                    self.CancelRefreshTimeout();
-                }
-            }
-        }
-
-        private async void StartRefreshTimeout()
-        {
-            CancelRefreshTimeout();
-            _refreshCts = new CancellationTokenSource();
-            try
-            {
-                await Task.Delay(RefreshHardTimeout, _refreshCts.Token);
-                if (!_refreshCts.IsCancellationRequested)
-                {
-                    MainThread.BeginInvokeOnMainThread(() => IsRefreshing = false);
-                }
-            }
-            catch (TaskCanceledException) { }
-        }
-
-        private void CancelRefreshTimeout()
-        {
-            try { _refreshCts?.Cancel(); } catch { }
-            _refreshCts?.Dispose();
-            _refreshCts = null;
-        }
-
-        // Fired by RefreshView.Refreshing to ensure Command runs and timeout starts even if binding hiccups occur
-        private void OnRefreshing(object? sender, EventArgs e)
-        {
-            try
-            {
-                if (DisableRefreshWhenEmpty && IsItemsSourceEmpty())
-                {
-                    // Immediately stop refresh if list is empty
-                    if (IsRefreshing) IsRefreshing = false;
-                    return;
-                }
-
-                if (RefreshCommand?.CanExecute(null) == true)
-                    RefreshCommand.Execute(null);
-                // Ensure two-way sync sets IsRefreshing to true
-                if (!IsRefreshing) IsRefreshing = true;
-            }
-            catch { }
         }
 
         private bool IsItemsSourceEmpty()
@@ -188,10 +118,7 @@ namespace Foodbook.Views.Components
             catch { return true; }
         }
 
-        // Expose a method to be called by the page when VM raises DataLoaded
-        public void RequestStopRefreshing()
-        {
-            StopRefreshRequested?.Invoke(this, EventArgs.Empty);
-        }
+        // Backwards-compat method: no-op now
+        public void RequestStopRefreshing() { }
     }
 }

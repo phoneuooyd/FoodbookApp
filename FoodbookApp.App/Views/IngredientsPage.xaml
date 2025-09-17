@@ -29,13 +29,6 @@
 
     <Grid RowDefinitions="Auto,Auto,*">
         
-        <!-- Loading indicator -->
-        <ActivityIndicator Grid.Row="0" 
-                          IsVisible="{Binding IsLoading}" 
-                          IsRunning="{Binding IsLoading}"
-                          Color="{AppThemeBinding Light=Black, Dark=White}"
-                          Margin="10" />
-
         <!-- Modern Search Bar Component -->
         <components:ModernSearchBarComponent Grid.Row="1"
                                            SearchText="{Binding SearchText}"
@@ -49,8 +42,6 @@
             <components:GenericListComponent x:Name="ListComponent"
                 ItemsSource="{Binding Ingredients}"
                 ItemTemplate="{StaticResource IngredientItemTemplate}"
-                IsRefreshing="{Binding IsRefreshing}"
-                RefreshCommand="{Binding RefreshCommand}"
                 EmptyTitle="{loc:Translate Resource=IngredientsPageResources, Key=EmptyTitle}"
                 EmptyHint="{loc:Translate Resource=IngredientsPageResources, Key=EmptyHint}"
                 IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
