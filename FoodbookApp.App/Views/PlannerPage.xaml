@@ -36,11 +36,11 @@
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="15" Margin="0,5">
                     <VerticalStackLayout Grid.Column="0" HorizontalOptions="Start">
                         <Label Text="{loc:Translate Resource=PlannerPageResources, Key=DateFrom}" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource Primary}" Margin="0,0,0,5" />
-                        <DatePicker Date="{Binding StartDate}" Format="dd.MM.yyyy" FontSize="14" HorizontalOptions="FillAndExpand" />
+                        <DatePicker x:Name="StartDatePicker" Date="{Binding StartDate}" Format="dd.MM.yyyy" FontSize="14" HorizontalOptions="FillAndExpand" />
                     </VerticalStackLayout>
                     <VerticalStackLayout Grid.Column="1" HorizontalOptions="End">
                         <Label Text="{loc:Translate Resource=PlannerPageResources, Key=DateTo}" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource Primary}" Margin="0,0,0,5" />
-                        <DatePicker Date="{Binding EndDate}" Format="dd.MM.yyyy" FontSize="14" HorizontalOptions="FillAndExpand" />
+                        <DatePicker x:Name="EndDatePicker" Date="{Binding EndDate}" Format="dd.MM.yyyy" FontSize="14" HorizontalOptions="FillAndExpand" />
                     </VerticalStackLayout>
                 </Grid>
                 <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">

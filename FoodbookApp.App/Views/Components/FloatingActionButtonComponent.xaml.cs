@@ -41,6 +41,11 @@ namespace Foodbook.Views.Components
         private bool _isExpanded;
         private double _uniformActionWidth = 0;
 
+        // Backing fields for named elements when building UI in code
+        private BoxView? _overlay;
+        private VerticalStackLayout? _actionsStack;
+        private Button? _mainFab;
+
         public ICommand Command { get => (ICommand)GetValue(CommandProperty); set => SetValue(CommandProperty, value); }
         public string ButtonText { get => (string)GetValue(ButtonTextProperty); set => SetValue(ButtonTextProperty, value); }
         public new bool IsVisible { get => (bool)GetValue(IsVisibleProperty); set => SetValue(IsVisibleProperty, value); }
@@ -49,10 +54,65 @@ namespace Foodbook.Views.Components
 
         public FloatingActionButtonComponent()
         {
-            InitializeComponent();
+            // Build the visual tree in code to avoid XAML resource loading issues on some platforms
+            BuildVisualTreeInCode();
+
             _themeHelper = new PageThemeHelper();
             Loaded += OnComponentLoaded;
             Unloaded += OnComponentUnloaded;
+        }
+
+        private void BuildVisualTreeInCode()
+        {
+            var root = new Grid();
+
+            _overlay = new BoxView
+            {
+                IsVisible = false,
+                BackgroundColor = Colors.Black,
+                Opacity = 0.2
+            };
+            var tap = new TapGestureRecognizer();
+            tap.Tapped += OnOverlayTapped;
+            _overlay.GestureRecognizers.Add(tap);
+            root.Add(_overlay);
+
+            var anchor = new Grid
+            {
+                Padding = new Thickness(16),
+                VerticalOptions = LayoutOptions.End,
+                HorizontalOptions = LayoutOptions.End
+            };
+
+            _actionsStack = new VerticalStackLayout
+            {
+                Spacing = 8,
+                Margin = new Thickness(0, 0, 0, 72),
+                TranslationX = -5,
+                TranslationY = -5,
+                IsVisible = false,
+                Opacity = 0
+            };
+            anchor.Add(_actionsStack);
+
+            _mainFab = new Button
+            {
+                Text = ButtonText,
+            };
+            // Try apply FloatingActionButton style if exists
+            if (Application.Current?.Resources.TryGetValue("FloatingActionButton", out var styleObj) == true && styleObj is Style style)
+            {
+                _mainFab.Style = style;
+            }
+            if (Application.Current?.Resources.TryGetValue("Primary", out var pri) == true && pri is Color priColor)
+            {
+                _mainFab.BackgroundColor = priColor;
+            }
+            _mainFab.Clicked += OnMainFabClicked;
+            anchor.Add(_mainFab);
+
+            root.Add(anchor);
+            Content = root;
         }
 
         private void OnComponentLoaded(object? sender, EventArgs e)
@@ -81,8 +141,9 @@ namespace Foodbook.Views.Components
 
         private void BuildActions()
         {
-            if (ActionsStack == null) return;
-            ActionsStack.Children.Clear();
+            var actionsStack = _actionsStack;
+            if (actionsStack == null) return;
+            actionsStack.Children.Clear();
             if (!IsExpandable || Actions == null || Actions.Count == 0) return;
 
             // Approximate width: char count * factor + padding
@@ -103,56 +164,50 @@ namespace Foodbook.Views.Components
                     Padding = new Thickness(16, 10),
                     FontSize = 16,
                     FontAttributes = FontAttributes.Bold,
-                    Style = (Style)Application.Current?.Resources["FabActionButton"]
                 };
 
-                // Dynamic theme resources (will update when theme/colors change)
                 btn.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
                 btn.SetDynamicResource(Button.TextColorProperty, "ButtonPrimaryText");
 
-                // Optional pressed visual feedback using VisualStateManager
                 var states = new VisualStateGroupList();
                 var common = new VisualStateGroup { Name = "CommonStates" };
                 var normal = new VisualState { Name = "Normal" };
                 var pressed = new VisualState { Name = "Pressed" };
                 pressed.Setters.Add(new Setter { Property = Button.ScaleProperty, Value = 0.97 });
-                pressed.Setters.Add(new Setter { Property = Button.BackgroundColorProperty, Value = Application.Current?.Resources["Secondary"] });
+                if (Application.Current?.Resources.TryGetValue("Secondary", out var sec) == true)
+                    pressed.Setters.Add(new Setter { Property = Button.BackgroundColorProperty, Value = sec });
                 common.States.Add(normal);
                 common.States.Add(pressed);
                 VisualStateManager.SetVisualStateGroups(btn, states);
                 states.Add(common);
 
-                if (!string.IsNullOrWhiteSpace(action.Icon))
-                    btn.ImageSource = ImageSource.FromFile(action.Icon);
-                ActionsStack.Children.Add(btn);
+                actionsStack.Children.Add(btn);
             }
         }
 
         private async void OnMainFabClicked(object? sender, EventArgs e)
         {
-            // If not expandable, rely on the Button.Command bound in XAML to execute once.
-            if (!IsExpandable)
-            {
-                return;
-            }
+            if (!IsExpandable) return;
             if (_isExpanded) await CollapseAsync(); else await ExpandAsync();
         }
         private async void OnOverlayTapped(object? sender, TappedEventArgs e) { if (_isExpanded) await CollapseAsync(); }
 
         private async Task ExpandAsync()
         {
-            _isExpanded = true; if (Overlay != null) Overlay.IsVisible = true; if (ActionsStack != null) ActionsStack.IsVisible = true;
-            var rotate = MainFab?.RotateTo(45, 150, Easing.CubicIn) ?? Task.CompletedTask;
-            var fade = ActionsStack != null ? ActionsStack.FadeTo(1, 150, Easing.CubicIn) : Task.CompletedTask;
+            _isExpanded = true;
+            if (_overlay != null) _overlay.IsVisible = true;
+            if (_actionsStack != null) _actionsStack.IsVisible = true;
+            var rotate = _mainFab?.RotateTo(45, 150, Easing.CubicIn) ?? Task.CompletedTask;
+            var fade = _actionsStack != null ? _actionsStack.FadeTo(1, 150, Easing.CubicIn) : Task.CompletedTask;
             await Task.WhenAll(rotate, fade);
         }
         private async Task CollapseAsync()
         {
             _isExpanded = false;
-            var rotate = MainFab?.RotateTo(0, 150, Easing.CubicOut) ?? Task.CompletedTask;
-            var fade = ActionsStack != null ? ActionsStack.FadeTo(0, 150, Easing.CubicOut) : Task.CompletedTask;
+            var rotate = _mainFab?.RotateTo(0, 150, Easing.CubicOut) ?? Task.CompletedTask;
+            var fade = _actionsStack != null ? _actionsStack.FadeTo(0, 150, Easing.CubicOut) : Task.CompletedTask;
             await Task.WhenAll(rotate, fade);
-            if (ActionsStack != null) ActionsStack.IsVisible = false; if (Overlay != null) Overlay.IsVisible = false;
+            if (_actionsStack != null) _actionsStack.IsVisible = false; if (_overlay != null) _overlay.IsVisible = false;
         }
     }
 }
