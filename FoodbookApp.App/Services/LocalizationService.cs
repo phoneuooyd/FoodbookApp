@@ -15,7 +15,31 @@ public class LocalizationService : ILocalizationService
 
     public void SetCulture(string cultureName)
     {
-        var culture = new CultureInfo(cultureName);
+        // Guard against null/empty and invalid culture names; use safe fallbacks
+        var effectiveName = string.IsNullOrWhiteSpace(cultureName)
+            ? CultureInfo.CurrentUICulture.Name
+            : cultureName;
+
+        CultureInfo culture;
+        try
+        {
+            culture = CultureInfo.GetCultureInfo(effectiveName);
+        }
+        catch (CultureNotFoundException)
+        {
+            // Try neutral language (e.g., "pl" from "pl-PL")
+            try
+            {
+                var neutral = new CultureInfo(effectiveName).TwoLetterISOLanguageName;
+                culture = CultureInfo.GetCultureInfo(neutral);
+            }
+            catch
+            {
+                // Final fallback to English to avoid crashes
+                culture = CultureInfo.GetCultureInfo("en");
+            }
+        }
+
         Thread.CurrentThread.CurrentCulture = culture;
         Thread.CurrentThread.CurrentUICulture = culture;
         CultureInfo.DefaultThreadCurrentCulture = culture;
@@ -32,14 +56,14 @@ public class LocalizationService : ILocalizationService
         PlannerPageResources.Culture = culture;
         RecipesPageResources.Culture = culture;
         SettingsPageResources.Culture = culture;
-        SetupWizardPageResources.Culture = culture; // ensure setup wizard page resources update
+        SetupWizardPageResources.Culture = culture; 
         ShoppingListDetailPageResources.Culture = culture;
         ShoppingListPageResources.Culture = culture;
         TabBarResources.Culture = culture;
         ButtonResources.Culture = culture;
         UnitResources.Culture = culture;
 
-        System.Diagnostics.Debug.WriteLine($"[LocalizationService] Culture changed to: {cultureName}");
+        System.Diagnostics.Debug.WriteLine($"[LocalizationService] Culture changed to: {culture.Name} (requested: '{cultureName}')");
         CultureChanged?.Invoke(this, EventArgs.Empty);
     }
 

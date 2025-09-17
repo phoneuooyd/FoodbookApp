@@ -26,6 +26,11 @@ public class LocalizationResourceManager : INotifyPropertyChanged
 
     public void SetCulture(string cultureName)
     {
+        if (string.IsNullOrWhiteSpace(cultureName))
+        {
+            System.Diagnostics.Debug.WriteLine("[LocalizationResourceManager] Ignoring empty culture name; using current culture");
+            return;
+        }
         _localizationService.SetCulture(cultureName);
         OnPropertyChanged(null);
     }

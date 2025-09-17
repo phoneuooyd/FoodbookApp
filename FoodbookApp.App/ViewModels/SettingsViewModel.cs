@@ -15,6 +15,9 @@ public class SettingsViewModel : INotifyPropertyChanged
     private readonly IFontService _fontService;
     private readonly IDatabaseService _databaseService;
 
+    // Guard to prevent re-entrancy and UI loops when changing culture
+    private bool _isChangingCulture;
+
     // Expose if current build is DEBUG so UI can hide dev-only actions in Release
 #if DEBUG
     public bool IsDebugBuild => true;
@@ -34,22 +37,61 @@ public class SettingsViewModel : INotifyPropertyChanged
         get => _selectedCulture;
         set
         {
-            if (_selectedCulture == value) return;
-            _selectedCulture = value;
-            OnPropertyChanged(nameof(SelectedCulture));
+            if (_selectedCulture == value || _isChangingCulture) return;
 
-            // Change app culture via resource manager
-            _locManager.SetCulture(value);
+            _isChangingCulture = true;
+            try
+            {
+                // Validate culture value before applying
+                var safeValue = value;
+                if (string.IsNullOrWhiteSpace(safeValue))
+                {
+                    safeValue = _preferencesService.GetSavedLanguage();
+                    if (string.IsNullOrWhiteSpace(safeValue))
+                    {
+                        var systemCulture = System.Globalization.CultureInfo.CurrentUICulture.Name;
+                        safeValue = _preferencesService.GetSupportedCultures().Contains(systemCulture)
+                            ? systemCulture
+                            : _preferencesService.GetSupportedCultures().First();
+                    }
+                }
+                else if (!_preferencesService.GetSupportedCultures().Contains(safeValue))
+                {
+                    // If not directly supported, try neutral (e.g., "pl" from "pl-PL")
+                    var neutral = new System.Globalization.CultureInfo(safeValue).TwoLetterISOLanguageName;
+                    if (_preferencesService.GetSupportedCultures().Contains(neutral))
+                    {
+                        safeValue = neutral;
+                    }
+                    else
+                    {
+                        safeValue = _preferencesService.GetSupportedCultures().First();
+                    }
+                }
 
-            // Save preference
-            _preferencesService.SaveLanguage(value);
+                _selectedCulture = safeValue;
+                OnPropertyChanged(nameof(SelectedCulture));
 
-            // Refresh pickers so ItemDisplayBinding converters re-evaluate with new culture
-            RefreshCollectionsForLocalization();
-            OnPropertyChanged(nameof(SelectedTheme));
-            OnPropertyChanged(nameof(SelectedColorTheme));
-            OnPropertyChanged(nameof(SelectedFontFamily));
-            OnPropertyChanged(nameof(SelectedFontSize));
+                // Change app culture via resource manager (on UI thread)
+                MainThread.BeginInvokeOnMainThread(() => _locManager.SetCulture(safeValue));
+
+                // Save preference
+                _preferencesService.SaveLanguage(safeValue);
+
+                // Do NOT repopulate ItemsSource collections here – it causes the picker to rebind
+                // and can retrigger SelectedItem changes, leading to re-entrancy and freezes.
+                // If display text depends on resources, bindings will refresh via CultureChanged.
+
+                // Notify dependent properties so their display can update if necessary
+                OnPropertyChanged(nameof(SelectedTheme));
+                OnPropertyChanged(nameof(SelectedColorTheme));
+                OnPropertyChanged(nameof(SelectedFontFamily));
+                OnPropertyChanged(nameof(SelectedFontSize));
+            }
+            finally
+            {
+                _isChangingCulture = false;
+            }
         }
     }
 
@@ -236,6 +278,9 @@ public class SettingsViewModel : INotifyPropertyChanged
 
     private void RefreshCollectionsForLocalization()
     {
+        // NOTE: This method is intentionally left intact, but it is no longer invoked from SelectedCulture setter
+        // to avoid UI re-entrancy/freeze scenarios. Keep for future use if needed during app startup only.
+
         // Cultures
         SupportedCultures.Clear();
         foreach (var c in _preferencesService.GetSupportedCultures())
