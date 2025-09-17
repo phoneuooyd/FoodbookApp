@@ -33,4 +33,7 @@
   <data name="Save" xml:space="preserve">
     <value>Zapisz</value>
   </data>
+  <data name="SelectRecipePlaceholder" xml:space="preserve">
+    <value>Wybierz przepis...</value>
+  </data>
 </root>

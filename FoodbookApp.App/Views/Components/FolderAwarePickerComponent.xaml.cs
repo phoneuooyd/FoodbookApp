@@ -22,7 +22,7 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
             defaultBindingMode: BindingMode.TwoWay, propertyChanged: OnSelectedRecipeChanged);
 
     public static readonly BindableProperty PlaceholderTextProperty = 
-        BindableProperty.Create(nameof(PlaceholderText), typeof(string), typeof(FolderAwarePickerComponent), "Select recipe...");
+        BindableProperty.Create(nameof(PlaceholderText), typeof(string), typeof(FolderAwarePickerComponent), "Select recipe...", propertyChanged: OnPlaceholderChanged);
 
     public ICommand OpenSelectionDialogCommand { get; }
 
@@ -55,6 +55,14 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
     }
 
     private static void OnSelectedRecipeChanged(BindableObject bindable, object oldValue, object newValue)
+    {
+        if (bindable is FolderAwarePickerComponent component)
+        {
+            component.OnPropertyChanged(nameof(DisplayText));
+        }
+    }
+
+    private static void OnPlaceholderChanged(BindableObject bindable, object oldValue, object newValue)
     {
         if (bindable is FolderAwarePickerComponent component)
         {
