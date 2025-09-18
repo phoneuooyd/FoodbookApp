@@ -11,6 +11,7 @@ using System.Linq;
 using FoodbookApp.Localization;
 using FoodbookApp.Localization;
 using CommunityToolkit.Mvvm.Messaging;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.ViewModels
 {

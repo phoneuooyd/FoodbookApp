@@ -1,10 +1,10 @@
 using Foodbook.ViewModels;
 using Microsoft.Maui.Controls;
-using Foodbook.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Foodbook.Views.Components;
 using CommunityToolkit.Maui.Views;
 using CommunityToolkit.Maui.Extensions;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.Views;
 

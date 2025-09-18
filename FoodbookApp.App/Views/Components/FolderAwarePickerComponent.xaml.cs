@@ -5,6 +5,7 @@ using Foodbook.Models;
 using Foodbook.Services;
 using CommunityToolkit.Maui.Views;
 using CommunityToolkit.Maui.Extensions;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.Views.Components;
 

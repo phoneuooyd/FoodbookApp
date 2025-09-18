@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Threading;
 using System.Resources;
 using FoodbookApp.Localization;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.Services;
 

@@ -1,9 +1,9 @@
 ﻿using Microsoft.Maui;
 using Microsoft.Extensions.DependencyInjection;
-using Foodbook.Services;
 using Foodbook.Models;
 using Foodbook.Views;
 using Foodbook.ViewModels;
+using FoodbookApp.Interfaces;
 
 namespace FoodbookApp
 {

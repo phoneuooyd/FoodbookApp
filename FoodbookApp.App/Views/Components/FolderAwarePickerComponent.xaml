@@ -10,7 +10,7 @@
     </ContentView.Resources>
 
     <!-- Simple picker-like interface that opens a dialog -->
-    <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#2B2B2B}"
+    <Border BackgroundColor="{DynamicResource FrameBackgroundColor}"
             Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#404040}"
             StrokeThickness="1"
             StrokeShape="RoundRectangle 6"
@@ -34,7 +34,7 @@
                    Text="⏷"
                    FontSize="14"
                    VerticalOptions="Center"
-                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+                   TextColor="{DynamicResource FrameTextColor}" />
         </Grid>
     </Border>
 </ContentView>

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http;
 using CommunityToolkit.Maui;
+using FoodbookApp.Interfaces;
 
 namespace FoodbookApp
 {

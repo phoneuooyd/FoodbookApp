@@ -1,8 +1,8 @@
 ﻿using FluentAssertions;
 using Foodbook.Models;
-using Foodbook.Services;
 using Foodbook.ViewModels;
 using Foodbook.Views;
+using FoodbookApp.Interfaces;
 using Microsoft.Maui.Controls;
 using Moq;
 using System.Globalization;

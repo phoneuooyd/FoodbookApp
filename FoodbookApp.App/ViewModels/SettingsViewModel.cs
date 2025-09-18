@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Windows.Input;
 using Foodbook.Models;
 using Foodbook.Services;
+using FoodbookApp.Interfaces;
 using FoodbookApp.Localization;
 
 namespace Foodbook.ViewModels;

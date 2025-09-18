@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace Foodbook.Services
+namespace FoodbookApp.Interfaces
 {
     public interface IDatabaseService
     {

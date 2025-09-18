@@ -1,5 +1,5 @@
 using System.ComponentModel;
-using Foodbook.Services;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.Services;
 

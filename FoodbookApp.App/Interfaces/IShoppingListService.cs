@@ -1,6 +1,6 @@
 using Foodbook.Models;
 
-namespace Foodbook.Services
+namespace FoodbookApp.Interfaces
 {
     public interface IShoppingListService
     {

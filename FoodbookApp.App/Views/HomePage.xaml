@@ -91,7 +91,8 @@
         <Style x:Key="DateHeaderStyle" TargetType="Label">
             <Setter Property="FontSize" Value="16" />
             <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="TextColor" Value="{DynamicResource Primary}" />
+            <!-- Make date header light in dark mode -->
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={DynamicResource Primary}, Dark=White}" />
             <Setter Property="Margin" Value="0,8,0,4" />
         </Style>
 
@@ -185,7 +186,8 @@
                     <StackLayout>
                         <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="8" Margin="0,0,0,16">
                             <Label Text="📅" FontSize="24" />
-                            <Label Text="{loc:Translate Resource=HomePageResources, Key=PlannedMealsHeader}" Style="{StaticResource CardTitleStyle}" Margin="0" />
+                            <!-- Override title color to be light in dark mode -->
+                            <Label Text="{loc:Translate Resource=HomePageResources, Key=PlannedMealsHeader}" Style="{StaticResource CardTitleStyle}" Margin="0" TextColor="{AppThemeBinding Light={DynamicResource Primary}, Dark=White}" />
                         </StackLayout>
                         
                         <!-- Period Selection Button for Planned Meals -->

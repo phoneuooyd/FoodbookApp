@@ -3,8 +3,8 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Foodbook.Models;
-using Foodbook.Services;
 using FoodbookApp;
+using FoodbookApp.Interfaces;
 using Microsoft.Maui.Controls;
 
 namespace Foodbook.ViewModels;

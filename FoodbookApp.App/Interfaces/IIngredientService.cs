@@ -1,5 +1,5 @@
 using Foodbook.Models;
-namespace Foodbook.Services;
+namespace FoodbookApp.Interfaces;
 public interface IIngredientService
 {
     Task<List<Ingredient>> GetIngredientsAsync();

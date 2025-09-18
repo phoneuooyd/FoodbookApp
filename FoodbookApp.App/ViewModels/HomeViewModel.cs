@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using Foodbook.Services;
 using Foodbook.Models;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -8,6 +7,7 @@ using Microsoft.Maui.Controls;
 using FoodbookApp.Localization;
 using CommunityToolkit.Maui.Views;
 using CommunityToolkit.Maui.Extensions;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.ViewModels;
 

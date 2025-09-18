@@ -1,5 +1,6 @@
 using Foodbook.Data;
 using Foodbook.Models;
+using FoodbookApp.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace Foodbook.Services;

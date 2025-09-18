@@ -23,11 +23,11 @@
                 <Label Text="{Binding EmptyTitle, Source={x:Reference ListComponent}}"
                        FontSize="18"
                        HorizontalOptions="Center"
-                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+                       TextColor="{DynamicResource FrameTextColor}" />
                 <Label Text="{Binding EmptyHint, Source={x:Reference ListComponent}}"
                        FontSize="14"
                        HorizontalOptions="Center"
-                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
+                       TextColor="{DynamicResource FrameTextColor}"
                        Margin="0,10,0,0" />
             </StackLayout>
         </CollectionView.EmptyView>

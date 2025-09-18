@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Foodbook.Services;
+namespace FoodbookApp.Interfaces;
 
 public interface ILocalizationService
 {

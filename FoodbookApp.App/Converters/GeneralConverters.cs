@@ -31,18 +31,23 @@ namespace Foodbook.Converters
 
     public class IsNotNullToColorConverter : IValueConverter
     {
+        private static Color GetAppColor(string key, Color fallback)
+        {
+            if (Application.Current?.Resources.TryGetValue(key, out var val) == true && val is Color c)
+                return c;
+            return fallback;
+        }
+
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            if (value != null)
-            {
-                // Has selection - use normal text color
-                return Application.Current?.RequestedTheme == Microsoft.Maui.ApplicationModel.AppTheme.Dark ? Colors.White : Colors.Black;
-            }
-            else
-            {
-                // No selection - use placeholder color
-                return Application.Current?.RequestedTheme == Microsoft.Maui.ApplicationModel.AppTheme.Dark ? Colors.Gray : Colors.DarkGray;
-            }
+            var hasValue = value != null;
+            
+            // Get adaptive frame text color for better contrast
+            var frameTextColor = GetAppColor("FrameTextColor", Color.FromArgb("#000000"));
+            var grayColor = GetAppColor("Gray500", Color.FromArgb("#6E6E6E"));
+            
+            // Return frame text color if has value, otherwise gray
+            return hasValue ? frameTextColor : grayColor;
         }
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotImplementedException();

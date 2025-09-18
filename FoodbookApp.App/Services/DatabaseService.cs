@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Foodbook.Data;
 using System.IO;
 using Microsoft.Maui.Storage;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.Services
 {

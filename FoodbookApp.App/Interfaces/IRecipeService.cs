@@ -2,7 +2,7 @@ using Foodbook.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Foodbook.Services
+namespace FoodbookApp.Interfaces
 {
     public interface IRecipeService
     {

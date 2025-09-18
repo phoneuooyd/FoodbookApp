@@ -1,6 +1,6 @@
 using Microsoft.Maui.Controls;
-using Foodbook.Services;
 using Microsoft.Extensions.DependencyInjection;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.Views.Base
 {

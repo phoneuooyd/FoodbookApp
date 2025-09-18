@@ -1,6 +1,6 @@
 using Foodbook.Models;
 
-namespace Foodbook.Services;
+namespace FoodbookApp.Interfaces;
 
 /// <summary>
 /// Service for managing font settings and dynamic font changes

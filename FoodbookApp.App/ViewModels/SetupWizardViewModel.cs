@@ -7,6 +7,7 @@ using Foodbook.Data;
 using Foodbook.Models;
 using Foodbook.Services;
 using FoodbookApp;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.ViewModels;
 
