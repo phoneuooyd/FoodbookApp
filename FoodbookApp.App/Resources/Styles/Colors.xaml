@@ -61,10 +61,11 @@
     <SolidColorBrush x:Key="PrimaryTextBrush" Color="{DynamicResource PrimaryText}"/>
     <SolidColorBrush x:Key="SecondaryTextBrush" Color="{DynamicResource SecondaryText}"/>
     
+    <!-- NEW: Folder card colors derived from Primary (pale/translucent) -->
+    <Color x:Key="FolderCardBackgroundColor">#1A512BD4</Color>
+    <Color x:Key="FolderCardStrokeColor">#33512BD4</Color>
+
     <!-- NEW: Dynamic Page Background Colors - Controlled by Settings > Colorful Backgrounds -->
-    <!-- When enabled: Uses tinted theme colors for page backgrounds -->
-    <!-- When disabled: Uses neutral gray backgrounds (default) -->
-    <!-- Updated dynamically by ThemeService.SetColorfulBackground() -->
     <Color x:Key="PageBackgroundColor">#F5F5F5</Color>
     <SolidColorBrush x:Key="PageBackgroundBrush" Color="{DynamicResource PageBackgroundColor}"/>
     

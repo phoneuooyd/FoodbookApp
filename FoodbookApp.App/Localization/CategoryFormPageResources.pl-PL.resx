@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="NewFolderTitle" xml:space="preserve">
+    <value>Nowy Folder</value>
+  </data>
+  <data name="EditFolderTitle" xml:space="preserve">
+    <value>Edytuj Folder</value>
+  </data>
+  <data name="FolderName" xml:space="preserve">
+    <value>Nazwa Folderu</value>
+  </data>
+  <data name="FolderNamePlaceholder" xml:space="preserve">
+    <value>Wprowadz nazwe folderu</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Opis (opcjonalny)</value>
+  </data>
+  <data name="DescriptionPlaceholder" xml:space="preserve">
+    <value>Wprowadz opis folderu</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Anuluj</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Zapisz</value>
+  </data>
+  <data name="Create" xml:space="preserve">
+    <value>Utworz</value>
+  </data>
+</root>

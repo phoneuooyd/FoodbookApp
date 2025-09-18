@@ -1,4 +1,5 @@
 using Foodbook.Models;
+using FoodbookApp.Interfaces;
 using Microsoft.Maui.Controls;
 
 namespace Foodbook.Services;

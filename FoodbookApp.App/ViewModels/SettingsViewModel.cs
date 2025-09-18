@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Windows.Input;
 using Foodbook.Models;
 using Foodbook.Services;
+using FoodbookApp.Interfaces;
 using FoodbookApp.Localization;
 
 namespace Foodbook.ViewModels;
@@ -13,6 +14,10 @@ public class SettingsViewModel : INotifyPropertyChanged
     private readonly IPreferencesService _preferencesService;
     private readonly IThemeService _themeService;
     private readonly IFontService _fontService;
+    private readonly IDatabaseService _databaseService;
+
+    // Guard to prevent re-entrancy and UI loops when changing culture
+    private bool _isChangingCulture;
 
     // Expose if current build is DEBUG so UI can hide dev-only actions in Release
 #if DEBUG
@@ -33,13 +38,61 @@ public class SettingsViewModel : INotifyPropertyChanged
         get => _selectedCulture;
         set
         {
-            if (_selectedCulture == value) return;
-            _selectedCulture = value;
-            OnPropertyChanged(nameof(SelectedCulture));
-            _locManager.SetCulture(value);
-            
-            // Save the selected culture to preferences
-            _preferencesService.SaveLanguage(value);
+            if (_selectedCulture == value || _isChangingCulture) return;
+
+            _isChangingCulture = true;
+            try
+            {
+                // Validate culture value before applying
+                var safeValue = value;
+                if (string.IsNullOrWhiteSpace(safeValue))
+                {
+                    safeValue = _preferencesService.GetSavedLanguage();
+                    if (string.IsNullOrWhiteSpace(safeValue))
+                    {
+                        var systemCulture = System.Globalization.CultureInfo.CurrentUICulture.Name;
+                        safeValue = _preferencesService.GetSupportedCultures().Contains(systemCulture)
+                            ? systemCulture
+                            : _preferencesService.GetSupportedCultures().First();
+                    }
+                }
+                else if (!_preferencesService.GetSupportedCultures().Contains(safeValue))
+                {
+                    // If not directly supported, try neutral (e.g., "pl" from "pl-PL")
+                    var neutral = new System.Globalization.CultureInfo(safeValue).TwoLetterISOLanguageName;
+                    if (_preferencesService.GetSupportedCultures().Contains(neutral))
+                    {
+                        safeValue = neutral;
+                    }
+                    else
+                    {
+                        safeValue = _preferencesService.GetSupportedCultures().First();
+                    }
+                }
+
+                _selectedCulture = safeValue;
+                OnPropertyChanged(nameof(SelectedCulture));
+
+                // Change app culture via resource manager (on UI thread)
+                MainThread.BeginInvokeOnMainThread(() => _locManager.SetCulture(safeValue));
+
+                // Save preference
+                _preferencesService.SaveLanguage(safeValue);
+
+                // Do NOT repopulate ItemsSource collections here – it causes the picker to rebind
+                // and can retrigger SelectedItem changes, leading to re-entrancy and freezes.
+                // If display text depends on resources, bindings will refresh via CultureChanged.
+
+                // Notify dependent properties so their display can update if necessary
+                OnPropertyChanged(nameof(SelectedTheme));
+                OnPropertyChanged(nameof(SelectedColorTheme));
+                OnPropertyChanged(nameof(SelectedFontFamily));
+                OnPropertyChanged(nameof(SelectedFontSize));
+            }
+            finally
+            {
+                _isChangingCulture = false;
+            }
         }
     }
 
@@ -161,12 +214,13 @@ public class SettingsViewModel : INotifyPropertyChanged
     public ICommand MigrateDatabaseCommand { get; }
     public ICommand ResetDatabaseCommand { get; }
 
-    public SettingsViewModel(LocalizationResourceManager locManager, IPreferencesService preferencesService, IThemeService themeService, IFontService fontService)
+    public SettingsViewModel(LocalizationResourceManager locManager, IPreferencesService preferencesService, IThemeService themeService, IFontService fontService, IDatabaseService databaseService)
     {
         _locManager = locManager;
         _preferencesService = preferencesService;
         _themeService = themeService;
         _fontService = fontService;
+        _databaseService = databaseService;
         
         // Initialize supported cultures from preferences service
         SupportedCultures = new ObservableCollection<string>(_preferencesService.GetSupportedCultures());
@@ -223,6 +277,38 @@ public class SettingsViewModel : INotifyPropertyChanged
         System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Initialized with color theme and colorful background support");
     }
 
+    private void RefreshCollectionsForLocalization()
+    {
+        // NOTE: This method is intentionally left intact, but it is no longer invoked from SelectedCulture setter
+        // to avoid UI re-entrancy/freeze scenarios. Keep for future use if needed during app startup only.
+
+        // Cultures
+        SupportedCultures.Clear();
+        foreach (var c in _preferencesService.GetSupportedCultures())
+            SupportedCultures.Add(c);
+
+        // Themes
+        var themes = new[] { Foodbook.Models.AppTheme.System, Foodbook.Models.AppTheme.Light, Foodbook.Models.AppTheme.Dark };
+        SupportedThemes.Clear();
+        foreach (var t in themes)
+            SupportedThemes.Add(t);
+
+        // Color themes
+        var colorThemes = new[] { AppColorTheme.Default, AppColorTheme.Nature, AppColorTheme.Warm, AppColorTheme.Vibrant, AppColorTheme.Monochrome, AppColorTheme.Navy, AppColorTheme.Autumn, AppColorTheme.Mint };
+        SupportedColorThemes.Clear();
+        foreach (var ct in colorThemes)
+            SupportedColorThemes.Add(ct);
+
+        // Fonts
+        SupportedFontFamilies.Clear();
+        foreach (var ff in _fontService.GetAvailableFontFamilies())
+            SupportedFontFamilies.Add(ff);
+
+        SupportedFontSizes.Clear();
+        foreach (var fs in _fontService.GetAvailableFontSizes())
+            SupportedFontSizes.Add(fs);
+    }
+
     private async Task MigrateDatabaseAsync()
     {
         try
@@ -232,33 +318,44 @@ public class SettingsViewModel : INotifyPropertyChanged
             
             System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Starting database migration");
             
-            var success = await FoodbookApp.MauiProgram.MigrateDatabaseAsync();
-            
+            var success = await _databaseService.MigrateDatabaseAsync();
+
+            var page = Application.Current?.MainPage;
             if (success)
             {
                 MigrationStatus = "Migracja zakoñczona pomyœlnie!";
-                await Application.Current?.MainPage?.DisplayAlert(
-                    "Sukces", 
-                    "Migracja bazy danych zosta³a wykonana pomyœlnie.", 
-                    "OK");
+                if (page != null)
+                {
+                    await page.DisplayAlert(
+                        "Sukces", 
+                        "Migracja bazy danych zosta³a wykonana pomyœlnie.", 
+                        "OK");
+                }
             }
             else
             {
                 MigrationStatus = "Migracja nieudana.";
-                await Application.Current?.MainPage?.DisplayAlert(
-                    "B³¹d", 
-                    "Nie uda³o siê wykonaæ migracji bazy danych. SprawdŸ logi aplikacji.", 
-                    "OK");
+                if (page != null)
+                {
+                    await page.DisplayAlert(
+                        "B³¹d", 
+                        "Nie uda³o siê wykonaæ migracji bazy danych. SprawdŸ logi aplikacji.", 
+                        "OK");
+                }
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Migration error: {ex.Message}");
             MigrationStatus = $"B³¹d migracji: {ex.Message}";
-            await Application.Current?.MainPage?.DisplayAlert(
-                "B³¹d", 
-                $"Wyst¹pi³ b³¹d podczas migracji: {ex.Message}", 
-                "OK");
+            var page = Application.Current?.MainPage;
+            if (page != null)
+            {
+                await page.DisplayAlert(
+                    "B³¹d", 
+                    $"Wyst¹pi³ b³¹d podczas migracji: {ex.Message}", 
+                    "OK");
+            }
         }
         finally
         {
@@ -277,10 +374,13 @@ public class SettingsViewModel : INotifyPropertyChanged
     {
         try
         {
-            bool confirm = await Application.Current?.MainPage?.DisplayAlert(
+            var page = Application.Current?.MainPage;
+            if (page == null) return;
+
+            bool confirm = await page.DisplayAlert(
                 "Resetuj bazê danych", 
                 "Czy na pewno chcesz usun¹æ wszystkie dane? Ta operacja jest nieodwracalna.\n\nWszystkie przepisy, plany i listy zakupów zostan¹ utracone.", 
-                "Tak, resetuj", "Anuluj") == true;
+                "Tak, resetuj", "Anuluj");
                 
             if (!confirm) return;
 
@@ -289,12 +389,12 @@ public class SettingsViewModel : INotifyPropertyChanged
             
             System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Starting database reset");
             
-            var success = await FoodbookApp.MauiProgram.ResetDatabaseAsync();
+            var success = await _databaseService.ResetDatabaseAsync();
             
             if (success)
             {
                 MigrationStatus = "Baza danych zosta³a zresetowana!";
-                await Application.Current?.MainPage?.DisplayAlert(
+                await page.DisplayAlert(
                     "Sukces", 
                     "Baza danych zosta³a zresetowana. Aplikacja zostanie zamkniêta - uruchom j¹ ponownie.", 
                     "OK");
@@ -305,7 +405,7 @@ public class SettingsViewModel : INotifyPropertyChanged
             else
             {
                 MigrationStatus = "Reset nieudany.";
-                await Application.Current?.MainPage?.DisplayAlert(
+                await page.DisplayAlert(
                     "B³¹d", 
                     "Nie uda³o siê zresetowaæ bazy danych. SprawdŸ logi aplikacji.", 
                     "OK");
@@ -315,10 +415,14 @@ public class SettingsViewModel : INotifyPropertyChanged
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Reset error: {ex.Message}");
             MigrationStatus = $"B³¹d resetu: {ex.Message}";
-            await Application.Current?.MainPage?.DisplayAlert(
-                "B³¹d", 
-                $"Wyst¹pi³ b³¹d podczas resetowania: {ex.Message}", 
-                "OK");
+            var page = Application.Current?.MainPage;
+            if (page != null)
+            {
+                await page.DisplayAlert(
+                    "B³¹d", 
+                    $"Wyst¹pi³ b³¹d podczas resetowania: {ex.Message}", 
+                    "OK");
+            }
         }
         finally
         {

@@ -1,5 +1,7 @@
 using Foodbook.Models;
+using FoodbookApp.Interfaces;
 using Application = Microsoft.Maui.Controls.Application;
+
 #if ANDROID
 using Android.OS;
 using Android.Views;
@@ -11,6 +13,8 @@ namespace Foodbook.Services
 {
     public class ThemeService : IThemeService
     {
+        public event EventHandler? ThemeChanged;
+
         private Foodbook.Models.AppTheme _currentTheme = Foodbook.Models.AppTheme.System;
         private AppColorTheme _currentColorTheme = AppColorTheme.Default;
         private bool _isColorfulBackgroundEnabled = false; // NEW: colorful background option
@@ -121,6 +125,28 @@ namespace Foodbook.Services
             return (active, unselected);
         }
 
+        private static Color Lighten(Color color, double factor)
+        {
+            // factor: 0 -> no change, 1 -> white
+            factor = Math.Clamp(factor, 0, 1);
+            return Color.FromRgb(
+                color.Red + (1 - color.Red) * factor,
+                color.Green + (1 - color.Green) * factor,
+                color.Blue + (1 - color.Blue) * factor
+            );
+        }
+
+        private static Color Darken(Color color, double factor)
+        {
+            // factor: 0 -> no change, 1 -> black
+            factor = Math.Clamp(factor, 0, 1);
+            return Color.FromRgb(
+                color.Red * (1 - factor),
+                color.Green * (1 - factor),
+                color.Blue * (1 - factor)
+            );
+        }
+
         private void ApplyColorTheme(AppColorTheme colorTheme)
         {
             try
@@ -151,24 +177,70 @@ namespace Foodbook.Services
                 app.Resources["SecondaryBrush"] = new SolidColorBrush(secondary);
                 app.Resources["TertiaryBrush"] = new SolidColorBrush(tertiary);
 
-                // NEW: Dynamic page background colors based on colorful background setting with improved intensity
+                // UPDATED: Dynamic page background colors with darker colorful backgrounds
                 Color pageBackground;
                 if (_isColorfulBackgroundEnabled)
                 {
-                    // ENHANCED: Better intensity balance for light/dark themes
                     var secondaryColor = secondary;
-                    pageBackground = isDark ? 
-                        Color.FromRgba(secondaryColor.Red, secondaryColor.Green, secondaryColor.Blue, 0.25) : // Dark themes: intense/visible tint
-                        Color.FromRgba(secondaryColor.Red, secondaryColor.Green, secondaryColor.Blue, 0.36);   // Light themes: MUCH MORE visible color (3x increase - 200% boost!)
+                    if (isDark)
+                    {
+                        // Darker in dark mode: reduce lightening and opacity
+                        var lightened = Lighten(secondaryColor, 0.35); // Reduced from 0.55 to 0.35
+                        pageBackground = Color.FromRgba(lightened.Red, lightened.Green, lightened.Blue, 0.35); // Reduced from 0.55 to 0.35
+                    }
+                    else
+                    {
+                        // Darker in light mode: darken secondary and reduce opacity
+                        var darkened = Darken(secondaryColor, 0.15); // Slightly darken the secondary color
+                        pageBackground = Color.FromRgba(darkened.Red, darkened.Green, darkened.Blue, 0.25); // Reduced from 0.36 to 0.25
+                    }
                 }
                 else
                 {
                     // Default neutral gray backgrounds
-                    pageBackground = isDark ? Color.FromArgb("#121212") : Color.FromArgb("#F5F5F5"); // Gray100/Gray950 equivalent
+                    pageBackground = isDark ? Color.FromArgb("#1E1E1E") : Color.FromArgb("#F5F5F5");
                 }
                 
                 app.Resources["PageBackgroundColor"] = pageBackground;
                 app.Resources["PageBackgroundBrush"] = new SolidColorBrush(pageBackground);
+
+                // NEW: Add text color that adapts to background state
+                Color adaptiveTextColor;
+                if (_isColorfulBackgroundEnabled)
+                {
+                    // For colorful backgrounds, ensure good contrast
+                    adaptiveTextColor = ChooseReadableEnhanced(pageBackground, Colors.White, Color.FromArgb("#000000"));
+                }
+                else
+                {
+                    // For gray backgrounds, use standard text colors
+                    adaptiveTextColor = isDark ? Color.FromArgb("#FFFFFF") : Color.FromArgb("#000000");
+                }
+                app.Resources["AdaptiveTextColor"] = adaptiveTextColor;
+
+                // UPDATED: Frame and content colors that adapt to colorful background state
+                Color frameBackgroundColor;
+                Color frameTextColor;
+                if (_isColorfulBackgroundEnabled)
+                {
+                    // For colorful backgrounds, use contrasting frame colors
+                    frameBackgroundColor = isDark ? Color.FromArgb("#2A2A2A") : Color.FromArgb("#FFFFFF");
+                    frameTextColor = isDark ? Color.FromArgb("#FFFFFF") : Color.FromArgb("#000000");
+                }
+                else
+                {
+                    // For gray backgrounds, use enhanced contrast
+                    frameBackgroundColor = isDark ? Color.FromArgb("#2A2A2A") : Color.FromArgb("#FFFFFF");
+                    frameTextColor = isDark ? Color.FromArgb("#E0E0E0") : Color.FromArgb("#2A2A2A");
+                }
+                app.Resources["FrameBackgroundColor"] = frameBackgroundColor;
+                app.Resources["FrameTextColor"] = frameTextColor;
+
+                // UPDATED: Folder card colors derived from Primary (pale/translucent) to follow theme
+                var folderBg = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 0.12);
+                var folderStroke = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 0.32);
+                app.Resources["FolderCardBackgroundColor"] = folderBg;
+                app.Resources["FolderCardStrokeColor"] = folderStroke;
 
                 var buttonPrimaryText = ChooseReadableEnhanced(primary, Colors.White, Color.FromArgb("#000000"));
                 var alt = RelativeLuminance(primary) > 0.45 ? Colors.Black : Colors.White;
@@ -196,6 +268,9 @@ namespace Foodbook.Services
                 app.Resources["ShellBackgroundColor"] = shellTitleBg;
 
                 ApplySystemBars(shellTitleBg);
+
+                // Raise ThemeChanged so components can refresh if they need custom handling
+                ThemeChanged?.Invoke(this, EventArgs.Empty);
                 
                 System.Diagnostics.Debug.WriteLine($"[ThemeService] Applied color theme {colorTheme} with colorful background: {_isColorfulBackgroundEnabled}");
             }
@@ -216,9 +291,10 @@ namespace Foodbook.Services
                 if (activity?.Window == null) return;
                 var window = activity.Window;
 
-                window.SetStatusBarColor(background.ToPlatform());
+                // Guard platform APIs by OS version to satisfy platform compatibility analyzers
                 if (Build.VERSION.SdkInt >= BuildVersionCodes.Lollipop)
                 {
+                    window.SetStatusBarColor(background.ToPlatform());
                     window.SetNavigationBarColor(background.ToPlatform());
                 }
 
@@ -226,31 +302,12 @@ namespace Foodbook.Services
                 var useDarkIcons = luminance > 0.55; // threshold
                 var decorView = window.DecorView;
 
-                if (Build.VERSION.SdkInt >= BuildVersionCodes.R)
+                // Use AndroidX WindowInsetsControllerCompat to avoid deprecated APIs and handle pre/post R consistently
+                var controller = new WindowInsetsControllerCompat(window, decorView);
+                controller.AppearanceLightStatusBars = useDarkIcons;
+                if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
                 {
-                    var controller = ViewCompat.GetWindowInsetsController(decorView);
-                    if (controller != null)
-                    {
-                        controller.AppearanceLightStatusBars = useDarkIcons;
-                        controller.AppearanceLightNavigationBars = useDarkIcons;
-                    }
-                }
-                else if (Build.VERSION.SdkInt >= BuildVersionCodes.M)
-                {
-                    var flags = (StatusBarVisibility)decorView.SystemUiVisibility;
-                    if (useDarkIcons)
-                        flags |= (StatusBarVisibility)SystemUiFlags.LightStatusBar;
-                    else
-                        flags &= ~(StatusBarVisibility)SystemUiFlags.LightStatusBar;
-
-                    if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
-                    {
-                        if (useDarkIcons)
-                            flags |= (StatusBarVisibility)SystemUiFlags.LightNavigationBar;
-                        else
-                            flags &= ~(StatusBarVisibility)SystemUiFlags.LightNavigationBar;
-                    }
-                    decorView.SystemUiVisibility = flags;
+                    controller.AppearanceLightNavigationBars = useDarkIcons;
                 }
             }
             catch (Exception ex)

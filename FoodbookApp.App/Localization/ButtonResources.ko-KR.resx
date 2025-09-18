@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="CustomDate" xml:space="preserve"><value>사용자 지정 날짜</value></data>
+  <data name="ThisWeek" xml:space="preserve"><value>이번 주</value></data>
+  <data name="Today" xml:space="preserve"><value>오늘</value></data>
+  <data name="Save" xml:space="preserve"><value>저장</value></data>
+  <data name="SaveChanges" xml:space="preserve"><value>변경 사항 저장</value></data>
+  <data name="AddRecipe" xml:space="preserve"><value>레시피 추가</value></data>
+  <data name="AddIngredient" xml:space="preserve"><value>재료 추가</value></data>
+  <data name="NewRecipe" xml:space="preserve"><value>새 레시피</value></data>
+  <data name="EditRecipe" xml:space="preserve"><value>레시피 편집</value></data>
+  <data name="NewIngredient" xml:space="preserve"><value>새 재료</value></data>
+  <data name="EditIngredient" xml:space="preserve"><value>재료 편집</value></data>
+  <data name="Cancel" xml:space="preserve"><value>취소</value></data>
+</root>

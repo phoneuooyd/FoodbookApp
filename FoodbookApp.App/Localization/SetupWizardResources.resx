@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Welcome to FoodBook</value>
+  </data>
+  <data name="WelcomeMessage" xml:space="preserve">
+    <value>Let's set up your app</value>
+  </data>
+  <data name="LanguageSection" xml:space="preserve">
+    <value>Choose your language</value>
+  </data>
+  <data name="LanguageDescription" xml:space="preserve">
+    <value>Select the language for the application interface</value>
+  </data>
+  <data name="IngredientsSection" xml:space="preserve">
+    <value>Basic ingredients</value>
+  </data>
+  <data name="IngredientsDescription" xml:space="preserve">
+    <value>Would you like to install a set of basic ingredients to get started?</value>
+  </data>
+  <data name="IngredientsDetails" xml:space="preserve">
+    <value>This will add common ingredients like eggs, milk, flour, etc. with nutritional information. You can always add your own ingredients later.</value>
+  </data>
+  <data name="YesInstallIngredients" xml:space="preserve">
+    <value>Yes, install basic ingredients</value>
+  </data>
+  <data name="NoInstallIngredients" xml:space="preserve">
+    <value>No, I'll add my own</value>
+  </data>
+  <data name="CompleteSetupButton" xml:space="preserve">
+    <value>Complete Setup</value>
+  </data>
+  <data name="StatusCompleting" xml:space="preserve">
+    <value>Completing setup...</value>
+  </data>
+  <data name="StatusLanguage" xml:space="preserve">
+    <value>Language preference saved...</value>
+  </data>
+  <data name="StatusIngredients" xml:space="preserve">
+    <value>Installing basic ingredients...</value>
+  </data>
+  <data name="StatusFinalizing" xml:space="preserve">
+    <value>Finalizing setup...</value>
+  </data>
+  <data name="StatusCompleted" xml:space="preserve">
+    <value>Setup completed!</value>
+  </data>
+  <data name="StatusError" xml:space="preserve">
+    <value>Setup completed with some issues, but you can continue using the app.</value>
+  </data>
+</root>

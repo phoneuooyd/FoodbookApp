@@ -3,10 +3,10 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Foodbook.Models;
-using Foodbook.Services;
 using Microsoft.Maui.Controls;
 using Foodbook.Views;
 using Foodbook.Data;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.ViewModels;
 
@@ -17,6 +17,8 @@ public class IngredientsViewModel : INotifyPropertyChanged
     private bool _isRefreshing;
     private string _searchText = string.Empty;
     private List<Ingredient> _allIngredients = new();
+
+    public event EventHandler? DataLoaded; // Raised when all data finished loading
 
     // W³aœciwoœci dla masowej weryfikacji
     private bool _isBulkVerifying;
@@ -105,6 +107,46 @@ public class IngredientsViewModel : INotifyPropertyChanged
         ClearSearchCommand = new Command(() => SearchText = string.Empty); // Komenda do czyszczenia wyszukiwania
     }
 
+    private void RaiseDataLoaded()
+    {
+        try { DataLoaded?.Invoke(this, EventArgs.Empty); } catch { }
+    }
+
+    /// <summary>
+    /// Core data fetch without toggling UI loader flags. Used by both LoadAsync and ReloadAsync.
+    /// </summary>
+    private async Task FetchIngredientsAsync()
+    {
+        var list = await _service.GetIngredientsAsync();
+        _allIngredients = list;
+
+        // Clear and add in batches to improve UI responsiveness
+        Ingredients.Clear();
+
+        // Add items in smaller batches to prevent UI blocking
+        const int batchSize = 50;
+        for (int i = 0; i < list.Count; i += batchSize)
+        {
+            var batch = list.Skip(i).Take(batchSize);
+            foreach (var ingredient in batch)
+            {
+                Ingredients.Add(ingredient);
+            }
+
+            // Allow UI to update between batches
+            if (i + batchSize < list.Count)
+            {
+                await Task.Delay(1);
+            }
+        }
+
+        FilterIngredients();
+        ((Command)BulkVerifyCommand).ChangeCanExecute(); // Refresh command state
+
+        // Signal that all data required by the view is ready
+        RaiseDataLoaded();
+    }
+
     /// <summary>
     /// Masowa weryfikacja wszystkich sk³adników z OpenFoodFacts
     /// </summary>
@@ -129,7 +171,6 @@ public class IngredientsViewModel : INotifyPropertyChanged
 
             BulkVerificationStatus = $"Weryfikujê sk³adniki: 0/{totalCount}";
 
-            // ? OPTYMALIZACJA: Batch processing z throttling
             const int batchSize = 5; // Mniejsze batche dla API
             for (int i = 0; i < Ingredients.Count; i += batchSize)
             {
@@ -180,7 +221,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
                     }
                 }
 
-                // ? OPTYMALIZACJA: Throttling miêdzy batchami
+                // Throttling miêdzy batchami
                 if (i + batchSize < Ingredients.Count)
                 {
                     await Task.Delay(1000); // 1 sekunda pauzy miêdzy batchami
@@ -188,10 +229,11 @@ public class IngredientsViewModel : INotifyPropertyChanged
             }
 
             // Poka¿ wyniki
-            var successMessage = $"Weryfikacja zakoñczona!\n\n" +
-                               $"? Zaktualizowano: {updatedCount} sk³adników\n" +
-                               $"?? Bez zmian: {totalCount - updatedCount - failedCount} sk³adników\n" +
-                               (failedCount > 0 ? $"? B³êdy/nie znaleziono: {failedCount} sk³adników" : "");
+            var successMessage =
+                "Weryfikacja zakoñczona!\n\n" +
+                $"? Zaktualizowano: {updatedCount} sk³adników\n" +
+                $"• Bez zmian: {totalCount - updatedCount - failedCount} sk³adników\n" +
+                (failedCount > 0 ? $"? B³êdy/nie znaleziono: {failedCount} sk³adników" : "");
 
             BulkVerificationStatus = $"? Zakoñczono - zaktualizowano {updatedCount}/{totalCount} sk³adników";
 
@@ -225,36 +267,11 @@ public class IngredientsViewModel : INotifyPropertyChanged
         IsLoading = true;
         try
         {
-            var list = await _service.GetIngredientsAsync();
-            _allIngredients = list;
-            
-            // Clear and add in batches to improve UI responsiveness
-            Ingredients.Clear();
-            
-            // Add items in smaller batches to prevent UI blocking
-            const int batchSize = 50;
-            for (int i = 0; i < list.Count; i += batchSize)
-            {
-                var batch = list.Skip(i).Take(batchSize);
-                foreach (var ingredient in batch)
-                {
-                    Ingredients.Add(ingredient);
-                }
-                
-                // Allow UI to update between batches
-                if (i + batchSize < list.Count)
-                {
-                    await Task.Delay(1);
-                }
-            }
-            
-            FilterIngredients();
-            ((Command)BulkVerifyCommand).ChangeCanExecute(); // Refresh command state
+            await FetchIngredientsAsync();
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error loading ingredients: {ex.Message}");
-            // Could show user-friendly error message here
         }
         finally
         {
@@ -265,11 +282,24 @@ public class IngredientsViewModel : INotifyPropertyChanged
     public async Task ReloadAsync()
     {
         if (IsRefreshing) return;
-        
         IsRefreshing = true;
         try
         {
-            await LoadAsync();
+            var fetchTask = FetchIngredientsAsync();
+            var timeoutTask = Task.Delay(15000); // 15s hard timeout
+            var completed = await Task.WhenAny(fetchTask, timeoutTask);
+            if (completed == fetchTask)
+            {
+                await fetchTask; // propagate exceptions if any
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[IngredientsViewModel] Refresh timeout reached - stopping spinner");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientsViewModel] Reload error: {ex.Message}");
         }
         finally
         {

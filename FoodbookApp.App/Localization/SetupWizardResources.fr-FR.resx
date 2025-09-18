@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Title" xml:space="preserve"><value>Bienvenue dans FoodBook</value></data>
+  <data name="WelcomeMessage" xml:space="preserve"><value>Configurons votre application</value></data>
+  <data name="LanguageSection" xml:space="preserve"><value>Choisissez votre langue</value></data>
+  <data name="LanguageDescription" xml:space="preserve"><value>Selectionnez la langue de l interface</value></data>
+  <data name="IngredientsSection" xml:space="preserve"><value>Ingredients de base</value></data>
+  <data name="IngredientsDescription" xml:space="preserve"><value>Installer un lot d ingredients de base ?</value></data>
+  <data name="IngredientsDetails" xml:space="preserve"><value>Ceci ajoutera des ingredients courants avec infos nutritionnelles.</value></data>
+  <data name="YesInstallIngredients" xml:space="preserve"><value>Oui, installer</value></data>
+  <data name="NoInstallIngredients" xml:space="preserve"><value>Non, plus tard</value></data>
+  <data name="CompleteSetupButton" xml:space="preserve"><value>Terminer la configuration</value></data>
+  <data name="StatusCompleting" xml:space="preserve"><value>Finalisation...</value></data>
+  <data name="StatusLanguage" xml:space="preserve"><value>Langue enregistree...</value></data>
+  <data name="StatusIngredients" xml:space="preserve"><value>Installation des ingredients...</value></data>
+  <data name="StatusFinalizing" xml:space="preserve"><value>Finalisation...</value></data>
+  <data name="StatusCompleted" xml:space="preserve"><value>Termine !</value></data>
+  <data name="StatusError" xml:space="preserve"><value>Configuration terminee avec incidents.</value></data>
+</root>

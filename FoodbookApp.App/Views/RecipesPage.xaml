@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:Foodbook.Services"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
-             xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:converters="clr-namespace:Foodbook.Converters"
              xmlns:components="clr-namespace:Foodbook.Views.Components"
              xmlns:resources="clr-namespace:FoodbookApp.Localization"
@@ -15,26 +14,28 @@
     
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
-        <DataTemplate x:Key="RecipeItemTemplate" x:DataType="models:Recipe">
+        <DataTemplate x:Key="RecipeItemTemplate">
             <components:UniversalListItemComponent 
-                EditCommand="{Binding BindingContext.EditRecipeCommand, Source={x:Reference ThisPage}}"
-                DeleteCommand="{Binding BindingContext.DeleteRecipeCommand, Source={x:Reference ThisPage}}"
+                EditCommand="{Binding BindingContext.EditItemCommand, Source={x:Reference ThisPage}}"
+                DeleteCommand="{Binding BindingContext.DeleteItemCommand, Source={x:Reference ThisPage}}"
+                FolderEditCommand="{Binding BindingContext.FolderEditCommand, Source={x:Reference ThisPage}}"
                 ShowSubtitle="False"
                 ShowNutritionLayout="True"
                 ShowPlanLayout="False"
                 ShowDeleteButton="True"
-                ShowArchiveButton="False" />
+                ShowArchiveButton="False"
+                ShowDragAndDrop="True"
+                DragStartingCommand="{Binding BindingContext.DragStartingCommand, Source={x:Reference ThisPage}}"
+                DragOverCommand="{Binding BindingContext.DragOverCommand, Source={x:Reference ThisPage}}"
+                DragLeaveCommand="{Binding BindingContext.DragLeaveCommand, Source={x:Reference ThisPage}}"
+                DropCommand="{Binding BindingContext.DropCommand, Source={x:Reference ThisPage}}" />
         </DataTemplate>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto,Auto,*">
+    <!-- Rows: 0 Loading, 1 Search, 2 Breadcrumb, 3 Content -->
+    <Grid RowDefinitions="Auto,Auto,Auto,*">
         
-        <!-- Loading indicator -->
-        <ActivityIndicator Grid.Row="0" 
-                          IsVisible="{Binding IsLoading}" 
-                          IsRunning="{Binding IsLoading}"
-                          Color="{AppThemeBinding Light=Black, Dark=White}"
-                          Margin="10" />
+        <!-- Removed ActivityIndicator spinner -->
 
         <!-- Modern Search Bar Component -->
         <components:ModernSearchBarComponent Grid.Row="1"
@@ -43,22 +44,52 @@
                                            ClearCommand="{Binding ClearSearchCommand}"
                                            IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
 
+        <!-- Breadcrumb with Back button under search bar -->
+        <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Padding="8,4" BackgroundColor="{DynamicResource PageBackgroundColor}">
+            <Grid.GestureRecognizers>
+                <!-- Drop anywhere on breadcrumb area moves recipe one level up -->
+                <DropGestureRecognizer AllowDrop="True" Drop="OnBreadcrumbDrop" />
+            </Grid.GestureRecognizers>
+            
+            <!-- Back button: uses GoBackCommand which goes up one level -->
+            <Button x:Name="BackButton"
+                    Text="◀"
+                    Command="{Binding GoBackCommand}"
+                    IsEnabled="{Binding CanGoBack}"
+                    BackgroundColor="{DynamicResource Primary}"
+                    TextColor="{DynamicResource ButtonPrimaryText}"
+                    WidthRequest="34"
+                    HeightRequest="20"
+                    Padding="0"
+                    Margin="0,0,8,0" />
+
+            <Label Grid.Column="1" 
+                   Text="{Binding CurrentPathDisplay}" 
+                   FontSize="13" 
+                   TextColor="{DynamicResource PrimaryText}" 
+                   VerticalTextAlignment="Center"/>
+        </Grid>
+
         <!-- Content -->
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="3">
             <!-- Generic List Component -->
-            <components:GenericListComponent 
-                ItemsSource="{Binding Recipes}"
+            <components:GenericListComponent x:Name="ListComponent"
+                ItemsSource="{Binding Items}"
                 ItemTemplate="{StaticResource RecipeItemTemplate}"
-                IsRefreshing="{Binding IsRefreshing}"
-                RefreshCommand="{Binding RefreshCommand}"
                 EmptyTitle="{loc:Translate Resource=RecipesPageResources, Key=EmptyTitle}"
                 EmptyHint="{loc:Translate Resource=RecipesPageResources, Key=EmptyHint}"
                 IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
             
-            <!-- Floating Action Button Component -->
-            <components:FloatingActionButtonComponent 
-                Command="{Binding AddRecipeCommand}"
-                IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+            <!-- Floating Action Button (expandable) -->
+            <components:FloatingActionButtonComponent x:Name="RecipesFab"
+                IsExpandable="True"
+                IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+                ButtonText="+">
+                <components:FloatingActionButtonComponent.Actions>
+                    <components:FabActionItem Text="Dodaj folder" Command="{Binding BindingContext.AddFolderCommand, Source={x:Reference ThisPage}}" />
+                    <components:FabActionItem Text="Dodaj przepis" Command="{Binding BindingContext.AddRecipeCommand, Source={x:Reference ThisPage}}" />
+                </components:FloatingActionButtonComponent.Actions>
+            </components:FloatingActionButtonComponent>
         </Grid>
     </Grid>
 

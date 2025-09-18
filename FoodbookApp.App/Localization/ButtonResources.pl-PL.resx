@@ -135,11 +135,11 @@
     <comment>Save changes button</comment>
   </data>
   <data name="AddRecipe" xml:space="preserve">
-    <value>Dodaj przepis</value>
+    <value>Zapisz przepis</value>
     <comment>Add recipe button</comment>
   </data>
   <data name="AddIngredient" xml:space="preserve">
-    <value>Dodaj składnik</value>
+    <value>Zapisz składnik</value>
     <comment>Add ingredient button</comment>
   </data>
   <data name="NewRecipe" xml:space="preserve">
@@ -157,5 +157,8 @@
   <data name="EditIngredient" xml:space="preserve">
     <value>Edytuj składnik</value>
     <comment>Edit ingredient title</comment>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Anuluj</value>
   </data>
 </root>

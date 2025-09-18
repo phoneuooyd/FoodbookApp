@@ -1,57 +1,344 @@
+using System;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
+using Microsoft.Maui.Controls;
+using Microsoft.Maui.Graphics;
 using Foodbook.Views.Base;
 
 namespace Foodbook.Views.Components
 {
+    public class FabActionItem : BindableObject
+    {
+        public static readonly BindableProperty TextProperty = BindableProperty.Create(
+            nameof(Text), typeof(string), typeof(FabActionItem), string.Empty, propertyChanged: OnActionChanged);
+        public static readonly BindableProperty IconProperty = BindableProperty.Create(
+            nameof(Icon), typeof(string), typeof(FabActionItem), default(string), propertyChanged: OnActionChanged);
+        public static readonly BindableProperty CommandProperty = BindableProperty.Create(
+            nameof(Command), typeof(ICommand), typeof(FabActionItem));
+        public static readonly BindableProperty CommandParameterProperty = BindableProperty.Create(
+            nameof(CommandParameter), typeof(object), typeof(FabActionItem));
+
+        public string Text { get => (string)GetValue(TextProperty); set => SetValue(TextProperty, value); }
+        public string? Icon { get => (string?)GetValue(IconProperty); set => SetValue(IconProperty, value); }
+        public ICommand? Command { get => (ICommand?)GetValue(CommandProperty); set => SetValue(CommandProperty, value); }
+        public object? CommandParameter { get => GetValue(CommandParameterProperty); set => SetValue(CommandParameterProperty, value); }
+
+        private static void OnActionChanged(BindableObject bindable, object oldValue, object newValue) => (bindable as FabActionItem)?.ParentFab?.RequestRebuild();
+        internal FloatingActionButtonComponent? ParentFab { get; set; }
+    }
+
     public partial class FloatingActionButtonComponent : ContentView
     {
-        public static readonly BindableProperty CommandProperty =
-            BindableProperty.Create(nameof(Command), typeof(ICommand), typeof(FloatingActionButtonComponent));
-
-        public static readonly BindableProperty ButtonTextProperty =
-            BindableProperty.Create(nameof(ButtonText), typeof(string), typeof(FloatingActionButtonComponent), "+");
-
-        public static readonly BindableProperty IsVisibleProperty =
-            BindableProperty.Create(nameof(IsVisible), typeof(bool), typeof(FloatingActionButtonComponent), true);
+        public static readonly BindableProperty CommandProperty = BindableProperty.Create(
+            nameof(Command), typeof(ICommand), typeof(FloatingActionButtonComponent), propertyChanged: OnComponentCommandChanged);
+        public static readonly BindableProperty ButtonTextProperty = BindableProperty.Create(
+            nameof(ButtonText), typeof(string), typeof(FloatingActionButtonComponent), "+", propertyChanged: OnButtonTextChanged);
+        public static readonly BindableProperty IsVisibleProperty = BindableProperty.Create(nameof(IsVisible), typeof(bool), typeof(FloatingActionButtonComponent), true);
+        public static readonly BindableProperty IsExpandableProperty = BindableProperty.Create(nameof(IsExpandable), typeof(bool), typeof(FloatingActionButtonComponent), false, propertyChanged: OnIsExpandableChanged);
+        public static readonly BindableProperty ActionsProperty = BindableProperty.Create(
+            nameof(Actions), typeof(ObservableCollection<FabActionItem>), typeof(FloatingActionButtonComponent), defaultValueCreator: _ => new ObservableCollection<FabActionItem>(), propertyChanged: OnActionsChanged);
 
         private readonly PageThemeHelper _themeHelper;
+        private bool _isExpanded;
+        private double _uniformActionWidth = 0;
 
-        public ICommand Command
-        {
-            get => (ICommand)GetValue(CommandProperty);
-            set => SetValue(CommandProperty, value);
-        }
+        // Backing fields for named elements when building UI in code
+        private BoxView? _overlay;
+        private VerticalStackLayout? _actionsStack;
+        private Button? _mainFab;
+        private Label? _iconLabel; // overlay icon to rotate without affecting layout
 
-        public string ButtonText
-        {
-            get => (string)GetValue(ButtonTextProperty);
-            set => SetValue(ButtonTextProperty, value);
-        }
-
-        public new bool IsVisible
-        {
-            get => (bool)GetValue(IsVisibleProperty);
-            set => SetValue(IsVisibleProperty, value);
-        }
+        public ICommand Command { get => (ICommand)GetValue(CommandProperty); set => SetValue(CommandProperty, value); }
+        public string ButtonText { get => (string)GetValue(ButtonTextProperty); set => SetValue(ButtonTextProperty, value); }
+        public new bool IsVisible { get => (bool)GetValue(IsVisibleProperty); set => SetValue(IsVisibleProperty, value); }
+        public bool IsExpandable { get => (bool)GetValue(IsExpandableProperty); set => SetValue(IsExpandableProperty, value); }
+        public ObservableCollection<FabActionItem> Actions { get => (ObservableCollection<FabActionItem>)GetValue(ActionsProperty); set => SetValue(ActionsProperty, value); }
 
         public FloatingActionButtonComponent()
         {
-            InitializeComponent();
+            // Build the visual tree in code to avoid XAML resource loading issues on some platforms
+            BuildVisualTreeInCode();
+
             _themeHelper = new PageThemeHelper();
-            
-            // Initialize theme handling when component is loaded
             Loaded += OnComponentLoaded;
             Unloaded += OnComponentUnloaded;
+        }
+
+        private void BuildVisualTreeInCode()
+        {
+            var root = new Grid();
+
+            _overlay = new BoxView
+            {
+                IsVisible = false,
+                BackgroundColor = Colors.Black,
+                Opacity = 0.2
+            };
+            var tap = new TapGestureRecognizer();
+            tap.Tapped += OnOverlayTapped;
+            _overlay.GestureRecognizers.Add(tap);
+            root.Add(_overlay);
+
+            var anchor = new Grid
+            {
+                Padding = new Thickness(16),
+                VerticalOptions = LayoutOptions.End,
+                HorizontalOptions = LayoutOptions.End
+            };
+
+            _actionsStack = new VerticalStackLayout
+            {
+                Spacing = 8,
+                Margin = new Thickness(0, 0, 0, 72),
+                TranslationX = -5,
+                TranslationY = -5,
+                IsVisible = false,
+                Opacity = 0
+            };
+            anchor.Add(_actionsStack);
+
+            // Fixed-size container to avoid layout shifts when animating the icon
+            var fabContainer = new Grid
+            {
+                WidthRequest = 56,
+                HeightRequest = 56,
+                HorizontalOptions = LayoutOptions.End,
+                VerticalOptions = LayoutOptions.End
+            };
+
+            _mainFab = new Button
+            {
+                Text = string.Empty, // icon will be rendered by overlay label to allow rotation without layout changes
+                CornerRadius = 24,
+                WidthRequest = 56,
+                HeightRequest = 56,
+                Padding = new Thickness(0),
+                Command = new Command(OnMainFabCommandProxy) // proxy to avoid double-exec with Command binding
+            };
+            // Bind to dynamic resources so color updates with theme changes
+            _mainFab.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
+            _mainFab.SetDynamicResource(Button.TextColorProperty, "ButtonPrimaryText");
+            // Try apply FloatingActionButton style if exists (will not override dynamic colors)
+            if (Application.Current?.Resources.TryGetValue("FloatingActionButton", out var styleObj) == true && styleObj is Style style)
+            {
+                _mainFab.Style = style;
+                _mainFab.Text = string.Empty; // ensure style's default "+" doesn't show
+                // Force centering within container, overriding style's End alignment and margin
+                _mainFab.HorizontalOptions = LayoutOptions.Center;
+                _mainFab.VerticalOptions = LayoutOptions.Center;
+                _mainFab.Margin = new Thickness(0);
+            }
+            else
+            {
+                _mainFab.HorizontalOptions = LayoutOptions.Center;
+                _mainFab.VerticalOptions = LayoutOptions.Center;
+                _mainFab.Margin = new Thickness(0);
+            }
+            _mainFab.Clicked += OnMainFabClicked;
+
+            // Overlay icon label centered within the container
+            _iconLabel = new Label
+            {
+                Text = ButtonText,
+                HorizontalOptions = LayoutOptions.Center,
+                VerticalOptions = LayoutOptions.Center,
+                HorizontalTextAlignment = TextAlignment.Center,
+                VerticalTextAlignment = TextAlignment.Center,
+                FontSize = 24,
+                FontAttributes = FontAttributes.Bold,
+                InputTransparent = true,
+                Margin = new Thickness(0)
+            };
+            _iconLabel.SetDynamicResource(Label.TextColorProperty, "ButtonPrimaryText");
+
+            fabContainer.Add(_mainFab);
+            fabContainer.Add(_iconLabel);
+
+            anchor.Add(fabContainer);
+
+            root.Add(anchor);
+            Content = root;
+        }
+
+        private void OnMainFabCommandProxy()
+        {
+            // No-op: Clicked handler will decide what to do. This prevents Command binding from double-firing on some platforms.
         }
 
         private void OnComponentLoaded(object? sender, EventArgs e)
         {
             _themeHelper.Initialize();
+            _themeHelper.ThemeChanged += OnThemeChanged;
+            AttachActions();
+            BuildActions();
+            // Sync icon text with ButtonText on load
+            if (_iconLabel != null) _iconLabel.Text = ButtonText;
+            // Ensure correct command hookup on load
+            UpdateMainButtonCommandBinding();
         }
-
         private void OnComponentUnloaded(object? sender, EventArgs e)
         {
+            _themeHelper.ThemeChanged -= OnThemeChanged;
             _themeHelper.Cleanup();
+        }
+
+        private void OnThemeChanged(object? sender, EventArgs e)
+        {
+            try
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    // Reapply style and dynamic resources to ensure color refresh
+                    if (_mainFab != null)
+                    {
+                        _mainFab.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
+                        _mainFab.SetDynamicResource(Button.TextColorProperty, "ButtonPrimaryText");
+                        if (Application.Current?.Resources.TryGetValue("FloatingActionButton", out var styleObj) == true && styleObj is Style style)
+                        {
+                            _mainFab.Style = style;
+                        }
+                    }
+                    if (_iconLabel != null)
+                    {
+                        _iconLabel.SetDynamicResource(Label.TextColorProperty, "ButtonPrimaryText");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FAB] Error applying theme: {ex.Message}");
+            }
+        }
+
+        private static void OnIsExpandableChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (bindable is FloatingActionButtonComponent fab)
+            {
+                fab.UpdateVisualStateForMode();
+                fab.UpdateMainButtonCommandBinding();
+            }
+        }
+        private static void OnActionsChanged(BindableObject bindable, object oldValue, object newValue)
+        { if (bindable is FloatingActionButtonComponent fab) { fab.AttachActions(); fab.BuildActions(); } }
+        private static void OnComponentCommandChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (bindable is FloatingActionButtonComponent fab)
+            {
+                fab.UpdateMainButtonCommandBinding();
+            }
+        }
+        private static void OnButtonTextChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (bindable is FloatingActionButtonComponent fab && fab._iconLabel != null)
+            {
+                fab._iconLabel.Text = newValue as string ?? "+";
+            }
+        }
+
+        private void UpdateMainButtonCommandBinding()
+        {
+            if (_mainFab == null) return;
+            if (!IsExpandable)
+            {
+                // Avoid binding Command directly to prevent double Execute; use Clicked handler to execute
+                _mainFab.Command = new Command(OnMainFabCommandProxy);
+            }
+            else
+            {
+                _mainFab.Command = new Command(OnMainFabCommandProxy); // still keep proxy; expand/collapse handled in Clicked
+            }
+        }
+
+        private void AttachActions()
+        {
+            if (Actions == null) return;
+            foreach (var a in Actions) a.ParentFab = this;
+            Actions.CollectionChanged += (_, __) => RequestRebuild();
+        }
+        internal void RequestRebuild() => BuildActions();
+
+        private void UpdateVisualStateForMode()
+        { if (!IsExpandable) _ = CollapseAsync(); BuildActions(); }
+
+        private void BuildActions()
+        {
+            var actionsStack = _actionsStack;
+            if (actionsStack == null) return;
+            actionsStack.Children.Clear();
+            if (!IsExpandable || Actions == null || Actions.Count == 0) return;
+
+            // Approximate width: char count * factor + padding
+            int maxChars = Actions.Max(a => (a.Text?.Length ?? 0));
+            _uniformActionWidth = Math.Max(120, maxChars * 10 + 32);
+
+            foreach (var action in Actions)
+            {
+                var btn = new Button
+                {
+                    Text = action.Text,
+                    Command = action.Command,
+                    CommandParameter = action.CommandParameter,
+                    HorizontalOptions = LayoutOptions.End,
+                    CornerRadius = 12,
+                    HeightRequest = 48,
+                    WidthRequest = _uniformActionWidth,
+                    Padding = new Thickness(16, 10),
+                    FontSize = 16,
+                    FontAttributes = FontAttributes.Bold,
+                };
+
+                btn.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
+                btn.SetDynamicResource(Button.TextColorProperty, "ButtonPrimaryText");
+
+                var states = new VisualStateGroupList();
+                var common = new VisualStateGroup { Name = "CommonStates" };
+                var normal = new VisualState { Name = "Normal" };
+                var pressed = new VisualState { Name = "Pressed" };
+                pressed.Setters.Add(new Setter { Property = Button.ScaleProperty, Value = 0.97 });
+                if (Application.Current?.Resources.TryGetValue("Secondary", out var sec) == true)
+                    pressed.Setters.Add(new Setter { Property = Button.BackgroundColorProperty, Value = sec });
+                common.States.Add(normal);
+                common.States.Add(pressed);
+                VisualStateManager.SetVisualStateGroups(btn, states);
+                states.Add(common);
+
+                actionsStack.Children.Add(btn);
+            }
+        }
+
+        private async void OnMainFabClicked(object? sender, EventArgs e)
+        {
+            if (!IsExpandable)
+            {
+                // Execute bound command when not expandable (single action mode) - prevent double navigation
+                if (Command?.CanExecute(null) == true)
+                {
+                    try { Command.Execute(null); } catch { }
+                }
+                return;
+            }
+            if (_isExpanded) await CollapseAsync(); else await ExpandAsync();
+        }
+        private async void OnOverlayTapped(object? sender, TappedEventArgs e) { if (_isExpanded) await CollapseAsync(); }
+
+        private async Task ExpandAsync()
+        {
+            _isExpanded = true;
+            if (_overlay != null) _overlay.IsVisible = true;
+            if (_actionsStack != null) _actionsStack.IsVisible = true;
+            var rotate = _iconLabel?.RotateTo(45, 150, Easing.CubicIn) ?? Task.CompletedTask; // rotate icon only to avoid layout shift
+            var fade = _actionsStack != null ? _actionsStack.FadeTo(1, 150, Easing.CubicIn) : Task.CompletedTask;
+            await Task.WhenAll(rotate, fade);
+        }
+        private async Task CollapseAsync()
+        {
+            _isExpanded = false;
+            var rotate = _iconLabel?.RotateTo(0, 150, Easing.CubicOut) ?? Task.CompletedTask; // rotate icon only
+            var fade = _actionsStack != null ? _actionsStack.FadeTo(0, 150, Easing.CubicOut) : Task.CompletedTask;
+            await Task.WhenAll(rotate, fade);
+            if (_actionsStack != null) _actionsStack.IsVisible = false; if (_overlay != null) _overlay.IsVisible = false;
         }
     }
 }

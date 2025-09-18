@@ -5,6 +5,7 @@
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:converters="clr-namespace:Foodbook.Converters"
+             xmlns:components="clr-namespace:Foodbook.Views.Components"
              xmlns:resources="clr-namespace:FoodbookApp.Localization"
              x:Class="Foodbook.Views.PlannerPage"
              x:Name="ThisPage"
@@ -35,11 +36,11 @@
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="15" Margin="0,5">
                     <VerticalStackLayout Grid.Column="0" HorizontalOptions="Start">
                         <Label Text="{loc:Translate Resource=PlannerPageResources, Key=DateFrom}" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource Primary}" Margin="0,0,0,5" />
-                        <DatePicker Date="{Binding StartDate}" Format="dd.MM.yyyy" FontSize="14" HorizontalOptions="FillAndExpand" />
+                        <DatePicker x:Name="StartDatePicker" Date="{Binding StartDate}" Format="dd.MM.yyyy" FontSize="14" HorizontalOptions="FillAndExpand" />
                     </VerticalStackLayout>
                     <VerticalStackLayout Grid.Column="1" HorizontalOptions="End">
                         <Label Text="{loc:Translate Resource=PlannerPageResources, Key=DateTo}" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource Primary}" Margin="0,0,0,5" />
-                        <DatePicker Date="{Binding EndDate}" Format="dd.MM.yyyy" FontSize="14" HorizontalOptions="FillAndExpand" />
+                        <DatePicker x:Name="EndDatePicker" Date="{Binding EndDate}" Format="dd.MM.yyyy" FontSize="14" HorizontalOptions="FillAndExpand" />
                     </VerticalStackLayout>
                 </Grid>
                 <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
@@ -49,14 +50,23 @@
                 <VerticalStackLayout BindableLayout.ItemsSource="{Binding Days}">
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="models:PlannerDay">
-                            <Frame BorderColor="LightGray" Padding="8" Margin="0,3">
+                            <Frame BorderColor="LightGray" 
+                                   Padding="8" 
+                                   Margin="0,3" 
+                                   BackgroundColor="{DynamicResource FrameBackgroundColor}">
                                 <VerticalStackLayout>
-                                    <Label Text="{Binding Date, StringFormat='{0:dd.MM.yyyy}'}" FontAttributes="Bold" FontSize="14" />
+                                    <Label Text="{Binding Date, StringFormat='{0:dd.MM.yyyy}'}" 
+                                           FontAttributes="Bold" 
+                                           FontSize="14" 
+                                           TextColor="{DynamicResource FrameTextColor}" />
                                     <StackLayout BindableLayout.ItemsSource="{Binding Meals}">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate x:DataType="models:PlannedMeal">
                                                 <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="4" Margin="0,1">
-                                                    <Picker Grid.Column="0" ItemsSource="{Binding Source={x:Reference ThisPage}, Path=BindingContext.Recipes}" ItemDisplayBinding="{Binding Name}" SelectedItem="{Binding Recipe}" FontSize="12" />
+                                                    <!-- Replace standard Picker with FolderAwarePicker -->
+                                                    <components:FolderAwarePickerComponent Grid.Column="0" 
+                                                                                          SelectedRecipe="{Binding Recipe}" 
+                                                                                          PlaceholderText="{loc:Translate Resource=PlannerPageResources, Key=SelectRecipePlaceholder}" />
                                                     <Button Grid.Column="1" Text="➖" Command="{Binding BindingContext.DecreasePortionsCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" WidthRequest="30" HeightRequest="30" CornerRadius="15" FontSize="16" FontAttributes="Bold" BorderWidth="0" Padding="0" BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" TextColor="{AppThemeBinding Light=Black, Dark=White}">
                                                         <Button.Triggers>
                                                             <DataTrigger TargetType="Button" Binding="{Binding Portions}" Value="1">
@@ -65,8 +75,16 @@
                                                             </DataTrigger>
                                                         </Button.Triggers>
                                                     </Button>
-                                                    <Label Grid.Column="2" Text="{Binding Portions}" VerticalOptions="Center" HorizontalOptions="Center" FontSize="14" FontAttributes="Bold" TextColor="{DynamicResource Primary}" WidthRequest="24" HorizontalTextAlignment="Center" />
-                                                    <Button Grid.Column="3" Text="➕" Command="{Binding BindingContext.IncreasePortionsCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" WidthRequest="30" HeightRequest="30" CornerRadius="15" FontSize="16" FontAttributes="Bold" BorderWidth="0" Padding="0" BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource PrimaryDark}}" TextColor="{AppThemeBinding Light=Black, Dark=White}">
+                                                    <Label Grid.Column="2" 
+                                                           Text="{Binding Portions}" 
+                                                           VerticalOptions="Center" 
+                                                           HorizontalOptions="Center" 
+                                                           FontSize="14" 
+                                                           FontAttributes="Bold" 
+                                                           TextColor="{DynamicResource FrameTextColor}" 
+                                                           WidthRequest="24" 
+                                                           HorizontalTextAlignment="Center" />
+                                                    <Button Grid.Column="3" Text="➕" Command="{Binding BindingContext.IncreasePortionsCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" WidthRequest="30" HeightRequest="30" CornerRadius="15" FontSize="16" FontAttributes="Bold" BorderWidth="0" Padding="0" BackgroundColor="{DynamicResource Primary}" TextColor="{DynamicResource ButtonPrimaryText}">
                                                         <Button.Triggers>
                                                             <DataTrigger TargetType="Button" Binding="{Binding Portions}" Value="20">
                                                                 <Setter Property="IsEnabled" Value="False" />

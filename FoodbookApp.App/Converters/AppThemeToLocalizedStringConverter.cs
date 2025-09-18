@@ -1,6 +1,6 @@
 using System.Globalization;
 using Foodbook.Models;
-using FoodbookApp.Localization;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.Converters
 {
@@ -10,13 +10,23 @@ namespace Foodbook.Converters
         {
             if (value is Foodbook.Models.AppTheme theme)
             {
-                return theme switch
+                try
                 {
-                    Foodbook.Models.AppTheme.Light => SettingsPageResources.ThemeLight,
-                    Foodbook.Models.AppTheme.Dark => SettingsPageResources.ThemeDark,
-                    Foodbook.Models.AppTheme.System => SettingsPageResources.ThemeSystem,
-                    _ => theme.ToString()
-                };
+                    var loc = FoodbookApp.MauiProgram.ServiceProvider?.GetService<ILocalizationService>();
+                    string L(string key) => loc?.GetString("SettingsPageResources", key) ?? key;
+
+                    return theme switch
+                    {
+                        Foodbook.Models.AppTheme.Light => L("ThemeLight"),
+                        Foodbook.Models.AppTheme.Dark => L("ThemeDark"),
+                        Foodbook.Models.AppTheme.System => L("ThemeSystem"),
+                        _ => theme.ToString()
+                    };
+                }
+                catch
+                {
+                    return theme.ToString();
+                }
             }
             
             return value?.ToString() ?? string.Empty;
@@ -24,15 +34,19 @@ namespace Foodbook.Converters
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            if (value is string localizedName)
+            try
             {
-                if (localizedName == SettingsPageResources.ThemeLight)
-                    return Foodbook.Models.AppTheme.Light;
-                if (localizedName == SettingsPageResources.ThemeDark)
-                    return Foodbook.Models.AppTheme.Dark;
-                if (localizedName == SettingsPageResources.ThemeSystem)
-                    return Foodbook.Models.AppTheme.System;
+                var loc = FoodbookApp.MauiProgram.ServiceProvider?.GetService<ILocalizationService>();
+                string L(string key) => loc?.GetString("SettingsPageResources", key) ?? key;
+
+                if (value is string localizedName)
+                {
+                    if (localizedName == L("ThemeLight")) return Foodbook.Models.AppTheme.Light;
+                    if (localizedName == L("ThemeDark")) return Foodbook.Models.AppTheme.Dark;
+                    if (localizedName == L("ThemeSystem")) return Foodbook.Models.AppTheme.System;
+                }
             }
+            catch { }
             
             return Foodbook.Models.AppTheme.System; // Default fallback
         }

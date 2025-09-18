@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.ViewModels
 {
@@ -25,6 +27,13 @@ namespace Foodbook.ViewModels
         // ✅ NOWE: Debouncing dla kalkulacji
         private CancellationTokenSource _calculationCts = new();
         private readonly SemaphoreSlim _calculationSemaphore = new(1, 1);
+
+        // ✅ Folder support
+        private readonly IFolderService _folderService;
+        private readonly IDatabaseService _databaseService;
+        public ObservableCollection<Folder> AvailableFolders { get; } = new();
+        public int? SelectedFolderId { get => _selectedFolderId; set { _selectedFolderId = value; OnPropertyChanged(); } }
+        private int? _selectedFolderId;
         
         // Tab management
         private int _selectedTabIndex = 0;
@@ -177,11 +186,14 @@ namespace Foodbook.ViewModels
         private readonly IIngredientService _ingredientService;
         private readonly RecipeImporter _importer;
 
-        public AddRecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService, RecipeImporter importer)
+        public AddRecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService, RecipeImporter importer, IFolderService folderService, IDatabaseService? databaseService = null)
         {
             _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
             _ingredientService = ingredientService ?? throw new ArgumentNullException(nameof(ingredientService));
             _importer = importer ?? throw new ArgumentNullException(nameof(importer));
+            _folderService = folderService ?? throw new ArgumentNullException(nameof(folderService));
+
+            _databaseService = databaseService ?? ResolveDatabaseService() ?? new NullDatabaseService();
 
             AddIngredientCommand = new Command(AddIngredient);
             RemoveIngredientCommand = new Command<Ingredient>(RemoveIngredient);
@@ -200,119 +212,112 @@ namespace Foodbook.ViewModels
                 ValidateInput();
             };
 
+            // Load folders list in background
+            _ = LoadAvailableFoldersAsync();
+
             ValidateInput();
         }
 
-        // ✅ NOWE: Metoda ładowania cache
-        private async Task EnsureIngredientsAreCachedAsync()
+        private IDatabaseService? ResolveDatabaseService()
         {
-            if (_cachedIngredients.Count == 0 || 
-                DateTime.Now - _lastCacheUpdate > _cacheValidityDuration)
+            try
             {
-                _cachedIngredients = await _ingredientService.GetIngredientsAsync();
-                _lastCacheUpdate = DateTime.Now;
-                System.Diagnostics.Debug.WriteLine($"Ingredients cache refreshed: {_cachedIngredients.Count} items");
+                return Application.Current?.Handler?.MauiContext?.Services?.GetService<IDatabaseService>();
+            }
+            catch
+            {
+                return null;
             }
         }
 
-        // ✅ NOWE: Debounced kalkulacja
-        private async Task ScheduleNutritionalCalculationAsync()
+        private sealed class NullDatabaseService : IDatabaseService
         {
-            // Anuluj poprzednie kalkulacje
-            _calculationCts.Cancel();
-            _calculationCts = new CancellationTokenSource();
+            public Task InitializeAsync() => Task.CompletedTask;
+            public Task<bool> EnsureDatabaseSchemaAsync() => Task.FromResult(true);
+            public Task<bool> MigrateDatabaseAsync() => Task.FromResult(true);
+            public Task<bool> ResetDatabaseAsync() => Task.FromResult(true);
+        }
 
+        public async Task LoadAvailableFoldersAsync()
+        {
             try
             {
-                // Czekaj 300ms na kolejne zmiany
-                await Task.Delay(300, _calculationCts.Token);
+                System.Diagnostics.Debug.WriteLine("[AddRecipeViewModel] Loading available folders...");
+                var roots = await _folderService.GetFolderHierarchyAsync();
+                var flat = new List<Folder>();
+                void Flatten(Folder f)
+                {
+                    flat.Add(f);
+                    if (f.SubFolders != null)
+                        foreach (var c in f.SubFolders)
+                            Flatten(c);
+                }
+                foreach (var r in roots)
+                    Flatten(r);
+
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    AvailableFolders.Clear();
+                    foreach (var f in flat)
+                        AvailableFolders.Add(f);
+                });
                 
-                await _calculationSemaphore.WaitAsync(_calculationCts.Token);
+                System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Loaded {flat.Count} folders successfully");
+            }
+            catch (Exception ex) when (ex.Message.Contains("no such table: Folders"))
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Folders table missing, attempting emergency schema fix...");
+                
                 try
                 {
-                    await CalculateNutritionalValuesAsync();
-                }
-                finally
-                {
-                    _calculationSemaphore.Release();
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                // Normalne anulowanie - ignoruj
-            }
-        }
+                    // Try to fix the database schema
+                    var schemaFixed = await _databaseService.EnsureDatabaseSchemaAsync();
+                    if (schemaFixed)
+                    {
+                        System.Diagnostics.Debug.WriteLine("[AddRecipeViewModel] Database schema fixed, retrying folder load...");
+                        // Retry loading folders after schema fix
+                        var roots = await _folderService.GetFolderHierarchyAsync();
+                        var flat = new List<Folder>();
+                        void Flatten(Folder f)
+                        {
+                            flat.Add(f);
+                            if (f.SubFolders != null)
+                                foreach (var c in f.SubFolders)
+                                    Flatten(c);
+                        }
+                        foreach (var r in roots)
+                            Flatten(r);
 
-        // ✅ NOWE: Publiczna metoda do synchronizacji cache
-        public async Task RefreshIngredientsCacheAsync()
-        {
-            _lastCacheUpdate = DateTime.MinValue; // Force refresh
-            await EnsureIngredientsAreCachedAsync();
-        }
-
-        private void SelectTab(object parameter)
-        {
-            try
-            {
-                int tabIndex = 0;
-                
-                if (parameter is int intParam)
-                {
-                    tabIndex = intParam;
+                        MainThread.BeginInvokeOnMainThread(() =>
+                        {
+                            AvailableFolders.Clear();
+                            foreach (var f in flat)
+                                AvailableFolders.Add(f);
+                        });
+                        
+                        System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Successfully loaded {flat.Count} folders after schema fix");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("[AddRecipeViewModel] Schema fix failed, continuing without folders");
+                        MainThread.BeginInvokeOnMainThread(() => AvailableFolders.Clear());
+                    }
                 }
-                else if (parameter is string stringParam && int.TryParse(stringParam, out int parsedIndex))
+                catch (Exception retryEx)
                 {
-                    tabIndex = parsedIndex;
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"Invalid tab parameter: {parameter}");
-                    return;
-                }
-
-                // Validate tab index is within bounds
-                if (tabIndex >= 0 && tabIndex <= 2)
-                {
-                    SelectedTabIndex = tabIndex;
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"Tab index out of bounds: {tabIndex}");
+                    System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Retry after schema fix failed: {retryEx.Message}");
+                    MainThread.BeginInvokeOnMainThread(() => AvailableFolders.Clear());
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in SelectTab: {ex.Message}");
-            }
-        }
-
-        public void Reset()
-        {
-            try
-            {
-                _editingRecipe = null;
-                Name = Description = string.Empty;
-                IloscPorcji = "2";
-                Calories = Protein = Fat = Carbs = "0";
-                CalculatedCalories = CalculatedProtein = CalculatedFat = CalculatedCarbs = "0";
-                
-                Ingredients.Clear();
-                
-                ImportUrl = string.Empty;
-                ImportStatus = string.Empty;
-                UseCalculatedValues = true;
-                IsManualMode = true; // Resetuj też tryb na ręczny
-                SelectedTabIndex = 0; // Reset do pierwszej zakładki
-                
-                // Powiadom o zmianach w tytule i przycisku
-                OnPropertyChanged(nameof(Title));
-                OnPropertyChanged(nameof(SaveButtonText));
-                
-                ValidateInput();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error in Reset: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Error loading folders: {ex.Message}");
+                // Don't throw - just log the error and continue without folders
+                // This allows the app to work even if folders feature isn't available
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    AvailableFolders.Clear();
+                });
             }
         }
 
@@ -334,6 +339,7 @@ namespace Foodbook.ViewModels
                 Protein = recipe.Protein.ToString("F1");
                 Fat = recipe.Fat.ToString("F1");
                 Carbs = recipe.Carbs.ToString("F1");
+                SelectedFolderId = recipe.FolderId;
                 
                 Ingredients.Clear();
                 foreach (var ing in recipe.Ingredients)
@@ -373,10 +379,10 @@ namespace Foodbook.ViewModels
             {
                 await EnsureIngredientsAreCachedAsync();
                 
-                var name = AvailableIngredientNames.FirstOrDefault() ?? string.Empty;
+                // Do not preselect the first available ingredient; start with empty name and defaults
                 var ingredient = new Ingredient 
                 { 
-                    Name = name, 
+                    Name = string.Empty, 
                     Quantity = 1, 
                     Unit = Unit.Gram, 
                     Calories = 0, 
@@ -384,19 +390,6 @@ namespace Foodbook.ViewModels
                     Fat = 0, 
                     Carbs = 0 
                 };
-                
-                // ✅ ZOPTYMALIZOWANE: Używa cache zamiast pobierania z bazy
-                if (!string.IsNullOrEmpty(name))
-                {
-                    var existingIngredient = _cachedIngredients.FirstOrDefault(i => i.Name == name);
-                    if (existingIngredient != null)
-                    {
-                        ingredient.Calories = existingIngredient.Calories;
-                        ingredient.Protein = existingIngredient.Protein;
-                        ingredient.Fat = existingIngredient.Fat;
-                        ingredient.Carbs = existingIngredient.Carbs;
-                    }
-                }
                 
                 Ingredients.Add(ingredient);
                 ValidateInput();
@@ -435,6 +428,72 @@ namespace Foodbook.ViewModels
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in RecalculateNutritionalValuesAsync: {ex.Message}");
+            }
+        }
+
+        // Ensure ingredients cache is loaded and fresh
+        private async Task EnsureIngredientsAreCachedAsync()
+        {
+            if (_cachedIngredients.Count == 0 || DateTime.Now - _lastCacheUpdate > _cacheValidityDuration)
+            {
+                _cachedIngredients = await _ingredientService.GetIngredientsAsync();
+                _lastCacheUpdate = DateTime.Now;
+                System.Diagnostics.Debug.WriteLine($"Ingredients cache refreshed: {_cachedIngredients.Count} items");
+            }
+        }
+
+        // Debounced calculation scheduler
+        private async Task ScheduleNutritionalCalculationAsync()
+        {
+            _calculationCts.Cancel();
+            _calculationCts = new CancellationTokenSource();
+
+            try
+            {
+                await Task.Delay(300, _calculationCts.Token);
+                await _calculationSemaphore.WaitAsync(_calculationCts.Token);
+                try
+                {
+                    await CalculateNutritionalValuesAsync();
+                }
+                finally
+                {
+                    _calculationSemaphore.Release();
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // expected on rapid changes
+            }
+        }
+
+        public void Reset()
+        {
+            try
+            {
+                _editingRecipe = null;
+                Name = Description = string.Empty;
+                IloscPorcji = "2";
+                Calories = Protein = Fat = Carbs = "0";
+                CalculatedCalories = CalculatedProtein = CalculatedFat = CalculatedCarbs = "0";
+                SelectedFolderId = null;
+
+                Ingredients.Clear();
+
+                ImportUrl = string.Empty;
+                ImportStatus = string.Empty;
+                UseCalculatedValues = true;
+                IsManualMode = true;
+                SelectedTabIndex = 0;
+
+                OnPropertyChanged(nameof(Title));
+                OnPropertyChanged(nameof(SaveButtonText));
+
+                ValidateInput();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in Reset: {ex.Message}");
             }
         }
 
@@ -757,6 +816,7 @@ namespace Foodbook.ViewModels
                 recipe.Fat = ParseDoubleValue(Fat);
                 recipe.Carbs = ParseDoubleValue(Carbs);
                 
+                recipe.FolderId = SelectedFolderId;
                 recipe.Ingredients = Ingredients.ToList();
 
                 System.Diagnostics.Debug.WriteLine($"💾 Saving recipe: {recipe.Name} (Edit mode: {_editingRecipe != null})");
@@ -779,6 +839,7 @@ namespace Foodbook.ViewModels
                     IloscPorcji = "2";
                     Calories = Protein = Fat = Carbs = "0";
                     CalculatedCalories = CalculatedProtein = CalculatedFat = CalculatedCarbs = "0";
+                    SelectedFolderId = null;
                     
                     Ingredients.Clear();
                     
@@ -837,6 +898,42 @@ namespace Foodbook.ViewModels
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in LoadAvailableIngredientsAsync: {ex.Message}");
+            }
+        }
+
+        private void SelectTab(object parameter)
+        {
+            try
+            {
+                int tabIndex = 0;
+                
+                if (parameter is int intParam)
+                {
+                    tabIndex = intParam;
+                }
+                else if (parameter is string stringParam && int.TryParse(stringParam, out int parsedIndex))
+                {
+                    tabIndex = parsedIndex;
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"Invalid tab parameter: {parameter}");
+                    return;
+                }
+
+                // Validate tab index is within bounds
+                if (tabIndex >= 0 && tabIndex <= 2)
+                {
+                    SelectedTabIndex = tabIndex;
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"Tab index out of bounds: {tabIndex}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in SelectTab: {ex.Message}");
             }
         }
 

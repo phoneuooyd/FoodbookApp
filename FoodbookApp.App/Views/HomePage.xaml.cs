@@ -1,7 +1,10 @@
 using Foodbook.ViewModels;
 using Microsoft.Maui.Controls;
-using Foodbook.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Foodbook.Views.Components;
+using CommunityToolkit.Maui.Views;
+using CommunityToolkit.Maui.Extensions;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.Views;
 
@@ -11,6 +14,7 @@ public partial class HomePage : ContentPage
     private IThemeService? _themeService;
     private IFontService? _fontService;
     private ILocalizationService? _localizationService;
+    private bool _isMealsPopupOpen = false; // Protection against multiple opens
 
     public HomePage(HomeViewModel vm)
     {
@@ -128,6 +132,60 @@ public partial class HomePage : ContentPage
     private async void OnSettingsClicked(object sender, EventArgs e)
     {
         await Shell.Current.GoToAsync(nameof(SettingsPage));
+    }
+
+    /// <summary>
+    /// Handler for meals popup with protection against multiple opens
+    /// </summary>
+    private async void OnShowMealsPopupClicked(object sender, EventArgs e)
+    {
+        // Protection against multiple opens
+        if (_isMealsPopupOpen)
+        {
+            System.Diagnostics.Debug.WriteLine("?? HomePage: Meals popup already open, ignoring request");
+            return;
+        }
+
+        try
+        {
+            _isMealsPopupOpen = true;
+            System.Diagnostics.Debug.WriteLine("?? HomePage: Opening meals popup");
+
+            if (ViewModel?.ShowMealsPopupCommand?.CanExecute(null) == true)
+            {
+                ViewModel.ShowMealsPopupCommand.Execute(null);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"? HomePage: Error opening meals popup: {ex.Message}");
+            
+            // Handle specific popup exception
+            if (ex.Message.Contains("PopupBlockedException") || ex.Message.Contains("blocked by the Modal Page"))
+            {
+                System.Diagnostics.Debug.WriteLine("?? HomePage: Attempting to close any existing modal pages");
+                
+                try
+                {
+                    // Try to dismiss any existing modal pages
+                    while (Application.Current?.MainPage?.Navigation?.ModalStack?.Count > 0)
+                    {
+                        await Application.Current.MainPage.Navigation.PopModalAsync(false);
+                    }
+                    
+                    System.Diagnostics.Debug.WriteLine("? HomePage: Modal stack cleared");
+                }
+                catch (Exception modalEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"?? HomePage: Could not clear modal stack: {modalEx.Message}");
+                }
+            }
+        }
+        finally
+        {
+            _isMealsPopupOpen = false;
+            System.Diagnostics.Debug.WriteLine("?? HomePage: Meals popup protection released");
+        }
     }
 }
 

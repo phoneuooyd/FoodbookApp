@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Foodbook.Models;
-using Foodbook.Services;
+using FoodbookApp.Interfaces;
 using Microsoft.Maui.Controls;
 
 namespace Foodbook.ViewModels;
@@ -87,7 +87,9 @@ public class PlannedMealFormViewModel : INotifyPropertyChanged
 
     private async Task CancelAsync()
     {
-        await Shell.Current.GoToAsync("..");
+        var shell = Shell.Current;
+        if (shell != null)
+            await shell.GoToAsync("..");
     }
 
     private async Task SaveAsync()
@@ -97,19 +99,23 @@ public class PlannedMealFormViewModel : INotifyPropertyChanged
             return;
         if (_meal == null)
         {
-            var m = new PlannedMeal { RecipeId = SelectedRecipe.Id, Date = Date };
+            var selectedId = SelectedRecipe?.Id ?? 0;
+            var m = new PlannedMeal { RecipeId = selectedId, Date = Date };
             await _plannerService.AddPlannedMealAsync(m);
         }
         else
         {
-            _meal.RecipeId = SelectedRecipe.Id;
+            var selectedId = SelectedRecipe?.Id ?? 0;
+            _meal.RecipeId = selectedId;
             _meal.Date = Date;
             await _plannerService.UpdatePlannedMealAsync(_meal);
         }
-        await Shell.Current.GoToAsync("..");
+        var shell = Shell.Current;
+        if (shell != null)
+            await shell.GoToAsync("..");
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
-    void OnPropertyChanged([CallerMemberName] string name = null) =>
+    void OnPropertyChanged([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }

@@ -1,8 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net9.0-android;net9.0-ios;net9.0-maccatalyst</TargetFrameworks>
+		<!-- Default: build Android everywhere to keep fast inner loop on all OSes -->
+		<TargetFrameworks>net9.0-android</TargetFrameworks>
+		<!-- Add Windows TFM only when building on Windows -->
 		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net9.0-windows10.0.19041.0</TargetFrameworks>
+		<!-- Add Apple TFMs only when building on macOS to avoid linker/connection warnings on Windows -->
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('osx'))">$(TargetFrameworks);net9.0-ios;net9.0-maccatalyst</TargetFrameworks>
 		<!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
 		<!-- <TargetFrameworks>$(TargetFrameworks);net9.0-tizen</TargetFrameworks> -->
 
@@ -40,6 +44,35 @@
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
                 <NeutralLanguage>en</NeutralLanguage>
+		
+		<!-- Fix for AOT GUID issues -->
+		<AndroidUseDefaultAotProfile Condition="'$(Configuration)' == 'Debug'">false</AndroidUseDefaultAotProfile>
+		<RunAOTCompilation Condition="'$(Configuration)' == 'Debug'">false</RunAOTCompilation>
+		<Company>$(Authors) Przemyslaw Przybyszewski</Company>
+		<Authors>Foodbook App Przemyslaw Przybyszewski </Authors>
+		<Product>Foodbook App</Product>
+		<Copyright>Przemyslaw Przybyszewski all rights reserved 2025</Copyright>
+
+		<!-- Disable trimming globally across all TFMs -->
+		<PublishTrimmed>false</PublishTrimmed>
+	</PropertyGroup>
+
+	<!-- Disable Android AOT in Release to avoid EF Core GUID mismatch on device -->
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-android' and '$(Configuration)' == 'Release'">
+		<RunAOTCompilation>false</RunAOTCompilation>
+		<UseInterpreter>true</UseInterpreter>
+		<!-- Fully disable linker/trimming on Android in Release -->
+		<AndroidLinkMode>None</AndroidLinkMode>
+	</PropertyGroup>
+
+	<!-- Ensure linker is disabled on Android in Debug as well -->
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-android' and '$(Configuration)' == 'Debug'">
+		<AndroidLinkMode>None</AndroidLinkMode>
+	</PropertyGroup>
+
+	<!-- Disable trimming for iOS and MacCatalyst for maximum stability -->
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-ios' or '$(TargetFramework)' == 'net9.0-maccatalyst'">
+		<PublishTrimmed>false</PublishTrimmed>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -84,97 +117,131 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Common" Version="8.4.0" />
 		<PackageReference Include="CommunityToolkit.Maui" Version="12.2.0" />
-		<PackageReference Include="HtmlAgilityPack" Version="1.12.1" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.6" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.6" />
-		<PackageReference Include="Microsoft.Maui.Controls" Version="9.0.92" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+		<PackageReference Include="HtmlAgilityPack" Version="1.12.2" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.9" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="9.0.110" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.9" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<!-- EF Core Design-time for migrations generation -->
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 	</ItemGroup>
 
         <ItemGroup>
-          <Compile Update="Localization\ButtonResources.Designer.cs">
+          <Compile Update="Localization\\ButtonResources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>ButtonResources.resx</DependentUpon>
           </Compile>
-          <Compile Update="Localization\TabBarResources.Designer.cs">
+          <Compile Update="Localization\\TabBarResources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>TabBarResources.resx</DependentUpon>
           </Compile>
-          <Compile Update="Localization\UnitResources.Designer.cs">
+          <Compile Update="Localization\\UnitResources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>UnitResources.resx</DependentUpon>
           </Compile>
+          <Compile Update="Localization\\SetupWizardResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>SetupWizardResources.resx</DependentUpon>
+          </Compile>
+          <!-- NEW SetupWizardPage resources -->
+          <Compile Update="Localization\\SetupWizardPageResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>SetupWizardPageResources.resx</DependentUpon>
+          </Compile>
+          <Compile Update="Properties\\Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+          </Compile>
         </ItemGroup>
 
         <ItemGroup>
-          <EmbeddedResource Update="Localization\ButtonResources.resx">
+          <EmbeddedResource Update="Localization\\ButtonResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>ButtonResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
-          <EmbeddedResource Update="Localization\TabBarResources.resx">
+          <EmbeddedResource Update="Localization\\TabBarResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>TabBarResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
+          <EmbeddedResource Update="Localization\\SetupWizardResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>SetupWizardResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
+          <!-- Embed main setup wizard page resource -->
+          <EmbeddedResource Update="Localization\\SetupWizardPageResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>SetupWizardPageResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
+          <!-- Polish satellite file (no generator needed) -->
+          <EmbeddedResource Update="Localization\\SetupWizardPageResources.pl-PL.resx" />
         </ItemGroup>
 
         <!-- Localization resources for individual pages -->
         <ItemGroup>
-          <Compile Update="Localization\AddRecipePageResources.Designer.cs">
+          <Compile Update="Localization\\AddRecipePageResources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>AddRecipePageResources.resx</DependentUpon>
           </Compile>
-          <Compile Update="Localization\ArchivePageResources.Designer.cs">
+          <Compile Update="Localization\\ArchivePageResources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>ArchivePageResources.resx</DependentUpon>
           </Compile>
-          <Compile Update="Localization\HomePageResources.Designer.cs">
+          <Compile Update="Localization\\HomePageResources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>HomePageResources.resx</DependentUpon>
           </Compile>
-          <Compile Update="Localization\IngredientFormPageResources.Designer.cs">
+          <Compile Update="Localization\\IngredientFormPageResources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>IngredientFormPageResources.resx</DependentUpon>
           </Compile>
-          <Compile Update="Localization\IngredientsPageResources.Designer.cs">
+          <Compile Update="Localization\\IngredientsPageResources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>IngredientsPageResources.resx</DependentUpon>
           </Compile>
-          <Compile Update="Localization\MealFormPageResources.Designer.cs">
+          <Compile Update="Localization\\MealFormPageResources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>MealFormPageResources.resx</DependentUpon>
           </Compile>
-          <Compile Update="Localization\PlannerPageResources.Designer.cs">
+          <Compile Update="Localization\\PlannerPageResources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>PlannerPageResources.resx</DependentUpon>
           </Compile>
-          <Compile Update="Localization\RecipesPageResources.Designer.cs">
+          <Compile Update="Localization\\RecipesPageResources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>RecipesPageResources.resx</DependentUpon>
           </Compile>
-          <Compile Update="Localization\ShoppingListDetailPageResources.Designer.cs">
+          <Compile Update="Localization\\ShoppingListDetailPageResources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>ShoppingListDetailPageResources.resx</DependentUpon>
           </Compile>
-          <Compile Update="Localization\ShoppingListPageResources.Designer.cs">
+          <Compile Update="Localization\\ShoppingListPageResources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>ShoppingListPageResources.resx</DependentUpon>
           </Compile>
-          <Compile Update="Localization\SettingsPageResources.Designer.cs">
+          <Compile Update="Localization\\SettingsPageResources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>SettingsPageResources.resx</DependentUpon>
@@ -182,53 +249,57 @@
         </ItemGroup>
 
         <ItemGroup>
-          <EmbeddedResource Update="Localization\AddRecipePageResources.resx">
+          <EmbeddedResource Update="Localization\\AddRecipePageResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>AddRecipePageResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
-          <EmbeddedResource Update="Localization\ArchivePageResources.resx">
+          <EmbeddedResource Update="Localization\\ArchivePageResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>ArchivePageResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
-          <EmbeddedResource Update="Localization\HomePageResources.resx">
+          <EmbeddedResource Update="Localization\\HomePageResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>HomePageResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
-          <EmbeddedResource Update="Localization\IngredientFormPageResources.resx">
+          <EmbeddedResource Update="Localization\\IngredientFormPageResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>IngredientFormPageResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
-          <EmbeddedResource Update="Localization\IngredientsPageResources.resx">
+          <EmbeddedResource Update="Localization\\IngredientsPageResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>IngredientsPageResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
-          <EmbeddedResource Update="Localization\MealFormPageResources.resx">
+          <EmbeddedResource Update="Localization\\MealFormPageResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>MealFormPageResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
-          <EmbeddedResource Update="Localization\PlannerPageResources.resx">
+          <EmbeddedResource Update="Localization\\PlannerPageResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>PlannerPageResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
-          <EmbeddedResource Update="Localization\RecipesPageResources.resx">
+          <EmbeddedResource Update="Localization\\RecipesPageResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>RecipesPageResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
-          <EmbeddedResource Update="Localization\ShoppingListDetailPageResources.resx">
+          <EmbeddedResource Update="Localization\\ShoppingListDetailPageResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>ShoppingListDetailPageResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
-          <EmbeddedResource Update="Localization\ShoppingListPageResources.resx">
+          <EmbeddedResource Update="Localization\\ShoppingListPageResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>ShoppingListPageResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
-          <EmbeddedResource Update="Localization\SettingsPageResources.resx">
+          <EmbeddedResource Update="Localization\\SettingsPageResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>SettingsPageResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
-          <EmbeddedResource Update="Localization\UnitResources.resx">
+          <EmbeddedResource Update="Localization\\UnitResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>UnitResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
+          <EmbeddedResource Update="Properties\\Resources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
         </ItemGroup>
 
@@ -245,6 +316,15 @@
 	  <MauiXaml Update="Views\Components\FloatingActionButtonComponent.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="Views\Components\FolderAwarePickerComponent.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Components\FolderAwarePickerPopup.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Components\FolderListComponent.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Views\Components\GenericListComponent.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
@@ -255,6 +335,24 @@
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Views\Components\RecipeListItemComponent.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Components\SafeButtonComponent.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Components\SearchablePickerComponent.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Components\SearchablePickerPopup.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Components\SimpleListPopup.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Components\SimplePicker.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Components\UnitPickerComponent.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Views\Components\UniversalListItemComponent.xaml">
@@ -281,6 +379,9 @@
           <MauiXaml Update="Views\SettingsPage.xaml">
             <Generator>MSBuild:Compile</Generator>
           </MauiXaml>
+          <MauiXaml Update="Views\SetupWizardPage.xaml">
+            <Generator>MSBuild:Compile</Generator>
+          </MauiXaml>
           <MauiXaml Update="Views\ShoppingListPage.xaml">
             <Generator>MSBuild:Compile</Generator>
           </MauiXaml>
@@ -290,7 +391,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include=".github\workflows\" />
+	  <Folder Include=".github\\workflows\\" />
+	  <Folder Include="Data\\Migrations\" />
 	</ItemGroup>
 
 </Project>

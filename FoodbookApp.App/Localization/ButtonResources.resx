@@ -161,4 +161,7 @@
     <value>Edit ingredient</value>
     <comment>Edit ingredient title</comment>
   </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
 </root>

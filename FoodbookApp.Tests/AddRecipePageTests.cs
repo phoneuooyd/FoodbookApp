@@ -2,6 +2,7 @@
 using Foodbook.Models;
 using Foodbook.Services;
 using Foodbook.ViewModels;
+using FoodbookApp.Interfaces;
 using Microsoft.Maui.Controls;
 using Moq;
 using System.Globalization;
@@ -12,6 +13,7 @@ namespace FoodbookApp.Tests
     {
         private readonly Mock<IRecipeService> _mockRecipeService;
         private readonly Mock<IIngredientService> _mockIngredientService;
+        private readonly Mock<IFolderService> _mockFolderService;
         private readonly RecipeImporter _recipeImporter;
         private readonly AddRecipeViewModel _viewModel;
 
@@ -19,10 +21,15 @@ namespace FoodbookApp.Tests
         {
             _mockRecipeService = new Mock<IRecipeService>();
             _mockIngredientService = new Mock<IIngredientService>();
+            _mockFolderService = new Mock<IFolderService>();
             
             // Setup basic empty list for ingredient service
             _mockIngredientService.Setup(s => s.GetIngredientsAsync())
                 .ReturnsAsync(new List<Ingredient>());
+            
+            // Setup folder service to avoid nulls/background loads
+            _mockFolderService.Setup(s => s.GetFolderHierarchyAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Folder>());
             
             // Tworzenie rzeczywistego RecipeImporter z mock HttpClient
             var mockHttpClient = new HttpClient();
@@ -31,7 +38,8 @@ namespace FoodbookApp.Tests
             _viewModel = new AddRecipeViewModel(
                 _mockRecipeService.Object, 
                 _mockIngredientService.Object, 
-                _recipeImporter);
+                _recipeImporter,
+                _mockFolderService.Object);
         }
 
         [Fact]
@@ -45,7 +53,8 @@ namespace FoodbookApp.Tests
             var viewModel = new AddRecipeViewModel(
                 _mockRecipeService.Object, 
                 _mockIngredientService.Object, 
-                recipeImporter);
+                recipeImporter,
+                _mockFolderService.Object);
 
             // Assert
             viewModel.Name.Should().BeEmpty();

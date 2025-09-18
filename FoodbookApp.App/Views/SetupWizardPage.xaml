@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Foodbook.ViewModels"
+             xmlns:loc="clr-namespace:Foodbook.Services"
+             xmlns:converters="clr-namespace:Foodbook.Converters"
+             x:Class="Foodbook.Views.SetupWizardPage"
+             x:DataType="vm:SetupWizardViewModel"
+             Title="{loc:Translate Resource=SetupWizardPageResources, Key=PageTitle}"
+             BackgroundColor="{DynamicResource PageBackgroundColor}"
+             Shell.NavBarIsVisible="False">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:CultureCodeToNativeNameConverter x:Key="CultureCodeToNativeNameConverter" />
+            <converters:CultureCodeToDisplayNameConverter x:Key="CultureCodeToDisplayNameConverter" />
+            <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <converters:StringIsNotNullOrEmptyConverter x:Key="StringIsNotNullOrEmptyConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <ScrollView Padding="20">
+        <VerticalStackLayout Spacing="30">
+
+            <!-- Welcome Header -->
+            <VerticalStackLayout Spacing="10" Margin="0,20,0,0">
+                <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=HeaderTitle}"
+                       FontSize="32"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       TextColor="{DynamicResource Primary}" />
+                
+                <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=HeaderSubtitle}"
+                       FontSize="18"
+                       HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+            </VerticalStackLayout>
+
+            <!-- Language Selection -->
+            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                   BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                   CornerRadius="10"
+                   Padding="20">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=LanguageSectionTitle}"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           TextColor="{DynamicResource Primary}" />
+                    
+                    <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=LanguageSectionDescription}"
+                           FontSize="14"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+                    
+                    <Picker ItemsSource="{Binding AvailableLanguages}"
+                            SelectedItem="{Binding SelectedLanguage}"
+                            ItemDisplayBinding="{Binding CultureCode, Converter={StaticResource CultureCodeToNativeNameConverter}}"
+                            FontSize="16"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}"
+                            TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Basic Ingredients Section -->
+            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                   BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                   CornerRadius="10"
+                   Padding="20">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=IngredientsSectionTitle}"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           TextColor="{DynamicResource Primary}" />
+                    
+                    <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=IngredientsSectionQuestion}"
+                           FontSize="14"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+                    
+                    <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=IngredientsSectionInfo}"
+                           FontSize="12"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
+                           Margin="0,5,0,10" />
+                    
+                    <VerticalStackLayout Spacing="10">
+                        <RadioButton Content="{loc:Translate Resource=SetupWizardPageResources, Key=IngredientsYes}"
+                                     IsChecked="{Binding InstallBasicIngredients}"
+                                     GroupName="IngredientsChoice"
+                                     FontSize="14"
+                                     TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                        
+                        <RadioButton Content="{loc:Translate Resource=SetupWizardPageResources, Key=IngredientsNo}"
+                                     IsChecked="{Binding InstallBasicIngredients, Converter={StaticResource InvertedBoolConverter}}"
+                                     GroupName="IngredientsChoice"
+                                     FontSize="14"
+                                     TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Status Message -->
+            <Label Text="{Binding StatusMessage}"
+                   FontSize="14"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center"
+                   TextColor="{DynamicResource Primary}"
+                   IsVisible="{Binding StatusMessage, Converter={StaticResource StringIsNotNullOrEmptyConverter}}"
+                   Margin="0,10,0,0" />
+
+            <!-- Complete Setup Button -->
+            <Button Text="{loc:Translate Resource=SetupWizardPageResources, Key=CompleteSetupButton}"
+                    Command="{Binding CompleteSetupCommand}"
+                    IsEnabled="{Binding IsCompleting, Converter={StaticResource InvertedBoolConverter}}"
+                    BackgroundColor="{DynamicResource Primary}"
+                    TextColor="{DynamicResource ButtonPrimaryText}"
+                    FontSize="18"
+                    FontAttributes="Bold"
+                    HeightRequest="50"
+                    CornerRadius="25"
+                    Margin="0,20,0,40" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

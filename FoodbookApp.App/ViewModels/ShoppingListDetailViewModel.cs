@@ -5,7 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Foodbook.Models;
-using Foodbook.Services;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.ViewModels;
 

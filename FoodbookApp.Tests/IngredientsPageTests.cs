@@ -1,7 +1,7 @@
 ﻿using FluentAssertions;
 using Foodbook.Models;
-using Foodbook.Services;
 using Foodbook.ViewModels;
+using FoodbookApp.Interfaces;
 using Microsoft.Maui.Controls;
 using Moq;
 

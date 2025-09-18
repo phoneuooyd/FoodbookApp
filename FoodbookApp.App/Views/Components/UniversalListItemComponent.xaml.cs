@@ -1,8 +1,11 @@
 using System.Windows.Input;
 using Foodbook.Views.Base;
+using Microsoft.Maui.Controls;
 
 namespace Foodbook.Views.Components
 {
+    public record DragDropInfo(object? Source, object? Target);
+
     public partial class UniversalListItemComponent : ContentView
     {
         public static readonly BindableProperty EditCommandProperty =
@@ -34,6 +37,29 @@ namespace Foodbook.Views.Components
 
         public static readonly BindableProperty ShowRestoreButtonProperty =
             BindableProperty.Create(nameof(ShowRestoreButton), typeof(bool), typeof(UniversalListItemComponent), false);
+
+        // Drag & Drop support
+        public static readonly BindableProperty ShowDragAndDropProperty =
+            BindableProperty.Create(nameof(ShowDragAndDrop), typeof(bool), typeof(UniversalListItemComponent), false);
+
+        public static readonly BindableProperty DragStartingCommandProperty =
+            BindableProperty.Create(nameof(DragStartingCommand), typeof(ICommand), typeof(UniversalListItemComponent));
+
+        public static readonly BindableProperty DragOverCommandProperty =
+            BindableProperty.Create(nameof(DragOverCommand), typeof(ICommand), typeof(UniversalListItemComponent));
+
+        public static readonly BindableProperty DragLeaveCommandProperty =
+            BindableProperty.Create(nameof(DragLeaveCommand), typeof(ICommand), typeof(UniversalListItemComponent));
+
+        public static readonly BindableProperty DropCommandProperty =
+            BindableProperty.Create(nameof(DropCommand), typeof(ICommand), typeof(UniversalListItemComponent));
+
+        // New: folder edit support
+        public static readonly BindableProperty FolderEditCommandProperty =
+            BindableProperty.Create(nameof(FolderEditCommand), typeof(ICommand), typeof(UniversalListItemComponent));
+
+        public static readonly BindableProperty ShowFolderEditButtonProperty =
+            BindableProperty.Create(nameof(ShowFolderEditButton), typeof(bool), typeof(UniversalListItemComponent), false);
 
         private readonly PageThemeHelper _themeHelper;
 
@@ -97,6 +123,48 @@ namespace Foodbook.Views.Components
             set => SetValue(ShowRestoreButtonProperty, value);
         }
 
+        public bool ShowDragAndDrop
+        {
+            get => (bool)GetValue(ShowDragAndDropProperty);
+            set => SetValue(ShowDragAndDropProperty, value);
+        }
+
+        public ICommand? DragStartingCommand
+        {
+            get => (ICommand?)GetValue(DragStartingCommandProperty);
+            set => SetValue(DragStartingCommandProperty, value);
+        }
+
+        public ICommand? DragOverCommand
+        {
+            get => (ICommand?)GetValue(DragOverCommandProperty);
+            set => SetValue(DragOverCommandProperty, value);
+        }
+
+        public ICommand? DragLeaveCommand
+        {
+            get => (ICommand?)GetValue(DragLeaveCommandProperty);
+            set => SetValue(DragLeaveCommandProperty, value);
+        }
+
+        public ICommand? DropCommand
+        {
+            get => (ICommand?)GetValue(DropCommandProperty);
+            set => SetValue(DropCommandProperty, value);
+        }
+
+        public ICommand? FolderEditCommand
+        {
+            get => (ICommand?)GetValue(FolderEditCommandProperty);
+            set => SetValue(FolderEditCommandProperty, value);
+        }
+
+        public bool ShowFolderEditButton
+        {
+            get => (bool)GetValue(ShowFolderEditButtonProperty);
+            set => SetValue(ShowFolderEditButtonProperty, value);
+        }
+
         public UniversalListItemComponent()
         {
             InitializeComponent();
@@ -115,6 +183,51 @@ namespace Foodbook.Views.Components
         private void OnComponentUnloaded(object? sender, EventArgs e)
         {
             _themeHelper.Cleanup();
+        }
+
+        // Handlers to forward gestures to bound commands
+        private void OnDragStarting(object? sender, DragStartingEventArgs e)
+        {
+            if (!ShowDragAndDrop) { e.Cancel = true; return; }
+
+            // Store source item in the drag data so it is available on drop
+            e.Data.Properties["SourceItem"] = BindingContext;
+            // RequestedOperation is not available in MAUI cross-platform DataPackage; skip
+
+            if (DragStartingCommand?.CanExecute(BindingContext) == true)
+            {
+                DragStartingCommand.Execute(BindingContext);
+            }
+        }
+
+        private void OnDragOver(object? sender, DragEventArgs e)
+        {
+            if (!ShowDragAndDrop) return;
+            if (DragOverCommand?.CanExecute(BindingContext) == true)
+            {
+                DragOverCommand.Execute(BindingContext);
+            }
+        }
+
+        private void OnDragLeave(object? sender, DragEventArgs e)
+        {
+            if (!ShowDragAndDrop) return;
+            if (DragLeaveCommand?.CanExecute(BindingContext) == true)
+            {
+                DragLeaveCommand.Execute(BindingContext);
+            }
+        }
+
+        private void OnDrop(object? sender, DropEventArgs e)
+        {
+            if (!ShowDragAndDrop) return;
+
+            e.Data.Properties.TryGetValue("SourceItem", out var source);
+            var payload = new DragDropInfo(source, BindingContext);
+            if (DropCommand?.CanExecute(payload) == true)
+            {
+                DropCommand.Execute(payload);
+            }
         }
     }
 }

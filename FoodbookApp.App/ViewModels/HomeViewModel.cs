@@ -1,11 +1,13 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using Foodbook.Services;
 using Foodbook.Models;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Microsoft.Maui.Controls;
 using FoodbookApp.Localization;
+using CommunityToolkit.Maui.Views;
+using CommunityToolkit.Maui.Extensions;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.ViewModels;
 
@@ -15,6 +17,8 @@ public class HomeViewModel : INotifyPropertyChanged
     private readonly IPlanService _planService;
     private readonly IPlannerService _plannerService;
     private readonly ILocalizationService _localizationService;
+    private bool _isRecipeIngredientsPopupOpen = false; // Protection against multiple opens
+    private bool _isMealsPopupOpen = false; // Protection against multiple opens for meals popup
 
     private int _recipeCount;
     public int RecipeCount
@@ -202,6 +206,8 @@ public class HomeViewModel : INotifyPropertyChanged
 
     // Commands
     public ICommand ShowRecipeIngredientsCommand { get; }
+    public ICommand ShowMealsPopupCommand { get; }
+    public ICommand ShowMealDetailsPopupCommand { get; }
     public ICommand ChangeNutritionPeriodCommand { get; }
     public ICommand ChangePlannedMealsPeriodCommand { get; }
 
@@ -218,7 +224,9 @@ public class HomeViewModel : INotifyPropertyChanged
         // Subscribe to plan change events (new/updated/archived plans or planned meals changes)
         Foodbook.Services.AppEvents.PlanChangedAsync += OnPlanChangedAsync;
         
-        ShowRecipeIngredientsCommand = new Command<PlannedMeal>(async (meal) => await ShowRecipeIngredientsAsync(meal));
+        ShowRecipeIngredientsCommand = new Command<PlannedMeal>(async (meal) => await ShowRecipeIngredientsAsync(meal), (meal) => !_isRecipeIngredientsPopupOpen);
+        ShowMealsPopupCommand = new Command(async () => await ShowMealsPopupAsync(), () => !_isMealsPopupOpen);
+        ShowMealDetailsPopupCommand = new Command<PlannedMeal>(async (meal) => await ShowMealDetailsPopupAsync(meal), (meal) => !_isMealsPopupOpen);
         ChangeNutritionPeriodCommand = new Command(async () => await ShowNutritionPeriodPickerAsync());
         ChangePlannedMealsPeriodCommand = new Command(async () => await ShowPlannedMealsPeriodPickerAsync());
     }
@@ -436,6 +444,9 @@ public class HomeViewModel : INotifyPropertyChanged
     /// </summary>
     private async Task ShowNutritionPeriodPickerAsync()
     {
+        var page = Application.Current?.MainPage;
+        if (page == null) return;
+
         var options = new List<string>
         {
             ButtonResources.Today,
@@ -451,7 +462,7 @@ public class HomeViewModel : INotifyPropertyChanged
         // RESTORED: Add custom date option back
         options.Add(ButtonResources.CustomDate);
 
-        var choice = await Application.Current.MainPage.DisplayActionSheet(
+        var choice = await page.DisplayActionSheet(
             "Wybierz okres dla statystyk", 
             "Anuluj", 
             null, 
@@ -476,15 +487,18 @@ public class HomeViewModel : INotifyPropertyChanged
 
     private async Task ShowPlanPickerAsync()
     {
+        var page = Application.Current?.MainPage;
+        if (page == null) return;
+
         if (!AvailablePlans.Any())
         {
-            await Application.Current.MainPage.DisplayAlert("Brak planów", "Nie ma dostêpnych planów do wyboru.", "OK");
+            await page.DisplayAlert("Brak planów", "Nie ma dostêpnych planów do wyboru.", "OK");
             return;
         }
 
         var planOptions = AvailablePlans.Select(p => $"{p.StartDate:dd.MM.yyyy} - {p.EndDate:dd.MM.yyyy}").ToArray();
         
-        var choice = await Application.Current.MainPage.DisplayActionSheet(
+        var choice = await page.DisplayActionSheet(
             "Wybierz plan", 
             "Anuluj", 
             null, 
@@ -511,11 +525,14 @@ public class HomeViewModel : INotifyPropertyChanged
     /// </summary>
     private async Task ShowCustomDateRangePickerAsync()
     {
+        var page = Application.Current?.MainPage;
+        if (page == null) return;
+
         try
         {
             // Simple input dialog approach for better reliability
-            var startDateInput = await Application.Current.MainPage.DisplayPromptAsync(
-                "?? Data pocz¹tkowa", 
+            var startDateInput = await page.DisplayPromptAsync(
+                "Data pocz¹tkowa", 
                 "Podaj datê pocz¹tkow¹ (dd.mm.yyyy):", 
                 "OK",
                 "Anuluj",
@@ -527,8 +544,8 @@ public class HomeViewModel : INotifyPropertyChanged
 
             if (DateTime.TryParseExact(startDateInput, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out var startDate))
             {
-                var endDateInput = await Application.Current.MainPage.DisplayPromptAsync(
-                    "?? Data koñcowa", 
+                var endDateInput = await page.DisplayPromptAsync(
+                    "Data koñcowa", 
                     "Podaj datê koñcow¹ (dd.mm.yyyy):", 
                     "OK",
                     "Anuluj",
@@ -549,30 +566,30 @@ public class HomeViewModel : INotifyPropertyChanged
                         // FORCE refresh after setting custom dates
                         await RefreshNutritionDataAsync();
                         
-                        await Application.Current.MainPage.DisplayAlert(
-                            "? Zakres ustawiony", 
+                        await page.DisplayAlert(
+                            "Zakres ustawiony", 
                             $"Filtr ustawiony na okres:\n{startDate:dd.MM.yyyy} - {endDate:dd.MM.yyyy}", 
                             "OK");
                     }
                     else
                     {
-                        await Application.Current.MainPage.DisplayAlert("? B³¹d", "Data koñcowa musi byæ póŸniejsza lub równa dacie pocz¹tkowej", "OK");
+                        await page.DisplayAlert("B³¹d", "Data koñcowa musi byæ póŸniejsza lub równa dacie pocz¹tkowej", "OK");
                     }
                 }
                 else
                 {
-                    await Application.Current.MainPage.DisplayAlert("? B³¹d", "Nieprawid³owy format daty koñcowej. U¿yj formatu dd.mm.yyyy", "OK");
+                    await page.DisplayAlert("B³¹d", "Nieprawid³owy format daty koñcowej. U¿yj formatu dd.mm.yyyy", "OK");
                 }
             }
             else
             {
-                await Application.Current.MainPage.DisplayAlert("? B³¹d", "Nieprawid³owy format daty pocz¹tkowej. U¿yj formatu dd.mm.yyyy", "OK");
+                await page.DisplayAlert("B³¹d", "Nieprawid³owy format daty pocz¹tkowej. U¿yj formatu dd.mm.yyyy", "OK");
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error showing custom date range picker: {ex.Message}");
-            await Application.Current.MainPage.DisplayAlert("? B³¹d", "Wyst¹pi³ b³¹d podczas ustawiania zakresu dat", "OK");
+            await page.DisplayAlert("B³¹d", "Wyst¹pi³ b³¹d podczas ustawiania zakresu dat", "OK");
         }
     }
 
@@ -645,19 +662,239 @@ public class HomeViewModel : INotifyPropertyChanged
         };
     }
 
+    // Restored helper used by LoadPlannedMealsAsync
+    private string GetDateLabel(DateTime date)
+    {
+        return date.ToString("dddd, dd.MM.yyyy");
+    }
+
+    // Restored helper used by ShowRecipeIngredientsAsync
+    private string GetUnitText(Unit unit)
+    {
+        return unit switch
+        {
+            Unit.Gram => FoodbookApp.Localization.UnitResources.GramShort,
+            Unit.Milliliter => FoodbookApp.Localization.UnitResources.MilliliterShort,
+            Unit.Piece => FoodbookApp.Localization.UnitResources.PieceShort,
+            _ => string.Empty
+        };
+    }
+
+    // Restored method for showing ingredients with protection
+    private async Task ShowRecipeIngredientsAsync(PlannedMeal meal)
+    {
+        // Protection against multiple opens
+        if (_isRecipeIngredientsPopupOpen)
+        {
+            System.Diagnostics.Debug.WriteLine("?? HomeViewModel: Recipe ingredients popup already open, ignoring request");
+            return;
+        }
+
+        if (meal?.Recipe == null)
+            return;
+
+        var page = Application.Current?.MainPage;
+        if (page == null) return;
+
+        try
+        {
+            _isRecipeIngredientsPopupOpen = true;
+            ((Command<PlannedMeal>)ShowRecipeIngredientsCommand).ChangeCanExecute();
+
+            System.Diagnostics.Debug.WriteLine($"?? HomeViewModel: Opening recipe ingredients popup for {meal.Recipe.Name}");
+
+            var fullRecipe = await _recipeService.GetRecipeAsync(meal.Recipe.Id);
+            if (fullRecipe == null)
+            {
+                await page.DisplayAlert("B³¹d", "Nie uda³o siê pobraæ przepisu.", "OK");
+                return;
+            }
+
+            var title = $"{fullRecipe.Name}";
+            if (meal.Portions != fullRecipe.IloscPorcji)
+            {
+                title += $" ({meal.Portions} porcji)";
+            }
+
+            var content = "";
+
+            if (fullRecipe.Ingredients != null && fullRecipe.Ingredients.Any())
+            {
+                content += "SK£ADNIKI:\n";
+                var ingredientsList = fullRecipe.Ingredients
+                    .Select(ing =>
+                    {
+                        var adjustedQuantity = (ing.Quantity * meal.Portions) / fullRecipe.IloscPorcji;
+                        var unitText = GetUnitText(ing.Unit);
+                        return $"• {ing.Name}: {adjustedQuantity:F1} {unitText}";
+                    })
+                    .ToList();
+                content += string.Join("\n", ingredientsList);
+            }
+            else
+            {
+                content += "SK£ADNIKI:\nBrak zdefiniowanych sk³adników.";
+            }
+
+            if (!string.IsNullOrWhiteSpace(fullRecipe.Description))
+            {
+                content += "\n\nSPOSÓB WYKONANIA:\n";
+                content += fullRecipe.Description;
+            }
+
+            await page.DisplayAlert(title, content, "OK");
+
+            System.Diagnostics.Debug.WriteLine($"? HomeViewModel: Recipe ingredients popup closed");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"? HomeViewModel: Error showing recipe ingredients: {ex.Message}");
+
+            if (ex.Message.Contains("PopupBlockedException") || ex.Message.Contains("blocked by the Modal Page"))
+            {
+                System.Diagnostics.Debug.WriteLine("?? HomeViewModel: Attempting to handle popup blocking");
+
+                try
+                {
+                    if (Application.Current?.MainPage?.Navigation?.ModalStack?.Count > 0)
+                    {
+                        await Application.Current.MainPage.Navigation.PopModalAsync(false);
+                    }
+                }
+                catch (Exception modalEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"?? HomeViewModel: Could not handle popup blocking: {modalEx.Message}");
+                }
+            }
+
+            await page.DisplayAlert("B³¹d", "Nie uda³o siê pobraæ szczegó³ów przepisu.", "OK");
+        }
+        finally
+        {
+            _isRecipeIngredientsPopupOpen = false;
+            ((Command<PlannedMeal>)ShowRecipeIngredientsCommand).ChangeCanExecute();
+            System.Diagnostics.Debug.WriteLine("?? HomeViewModel: Recipe ingredients popup protection released");
+        }
+    }
+
+    private async Task ShowMealDetailsPopupAsync(PlannedMeal meal)
+    {
+        if (_isMealsPopupOpen)
+        {
+            System.Diagnostics.Debug.WriteLine("?? HomeViewModel: Meals popup already open, ignoring request");
+            return;
+        }
+        if (meal?.Recipe == null) return;
+
+        var page = Application.Current?.MainPage;
+        if (page == null) return;
+
+        try
+        {
+            _isMealsPopupOpen = true;
+            ((Command)ShowMealsPopupCommand).ChangeCanExecute();
+            ((Command<PlannedMeal>)ShowMealDetailsPopupCommand).ChangeCanExecute();
+
+            // Fetch full recipe details
+            var fullRecipe = await _recipeService.GetRecipeAsync(meal.Recipe.Id);
+            if (fullRecipe == null) return;
+
+            var items = new List<object>();
+
+            // Date header
+            items.Add(new Views.Components.SimpleListPopup.SectionHeader { Text = GetDateLabel(meal.Date.Date) });
+
+            // Title
+            var title = meal.Portions != fullRecipe.IloscPorcji
+                ? $"{fullRecipe.Name} ({meal.Portions} porcji)"
+                : fullRecipe.Name;
+            items.Add(new Views.Components.SimpleListPopup.MealTitle { Text = title });
+
+            // Macro
+            var portionMultiplier = (double)meal.Portions / Math.Max(fullRecipe.IloscPorcji, 1);
+            items.Add(new Views.Components.SimpleListPopup.MacroRow
+            {
+                Calories = fullRecipe.Calories * portionMultiplier,
+                Protein = fullRecipe.Protein * portionMultiplier,
+                Fat = fullRecipe.Fat * portionMultiplier,
+                Carbs = fullRecipe.Carbs * portionMultiplier
+            });
+
+            // Ingredients
+            items.Add(new Views.Components.SimpleListPopup.SectionHeader { Text = "SK£ADNIKI" });
+            if (fullRecipe.Ingredients != null && fullRecipe.Ingredients.Any())
+            {
+                foreach (var ing in fullRecipe.Ingredients)
+                {
+                    var adjustedQuantity = (ing.Quantity * meal.Portions) / Math.Max(fullRecipe.IloscPorcji, 1);
+                    var unitText = GetUnitText(ing.Unit);
+                    items.Add($"{ing.Name}: {adjustedQuantity:F1} {unitText}");
+                }
+            }
+            else
+            {
+                items.Add("Brak zdefiniowanych sk³adników.");
+            }
+
+            // Description
+            if (!string.IsNullOrWhiteSpace(fullRecipe.Description))
+            {
+                items.Add(new Views.Components.SimpleListPopup.SectionHeader { Text = "SPOSÓB WYKONANIA" });
+                items.Add(new Views.Components.SimpleListPopup.Description { Text = fullRecipe.Description! });
+            }
+
+            var popup = new Views.Components.SimpleListPopup
+            {
+                TitleText = GetDateLabel(meal.Date.Date),
+                Items = items,
+                IsBulleted = true
+            };
+
+            System.Diagnostics.Debug.WriteLine("?? HomeViewModel: Opening single-meal details popup");
+            var showTask = page.ShowPopupAsync(popup);
+            var resultTask = popup.ResultTask;
+            await Task.WhenAny(showTask, resultTask);
+            var _ = resultTask.IsCompleted ? await resultTask : null;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"? HomeViewModel: Error showing meal details popup: {ex.Message}");
+            if (ex.Message.Contains("PopupBlockedException") || ex.Message.Contains("blocked by the Modal Page"))
+            {
+                try
+                {
+                    if (Application.Current?.MainPage?.Navigation?.ModalStack?.Count > 0)
+                        await Application.Current.MainPage.Navigation.PopModalAsync(false);
+                }
+                catch { }
+            }
+        }
+        finally
+        {
+            _isMealsPopupOpen = false;
+            ((Command)ShowMealsPopupCommand).ChangeCanExecute();
+            ((Command<PlannedMeal>)ShowMealDetailsPopupCommand).ChangeCanExecute();
+            System.Diagnostics.Debug.WriteLine("?? HomeViewModel: Meals popup protection released");
+        }
+    }
+
+    // Restored planned meals period picker
     private async Task ShowPlannedMealsPeriodPickerAsync()
     {
+        var page = Application.Current?.MainPage;
+        if (page == null) return;
+
         var options = new[]
         {
             ButtonResources.Today,
-            ButtonResources.ThisWeek, 
+            ButtonResources.ThisWeek,
             ButtonResources.CustomDate
         };
 
-        var choice = await Application.Current.MainPage.DisplayActionSheet(
-            "Wybierz okres dla zaplanowanych posi³ków", 
-            "Anuluj", 
-            null, 
+        var choice = await page.DisplayActionSheet(
+            "Wybierz okres dla zaplanowanych posi³ków",
+            "Anuluj",
+            null,
             options);
 
         switch (choice)
@@ -676,16 +913,19 @@ public class HomeViewModel : INotifyPropertyChanged
 
     private async Task ShowCustomPlannedMealsDateRangePickerAsync()
     {
-        var startDateInput = await Application.Current.MainPage.DisplayPromptAsync(
-            "Data pocz¹tkowa", 
-            "Podaj datê pocz¹tkow¹ (dd.mm.yyyy):", 
+        var page = Application.Current?.MainPage;
+        if (page == null) return;
+
+        var startDateInput = await page.DisplayPromptAsync(
+            "Data pocz¹tkowa",
+            "Podaj datê pocz¹tkow¹ (dd.mm.yyyy):",
             initialValue: PlannedMealsCustomStartDate.ToString("dd.MM.yyyy"));
 
         if (DateTime.TryParseExact(startDateInput, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out var startDate))
         {
-            var endDateInput = await Application.Current.MainPage.DisplayPromptAsync(
-                "Data koñcowa", 
-                "Podaj datê koñcow¹ (dd.mm.yyyy):", 
+            var endDateInput = await page.DisplayPromptAsync(
+                "Data koñcowa",
+                "Podaj datê koñcow¹ (dd.mm.yyyy):",
                 initialValue: PlannedMealsCustomEndDate.ToString("dd.MM.yyyy"));
 
             if (DateTime.TryParseExact(endDateInput, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out var endDate))
@@ -698,93 +938,120 @@ public class HomeViewModel : INotifyPropertyChanged
                 }
                 else
                 {
-                    await Application.Current.MainPage.DisplayAlert("B³¹d", "Data koñcowa musi byæ póŸniejsza ni¿ pocz¹tkowa", "OK");
+                    await page.DisplayAlert("B³¹d", "Data koñcowa musi byæ póŸniejsza ni¿ pocz¹tkowa", "OK");
                 }
             }
         }
     }
 
-    private async Task ShowRecipeIngredientsAsync(PlannedMeal meal)
+    private async Task ShowMealsPopupAsync()
     {
-        if (meal?.Recipe == null)
+        // Protection against multiple opens
+        if (_isMealsPopupOpen)
+        {
+            System.Diagnostics.Debug.WriteLine("?? HomeViewModel: Meals popup already open, ignoring request");
             return;
+        }
 
         try
         {
-            // Pobierz pe³ny przepis ze sk³adnikami z serwisu
-            var fullRecipe = await _recipeService.GetRecipeAsync(meal.Recipe.Id);
-            if (fullRecipe == null)
-            {
-                await Application.Current.MainPage.DisplayAlert(
-                    "B³¹d", 
-                    "Nie uda³o siê pobraæ przepisu.", 
-                    "OK");
-                return;
-            }
+            _isMealsPopupOpen = true;
+            ((Command)ShowMealsPopupCommand).ChangeCanExecute();
 
-            // Przygotuj nag³ówek
-            var title = $"{fullRecipe.Name}";
-            if (meal.Portions != fullRecipe.IloscPorcji)
-            {
-                title += $" ({meal.Portions} porcji)";
-            }
+            var page = Application.Current?.MainPage;
+            if (page == null) return;
 
-            // Przygotuj treœæ
-            var content = "";
-
-            // Dodaj sk³adniki jeœli istniej¹
-            if (fullRecipe.Ingredients != null && fullRecipe.Ingredients.Any())
+            var items = new List<object>();
+            foreach (var group in PlannedMealHistory)
             {
-                content += "SK£ADNIKI:\n";
-                var ingredientsList = fullRecipe.Ingredients
-                    .Select(ing => 
+                // Date section header
+                items.Add(new Views.Components.SimpleListPopup.SectionHeader { Text = group.DateLabel });
+
+                foreach (var meal in group.Meals)
+                {
+                    if (meal?.Recipe == null) continue;
+
+                    // Fetch full recipe details
+                    var fullRecipe = await _recipeService.GetRecipeAsync(meal.Recipe.Id);
+                    if (fullRecipe == null) continue;
+
+                    // Title (recipe name + portions)
+                    var title = meal.Portions != fullRecipe.IloscPorcji
+                        ? $"{fullRecipe.Name} ({meal.Portions} porcji)"
+                        : fullRecipe.Name;
+                    items.Add(new Views.Components.SimpleListPopup.MealTitle { Text = title });
+
+                    // Macro row scaled by portions
+                    var portionMultiplier = (double)meal.Portions / Math.Max(fullRecipe.IloscPorcji, 1);
+                    items.Add(new Views.Components.SimpleListPopup.MacroRow
                     {
-                        var adjustedQuantity = (ing.Quantity * meal.Portions) / fullRecipe.IloscPorcji;
-                        var unitText = GetUnitText(ing.Unit);
-                        return $"• {ing.Name}: {adjustedQuantity:F1} {unitText}";
-                    })
-                    .ToList();
-                content += string.Join("\n", ingredientsList);
-            }
-            else
-            {
-                content += "SK£ADNIKI:\nBrak zdefiniowanych sk³adników.";
+                        Calories = fullRecipe.Calories * portionMultiplier,
+                        Protein = fullRecipe.Protein * portionMultiplier,
+                        Fat = fullRecipe.Fat * portionMultiplier,
+                        Carbs = fullRecipe.Carbs * portionMultiplier
+                    });
+
+                    // Description (optional)
+                    if (!string.IsNullOrWhiteSpace(fullRecipe.Description))
+                    {
+                        items.Add(new Views.Components.SimpleListPopup.Description { Text = fullRecipe.Description! });
+                    }
+                }
+
+                // Spacer between days
+                items.Add(string.Empty);
             }
 
-            // Dodaj sposób wykonania jeœli istnieje
-            if (!string.IsNullOrWhiteSpace(fullRecipe.Description))
+            var popup = new Views.Components.SimpleListPopup
             {
-                content += "\n\nSPOSÓB WYKONANIA:\n";
-                content += fullRecipe.Description;
-            }
+                TitleText = "Zaplanowane posi³ki",
+                Items = items,
+                IsBulleted = false
+            };
 
-            await Application.Current.MainPage.DisplayAlert(title, content, "OK");
+            System.Diagnostics.Debug.WriteLine("?? HomeViewModel: Opening meals popup");
+
+            // Use CommunityToolkit popup extension method
+            var showTask = page.ShowPopupAsync(popup);
+            var resultTask = popup.ResultTask;
+            
+            // Wait for either the popup to be dismissed or a result to be set
+            await Task.WhenAny(showTask, resultTask);
+            
+            // Get the result (even though SimpleListPopup doesn't return meaningful data)
+            var result = resultTask.IsCompleted ? await resultTask : null;
+            
+            System.Diagnostics.Debug.WriteLine($"? HomeViewModel: Meals popup closed");
         }
         catch (Exception ex)
         {
-            await Application.Current.MainPage.DisplayAlert(
-                "B³¹d", 
-                "Nie uda³o siê pobraæ szczegó³ów przepisu.", 
-                "OK");
-            System.Diagnostics.Debug.WriteLine($"Error showing recipe ingredients: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"? HomeViewModel: Error showing meals popup: {ex.Message}");
+            
+            // Handle specific popup exception
+            if (ex.Message.Contains("PopupBlockedException") || ex.Message.Contains("blocked by the Modal Page"))
+            {
+                System.Diagnostics.Debug.WriteLine("?? HomeViewModel: Attempting to handle popup blocking");
+                
+                try
+                {
+                    // Try to dismiss any existing modal pages
+                    if (Application.Current?.MainPage?.Navigation?.ModalStack?.Count > 0)
+                    {
+                        await Application.Current.MainPage.Navigation.PopModalAsync(false);
+                    }
+                }
+                catch (Exception modalEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"?? HomeViewModel: Could not handle popup blocking: {modalEx.Message}");
+                }
+            }
         }
-    }
-
-    private string GetUnitText(Unit unit)
-    {
-        return unit switch
+        finally
         {
-            Unit.Gram => FoodbookApp.Localization.UnitResources.GramShort,
-            Unit.Milliliter => FoodbookApp.Localization.UnitResources.MilliliterShort, 
-            Unit.Piece => FoodbookApp.Localization.UnitResources.PieceShort,
-            _ => ""
-        };
-    }
-
-    private string GetDateLabel(DateTime date)
-    {
-        // Zawsze pokazuj datê zamiast s³ów "dzisiaj", "jutro"
-        return date.ToString("dddd, dd.MM.yyyy");
+            _isMealsPopupOpen = false;
+            ((Command)ShowMealsPopupCommand).ChangeCanExecute();
+            System.Diagnostics.Debug.WriteLine("?? HomeViewModel: Meals popup protection released");
+        }
     }
 
     /// <summary>

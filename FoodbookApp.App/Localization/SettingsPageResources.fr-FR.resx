@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Title" xml:space="preserve"><value>Parametres</value></data>
+  <data name="HeaderTitle" xml:space="preserve"><value>Parametres</value></data>
+  <data name="HeaderSubtitle" xml:space="preserve"><value>Personnalisez votre application</value></data>
+  <data name="ColorThemeTitle" xml:space="preserve"><value>Theme de couleur</value></data>
+  <data name="ColorThemeDescription" xml:space="preserve"><value>Palette de l application</value></data>
+  <data name="ColorfulBackgroundOption" xml:space="preserve"><value>Arriere-plan</value></data>
+  <data name="ColorThemeDefault" xml:space="preserve"><value>Defaut</value></data>
+  <data name="ColorThemeNature" xml:space="preserve"><value>Nature</value></data>
+  <data name="ColorThemeWarm" xml:space="preserve"><value>Chaud</value></data>
+  <data name="ColorThemeVibrant" xml:space="preserve"><value>Vif</value></data>
+  <data name="ColorThemeMonochrome" xml:space="preserve"><value>Monochrome</value></data>
+  <data name="ColorThemeNavy" xml:space="preserve"><value>Marine</value></data>
+  <data name="ColorThemeAutumn" xml:space="preserve"><value>Automne</value></data>
+  <data name="ColorThemeMint" xml:space="preserve"><value>Menthe</value></data>
+  <data name="ThemeTitle" xml:space="preserve"><value>Theme</value></data>
+  <data name="ThemeDescription" xml:space="preserve"><value>Clair / sombre</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>Clair</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>Sombre</value></data>
+  <data name="ThemeSystem" xml:space="preserve"><value>Syst?me</value></data>
+  <data name="LanguageTitle" xml:space="preserve"><value>Langue</value></data>
+  <data name="LanguageDescription" xml:space="preserve"><value>Langue de l interface</value></data>
+  <data name="LanguageEnglish" xml:space="preserve"><value>Anglais</value></data>
+  <data name="LanguagePolish" xml:space="preserve"><value>Polonais</value></data>
+  <data name="FontFamilyTitle" xml:space="preserve"><value>Police</value></data>
+  <data name="FontFamilyDescription" xml:space="preserve"><value>Police de texte</value></data>
+  <data name="FontFamilyDefault" xml:space="preserve"><value>Par defaut</value></data>
+  <data name="FontFamilySansSerif" xml:space="preserve"><value>Sans-serif</value></data>
+  <data name="FontFamilySerif" xml:space="preserve"><value>Serif</value></data>
+  <data name="FontFamilyMonospace" xml:space="preserve"><value>Monospace</value></data>
+  <data name="FontSizeTitle" xml:space="preserve"><value>Taille de police</value></data>
+  <data name="FontSizeDescription" xml:space="preserve"><value>Taille du texte</value></data>
+  <data name="FontSizeSmall" xml:space="preserve"><value>Petite</value></data>
+  <data name="FontSizeDefault" xml:space="preserve"><value>Defaut</value></data>
+  <data name="FontSizeLarge" xml:space="preserve"><value>Grande</value></data>
+  <data name="FontSizeExtraLarge" xml:space="preserve"><value>Tres grande</value></data>
+  <data name="VersionInfoTitle" xml:space="preserve"><value>Infos version</value></data>
+  <data name="VersionNumber" xml:space="preserve"><value>Version 1.0</value></data>
+  <data name="AuthorLabel" xml:space="preserve"><value>Auteur: Przemyslaw Przybyszewski</value></data>
+  <data name="RightsLabel" xml:space="preserve"><value>Tous droits reserves 2025</value></data>
+  <data name="AppName" xml:space="preserve"><value>FoodBook App</value></data>
+  <data name="DataExportTitle" xml:space="preserve"><value>Export des donnees</value></data>
+  <data name="DataExportDescription" xml:space="preserve"><value>Sauvegarder recettes et plans</value></data>
+  <data name="ComingSoon" xml:space="preserve"><value>Bientot</value></data>
+  <data name="DatabaseMigrationTitle" xml:space="preserve"><value>Migration de base de donnees</value></data>
+  <data name="DatabaseMigrationDescription" xml:space="preserve"><value>Mettre a jour la structure</value></data>
+  <data name="DatabaseMigrationButton" xml:space="preserve"><value>Executer la migration</value></data>
+  <data name="DatabaseResetTitle" xml:space="preserve"><value>Reinitialiser la base</value></data>
+  <data name="DatabaseResetDescription" xml:space="preserve"><value>Supprimer toutes les donnees</value></data>
+  <data name="DatabaseResetButton" xml:space="preserve"><value>Reinitialiser</value></data>
+  <data name="DatabaseResetWarning" xml:space="preserve"><value>Operation irreversible</value></data>
+</root>

@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<mct:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+           xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+           xmlns:mct="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui"
+           xmlns:converters="clr-namespace:Foodbook.Converters"
+           xmlns:loc="clr-namespace:Foodbook.Services"
+           x:Class="Foodbook.Views.Components.FolderAwarePickerPopup"
+           x:Name="ThisPopup"
+           CanBeDismissedByTappingOutsideOfPopup="True"
+           Padding="0"
+		   Margin="0">
+
+    <mct:Popup.Resources>
+        <ResourceDictionary>
+            <converters:ItemTypeToColorConverter x:Key="ItemTypeToColorConverter" />
+        </ResourceDictionary>
+    </mct:Popup.Resources>
+
+    <Border BackgroundColor="{DynamicResource PageBackgroundColor}"
+            StrokeShape="RoundRectangle 12"
+            StrokeThickness="1"
+            Stroke="{DynamicResource Secondary}"
+            MinimumWidthRequest="300"
+            MaximumWidthRequest="400"
+			MinimumHeightRequest="350"
+            MaximumHeightRequest="600">
+        
+        <Grid RowDefinitions="Auto,*,Auto">
+            
+            <!-- Header -->
+			<StackLayout Grid.Row="0"
+                        BackgroundColor="{DynamicResource ShellBackgroundColor}"
+
+                        Padding="12,10"
+						Margin="0,0">
+
+                <Grid ColumnDefinitions="Auto,*,Auto" Padding="6,6">
+                    <!-- Back button -->
+                    <Button Grid.Column="0"
+                            Text="←"
+                            FontSize="16"
+                            WidthRequest="32"
+                            HeightRequest="32"
+                            CornerRadius="16"
+                            BackgroundColor="Transparent"
+                            TextColor="{DynamicResource ShellTitleColor}"
+                            Command="{Binding BackCommand, Source={x:Reference ThisPopup}}"
+                            IsVisible="{Binding HasBreadcrumb, Source={x:Reference ThisPopup}}"
+                            Margin="0,0,8,0" />
+
+					<StackLayout Grid.Column="1" Orientation="Vertical" Spacing="4">
+                        <!-- Localized title -->
+						<Label FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource ShellTitleColor}">
+                            <Label.Text>
+                                <loc:Translate Resource="FolderResources" Key="ChooseRecipeTitle" />
+                            </Label.Text>
+                        </Label>
+
+						<Label Text="{Binding BreadcrumbText, Source={x:Reference ThisPopup}}"
+                               FontSize="14"
+                               TextColor="{DynamicResource SecondaryText}"
+                               IsVisible="{Binding HasBreadcrumb, Source={x:Reference ThisPopup}}" />
+					</StackLayout>
+
+                    <!-- Close button -->
+					<Button Grid.Column="2"
+                            Text="X"
+                            FontSize="16"
+                            WidthRequest="32"
+                            HeightRequest="32"
+                            CornerRadius="16"
+                            BackgroundColor="Transparent"
+                            TextColor="{DynamicResource ShellTitleColor}"
+                            Command="{Binding CloseCommand, Source={x:Reference ThisPopup}}" />
+				</Grid>
+			</StackLayout>
+            
+            <!-- Content -->
+            <ScrollView Grid.Row="1" 
+                        BackgroundColor="{DynamicResource PageBackgroundColor}"
+                        Padding="6,4"
+                        MaximumHeightRequest="600">
+                <StackLayout BindableLayout.ItemsSource="{Binding Items, Source={x:Reference ThisPopup}}"
+                             Spacing="8">
+                    
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="16,14"
+                                    Margin="2,4"
+                                    StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 8">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Style.Triggers>
+                                            <DataTrigger TargetType="Border" 
+                                                       Binding="{Binding ItemType}" 
+                                                       Value="Folder">
+                                                <Setter Property="BackgroundColor" Value="{DynamicResource FolderCardBackgroundColor}" />
+                                                <Setter Property="Stroke" Value="{DynamicResource FolderCardStrokeColor}" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Border" 
+                                                       Binding="{Binding ItemType}" 
+                                                       Value="Recipe">
+                                                <Setter Property="BackgroundColor" Value="{DynamicResource PageBackgroundColor}" />
+                                                <Setter Property="Stroke" Value="{DynamicResource Secondary}" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Border" 
+                                                       Binding="{Binding ItemType}" 
+                                                       Value="Navigation">
+                                                <Setter Property="BackgroundColor" Value="{DynamicResource FolderCardBackgroundColor}" />
+                                                <Setter Property="Stroke" Value="{DynamicResource FolderCardStrokeColor}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding TapCommand, Source={x:Reference ThisPopup}}"
+                                                        CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                                
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <!-- Icon -->
+                                    <Label Grid.Column="0"
+                                           Text="{Binding Icon}"
+                                           FontSize="18"
+                                           VerticalOptions="Center"
+                                           Margin="0,0,12,0"
+                                           IsVisible="{Binding HasIcon}"
+                                           TextColor="{DynamicResource PrimaryText}" />
+                                    
+                                    <!-- Content -->
+                                    <StackLayout Grid.Column="1" 
+                                               VerticalOptions="Center"
+                                               Spacing="3">
+                                        <Label Text="{Binding DisplayName}"
+                                               FontSize="17"
+                                               FontAttributes="{Binding FontAttributes}"
+                                               TextColor="{DynamicResource PrimaryText}"
+                                               LineBreakMode="TailTruncation" />
+                                        
+                                        <Label Text="{Binding Description}"
+                                               FontSize="13"
+                                               TextColor="{DynamicResource SecondaryText}"
+                                               IsVisible="{Binding HasDescription}"
+                                               LineBreakMode="TailTruncation" />
+                                    </StackLayout>
+                                    
+                                    <!-- Arrow for folders -->
+                                    <Label Grid.Column="2"
+                                           Text="&#8250;"
+                                           FontSize="20"
+                                           VerticalOptions="Center"
+                                           TextColor="{DynamicResource SecondaryText}"
+                                           IsVisible="{Binding ShowArrow}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                    
+                    <BindableLayout.EmptyView>
+                        <StackLayout Padding="0" 
+                                   Spacing="16"
+                                   VerticalOptions="CenterAndExpand"
+                                   HorizontalOptions="CenterAndExpand">
+                            <Label Text="📁"
+                                   FontSize="48"
+                                   HorizontalOptions="Center"
+                                   TextColor="{DynamicResource SecondaryText}" />
+                            <Label FontSize="16" HorizontalOptions="Center" TextColor="{DynamicResource PrimaryText}" HorizontalTextAlignment="Center">
+                                <Label.Text>
+                                    <loc:Translate Resource="FolderResources" Key="EmptyFolderTitle" />
+                                </Label.Text>
+                            </Label>
+                            <Label FontSize="14" HorizontalOptions="Center" TextColor="{DynamicResource SecondaryText}" HorizontalTextAlignment="Center">
+                                <Label.Text>
+                                    <loc:Translate Resource="FolderResources" Key="EmptyFolderHint" />
+                                </Label.Text>
+                            </Label>
+                        </StackLayout>
+                    </BindableLayout.EmptyView>
+                </StackLayout>
+            </ScrollView>
+            
+            <!-- Footer -->
+            <StackLayout Grid.Row="2"
+                        BackgroundColor="{DynamicResource ShellBackgroundColor}"
+                        Padding="6,4">
+                
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Grid.Column="0" FontSize="12" VerticalOptions="Center" TextColor="{DynamicResource SecondaryText}">
+                        <Label.Text>
+                            <loc:Translate Resource="FolderResources" Key="FooterHint" />
+                        </Label.Text>
+                    </Label>
+                    
+                    <Button Grid.Column="1"
+                            FontSize="14"
+                            BackgroundColor="Transparent"
+                            TextColor="{DynamicResource ShellTitleColor}"
+                            Command="{Binding CloseCommand, Source={x:Reference ThisPopup}}">
+                        <Button.Text>
+                            <loc:Translate Resource="ButtonResources" Key="Cancel" />
+                        </Button.Text>
+                    </Button>
+                </Grid>
+            </StackLayout>
+        </Grid>
+    </Border>
+</mct:Popup>

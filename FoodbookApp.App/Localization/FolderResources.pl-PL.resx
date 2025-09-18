@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="RenameFolderTitle" xml:space="preserve">
+    <value>Zmień nazwę folderu</value>
+  </data>
+  <data name="RenameFolderPrompt" xml:space="preserve">
+    <value>Podaj nową nazwę folderu</value>
+  </data>
+  <data name="EditDescriptionTitle" xml:space="preserve">
+    <value>Opis folderu</value>
+  </data>
+  <data name="EditDescriptionPrompt" xml:space="preserve">
+    <value>Podaj opis (opcjonalnie)</value>
+  </data>
+  <data name="ValidationNameRequired" xml:space="preserve">
+    <value>Nazwa nie może być pusta.</value>
+  </data>
+  <!-- FolderAwarePickerPopup -->
+  <data name="ChooseRecipeTitle" xml:space="preserve"><value>Wybierz przepis</value></data>
+  <data name="EmptyFolderTitle" xml:space="preserve"><value>Brak przepisów w tym folderze</value></data>
+  <data name="EmptyFolderHint" xml:space="preserve"><value>Dodaj przepisy lub przejdź do innego folderu</value></data>
+  <data name="FooterHint" xml:space="preserve"><value>Wybierz przepis lub przejdź do folderu</value></data>
+  <data name="Root" xml:space="preserve"><value>Katalog główny</value></data>
+</root>

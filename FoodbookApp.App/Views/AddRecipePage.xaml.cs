@@ -4,19 +4,20 @@ using Foodbook.ViewModels;
 using Foodbook.Models;
 using Foodbook.Views.Base;
 using System.Threading.Tasks;
+using Foodbook.Views.Components;
 
 namespace Foodbook.Views
 {
     [QueryProperty(nameof(RecipeId), "id")]
+    [QueryProperty(nameof(FolderId), "folderId")]
     public partial class AddRecipePage : ContentPage
     {
-        public IEnumerable<Foodbook.Models.Unit> Units => Enum.GetValues(typeof(Foodbook.Models.Unit)).Cast<Foodbook.Models.Unit>();
-
-        private AddRecipeViewModel ViewModel => BindingContext as AddRecipeViewModel;
+        private AddRecipeViewModel? ViewModel => BindingContext as AddRecipeViewModel;
         private readonly PageThemeHelper _themeHelper;
         
-        // ?? NOWE: Debouncing timer dla zmian wartoœci
         private IDispatcherTimer? _valueChangeTimer;
+        private bool _isInitialized;
+        private bool _hasEverLoaded;
 
         public AddRecipePage(AddRecipeViewModel vm)
         {
@@ -30,25 +31,39 @@ namespace Foodbook.Views
             try
             {
                 base.OnAppearing();
-                
-                // Initialize theme and font handling
                 _themeHelper.Initialize();
-                
-                // Zawsze resetuj stan ViewModelu na pocz¹tku
-                ViewModel?.Reset();
-                
-                await ViewModel.LoadAvailableIngredientsAsync();
-                
-                // Tylko jeœli mamy RecipeId > 0, za³aduj przepis do edycji
-                if (RecipeId > 0)
-                    await ViewModel.LoadRecipeAsync(RecipeId);
+                _themeHelper.ThemeChanged += OnThemeChanged;
+
+                if (!_hasEverLoaded)
+                {
+                    // First time loading - perform full initialization
+                    System.Diagnostics.Debug.WriteLine("?? AddRecipePage: First load - performing full initialization");
+                    
+                    ViewModel?.Reset();
+                    await (ViewModel?.LoadAvailableIngredientsAsync() ?? Task.CompletedTask);
+
+                    if (RecipeId > 0 && ViewModel != null)
+                        await ViewModel.LoadRecipeAsync(RecipeId);
+
+                    // If navigation passed FolderId, preselect it
+                    if (FolderId > 0 && ViewModel != null)
+                        ViewModel.SelectedFolderId = FolderId;
+                        
+                    _hasEverLoaded = true;
+                    _isInitialized = true;
+                }
+                else
+                {
+                    // Subsequent appearances (e.g., after popup close) - do not reset
+                    System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Skipping reset on re-appear");
+                }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in OnAppearing: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"B³¹d ³adowania strony: {ex.Message}";
+                    ViewModel.ValidationMessage = $"B??d ?adowania strony: {ex.Message}";
                 }
             }
         }
@@ -56,17 +71,36 @@ namespace Foodbook.Views
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
-            
-            // Cleanup theme and font handling
+            _themeHelper.ThemeChanged -= OnThemeChanged;
             _themeHelper.Cleanup();
+            
+            System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Disappearing - preserving current state");
+        }
+
+        private void OnThemeChanged(object? sender, EventArgs e)
+        {
+            try
+            {
+                if (ViewModel == null) return;
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    // Re-raise computed/bound properties so converter-based bindings recompute with new palette
+                    ViewModel.SelectedTabIndex = ViewModel.SelectedTabIndex; // updates Is*TabSelected
+                    ViewModel.IsManualMode = ViewModel.IsManualMode;         // updates IsImportMode
+                    ViewModel.UseCalculatedValues = ViewModel.UseCalculatedValues; // updates UseManualValues
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] OnThemeChanged error: {ex.Message}");
+            }
         }
 
         private int _recipeId;
-        public int RecipeId
-        {
-            get => _recipeId;
-            set => _recipeId = value;
-        }
+        public int RecipeId { get => _recipeId; set => _recipeId = value; }
+
+        private int _folderId;
+        public int FolderId { get => _folderId; set => _folderId = value; }
 
         protected override bool OnBackButtonPressed()
         {
@@ -97,7 +131,7 @@ namespace Foodbook.Views
                 System.Diagnostics.Debug.WriteLine($"Error in OnAutoModeClicked: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"B³¹d prze³¹czania trybu: {ex.Message}";
+                    ViewModel.ValidationMessage = $"B??d prze??czania trybu: {ex.Message}";
                 }
             }
         }
@@ -116,28 +150,26 @@ namespace Foodbook.Views
                 System.Diagnostics.Debug.WriteLine($"Error in OnManualModeClicked: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"B³¹d prze³¹czania trybu: {ex.Message}";
+                    ViewModel.ValidationMessage = $"B??d prze??czania trybu: {ex.Message}";
                 }
             }
         }
 
-        // ?? ZOPTYMALIZOWANE: Debounced przeliczenia z u¿yciem nowej async metody
         private void OnIngredientValueChanged(object sender, EventArgs e)
         {
             try
             {
-                // Anuluj poprzedni timer
                 _valueChangeTimer?.Stop();
-                
-                // Utwórz nowy timer z 500ms opóŸnieniem
-                _valueChangeTimer = Application.Current.Dispatcher.CreateTimer();
+                var dispatcher = Application.Current?.Dispatcher ?? this.Dispatcher;
+                _valueChangeTimer = dispatcher?.CreateTimer();
+                if (_valueChangeTimer == null) return;
+
                 _valueChangeTimer.Interval = TimeSpan.FromMilliseconds(500);
                 _valueChangeTimer.Tick += async (s, args) =>
                 {
                     try
                     {
                         _valueChangeTimer.Stop();
-                        // ?? U¿ywa nowej asynchronicznej metody
                         if (ViewModel != null)
                         {
                             await ViewModel.RecalculateNutritionalValuesAsync();
@@ -160,10 +192,26 @@ namespace Foodbook.Views
         {
             try
             {
-                if (sender is Picker picker && picker.BindingContext is Ingredient ingredient)
+                // Support both native Picker and custom SearchablePickerComponent
+                if (sender is Picker picker && picker.BindingContext is Ingredient ingredientFromPicker)
                 {
-                    // Aktualizuj wartoœci od¿ywcze sk³adnika na podstawie wybranej nazwy
-                    await ViewModel.UpdateIngredientNutritionalValuesAsync(ingredient);
+                    await (ViewModel?.UpdateIngredientNutritionalValuesAsync(ingredientFromPicker) ?? Task.CompletedTask);
+                    return;
+                }
+                if (sender is SearchablePickerComponent comp && comp.BindingContext is Ingredient ingredient)
+                {
+                    await (ViewModel?.UpdateIngredientNutritionalValuesAsync(ingredient) ?? Task.CompletedTask);
+                    return;
+                }
+                
+                // Alternative approach: try to get the ingredient from binding context of parent
+                if (sender is View element)
+                {
+                    var ingredientFromElement = element.BindingContext as Ingredient;
+                    if (ingredientFromElement != null)
+                    {
+                        await (ViewModel?.UpdateIngredientNutritionalValuesAsync(ingredientFromElement) ?? Task.CompletedTask);
+                    }
                 }
             }
             catch (Exception ex)
@@ -171,7 +219,7 @@ namespace Foodbook.Views
                 System.Diagnostics.Debug.WriteLine($"Error in OnIngredientNameChanged: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"B³¹d aktualizacji sk³adnika: {ex.Message}";
+                    ViewModel.ValidationMessage = $"B??d aktualizacji sk?adnika: {ex.Message}";
                 }
             }
         }

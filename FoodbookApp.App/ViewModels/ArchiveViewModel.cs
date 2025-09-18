@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Foodbook.Models;
-using Foodbook.Services;
+using FoodbookApp.Interfaces;
 using Microsoft.Maui.Controls;
 
 namespace Foodbook.ViewModels;

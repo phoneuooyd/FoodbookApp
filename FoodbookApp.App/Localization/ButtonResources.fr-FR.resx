@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="CustomDate" xml:space="preserve"><value>Date personnalisée</value></data>
+  <data name="ThisWeek" xml:space="preserve"><value>Cette semaine</value></data>
+  <data name="Today" xml:space="preserve"><value>Aujourd'hui</value></data>
+  <data name="Save" xml:space="preserve"><value>Enregistrer</value></data>
+  <data name="SaveChanges" xml:space="preserve"><value>Enregistrer les modifications</value></data>
+  <data name="AddRecipe" xml:space="preserve"><value>Ajouter une recette</value></data>
+  <data name="AddIngredient" xml:space="preserve"><value>Ajouter un ingrédient</value></data>
+  <data name="NewRecipe" xml:space="preserve"><value>Nouvelle recette</value></data>
+  <data name="EditRecipe" xml:space="preserve"><value>Modifier la recette</value></data>
+  <data name="NewIngredient" xml:space="preserve"><value>Nouvel ingrédient</value></data>
+  <data name="EditIngredient" xml:space="preserve"><value>Modifier l'ingrédient</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Annuler</value></data>
+</root>

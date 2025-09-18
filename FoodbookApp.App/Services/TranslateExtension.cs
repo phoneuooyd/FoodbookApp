@@ -6,6 +6,7 @@ using FoodbookApp;
 namespace Foodbook.Services;
 
 [ContentProperty(nameof(Key))]
+[AcceptEmptyServiceProvider] // This markup extension does not require IServiceProvider
 public class TranslateExtension : BindableObject, IMarkupExtension<BindingBase>
 {
     public static readonly BindableProperty KeyProperty = BindableProperty.Create(nameof(Key), typeof(string), typeof(TranslateExtension), null, propertyChanged: (b,o,n) => ((TranslateExtension)b).OnTranslatedValueChanged());

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.ComponentModel;
 using System.Windows.Input;
 using Foodbook.Views.Base;
 
@@ -12,12 +13,13 @@ namespace Foodbook.Views.Components
         public static readonly BindableProperty ItemTemplateProperty =
             BindableProperty.Create(nameof(ItemTemplate), typeof(DataTemplate), typeof(GenericListComponent));
 
+        // Re-introduced as no-op bindable properties for compatibility with existing XAML usages
         public static readonly BindableProperty IsRefreshingProperty =
             BindableProperty.Create(nameof(IsRefreshing), typeof(bool), typeof(GenericListComponent), false);
 
         public static readonly BindableProperty RefreshCommandProperty =
             BindableProperty.Create(nameof(RefreshCommand), typeof(ICommand), typeof(GenericListComponent));
-
+        
         public static readonly BindableProperty EmptyTitleProperty =
             BindableProperty.Create(nameof(EmptyTitle), typeof(string), typeof(GenericListComponent), "No items found");
 
@@ -26,6 +28,10 @@ namespace Foodbook.Views.Components
 
         public static readonly BindableProperty IsVisibleProperty =
             BindableProperty.Create(nameof(IsVisible), typeof(bool), typeof(GenericListComponent), true);
+
+        // Kept for compatibility but no longer used internally
+        public static readonly BindableProperty DisableRefreshWhenEmptyProperty =
+            BindableProperty.Create(nameof(DisableRefreshWhenEmpty), typeof(bool), typeof(GenericListComponent), true);
 
         private readonly PageThemeHelper _themeHelper;
 
@@ -41,6 +47,7 @@ namespace Foodbook.Views.Components
             set => SetValue(ItemTemplateProperty, value);
         }
 
+        // No-op properties so bindings compile but have no effect
         public bool IsRefreshing
         {
             get => (bool)GetValue(IsRefreshingProperty);
@@ -71,12 +78,17 @@ namespace Foodbook.Views.Components
             set => SetValue(IsVisibleProperty, value);
         }
 
+        public bool DisableRefreshWhenEmpty
+        {
+            get => (bool)GetValue(DisableRefreshWhenEmptyProperty);
+            set => SetValue(DisableRefreshWhenEmptyProperty, value);
+        }
+
         public GenericListComponent()
         {
             InitializeComponent();
             _themeHelper = new PageThemeHelper();
             
-            // Initialize theme handling when component is loaded
             Loaded += OnComponentLoaded;
             Unloaded += OnComponentUnloaded;
         }
@@ -90,5 +102,23 @@ namespace Foodbook.Views.Components
         {
             _themeHelper.Cleanup();
         }
+
+        private bool IsItemsSourceEmpty()
+        {
+            try
+            {
+                var enumerable = ItemsSource;
+                if (enumerable == null) return true;
+                var enumerator = enumerable.GetEnumerator();
+                using (enumerator as IDisposable)
+                {
+                    return !enumerator.MoveNext();
+                }
+            }
+            catch { return true; }
+        }
+
+        // Backwards-compat method: no-op now
+        public void RequestStopRefreshing() { }
     }
 }

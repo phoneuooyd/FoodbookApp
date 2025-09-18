@@ -1,0 +1,15 @@
+<linker>
+  <!-- EF Core model metadata is generally needed at runtime due to reflection -->
+  <assembly fullname="Microsoft.EntityFrameworkCore" preserve="all" />
+  <assembly fullname="Microsoft.EntityFrameworkCore.Relational" preserve="all" />
+  <assembly fullname="Microsoft.EntityFrameworkCore.Sqlite" preserve="all" />
+
+  <!-- Newtonsoft.Json dynamic contract resolution -->
+  <assembly fullname="Newtonsoft.Json" preserve="all" />
+
+  <!-- Microsoft.CSharp is used by 'dynamic' runtime binder -->
+  <assembly fullname="Microsoft.CSharp" preserve="all" />
+
+  <!-- Preserve resource-based localization (resx) -->
+  <assembly fullname="FoodbookApp" preserve="resources" />
+</linker>
