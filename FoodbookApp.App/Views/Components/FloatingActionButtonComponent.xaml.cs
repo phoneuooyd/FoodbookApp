@@ -33,7 +33,8 @@ namespace Foodbook.Views.Components
     {
         public static readonly BindableProperty CommandProperty = BindableProperty.Create(
             nameof(Command), typeof(ICommand), typeof(FloatingActionButtonComponent), propertyChanged: OnComponentCommandChanged);
-        public static readonly BindableProperty ButtonTextProperty = BindableProperty.Create(nameof(ButtonText), typeof(string), typeof(FloatingActionButtonComponent), "+");
+        public static readonly BindableProperty ButtonTextProperty = BindableProperty.Create(
+            nameof(ButtonText), typeof(string), typeof(FloatingActionButtonComponent), "+", propertyChanged: OnButtonTextChanged);
         public static readonly BindableProperty IsVisibleProperty = BindableProperty.Create(nameof(IsVisible), typeof(bool), typeof(FloatingActionButtonComponent), true);
         public static readonly BindableProperty IsExpandableProperty = BindableProperty.Create(nameof(IsExpandable), typeof(bool), typeof(FloatingActionButtonComponent), false, propertyChanged: OnIsExpandableChanged);
         public static readonly BindableProperty ActionsProperty = BindableProperty.Create(
@@ -47,6 +48,7 @@ namespace Foodbook.Views.Components
         private BoxView? _overlay;
         private VerticalStackLayout? _actionsStack;
         private Button? _mainFab;
+        private Label? _iconLabel; // overlay icon to rotate without affecting layout
 
         public ICommand Command { get => (ICommand)GetValue(CommandProperty); set => SetValue(CommandProperty, value); }
         public string ButtonText { get => (string)GetValue(ButtonTextProperty); set => SetValue(ButtonTextProperty, value); }
@@ -97,9 +99,18 @@ namespace Foodbook.Views.Components
             };
             anchor.Add(_actionsStack);
 
+            // Fixed-size container to avoid layout shifts when animating the icon
+            var fabContainer = new Grid
+            {
+                WidthRequest = 56,
+                HeightRequest = 56,
+                HorizontalOptions = LayoutOptions.End,
+                VerticalOptions = LayoutOptions.End
+            };
+
             _mainFab = new Button
             {
-                Text = ButtonText,
+                Text = string.Empty, // icon will be rendered by overlay label to allow rotation without layout changes
                 CornerRadius = 24,
                 WidthRequest = 56,
                 HeightRequest = 56,
@@ -113,9 +124,39 @@ namespace Foodbook.Views.Components
             if (Application.Current?.Resources.TryGetValue("FloatingActionButton", out var styleObj) == true && styleObj is Style style)
             {
                 _mainFab.Style = style;
+                _mainFab.Text = string.Empty; // ensure style's default "+" doesn't show
+                // Force centering within container, overriding style's End alignment and margin
+                _mainFab.HorizontalOptions = LayoutOptions.Center;
+                _mainFab.VerticalOptions = LayoutOptions.Center;
+                _mainFab.Margin = new Thickness(0);
+            }
+            else
+            {
+                _mainFab.HorizontalOptions = LayoutOptions.Center;
+                _mainFab.VerticalOptions = LayoutOptions.Center;
+                _mainFab.Margin = new Thickness(0);
             }
             _mainFab.Clicked += OnMainFabClicked;
-            anchor.Add(_mainFab);
+
+            // Overlay icon label centered within the container
+            _iconLabel = new Label
+            {
+                Text = ButtonText,
+                HorizontalOptions = LayoutOptions.Center,
+                VerticalOptions = LayoutOptions.Center,
+                HorizontalTextAlignment = TextAlignment.Center,
+                VerticalTextAlignment = TextAlignment.Center,
+                FontSize = 24,
+                FontAttributes = FontAttributes.Bold,
+                InputTransparent = true,
+                Margin = new Thickness(0)
+            };
+            _iconLabel.SetDynamicResource(Label.TextColorProperty, "ButtonPrimaryText");
+
+            fabContainer.Add(_mainFab);
+            fabContainer.Add(_iconLabel);
+
+            anchor.Add(fabContainer);
 
             root.Add(anchor);
             Content = root;
@@ -129,12 +170,47 @@ namespace Foodbook.Views.Components
         private void OnComponentLoaded(object? sender, EventArgs e)
         {
             _themeHelper.Initialize();
+            _themeHelper.ThemeChanged += OnThemeChanged;
             AttachActions();
             BuildActions();
+            // Sync icon text with ButtonText on load
+            if (_iconLabel != null) _iconLabel.Text = ButtonText;
             // Ensure correct command hookup on load
             UpdateMainButtonCommandBinding();
         }
-        private void OnComponentUnloaded(object? sender, EventArgs e) => _themeHelper.Cleanup();
+        private void OnComponentUnloaded(object? sender, EventArgs e)
+        {
+            _themeHelper.ThemeChanged -= OnThemeChanged;
+            _themeHelper.Cleanup();
+        }
+
+        private void OnThemeChanged(object? sender, EventArgs e)
+        {
+            try
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    // Reapply style and dynamic resources to ensure color refresh
+                    if (_mainFab != null)
+                    {
+                        _mainFab.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
+                        _mainFab.SetDynamicResource(Button.TextColorProperty, "ButtonPrimaryText");
+                        if (Application.Current?.Resources.TryGetValue("FloatingActionButton", out var styleObj) == true && styleObj is Style style)
+                        {
+                            _mainFab.Style = style;
+                        }
+                    }
+                    if (_iconLabel != null)
+                    {
+                        _iconLabel.SetDynamicResource(Label.TextColorProperty, "ButtonPrimaryText");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FAB] Error applying theme: {ex.Message}");
+            }
+        }
 
         private static void OnIsExpandableChanged(BindableObject bindable, object oldValue, object newValue)
         {
@@ -151,6 +227,13 @@ namespace Foodbook.Views.Components
             if (bindable is FloatingActionButtonComponent fab)
             {
                 fab.UpdateMainButtonCommandBinding();
+            }
+        }
+        private static void OnButtonTextChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (bindable is FloatingActionButtonComponent fab && fab._iconLabel != null)
+            {
+                fab._iconLabel.Text = newValue as string ?? "+";
             }
         }
 
@@ -245,14 +328,14 @@ namespace Foodbook.Views.Components
             _isExpanded = true;
             if (_overlay != null) _overlay.IsVisible = true;
             if (_actionsStack != null) _actionsStack.IsVisible = true;
-            var rotate = _mainFab?.RotateTo(45, 150, Easing.CubicIn) ?? Task.CompletedTask;
+            var rotate = _iconLabel?.RotateTo(45, 150, Easing.CubicIn) ?? Task.CompletedTask; // rotate icon only to avoid layout shift
             var fade = _actionsStack != null ? _actionsStack.FadeTo(1, 150, Easing.CubicIn) : Task.CompletedTask;
             await Task.WhenAll(rotate, fade);
         }
         private async Task CollapseAsync()
         {
             _isExpanded = false;
-            var rotate = _mainFab?.RotateTo(0, 150, Easing.CubicOut) ?? Task.CompletedTask;
+            var rotate = _iconLabel?.RotateTo(0, 150, Easing.CubicOut) ?? Task.CompletedTask; // rotate icon only
             var fade = _actionsStack != null ? _actionsStack.FadeTo(0, 150, Easing.CubicOut) : Task.CompletedTask;
             await Task.WhenAll(rotate, fade);
             if (_actionsStack != null) _actionsStack.IsVisible = false; if (_overlay != null) _overlay.IsVisible = false;

@@ -46,6 +46,11 @@ namespace Foodbook.Views.Base
                     {
                         _localizationService.CultureChanged += OnLocalizationCultureChanged;
                     }
+
+                    if (_themeService != null)
+                    {
+                        _themeService.ThemeChanged += OnThemeChanged;
+                    }
                 }
             }
             catch (Exception ex)
@@ -73,6 +78,11 @@ namespace Foodbook.Views.Base
                 {
                     _localizationService.CultureChanged -= OnLocalizationCultureChanged;
                 }
+
+                if (_themeService != null)
+                {
+                    _themeService.ThemeChanged -= OnThemeChanged;
+                }
             }
             catch (Exception ex)
             {
@@ -80,6 +90,21 @@ namespace Foodbook.Views.Base
             }
 
             _disposed = true;
+        }
+
+        private void OnThemeChanged(object? sender, EventArgs e)
+        {
+            try
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    ThemeChanged?.Invoke(this, EventArgs.Empty);
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PageThemeHelper] Error in OnThemeChanged: {ex.Message}");
+            }
         }
 
         private void OnFontSettingsChanged(object? sender, FontSettingsChangedEventArgs e)

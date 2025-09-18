@@ -5,6 +5,11 @@ namespace FoodbookApp.Interfaces
     public interface IThemeService
     {
         /// <summary>
+        /// Raised after theme or color palette is applied to application resources
+        /// </summary>
+        event EventHandler? ThemeChanged;
+
+        /// <summary>
         /// Sets the application theme
         /// </summary>
         /// <param name="theme">The theme to apply</param>

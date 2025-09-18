@@ -32,6 +32,7 @@ namespace Foodbook.Views
             {
                 base.OnAppearing();
                 _themeHelper.Initialize();
+                _themeHelper.ThemeChanged += OnThemeChanged;
 
                 if (!_hasEverLoaded)
                 {
@@ -62,7 +63,7 @@ namespace Foodbook.Views
                 System.Diagnostics.Debug.WriteLine($"Error in OnAppearing: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"B³¹d ³adowania strony: {ex.Message}";
+                    ViewModel.ValidationMessage = $"B??d ?adowania strony: {ex.Message}";
                 }
             }
         }
@@ -70,9 +71,29 @@ namespace Foodbook.Views
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
+            _themeHelper.ThemeChanged -= OnThemeChanged;
             _themeHelper.Cleanup();
             
             System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Disappearing - preserving current state");
+        }
+
+        private void OnThemeChanged(object? sender, EventArgs e)
+        {
+            try
+            {
+                if (ViewModel == null) return;
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    // Re-raise computed/bound properties so converter-based bindings recompute with new palette
+                    ViewModel.SelectedTabIndex = ViewModel.SelectedTabIndex; // updates Is*TabSelected
+                    ViewModel.IsManualMode = ViewModel.IsManualMode;         // updates IsImportMode
+                    ViewModel.UseCalculatedValues = ViewModel.UseCalculatedValues; // updates UseManualValues
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] OnThemeChanged error: {ex.Message}");
+            }
         }
 
         private int _recipeId;
@@ -110,7 +131,7 @@ namespace Foodbook.Views
                 System.Diagnostics.Debug.WriteLine($"Error in OnAutoModeClicked: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"B³¹d prze³¹czania trybu: {ex.Message}";
+                    ViewModel.ValidationMessage = $"B??d prze??czania trybu: {ex.Message}";
                 }
             }
         }
@@ -129,7 +150,7 @@ namespace Foodbook.Views
                 System.Diagnostics.Debug.WriteLine($"Error in OnManualModeClicked: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"B³¹d prze³¹czania trybu: {ex.Message}";
+                    ViewModel.ValidationMessage = $"B??d prze??czania trybu: {ex.Message}";
                 }
             }
         }
@@ -198,7 +219,7 @@ namespace Foodbook.Views
                 System.Diagnostics.Debug.WriteLine($"Error in OnIngredientNameChanged: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"B³¹d aktualizacji sk³adnika: {ex.Message}";
+                    ViewModel.ValidationMessage = $"B??d aktualizacji sk?adnika: {ex.Message}";
                 }
             }
         }

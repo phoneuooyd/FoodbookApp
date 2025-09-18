@@ -135,19 +135,19 @@
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
                             <StackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
                                 <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=CaloriesLabel}" Style="{StaticResource FieldLabel}" />
-                                <Label Text="{Binding CalculatedCalories}" FontSize="16" HorizontalTextAlignment="Center" BackgroundColor="LightGray" Padding="10" TextColor="Black" />
+                                <Label Text="{Binding CalculatedCalories}" FontSize="16" HorizontalTextAlignment="Center" BackgroundColor="{DynamicResource FrameBackgroundColor}" Padding="10" TextColor="{DynamicResource FrameTextColor}" />
                             </StackLayout>
                             <StackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
                                 <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=ProteinLabel}" Style="{StaticResource FieldLabel}" />
-                                <Label Text="{Binding CalculatedProtein}" FontSize="16" HorizontalTextAlignment="Center" BackgroundColor="LightGray" Padding="10" TextColor="Black" />
+                                <Label Text="{Binding CalculatedProtein}" FontSize="16" HorizontalTextAlignment="Center" BackgroundColor="{DynamicResource FrameBackgroundColor}" Padding="10" TextColor="{DynamicResource FrameTextColor}" />
                             </StackLayout>
                             <StackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
                                 <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=FatLabel}" Style="{StaticResource FieldLabel}" />
-                                <Label Text="{Binding CalculatedFat}" FontSize="16" HorizontalTextAlignment="Center" BackgroundColor="LightGray" Padding="10" TextColor="Black" />
+                                <Label Text="{Binding CalculatedFat}" FontSize="16" HorizontalTextAlignment="Center" BackgroundColor="{DynamicResource FrameBackgroundColor}" Padding="10" TextColor="{DynamicResource FrameTextColor}" />
                             </StackLayout>
                             <StackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
                                 <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=CarbsLabel}" Style="{StaticResource FieldLabel}" />
-                                <Label Text="{Binding CalculatedCarbs}" FontSize="16" HorizontalTextAlignment="Center" BackgroundColor="LightGray" Padding="10" TextColor="Black" />
+                                <Label Text="{Binding CalculatedCarbs}" FontSize="16" HorizontalTextAlignment="Center" BackgroundColor="{DynamicResource FrameBackgroundColor}" Padding="10" TextColor="{DynamicResource FrameTextColor}" />
                             </StackLayout>
                         </Grid>
                     </StackLayout>

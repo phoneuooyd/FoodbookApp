@@ -26,6 +26,7 @@ public partial class IngredientFormPage : ContentPage
         
         // Initialize theme and font handling
         _themeHelper.Initialize();
+        _themeHelper.ThemeChanged += OnThemeChanged;
     }
 
     protected override void OnDisappearing()
@@ -33,7 +34,25 @@ public partial class IngredientFormPage : ContentPage
         base.OnDisappearing();
         
         // Cleanup theme and font handling
+        _themeHelper.ThemeChanged -= OnThemeChanged;
         _themeHelper.Cleanup();
+    }
+
+    private void OnThemeChanged(object? sender, EventArgs e)
+    {
+        try
+        {
+            if (ViewModel == null) return;
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                // Re-raise properties so BoolToColorConverter bindings recompute with new palette
+                ViewModel.SelectedTabIndex = ViewModel.SelectedTabIndex; // updates Is*TabSelected
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] OnThemeChanged error: {ex.Message}");
+        }
     }
 
     private int _itemId;

@@ -13,6 +13,8 @@ namespace Foodbook.Services
 {
     public class ThemeService : IThemeService
     {
+        public event EventHandler? ThemeChanged;
+
         private Foodbook.Models.AppTheme _currentTheme = Foodbook.Models.AppTheme.System;
         private AppColorTheme _currentColorTheme = AppColorTheme.Default;
         private bool _isColorfulBackgroundEnabled = false; // NEW: colorful background option
@@ -266,6 +268,9 @@ namespace Foodbook.Services
                 app.Resources["ShellBackgroundColor"] = shellTitleBg;
 
                 ApplySystemBars(shellTitleBg);
+
+                // Raise ThemeChanged so components can refresh if they need custom handling
+                ThemeChanged?.Invoke(this, EventArgs.Empty);
                 
                 System.Diagnostics.Debug.WriteLine($"[ThemeService] Applied color theme {colorTheme} with colorful background: {_isColorfulBackgroundEnabled}");
             }
