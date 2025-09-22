@@ -1,13 +1,18 @@
 using CommunityToolkit.Maui.Views;
+using Foodbook.Services;
+using FoodbookApp.Interfaces;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
 using System.Windows.Input;
+using Microsoft.Extensions.DependencyInjection; // for GetService
+using FoodbookApp; // to access MauiProgram.ServiceProvider
 
 namespace Foodbook.Views.Components;
 
 public partial class SimpleListPopup : Popup
 {
     private readonly TaskCompletionSource<object?> _tcs = new();
+    private IThemeService? _themeService;
     public Task<object?> ResultTask => _tcs.Task;
 
     public static readonly BindableProperty TitleTextProperty =
@@ -54,6 +59,14 @@ public partial class SimpleListPopup : Popup
     public SimpleListPopup()
     {
         CloseCommand = new Command(async () => await CloseWithResultAsync(null));
+
+        // Resolve theme service from DI if available
+        try
+        {
+            _themeService = MauiProgram.ServiceProvider?.GetService<IThemeService>();
+        }
+        catch { /* ignore and keep null -> we'll fallback in BuildItems */ }
+
         InitializeComponent();
         Loaded += (_, __) => BuildItems();
     }
@@ -81,20 +94,50 @@ public partial class SimpleListPopup : Popup
             var primaryTextRes = app?.Resources.TryGetValue("PrimaryText", out var v1) == true && v1 is Color c1 ? c1 : Colors.Black;
             var secondaryTextRes = app?.Resources.TryGetValue("SecondaryText", out var v2) == true && v2 is Color c2 ? c2 : Colors.Gray;
 
-            // In dark mode, use dark foregrounds to improve contrast against light-tinted popup backgrounds
-            var contentPrimary = isDark ? Colors.Black : primaryTextRes;
-            var contentSecondary = isDark ? Color.FromArgb("#333333") : secondaryTextRes;
+            // proper font colour setting for darkmode and tint mode (null-safe when _themeService is not yet resolved)
+            var isColorful = _themeService?.GetIsColorfulBackgroundEnabled() == true;
+
+            var contentPrimary = !isColorful
+                ? (isDark ? Colors.White : primaryTextRes)
+                : (isDark ? Colors.Black : primaryTextRes);
+
+            var contentSecondary = !isColorful
+                ? (isDark ? Color.FromArgb("#858585") : secondaryTextRes)
+                : (isDark ? Color.FromArgb("#000000") : secondaryTextRes);
 
             foreach (var obj in data)
             {
+                // Skip duplicating the header (day + date) inside the item list
+                if (IsDuplicateHeaderItem(obj))
+                    continue;
+
                 var view = CreateViewForItem(obj, contentPrimary, contentSecondary);
                 if (view != null)
                     host.Children.Add(view);
             }
+
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error building SimpleListPopup items: {ex.Message}");
+        }
+    }
+
+    private bool IsDuplicateHeaderItem(object obj)
+    {
+        var title = TitleText?.Trim();
+        if (string.IsNullOrWhiteSpace(title)) return false;
+
+        switch (obj)
+        {
+            case MealTitle mt when !string.IsNullOrWhiteSpace(mt.Text):
+                return string.Equals(mt.Text.Trim(), title, StringComparison.CurrentCultureIgnoreCase);
+            case string s when !string.IsNullOrWhiteSpace(s):
+                return string.Equals(s.Trim(), title, StringComparison.CurrentCultureIgnoreCase);
+            case SectionHeader sh when !string.IsNullOrWhiteSpace(sh.Text):
+                return string.Equals(sh.Text.Trim(), title, StringComparison.CurrentCultureIgnoreCase);
+            default:
+                return false;
         }
     }
 
