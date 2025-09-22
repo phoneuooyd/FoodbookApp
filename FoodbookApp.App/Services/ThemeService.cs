@@ -384,6 +384,38 @@ namespace Foodbook.Services
                     PrimaryLight = Color.FromArgb("#00ACC1"), SecondaryLight = Color.FromArgb("#E0F7FA"), TertiaryLight = Color.FromArgb("#006064"), AccentLight = Color.FromArgb("#26C6DA"),
                     PrimaryDark = Color.FromArgb("#4DD0E1"), SecondaryDark = Color.FromArgb("#26C6DA"), TertiaryDark = Color.FromArgb("#00BCD4"), AccentDark = Color.FromArgb("#4DD0E1"),
                     PrimaryTextLight = Color.FromArgb("#006064"), SecondaryTextLight = Color.FromArgb("#00838F"), PrimaryTextDark = Color.FromArgb("#E0F7FA"), SecondaryTextDark = Color.FromArgb("#B2EBF2")
+                },
+                // NEW: Forest Theme (Ciemnozielony)
+                [AppColorTheme.Forest] = new ThemeColors
+                {
+                    Name = "Forest",
+                    PrimaryLight = Color.FromArgb("#1B5E20"), SecondaryLight = Color.FromArgb("#E8F5E9"), TertiaryLight = Color.FromArgb("#2E7D32"), AccentLight = Color.FromArgb("#388E3C"),
+                    PrimaryDark = Color.FromArgb("#66BB6A"), SecondaryDark = Color.FromArgb("#43A047"), TertiaryDark = Color.FromArgb("#388E3C"), AccentDark = Color.FromArgb("#81C784"),
+                    PrimaryTextLight = Color.FromArgb("#1B5E20"), SecondaryTextLight = Color.FromArgb("#2E7D32"), PrimaryTextDark = Color.FromArgb("#E8F5E9"), SecondaryTextDark = Color.FromArgb("#C8E6C9")
+                },
+                // NEW: Sunset Theme (Pomarañczowy)
+                [AppColorTheme.Sunset] = new ThemeColors
+                {
+                    Name = "Sunset",
+                    PrimaryLight = Color.FromArgb("#FB8C00"), SecondaryLight = Color.FromArgb("#FFF3E0"), TertiaryLight = Color.FromArgb("#E65100"), AccentLight = Color.FromArgb("#FF9800"),
+                    PrimaryDark = Color.FromArgb("#FFB74D"), SecondaryDark = Color.FromArgb("#FF9800"), TertiaryDark = Color.FromArgb("#F57C00"), AccentDark = Color.FromArgb("#FFCC80"),
+                    PrimaryTextLight = Color.FromArgb("#E65100"), SecondaryTextLight = Color.FromArgb("#F57C00"), PrimaryTextDark = Color.FromArgb("#FFF3E0"), SecondaryTextDark = Color.FromArgb("#FFE0B2")
+                },
+                // NEW: Bubblegum Theme (Ró¿ + B³êkit)
+                [AppColorTheme.Bubblegum] = new ThemeColors
+                {
+                    Name = "Bubblegum",
+                    PrimaryLight = Color.FromArgb("#F48FB1"), SecondaryLight = Color.FromArgb("#E1F5FE"), TertiaryLight = Color.FromArgb("#F06292"), AccentLight = Color.FromArgb("#81D4FA"),
+                    PrimaryDark = Color.FromArgb("#F8BBD0"), SecondaryDark = Color.FromArgb("#4FC3F7"), TertiaryDark = Color.FromArgb("#EC407A"), AccentDark = Color.FromArgb("#29B6F6"),
+                    PrimaryTextLight = Color.FromArgb("#AD1457"), SecondaryTextLight = Color.FromArgb("#0288D1"), PrimaryTextDark = Color.FromArgb("#FCE4EC"), SecondaryTextDark = Color.FromArgb("#E1F5FE")
+                },
+                // NEW: Sky Theme (SkyBlue)
+                [AppColorTheme.Sky] = new ThemeColors
+                {
+                    Name = "Sky",
+                    PrimaryLight = Color.FromArgb("#03A9F4"), SecondaryLight = Color.FromArgb("#E1F5FE"), TertiaryLight = Color.FromArgb("#0288D1"), AccentLight = Color.FromArgb("#29B6F6"),
+                    PrimaryDark = Color.FromArgb("#81D4FA"), SecondaryDark = Color.FromArgb("#4FC3F7"), TertiaryDark = Color.FromArgb("#039BE5"), AccentDark = Color.FromArgb("#81D4FA"),
+                    PrimaryTextLight = Color.FromArgb("#01579B"), SecondaryTextLight = Color.FromArgb("#0277BD"), PrimaryTextDark = Color.FromArgb("#E1F5FE"), SecondaryTextDark = Color.FromArgb("#B3E5FC")
                 }
 
             };

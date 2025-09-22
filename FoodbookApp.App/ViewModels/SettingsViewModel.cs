@@ -243,7 +243,11 @@ public class SettingsViewModel : INotifyPropertyChanged
             AppColorTheme.Monochrome,
             AppColorTheme.Navy,     // NEW: Navy theme
             AppColorTheme.Autumn,   // NEW: Autumn theme
-            AppColorTheme.Mint      // NEW: Mint theme
+            AppColorTheme.Mint,     // NEW: Mint theme
+            AppColorTheme.Forest,   // NEW: Forest theme
+            AppColorTheme.Sunset,   // NEW: Sunset theme
+            AppColorTheme.Bubblegum,// NEW: Bubblegum theme
+            AppColorTheme.Sky       // NEW: Sky theme
         };
         
         // Initialize supported font families
@@ -294,7 +298,7 @@ public class SettingsViewModel : INotifyPropertyChanged
             SupportedThemes.Add(t);
 
         // Color themes
-        var colorThemes = new[] { AppColorTheme.Default, AppColorTheme.Nature, AppColorTheme.Warm, AppColorTheme.Vibrant, AppColorTheme.Monochrome, AppColorTheme.Navy, AppColorTheme.Autumn, AppColorTheme.Mint };
+        var colorThemes = new[] { AppColorTheme.Default, AppColorTheme.Nature, AppColorTheme.Warm, AppColorTheme.Vibrant, AppColorTheme.Monochrome, AppColorTheme.Navy, AppColorTheme.Autumn, AppColorTheme.Mint, AppColorTheme.Forest, AppColorTheme.Sunset, AppColorTheme.Bubblegum, AppColorTheme.Sky };
         SupportedColorThemes.Clear();
         foreach (var ct in colorThemes)
             SupportedColorThemes.Add(ct);
