@@ -385,6 +385,7 @@ namespace Foodbook.Services
                     PrimaryDark = Color.FromArgb("#4DD0E1"), SecondaryDark = Color.FromArgb("#26C6DA"), TertiaryDark = Color.FromArgb("#00BCD4"), AccentDark = Color.FromArgb("#4DD0E1"),
                     PrimaryTextLight = Color.FromArgb("#006064"), SecondaryTextLight = Color.FromArgb("#00838F"), PrimaryTextDark = Color.FromArgb("#E0F7FA"), SecondaryTextDark = Color.FromArgb("#B2EBF2")
                 }
+
             };
         }
     }

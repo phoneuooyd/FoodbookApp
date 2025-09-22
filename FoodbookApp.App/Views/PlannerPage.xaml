@@ -14,6 +14,21 @@
              BackgroundColor="{DynamicResource PageBackgroundColor}">
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        <!-- Local styles to render DatePickers as cards matching meal grid color -->
+        <Style x:Key="PlannerDateCardFrame" TargetType="Frame">
+            <Setter Property="HasShadow" Value="False" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="BackgroundColor" Value="{DynamicResource FrameBackgroundColor}" />
+            <Setter Property="BorderColor" Value="{AppThemeBinding Light=LightGray, Dark=#555555}" />
+        </Style>
+        <Style x:Key="PlannerDatePicker" TargetType="DatePicker">
+            <Setter Property="TextColor" Value="{DynamicResource FrameTextColor}" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="HorizontalOptions" Value="FillAndExpand" />
+        </Style>
     </ContentPage.Resources>
     <Grid RowDefinitions="*">
         <!-- Loading -->
@@ -36,11 +51,17 @@
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="15" Margin="0,5">
                     <VerticalStackLayout Grid.Column="0" HorizontalOptions="Start">
                         <Label Text="{loc:Translate Resource=PlannerPageResources, Key=DateFrom}" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource Primary}" Margin="0,0,0,5" />
-                        <DatePicker x:Name="StartDatePicker" Date="{Binding StartDate}" Format="dd.MM.yyyy" FontSize="14" HorizontalOptions="FillAndExpand" />
+                        <!-- Date From: wrapped in card frame matching meal grid color -->
+                        <Frame Style="{StaticResource PlannerDateCardFrame}">
+                            <DatePicker x:Name="StartDatePicker" Date="{Binding StartDate}" Format="dd.MM.yyyy" Style="{StaticResource PlannerDatePicker}" />
+                        </Frame>
                     </VerticalStackLayout>
                     <VerticalStackLayout Grid.Column="1" HorizontalOptions="End">
                         <Label Text="{loc:Translate Resource=PlannerPageResources, Key=DateTo}" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource Primary}" Margin="0,0,0,5" />
-                        <DatePicker x:Name="EndDatePicker" Date="{Binding EndDate}" Format="dd.MM.yyyy" FontSize="14" HorizontalOptions="FillAndExpand" />
+                        <!-- Date To: wrapped in card frame matching meal grid color -->
+                        <Frame Style="{StaticResource PlannerDateCardFrame}">
+                            <DatePicker x:Name="EndDatePicker" Date="{Binding EndDate}" Format="dd.MM.yyyy" Style="{StaticResource PlannerDatePicker}" />
+                        </Frame>
                     </VerticalStackLayout>
                 </Grid>
                 <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
