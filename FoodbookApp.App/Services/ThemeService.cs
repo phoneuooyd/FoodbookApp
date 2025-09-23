@@ -193,9 +193,9 @@ namespace Foodbook.Services
                     var secondaryColor = secondary;
                     if (isDark)
                     {
-                        // Darker in dark mode: reduce lightening and opacity
-                        var lightened = Lighten(secondaryColor, 0.35);
-                        pageBackground = Color.FromRgba(lightened.Red, lightened.Green, lightened.Blue, 0.35);
+                        // In dark mode: keep palette, but darken background slightly
+                        var darkened = Darken(secondaryColor, 0.12);
+                        pageBackground = Color.FromRgba(darkened.Red, darkened.Green, darkened.Blue, 0.35);
                     }
                     else
                     {
@@ -208,6 +208,11 @@ namespace Foodbook.Services
                 {
                     // Default neutral gray backgrounds
                     pageBackground = isDark ? Color.FromArgb("#1E1E1E") : Color.FromArgb("#F5F5F5");
+                    if (isDark)
+                    {
+                        var darkened = Darken(pageBackground, 0.12);
+                        pageBackground = Color.FromRgba(darkened.Red, darkened.Green, darkened.Blue, pageBackground.Alpha);
+                    }
                 }
                 
                 app.Resources["PageBackgroundColor"] = pageBackground;
