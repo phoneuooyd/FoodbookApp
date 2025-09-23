@@ -381,9 +381,9 @@ namespace Foodbook.Services
                 [AppColorTheme.Mint] = new ThemeColors
                 {
                     Name = "Mint",
-                    PrimaryLight = Color.FromArgb("#00ACC1"), SecondaryLight = Color.FromArgb("#E0F7FA"), TertiaryLight = Color.FromArgb("#006064"), AccentLight = Color.FromArgb("#26C6DA"),
-                    PrimaryDark = Color.FromArgb("#4DD0E1"), SecondaryDark = Color.FromArgb("#26C6DA"), TertiaryDark = Color.FromArgb("#00BCD4"), AccentDark = Color.FromArgb("#4DD0E1"),
-                    PrimaryTextLight = Color.FromArgb("#006064"), SecondaryTextLight = Color.FromArgb("#00838F"), PrimaryTextDark = Color.FromArgb("#E0F7FA"), SecondaryTextDark = Color.FromArgb("#B2EBF2")
+                    PrimaryLight = Color.FromArgb("#05f2de"), SecondaryLight = Color.FromArgb("#93faf6"), TertiaryLight = Color.FromArgb("#018585"), AccentLight = Color.FromArgb("#26dad1"),
+                    PrimaryDark = Color.FromArgb("#04d9d2"), SecondaryDark = Color.FromArgb("#26dad4"), TertiaryDark = Color.FromArgb("#00d4c9"), AccentDark = Color.FromArgb("#4ddce1"),
+                    PrimaryTextLight = Color.FromArgb("#006064"), SecondaryTextLight = Color.FromArgb("#00838F"), PrimaryTextDark = Color.FromArgb("#bef7f7"), SecondaryTextDark = Color.FromArgb("#a8eff7")
                 },
                 // NEW: Forest Theme (Ciemnozielony)
                 [AppColorTheme.Forest] = new ThemeColors

@@ -233,21 +233,21 @@ public class SettingsViewModel : INotifyPropertyChanged
             Foodbook.Models.AppTheme.Dark 
         };
         
-        // Initialize supported color themes
+        // Picker order requested by user
         SupportedColorThemes = new ObservableCollection<AppColorTheme>
         {
             AppColorTheme.Default,
             AppColorTheme.Nature,
+            AppColorTheme.Forest,
+            AppColorTheme.Autumn,
             AppColorTheme.Warm,
+            AppColorTheme.Sunset,
             AppColorTheme.Vibrant,
             AppColorTheme.Monochrome,
-            AppColorTheme.Navy,     // NEW: Navy theme
-            AppColorTheme.Autumn,   // NEW: Autumn theme
-            AppColorTheme.Mint,     // NEW: Mint theme
-            AppColorTheme.Forest,   // NEW: Forest theme
-            AppColorTheme.Sunset,   // NEW: Sunset theme
-            AppColorTheme.Bubblegum,// NEW: Bubblegum theme
-            AppColorTheme.Sky       // NEW: Sky theme
+            AppColorTheme.Navy,
+            AppColorTheme.Mint,
+            AppColorTheme.Sky,
+            AppColorTheme.Bubblegum
         };
         
         // Initialize supported font families
@@ -297,8 +297,22 @@ public class SettingsViewModel : INotifyPropertyChanged
         foreach (var t in themes)
             SupportedThemes.Add(t);
 
-        // Color themes
-        var colorThemes = new[] { AppColorTheme.Default, AppColorTheme.Nature, AppColorTheme.Warm, AppColorTheme.Vibrant, AppColorTheme.Monochrome, AppColorTheme.Navy, AppColorTheme.Autumn, AppColorTheme.Mint, AppColorTheme.Forest, AppColorTheme.Sunset, AppColorTheme.Bubblegum, AppColorTheme.Sky };
+        // Keep the same explicit order as the enum requested by the user
+        var colorThemes = new[]
+        {
+            AppColorTheme.Default,
+            AppColorTheme.Nature,
+            AppColorTheme.Forest,
+            AppColorTheme.Autumn,
+            AppColorTheme.Warm,
+            AppColorTheme.Sunset,
+            AppColorTheme.Vibrant,
+            AppColorTheme.Monochrome,
+            AppColorTheme.Navy,
+            AppColorTheme.Mint,
+            AppColorTheme.Sky,
+            AppColorTheme.Bubblegum
+        };
         SupportedColorThemes.Clear();
         foreach (var ct in colorThemes)
             SupportedColorThemes.Add(ct);
