@@ -12,6 +12,7 @@ public class PreferencesService : IPreferencesService
     private const string SelectedThemeKey = "SelectedTheme";
     private const string SelectedColorThemeKey = "SelectedColorTheme";
     private const string ColorfulBackgroundEnabledKey = "ColorfulBackgroundEnabled"; // NEW
+    private const string WallpaperEnabledKey = "WallpaperEnabled"; // NEW: wallpaper
     private const string SelectedFontFamilyKey = "SelectedFontFamily";
     private const string SelectedFontSizeKey = "SelectedFontSize";
     private const string IsFirstLaunchKey = "IsFirstLaunch";
@@ -169,6 +170,36 @@ public class PreferencesService : IPreferencesService
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to save colorful background preference: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc/>
+    public bool GetIsWallpaperEnabled()
+    {
+        try
+        {
+            var isEnabled = Preferences.Get(WallpaperEnabledKey, false);
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Retrieved wallpaper enabled: {isEnabled}");
+            return isEnabled;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to get wallpaper enabled: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <inheritdoc/>
+    public void SaveWallpaperEnabled(bool isEnabled)
+    {
+        try
+        {
+            Preferences.Set(WallpaperEnabledKey, isEnabled);
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved wallpaper enabled: {isEnabled}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to save wallpaper enabled: {ex.Message}");
         }
     }
 

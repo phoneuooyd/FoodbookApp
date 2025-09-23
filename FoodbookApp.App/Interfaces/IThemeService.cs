@@ -62,5 +62,26 @@ namespace FoodbookApp.Interfaces
         /// </summary>
         /// <returns>True if colorful backgrounds are enabled</returns>
         bool GetIsColorfulBackgroundEnabled();
+
+        /// <summary>
+        /// Enables or disables the wallpaper background option
+        /// </summary>
+        /// <param name="isEnabled">True to enable wallpaper background, false to disable</param>
+        void EnableWallpaperBackground(bool isEnabled);
+
+        /// <summary>
+        /// Checks if the wallpaper background option is enabled
+        /// </summary>
+        /// <returns>True if wallpaper background is enabled</returns>
+        bool IsWallpaperBackgroundEnabled();
+
+        /// <summary>
+        /// Returns whether wallpapers are available for a given color theme.
+        /// A theme is considered supported if at least a single wallpaper file is defined
+        /// (either a single file for both modes or light/dark variants).
+        /// </summary>
+        /// <param name="colorTheme">Color theme to check</param>
+        /// <returns>True if wallpaper is available for the theme</returns>
+        bool IsWallpaperAvailableFor(AppColorTheme colorTheme);
     }
 }

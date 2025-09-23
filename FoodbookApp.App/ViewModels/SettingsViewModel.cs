@@ -18,6 +18,8 @@ public class SettingsViewModel : INotifyPropertyChanged
 
     // Guard to prevent re-entrancy and UI loops when changing culture
     private bool _isChangingCulture;
+    // Guard to avoid recursion when toggling mutually exclusive background options
+    private bool _isUpdatingBackgroundOptions;
 
     // Expose if current build is DEBUG so UI can hide dev-only actions in Release
 #if DEBUG
@@ -79,10 +81,6 @@ public class SettingsViewModel : INotifyPropertyChanged
                 // Save preference
                 _preferencesService.SaveLanguage(safeValue);
 
-                // Do NOT repopulate ItemsSource collections here – it causes the picker to rebind
-                // and can retrigger SelectedItem changes, leading to re-entrancy and freezes.
-                // If display text depends on resources, bindings will refresh via CultureChanged.
-
                 // Notify dependent properties so their display can update if necessary
                 OnPropertyChanged(nameof(SelectedTheme));
                 OnPropertyChanged(nameof(SelectedColorTheme));
@@ -124,11 +122,44 @@ public class SettingsViewModel : INotifyPropertyChanged
             _selectedColorTheme = value;
             OnPropertyChanged(nameof(SelectedColorTheme));
             
+            // Update wallpaper availability for this color theme
+            IsWallpaperAvailable = _themeService.IsWallpaperAvailableFor(_selectedColorTheme);
+            
+            // If wallpaper not available, ensure it's turned off in UI and service
+            if (!IsWallpaperAvailable && IsWallpaperBackgroundEnabled)
+            {
+                if (!_isUpdatingBackgroundOptions)
+                {
+                    try
+                    {
+                        _isUpdatingBackgroundOptions = true;
+                        IsWallpaperBackgroundEnabled = false; // will call service and save pref
+                    }
+                    finally
+                    {
+                        _isUpdatingBackgroundOptions = false;
+                    }
+                }
+            }
+            
             // Apply the color theme immediately
             _themeService.SetColorTheme(value);
             
             // Save the selected color theme to preferences
             _preferencesService.SaveColorTheme(value);
+        }
+    }
+
+    // NEW: Availability of wallpaper option for selected color theme
+    private bool _isWallpaperAvailable;
+    public bool IsWallpaperAvailable
+    {
+        get => _isWallpaperAvailable;
+        private set
+        {
+            if (_isWallpaperAvailable == value) return;
+            _isWallpaperAvailable = value;
+            OnPropertyChanged(nameof(IsWallpaperAvailable));
         }
     }
 
@@ -148,8 +179,69 @@ public class SettingsViewModel : INotifyPropertyChanged
             
             // Save the colorful background preference
             _preferencesService.SaveColorfulBackground(value);
+
+            // Ensure mutual exclusion with wallpaper option
+            if (value && IsWallpaperBackgroundEnabled)
+            {
+                if (_isUpdatingBackgroundOptions) return;
+                try
+                {
+                    _isUpdatingBackgroundOptions = true;
+                    IsWallpaperBackgroundEnabled = false;
+                }
+                finally
+                {
+                    _isUpdatingBackgroundOptions = false;
+                }
+            }
             
             System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Colorful background changed to: {value}");
+        }
+    }
+
+    // NEW: Wallpaper background property
+    private bool _isWallpaperBackgroundEnabled;
+    public bool IsWallpaperBackgroundEnabled
+    {
+        get => _isWallpaperBackgroundEnabled;
+        set
+        {
+            if (_isWallpaperBackgroundEnabled == value) return;
+
+            // Block enabling when not available for current color theme
+            if (value && !_themeService.IsWallpaperAvailableFor(_selectedColorTheme))
+            {
+                // keep disabled
+                _isWallpaperBackgroundEnabled = false;
+                OnPropertyChanged(nameof(IsWallpaperBackgroundEnabled));
+                return;
+            }
+
+            _isWallpaperBackgroundEnabled = value;
+            OnPropertyChanged(nameof(IsWallpaperBackgroundEnabled));
+
+            // Apply wallpaper background immediately
+            _themeService.EnableWallpaperBackground(value);
+            
+            // Save preference
+            _preferencesService.SaveWallpaperEnabled(value);
+
+            // Ensure mutual exclusion with colorful background option
+            if (value && IsColorfulBackgroundEnabled)
+            {
+                if (_isUpdatingBackgroundOptions) return;
+                try
+                {
+                    _isUpdatingBackgroundOptions = true;
+                    IsColorfulBackgroundEnabled = false;
+                }
+                finally
+                {
+                    _isUpdatingBackgroundOptions = false;
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Wallpaper background changed to: {value}");
         }
     }
 
@@ -260,7 +352,12 @@ public class SettingsViewModel : INotifyPropertyChanged
         _selectedCulture = LoadSelectedCulture();
         _selectedTheme = LoadSelectedTheme();
         _selectedColorTheme = LoadSelectedColorTheme();
-        _isColorfulBackgroundEnabled = LoadColorfulBackgroundSetting(); // NEW
+        _isColorfulBackgroundEnabled = LoadColorfulBackgroundSetting();
+        _isWallpaperBackgroundEnabled = LoadWallpaperBackgroundSetting();
+        
+        // Initialize wallpaper availability for initial color theme
+        _isWallpaperAvailable = _themeService.IsWallpaperAvailableFor(_selectedColorTheme);
+        
         LoadSelectedFontSettings();
         
         // Set the culture without triggering the setter to avoid recursive calls
@@ -269,7 +366,14 @@ public class SettingsViewModel : INotifyPropertyChanged
         // Apply saved theme and color theme
         _themeService.SetTheme(_selectedTheme);
         _themeService.SetColorTheme(_selectedColorTheme);
-        _themeService.SetColorfulBackground(_isColorfulBackgroundEnabled); // NEW: Apply saved colorful background setting
+        _themeService.SetColorfulBackground(_isColorfulBackgroundEnabled);
+        // If initial theme does not support wallpapers, ensure it's off
+        if (!_isWallpaperAvailable && _isWallpaperBackgroundEnabled)
+        {
+            _isWallpaperBackgroundEnabled = false;
+            _preferencesService.SaveWallpaperEnabled(false);
+        }
+        _themeService.EnableWallpaperBackground(_isWallpaperBackgroundEnabled);
         
         // Apply saved font settings
         _fontService.LoadSavedSettings();
@@ -278,7 +382,7 @@ public class SettingsViewModel : INotifyPropertyChanged
         MigrateDatabaseCommand = new Command(async () => await MigrateDatabaseAsync(), () => CanExecuteMigration);
         ResetDatabaseCommand = new Command(async () => await ResetDatabaseAsync(), () => CanExecuteMigration);
         
-        System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Initialized with color theme and colorful background support");
+        System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Initialized with color theme and colorful/wallpaper background support");
     }
 
     private void RefreshCollectionsForLocalization()
@@ -525,6 +629,22 @@ public class SettingsViewModel : INotifyPropertyChanged
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Failed to load colorful background preference: {ex.Message}");
             return false; // Default to false (gray backgrounds)
+        }
+    }
+
+    // NEW: Load wallpaper background setting
+    private bool LoadWallpaperBackgroundSetting()
+    {
+        try
+        {
+            var isEnabled = _preferencesService.GetIsWallpaperEnabled();
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Loaded wallpaper background preference: {isEnabled}");
+            return isEnabled;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Failed to load wallpaper background preference: {ex.Message}");
+            return false;
         }
     }
 

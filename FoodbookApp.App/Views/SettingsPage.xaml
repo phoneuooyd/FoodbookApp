@@ -178,6 +178,20 @@
                                    VerticalOptions="Center"
                                    Margin="8,0,0,0" />
                         </StackLayout>
+
+                        <!-- NEW: Wallpaper Background CheckBox -->
+                        <StackLayout Orientation="Horizontal" Margin="0,8,0,0" HorizontalOptions="Center">
+                            <CheckBox IsChecked="{Binding IsWallpaperBackgroundEnabled}"
+                                      IsEnabled="{Binding IsWallpaperAvailable}"
+                                      Color="{DynamicResource Primary}"
+                                      VerticalOptions="Center" />
+                            <Label Text="{loc:Translate Resource=SettingsPageResources, Key=WallpaperBackgroundOption}"
+                                   FontSize="{DynamicResource AppSmallFontSize}"
+                                   FontFamily="{DynamicResource AppFontFamily}"
+                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"
+                                   VerticalOptions="Center"
+                                   Margin="8,0,0,0" />
+                        </StackLayout>
                         
                         <!-- Theme Preview -->
                         <Grid Margin="0,12,0,0" HeightRequest="40" ColumnDefinitions="*,*,*">

@@ -135,6 +135,9 @@
   <data name="ColorfulBackgroundOption" xml:space="preserve">
     <value>Tło</value>
   </data>
+  <data name="WallpaperBackgroundOption" xml:space="preserve">
+    <value>Tapeta</value>
+  </data>
   <data name="ColorThemeDefault" xml:space="preserve">
     <value>Domyślny</value>
   </data>
