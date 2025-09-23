@@ -44,9 +44,10 @@
                                 <DataTrigger TargetType="Label" Binding="{Binding ., Converter={StaticResource IsPlanConverter}}" Value="True">
                                     <Setter Property="Text" Value="{Binding Label}" />
                                 </DataTrigger>
-                                <!-- Folder: increase font size by +4pt (18 -> 22) -->
+                                <!-- Folder: increase font size and use themed text color -->
                                 <DataTrigger TargetType="Label" Binding="{Binding ., Converter={StaticResource IsFolderConverter}}" Value="True">
                                     <Setter Property="FontSize" Value="22" />
+                                    <Setter Property="TextColor" Value="{DynamicResource FolderCardTextColor}" />
                                 </DataTrigger>
                             </Label.Triggers>
                         </Label>
@@ -148,7 +149,7 @@
             </Grid>
 
             <Frame.Triggers>
-                <!-- Folder: increase overall height by +10px (66 -> 76) and apply yellowish background -->
+                <!-- Folder: increase overall height by +10px (66 -> 76) and apply themed background + stroke from ThemeService policy -->
                 <DataTrigger TargetType="Frame" Binding="{Binding ., Converter={StaticResource IsFolderConverter}}" Value="True">
                     <Setter Property="MinimumHeightRequest" Value="76" />
                     <Setter Property="HeightRequest" Value="76" />

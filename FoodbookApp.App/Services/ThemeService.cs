@@ -253,8 +253,27 @@ namespace Foodbook.Services
                 // UPDATED: Folder card colors derived from Primary (pale/translucent) to follow theme
                 var folderBg = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 0.12);
                 var folderStroke = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 0.32);
+
+                // Apply user rules for folder border/text based on theme and background mode
+                // - Dark mode with colorful background: dark border + dark text
+                // - Dark mode without background: unchanged
+                // - Light mode without background: dark border
+                // - Light mode with background: dark border
+                Color folderTextColor = frameTextColor; // default
+                if (isDark && _isColorfulBackgroundEnabled)
+                {
+                    folderStroke = Color.FromArgb("#2A2A2A");
+                    folderTextColor = Color.FromArgb("#000000");
+                }
+                else if (!isDark)
+                {
+                    folderStroke = Color.FromArgb("#424242");
+                    // text unchanged (use frameTextColor)
+                }
+
                 app.Resources["FolderCardBackgroundColor"] = folderBg;
                 app.Resources["FolderCardStrokeColor"] = folderStroke;
+                app.Resources["FolderCardTextColor"] = folderTextColor;
 
                 var buttonPrimaryText = ChooseReadableEnhanced(primary, Colors.White, Color.FromArgb("#000000"));
                 var alt = RelativeLuminance(primary) > 0.45 ? Colors.Black : Colors.White;
