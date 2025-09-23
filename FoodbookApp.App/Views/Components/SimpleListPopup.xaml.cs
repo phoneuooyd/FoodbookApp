@@ -1,4 +1,4 @@
-using CommunityToolkit.Maui.Views;
+﻿using CommunityToolkit.Maui.Views;
 using Foodbook.Services;
 using FoodbookApp.Interfaces;
 using Microsoft.Maui.Controls;
@@ -235,7 +235,7 @@ public partial class SimpleListPopup : Popup
                 ColumnSpacing = 12
             };
 
-            var bullet = new Label { Text = "�", TextColor = primaryText, FontSize = 16, VerticalOptions = LayoutOptions.Center };
+            var bullet = new Label { Text = "•", TextColor = primaryText, FontSize = 16, VerticalOptions = LayoutOptions.Center };
             var textLabel = new Label { Text = text, TextColor = primaryText, FontSize = 15, LineBreakMode = LineBreakMode.WordWrap };
             Grid.SetColumn(textLabel, 1);
             grid.Add(bullet);
@@ -286,7 +286,7 @@ public partial class SimpleListPopup : Popup
 
         var minus = new Button
         {
-            Text = "-",
+            Text = "➖",
             WidthRequest = 26,
             HeightRequest = 26,
             CornerRadius = 13,
@@ -301,7 +301,7 @@ public partial class SimpleListPopup : Popup
 
         var plus = new Button
         {
-            Text = "+",
+            Text = "➕",
             WidthRequest = 26,
             HeightRequest = 26,
             CornerRadius = 13,
@@ -330,7 +330,7 @@ public partial class SimpleListPopup : Popup
                     var adjusted = ing.Quantity * multiplier;
                     list.Children.Add(new Label
                     {
-                        Text = $"� {ing.Name}: {adjusted:F1} {GetUnitText(ing.Unit)}",
+                        Text = $"• {ing.Name}: {adjusted:F1} {GetUnitText(ing.Unit)}",
                         FontSize = 14,
                         TextColor = secondaryText
                     });

@@ -126,7 +126,7 @@
                                                             </DataTrigger>
                                                         </Button.Triggers>
                                                     </Button>
-                                                    <Button Grid.Column="4" Text="✕"  Command="{Binding BindingContext.RemoveMealCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" MinimumWidthRequest="18" MinimumHeightRequest="18" WidthRequest="28" HeightRequest="28" BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}" TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}" FontSize="14" CornerRadius="17" BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}" BorderWidth="1" Padding="0" />
+                                                    <Button Grid.Column="4" Text="✕"  Command="{Binding BindingContext.RemoveMealCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" MinimumWidthRequest="18" MinimumHeightRequest="18" WidthRequest="35" HeightRequest="35" BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}" TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}" FontSize="14" CornerRadius="9" BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}" BorderWidth="1" Padding="0" />
                                                 </Grid>
                                             </DataTemplate>
                                         </BindableLayout.ItemTemplate>
