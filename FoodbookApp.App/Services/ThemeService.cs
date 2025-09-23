@@ -167,6 +167,15 @@ namespace Foodbook.Services
                 var primaryText = isDark ? themeColors.PrimaryTextDark : themeColors.PrimaryTextLight;
                 var secondaryText = isDark ? themeColors.SecondaryTextDark : themeColors.SecondaryTextLight;
 
+                // NEW: In light mode with colorful background, make palette brighter
+                if (_isColorfulBackgroundEnabled && !isDark)
+                {
+                    primary = Lighten(primary, 0.12);
+                    secondary = Lighten(secondary, 0.18);
+                    tertiary = Lighten(tertiary, 0.10);
+                    accent = Lighten(accent, 0.12);
+                }
+
                 app.Resources["Primary"] = primary;
                 app.Resources["Secondary"] = secondary;
                 app.Resources["Tertiary"] = tertiary;
@@ -177,7 +186,7 @@ namespace Foodbook.Services
                 app.Resources["SecondaryBrush"] = new SolidColorBrush(secondary);
                 app.Resources["TertiaryBrush"] = new SolidColorBrush(tertiary);
 
-                // UPDATED: Dynamic page background colors with darker colorful backgrounds
+                // UPDATED: Dynamic page background colors; lighten in light mode when colorful is enabled
                 Color pageBackground;
                 if (_isColorfulBackgroundEnabled)
                 {
@@ -185,14 +194,14 @@ namespace Foodbook.Services
                     if (isDark)
                     {
                         // Darker in dark mode: reduce lightening and opacity
-                        var lightened = Lighten(secondaryColor, 0.35); // Reduced from 0.55 to 0.35
-                        pageBackground = Color.FromRgba(lightened.Red, lightened.Green, lightened.Blue, 0.35); // Reduced from 0.55 to 0.35
+                        var lightened = Lighten(secondaryColor, 0.35);
+                        pageBackground = Color.FromRgba(lightened.Red, lightened.Green, lightened.Blue, 0.35);
                     }
                     else
                     {
-                        // Darker in light mode: darken secondary and reduce opacity
-                        var darkened = Darken(secondaryColor, 0.15); // Slightly darken the secondary color
-                        pageBackground = Color.FromRgba(darkened.Red, darkened.Green, darkened.Blue, 0.25); // Reduced from 0.36 to 0.25
+                        // In light mode: make it brighter instead of darker
+                        var lightened = Lighten(secondaryColor, 0.22);
+                        pageBackground = Color.FromRgba(lightened.Red, lightened.Green, lightened.Blue, 0.30);
                     }
                 }
                 else
