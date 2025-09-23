@@ -211,6 +211,10 @@ public class HomeViewModel : INotifyPropertyChanged
     public ICommand ChangeNutritionPeriodCommand { get; }
     public ICommand ChangePlannedMealsPeriodCommand { get; }
 
+    // Portion adjustment from Home popups
+    public ICommand IncreaseMealPortionsCommand { get; }
+    public ICommand DecreaseMealPortionsCommand { get; }
+
     public HomeViewModel(IRecipeService recipeService, IPlanService planService, IPlannerService plannerService, ILocalizationService localizationService)
     {
         _recipeService = recipeService;
@@ -229,6 +233,56 @@ public class HomeViewModel : INotifyPropertyChanged
         ShowMealDetailsPopupCommand = new Command<PlannedMeal>(async (meal) => await ShowMealDetailsPopupAsync(meal), (meal) => !_isMealsPopupOpen);
         ChangeNutritionPeriodCommand = new Command(async () => await ShowNutritionPeriodPickerAsync());
         ChangePlannedMealsPeriodCommand = new Command(async () => await ShowPlannedMealsPeriodPickerAsync());
+
+        IncreaseMealPortionsCommand = new Command<PlannedMeal>(async (meal) => await IncreaseMealPortionsAsync(meal), CanIncreaseMealPortions);
+        DecreaseMealPortionsCommand = new Command<PlannedMeal>(async (meal) => await DecreaseMealPortionsAsync(meal), CanDecreaseMealPortions);
+    }
+
+    private bool CanIncreaseMealPortions(PlannedMeal? meal) => meal != null && meal.Portions < 20;
+    private bool CanDecreaseMealPortions(PlannedMeal? meal) => meal != null && meal.Portions > 1;
+
+    private async Task IncreaseMealPortionsAsync(PlannedMeal? meal)
+    {
+        if (meal == null) return;
+        try
+        {
+            if (meal.Portions < 20)
+            {
+                meal.Portions++;
+                // Persist the change
+                await _plannerService.UpdatePlannedMealAsync(meal);
+                // Update nutrition stats if visible period includes this meal
+                await RefreshNutritionDataAsync();
+                (IncreaseMealPortionsCommand as Command<PlannedMeal>)?.ChangeCanExecute();
+                (DecreaseMealPortionsCommand as Command<PlannedMeal>)?.ChangeCanExecute();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HomeViewModel] Error increasing portions: {ex.Message}");
+        }
+    }
+
+    private async Task DecreaseMealPortionsAsync(PlannedMeal? meal)
+    {
+        if (meal == null) return;
+        try
+        {
+            if (meal.Portions > 1)
+            {
+                meal.Portions--;
+                // Persist the change
+                await _plannerService.UpdatePlannedMealAsync(meal);
+                // Update nutrition stats if visible period includes this meal
+                await RefreshNutritionDataAsync();
+                (IncreaseMealPortionsCommand as Command<PlannedMeal>)?.ChangeCanExecute();
+                (DecreaseMealPortionsCommand as Command<PlannedMeal>)?.ChangeCanExecute();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HomeViewModel] Error decreasing portions: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -779,78 +833,39 @@ public class HomeViewModel : INotifyPropertyChanged
 
     private async Task ShowMealDetailsPopupAsync(PlannedMeal meal)
     {
-        if (_isMealsPopupOpen)
-        {
-            System.Diagnostics.Debug.WriteLine("?? HomeViewModel: Meals popup already open, ignoring request");
-            return;
-        }
-        if (meal?.Recipe == null) return;
-
-        var page = Application.Current?.MainPage;
-        if (page == null) return;
-
+        if (_isMealsPopupOpen) { System.Diagnostics.Debug.WriteLine("Meals popup already open, ignoring request"); return; }
+        if (meal?.Recipe == null) return; var page = Application.Current?.MainPage; if (page == null) return;
         try
         {
-            _isMealsPopupOpen = true;
-            ((Command)ShowMealsPopupCommand).ChangeCanExecute();
-            ((Command<PlannedMeal>)ShowMealDetailsPopupCommand).ChangeCanExecute();
-
-            // Fetch full recipe details
-            var fullRecipe = await _recipeService.GetRecipeAsync(meal.Recipe.Id);
-            if (fullRecipe == null) return;
-
+            _isMealsPopupOpen = true; ((Command)ShowMealsPopupCommand).ChangeCanExecute(); ((Command<PlannedMeal>)ShowMealDetailsPopupCommand).ChangeCanExecute();
+            var fullRecipe = await _recipeService.GetRecipeAsync(meal.Recipe.Id); if (fullRecipe == null) return;
             var items = new List<object>();
-
-            // Date header
+            // Date header (kept minimal)
             items.Add(new Views.Components.SimpleListPopup.SectionHeader { Text = GetDateLabel(meal.Date.Date) });
-
-            // Title
-            var title = meal.Portions != fullRecipe.IloscPorcji
-                ? $"{fullRecipe.Name} ({meal.Portions} porcji)"
-                : fullRecipe.Name;
-            items.Add(new Views.Components.SimpleListPopup.MealTitle { Text = title });
-
-            // Macro
-            var portionMultiplier = (double)meal.Portions / Math.Max(fullRecipe.IloscPorcji, 1);
+            // Title with +/- (also shows name and portions) and dynamic ingredients below
+            items.Add(new Views.Components.SimpleListPopup.MealPreviewBlock
+            {
+                Meal = meal,
+                Recipe = fullRecipe,
+                IncreaseCommand = IncreaseMealPortionsCommand,
+                DecreaseCommand = DecreaseMealPortionsCommand
+            });
+            // Macros always for 1 portion (below the title and ingredients)
+            var perPortion = Math.Max(fullRecipe.IloscPorcji, 1);
+            var onePortionMultiplier = 1.0 / perPortion;
             items.Add(new Views.Components.SimpleListPopup.MacroRow
             {
-                Calories = fullRecipe.Calories * portionMultiplier,
-                Protein = fullRecipe.Protein * portionMultiplier,
-                Fat = fullRecipe.Fat * portionMultiplier,
-                Carbs = fullRecipe.Carbs * portionMultiplier
+                Calories = fullRecipe.Calories * onePortionMultiplier,
+                Protein = fullRecipe.Protein * onePortionMultiplier,
+                Fat = fullRecipe.Fat * onePortionMultiplier,
+                Carbs = fullRecipe.Carbs * onePortionMultiplier
             });
-
-            // Ingredients
-            items.Add(new Views.Components.SimpleListPopup.SectionHeader { Text = "SK£ADNIKI" });
-            if (fullRecipe.Ingredients != null && fullRecipe.Ingredients.Any())
-            {
-                foreach (var ing in fullRecipe.Ingredients)
-                {
-                    var adjustedQuantity = (ing.Quantity * meal.Portions) / Math.Max(fullRecipe.IloscPorcji, 1);
-                    var unitText = GetUnitText(ing.Unit);
-                    items.Add($"{ing.Name}: {adjustedQuantity:F1} {unitText}");
-                }
-            }
-            else
-            {
-                items.Add("Brak zdefiniowanych sk³adników.");
-            }
-
-            // Description
+            // Description at the bottom
             if (!string.IsNullOrWhiteSpace(fullRecipe.Description))
             {
-                items.Add(new Views.Components.SimpleListPopup.SectionHeader { Text = "SPOSÓB WYKONANIA" });
                 items.Add(new Views.Components.SimpleListPopup.Description { Text = fullRecipe.Description! });
             }
-
-            var popup = new Views.Components.SimpleListPopup
-            {
-                TitleText = GetDateLabel(meal.Date.Date),
-                Items = items,
-                IsBulleted = true
-            };
-
-            System.Diagnostics.Debug.WriteLine("?? HomeViewModel: Opening single-meal details popup");
+            var popup = new Views.Components.SimpleListPopup { TitleText = GetDateLabel(meal.Date.Date), Items = items, IsBulleted = false };
             var showTask = page.ShowPopupAsync(popup);
             var resultTask = popup.ResultTask;
             await Task.WhenAny(showTask, resultTask);
@@ -858,23 +873,16 @@ public class HomeViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"? HomeViewModel: Error showing meal details popup: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Error showing meal details popup: {ex.Message}");
             if (ex.Message.Contains("PopupBlockedException") || ex.Message.Contains("blocked by the Modal Page"))
             {
-                try
-                {
-                    if (Application.Current?.MainPage?.Navigation?.ModalStack?.Count > 0)
-                        await Application.Current.MainPage.Navigation.PopModalAsync(false);
-                }
+                try { if (Application.Current?.MainPage?.Navigation?.ModalStack?.Count > 0) await Application.Current.MainPage.Navigation.PopModalAsync(false); }
                 catch { }
             }
         }
         finally
         {
-            _isMealsPopupOpen = false;
-            ((Command)ShowMealsPopupCommand).ChangeCanExecute();
-            ((Command<PlannedMeal>)ShowMealDetailsPopupCommand).ChangeCanExecute();
-            System.Diagnostics.Debug.WriteLine("?? HomeViewModel: Meals popup protection released");
+            _isMealsPopupOpen = false; ((Command)ShowMealsPopupCommand).ChangeCanExecute(); ((Command<PlannedMeal>)ShowMealDetailsPopupCommand).ChangeCanExecute();
         }
     }
 
@@ -930,16 +938,8 @@ public class HomeViewModel : INotifyPropertyChanged
 
             if (DateTime.TryParseExact(endDateInput, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out var endDate))
             {
-                if (endDate >= startDate)
-                {
-                    PlannedMealsCustomStartDate = startDate;
-                    PlannedMealsCustomEndDate = endDate;
-                    SelectedPlannedMealsPeriod = PlannedMealsPeriod.Custom;
-                }
-                else
-                {
-                    await page.DisplayAlert("B³¹d", "Data koñcowa musi byæ póŸniejsza ni¿ pocz¹tkowa", "OK");
-                }
+                if (endDate >= startDate) { PlannedMealsCustomStartDate = startDate; PlannedMealsCustomEndDate = endDate; SelectedPlannedMealsPeriod = PlannedMealsPeriod.Custom; }
+                else await page.DisplayAlert("B³¹d", "Data koñcowa musi byæ póŸniejsza ni¿ pocz¹tkowa", "OK");
             }
         }
     }
@@ -969,13 +969,9 @@ public class HomeViewModel : INotifyPropertyChanged
 
                 foreach (var meal in group.Meals)
                 {
-                    if (meal?.Recipe == null) continue;
-
-                    // Fetch full recipe details
-                    var fullRecipe = await _recipeService.GetRecipeAsync(meal.Recipe.Id);
-                    if (fullRecipe == null) continue;
-
-                    // Title (recipe name + portions)
+                    if (meal?.Recipe == null) continue; var fullRecipe = await _recipeService.GetRecipeAsync(meal.Recipe.Id); if (fullRecipe == null) continue;
+                    
+                    // Keep summary list lightweight (no inline +/- here)
                     var title = meal.Portions != fullRecipe.IloscPorcji
                         ? $"{fullRecipe.Name} ({meal.Portions} porcji)"
                         : fullRecipe.Name;

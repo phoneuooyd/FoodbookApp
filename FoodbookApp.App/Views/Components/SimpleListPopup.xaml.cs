@@ -6,6 +6,7 @@ using Microsoft.Maui.Graphics;
 using System.Windows.Input;
 using Microsoft.Extensions.DependencyInjection; // for GetService
 using FoodbookApp; // to access MauiProgram.ServiceProvider
+using Foodbook.Models;
 
 namespace Foodbook.Views.Components;
 
@@ -56,6 +57,16 @@ public partial class SimpleListPopup : Popup
     }
     public class Description { public string Text { get; set; } = string.Empty; }
 
+    // Interactive block for planned meal preview with +/- and ingredients scaling
+    public class MealPreviewBlock
+    {
+        public PlannedMeal Meal { get; set; } = new PlannedMeal();
+        public Recipe Recipe { get; set; } = new Recipe();
+        // Commands kept for backward-compatibility but ignored here to keep changes visual-only
+        public ICommand? IncreaseCommand { get; set; }
+        public ICommand? DecreaseCommand { get; set; }
+    }
+
     public SimpleListPopup()
     {
         CloseCommand = new Command(async () => await CloseWithResultAsync(null));
@@ -88,7 +99,7 @@ public partial class SimpleListPopup : Popup
             if (app != null)
             {
                 var user = app.UserAppTheme;
-                isDark = user == AppTheme.Dark || (user == AppTheme.Unspecified && app.RequestedTheme == AppTheme.Dark);
+                isDark = user == Microsoft.Maui.ApplicationModel.AppTheme.Dark || (user == Microsoft.Maui.ApplicationModel.AppTheme.Unspecified && app.RequestedTheme == Microsoft.Maui.ApplicationModel.AppTheme.Dark);
             }
 
             var primaryTextRes = app?.Resources.TryGetValue("PrimaryText", out var v1) == true && v1 is Color c1 ? c1 : Colors.Black;
@@ -167,19 +178,19 @@ public partial class SimpleListPopup : Popup
                 };
 
             case MacroRow macros:
+            {
+                var layout = new HorizontalStackLayout
                 {
-                    var layout = new HorizontalStackLayout
-                    {
-                        Spacing = 20,
-                        Margin = new Thickness(0, 2, 0, 6)
-                    };
+                    Spacing = 20,
+                    Margin = new Thickness(0, 2, 0, 6)
+                };
 
-                    layout.Children.Add(new Label { Text = $"K: {macros.Calories:F0} kcal", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText });
-                    layout.Children.Add(new Label { Text = $"B: {macros.Protein:F1}g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText });
-                    layout.Children.Add(new Label { Text = $"T: {macros.Fat:F1}g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText });
-                    layout.Children.Add(new Label { Text = $"W: {macros.Carbs:F1}g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText });
-                    return layout;
-                }
+                layout.Children.Add(new Label { Text = $"K: {macros.Calories:F0} kcal", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText });
+                layout.Children.Add(new Label { Text = $"B: {macros.Protein:F1}g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText });
+                layout.Children.Add(new Label { Text = $"T: {macros.Fat:F1}g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText });
+                layout.Children.Add(new Label { Text = $"W: {macros.Carbs:F1}g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText });
+                return layout;
+            }
 
             case Description desc:
                 return new Label
@@ -191,14 +202,19 @@ public partial class SimpleListPopup : Popup
                     Margin = new Thickness(0, 4, 0, 16)
                 };
 
+            case MealPreviewBlock mpb:
+                return CreateMealPreviewView(mpb, primaryText, secondaryText);
+
             case string s:
                 return CreateRow(s, primaryText);
 
             case IEnumerable<string> group:
+            {
                 var container = new VerticalStackLayout { Spacing = 6 };
                 foreach (var s2 in group)
                     container.Children.Add(CreateRow(s2, primaryText));
                 return container;
+            }
 
             default:
                 return CreateRow(obj?.ToString() ?? string.Empty, primaryText);
@@ -239,6 +255,127 @@ public partial class SimpleListPopup : Popup
         }
     }
 
+    private View CreateMealPreviewView(MealPreviewBlock mpb, Color primaryText, Color secondaryText)
+    {
+        var wrapper = new VerticalStackLayout { Spacing = 8 };
+
+        // Local, visual-only portions value (does not modify plan)
+        int displayPortions = mpb.Meal.Portions > 0 ? mpb.Meal.Portions : Math.Max(mpb.Recipe.IloscPorcji, 1);
+
+        // Title with portions and +/- controls
+        var row = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitionCollection
+            {
+                new ColumnDefinition{ Width = GridLength.Star },
+                new ColumnDefinition{ Width = GridLength.Auto },
+                new ColumnDefinition{ Width = GridLength.Auto }
+            },
+            ColumnSpacing = 6
+        };
+
+        var titleLabel = new Label
+        {
+            Text = $"{mpb.Recipe.Name} ({displayPortions} porcji)",
+            FontSize = 17,
+            FontAttributes = FontAttributes.Bold,
+            TextColor = primaryText,
+            LineBreakMode = LineBreakMode.WordWrap
+        };
+        row.Add(titleLabel);
+
+        var minus = new Button
+        {
+            Text = "-",
+            WidthRequest = 26,
+            HeightRequest = 26,
+            CornerRadius = 13,
+            FontSize = 14,
+            Padding = 0,
+            BackgroundColor = Application.Current?.RequestedTheme == Microsoft.Maui.ApplicationModel.AppTheme.Dark ? Color.FromArgb("#555555") : Color.FromArgb("#E0E0E0"),
+            TextColor = Application.Current?.RequestedTheme == Microsoft.Maui.ApplicationModel.AppTheme.Dark ? Colors.White : Colors.Black,
+            IsEnabled = displayPortions > 1
+        };
+        Grid.SetColumn(minus, 1);
+        row.Add(minus);
+
+        var plus = new Button
+        {
+            Text = "+",
+            WidthRequest = 26,
+            HeightRequest = 26,
+            CornerRadius = 13,
+            FontSize = 14,
+            Padding = 0,
+            BackgroundColor = (Color)Application.Current?.Resources["Primary"],
+            TextColor = (Color)Application.Current?.Resources["ButtonPrimaryText"],
+            IsEnabled = displayPortions < 20
+        };
+        Grid.SetColumn(plus, 2);
+        row.Add(plus);
+
+        wrapper.Children.Add(row);
+
+        // Ingredients list recalculated by local displayPortions
+        var list = new VerticalStackLayout { Spacing = 4 };
+
+        void rebuild()
+        {
+            list.Children.Clear();
+            var multiplier = (double)displayPortions / Math.Max(mpb.Recipe.IloscPorcji, 1);
+            if (mpb.Recipe.Ingredients != null)
+            {
+                foreach (var ing in mpb.Recipe.Ingredients)
+                {
+                    var adjusted = ing.Quantity * multiplier;
+                    list.Children.Add(new Label
+                    {
+                        Text = $"• {ing.Name}: {adjusted:F1} {GetUnitText(ing.Unit)}",
+                        FontSize = 14,
+                        TextColor = secondaryText
+                    });
+                }
+            }
+        }
+
+        rebuild();
+
+        // Wire events after variables are defined
+        minus.Clicked += (s, e) =>
+        {
+            if (displayPortions <= 1) return;
+            displayPortions--;
+            titleLabel.Text = $"{mpb.Recipe.Name} ({displayPortions} porcji)";
+            rebuild();
+            minus.IsEnabled = displayPortions > 1;
+            plus.IsEnabled = displayPortions < 20;
+        };
+
+        plus.Clicked += (s, e) =>
+        {
+            if (displayPortions >= 20) return;
+            displayPortions++;
+            titleLabel.Text = $"{mpb.Recipe.Name} ({displayPortions} porcji)";
+            rebuild();
+            minus.IsEnabled = displayPortions > 1;
+            plus.IsEnabled = displayPortions < 20;
+        };
+
+        wrapper.Children.Add(list);
+        return wrapper;
+    }
+
+    private static string GetUnitText(Unit unit)
+    {
+        return unit switch
+        {
+            Unit.Gram => FoodbookApp.Localization.UnitResources.GramShort,
+            Unit.Milliliter => FoodbookApp.Localization.UnitResources.MilliliterShort,
+            Unit.Piece => FoodbookApp.Localization.UnitResources.PieceShort,
+            _ => string.Empty
+        };
+    }
+
     private async Task CloseWithResultAsync(object? result)
     {
         try
@@ -250,19 +387,13 @@ public partial class SimpleListPopup : Popup
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error closing SimpleListPopup: {ex.Message}");
-            
-            // Handle specific popup exception
             if (ex.Message.Contains("PopupBlockedException") || ex.Message.Contains("blocked by the Modal Page"))
             {
                 System.Diagnostics.Debug.WriteLine("?? SimpleListPopup: Attempting to handle popup blocking");
-                
                 try
                 {
-                    // Try to clear the result and force close
                     if (!_tcs.Task.IsCompleted)
                         _tcs.SetResult(null);
-                        
-                    // Try to dismiss any existing modal pages
                     if (Application.Current?.MainPage?.Navigation?.ModalStack?.Count > 0)
                     {
                         await Application.Current.MainPage.Navigation.PopModalAsync(false);

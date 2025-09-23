@@ -95,7 +95,10 @@
                                                     <components:FolderAwarePickerComponent Grid.Column="0" 
                                                                                           SelectedRecipe="{Binding Recipe}" 
                                                                                           PlaceholderText="{loc:Translate Resource=PlannerPageResources, Key=SelectRecipePlaceholder}" />
-                                                    <Button Grid.Column="1" Text="➖" Command="{Binding BindingContext.DecreasePortionsCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" WidthRequest="30" HeightRequest="30" CornerRadius="15" FontSize="16" FontAttributes="Bold" BorderWidth="0" Padding="0" BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" TextColor="{AppThemeBinding Light=Black, Dark=White}">
+                                                    <Button Grid.Column="1" Text="➖" Command="{Binding BindingContext.DecreasePortionsCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}"
+                                                            WidthRequest="35" HeightRequest="35" MinimumWidthRequest="18" MinimumHeightRequest="18"
+                                                            CornerRadius="9" FontSize="14" FontAttributes="Bold" BorderWidth="0" Padding="0"
+                                                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" TextColor="{AppThemeBinding Light=Black, Dark=White}">
                                                         <Button.Triggers>
                                                             <DataTrigger TargetType="Button" Binding="{Binding Portions}" Value="1">
                                                                 <Setter Property="IsEnabled" Value="False" />
@@ -107,12 +110,15 @@
                                                            Text="{Binding Portions}" 
                                                            VerticalOptions="Center" 
                                                            HorizontalOptions="Center" 
-                                                           FontSize="14" 
+                                                           FontSize="18" 
                                                            FontAttributes="Bold" 
                                                            TextColor="{DynamicResource FrameTextColor}" 
-                                                           WidthRequest="24" 
+                                                           WidthRequest="36" 
                                                            HorizontalTextAlignment="Center" />
-                                                    <Button Grid.Column="3" Text="➕" Command="{Binding BindingContext.IncreasePortionsCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" WidthRequest="30" HeightRequest="30" CornerRadius="15" FontSize="16" FontAttributes="Bold" BorderWidth="0" Padding="0" BackgroundColor="{DynamicResource Primary}" TextColor="{DynamicResource ButtonPrimaryText}">
+                                                    <Button Grid.Column="3" Text="➕" Command="{Binding BindingContext.IncreasePortionsCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}"
+                                                            WidthRequest="35" HeightRequest="35" MinimumWidthRequest="18" MinimumHeightRequest="18"
+                                                            CornerRadius="9" FontSize="14" FontAttributes="Bold" BorderWidth="0" Padding="0"
+                                                            BackgroundColor="{DynamicResource Primary}" TextColor="{DynamicResource ButtonPrimaryText}">
                                                         <Button.Triggers>
                                                             <DataTrigger TargetType="Button" Binding="{Binding Portions}" Value="20">
                                                                 <Setter Property="IsEnabled" Value="False" />
@@ -120,7 +126,7 @@
                                                             </DataTrigger>
                                                         </Button.Triggers>
                                                     </Button>
-                                                    <Button Grid.Column="4" Text="✕" Command="{Binding BindingContext.RemoveMealCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" WidthRequest="35" HeightRequest="35" BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}" TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}" FontSize="16" CornerRadius="17" BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}" BorderWidth="1" Padding="0" />
+                                                    <Button Grid.Column="4" Text="✕"  Command="{Binding BindingContext.RemoveMealCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" MinimumWidthRequest="18" MinimumHeightRequest="18" WidthRequest="28" HeightRequest="28" BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}" TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}" FontSize="14" CornerRadius="17" BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}" BorderWidth="1" Padding="0" />
                                                 </Grid>
                                             </DataTemplate>
                                         </BindableLayout.ItemTemplate>
