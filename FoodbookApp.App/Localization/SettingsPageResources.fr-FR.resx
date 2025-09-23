@@ -18,11 +18,16 @@
   <data name="ColorThemeNavy" xml:space="preserve"><value>Marine</value></data>
   <data name="ColorThemeAutumn" xml:space="preserve"><value>Automne</value></data>
   <data name="ColorThemeMint" xml:space="preserve"><value>Menthe</value></data>
+  <!-- Nouvelles traductions des themes -->
+  <data name="ColorThemeForest" xml:space="preserve"><value>Foret</value></data>
+  <data name="ColorThemeSunset" xml:space="preserve"><value>Coucher de soleil</value></data>
+  <data name="ColorThemeBubblegum" xml:space="preserve"><value>Chewing-gum</value></data>
+  <data name="ColorThemeSky" xml:space="preserve"><value>Ciel</value></data>
   <data name="ThemeTitle" xml:space="preserve"><value>Theme</value></data>
   <data name="ThemeDescription" xml:space="preserve"><value>Clair / sombre</value></data>
   <data name="ThemeLight" xml:space="preserve"><value>Clair</value></data>
   <data name="ThemeDark" xml:space="preserve"><value>Sombre</value></data>
-  <data name="ThemeSystem" xml:space="preserve"><value>Syst?me</value></data>
+  <data name="ThemeSystem" xml:space="preserve"><value>Systeme</value></data>
   <data name="LanguageTitle" xml:space="preserve"><value>Langue</value></data>
   <data name="LanguageDescription" xml:space="preserve"><value>Langue de l interface</value></data>
   <data name="LanguageEnglish" xml:space="preserve"><value>Anglais</value></data>

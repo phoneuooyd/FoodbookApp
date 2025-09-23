@@ -337,6 +337,22 @@ namespace Foodbook.Services
                     PrimaryDark = Color.FromArgb("#81C784"), SecondaryDark = Color.FromArgb("#4CAF50"), TertiaryDark = Color.FromArgb("#66BB6A"), AccentDark = Color.FromArgb("#81C784"),
                     PrimaryTextLight = Color.FromArgb("#1B5E20"), SecondaryTextLight = Color.FromArgb("#2E7D32"), PrimaryTextDark = Color.FromArgb("#E8F5E8"), SecondaryTextDark = Color.FromArgb("#C8E6C9")
                 },
+                // Forest Theme (Ciemnozielony)
+                [AppColorTheme.Forest] = new ThemeColors
+                {
+                    Name = "Forest",
+                    PrimaryLight = Color.FromArgb("#1B5E20"), SecondaryLight = Color.FromArgb("#E8F5E9"), TertiaryLight = Color.FromArgb("#2E7D32"), AccentLight = Color.FromArgb("#388E3C"),
+                    PrimaryDark = Color.FromArgb("#66BB6A"), SecondaryDark = Color.FromArgb("#43A047"), TertiaryDark = Color.FromArgb("#388E3C"), AccentDark = Color.FromArgb("#81C784"),
+                    PrimaryTextLight = Color.FromArgb("#1B5E20"), SecondaryTextLight = Color.FromArgb("#2E7D32"), PrimaryTextDark = Color.FromArgb("#E8F5E9"), SecondaryTextDark = Color.FromArgb("#C8E6C9")
+                },
+                // Autumn Theme (Br¹zowy Jesienny)
+                [AppColorTheme.Autumn] = new ThemeColors
+                {
+                    Name = "Autumn",
+                    PrimaryLight = Color.FromArgb("#b06553"), SecondaryLight = Color.FromArgb("#e0d3cc"), TertiaryLight = Color.FromArgb("#824e3e"), AccentLight = Color.FromArgb("#cc7d7a"),
+                    PrimaryDark = Color.FromArgb("#BCAAA4"), SecondaryDark = Color.FromArgb("#A1887F"), TertiaryDark = Color.FromArgb("#8D6E63"), AccentDark = Color.FromArgb("#BCAAA4"),
+                    PrimaryTextLight = Color.FromArgb("#3E2723"), SecondaryTextLight = Color.FromArgb("#5D4037"), PrimaryTextDark = Color.FromArgb("#EFEBE9"), SecondaryTextDark = Color.FromArgb("#D7CCC8")
+                },
                 // Warm Theme
                 [AppColorTheme.Warm] = new ThemeColors
                 {
@@ -344,6 +360,14 @@ namespace Foodbook.Services
                     PrimaryLight = Color.FromArgb("#F57C00"), SecondaryLight = Color.FromArgb("#FFF3E0"), TertiaryLight = Color.FromArgb("#E65100"), AccentLight = Color.FromArgb("#FF9800"),
                     PrimaryDark = Color.FromArgb("#FFCC02"), SecondaryDark = Color.FromArgb("#FFB74D"), TertiaryDark = Color.FromArgb("#FF8F00"), AccentDark = Color.FromArgb("#FFCC02"),
                     PrimaryTextLight = Color.FromArgb("#E65100"), SecondaryTextLight = Color.FromArgb("#F57C00"), PrimaryTextDark = Color.FromArgb("#FFF8E1"), SecondaryTextDark = Color.FromArgb("#FFCC80")
+                },
+                // Sunset Theme (Pomarañczowy)
+                [AppColorTheme.Sunset] = new ThemeColors
+                {
+                    Name = "Sunset",
+                    PrimaryLight = Color.FromArgb("#FB8C00"), SecondaryLight = Color.FromArgb("#FFF3E0"), TertiaryLight = Color.FromArgb("#E65100"), AccentLight = Color.FromArgb("#FF9800"),
+                    PrimaryDark = Color.FromArgb("#FFB74D"), SecondaryDark = Color.FromArgb("#FF9800"), TertiaryDark = Color.FromArgb("#F57C00"), AccentDark = Color.FromArgb("#FFCC80"),
+                    PrimaryTextLight = Color.FromArgb("#E65100"), SecondaryTextLight = Color.FromArgb("#F57C00"), PrimaryTextDark = Color.FromArgb("#FFF3E0"), SecondaryTextDark = Color.FromArgb("#FFE0B2")
                 },
                 // Vibrant Theme
                 [AppColorTheme.Vibrant] = new ThemeColors
@@ -361,23 +385,15 @@ namespace Foodbook.Services
                     PrimaryDark = Color.FromArgb("#E0E0E0"), SecondaryDark = Color.FromArgb("#616161"), TertiaryDark = Color.FromArgb("#9E9E9E"), AccentDark = Color.FromArgb("#BDBDBD"),
                     PrimaryTextLight = Color.FromArgb("#212121"), SecondaryTextLight = Color.FromArgb("#616161"), PrimaryTextDark = Color.FromArgb("#FFFFFF"), SecondaryTextDark = Color.FromArgb("#E0E0E0")
                 },
-                // NEW: Navy Theme (Ciemny Niebieski)
+                // Navy Theme (Ciemny Niebieski)
                 [AppColorTheme.Navy] = new ThemeColors
                 {
                     Name = "Navy",
-                    PrimaryLight = Color.FromArgb("#1565C0"), SecondaryLight = Color.FromArgb("#E3F2FD"), TertiaryLight = Color.FromArgb("#0D47A1"), AccentLight = Color.FromArgb("#1976D2"),
-                    PrimaryDark = Color.FromArgb("#64B5F6"), SecondaryDark = Color.FromArgb("#42A5F5"), TertiaryDark = Color.FromArgb("#2196F3"), AccentDark = Color.FromArgb("#64B5F6"),
+                    PrimaryLight = Color.FromArgb("#074891"), SecondaryLight = Color.FromArgb("#9fbafc"), TertiaryLight = Color.FromArgb("#0D47A1"), AccentLight = Color.FromArgb("#1976D2"),
+                    PrimaryDark = Color.FromArgb("#183b99"), SecondaryDark = Color.FromArgb("#5d6ff0"), TertiaryDark = Color.FromArgb("#2196F3"), AccentDark = Color.FromArgb("#64B5F6"),
                     PrimaryTextLight = Color.FromArgb("#0D47A1"), SecondaryTextLight = Color.FromArgb("#1565C0"), PrimaryTextDark = Color.FromArgb("#E3F2FD"), SecondaryTextDark = Color.FromArgb("#BBDEFB")
                 },
-                // NEW: Autumn Theme (Br¹zowy Jesienny)
-                [AppColorTheme.Autumn] = new ThemeColors
-                {
-                    Name = "Autumn",
-                    PrimaryLight = Color.FromArgb("#8D6E63"), SecondaryLight = Color.FromArgb("#EFEBE9"), TertiaryLight = Color.FromArgb("#5D4037"), AccentLight = Color.FromArgb("#A1887F"),
-                    PrimaryDark = Color.FromArgb("#BCAAA4"), SecondaryDark = Color.FromArgb("#A1887F"), TertiaryDark = Color.FromArgb("#8D6E63"), AccentDark = Color.FromArgb("#BCAAA4"),
-                    PrimaryTextLight = Color.FromArgb("#3E2723"), SecondaryTextLight = Color.FromArgb("#5D4037"), PrimaryTextDark = Color.FromArgb("#EFEBE9"), SecondaryTextDark = Color.FromArgb("#D7CCC8")
-                },
-                // NEW: Mint Theme (Miêtowy)
+                // Mint Theme (Miêtowy)
                 [AppColorTheme.Mint] = new ThemeColors
                 {
                     Name = "Mint",
@@ -385,37 +401,21 @@ namespace Foodbook.Services
                     PrimaryDark = Color.FromArgb("#04d9d2"), SecondaryDark = Color.FromArgb("#26dad4"), TertiaryDark = Color.FromArgb("#00d4c9"), AccentDark = Color.FromArgb("#4ddce1"),
                     PrimaryTextLight = Color.FromArgb("#006064"), SecondaryTextLight = Color.FromArgb("#00838F"), PrimaryTextDark = Color.FromArgb("#bef7f7"), SecondaryTextDark = Color.FromArgb("#a8eff7")
                 },
-                // NEW: Forest Theme (Ciemnozielony)
-                [AppColorTheme.Forest] = new ThemeColors
-                {
-                    Name = "Forest",
-                    PrimaryLight = Color.FromArgb("#1B5E20"), SecondaryLight = Color.FromArgb("#E8F5E9"), TertiaryLight = Color.FromArgb("#2E7D32"), AccentLight = Color.FromArgb("#388E3C"),
-                    PrimaryDark = Color.FromArgb("#66BB6A"), SecondaryDark = Color.FromArgb("#43A047"), TertiaryDark = Color.FromArgb("#388E3C"), AccentDark = Color.FromArgb("#81C784"),
-                    PrimaryTextLight = Color.FromArgb("#1B5E20"), SecondaryTextLight = Color.FromArgb("#2E7D32"), PrimaryTextDark = Color.FromArgb("#E8F5E9"), SecondaryTextDark = Color.FromArgb("#C8E6C9")
-                },
-                // NEW: Sunset Theme (Pomarañczowy)
-                [AppColorTheme.Sunset] = new ThemeColors
-                {
-                    Name = "Sunset",
-                    PrimaryLight = Color.FromArgb("#FB8C00"), SecondaryLight = Color.FromArgb("#FFF3E0"), TertiaryLight = Color.FromArgb("#E65100"), AccentLight = Color.FromArgb("#FF9800"),
-                    PrimaryDark = Color.FromArgb("#FFB74D"), SecondaryDark = Color.FromArgb("#FF9800"), TertiaryDark = Color.FromArgb("#F57C00"), AccentDark = Color.FromArgb("#FFCC80"),
-                    PrimaryTextLight = Color.FromArgb("#E65100"), SecondaryTextLight = Color.FromArgb("#F57C00"), PrimaryTextDark = Color.FromArgb("#FFF3E0"), SecondaryTextDark = Color.FromArgb("#FFE0B2")
-                },
-                // NEW: Bubblegum Theme (Ró¿ + B³êkit)
-                [AppColorTheme.Bubblegum] = new ThemeColors
-                {
-                    Name = "Bubblegum",
-                    PrimaryLight = Color.FromArgb("#F48FB1"), SecondaryLight = Color.FromArgb("#E1F5FE"), TertiaryLight = Color.FromArgb("#F06292"), AccentLight = Color.FromArgb("#81D4FA"),
-                    PrimaryDark = Color.FromArgb("#F8BBD0"), SecondaryDark = Color.FromArgb("#4FC3F7"), TertiaryDark = Color.FromArgb("#EC407A"), AccentDark = Color.FromArgb("#29B6F6"),
-                    PrimaryTextLight = Color.FromArgb("#AD1457"), SecondaryTextLight = Color.FromArgb("#0288D1"), PrimaryTextDark = Color.FromArgb("#FCE4EC"), SecondaryTextDark = Color.FromArgb("#E1F5FE")
-                },
-                // NEW: Sky Theme (SkyBlue)
+                // Sky Theme (SkyBlue)
                 [AppColorTheme.Sky] = new ThemeColors
                 {
                     Name = "Sky",
                     PrimaryLight = Color.FromArgb("#03A9F4"), SecondaryLight = Color.FromArgb("#E1F5FE"), TertiaryLight = Color.FromArgb("#0288D1"), AccentLight = Color.FromArgb("#29B6F6"),
                     PrimaryDark = Color.FromArgb("#81D4FA"), SecondaryDark = Color.FromArgb("#4FC3F7"), TertiaryDark = Color.FromArgb("#039BE5"), AccentDark = Color.FromArgb("#81D4FA"),
                     PrimaryTextLight = Color.FromArgb("#01579B"), SecondaryTextLight = Color.FromArgb("#0277BD"), PrimaryTextDark = Color.FromArgb("#E1F5FE"), SecondaryTextDark = Color.FromArgb("#B3E5FC")
+                },
+                // Bubblegum Theme (Ró¿ + B³êkit)
+                [AppColorTheme.Bubblegum] = new ThemeColors
+                {
+                    Name = "Bubblegum",
+                    PrimaryLight = Color.FromArgb("#F48FB1"), SecondaryLight = Color.FromArgb("#E1F5FE"), TertiaryLight = Color.FromArgb("#F06292"), AccentLight = Color.FromArgb("#81D4FA"),
+                    PrimaryDark = Color.FromArgb("#F8BBD0"), SecondaryDark = Color.FromArgb("#4FC3F7"), TertiaryDark = Color.FromArgb("#EC407A"), AccentDark = Color.FromArgb("#29B6F6"),
+                    PrimaryTextLight = Color.FromArgb("#AD1457"), SecondaryTextLight = Color.FromArgb("#0288D1"), PrimaryTextDark = Color.FromArgb("#FCE4EC"), SecondaryTextDark = Color.FromArgb("#E1F5FE")
                 }
 
             };

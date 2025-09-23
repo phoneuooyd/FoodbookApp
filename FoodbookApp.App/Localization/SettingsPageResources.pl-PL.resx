@@ -159,6 +159,18 @@
   <data name="ColorThemeMint" xml:space="preserve">
     <value>Miętowy</value>
   </data>
+  <data name="ColorThemeForest" xml:space="preserve">
+    <value>Leśny</value>
+  </data>
+  <data name="ColorThemeSunset" xml:space="preserve">
+    <value>Zachód słońca</value>
+  </data>
+  <data name="ColorThemeBubblegum" xml:space="preserve">
+    <value>Guma balonowa</value>
+  </data>
+  <data name="ColorThemeSky" xml:space="preserve">
+    <value>Niebo</value>
+  </data>
   <data name="ThemeTitle" xml:space="preserve">
     <value>Motyw</value>
   </data>

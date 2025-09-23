@@ -18,6 +18,11 @@
   <data name="ColorThemeNavy" xml:space="preserve"><value>Marine</value></data>
   <data name="ColorThemeAutumn" xml:space="preserve"><value>Herbst</value></data>
   <data name="ColorThemeMint" xml:space="preserve"><value>Minze</value></data>
+  <!-- Neue fehlende Theme-Namen -->
+  <data name="ColorThemeForest" xml:space="preserve"><value>Wald</value></data>
+  <data name="ColorThemeSunset" xml:space="preserve"><value>Sonnenuntergang</value></data>
+  <data name="ColorThemeBubblegum" xml:space="preserve"><value>Kaugummi</value></data>
+  <data name="ColorThemeSky" xml:space="preserve"><value>Himmel</value></data>
   <data name="ThemeTitle" xml:space="preserve"><value>Theme</value></data>
   <data name="ThemeDescription" xml:space="preserve"><value>Licht / Dunkel</value></data>
   <data name="ThemeLight" xml:space="preserve"><value>Hell</value></data>

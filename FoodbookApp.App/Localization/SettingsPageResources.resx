@@ -159,6 +159,18 @@
   <data name="ColorThemeMint" xml:space="preserve">
     <value>Mint</value>
   </data>
+  <data name="ColorThemeForest" xml:space="preserve">
+    <value>Forest</value>
+  </data>
+  <data name="ColorThemeSunset" xml:space="preserve">
+    <value>Sunset</value>
+  </data>
+  <data name="ColorThemeBubblegum" xml:space="preserve">
+    <value>Bubblegum</value>
+  </data>
+  <data name="ColorThemeSky" xml:space="preserve">
+    <value>Sky</value>
+  </data>
   <data name="ThemeTitle" xml:space="preserve">
     <value>Theme</value>
   </data>

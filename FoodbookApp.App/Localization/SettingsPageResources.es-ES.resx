@@ -18,6 +18,11 @@
   <data name="ColorThemeNavy" xml:space="preserve"><value>Marino</value></data>
   <data name="ColorThemeAutumn" xml:space="preserve"><value>Otono</value></data>
   <data name="ColorThemeMint" xml:space="preserve"><value>Mentol</value></data>
+  <!-- Nuevos nombres de temas -->
+  <data name="ColorThemeForest" xml:space="preserve"><value>Bosque</value></data>
+  <data name="ColorThemeSunset" xml:space="preserve"><value>Atardecer</value></data>
+  <data name="ColorThemeBubblegum" xml:space="preserve"><value>Chicle</value></data>
+  <data name="ColorThemeSky" xml:space="preserve"><value>Cielo</value></data>
   <data name="ThemeTitle" xml:space="preserve"><value>Tema</value></data>
   <data name="ThemeDescription" xml:space="preserve"><value>Claro / oscuro</value></data>
   <data name="ThemeLight" xml:space="preserve"><value>Claro</value></data>
