@@ -166,32 +166,33 @@
                                 FontFamily="{DynamicResource AppFontFamily}"
                                 ItemDisplayBinding="{Binding ., Converter={StaticResource AppColorThemeToLocalizedStringConverter}}" />
                         
-                        <!-- NEW: Colorful Background CheckBox -->
-                        <StackLayout Orientation="Horizontal" Margin="0,12,0,0" HorizontalOptions="Center">
-                            <CheckBox IsChecked="{Binding IsColorfulBackgroundEnabled}"
+                        <!-- Aligned options: Background & Wallpaper in one grid aligned to the left -->
+                        <Grid Margin="0,12,0,0" HorizontalOptions="Start" ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8">
+                            <!-- Background row -->
+                            <CheckBox Grid.Row="0" Grid.Column="0"
+                                      IsChecked="{Binding IsColorfulBackgroundEnabled}"
                                       Color="{DynamicResource Primary}"
                                       VerticalOptions="Center" />
-                            <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ColorfulBackgroundOption}"
+                            <Label Grid.Row="0" Grid.Column="1"
+                                   Text="{loc:Translate Resource=SettingsPageResources, Key=ColorfulBackgroundOption}"
                                    FontSize="{DynamicResource AppSmallFontSize}"
                                    FontFamily="{DynamicResource AppFontFamily}"
                                    TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"
-                                   VerticalOptions="Center"
-                                   Margin="8,0,0,0" />
-                        </StackLayout>
+                                   VerticalOptions="Center" />
 
-                        <!-- NEW: Wallpaper Background CheckBox -->
-                        <StackLayout Orientation="Horizontal" Margin="0,8,0,0" HorizontalOptions="Center">
-                            <CheckBox IsChecked="{Binding IsWallpaperBackgroundEnabled}"
+                            <!-- Wallpaper row -->
+                            <CheckBox Grid.Row="1" Grid.Column="0"
+                                      IsChecked="{Binding IsWallpaperBackgroundEnabled}"
                                       IsEnabled="{Binding IsWallpaperAvailable}"
                                       Color="{DynamicResource Primary}"
                                       VerticalOptions="Center" />
-                            <Label Text="{loc:Translate Resource=SettingsPageResources, Key=WallpaperBackgroundOption}"
+                            <Label Grid.Row="1" Grid.Column="1"
+                                   Text="{loc:Translate Resource=SettingsPageResources, Key=WallpaperBackgroundOption}"
                                    FontSize="{DynamicResource AppSmallFontSize}"
                                    FontFamily="{DynamicResource AppFontFamily}"
                                    TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"
-                                   VerticalOptions="Center"
-                                   Margin="8,0,0,0" />
-                        </StackLayout>
+                                   VerticalOptions="Center" />
+                        </Grid>
                         
                         <!-- Theme Preview -->
                         <Grid Margin="0,12,0,0" HeightRequest="40" ColumnDefinitions="*,*,*">
@@ -289,7 +290,7 @@
                                    FontAttributes="Bold"
                                    HorizontalTextAlignment="Center"
                                    TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
-                                   Margin="0,8,0,0" />
+                                   Margin="0,4,0,0" />
                         </StackLayout>
                     </StackLayout>
                 </Frame>
