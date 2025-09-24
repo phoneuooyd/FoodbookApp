@@ -105,9 +105,11 @@ public partial class SimpleListPopup : Popup
             var primaryTextRes = app?.Resources.TryGetValue("PrimaryText", out var v1) == true && v1 is Color c1 ? c1 : Colors.Black;
             var secondaryTextRes = app?.Resources.TryGetValue("SecondaryText", out var v2) == true && v2 is Color c2 ? c2 : Colors.Gray;
 
-            // proper font colour setting for darkmode and tint mode (null-safe when _themeService is not yet resolved)
+            // flags from theme service
             var isColorful = _themeService?.GetIsColorfulBackgroundEnabled() == true;
+            var isWallpaper = _themeService?.IsWallpaperBackgroundEnabled() == true;
 
+            // Base colours
             var contentPrimary = !isColorful
                 ? (isDark ? Colors.White : primaryTextRes)
                 : (isDark ? Colors.Black : primaryTextRes);
@@ -115,6 +117,16 @@ public partial class SimpleListPopup : Popup
             var contentSecondary = !isColorful
                 ? (isDark ? Color.FromArgb("#858585") : secondaryTextRes)
                 : (isDark ? Color.FromArgb("#000000") : secondaryTextRes);
+
+            // Adjust when wallpaper is enabled in dark mode: slightly darken text for softer contrast
+            if (isWallpaper && isDark)
+            {
+                contentPrimary = Color.FromArgb("#858585");  // soften primary
+                contentSecondary = Color.FromArgb("#000000"); // soften secondary vs bg
+            }
+
+            // Ensure header title adopts the same tuned colour
+            TitleLabel.TextColor = contentPrimary;
 
             foreach (var obj in data)
             {

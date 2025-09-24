@@ -23,10 +23,28 @@ namespace Foodbook.Services
         private readonly Dictionary<AppColorTheme, ThemeColors> _availableColorThemes;
 
         // Supported wallpapers per color theme
+        // Files are expected in Resources/Wallpapers with pattern: <theme>_light.jpg and <theme>_dark.jpg
         // If only single is provided, it will be used for both light and dark
         private readonly Dictionary<AppColorTheme, (string? single, string? light, string? dark)> _wallpaperMap = new()
         {
-            [AppColorTheme.Autumn] = (single: null, light: "autumn_light.jpg", dark: "autumn_dark.jpg")
+            // Default
+            [AppColorTheme.Default]    = (single: null, light: "default_light.jpg",    dark: "default_dark.jpg"),
+            // Nature family
+            [AppColorTheme.Nature]     = (single: null, light: "nature_light.jpg",     dark: "nature_dark.jpg"),
+            [AppColorTheme.Forest]     = (single: null, light: "forest_light.jpg",     dark: "forest_dark.jpg"),
+            // Warm colors
+            [AppColorTheme.Autumn]     = (single: null, light: "autumn_light.jpg",     dark: "autumn_dark.jpg"),
+            [AppColorTheme.Warm]       = (single: null, light: "warm_light.jpg",       dark: "warm_dark.jpg"),
+            [AppColorTheme.Sunset]     = (single: null, light: "sunset_light.jpg",     dark: "sunset_dark.jpg"),
+            [AppColorTheme.Vibrant]    = (single: null, light: "vibrant_light.jpg",    dark: "vibrant_dark.jpg"),
+            // Neutral
+            [AppColorTheme.Monochrome] = (single: "monochrome.jpg", light: null,       dark: null),
+            // Cool colors
+            [AppColorTheme.Navy]       = (single: null, light: "navy_light.jpg",       dark: "navy_dark.jpg"),
+            [AppColorTheme.Mint]       = (single: null, light: "mint_light.jpg",       dark: "mint_dark.jpg"),
+            [AppColorTheme.Sky]        = (single: null, light: "sky_light.jpg",        dark: "sky_dark.jpg"),
+            // Fun
+            [AppColorTheme.Bubblegum]  = (single: null, light: "bubblegum_light.jpg",  dark: "bubblegum_dark.jpg"),
         };
 
         public ThemeService()
@@ -236,7 +254,17 @@ namespace Foodbook.Services
                         pageBackgroundImageSource = ImageSource.FromFile(mapping.single!);
                     }
 
-                    pageBackground = isDark ? Color.FromRgba(0, 0, 0, 0.35) : Color.FromRgba(255, 255, 255, 0.10);
+                    // Slightly stronger overlays for better readability in wallpaper mode
+                    if (isDark)
+                    {
+                        // Dark mode: make overlay a bit darker than before (0.45 vs 0.35)
+                        pageBackground = Color.FromRgba(0, 0, 0, 0.15);
+                    }
+                    else
+                    {
+                        // Light mode: a touch stronger to improve contrast on bright wallpapers (0.14 vs 0.10)
+                        pageBackground = Color.FromRgba(255, 255, 255, 0.14);
+                    }
                 }
                 else if (_isColorfulBackgroundEnabled)
                 {

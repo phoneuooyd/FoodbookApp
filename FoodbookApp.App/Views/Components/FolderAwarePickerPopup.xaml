@@ -4,6 +4,7 @@
            xmlns:mct="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui"
            xmlns:converters="clr-namespace:Foodbook.Converters"
            xmlns:loc="clr-namespace:Foodbook.Services"
+           xmlns:components="clr-namespace:Foodbook.Views.Components"
            x:Class="Foodbook.Views.Components.FolderAwarePickerPopup"
            x:Name="ThisPopup"
            CanBeDismissedByTappingOutsideOfPopup="True"
@@ -30,7 +31,6 @@
             <!-- Header -->
 			<StackLayout Grid.Row="0"
                         BackgroundColor="{DynamicResource ShellBackgroundColor}"
-
                         Padding="12,10"
 						Margin="0,0">
 
@@ -48,7 +48,7 @@
                             IsVisible="{Binding HasBreadcrumb, Source={x:Reference ThisPopup}}"
                             Margin="0,0,8,0" />
 
-					<StackLayout Grid.Column="1" Orientation="Vertical" Spacing="4">
+					<StackLayout Grid.Column="1" Orientation="Vertical" Spacing="6">
                         <!-- Localized title -->
 						<Label FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource ShellTitleColor}">
                             <Label.Text>
@@ -60,6 +60,13 @@
                                FontSize="14"
                                TextColor="{DynamicResource SecondaryText}"
                                IsVisible="{Binding HasBreadcrumb, Source={x:Reference ThisPopup}}" />
+
+                        <!-- Modern search bar component -->
+                        <components:ModernSearchBarComponent
+                            SearchText="{Binding SearchText, Source={x:Reference ThisPopup}}"
+                            PlaceholderText="Szukaj..."
+                            ClearCommand="{Binding ClearSearchCommand, Source={x:Reference ThisPopup}}"
+                            />
 					</StackLayout>
 
                     <!-- Close button -->

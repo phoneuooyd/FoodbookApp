@@ -148,8 +148,6 @@ namespace Foodbook.ViewModels
                 {
                     var title = FolderResources.RenameFolderTitle;
                     var prompt = FolderResources.RenameFolderPrompt;
-                    var descTitle = FolderResources.EditDescriptionTitle;
-                    var descPrompt = FolderResources.EditDescriptionPrompt;
 
                     string newName = await Shell.Current.DisplayPromptAsync(title, prompt, initialValue: f.Name, maxLength: 200);
                     if (newName == null) return; // user cancelled
@@ -159,9 +157,9 @@ namespace Foodbook.ViewModels
                         await Shell.Current.DisplayAlert(title, FolderResources.ValidationNameRequired, "OK");
                         return;
                     }
-                    string newDesc = await Shell.Current.DisplayPromptAsync(descTitle, descPrompt, initialValue: f.Description ?? string.Empty, maxLength: 1000);
+
+                    // Only rename folder. Description editing dialog removed per request.
                     f.Name = newName;
-                    f.Description = string.IsNullOrWhiteSpace(newDesc) ? null : newDesc.Trim();
                     await _folderService.UpdateFolderAsync(f);
                     FilterItems();
                 }

@@ -41,10 +41,24 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
 
     public bool HasBreadcrumb => _breadcrumb.Count > 0 || _currentFolder != null;
 
+    private string _searchText = string.Empty;
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            if (_searchText == value) return;
+            _searchText = value;
+            OnPropertyChanged();
+            ApplySearch();
+        }
+    }
+
     public ICommand TapCommand { get; }
     public ICommand CloseCommand { get; }
     public ICommand RefreshCommand { get; }
     public ICommand BackCommand { get; }
+    public ICommand ClearSearchCommand { get; }
 
     public Task<object?> ResultTask => _tcs.Task;
 
@@ -60,6 +74,7 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
         CloseCommand = new Command(() => CloseWithResult(null));
         RefreshCommand = new Command(async () => await RefreshDataAsync());
         BackCommand = new Command(GoBack);
+        ClearSearchCommand = new Command(() => { SearchText = string.Empty; });
         
         InitializeComponent();
         
@@ -122,27 +137,74 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
         // Add recipes
         foreach (var recipe in recipes.OrderBy(r => r.Name))
         {
-            var nutritionInfo = $"{recipe.Calories:F0} kcal";
-            if (recipe.IloscPorcji > 1)
-                nutritionInfo += $" \u2022 {recipe.IloscPorcji} porcji";
-
-            Items.Add(new FolderPickerItem
-            {
-                ItemType = FolderPickerItemType.Recipe,
-                DisplayName = recipe.Name,
-                Description = nutritionInfo,
-                Icon = "\uD83C\uDF7D", // Recipe icon
-                FontAttributes = FontAttributes.None,
-                ShowArrow = false,
-                Data = recipe,
-                TapAction = () => CloseWithResult(recipe)
-            });
+            Items.Add(CreateRecipeItem(recipe));
         }
 
         // Update UI properties
         OnPropertyChanged(nameof(BreadcrumbText));
         OnPropertyChanged(nameof(HasBreadcrumb));
         OnPropertyChanged(nameof(Title));
+
+        // Apply current search if any
+        if (!string.IsNullOrWhiteSpace(_searchText))
+            ApplySearch();
+    }
+
+    private FolderPickerItem CreateRecipeItem(Recipe recipe)
+    {
+        var nutritionInfo = $"{recipe.Calories:F0} kcal";
+        if (recipe.IloscPorcji > 1)
+            nutritionInfo += $" \u2022 {recipe.IloscPorcji} porcji";
+
+        return new FolderPickerItem
+        {
+            ItemType = FolderPickerItemType.Recipe,
+            DisplayName = recipe.Name,
+            Description = nutritionInfo,
+            Icon = "\uD83C\uDF7D",
+            FontAttributes = FontAttributes.None,
+            ShowArrow = false,
+            Data = recipe,
+            TapAction = () => CloseWithResult(recipe)
+        };
+    }
+
+    private void ApplySearch()
+    {
+        try
+        {
+            var text = _searchText?.Trim();
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                // show current folder contents
+                LoadCurrentFolderContents();
+                return;
+            }
+
+            var query = text.ToLowerInvariant();
+            Items.Clear();
+
+            // If user typed a folder name, show recipes from that folder too
+            var matchingFolders = _allFolders.Where(f => (f.Name?.ToLower().Contains(query) ?? false)).ToList();
+            var folderIds = matchingFolders.Select(f => (int?)f.Id).ToHashSet();
+
+            // Search recipes by name/description OR located in matched folders
+            var matchedRecipes = _allRecipes.Where(r =>
+                    (r.Name?.ToLower().Contains(query) ?? false)
+                 || (r.Description?.ToLower().Contains(query) ?? false)
+                 || (folderIds.Contains(r.FolderId)))
+                .OrderBy(r => r.Name)
+                .ToList();
+
+            foreach (var recipe in matchedRecipes)
+            {
+                Items.Add(CreateRecipeItem(recipe));
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"FolderAwarePickerPopup.ApplySearch error: {ex.Message}");
+        }
     }
 
     private void OnItemTapped(FolderPickerItem item)
@@ -157,6 +219,8 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
             _breadcrumb.Add(_currentFolder);
         }
         _currentFolder = folder;
+        _searchText = string.Empty; // reset search when navigating
+        OnPropertyChanged(nameof(SearchText));
         LoadCurrentFolderContents();
     }
 
@@ -171,6 +235,8 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
         {
             _currentFolder = null;
         }
+        _searchText = string.Empty; // reset search when navigating back
+        OnPropertyChanged(nameof(SearchText));
         LoadCurrentFolderContents();
     }
 
