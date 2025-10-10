@@ -26,42 +26,17 @@
 			MinimumHeightRequest="350"
             MaximumHeightRequest="600">
         
-        <Grid RowDefinitions="Auto,*,Auto">
+        <Grid RowDefinitions="Auto,*">
             
-            <!-- Header -->
+            <!-- Header without title, breadcrumb and back button (back is shown only as a list row) -->
 			<StackLayout Grid.Row="0"
                         BackgroundColor="{DynamicResource ShellBackgroundColor}"
                         Padding="12,10"
 						Margin="0,0">
 
-                <Grid ColumnDefinitions="Auto,*,Auto" Padding="6,6">
-                    <!-- Back button -->
-                    <Button Grid.Column="0"
-                            Text="←"
-                            FontSize="16"
-                            WidthRequest="32"
-                            HeightRequest="32"
-                            CornerRadius="16"
-                            BackgroundColor="Transparent"
-                            TextColor="{DynamicResource ShellTitleColor}"
-                            Command="{Binding BackCommand, Source={x:Reference ThisPopup}}"
-                            IsVisible="{Binding HasBreadcrumb, Source={x:Reference ThisPopup}}"
-                            Margin="0,0,8,0" />
-
-					<StackLayout Grid.Column="1" Orientation="Vertical" Spacing="6">
-                        <!-- Localized title -->
-						<Label FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource ShellTitleColor}">
-                            <Label.Text>
-                                <loc:Translate Resource="FolderResources" Key="ChooseRecipeTitle" />
-                            </Label.Text>
-                        </Label>
-
-						<Label Text="{Binding BreadcrumbText, Source={x:Reference ThisPopup}}"
-                               FontSize="14"
-                               TextColor="{DynamicResource SecondaryText}"
-                               IsVisible="{Binding HasBreadcrumb, Source={x:Reference ThisPopup}}" />
-
-                        <!-- Modern search bar component -->
+                <Grid ColumnDefinitions="*,Auto" Padding="6,6">
+                    <!-- Search bar only -->
+                    <StackLayout Grid.Column="0" Orientation="Vertical" Spacing="6">
                         <components:ModernSearchBarComponent
                             SearchText="{Binding SearchText, Source={x:Reference ThisPopup}}"
                             PlaceholderText="Szukaj..."
@@ -70,7 +45,7 @@
 					</StackLayout>
 
                     <!-- Close button -->
-					<Button Grid.Column="2"
+					<Button Grid.Column="1"
                             Text="X"
                             FontSize="16"
                             WidthRequest="32"
@@ -189,29 +164,7 @@
                 </StackLayout>
             </ScrollView>
             
-            <!-- Footer -->
-            <StackLayout Grid.Row="2"
-                        BackgroundColor="{DynamicResource ShellBackgroundColor}"
-                        Padding="6,4">
-                
-                <Grid ColumnDefinitions="*,Auto">
-                    <Label Grid.Column="0" FontSize="12" VerticalOptions="Center" TextColor="{DynamicResource SecondaryText}">
-                        <Label.Text>
-                            <loc:Translate Resource="FolderResources" Key="FooterHint" />
-                        </Label.Text>
-                    </Label>
-                    
-                    <Button Grid.Column="1"
-                            FontSize="14"
-                            BackgroundColor="Transparent"
-                            TextColor="{DynamicResource ShellTitleColor}"
-                            Command="{Binding CloseCommand, Source={x:Reference ThisPopup}}">
-                        <Button.Text>
-                            <loc:Translate Resource="ButtonResources" Key="Cancel" />
-                        </Button.Text>
-                    </Button>
-                </Grid>
-            </StackLayout>
+            <!-- Footer removed -->
         </Grid>
     </Border>
 </mct:Popup>

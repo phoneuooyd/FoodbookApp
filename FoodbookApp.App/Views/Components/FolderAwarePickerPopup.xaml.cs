@@ -100,7 +100,7 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
             Items.Add(new FolderPickerItem
             {
                 ItemType = FolderPickerItemType.Navigation,
-                DisplayName = "\u2190 Wróæ", // Unicode left arrow
+                DisplayName = "Wróæ",
                 Description = _breadcrumb.LastOrDefault()?.Name ?? "Root",
                 Icon = "\u2190", // Unicode left arrow
                 FontAttributes = FontAttributes.None,
