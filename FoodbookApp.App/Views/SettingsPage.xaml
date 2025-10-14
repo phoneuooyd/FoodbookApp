@@ -150,7 +150,7 @@
 
             <!-- Settings Grid -->
             <Grid ColumnDefinitions="*,*" 
-                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                   ColumnSpacing="0"
                   RowSpacing="8">
 
@@ -347,6 +347,44 @@
                                FontAttributes="Bold"
                                Margin="0,4,0,0" />
                     </StackLayout>
+                </Frame>
+
+                <!-- Labels Management Card -->
+                <Frame Grid.Row="6" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Etykiety przepisów" Style="{StaticResource CardTitleStyle}" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                            <!-- Add new label -->
+                            <VerticalStackLayout Grid.Column="0" Spacing="6">
+                                <Label Text="Dodaj etykietę" FontAttributes="Bold" />
+                                <Entry Placeholder="Nazwa etykiety" Text="{Binding NewLabelName}" />
+                                <Entry Placeholder="#RRGGBB lub #AARRGGBB" Text="{Binding NewLabelColor}" />
+                                <Button Text="Dodaj" Command="{Binding AddLabelCommand}" />
+                            </VerticalStackLayout>
+                            <!-- Edit selected label -->
+                            <VerticalStackLayout Grid.Column="1" Spacing="6">
+                                <Label Text="Edytuj wybraną" FontAttributes="Bold" />
+                                <Entry Placeholder="Nazwa" Text="{Binding EditLabelName}" />
+                                <Entry Placeholder="#RRGGBB lub #AARRGGBB" Text="{Binding EditLabelColor}" />
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                                    <Button Text="Zapisz" Command="{Binding UpdateLabelCommand}" />
+                                    <Button Text="Usuń" Command="{Binding DeleteLabelCommand}" Style="{StaticResource DangerButtonStyle}" />
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Grid>
+                        <CollectionView ItemsSource="{Binding Labels}" SelectionMode="Single" SelectedItem="{Binding SelectedLabel}" Margin="-8,0">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border StrokeThickness="1" Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" Padding="8" Margin="0,6" StrokeShape="RoundRectangle 10">
+                                        <HorizontalStackLayout Spacing="8">
+                                            <BoxView WidthRequest="14" HeightRequest="14" CornerRadius="7" Color="{Binding ColorHex}" />
+                                            <Label Text="{Binding Name}" VerticalOptions="Center" />
+                                        </HorizontalStackLayout>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
                 </Frame>
 
             </Grid>

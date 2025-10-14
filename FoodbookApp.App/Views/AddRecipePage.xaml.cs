@@ -41,6 +41,7 @@ namespace Foodbook.Views
                     
                     ViewModel?.Reset();
                     await (ViewModel?.LoadAvailableIngredientsAsync() ?? Task.CompletedTask);
+                    await (ViewModel?.LoadAvailableLabelsAsync() ?? Task.CompletedTask);
 
                     if (RecipeId > 0 && ViewModel != null)
                         await ViewModel.LoadRecipeAsync(RecipeId);

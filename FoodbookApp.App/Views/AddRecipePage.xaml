@@ -76,6 +76,28 @@
                             </StackLayout>
                         </Border>
                     </StackLayout>
+                    <!-- Labels assign panel (always visible on tab 1) -->
+                    <Border Style="{StaticResource ModernBorder}">
+                        <StackLayout Spacing="8" Padding="12,8">
+                            <Label Text="Etykiety" Style="{StaticResource FieldLabel}" />
+                            <CollectionView ItemsSource="{Binding AvailableLabels}" SelectionMode="Multiple" SelectedItems="{Binding SelectedLabels}">
+                                <CollectionView.ItemsLayout>
+                                    <GridItemsLayout Orientation="Vertical" Span="3"/>
+                                </CollectionView.ItemsLayout>
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="models:RecipeLabel">
+                                        <Border StrokeThickness="1" Stroke="{DynamicResource FrameBorderColor}" BackgroundColor="{DynamicResource FrameBackgroundColor}" Padding="6" Margin="4" StrokeShape="RoundRectangle 8">
+                                            <HorizontalStackLayout Spacing="6" VerticalOptions="Center" HorizontalOptions="Center">
+                                                <BoxView WidthRequest="12" HeightRequest="12" CornerRadius="6" Color="{Binding ColorHex}" />
+                                                <Label Text="{Binding Name}" FontSize="12" />
+                                            </HorizontalStackLayout>
+                                        </Border>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                            <Label FontSize="11" TextColor="Gray" Text="Dotknij, aby dodać/zdjąć etykietę z przepisu" />
+                        </StackLayout>
+                    </Border>
                 </StackLayout>
                 <!-- Ingredients Tab -->
                 <StackLayout IsVisible="{Binding IsIngredientsTabSelected}" Spacing="15">

@@ -11,6 +11,7 @@ namespace Foodbook.Data
         public DbSet<Plan> Plans => Set<Plan>();
         public DbSet<ShoppingListItem> ShoppingListItems => Set<ShoppingListItem>();
         public DbSet<Folder> Folders => Set<Folder>();
+        public DbSet<RecipeLabel> RecipeLabels => Set<RecipeLabel>();
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -27,10 +28,6 @@ namespace Foodbook.Data
                 .IsRequired(false);
 
             // Add indexes for better query performance
-            modelBuilder.Entity<Ingredient>()
-                .HasIndex(i => i.RecipeId)
-                .HasDatabaseName("IX_Ingredients_RecipeId");
-
             modelBuilder.Entity<Ingredient>()
                 .HasIndex(i => i.Name)
                 .HasDatabaseName("IX_Ingredients_Name");
@@ -87,6 +84,20 @@ namespace Foodbook.Data
             modelBuilder.Entity<Recipe>()
                 .HasIndex(r => r.FolderId)
                 .HasDatabaseName("IX_Recipes_FolderId");
+
+            // Recipe labels: many-to-many
+            modelBuilder.Entity<Recipe>()
+                .HasMany(r => r.Labels)
+                .WithMany()
+                .UsingEntity<Dictionary<string, object>>(
+                    "RecipeRecipeLabel",
+                    j => j.HasOne<RecipeLabel>().WithMany().HasForeignKey("LabelsId").OnDelete(DeleteBehavior.Cascade),
+                    j => j.HasOne<Recipe>().WithMany().HasForeignKey("RecipesId").OnDelete(DeleteBehavior.Cascade)
+                );
+
+            modelBuilder.Entity<RecipeLabel>()
+                .HasIndex(l => l.Name)
+                .HasDatabaseName("IX_RecipeLabels_Name");
 
             base.OnModelCreating(modelBuilder);
         }

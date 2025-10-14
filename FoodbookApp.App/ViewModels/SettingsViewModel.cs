@@ -8,7 +8,7 @@ using FoodbookApp.Localization;
 
 namespace Foodbook.ViewModels;
 
-public class SettingsViewModel : INotifyPropertyChanged
+public partial class SettingsViewModel : INotifyPropertyChanged
 {
     private readonly LocalizationResourceManager _locManager;
     private readonly IPreferencesService _preferencesService;
@@ -383,6 +383,9 @@ public class SettingsViewModel : INotifyPropertyChanged
         ResetDatabaseCommand = new Command(async () => await ResetDatabaseAsync(), () => CanExecuteMigration);
         
         System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Initialized with color theme and colorful/wallpaper background support");
+
+        // Initialize labels feature (in partial)
+        InitializeLabelsFeature();
     }
 
     private void RefreshCollectionsForLocalization()
@@ -668,4 +671,7 @@ public class SettingsViewModel : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
     private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+    // Partial hook to initialize labels feature
+    partial void InitializeLabelsFeature();
 }

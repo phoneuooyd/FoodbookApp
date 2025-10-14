@@ -60,6 +60,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<IPlanService, PlanService>();
             builder.Services.AddScoped<IIngredientService, IngredientService>();
             builder.Services.AddScoped<IFolderService, FolderService>();
+            builder.Services.AddScoped<IRecipeLabelService, RecipeLabelService>();
             builder.Services.AddSingleton<ILocalizationService, LocalizationService>();
             builder.Services.AddSingleton<LocalizationResourceManager>();
             builder.Services.AddSingleton<IPreferencesService, PreferencesService>();

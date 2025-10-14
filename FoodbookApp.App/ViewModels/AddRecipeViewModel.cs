@@ -34,7 +34,12 @@ namespace Foodbook.ViewModels
         public ObservableCollection<Folder> AvailableFolders { get; } = new();
         public int? SelectedFolderId { get => _selectedFolderId; set { _selectedFolderId = value; OnPropertyChanged(); } }
         private int? _selectedFolderId;
-        
+
+        // ✅ Labels support
+        private readonly IRecipeLabelService _labelService;
+        public ObservableCollection<RecipeLabel> AvailableLabels { get; } = new();
+        public ObservableCollection<RecipeLabel> SelectedLabels { get; } = new();
+
         // Tab management
         private int _selectedTabIndex = 0;
         public int SelectedTabIndex
@@ -186,7 +191,7 @@ namespace Foodbook.ViewModels
         private readonly IIngredientService _ingredientService;
         private readonly RecipeImporter _importer;
 
-        public AddRecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService, RecipeImporter importer, IFolderService folderService, IDatabaseService? databaseService = null)
+        public AddRecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService, RecipeImporter importer, IFolderService folderService, IDatabaseService? databaseService = null, IRecipeLabelService? labelService = null)
         {
             _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
             _ingredientService = ingredientService ?? throw new ArgumentNullException(nameof(ingredientService));
@@ -194,6 +199,7 @@ namespace Foodbook.ViewModels
             _folderService = folderService ?? throw new ArgumentNullException(nameof(folderService));
 
             _databaseService = databaseService ?? ResolveDatabaseService() ?? new NullDatabaseService();
+            _labelService = labelService ?? ResolveLabelService() ?? new NullLabelService();
 
             AddIngredientCommand = new Command(AddIngredient);
             RemoveIngredientCommand = new Command<Ingredient>(RemoveIngredient);
@@ -212,8 +218,9 @@ namespace Foodbook.ViewModels
                 ValidateInput();
             };
 
-            // Load folders list in background
+            // Load folders and labels list in background
             _ = LoadAvailableFoldersAsync();
+            _ = LoadAvailableLabelsAsync();
 
             ValidateInput();
         }
@@ -230,12 +237,33 @@ namespace Foodbook.ViewModels
             }
         }
 
+        private IRecipeLabelService? ResolveLabelService()
+        {
+            try
+            {
+                return Application.Current?.Handler?.MauiContext?.Services?.GetService<IRecipeLabelService>();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         private sealed class NullDatabaseService : IDatabaseService
         {
             public Task InitializeAsync() => Task.CompletedTask;
             public Task<bool> EnsureDatabaseSchemaAsync() => Task.FromResult(true);
             public Task<bool> MigrateDatabaseAsync() => Task.FromResult(true);
             public Task<bool> ResetDatabaseAsync() => Task.FromResult(true);
+        }
+
+        private sealed class NullLabelService : IRecipeLabelService
+        {
+            public Task<RecipeLabel> AddAsync(RecipeLabel label, CancellationToken ct = default) => Task.FromResult(label);
+            public Task<bool> DeleteAsync(int id, CancellationToken ct = default) => Task.FromResult(true);
+            public Task<List<RecipeLabel>> GetAllAsync(CancellationToken ct = default) => Task.FromResult(new List<RecipeLabel>());
+            public Task<RecipeLabel?> GetByIdAsync(int id, CancellationToken ct = default) => Task.FromResult<RecipeLabel?>(null);
+            public Task<RecipeLabel> UpdateAsync(RecipeLabel label, CancellationToken ct = default) => Task.FromResult(label);
         }
 
         public async Task LoadAvailableFoldersAsync()
@@ -321,6 +349,25 @@ namespace Foodbook.ViewModels
             }
         }
 
+        public async Task LoadAvailableLabelsAsync()
+        {
+            try
+            {
+                var labels = await _labelService.GetAllAsync();
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    AvailableLabels.Clear();
+                    foreach (var l in labels)
+                        AvailableLabels.Add(l);
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Error loading labels: {ex.Message}");
+                MainThread.BeginInvokeOnMainThread(() => AvailableLabels.Clear());
+            }
+        }
+
         public bool IsEditMode => _editingRecipe != null;
 
         public async Task LoadRecipeAsync(int id)
@@ -358,6 +405,14 @@ namespace Foodbook.ViewModels
                     };
                     
                     Ingredients.Add(ingredient);
+                }
+
+                // labels
+                SelectedLabels.Clear();
+                if (recipe.Labels != null)
+                {
+                    foreach (var label in recipe.Labels)
+                        SelectedLabels.Add(label);
                 }
                 
                 await ScheduleNutritionalCalculationAsync();
@@ -479,6 +534,7 @@ namespace Foodbook.ViewModels
                 SelectedFolderId = null;
 
                 Ingredients.Clear();
+                SelectedLabels.Clear();
 
                 ImportUrl = string.Empty;
                 ImportStatus = string.Empty;
@@ -818,6 +874,7 @@ namespace Foodbook.ViewModels
                 
                 recipe.FolderId = SelectedFolderId;
                 recipe.Ingredients = Ingredients.ToList();
+                recipe.Labels = SelectedLabels.ToList();
 
                 System.Diagnostics.Debug.WriteLine($"💾 Saving recipe: {recipe.Name} (Edit mode: {_editingRecipe != null})");
 
@@ -842,6 +899,7 @@ namespace Foodbook.ViewModels
                     SelectedFolderId = null;
                     
                     Ingredients.Clear();
+                    SelectedLabels.Clear();
                     
                     ImportUrl = string.Empty;
                     ImportStatus = string.Empty;
