@@ -8,7 +8,6 @@
              x:DataType="vm:SettingsViewModel"
              Title="{loc:Translate Resource=SettingsPageResources, Key=Title}"
              BackgroundColor="{DynamicResource PageBackgroundColor}">
-    
     <ContentPage.Resources>
         <!-- Converters -->
         <converters:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter" />
@@ -74,42 +73,6 @@
             <Setter Property="Margin" Value="0,8,0,0" />
         </Style>
         
-        <!-- Disabled Button Style -->
-        <Style x:Key="DisabledButtonStyle" TargetType="Button">
-            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray400}}" />
-            <Setter Property="FontSize" Value="{DynamicResource AppFontSize}" />
-            <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
-            <Setter Property="HeightRequest" Value="40" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Margin" Value="0,12,0,0" />
-        </Style>
-        
-        <!-- Emoji Style -->
-        <Style x:Key="EmojiStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="{DynamicResource AppLargeFontSize}" />
-            <Setter Property="HorizontalTextAlignment" Value="Center" />
-            <Setter Property="Margin" Value="0,0,0,8" />
-        </Style>
-
-        <!-- Description Style -->
-        <Style x:Key="DescriptionStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="{DynamicResource AppSmallFontSize}" />
-            <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
-            <Setter Property="HorizontalTextAlignment" Value="Center" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
-            <Setter Property="Margin" Value="0,0,0,8" />
-        </Style>
-
-        <!-- Info Text Style -->
-        <Style x:Key="InfoTextStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="{DynamicResource AppSmallFontSize}" />
-            <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
-            <Setter Property="HorizontalTextAlignment" Value="Center" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}" />
-            <Setter Property="Margin" Value="0,4" />
-        </Style>
-
         <!-- Status Label Style -->
         <Style x:Key="StatusLabelStyle" TargetType="Label">
             <Setter Property="FontSize" Value="{DynamicResource AppSmallFontSize}" />
@@ -118,6 +81,24 @@
             <Setter Property="TextColor" Value="{AppThemeBinding Light={DynamicResource Primary}, Dark={DynamicResource Primary}}" />
             <Setter Property="FontAttributes" Value="Italic" />
             <Setter Property="Margin" Value="0,8,0,0" />
+        </Style>
+        
+        <!-- Description style for consistent text blocks -->
+        <Style x:Key="DescriptionStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="{DynamicResource AppSmallFontSize}" />
+            <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
+            <Setter Property="HorizontalTextAlignment" Value="Center" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+        
+        <!-- Info text style for additional information -->
+        <Style x:Key="InfoTextStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="{DynamicResource AppSmallFontSize}" />
+            <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
+            <Setter Property="HorizontalTextAlignment" Value="Center" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}" />
+            <Setter Property="Margin" Value="0,4" />
         </Style>
     </ContentPage.Resources>
 
@@ -150,7 +131,7 @@
 
             <!-- Settings Grid -->
             <Grid ColumnDefinitions="*,*" 
-                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                   ColumnSpacing="0"
                   RowSpacing="8">
 
@@ -266,32 +247,12 @@
                 </Frame>
 
                 <!-- Version Info Card -->
-                <Frame Grid.Row="2" Grid.Column="1" Grid.RowSpan="1" Style="{StaticResource DashboardCardStyle}">
+                <Frame Grid.Row="2" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=VersionInfoTitle}" Style="{StaticResource CardTitleStyle}" />
-                        
-                        <StackLayout Spacing="8" Margin="0,8">
-                            <Label Text="{loc:Translate Resource=SettingsPageResources, Key=VersionNumber}"
-                                   FontSize="{DynamicResource AppFontSize}"
-                                   FontFamily="{DynamicResource AppFontFamily}"
-                                   FontAttributes="Bold"
-                                   HorizontalTextAlignment="Center"
-                                   TextColor="{AppThemeBinding Light={DynamicResource Primary}, Dark={DynamicResource Primary}}" />
-                            
-                            <Label Text="{loc:Translate Resource=SettingsPageResources, Key=AuthorLabel}"
-                                   Style="{StaticResource InfoTextStyle}" />
-                            
-                            <Label Text="{loc:Translate Resource=SettingsPageResources, Key=RightsLabel}"
-                                   Style="{StaticResource InfoTextStyle}" />
-                            
-                            <Label Text="{loc:Translate Resource=SettingsPageResources, Key=AppName}"
-                                   FontSize="{DynamicResource AppFontSize}"
-                                   FontFamily="{DynamicResource AppFontFamily}"
-                                   FontAttributes="Bold"
-                                   HorizontalTextAlignment="Center"
-                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
-                                   Margin="0,4,0,0" />
-                        </StackLayout>
+                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=VersionNumber}" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=AuthorLabel}" Style="{StaticResource InfoTextStyle}" />
+                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=RightsLabel}" Style="{StaticResource InfoTextStyle}" />
                     </StackLayout>
                 </Frame>
 
@@ -299,11 +260,8 @@
                 <Frame Grid.Row="3" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DataExportTitle}" Style="{StaticResource CardTitleStyle}" />
-                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DataExportDescription}"
-                               Style="{StaticResource DescriptionStyle}" />
-                        <Button Style="{StaticResource DisabledButtonStyle}"
-                                IsEnabled="False"
-                                Text="{loc:Translate Resource=SettingsPageResources, Key=ComingSoon}" />
+                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DataExportDescription}" Style="{StaticResource DescriptionStyle}" />
+                        <Button Text="{loc:Translate Resource=SettingsPageResources, Key=ComingSoon}" IsEnabled="False" />
                     </StackLayout>
                 </Frame>
 
@@ -317,15 +275,9 @@
                 <Frame Grid.Row="5" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseMigrationTitle}" Style="{StaticResource CardTitleStyle}" />
-                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseMigrationDescription}"
-                               Style="{StaticResource DescriptionStyle}" />
-                        <Button Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseMigrationButton}"
-                                Style="{StaticResource MigrationButtonStyle}"
-                                Command="{Binding MigrateDatabaseCommand}"
-                                IsEnabled="{Binding CanExecuteMigration}" />
-                        <Label Text="{Binding MigrationStatus}"
-                               Style="{StaticResource StatusLabelStyle}"
-                               IsVisible="{Binding MigrationStatus, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
+                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseMigrationDescription}" Style="{StaticResource DescriptionStyle}" />
+                        <Button Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseMigrationButton}" Style="{StaticResource MigrationButtonStyle}" Command="{Binding MigrateDatabaseCommand}" IsEnabled="{Binding CanExecuteMigration}" />
+                        <Label Text="{Binding MigrationStatus}" Style="{StaticResource StatusLabelStyle}" IsVisible="{Binding MigrationStatus, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
                     </StackLayout>
                 </Frame>
 
@@ -333,60 +285,19 @@
                 <Frame Grid.Row="5" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseResetTitle}" Style="{StaticResource CardTitleStyle}" />
-                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseResetDescription}"
-                               Style="{StaticResource DescriptionStyle}" />
-                        <Button Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseResetButton}"
-                                Style="{StaticResource DangerButtonStyle}"
-                                Command="{Binding ResetDatabaseCommand}"
-                                IsEnabled="{Binding CanExecuteMigration}" />
-                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseResetWarning}"
-                               FontSize="{DynamicResource AppSmallFontSize}"
-                               FontFamily="{DynamicResource AppFontFamily}"
-                               HorizontalTextAlignment="Center"
-                               TextColor="{AppThemeBinding Light=#DC3545, Dark=#C62D3A}"
-                               FontAttributes="Bold"
-                               Margin="0,4,0,0" />
+                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseResetDescription}" Style="{StaticResource DescriptionStyle}" />
+                        <Button Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseResetButton}" Style="{StaticResource DangerButtonStyle}" Command="{Binding ResetDatabaseCommand}" IsEnabled="{Binding CanExecuteMigration}" />
+                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseResetWarning}" FontSize="{DynamicResource AppSmallFontSize}" HorizontalTextAlignment="Center" TextColor="{AppThemeBinding Light=#DC3545, Dark=#C62D3A}" FontAttributes="Bold" Margin="0,4,0,0" />
                     </StackLayout>
                 </Frame>
 
-                <!-- Labels Management Card -->
+                <!-- Labels management summary + popup trigger -->
                 <Frame Grid.Row="6" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="Etykiety przepisów" Style="{StaticResource CardTitleStyle}" />
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                            <!-- Add new label -->
-                            <VerticalStackLayout Grid.Column="0" Spacing="6">
-                                <Label Text="Dodaj etykietę" FontAttributes="Bold" />
-                                <Entry Placeholder="Nazwa etykiety" Text="{Binding NewLabelName}" />
-                                <Entry Placeholder="#RRGGBB lub #AARRGGBB" Text="{Binding NewLabelColor}" />
-                                <Button Text="Dodaj" Command="{Binding AddLabelCommand}" />
-                            </VerticalStackLayout>
-                            <!-- Edit selected label -->
-                            <VerticalStackLayout Grid.Column="1" Spacing="6">
-                                <Label Text="Edytuj wybraną" FontAttributes="Bold" />
-                                <Entry Placeholder="Nazwa" Text="{Binding EditLabelName}" />
-                                <Entry Placeholder="#RRGGBB lub #AARRGGBB" Text="{Binding EditLabelColor}" />
-                                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                                    <Button Text="Zapisz" Command="{Binding UpdateLabelCommand}" />
-                                    <Button Text="Usuń" Command="{Binding DeleteLabelCommand}" Style="{StaticResource DangerButtonStyle}" />
-                                </Grid>
-                            </VerticalStackLayout>
-                        </Grid>
-                        <CollectionView ItemsSource="{Binding Labels}" SelectionMode="Single" SelectedItem="{Binding SelectedLabel}" Margin="-8,0">
-                            <CollectionView.ItemTemplate>
-                                <DataTemplate>
-                                    <Border StrokeThickness="1" Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" Padding="8" Margin="0,6" StrokeShape="RoundRectangle 10">
-                                        <HorizontalStackLayout Spacing="8">
-                                            <BoxView WidthRequest="14" HeightRequest="14" CornerRadius="7" Color="{Binding ColorHex}" />
-                                            <Label Text="{Binding Name}" VerticalOptions="Center" />
-                                        </HorizontalStackLayout>
-                                    </Border>
-                                </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
+                        <Label Text="Etykiety" Style="{StaticResource CardTitleStyle}" />
+                        <Button Text="Zarządzaj etykietami" Clicked="OnManageLabelsClicked" HeightRequest="42" BackgroundColor="{DynamicResource Primary}" TextColor="White" />
                     </VerticalStackLayout>
                 </Frame>
-
             </Grid>
         </StackLayout>
     </ScrollView>
