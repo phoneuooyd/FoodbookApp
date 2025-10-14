@@ -142,31 +142,32 @@ public class CRUDComponentPopup : Popup
             IsVisible = false,
             ColumnDefinitions = new ColumnDefinitionCollection
             {
-                new ColumnDefinition(GridLength.Star),
                 new ColumnDefinition(GridLength.Auto),
                 new ColumnDefinition(GridLength.Auto),
-                new ColumnDefinition(GridLength.Auto)
+                new ColumnDefinition(GridLength.Auto),
+                new ColumnDefinition(GridLength.Star)
             },
             Padding = new Thickness(0,12,0,0)
         };
-        _footerBar.Add(new Label { Text = " " }, 0, 0);
-        _footerBar.Add(_deleteButton, 1, 0);
-        _footerBar.Add(cancelButton, 2, 0);
-        _footerBar.Add(_saveButton, 3, 0);
+        // Buttons moved to left: Save, Cancel, Delete (if editing)
+        _footerBar.Add(_saveButton, 0, 0);
+        _footerBar.Add(cancelButton, 1, 0);
+        _footerBar.Add(_deleteButton, 2, 0);
+        _footerBar.Add(new Label { Text = "" }, 3, 0); // spacer
 
-        // Toolbar now only shows add button aligned right
+        // Toolbar with plus button on left now
         var toolbar = new Grid
         {
             ColumnDefinitions = new ColumnDefinitionCollection
             {
-                new ColumnDefinition(GridLength.Star),
-                new ColumnDefinition(GridLength.Auto)
+                new ColumnDefinition(GridLength.Auto),
+                new ColumnDefinition(GridLength.Star)
             },
             Padding = 0,
             Margin = new Thickness(0,0,0,4)
         };
-        toolbar.Add(new Label { Text = " ", IsVisible = false },0,0); // spacer
-        toolbar.Add(addButton,1,0);
+        toolbar.Add(addButton,0,0);
+        toolbar.Add(new Label { Text = "" },1,0);
 
         var header = new Grid
         {
@@ -193,6 +194,8 @@ public class CRUDComponentPopup : Popup
             Spacing = 8,
             Children = { header, toolbar, body, _detailsPanel, _footerBar }
         };
+        // mainStack inherits themed background (avoid hard white)
+        mainStack.SetDynamicResource(BackgroundColorProperty, "ShellBackgroundColor");
 
         var outerBorder = new Border
         {
@@ -203,7 +206,8 @@ public class CRUDComponentPopup : Popup
             MaximumWidthRequest = 520,
             Content = mainStack
         };
-        outerBorder.SetDynamicResource(Border.BackgroundColorProperty, "PageBackgroundColor");
+        // Use shell background instead of white page background to remove white block effect
+        outerBorder.SetDynamicResource(Border.BackgroundColorProperty, "ShellBackgroundColor");
         outerBorder.SetDynamicResource(Border.StrokeProperty, "Secondary");
         return outerBorder;
     }
@@ -220,7 +224,6 @@ public class CRUDComponentPopup : Popup
 
     private View BuildLabelItem(RecipeLabel lbl)
     {
-        var isDark = Application.Current?.RequestedTheme == MauiAppTheme.Dark;
         var border = new Border
         {
             StrokeThickness = 1,

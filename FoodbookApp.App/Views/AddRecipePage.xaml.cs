@@ -5,6 +5,8 @@ using Foodbook.Models;
 using Foodbook.Views.Base;
 using System.Threading.Tasks;
 using Foodbook.Views.Components;
+using FoodbookApp; // added for MauiProgram
+using CommunityToolkit.Maui.Extensions; // for ShowPopupAsync
 
 namespace Foodbook.Views
 {
@@ -24,6 +26,36 @@ namespace Foodbook.Views
             InitializeComponent();
             BindingContext = vm;
             _themeHelper = new PageThemeHelper();
+        }
+
+        // New: open labels popup and refresh labels afterwards
+        private async void OnAddLabelClicked(object sender, System.EventArgs e)
+        {
+            try
+            {
+                // SettingsViewModel contains labels management logic (singleton)
+                var settingsVm = MauiProgram.ServiceProvider?.GetService(typeof(SettingsViewModel)) as SettingsViewModel;
+                if (settingsVm == null)
+                    return;
+                var popup = new CRUDComponentPopup(settingsVm);
+                var hostPage = Application.Current?.Windows.FirstOrDefault()?.Page as ContentPage ?? this;
+                await hostPage.ShowPopupAsync(popup);
+
+                // After popup closes reload labels & sync selection by Id
+                if (ViewModel != null)
+                {
+                    await ViewModel.LoadAvailableLabelsAsync();
+                    // Ensure SelectedLabels contains only those still existing (avoid stale references)
+                    var selectedIds = ViewModel.SelectedLabels.Select(l => l.Id).ToHashSet();
+                    ViewModel.SelectedLabels.Clear();
+                    foreach (var lbl in ViewModel.AvailableLabels)
+                        if (selectedIds.Contains(lbl.Id)) ViewModel.SelectedLabels.Add(lbl);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] OnAddLabelClicked error: {ex.Message}");
+            }
         }
 
         protected override async void OnAppearing()
@@ -46,7 +78,6 @@ namespace Foodbook.Views
                     if (RecipeId > 0 && ViewModel != null)
                         await ViewModel.LoadRecipeAsync(RecipeId);
 
-                    // If navigation passed FolderId, preselect it
                     if (FolderId > 0 && ViewModel != null)
                         ViewModel.SelectedFolderId = FolderId;
                         
@@ -55,11 +86,10 @@ namespace Foodbook.Views
                 }
                 else
                 {
-                    // Subsequent appearances (e.g., after popup close) - do not reset
                     System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Skipping reset on re-appear");
                 }
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in OnAppearing: {ex.Message}");
                 if (ViewModel != null)
@@ -78,20 +108,19 @@ namespace Foodbook.Views
             System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Disappearing - preserving current state");
         }
 
-        private void OnThemeChanged(object? sender, EventArgs e)
+        private void OnThemeChanged(object? sender, System.EventArgs e)
         {
             try
             {
                 if (ViewModel == null) return;
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    // Re-raise computed/bound properties so converter-based bindings recompute with new palette
-                    ViewModel.SelectedTabIndex = ViewModel.SelectedTabIndex; // updates Is*TabSelected
-                    ViewModel.IsManualMode = ViewModel.IsManualMode;         // updates IsImportMode
-                    ViewModel.UseCalculatedValues = ViewModel.UseCalculatedValues; // updates UseManualValues
+                    ViewModel.SelectedTabIndex = ViewModel.SelectedTabIndex; 
+                    ViewModel.IsManualMode = ViewModel.IsManualMode;         
+                    ViewModel.UseCalculatedValues = ViewModel.UseCalculatedValues; 
                 });
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[AddRecipePage] OnThemeChanged error: {ex.Message}");
             }
@@ -111,14 +140,14 @@ namespace Foodbook.Views
                     ViewModel.CancelCommand.Execute(null);
                 return true;
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in OnBackButtonPressed: {ex.Message}");
                 return base.OnBackButtonPressed();
             }
         }
 
-        private void OnAutoModeClicked(object sender, EventArgs e)
+        private void OnAutoModeClicked(object sender, System.EventArgs e)
         {
             try
             {
@@ -127,7 +156,7 @@ namespace Foodbook.Views
                     ViewModel.UseCalculatedValues = true;
                 }
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in OnAutoModeClicked: {ex.Message}");
                 if (ViewModel != null)
@@ -137,7 +166,7 @@ namespace Foodbook.Views
             }
         }
 
-        private void OnManualModeClicked(object sender, EventArgs e)
+        private void OnManualModeClicked(object sender, System.EventArgs e)
         {
             try
             {
@@ -146,7 +175,7 @@ namespace Foodbook.Views
                     ViewModel.UseCalculatedValues = false;
                 }
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in OnManualModeClicked: {ex.Message}");
                 if (ViewModel != null)
@@ -156,7 +185,7 @@ namespace Foodbook.Views
             }
         }
 
-        private void OnIngredientValueChanged(object sender, EventArgs e)
+        private void OnIngredientValueChanged(object sender, System.EventArgs e)
         {
             try
             {
@@ -176,24 +205,23 @@ namespace Foodbook.Views
                             await ViewModel.RecalculateNutritionalValuesAsync();
                         }
                     }
-                    catch (Exception timerEx)
+                    catch (System.Exception timerEx)
                     {
                         System.Diagnostics.Debug.WriteLine($"Error in timer callback: {timerEx.Message}");
                     }
                 };
                 _valueChangeTimer.Start();
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in OnIngredientValueChanged: {ex.Message}");
             }
         }
 
-        private async void OnIngredientNameChanged(object sender, EventArgs e)
+        private async void OnIngredientNameChanged(object sender, System.EventArgs e)
         {
             try
             {
-                // Support both native Picker and custom SearchablePickerComponent
                 if (sender is Picker picker && picker.BindingContext is Ingredient ingredientFromPicker)
                 {
                     await (ViewModel?.UpdateIngredientNutritionalValuesAsync(ingredientFromPicker) ?? Task.CompletedTask);
@@ -204,8 +232,6 @@ namespace Foodbook.Views
                     await (ViewModel?.UpdateIngredientNutritionalValuesAsync(ingredient) ?? Task.CompletedTask);
                     return;
                 }
-                
-                // Alternative approach: try to get the ingredient from binding context of parent
                 if (sender is View element)
                 {
                     var ingredientFromElement = element.BindingContext as Ingredient;
@@ -215,7 +241,7 @@ namespace Foodbook.Views
                     }
                 }
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in OnIngredientNameChanged: {ex.Message}");
                 if (ViewModel != null)
