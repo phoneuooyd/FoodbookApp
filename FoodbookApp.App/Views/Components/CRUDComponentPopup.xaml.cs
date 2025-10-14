@@ -154,6 +154,7 @@ public class CRUDComponentPopup : Popup
         _footerBar.Add(cancelButton, 2, 0);
         _footerBar.Add(_saveButton, 3, 0);
 
+        // Toolbar now only shows add button aligned right
         var toolbar = new Grid
         {
             ColumnDefinitions = new ColumnDefinitionCollection
@@ -164,13 +165,7 @@ public class CRUDComponentPopup : Popup
             Padding = 0,
             Margin = new Thickness(0,0,0,4)
         };
-        toolbar.Add(new Label
-        {
-            Text = "Lista etykiet",
-            FontSize = 16,
-            FontAttributes = FontAttributes.Bold,
-            VerticalOptions = LayoutOptions.Center
-        },0,0);
+        toolbar.Add(new Label { Text = " ", IsVisible = false },0,0); // spacer
         toolbar.Add(addButton,1,0);
 
         var header = new Grid
