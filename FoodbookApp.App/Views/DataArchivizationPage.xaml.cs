@@ -196,10 +196,19 @@ public partial class DataArchivizationPage : ContentPage
         if (sender is Button b && b.CommandParameter is string path && File.Exists(path))
         {
             var fileName = Path.GetFileName(path);
-            var confirm = await DisplayAlert(GetLocalizedText("DataArchivizationPageResources", "ConfirmTitle", "Confirm"),
-                                             string.Format(GetLocalizedText("DataArchivizationPageResources", "ConfirmDelete", "Delete {0}?"), fileName),
-                                             GetLocalizedText("ButtonResources", "Yes", "Yes"),
-                                             GetLocalizedText("ButtonResources", "No", "No"));
+
+            // Localized labels with safe fallbacks to avoid null/empty exceptions
+            var accept = GetLocalizedText("ButtonResources", "Yes", "Yes");
+            if (string.IsNullOrWhiteSpace(accept)) accept = "Yes";
+            var cancel = GetLocalizedText("ButtonResources", "No", "No");
+            if (string.IsNullOrWhiteSpace(cancel)) cancel = "Cancel";
+
+            var confirm = await DisplayAlert(
+                GetLocalizedText("DataArchivizationPageResources", "ConfirmTitle", "Confirm"),
+                string.Format(GetLocalizedText("DataArchivizationPageResources", "ConfirmDelete", "Delete {0}?"), fileName),
+                accept,
+                cancel);
+
             if (confirm)
             {
                 try

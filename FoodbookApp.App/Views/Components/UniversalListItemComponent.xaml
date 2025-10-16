@@ -21,7 +21,7 @@
             </Frame.GestureRecognizers>
 
             <!-- Layout: narrow left ribbon column + content -->
-            <Grid ColumnDefinitions="Auto,*">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
                 <!-- Ribbon shown only for folders; collapses when not a folder -->
                 <BoxView Grid.Column="0"
                          WidthRequest="6"
@@ -35,7 +35,7 @@
                 </BoxView>
 
                 <!-- Content area (keeps inner spacing) -->
-                <Grid Grid.Column="1" Margin="12" Style="{StaticResource ListItemContentGrid}" ColumnDefinitions="*,Auto,Auto">
+                <Grid Grid.Column="1" Margin="12" Style="{StaticResource ListItemContentGrid}" ColumnDefinitions="*,Auto,Auto,Auto">
                     <StackLayout Grid.Column="0" Spacing="2">
                         <!-- Title for Recipe/Ingredient, Label for Plan -->
                         <Label x:Name="TitleLabel" Text="{Binding Name}" Style="{StaticResource ItemTitleLabel}">
@@ -114,19 +114,6 @@
                         </StackLayout>
                     </StackLayout>
 
-                    <!-- Folder edit button -->
-                    <Button Grid.Column="1"
-                            Text="✎"
-                            FontSize="16"
-                            WidthRequest="36"
-                            HeightRequest="36"
-                            CornerRadius="18"
-                            BackgroundColor="{AppThemeBinding Light=#E6F0FF, Dark=#2A3A4A}"
-                            TextColor="{AppThemeBinding Light=#004A99, Dark=#66B2FF}"
-                            Command="{Binding FolderEditCommand, Source={x:Reference ItemComponent}}"
-                            CommandParameter="{Binding .}"
-                            IsVisible="{Binding ., Converter={StaticResource IsFolderConverter}}" />
-
                     <!-- Archive button for plans -->
                     <ImageButton Grid.Column="1"
                                  Source="save.png"
@@ -139,8 +126,17 @@
                                  CommandParameter="{Binding .}"
                                  IsVisible="{Binding ShowArchiveButton, Source={x:Reference ItemComponent}}" />
 
-                    <!-- Delete button -->
+                    <!-- Restore button with redo icon -->
                     <Button Grid.Column="2"
+                            Style="{StaticResource RestoreButton}"
+                            Text=""
+                            ImageSource="redo.png"
+                            Command="{Binding RestoreCommand, Source={x:Reference ItemComponent}}"
+                            CommandParameter="{Binding .}"
+                            IsVisible="{Binding ShowRestoreButton, Source={x:Reference ItemComponent}}" />
+
+                    <!-- Delete button -->
+                    <Button Grid.Column="3"
                             Style="{StaticResource DeleteButton}"
                             Command="{Binding DeleteCommand, Source={x:Reference ItemComponent}}"
                             CommandParameter="{Binding .}"
