@@ -45,7 +45,7 @@
                                            IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
 
         <!-- Breadcrumb with Back button under search bar -->
-        <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Padding="8,4" BackgroundColor="{DynamicResource PageBackgroundColor}">
+        <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" Padding="8,4" BackgroundColor="{DynamicResource PageBackgroundColor}">
             <Grid.GestureRecognizers>
                 <!-- Drop anywhere on breadcrumb area moves recipe one level up -->
                 <DropGestureRecognizer AllowDrop="True" Drop="OnBreadcrumbDrop" />
@@ -68,6 +68,16 @@
                    FontSize="13" 
                    TextColor="{DynamicResource PrimaryText}" 
                    VerticalTextAlignment="Center"/>
+
+            <!-- Filter/Sort button with image -->
+            <ImageButton Grid.Column="2"
+                         WidthRequest="28"
+                         HeightRequest="28"
+                         BackgroundColor="Transparent"
+                         HorizontalOptions="End"
+                         Source="Resources/Images/filter.png"
+                         Clicked="OnFilterSortClicked"
+                         AutomationId="RecipesFilterButton"/>
         </Grid>
 
         <!-- Content -->

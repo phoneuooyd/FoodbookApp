@@ -34,6 +34,25 @@ namespace Foodbook.ViewModels
         private List<Folder> _allFolders = new();
         private Folder? _currentFolder;
 
+        // New: sorting and label filter state
+        private bool _sortByName;
+        public bool SortByName
+        {
+            get => _sortByName;
+            set { if (_sortByName == value) return; _sortByName = value; OnPropertyChanged(); FilterItems(); }
+        }
+
+        private HashSet<int> _selectedLabelIds = new();
+        public IReadOnlyCollection<int> SelectedLabelIds => _selectedLabelIds;
+
+        public void ApplySortingAndLabelFilter(bool sortByName, IEnumerable<int> labelIds)
+        {
+            _sortByName = sortByName;
+            _selectedLabelIds = new HashSet<int>(labelIds ?? Enumerable.Empty<int>());
+            OnPropertyChanged(nameof(SortByName));
+            FilterItems();
+        }
+
         public event EventHandler? DataLoaded; // Raised when recipes and folders are loaded and filtered
 
         // Mixed list: folders on top, then recipes
@@ -254,24 +273,42 @@ namespace Foodbook.ViewModels
         private void FilterItems()
         {
             IEnumerable<object> src;
+            IEnumerable<Folder> folderQuery;
+            IEnumerable<Recipe> recipeQuery;
+
             if (_currentFolder == null)
             {
-                src = _allFolders.Where(f => f.ParentFolderId == null).Cast<object>()
-                      .Concat(_allRecipes.Where(r => r.FolderId == null));
+                folderQuery = _allFolders.Where(f => f.ParentFolderId == null);
+                recipeQuery = _allRecipes.Where(r => r.FolderId == null);
             }
             else
             {
-                src = _allFolders.Where(f => f.ParentFolderId == _currentFolder.Id).Cast<object>()
-                      .Concat(_allRecipes.Where(r => r.FolderId == _currentFolder.Id));
+                folderQuery = _allFolders.Where(f => f.ParentFolderId == _currentFolder.Id);
+                recipeQuery = _allRecipes.Where(r => r.FolderId == _currentFolder.Id);
             }
 
+            // Apply search
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
-                src = src.Where(o => o is Recipe rr && (
-                                         rr.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                                         (rr.Description?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false))
-                                      || o is Folder ff && ff.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+                folderQuery = folderQuery.Where(ff => ff.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+                recipeQuery = recipeQuery.Where(rr => rr.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                                                       (rr.Description?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
             }
+
+            // Apply label filter (recipes only)
+            if (_selectedLabelIds.Count > 0)
+            {
+                recipeQuery = recipeQuery.Where(r => (r.Labels?.Any(l => _selectedLabelIds.Contains(l.Id)) ?? false));
+            }
+
+            // Apply sorting (alphabetical A-Z)
+            if (SortByName)
+            {
+                folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
+                recipeQuery = recipeQuery.OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase);
+            }
+
+            src = folderQuery.Cast<object>().Concat(recipeQuery);
 
             Items.Clear();
             foreach (var o in src)

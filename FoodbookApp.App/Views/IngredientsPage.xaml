@@ -30,11 +30,21 @@
     <Grid RowDefinitions="Auto,Auto,*">
         
         <!-- Modern Search Bar Component -->
-        <components:ModernSearchBarComponent Grid.Row="1"
-                                           SearchText="{Binding SearchText}"
-                                           PlaceholderText="{loc:Translate Resource=IngredientsPageResources, Key=SearchPlaceholder}"
-                                           ClearCommand="{Binding ClearSearchCommand}"
-                                           IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" VerticalOptions="Center" Padding="0,0,6,0">
+            <components:ModernSearchBarComponent Grid.Column="0"
+                                               SearchText="{Binding SearchText}"
+                                               PlaceholderText="{loc:Translate Resource=IngredientsPageResources, Key=SearchPlaceholder}"
+                                               ClearCommand="{Binding ClearSearchCommand}"
+                                               IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+            <ImageButton Grid.Column="1"
+                         WidthRequest="28"
+                         HeightRequest="28"
+                         BackgroundColor="Transparent"
+                         HorizontalOptions="End"
+                         Source="Resources/Images/filter.png"
+                         Clicked="OnIngredientSortClicked"
+                         AutomationId="IngredientsFilterButton"/>
+        </Grid>
 
         <!-- Content -->
         <Grid Grid.Row="2">

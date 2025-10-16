@@ -18,6 +18,14 @@ public class IngredientsViewModel : INotifyPropertyChanged
     private string _searchText = string.Empty;
     private List<Ingredient> _allIngredients = new();
 
+    // New: sort flag
+    private bool _sortByName;
+    public bool SortByName
+    {
+        get => _sortByName;
+        set { if (_sortByName == value) return; _sortByName = value; OnPropertyChanged(); FilterIngredients(); }
+    }
+
     public event EventHandler? DataLoaded; // Raised when all data finished loading
 
     // W³aœciwoœci dla masowej weryfikacji
@@ -232,7 +240,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
             var successMessage =
                 "Weryfikacja zakoñczona!\n\n" +
                 $"? Zaktualizowano: {updatedCount} sk³adników\n" +
-                $"• Bez zmian: {totalCount - updatedCount - failedCount} sk³adników\n" +
+                $"? Bez zmian: {totalCount - updatedCount - failedCount} sk³adników\n" +
                 (failedCount > 0 ? $"? B³êdy/nie znaleziono: {failedCount} sk³adników" : "");
 
             BulkVerificationStatus = $"? Zakoñczono - zaktualizowano {updatedCount}/{totalCount} sk³adników";
@@ -309,30 +317,26 @@ public class IngredientsViewModel : INotifyPropertyChanged
 
     private void FilterIngredients()
     {
+        IEnumerable<Ingredient> source;
         if (string.IsNullOrWhiteSpace(SearchText))
         {
-            // If no search text, show all ingredients
-            if (Ingredients.Count != _allIngredients.Count)
-            {
-                Ingredients.Clear();
-                foreach (var ingredient in _allIngredients)
-                {
-                    Ingredients.Add(ingredient);
-                }
-            }
+            source = _allIngredients;
         }
         else
         {
-            // Filter ingredients based on search text
-            var filtered = _allIngredients
-                .Where(i => i.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-            
-            Ingredients.Clear();
-            foreach (var ingredient in filtered)
-            {
-                Ingredients.Add(ingredient);
-            }
+            source = _allIngredients
+                .Where(i => i.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (SortByName)
+        {
+            source = source.OrderBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase);
+        }
+
+        Ingredients.Clear();
+        foreach (var ingredient in source)
+        {
+            Ingredients.Add(ingredient);
         }
         
         ((Command)BulkVerifyCommand).ChangeCanExecute(); // Refresh command state when filter changes
