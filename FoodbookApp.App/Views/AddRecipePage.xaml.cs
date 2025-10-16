@@ -420,5 +420,42 @@ namespace Foodbook.Views
                 _isModalOpen = false;
             }
         }
+
+        // Toggle selection when a label chip is tapped
+        private void OnLabelTapped(object? sender, TappedEventArgs e)
+        {
+            try
+            {
+                if (ViewModel == null) return;
+
+                // Resolve tapped item from BindingContext of Border
+                if (sender is Element element && element.BindingContext is RecipeLabel tappedLabel)
+                {
+                    var selected = LabelsCollectionView.SelectedItems;
+
+                    // Toggle: if selected -> remove; else -> add
+                    var alreadySelected = selected?.OfType<RecipeLabel>().Any(l => l.Id == tappedLabel.Id) == true;
+                    if (alreadySelected)
+                    {
+                        // Remove from CollectionView selection
+                        selected?.Remove(tappedLabel);
+                        // Remove from ViewModel selection
+                        var vmItem = ViewModel.SelectedLabels.FirstOrDefault(l => l.Id == tappedLabel.Id);
+                        if (vmItem != null) ViewModel.SelectedLabels.Remove(vmItem);
+                    }
+                    else
+                    {
+                        selected?.Add(tappedLabel);
+                        // Keep VM in sync (avoid duplicates by Id)
+                        if (!ViewModel.SelectedLabels.Any(l => l.Id == tappedLabel.Id))
+                            ViewModel.SelectedLabels.Add(tappedLabel);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"? Error in OnLabelTapped: {ex.Message}");
+            }
+        }
     }
 }

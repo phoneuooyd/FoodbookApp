@@ -106,24 +106,26 @@
                                 </CollectionView.ItemsLayout>
                                 <CollectionView.ItemTemplate>
                                     <DataTemplate x:DataType="models:RecipeLabel">
-                                        <Frame HasShadow="False"
-                                               Padding="12,8"
-                                               CornerRadius="14"
-                                               Margin="6,4"
-                                               BackgroundColor="Transparent"
-                                               BorderColor="{StaticResource ModernBorderColor}">
+                                        <Border Padding="12,8"
+                                                Margin="6,4"
+                                                BackgroundColor="Transparent"
+                                                Stroke="{StaticResource ModernBorderColor}"
+                                                StrokeShape="RoundRectangle 14">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnLabelTapped" />
+                                            </Border.GestureRecognizers>
                                             <VisualStateManager.VisualStateGroups>
-                                                <VisualStateGroup x:Name="CommonStates">
-                                                    <VisualState x:Name="Normal">
+                                                <VisualStateGroup Name="CommonStates">
+                                                    <VisualState Name="Normal">
                                                         <VisualState.Setters>
                                                             <Setter Property="BackgroundColor" Value="Transparent" />
-                                                            <Setter Property="BorderColor" Value="{StaticResource ModernBorderColor}" />
+                                                            <Setter Property="Stroke" Value="{StaticResource ModernBorderColor}" />
                                                         </VisualState.Setters>
                                                     </VisualState>
-                                                    <VisualState x:Name="Selected">
+                                                    <VisualState Name="Selected">
                                                         <VisualState.Setters>
                                                             <Setter Property="BackgroundColor" Value="Transparent" />
-                                                            <Setter Property="BorderColor" Value="{DynamicResource Primary}" />
+                                                            <Setter Property="Stroke" Value="{DynamicResource Primary}" />
                                                         </VisualState.Setters>
                                                     </VisualState>
                                                 </VisualStateGroup>
@@ -132,14 +134,25 @@
                                             <Label Text="{Binding Name}"
                                                    HorizontalOptions="Center"
                                                    VerticalOptions="Center" />
-                                        </Frame>
+                                        </Border>
                                     </DataTemplate>
                                 </CollectionView.ItemTemplate>
                             </CollectionView>
                         </StackLayout>
                     </Frame>
                 </StackLayout>
-                <!-- Other tabs content can be added here as needed -->
+                <!-- Save button (consistent with IngredientFormPage) -->
+                <StackLayout Spacing="10" Margin="0,20,0,0">
+                    <Button Command="{Binding SaveRecipeCommand}"
+                            BackgroundColor="{DynamicResource Primary}"
+                            TextColor="White"
+                            HeightRequest="50"
+                            FontSize="16"
+                            FontAttributes="Bold"
+                            CornerRadius="8"
+                            HorizontalOptions="FillAndExpand"
+                            Text="{Binding SaveButtonText}" />
+                </StackLayout>
             </VerticalStackLayout>
         </ScrollView>
     </Grid>
