@@ -163,14 +163,14 @@ public partial class RecipesPage : ContentPage
                 showLabels: true,
                 labels: allLabels,
                 preselectedLabelIds: _viewModel.SelectedLabelIds,
-                sortByName: _viewModel.SortByName);
+                sortOrder: _viewModel.SortOrder);
 
             var hostPage = Application.Current?.MainPage ?? this;
             hostPage.ShowPopup(popup);
             var result = await popup.ResultTask;
             if (result != null)
             {
-                _viewModel.ApplySortingAndLabelFilter(result.SortByName, result.SelectedLabelIds);
+                _viewModel.ApplySortingAndLabelFilter(result.SortOrder, result.SelectedLabelIds);
             }
         }
         catch (Exception ex)

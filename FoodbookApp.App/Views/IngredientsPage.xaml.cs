@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using FoodbookApp;
 using Foodbook.Views.Components;
 using CommunityToolkit.Maui.Extensions;
+using Foodbook.Models;
 
 namespace Foodbook.Views;
 
@@ -98,13 +99,13 @@ public partial class IngredientsPage : ContentPage
     {
         try
         {
-            var popup = new FilterSortPopup(showLabels: false, labels: null, preselectedLabelIds: null, sortByName: _viewModel.SortByName);
+            var popup = new FilterSortPopup(showLabels: false, labels: null, preselectedLabelIds: null, sortOrder: _viewModel.SortOrder);
             var hostPage = Application.Current?.MainPage ?? this;
             hostPage.ShowPopup(popup);
             var result = await popup.ResultTask;
             if (result != null)
             {
-                _viewModel.SortByName = result.SortByName;
+                _viewModel.SortOrder = result.SortOrder;
             }
         }
         catch (Exception ex)

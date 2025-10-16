@@ -18,12 +18,12 @@ public class IngredientsViewModel : INotifyPropertyChanged
     private string _searchText = string.Empty;
     private List<Ingredient> _allIngredients = new();
 
-    // New: sort flag
-    private bool _sortByName;
-    public bool SortByName
+    // New: sort order
+    private SortOrder _sortOrder = SortOrder.Asc;
+    public SortOrder SortOrder
     {
-        get => _sortByName;
-        set { if (_sortByName == value) return; _sortByName = value; OnPropertyChanged(); FilterIngredients(); }
+        get => _sortOrder;
+        set { if (_sortOrder == value) return; _sortOrder = value; OnPropertyChanged(); FilterIngredients(); }
     }
 
     public event EventHandler? DataLoaded; // Raised when all data finished loading
@@ -328,10 +328,9 @@ public class IngredientsViewModel : INotifyPropertyChanged
                 .Where(i => i.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
         }
 
-        if (SortByName)
-        {
-            source = source.OrderBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase);
-        }
+        source = SortOrder == SortOrder.Asc
+            ? source.OrderBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase)
+            : source.OrderByDescending(i => i.Name, StringComparer.CurrentCultureIgnoreCase);
 
         Ingredients.Clear();
         foreach (var ingredient in source)

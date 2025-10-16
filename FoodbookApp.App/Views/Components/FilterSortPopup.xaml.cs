@@ -6,12 +6,13 @@ using Microsoft.Maui.Graphics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Maui.Controls.Shapes;
+using Microsoft.Maui.Devices;
 
 namespace Foodbook.Views.Components;
 
 public class FilterSortResult
 {
-    public bool SortByName { get; set; }
+    public SortOrder SortOrder { get; set; } = SortOrder.Asc;
     public List<int> SelectedLabelIds { get; set; } = new();
 }
 
@@ -21,21 +22,24 @@ public class FilterSortPopup : Popup
     private readonly ObservableCollection<RecipeLabel> _labels;
     private readonly HashSet<int> _selected;
 
-    private readonly Switch _sortSwitch;
+    private readonly Picker _sortPicker;
     private readonly VerticalStackLayout _labelsHost;
 
     private readonly TaskCompletionSource<FilterSortResult?> _tcs = new();
     public Task<FilterSortResult?> ResultTask => _tcs.Task;
 
-    public FilterSortPopup(bool showLabels, IEnumerable<RecipeLabel>? labels, IEnumerable<int>? preselectedLabelIds, bool sortByName)
+    public FilterSortPopup(bool showLabels, IEnumerable<RecipeLabel>? labels, IEnumerable<int>? preselectedLabelIds, SortOrder sortOrder)
     {
         _showLabels = showLabels;
         _labels = new ObservableCollection<RecipeLabel>(labels ?? Enumerable.Empty<RecipeLabel>());
         _selected = new HashSet<int>(preselectedLabelIds ?? Enumerable.Empty<int>());
 
         CanBeDismissedByTappingOutsideOfPopup = true;
+        Padding = 0; // match SimpleListPopup
+        Margin = 0;  // match SimpleListPopup
 
-        _sortSwitch = new Switch { IsToggled = sortByName };
+        _sortPicker = new Picker { Title = "Sortuj", ItemsSource = new List<string> { "A-Z", "Z-A" } };
+        _sortPicker.SelectedIndex = sortOrder == SortOrder.Desc ? 1 : 0;
         _labelsHost = new VerticalStackLayout { Spacing = 6 };
 
         Content = BuildContent();
@@ -48,6 +52,10 @@ public class FilterSortPopup : Popup
 
     private View BuildContent()
     {
+        // Calculate popup width similar to SimpleListPopup
+        double displayWidth = DeviceDisplay.Current.MainDisplayInfo.Width / DeviceDisplay.Current.MainDisplayInfo.Density;
+        double popupWidth = Math.Min(displayWidth * 0.92, 560);
+
         var title = new Label
         {
             Text = "Sortowanie i filtrowanie",
@@ -65,8 +73,8 @@ public class FilterSortPopup : Popup
             },
             Margin = new Thickness(0,8)
         };
-        sortRow.Add(new Label { Text = "Sortuj alfabetycznie (A?Z)", VerticalOptions = LayoutOptions.Center });
-        sortRow.Add(_sortSwitch,1,0);
+        sortRow.Add(new Label { Text = "Sortuj alfabetycznie", VerticalOptions = LayoutOptions.Center });
+        sortRow.Add(_sortPicker,1,0);
 
         var labelsHeader = new Label
         {
@@ -77,7 +85,7 @@ public class FilterSortPopup : Popup
         };
         labelsHeader.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
 
-        var scroll = new ScrollView { Content = _labelsHost, IsVisible = _showLabels, HeightRequest = 260 };
+        var scroll = new ScrollView { Content = _labelsHost, IsVisible = _showLabels, HeightRequest = 360 };
 
         var ok = new Button { Text = "Zastosuj" };
         ok.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
@@ -88,7 +96,7 @@ public class FilterSortPopup : Popup
             {
                 var result = new FilterSortResult
                 {
-                    SortByName = _sortSwitch.IsToggled,
+                    SortOrder = _sortPicker.SelectedIndex == 1 ? SortOrder.Desc : SortOrder.Asc,
                     SelectedLabelIds = _selected.ToList()
                 };
                 if (!_tcs.Task.IsCompleted)
@@ -104,7 +112,7 @@ public class FilterSortPopup : Popup
         clear.SetDynamicResource(Button.TextColorProperty, "PrimaryText");
         clear.Clicked += (_, __) =>
         {
-            _sortSwitch.IsToggled = false;
+            _sortPicker.SelectedIndex = 0;
             _selected.Clear();
             // update visuals
             foreach (var chip in _labelsHost.Children.OfType<Border>())
@@ -116,6 +124,7 @@ public class FilterSortPopup : Popup
         var buttons = new HorizontalStackLayout
         {
             Spacing = 12,
+            HorizontalOptions = LayoutOptions.End, // align buttons group to the right
             Children = { clear, ok }
         };
 
@@ -130,7 +139,9 @@ public class FilterSortPopup : Popup
             Padding = 16,
             StrokeThickness = 1,
             StrokeShape = new RoundRectangle { CornerRadius = 12 },
-            Content = body
+            Content = body,
+            WidthRequest = popupWidth,
+            MaximumWidthRequest = 560
         };
         outer.SetDynamicResource(Border.BackgroundColorProperty, "PageBackgroundColor");
         outer.SetDynamicResource(Border.StrokeProperty, "Secondary");

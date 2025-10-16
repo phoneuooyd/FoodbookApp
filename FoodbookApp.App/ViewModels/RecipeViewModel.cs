@@ -35,21 +35,21 @@ namespace Foodbook.ViewModels
         private Folder? _currentFolder;
 
         // New: sorting and label filter state
-        private bool _sortByName;
-        public bool SortByName
+        private SortOrder _sortOrder = SortOrder.Asc;
+        public SortOrder SortOrder
         {
-            get => _sortByName;
-            set { if (_sortByName == value) return; _sortByName = value; OnPropertyChanged(); FilterItems(); }
+            get => _sortOrder;
+            set { if (_sortOrder == value) return; _sortOrder = value; OnPropertyChanged(); FilterItems(); }
         }
 
         private HashSet<int> _selectedLabelIds = new();
         public IReadOnlyCollection<int> SelectedLabelIds => _selectedLabelIds;
 
-        public void ApplySortingAndLabelFilter(bool sortByName, IEnumerable<int> labelIds)
+        public void ApplySortingAndLabelFilter(SortOrder sortOrder, IEnumerable<int> labelIds)
         {
-            _sortByName = sortByName;
+            _sortOrder = sortOrder;
             _selectedLabelIds = new HashSet<int>(labelIds ?? Enumerable.Empty<int>());
-            OnPropertyChanged(nameof(SortByName));
+            OnPropertyChanged(nameof(SortOrder));
             FilterItems();
         }
 
@@ -301,11 +301,16 @@ namespace Foodbook.ViewModels
                 recipeQuery = recipeQuery.Where(r => (r.Labels?.Any(l => _selectedLabelIds.Contains(l.Id)) ?? false));
             }
 
-            // Apply sorting (alphabetical A-Z)
-            if (SortByName)
+            // Apply sorting (A-Z or Z-A)
+            if (SortOrder == SortOrder.Asc)
             {
                 folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
                 recipeQuery = recipeQuery.OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase);
+            }
+            else
+            {
+                folderQuery = folderQuery.OrderByDescending(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
+                recipeQuery = recipeQuery.OrderByDescending(r => r.Name, StringComparer.CurrentCultureIgnoreCase);
             }
 
             src = folderQuery.Cast<object>().Concat(recipeQuery);
