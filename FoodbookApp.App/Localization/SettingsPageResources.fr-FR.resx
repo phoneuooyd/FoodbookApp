@@ -59,4 +59,8 @@
   <data name="DatabaseResetDescription" xml:space="preserve"><value>Supprimer toutes les donnees</value></data>
   <data name="DatabaseResetButton" xml:space="preserve"><value>Reinitialiser</value></data>
   <data name="DatabaseResetWarning" xml:space="preserve"><value>Operation irreversible</value></data>
+  <!-- Tabs -->
+  <data name="TabLanguage" xml:space="preserve"><value>Langue</value></data>
+  <data name="TabAppearance" xml:space="preserve"><value>Apparence</value></data>
+  <data name="TabData" xml:space="preserve"><value>Données</value></data>
 </root>

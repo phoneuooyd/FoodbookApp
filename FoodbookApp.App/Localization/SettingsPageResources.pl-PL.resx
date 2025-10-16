@@ -294,4 +294,14 @@
   <data name="DatabaseResetWarning" xml:space="preserve">
     <value>Operacja nieodwracalna!</value>
   </data>
+  <!-- Tabs -->
+  <data name="TabLanguage" xml:space="preserve">
+    <value>Język</value>
+  </data>
+  <data name="TabAppearance" xml:space="preserve">
+    <value>Wygląd</value>
+  </data>
+  <data name="TabData" xml:space="preserve">
+    <value>Dane</value>
+  </data>
 </root>

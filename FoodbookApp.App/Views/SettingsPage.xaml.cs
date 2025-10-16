@@ -9,6 +9,8 @@ namespace Foodbook.Views
     {
         private readonly PageThemeHelper _themeHelper;
 
+        private SettingsViewModel ViewModel => BindingContext as SettingsViewModel;
+
         public SettingsPage(SettingsViewModel vm)
         {
             InitializeComponent();
@@ -20,12 +22,31 @@ namespace Foodbook.Views
         {
             base.OnAppearing();
             _themeHelper.Initialize();
+            _themeHelper.ThemeChanged += OnThemeChanged;
         }
 
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
+            _themeHelper.ThemeChanged -= OnThemeChanged;
             _themeHelper.Cleanup();
+        }
+
+        private void OnThemeChanged(object? sender, EventArgs e)
+        {
+            try
+            {
+                if (ViewModel == null) return;
+                // Re-raise SelectedTabIndex to force BoolToColorConverter to recompute with new palette
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    ViewModel.SelectedTabIndex = ViewModel.SelectedTabIndex;
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SettingsPage] OnThemeChanged error: {ex.Message}");
+            }
         }
 
         private async void OnOpenArchivizationClicked(object sender, EventArgs e)

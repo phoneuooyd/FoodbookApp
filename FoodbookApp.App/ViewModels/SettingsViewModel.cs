@@ -16,6 +16,28 @@ public partial class SettingsViewModel : INotifyPropertyChanged
     private readonly IFontService _fontService;
     private readonly IDatabaseService _databaseService;
 
+    // Tabs management
+    private int _selectedTabIndex;
+    public int SelectedTabIndex
+    {
+        get => _selectedTabIndex;
+        set
+        {
+            if (_selectedTabIndex == value) return;
+            _selectedTabIndex = value;
+            OnPropertyChanged(nameof(SelectedTabIndex));
+            OnPropertyChanged(nameof(IsLanguageTabSelected));
+            OnPropertyChanged(nameof(IsAppearanceTabSelected));
+            OnPropertyChanged(nameof(IsDataTabSelected));
+        }
+    }
+
+    public bool IsLanguageTabSelected => SelectedTabIndex == 0;
+    public bool IsAppearanceTabSelected => SelectedTabIndex == 1;
+    public bool IsDataTabSelected => SelectedTabIndex == 2;
+
+    public ICommand SelectTabCommand { get; }
+
     // Guard to prevent re-entrancy and UI loops when changing culture
     private bool _isChangingCulture;
     // Guard to avoid recursion when toggling mutually exclusive background options
@@ -313,6 +335,21 @@ public partial class SettingsViewModel : INotifyPropertyChanged
         _themeService = themeService;
         _fontService = fontService;
         _databaseService = databaseService;
+        
+        // Tabs
+        SelectTabCommand = new Command<object>(p =>
+        {
+            try
+            {
+                int index = 0;
+                if (p is int i) index = i;
+                else if (p is string s && int.TryParse(s, out var parsed)) index = parsed;
+                if (index < 0 || index > 2) index = 0;
+                SelectedTabIndex = index;
+            }
+            catch { SelectedTabIndex = 0; }
+        });
+        SelectedTabIndex = 0; // default: Language
         
         // Initialize supported cultures from preferences service
         SupportedCultures = new ObservableCollection<string>(_preferencesService.GetSupportedCultures());
