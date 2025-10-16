@@ -70,8 +70,8 @@ public class CRUDComponentPopup : Popup
         double popupWidth = Math.Min(DeviceDisplay.Current.MainDisplayInfo.Width / DeviceDisplay.Current.MainDisplayInfo.Density * 0.9, 520);
 
         _listHost = new VerticalStackLayout { Spacing = 6 };
-        _nameEntry = new Entry { Placeholder = "Nazwa etykiety" };
-        _colorPicker = new Picker { Title = "Kolor" };
+        _nameEntry = new Entry { Placeholder = "Nazwa etykiety", BackgroundColor = Colors.Transparent };
+        _colorPicker = new Picker { Title = "Kolor", BackgroundColor = Colors.Transparent };
         _colorPicker.ItemsSource = _colorOptions;
         _colorPicker.ItemDisplayBinding = new Binding(nameof(ColorOption.Name));
 
@@ -90,20 +90,23 @@ public class CRUDComponentPopup : Popup
             CornerRadius = 8,
             HeightRequest = 42
         };
-        _saveButton.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
-        _saveButton.SetDynamicResource(Button.TextColorProperty, "ButtonPrimaryText");
+        // Default (edit) style is neutral; add-mode will switch to Primary
+        _saveButton.BackgroundColor = Color.FromArgb("#E0E0E0");
+        _saveButton.SetDynamicResource(Button.TextColorProperty, "PrimaryText");
         var cancelButton = new Button
         {
             Text = "Anuluj",
             CornerRadius = 8,
             HeightRequest = 42
         };
-        cancelButton.SetDynamicResource(Button.BackgroundColorProperty, "Secondary");
-        cancelButton.SetDynamicResource(Button.TextColorProperty, "ButtonPrimaryText");
+        // Make cancel clearly visible with neutral, less transparent background
+        cancelButton.BackgroundColor = Color.FromArgb("#D6D6D6");
+        cancelButton.SetDynamicResource(Button.TextColorProperty, "PrimaryText");
 
         var addButton = new Button { Text = "+", WidthRequest = 44, HeightRequest = 44, CornerRadius = 22 };
-        addButton.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
-        addButton.SetDynamicResource(Button.TextColorProperty, "ButtonPrimaryText");
+        // Neutralize Primary background for consistency
+        addButton.BackgroundColor = Color.FromArgb("#E0E0E0");
+        addButton.SetDynamicResource(Button.TextColorProperty, "PrimaryText");
 
         addButton.Clicked += OnAddClicked;
         _saveButton.Clicked += OnSaveClicked;
@@ -114,11 +117,12 @@ public class CRUDComponentPopup : Popup
         {
             IsVisible = false,
             Padding = 12,
-            StrokeThickness = 1,
+            StrokeThickness = 1.5,
             StrokeShape = new RoundRectangle { CornerRadius = 12 }
         };
-        _detailsPanel.SetDynamicResource(Border.BackgroundColorProperty, "ShellBackgroundColor");
-        _detailsPanel.SetDynamicResource(Border.StrokeProperty, "Secondary");
+        // Neutral background with Primary stroke
+        _detailsPanel.SetDynamicResource(Border.BackgroundColorProperty, "PageBackgroundColor");
+        _detailsPanel.SetDynamicResource(Border.StrokeProperty, "Primary");
 
         var gridDetails = new Grid
         {
@@ -204,7 +208,7 @@ public class CRUDComponentPopup : Popup
         header.SetDynamicResource(BackgroundColorProperty, "ShellBackgroundColor");
         var title = new Label { Text = "Etykiety", FontSize = 20, FontAttributes = FontAttributes.Bold, HorizontalTextAlignment = TextAlignment.Center, VerticalOptions = LayoutOptions.Center };
         title.SetDynamicResource(Label.TextColorProperty, "ShellTitleColor");
-        var closeBtn = new Button { Text = "?", WidthRequest = 32, HeightRequest = 32, CornerRadius = 16, BackgroundColor = Colors.Transparent };
+        var closeBtn = new Button { Text = "X", WidthRequest = 32, HeightRequest = 32, CornerRadius = 16, BackgroundColor = Colors.Transparent };
         closeBtn.SetDynamicResource(Button.TextColorProperty, "ShellTitleColor");
         closeBtn.Clicked += async (_,__) => await CloseAsync();
         header.Add(title,0,0); header.Add(closeBtn,1,0);
@@ -258,10 +262,10 @@ public class CRUDComponentPopup : Popup
         {
             StrokeThickness = 2,
             Padding = new Thickness(10,6),
-            StrokeShape = new RoundRectangle { CornerRadius = 10 }
+            StrokeShape = new RoundRectangle { CornerRadius = 10 },
+            BackgroundColor = Colors.Transparent // ensure no Primary background
         };
         // Neutral background, colored only the border for readability
-        border.SetDynamicResource(Border.BackgroundColorProperty, "ShellBackgroundColor");
         border.Stroke = Color.FromArgb(lbl.ColorHex ?? "#757575");
 
         var grid = new Grid
@@ -269,41 +273,25 @@ public class CRUDComponentPopup : Popup
             ColumnDefinitions = new ColumnDefinitionCollection
             {
                 new ColumnDefinition(GridLength.Auto),
-                new ColumnDefinition(GridLength.Star),
-                new ColumnDefinition(GridLength.Auto)
+                new ColumnDefinition(GridLength.Star)
             },
             ColumnSpacing = 8
         };
 
-        var colorDot = new Frame
+        // Colored dot (Border instead of Frame)
+        var colorDot = new Border
         {
             WidthRequest = 16,
             HeightRequest = 16,
-            CornerRadius = 8,
-            Padding = 0,
-            HasShadow = false,
-            BackgroundColor = Color.FromArgb(lbl.ColorHex ?? "#757575")
+            StrokeThickness = 0,
+            BackgroundColor = Color.FromArgb(lbl.ColorHex ?? "#757575"),
+            StrokeShape = new RoundRectangle { CornerRadius = 8 }
         };
         grid.Add(colorDot,0,0);
 
         var nameLabel = new Label { Text = lbl.Name, VerticalOptions = LayoutOptions.Center };
         nameLabel.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
         grid.Add(nameLabel,1,0);
-
-        var deleteBtn = new Button
-        {
-            Text = "?",
-            WidthRequest = 36,
-            HeightRequest = 36,
-            CornerRadius = 18,
-            BackgroundColor = Colors.Transparent,
-            Padding = 0,
-            FontSize = 18,
-            FontAttributes = FontAttributes.Bold,
-            Command = new Command(() => DeleteLabel(lbl))
-        };
-        deleteBtn.SetDynamicResource(Button.TextColorProperty, "PrimaryText");
-        grid.Add(deleteBtn,2,0);
 
         var tap = new TapGestureRecognizer();
         tap.Tapped += (_,__) => StartEdit(lbl);
@@ -320,6 +308,18 @@ public class CRUDComponentPopup : Popup
         _colorPicker.SelectedIndex = -1;
         _deleteButton.IsVisible = false;
         _saveButton.Text = "Dodaj";
+        // In add mode, make the main action Primary (full button background)
+        if (Application.Current?.Resources.TryGetValue("Primary", out var primaryObj) == true && primaryObj is Color primaryColor)
+        {
+            _saveButton.BackgroundColor = primaryColor;
+        }
+        else
+        {
+            // fallback
+            _saveButton.BackgroundColor = Color.FromArgb("#FF6200");
+        }
+        _saveButton.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
+        _saveButton.SetDynamicResource(Button.TextColorProperty, "ButtonPrimaryText");
         ShowDetailsPanels();
     }
 
@@ -331,6 +331,10 @@ public class CRUDComponentPopup : Popup
         _colorPicker.SelectedIndex = idx;
         _deleteButton.IsVisible = true;
         _saveButton.Text = "Zapisz";
+        // In edit mode, keep neutral style
+        _saveButton.ClearValue(Button.BackgroundColorProperty);
+        _saveButton.BackgroundColor = Color.FromArgb("#E0E0E0");
+        _saveButton.SetDynamicResource(Button.TextColorProperty, "PrimaryText");
         ShowDetailsPanels();
     }
 
