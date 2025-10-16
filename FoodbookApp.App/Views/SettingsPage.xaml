@@ -104,7 +104,7 @@
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*">
-        <!-- Tabs header (like AddRecipePage) -->
+        <!-- Tabs header -->
         <Grid Grid.Row="0" RowDefinitions="*,3" ColumnDefinitions="*,*,*" HeightRequest="{OnPlatform Default=60, iOS=70}" BackgroundColor="{AppThemeBinding Light=White, Dark=#2D2D30}">
             <Button Grid.Row="0" Grid.Column="0"
                     Text="{loc:Translate Resource=SettingsPageResources, Key=TabLanguage}"
@@ -135,28 +135,9 @@
             <BoxView Grid.Row="1" Grid.Column="2" BackgroundColor="{Binding IsDataTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=TabBorder}" HeightRequest="3" HorizontalOptions="FillAndExpand" />
         </Grid>
 
+        <!-- Content -->
         <ScrollView Grid.Row="1">
-            <VerticalStackLayout Padding="16" Spacing="0" BackgroundColor="{DynamicResource PageBackgroundColor}">
-                <!-- Common header -->
-                <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}" 
-                       CornerRadius="20" HasShadow="True" Margin="0,0,0,20" Padding="20,16">
-                    <StackLayout>
-                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=HeaderTitle}"
-                               FontSize="{DynamicResource AppTitleFontSize}"
-                               FontFamily="{DynamicResource AppFontFamily}"
-                               FontAttributes="Bold"
-                               HorizontalTextAlignment="Center"
-                               TextColor="{AppThemeBinding Light={DynamicResource Primary}, Dark={DynamicResource Primary}}"
-                               Margin="0,4" />
-                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=HeaderSubtitle}"
-                               FontSize="{DynamicResource AppSmallFontSize}"
-                               FontFamily="{DynamicResource AppFontFamily}"
-                               HorizontalTextAlignment="Center"
-                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}"
-                               Margin="0,0,0,4" />
-                    </StackLayout>
-                </Frame>
-
+            <VerticalStackLayout Padding="16" Spacing="8" BackgroundColor="{DynamicResource PageBackgroundColor}">
                 <!-- LANGUAGE TAB CONTENT -->
                 <StackLayout IsVisible="{Binding IsLanguageTabSelected}" Spacing="8">
                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="0" RowSpacing="8">
@@ -164,12 +145,9 @@
                         <Frame Grid.Row="0" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
                             <StackLayout>
                                 <Label Text="{loc:Translate Resource=SettingsPageResources, Key=LanguageTitle}" Style="{StaticResource CardTitleStyle}" />
-                                <Label Text="{loc:Translate Resource=SettingsPageResources, Key=LanguageDescription}"
-                                       Style="{StaticResource DescriptionStyle}" />
-                                <Picker ItemsSource="{Binding SupportedCultures}" 
-                                        SelectedItem="{Binding SelectedCulture}"
-                                        FontSize="{DynamicResource AppFontSize}"
-                                        FontFamily="{DynamicResource AppFontFamily}"
+                                <Label Text="{loc:Translate Resource=SettingsPageResources, Key=LanguageDescription}" Style="{StaticResource DescriptionStyle}" />
+                                <Picker ItemsSource="{Binding SupportedCultures}" SelectedItem="{Binding SelectedCulture}"
+                                        FontSize="{DynamicResource AppFontSize}" FontFamily="{DynamicResource AppFontFamily}"
                                         ItemDisplayBinding="{Binding ., Converter={StaticResource CultureCodeToLocalizedNameConverter}}" />
                             </StackLayout>
                         </Frame>
@@ -188,12 +166,9 @@
                         <Frame Grid.Row="1" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
                             <StackLayout>
                                 <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FontFamilyTitle}" Style="{StaticResource CardTitleStyle}" />
-                                <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FontFamilyDescription}"
-                                       Style="{StaticResource DescriptionStyle}" />
-                                <Picker ItemsSource="{Binding SupportedFontFamilies}" 
-                                        SelectedItem="{Binding SelectedFontFamily}"
-                                        FontSize="{DynamicResource AppFontSize}"
-                                        FontFamily="{DynamicResource AppFontFamily}"
+                                <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FontFamilyDescription}" Style="{StaticResource DescriptionStyle}" />
+                                <Picker ItemsSource="{Binding SupportedFontFamilies}" SelectedItem="{Binding SelectedFontFamily}"
+                                        FontSize="{DynamicResource AppFontSize}" FontFamily="{DynamicResource AppFontFamily}"
                                         ItemDisplayBinding="{Binding ., Converter={StaticResource FontFamilyToLocalizedStringConverter}}" />
                             </StackLayout>
                         </Frame>
@@ -202,12 +177,9 @@
                         <Frame Grid.Row="1" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
                             <StackLayout>
                                 <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FontSizeTitle}" Style="{StaticResource CardTitleStyle}" />
-                                <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FontSizeDescription}"
-                                       Style="{StaticResource DescriptionStyle}" />
-                                <Picker ItemsSource="{Binding SupportedFontSizes}" 
-                                        SelectedItem="{Binding SelectedFontSize}"
-                                        FontSize="{DynamicResource AppFontSize}"
-                                        FontFamily="{DynamicResource AppFontFamily}"
+                                <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FontSizeDescription}" Style="{StaticResource DescriptionStyle}" />
+                                <Picker ItemsSource="{Binding SupportedFontSizes}" SelectedItem="{Binding SelectedFontSize}"
+                                        FontSize="{DynamicResource AppFontSize}" FontFamily="{DynamicResource AppFontFamily}"
                                         ItemDisplayBinding="{Binding ., Converter={StaticResource FontSizeToLocalizedStringConverter}}" />
                             </StackLayout>
                         </Frame>
@@ -216,69 +188,42 @@
 
                 <!-- APPEARANCE TAB CONTENT -->
                 <StackLayout IsVisible="{Binding IsAppearanceTabSelected}" Spacing="8">
-                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto" ColumnSpacing="0" RowSpacing="8">
+                    <!-- Two rows, 100% width each -->
+                    <Grid ColumnDefinitions="*" RowDefinitions="Auto,Auto" ColumnSpacing="0" RowSpacing="8">
                         <!-- Color Theme Settings Card -->
                         <Frame Grid.Row="0" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
                             <StackLayout>
                                 <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ColorThemeTitle}" Style="{StaticResource CardTitleStyle}" />
-                                <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ColorThemeDescription}"
-                                       Style="{StaticResource DescriptionStyle}" />
-                                <Picker ItemsSource="{Binding SupportedColorThemes}" 
-                                        SelectedItem="{Binding SelectedColorTheme}"
-                                        FontSize="{DynamicResource AppFontSize}"
-                                        FontFamily="{DynamicResource AppFontFamily}"
+                                <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ColorThemeDescription}" Style="{StaticResource DescriptionStyle}" />
+                                <Picker ItemsSource="{Binding SupportedColorThemes}" SelectedItem="{Binding SelectedColorTheme}"
+                                        FontSize="{DynamicResource AppFontSize}" FontFamily="{DynamicResource AppFontFamily}"
                                         ItemDisplayBinding="{Binding ., Converter={StaticResource AppColorThemeToLocalizedStringConverter}}" />
                                 
                                 <!-- Background options -->
                                 <Grid Margin="0,12,0,0" HorizontalOptions="Start" ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8">
-                                    <CheckBox Grid.Row="0" Grid.Column="0"
-                                              IsChecked="{Binding IsColorfulBackgroundEnabled}"
-                                              Color="{DynamicResource Primary}"
-                                              VerticalOptions="Center" />
-                                    <Label Grid.Row="0" Grid.Column="1"
-                                           Text="{loc:Translate Resource=SettingsPageResources, Key=ColorfulBackgroundOption}"
-                                           FontSize="{DynamicResource AppSmallFontSize}"
-                                           FontFamily="{DynamicResource AppFontFamily}"
-                                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"
-                                           VerticalOptions="Center" />
-                                    <CheckBox Grid.Row="1" Grid.Column="0"
-                                              IsChecked="{Binding IsWallpaperBackgroundEnabled}"
-                                              IsEnabled="{Binding IsWallpaperAvailable}"
-                                              Color="{DynamicResource Primary}"
-                                              VerticalOptions="Center" />
-                                    <Label Grid.Row="1" Grid.Column="1"
-                                           Text="{loc:Translate Resource=SettingsPageResources, Key=WallpaperBackgroundOption}"
-                                           FontSize="{DynamicResource AppSmallFontSize}"
-                                           FontFamily="{DynamicResource AppFontFamily}"
-                                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"
-                                           VerticalOptions="Center" />
+                                    <CheckBox Grid.Row="0" Grid.Column="0" IsChecked="{Binding IsColorfulBackgroundEnabled}" Color="{DynamicResource Primary}" VerticalOptions="Center" />
+                                    <Label Grid.Row="0" Grid.Column="1" Text="{loc:Translate Resource=SettingsPageResources, Key=ColorfulBackgroundOption}" FontSize="{DynamicResource AppSmallFontSize}" FontFamily="{DynamicResource AppFontFamily}" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" VerticalOptions="Center" />
+
+                                    <CheckBox Grid.Row="1" Grid.Column="0" IsChecked="{Binding IsWallpaperBackgroundEnabled}" IsEnabled="{Binding IsWallpaperAvailable}" Color="{DynamicResource Primary}" VerticalOptions="Center" />
+                                    <Label Grid.Row="1" Grid.Column="1" Text="{loc:Translate Resource=SettingsPageResources, Key=WallpaperBackgroundOption}" FontSize="{DynamicResource AppSmallFontSize}" FontFamily="{DynamicResource AppFontFamily}" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" VerticalOptions="Center" />
                                 </Grid>
                                 
                                 <!-- Theme Preview -->
                                 <Grid Margin="0,12,0,0" HeightRequest="40" ColumnDefinitions="*,*,*">
-                                    <Ellipse Grid.Column="0" 
-                                             Fill="{Binding SelectedColorTheme, Converter={StaticResource ThemeToColorConverter}, ConverterParameter=Primary}"
-                                             WidthRequest="32" HeightRequest="32" />
-                                    <Ellipse Grid.Column="1"
-                                             Fill="{Binding SelectedColorTheme, Converter={StaticResource ThemeToColorConverter}, ConverterParameter=Secondary}"
-                                             WidthRequest="32" HeightRequest="32" />
-                                    <Ellipse Grid.Column="2"
-                                             Fill="{Binding SelectedColorTheme, Converter={StaticResource ThemeToColorConverter}, ConverterParameter=Tertiary}"
-                                             WidthRequest="32" HeightRequest="32" />
+                                    <Ellipse Grid.Column="0" Fill="{Binding SelectedColorTheme, Converter={StaticResource ThemeToColorConverter}, ConverterParameter=Primary}" WidthRequest="32" HeightRequest="32" />
+                                    <Ellipse Grid.Column="1" Fill="{Binding SelectedColorTheme, Converter={StaticResource ThemeToColorConverter}, ConverterParameter=Secondary}" WidthRequest="32" HeightRequest="32" />
+                                    <Ellipse Grid.Column="2" Fill="{Binding SelectedColorTheme, Converter={StaticResource ThemeToColorConverter}, ConverterParameter=Tertiary}" WidthRequest="32" HeightRequest="32" />
                                 </Grid>
                             </StackLayout>
                         </Frame>
 
                         <!-- Theme Settings Card -->
-                        <Frame Grid.Row="0" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
+                        <Frame Grid.Row="1" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
                             <StackLayout>
                                 <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ThemeTitle}" Style="{StaticResource CardTitleStyle}" />
-                                <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ThemeDescription}"
-                                       Style="{StaticResource DescriptionStyle}" />
-                                <Picker ItemsSource="{Binding SupportedThemes}" 
-                                        SelectedItem="{Binding SelectedTheme}"
-                                        FontSize="{DynamicResource AppFontSize}"
-                                        FontFamily="{DynamicResource AppFontFamily}"
+                                <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ThemeDescription}" Style="{StaticResource DescriptionStyle}" />
+                                <Picker ItemsSource="{Binding SupportedThemes}" SelectedItem="{Binding SelectedTheme}"
+                                        FontSize="{DynamicResource AppFontSize}" FontFamily="{DynamicResource AppFontFamily}"
                                         ItemDisplayBinding="{Binding ., Converter={StaticResource AppThemeToLocalizedStringConverter}}" />
                             </StackLayout>
                         </Frame>
