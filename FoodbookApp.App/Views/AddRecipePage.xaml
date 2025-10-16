@@ -102,15 +102,15 @@
                                             SelectionMode="Multiple"
                                             SelectionChanged="OnLabelsSelectionChanged">
                                 <CollectionView.ItemsLayout>
-                                    <GridItemsLayout Orientation="Vertical" Span="2" />
+                                    <GridItemsLayout Orientation="Vertical" Span="4" />
                                 </CollectionView.ItemsLayout>
                                 <CollectionView.ItemTemplate>
                                     <DataTemplate x:DataType="models:RecipeLabel">
-                                        <Border Padding="12,8"
-                                                Margin="6,4"
+                                        <Border Padding="4,3"
+                                                Margin="3,2"
                                                 BackgroundColor="Transparent"
                                                 Stroke="{StaticResource ModernBorderColor}"
-                                                StrokeShape="RoundRectangle 14">
+                                                StrokeShape="RoundRectangle 8">
                                             <Border.GestureRecognizers>
                                                 <TapGestureRecognizer Tapped="OnLabelTapped" />
                                             </Border.GestureRecognizers>
@@ -131,9 +131,13 @@
                                                 </VisualStateGroup>
                                             </VisualStateManager.VisualStateGroups>
 
-                                            <Label Text="{Binding Name}"
-                                                   HorizontalOptions="Center"
-                                                   VerticalOptions="Center" />
+                                            <HorizontalStackLayout Spacing="6" HorizontalOptions="Center" VerticalOptions="Center">
+                                                <Frame WidthRequest="10" HeightRequest="10" Padding="0" HasShadow="False" CornerRadius="5"
+                                                       BackgroundColor="{Binding ColorHex}" />
+                                                <Label Text="{Binding Name}"
+                                                       FontSize="12"
+                                                       VerticalOptions="Center" />
+                                            </HorizontalStackLayout>
                                         </Border>
                                     </DataTemplate>
                                 </CollectionView.ItemTemplate>
