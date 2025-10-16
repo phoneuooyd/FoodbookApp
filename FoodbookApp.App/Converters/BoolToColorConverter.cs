@@ -47,6 +47,10 @@ public class BoolToColorConverter : IValueConverter
             "SegmentUnselectedBg" => !isTrue ? (dark ? gray600 : gray300) : (dark ? primaryDark.WithAlpha(0.25f) : secondary),
             // Segmented text color
             "SegmentText" => isTrue ? (dark ? primaryDark : primary) : (dark ? gray200 : gray500),
+            // Label border color for selected/unselected state
+            "LabelBorder" => isTrue ? primaryActive : Colors.Transparent,
+            // Label background for selected/unselected state (keep subtle)
+            "LabelBackground" => dark ? Color.FromArgb("#2C2C2E") : Color.FromArgb("#F2F2F7"),
             _ => isTrue ? primaryActive : (dark ? gray600 : gray300)
         };
     }

@@ -20,6 +20,7 @@ namespace Foodbook.Views
         private bool _isInitialized;
         private bool _hasEverLoaded;
         private bool _isUpdatingLabelsSelection; // Flag to prevent circular updates
+        private bool _isModalOpen = false; // Flag to prevent multiple modal opens
 
         public AddRecipePage(AddRecipeViewModel vm)
         {
@@ -306,6 +307,15 @@ namespace Foodbook.Views
         {
             try
             {
+                // Prevent multiple modal opens
+                if (_isModalOpen)
+                {
+                    System.Diagnostics.Debug.WriteLine("Modal already open, ignoring click");
+                    return;
+                }
+
+                _isModalOpen = true;
+
                 // Get SettingsViewModel from DI
                 var settingsVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<SettingsViewModel>();
                 if (settingsVm == null)
@@ -327,6 +337,11 @@ namespace Foodbook.Views
             {
                 System.Diagnostics.Debug.WriteLine($"[AddRecipePage] CRUDComponentPopup error: {ex.Message}");
                 await DisplayAlert("B³¹d", "Nie mo¿na otworzyæ zarz¹dzania etykietami", "OK");
+            }
+            finally
+            {
+                // Always reset the flag, even if an error occurred
+                _isModalOpen = false;
             }
         }
     }
