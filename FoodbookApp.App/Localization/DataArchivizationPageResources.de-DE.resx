@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Datenarchiv</value>
+  </data>
+  <data name="HeaderTitle" xml:space="preserve">
+    <value>Datenarchiv</value>
+  </data>
+  <data name="HeaderDescription" xml:space="preserve">
+    <value>Erstellen Sie ein Backup-Archiv (.fbk). Das Archiv enthaelt die Datenbank und wichtige Einstellungen.</value>
+  </data>
+  <data name="CreateArchiveButton" xml:space="preserve">
+    <value>Archiv erstellen</value>
+  </data>
+  <data name="RestoreHeader" xml:space="preserve">
+    <value>Daten wiederherstellen</value>
+  </data>
+  <data name="RestoreDescription" xml:space="preserve">
+    <value>Waehlen Sie eine Archivdatei (.fbk oder .zip), um wiederherzustellen.</value>
+  </data>
+  <data name="RestoreArchiveButton" xml:space="preserve">
+    <value>Aus Archiv wiederherstellen</value>
+  </data>
+  <data name="DefaultFolderLabel" xml:space="preserve">
+    <value>Standard-Archivordner</value>
+  </data>
+  <data name="RefreshList" xml:space="preserve">
+    <value>Liste aktualisieren</value>
+  </data>
+  <data name="ArchivesInFolder" xml:space="preserve">
+    <value>Archive im Ordner</value>
+  </data>
+  <data name="NoArchivesFound" xml:space="preserve">
+    <value>Keine Archive gefunden</value>
+  </data>
+  <data name="RestoreFromThis" xml:space="preserve">
+    <value>Wiederherstellen</value>
+  </data>
+  <data name="ArchiveNameLabel" xml:space="preserve">
+    <value>Archivname</value>
+  </data>
+  <data name="ArchiveNamePlaceholder" xml:space="preserve">
+    <value>Optionaler Name (ohne Erweiterung)</value>
+  </data>
+  <data name="DeleteFromThis" xml:space="preserve">
+    <value>Loeschen</value>
+  </data>
+  <data name="NoArchivesInDefault" xml:space="preserve">
+    <value>Keine Archive im Standardordner. Bitte waehlen Sie eine Datei.</value>
+  </data>
+  <data name="ConfirmTitle" xml:space="preserve">
+    <value>Bestaetigung</value>
+  </data>
+  <data name="ConfirmDelete" xml:space="preserve">
+    <value>{0} loeschen?</value>
+  </data>
+  <data name="DeletedMessage" xml:space="preserve">
+    <value>Geloescht: {0}</value>
+  </data>
+  <data name="ArchiveCreatedSuffix" xml:space="preserve">
+    <value>erfolgreich erstellt</value>
+  </data>
+  <data name="RestoreSuccess" xml:space="preserve">
+    <value>Wiederhergestellt. Bitte die App neu starten.</value>
+  </data>
+</root>

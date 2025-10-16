@@ -27,5 +27,13 @@ namespace Foodbook.Views
             base.OnDisappearing();
             _themeHelper.Cleanup();
         }
+
+        private async void OnOpenArchivizationClicked(object sender, EventArgs e)
+        {
+            await Shell.Current.Navigation.PushAsync(new DataArchivizationPage(
+                FoodbookApp.MauiProgram.ServiceProvider.GetRequiredService<FoodbookApp.Interfaces.IDatabaseService>(),
+                FoodbookApp.MauiProgram.ServiceProvider.GetRequiredService<FoodbookApp.Interfaces.IPreferencesService>()
+            ));
+        }
     }
 }

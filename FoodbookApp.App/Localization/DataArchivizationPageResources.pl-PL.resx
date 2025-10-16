@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Archiwizacja danych</value>
+  </data>
+  <data name="HeaderTitle" xml:space="preserve">
+    <value>Archiwizacja danych</value>
+  </data>
+  <data name="HeaderDescription" xml:space="preserve">
+    <value>Utworz archiwum (.fbk) z baza danych i kluczowymi ustawieniami.</value>
+  </data>
+  <data name="CreateArchiveButton" xml:space="preserve">
+    <value>Utworz archiwum</value>
+  </data>
+  <data name="RestoreHeader" xml:space="preserve">
+    <value>Przywracanie danych</value>
+  </data>
+  <data name="RestoreDescription" xml:space="preserve">
+    <value>Wybierz plik archiwum (.fbk lub .zip), aby przywrocic dane.</value>
+  </data>
+  <data name="RestoreArchiveButton" xml:space="preserve">
+    <value>Przywroc z archiwum</value>
+  </data>
+  <data name="DefaultFolderLabel" xml:space="preserve">
+    <value>Domyslny folder archiwum</value>
+  </data>
+  <data name="RefreshList" xml:space="preserve">
+    <value>Odswiez liste</value>
+  </data>
+  <data name="ArchivesInFolder" xml:space="preserve">
+    <value>Archiwa w folderze</value>
+  </data>
+  <data name="NoArchivesFound" xml:space="preserve">
+    <value>Brak archiow</value>
+  </data>
+  <data name="RestoreFromThis" xml:space="preserve">
+    <value>Przywroc</value>
+  </data>
+  <data name="ArchiveNameLabel" xml:space="preserve">
+    <value>Nazwa archiwum</value>
+  </data>
+  <data name="ArchiveNamePlaceholder" xml:space="preserve">
+    <value>Opcjonalna nazwa (bez rozszerzenia)</value>
+  </data>
+  <data name="DeleteFromThis" xml:space="preserve">
+    <value>Usun</value>
+  </data>
+  <data name="NoArchivesInDefault" xml:space="preserve">
+    <value>Brak archiwow w domyslnym folderze. Wybierz plik.</value>
+  </data>
+  <data name="ConfirmTitle" xml:space="preserve">
+    <value>Potwierdzenie</value>
+  </data>
+  <data name="ConfirmDelete" xml:space="preserve">
+    <value>Usunac {0}?</value>
+  </data>
+  <data name="DeletedMessage" xml:space="preserve">
+    <value>Usunieto: {0}</value>
+  </data>
+  <data name="ArchiveCreatedSuffix" xml:space="preserve">
+    <value>utworzono pomyslnie</value>
+  </data>
+  <data name="RestoreSuccess" xml:space="preserve">
+    <value>Przywrocono. Uruchom ponownie aplikacje.</value>
+  </data>
+</root>

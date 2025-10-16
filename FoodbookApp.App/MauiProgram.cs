@@ -97,6 +97,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<ArchivePage>();
             builder.Services.AddScoped<SettingsPage>();
             builder.Services.AddScoped<SetupWizardPage>();
+            builder.Services.AddScoped<DataArchivizationPage>();
 
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering routes");
             Routing.RegisterRoute(nameof(HomePage), typeof(HomePage));
@@ -111,6 +112,7 @@ namespace FoodbookApp
             Routing.RegisterRoute(nameof(ArchivePage), typeof(ArchivePage));
             Routing.RegisterRoute(nameof(SettingsPage), typeof(SettingsPage));
             Routing.RegisterRoute(nameof(SetupWizardPage), typeof(SetupWizardPage));
+            Routing.RegisterRoute(nameof(DataArchivizationPage), typeof(DataArchivizationPage));
 
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Building app");
             var app = builder.Build();

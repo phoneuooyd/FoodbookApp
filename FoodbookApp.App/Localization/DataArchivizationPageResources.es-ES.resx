@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Archivo de datos</value>
+  </data>
+  <data name="HeaderTitle" xml:space="preserve">
+    <value>Archivo de datos</value>
+  </data>
+  <data name="HeaderDescription" xml:space="preserve">
+    <value>Cree un archivo de respaldo (.fbk). El archivo incluye la base de datos y la configuracion principal.</value>
+  </data>
+  <data name="CreateArchiveButton" xml:space="preserve">
+    <value>Crear archivo</value>
+  </data>
+  <data name="RestoreHeader" xml:space="preserve">
+    <value>Restaurar datos</value>
+  </data>
+  <data name="RestoreDescription" xml:space="preserve">
+    <value>Seleccione un archivo de archivo (.fbk o .zip) para restaurar.</value>
+  </data>
+  <data name="RestoreArchiveButton" xml:space="preserve">
+    <value>Restaurar desde archivo</value>
+  </data>
+  <data name="DefaultFolderLabel" xml:space="preserve">
+    <value>Carpeta de archivo predeterminada</value>
+  </data>
+  <data name="RefreshList" xml:space="preserve">
+    <value>Actualizar lista</value>
+  </data>
+  <data name="ArchivesInFolder" xml:space="preserve">
+    <value>Archivos en la carpeta</value>
+  </data>
+  <data name="NoArchivesFound" xml:space="preserve">
+    <value>No se encontraron archivos</value>
+  </data>
+  <data name="RestoreFromThis" xml:space="preserve">
+    <value>Restaurar</value>
+  </data>
+  <data name="ArchiveNameLabel" xml:space="preserve">
+    <value>Nombre del archivo</value>
+  </data>
+  <data name="ArchiveNamePlaceholder" xml:space="preserve">
+    <value>Nombre opcional (sin extension)</value>
+  </data>
+  <data name="DeleteFromThis" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="NoArchivesInDefault" xml:space="preserve">
+    <value>No hay archivos en la carpeta predeterminada. Elija un archivo.</value>
+  </data>
+  <data name="ConfirmTitle" xml:space="preserve">
+    <value>Confirmacion</value>
+  </data>
+  <data name="ConfirmDelete" xml:space="preserve">
+    <value>Eliminar {0}?</value>
+  </data>
+  <data name="DeletedMessage" xml:space="preserve">
+    <value>Eliminado: {0}</value>
+  </data>
+  <data name="ArchiveCreatedSuffix" xml:space="preserve">
+    <value>creado correctamente</value>
+  </data>
+  <data name="RestoreSuccess" xml:space="preserve">
+    <value>Restaurado. Reinicie la aplicacion.</value>
+  </data>
+</root>
