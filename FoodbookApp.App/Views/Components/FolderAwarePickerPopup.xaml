@@ -34,7 +34,7 @@
                         Padding="12,10"
 						Margin="0,0">
 
-                <Grid ColumnDefinitions="*,Auto" Padding="6,6">
+                <Grid ColumnDefinitions="*,Auto,Auto" Padding="6,6">
                     <!-- Search bar only -->
                     <StackLayout Grid.Column="0" Orientation="Vertical" Spacing="6">
                         <components:ModernSearchBarComponent
@@ -44,8 +44,18 @@
                             />
 					</StackLayout>
 
+                    <!-- Filter button -->
+                    <ImageButton Grid.Column="1"
+                                 Source="Resources/Images/filter.png"
+                                 WidthRequest="32"
+                                 HeightRequest="32"
+                                 BackgroundColor="Transparent"
+                                 Clicked="OnFilterSortClicked"
+                                 HorizontalOptions="End"
+                                 VerticalOptions="Center" />
+
                     <!-- Close button -->
-					<Button Grid.Column="1"
+					<Button Grid.Column="2"
                             Text="X"
                             FontSize="16"
                             WidthRequest="32"
