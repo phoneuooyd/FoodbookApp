@@ -131,7 +131,7 @@
 
             <!-- Settings Grid -->
             <Grid ColumnDefinitions="*,*" 
-                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
                   ColumnSpacing="0"
                   RowSpacing="8">
 

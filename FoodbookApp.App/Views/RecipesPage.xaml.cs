@@ -4,6 +4,9 @@ using Foodbook.Views.Base;
 using CommunityToolkit.Mvvm.Messaging;
 using System.Threading.Tasks;
 using Foodbook.Models; // added for Recipe type
+using CommunityToolkit.Maui.Extensions;
+using Foodbook.Views.Components;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Foodbook.Views;
 

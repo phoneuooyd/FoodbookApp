@@ -19,8 +19,8 @@
         <converters:UnitToLocalizedStringConverter x:Key="UnitToStringConverter" />
     </ContentPage.Resources>
     <Grid RowDefinitions="Auto,*">
-        <!-- existing tab header -->
         <Grid Grid.Row="0" RowDefinitions="*,3" ColumnDefinitions="*,*,*" HeightRequest="{OnPlatform Default=60, iOS=70}" BackgroundColor="{AppThemeBinding Light=White, Dark=#2D2D30}">
+            <!-- Tabs -->
             <Button Grid.Row="0" Grid.Column="0" Text="{loc:Translate Resource=AddRecipePageResources, Key=BasicInfoTab}" Command="{Binding SelectTabCommand}" CommandParameter="0" BackgroundColor="{Binding IsBasicInfoTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=TabBackground}" TextColor="{Binding IsBasicInfoTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=Text}" FontSize="14" FontAttributes="{Binding IsBasicInfoTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=Bold}" CornerRadius="0" BorderWidth="0" Padding="0" />
             <Button Grid.Row="0" Grid.Column="1" Text="{loc:Translate Resource=AddRecipePageResources, Key=IngredientsTab}" Command="{Binding SelectTabCommand}" CommandParameter="1" BackgroundColor="{Binding IsIngredientsTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=TabBackground}" TextColor="{Binding IsIngredientsTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=Text}" FontSize="14" FontAttributes="{Binding IsIngredientsTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=Bold}" CornerRadius="0" BorderWidth="0" Padding="0" />
             <Button Grid.Row="0" Grid.Column="2" Text="{loc:Translate Resource=AddRecipePageResources, Key=NutritionTab}" Command="{Binding SelectTabCommand}" CommandParameter="2" BackgroundColor="{Binding IsNutritionTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=TabBackground}" TextColor="{Binding IsNutritionTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=Text}" FontSize="14" FontAttributes="{Binding IsNutritionTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=Bold}" CornerRadius="0" BorderWidth="0" Padding="0" />
@@ -32,7 +32,7 @@
             <VerticalStackLayout Padding="20" Spacing="15">
                 <!-- Tab 1 -->
                 <StackLayout IsVisible="{Binding IsBasicInfoTabSelected}" Spacing="15">
-                    <!-- Mode Selection (unchanged) -->
+                    <!-- Mode Selection -->
                     <StackLayout Spacing="10">
                         <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=ModeSelection}" FontSize="18" FontAttributes="Bold" />
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
@@ -40,7 +40,7 @@
                             <Button Grid.Column="1" Command="{Binding SetImportModeCommand}" BackgroundColor="{Binding IsImportMode, Converter={StaticResource BoolToColorConverter}, ConverterParameter=SegmentSelectedBg}" TextColor="{Binding IsImportMode, Converter={StaticResource BoolToColorConverter}, ConverterParameter=SegmentText}" HeightRequest="45" Text="{loc:Translate Resource=AddRecipePageResources, Key=FromLink}" />
                         </Grid>
                     </StackLayout>
-                    <!-- Import Section (unchanged) -->
+                    <!-- Import Section -->
                     <StackLayout IsVisible="{Binding IsImportMode}" Spacing="10">
                         <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=ImportHeader}" FontSize="18" FontAttributes="Bold" Margin="0,10,0,5" />
                         <StackLayout Spacing="5">
@@ -54,7 +54,7 @@
                         <Button Command="{Binding ImportRecipeCommand}" BackgroundColor="{DynamicResource Primary}" HeightRequest="45" Text="{loc:Translate Resource=AddRecipePageResources, Key=ImportButton}" />
                         <Label Text="{Binding ImportStatus}" FontSize="12" HorizontalTextAlignment="Center" IsVisible="{Binding ImportStatus, Converter={StaticResource StringToBoolConverter}}" />
                     </StackLayout>
-                    <!-- Manual Section (unchanged) -->
+                    <!-- Manual Section -->
                     <StackLayout IsVisible="{Binding IsManualMode}" Spacing="10">
                         <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=BasicInfoHeader}" FontSize="18" FontAttributes="Bold" Margin="0,10,0,5" />
                         <Border Style="{StaticResource ModernBorder}">
@@ -76,148 +76,14 @@
                             </StackLayout>
                         </Border>
                     </StackLayout>
-                    <!-- Labels assign panel with plus button -->
+                    <!-- Labels assign panel (always visible on tab 1) -->
                     <Border Style="{StaticResource ModernBorder}">
-                        <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*" Padding="0">
-                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="12,8">
-                                <Label Text="Etykiety" Style="{StaticResource FieldLabel}" />
-                                <Button Grid.Column="1" Text="+" WidthRequest="32" HeightRequest="32" CornerRadius="16" BackgroundColor="{DynamicResource Primary}" TextColor="{DynamicResource ButtonPrimaryText}" Clicked="OnAddLabelClicked" />
-                            </Grid>
-                            <CollectionView Grid.Row="1" ItemsSource="{Binding AvailableLabels}" SelectionMode="Multiple" SelectedItems="{Binding SelectedLabels}" Margin="4,0,4,0">
-                                <CollectionView.ItemsLayout>
-                                    <GridItemsLayout Orientation="Vertical" Span="3" />
-                                </CollectionView.ItemsLayout>
-                                <CollectionView.ItemTemplate>
-                                    <DataTemplate x:DataType="models:RecipeLabel">
-                                        <Border StrokeThickness="1" Stroke="{DynamicResource FrameBorderColor}" BackgroundColor="{DynamicResource FrameBackgroundColor}" Padding="6" Margin="4" StrokeShape="RoundRectangle 8">
-                                            <HorizontalStackLayout Spacing="6" VerticalOptions="Center" HorizontalOptions="Center">
-                                                <BoxView WidthRequest="12" HeightRequest="12" CornerRadius="6" Color="{Binding ColorHex}" />
-                                                <Label Text="{Binding Name}" FontSize="12" />
-                                            </HorizontalStackLayout>
-                                        </Border>
-                                    </DataTemplate>
-                                </CollectionView.ItemTemplate>
-                            </CollectionView>
-                            <Label Grid.Row="2" FontSize="11" TextColor="Gray" Text="Dotknij, aby dodać/zdjąć etykietę z przepisu" Margin="12,4,12,8" />
-                        </Grid>
-                    </Border>
-                </StackLayout>
-                <!-- Ingredients Tab (unchanged) -->
-                <StackLayout IsVisible="{Binding IsIngredientsTabSelected}" Spacing="15">
-                    <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=IngredientsHeader}" FontSize="18" FontAttributes="Bold" Margin="0,0,0,5" />
-                    <CollectionView ItemsSource="{Binding Ingredients}">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="models:Ingredient">
-                                <Border Style="{StaticResource ModernBorder}" Margin="0,3">
-                                    <Grid ColumnDefinitions="2*,*,Auto,Auto" ColumnSpacing="8" RowDefinitions="Auto,Auto" RowSpacing="8" Padding="12,10">
-                                        <StackLayout Grid.Row="0" Grid.Column="0" Spacing="3">
-                                            <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=IngredientLabel}" Style="{StaticResource FieldLabel}" />
-                                            <controls:SearchablePickerComponent
-                                                PlaceholderText="{loc:Translate Resource=AddRecipePageResources, Key=SelectIngredientPlaceholder}"
-                                                ItemsSource="{Binding BindingContext.AvailableIngredientNames, Source={x:Reference ThisPage}}"
-                                                SelectedItem="{Binding Name}"
-                                                SelectionChanged="OnIngredientNameChanged" />
-                                        </StackLayout>
-                                        <StackLayout Grid.Row="0" Grid.Column="1" Spacing="3">
-                                            <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=QuantityLabelShort}" Style="{StaticResource FieldLabel}" />
-                                            <Border Style="{StaticResource ModernBorder}">
-                                                <Entry Placeholder="1.0" Keyboard="Numeric" Text="{Binding Quantity}" HorizontalTextAlignment="Center" TextChanged="OnIngredientValueChanged" Style="{StaticResource ModernEntry}" />
-                                            </Border>
-                                        </StackLayout>
-                                        <StackLayout Grid.Row="0" Grid.Column="2" Spacing="3">
-                                            <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=UnitLabelShort}" Style="{StaticResource FieldLabel}" />
-                                            <controls:SimplePicker ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}"
-                                                                   SelectedItem="{Binding Unit}"
-                                                                   ItemDisplayBinding="{Binding Converter={StaticResource UnitToStringConverter}}"
-                                                                   Title="Jednostka" />
-                                        </StackLayout>
-                                        <Button Grid.Row="0" Grid.Column="3" Style="{StaticResource DeleteButton}" Command="{Binding BindingContext.RemoveIngredientCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" VerticalOptions="End" HorizontalOptions="Center" />
-                                        <StackLayout Grid.Row="1" Grid.ColumnSpan="4" Orientation="Horizontal" Spacing="15" Margin="0,5,0,0">
-                                            <Label Text="{Binding Calories, StringFormat='⚡ {0:F1} kcal'}" FontSize="11" TextColor="Gray" />
-                                            <Label Text="{Binding Protein, StringFormat='🥩 {0:F1}g'}" FontSize="11" TextColor="Gray" />
-                                            <Label Text="{Binding Fat, StringFormat='🧈 {0:F1}g'}" FontSize="11" TextColor="Gray" />
-                                            <Label Text="{Binding Carbs, StringFormat='🌾 {0:F1}g'}" FontSize="11" TextColor="Gray" />
-                                        </StackLayout>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-                    <Button Command="{Binding AddIngredientCommand}" BackgroundColor="{DynamicResource Primary}" HeightRequest="45" Text="{loc:Translate Resource=AddRecipePageResources, Key=AddIngredient}" />
-                </StackLayout>
-                <!-- Nutrition Tab (unchanged existing) -->
-                <StackLayout IsVisible="{Binding IsNutritionTabSelected}" Spacing="15">
-                    <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=NutritionHeader}" FontSize="18" FontAttributes="Bold" Margin="0,0,0,5" />
-                    <StackLayout Spacing="10">
-                        <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=CalcModeLabel}" FontSize="14" FontAttributes="Bold" />
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                            <Button Grid.Column="0" BackgroundColor="{Binding UseCalculatedValues, Converter={StaticResource BoolToColorConverter}, ConverterParameter=SegmentSelectedBg}" TextColor="{Binding UseCalculatedValues, Converter={StaticResource BoolToColorConverter}, ConverterParameter=SegmentText}" HeightRequest="40" Clicked="OnAutoModeClicked" Text="{loc:Translate Resource=AddRecipePageResources, Key=AutoButton}" />
-                            <Button Grid.Column="1" BackgroundColor="{Binding UseManualValues, Converter={StaticResource BoolToColorConverter}, ConverterParameter=SegmentSelectedBg}" TextColor="{Binding UseManualValues, Converter={StaticResource BoolToColorConverter}, ConverterParameter=SegmentText}" HeightRequest="40" Clicked="OnManualModeClicked" Text="{loc:Translate Resource=AddRecipePageResources, Key=ManualButton}" />
-                        </Grid>
-                    </StackLayout>
-                    <StackLayout IsVisible="{Binding UseCalculatedValues}" Spacing="10">
-                        <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=AutoCalculatedInfo}" FontSize="12" FontAttributes="Italic" HorizontalTextAlignment="Center" />
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
-                            <StackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
-                                <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=CaloriesLabel}" Style="{StaticResource FieldLabel}" />
-                                <Label Text="{Binding CalculatedCalories}" FontSize="16" HorizontalTextAlignment="Center" BackgroundColor="{DynamicResource FrameBackgroundColor}" Padding="10" TextColor="{DynamicResource FrameTextColor}" />
-                            </StackLayout>
-                            <StackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
-                                <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=ProteinLabel}" Style="{StaticResource FieldLabel}" />
-                                <Label Text="{Binding CalculatedProtein}" FontSize="16" HorizontalTextAlignment="Center" BackgroundColor="{DynamicResource FrameBackgroundColor}" Padding="10" TextColor="{DynamicResource FrameTextColor}" />
-                            </StackLayout>
-                            <StackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
-                                <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=FatLabel}" Style="{StaticResource FieldLabel}" />
-                                <Label Text="{Binding CalculatedFat}" FontSize="16" HorizontalTextAlignment="Center" BackgroundColor="{DynamicResource FrameBackgroundColor}" Padding="10" TextColor="{DynamicResource FrameTextColor}" />
-                            </StackLayout>
-                            <StackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
-                                <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=CarbsLabel}" Style="{StaticResource FieldLabel}" />
-                                <Label Text="{Binding CalculatedCarbs}" FontSize="16" HorizontalTextAlignment="Center" BackgroundColor="{DynamicResource FrameBackgroundColor}" Padding="10" TextColor="{DynamicResource FrameTextColor}" />
-                            </StackLayout>
-                        </Grid>
-                    </StackLayout>
-                    <StackLayout IsVisible="{Binding UseManualValues}" Spacing="10">
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                            <Label Grid.Column="0" Text="{loc:Translate Resource=AddRecipePageResources, Key=ManualInputLabel}" FontSize="12" FontAttributes="Italic" VerticalOptions="Center" />
-                            <Button Grid.Column="1" Command="{Binding CopyCalculatedValuesCommand}" FontSize="12" HeightRequest="30" BackgroundColor="{DynamicResource Primary}" Text="{loc:Translate Resource=AddRecipePageResources, Key=CopyCalculated}" />
-                        </Grid>
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
-                            <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource ModernBorder}">
-                                <StackLayout Spacing="5" Padding="12,8">
-                                    <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=CaloriesLabel}" Style="{StaticResource FieldLabel}" />
-                                    <Entry Placeholder="0.0" Keyboard="Numeric" Text="{Binding Calories}" ClearButtonVisibility="WhileEditing" Style="{StaticResource ModernEntry}" />
-                                </StackLayout>
-                            </Border>
-                            <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource ModernBorder}">
-                                <StackLayout Spacing="5" Padding="12,8">
-                                    <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=ProteinLabel}" Style="{StaticResource FieldLabel}" />
-                                    <Entry Placeholder="0.0" Keyboard="Numeric" Text="{Binding Protein}" ClearButtonVisibility="WhileEditing" Style="{StaticResource ModernEntry}" />
-                                </StackLayout>
-                            </Border>
-                            <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource ModernBorder}">
-                                <StackLayout Spacing="5" Padding="12,8">
-                                    <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=FatLabel}" Style="{StaticResource FieldLabel}" />
-                                    <Entry Placeholder="0.0" Keyboard="Numeric" Text="{Binding Fat}" ClearButtonVisibility="WhileEditing" Style="{StaticResource ModernEntry}" />
-                                </StackLayout>
-                            </Border>
-                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource ModernBorder}">
-                                <StackLayout Spacing="5" Padding="12,8">
-                                    <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=CarbsLabel}" Style="{StaticResource FieldLabel}" />
-                                    <Entry Placeholder="0.0" Keyboard="Numeric" Text="{Binding Carbs}" ClearButtonVisibility="WhileEditing" Style="{StaticResource ModernEntry}" />
-                                </StackLayout>
-                            </Border>
-                        </Grid>
-                    </StackLayout>
-                </StackLayout>
-                <StackLayout Spacing="10" Margin="0,20,0,0">
-                    <Button Command="{Binding SaveRecipeCommand}" Text="{Binding SaveButtonText}" BackgroundColor="{DynamicResource Primary}" HeightRequest="50" FontSize="16" FontAttributes="Bold">
-                        <Button.ImageSource>
-                            <FileImageSource File="save.png" />
-                        </Button.ImageSource>
-                    </Button>
-                </StackLayout>
-                <Label Text="{Binding ValidationMessage}" FontSize="12" IsVisible="{Binding HasValidationError}" HorizontalTextAlignment="Center" TextColor="Red" Margin="0,10,0,0" />
-            </VerticalStackLayout>
-        </ScrollView>
-    </Grid>
-</ContentPage>
+                        <StackLayout Spacing="8" Padding="12,8">
+                            <!-- Header row with title and manage button -->
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,4">
+                                <Label Grid.Column="0"
+                                       Text="Etykiety" 
+                                       Style="{StaticResource FieldLabel}" 
+                                       VerticalOptions="Center" />
+                                <Button Grid.Column="1"
+                                        Text="+"

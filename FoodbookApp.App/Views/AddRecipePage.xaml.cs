@@ -5,8 +5,7 @@ using Foodbook.Models;
 using Foodbook.Views.Base;
 using System.Threading.Tasks;
 using Foodbook.Views.Components;
-using FoodbookApp; // added for MauiProgram
-using CommunityToolkit.Maui.Extensions; // for ShowPopupAsync
+using CommunityToolkit.Maui.Extensions;
 
 namespace Foodbook.Views
 {
@@ -20,42 +19,13 @@ namespace Foodbook.Views
         private IDispatcherTimer? _valueChangeTimer;
         private bool _isInitialized;
         private bool _hasEverLoaded;
+        private bool _isUpdatingLabelsSelection; // Flag to prevent circular updates
 
         public AddRecipePage(AddRecipeViewModel vm)
         {
             InitializeComponent();
             BindingContext = vm;
             _themeHelper = new PageThemeHelper();
-        }
-
-        // New: open labels popup and refresh labels afterwards
-        private async void OnAddLabelClicked(object sender, System.EventArgs e)
-        {
-            try
-            {
-                // SettingsViewModel contains labels management logic (singleton)
-                var settingsVm = MauiProgram.ServiceProvider?.GetService(typeof(SettingsViewModel)) as SettingsViewModel;
-                if (settingsVm == null)
-                    return;
-                var popup = new CRUDComponentPopup(settingsVm);
-                var hostPage = Application.Current?.Windows.FirstOrDefault()?.Page as ContentPage ?? this;
-                await hostPage.ShowPopupAsync(popup);
-
-                // After popup closes reload labels & sync selection by Id
-                if (ViewModel != null)
-                {
-                    await ViewModel.LoadAvailableLabelsAsync();
-                    // Ensure SelectedLabels contains only those still existing (avoid stale references)
-                    var selectedIds = ViewModel.SelectedLabels.Select(l => l.Id).ToHashSet();
-                    ViewModel.SelectedLabels.Clear();
-                    foreach (var lbl in ViewModel.AvailableLabels)
-                        if (selectedIds.Contains(lbl.Id)) ViewModel.SelectedLabels.Add(lbl);
-                }
-            }
-            catch (System.Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] OnAddLabelClicked error: {ex.Message}");
-            }
         }
 
         protected override async void OnAppearing()
@@ -76,8 +46,13 @@ namespace Foodbook.Views
                     await (ViewModel?.LoadAvailableLabelsAsync() ?? Task.CompletedTask);
 
                     if (RecipeId > 0 && ViewModel != null)
+                    {
                         await ViewModel.LoadRecipeAsync(RecipeId);
+                        // Synchronize CollectionView selection with ViewModel after loading
+                        SyncLabelsSelection();
+                    }
 
+                    // If navigation passed FolderId, preselect it
                     if (FolderId > 0 && ViewModel != null)
                         ViewModel.SelectedFolderId = FolderId;
                         
@@ -86,15 +61,20 @@ namespace Foodbook.Views
                 }
                 else
                 {
+                    // Subsequent appearances (e.g., after popup close) - do not reset
                     System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Skipping reset on re-appear");
+                    // Refresh labels list in case user added/removed labels
+                    await (ViewModel?.LoadAvailableLabelsAsync() ?? Task.CompletedTask);
+                    // Re-sync selection after refresh
+                    SyncLabelsSelection();
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in OnAppearing: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"B??d ?adowania strony: {ex.Message}";
+                    ViewModel.ValidationMessage = $"B³¹d ³adowania strony: {ex.Message}";
                 }
             }
         }
@@ -108,19 +88,20 @@ namespace Foodbook.Views
             System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Disappearing - preserving current state");
         }
 
-        private void OnThemeChanged(object? sender, System.EventArgs e)
+        private void OnThemeChanged(object? sender, EventArgs e)
         {
             try
             {
                 if (ViewModel == null) return;
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    ViewModel.SelectedTabIndex = ViewModel.SelectedTabIndex; 
-                    ViewModel.IsManualMode = ViewModel.IsManualMode;         
-                    ViewModel.UseCalculatedValues = ViewModel.UseCalculatedValues; 
+                    // Re-raise computed/bound properties so converter-based bindings recompute with new palette
+                    ViewModel.SelectedTabIndex = ViewModel.SelectedTabIndex; // updates Is*TabSelected
+                    ViewModel.IsManualMode = ViewModel.IsManualMode;         // updates IsImportMode
+                    ViewModel.UseCalculatedValues = ViewModel.UseCalculatedValues; // updates UseManualValues
                 });
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[AddRecipePage] OnThemeChanged error: {ex.Message}");
             }
@@ -140,14 +121,14 @@ namespace Foodbook.Views
                     ViewModel.CancelCommand.Execute(null);
                 return true;
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in OnBackButtonPressed: {ex.Message}");
                 return base.OnBackButtonPressed();
             }
         }
 
-        private void OnAutoModeClicked(object sender, System.EventArgs e)
+        private void OnAutoModeClicked(object sender, EventArgs e)
         {
             try
             {
@@ -156,17 +137,17 @@ namespace Foodbook.Views
                     ViewModel.UseCalculatedValues = true;
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in OnAutoModeClicked: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"B??d prze??czania trybu: {ex.Message}";
+                    ViewModel.ValidationMessage = $"B³¹d prze³¹czania trybu: {ex.Message}";
                 }
             }
         }
 
-        private void OnManualModeClicked(object sender, System.EventArgs e)
+        private void OnManualModeClicked(object sender, EventArgs e)
         {
             try
             {
@@ -175,17 +156,17 @@ namespace Foodbook.Views
                     ViewModel.UseCalculatedValues = false;
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in OnManualModeClicked: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"B??d prze??czania trybu: {ex.Message}";
+                    ViewModel.ValidationMessage = $"B³¹d prze³¹czania trybu: {ex.Message}";
                 }
             }
         }
 
-        private void OnIngredientValueChanged(object sender, System.EventArgs e)
+        private void OnIngredientValueChanged(object sender, EventArgs e)
         {
             try
             {
@@ -205,23 +186,24 @@ namespace Foodbook.Views
                             await ViewModel.RecalculateNutritionalValuesAsync();
                         }
                     }
-                    catch (System.Exception timerEx)
+                    catch (Exception timerEx)
                     {
                         System.Diagnostics.Debug.WriteLine($"Error in timer callback: {timerEx.Message}");
                     }
                 };
                 _valueChangeTimer.Start();
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in OnIngredientValueChanged: {ex.Message}");
             }
         }
 
-        private async void OnIngredientNameChanged(object sender, System.EventArgs e)
+        private async void OnIngredientNameChanged(object sender, EventArgs e)
         {
             try
             {
+                // Support both native Picker and custom SearchablePickerComponent
                 if (sender is Picker picker && picker.BindingContext is Ingredient ingredientFromPicker)
                 {
                     await (ViewModel?.UpdateIngredientNutritionalValuesAsync(ingredientFromPicker) ?? Task.CompletedTask);
@@ -232,6 +214,8 @@ namespace Foodbook.Views
                     await (ViewModel?.UpdateIngredientNutritionalValuesAsync(ingredient) ?? Task.CompletedTask);
                     return;
                 }
+                
+                // Alternative approach: try to get the ingredient from binding context of parent
                 if (sender is View element)
                 {
                     var ingredientFromElement = element.BindingContext as Ingredient;
@@ -241,13 +225,108 @@ namespace Foodbook.Views
                     }
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in OnIngredientNameChanged: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"B??d aktualizacji sk?adnika: {ex.Message}";
+                    ViewModel.ValidationMessage = $"B³¹d aktualizacji sk³adnika: {ex.Message}";
                 }
+            }
+        }
+
+        // Synchronize CollectionView selected items with ViewModel
+        private void SyncLabelsSelection()
+        {
+            try
+            {
+                if (ViewModel == null || _isUpdatingLabelsSelection) return;
+
+                _isUpdatingLabelsSelection = true;
+                System.Diagnostics.Debug.WriteLine($"??? Syncing labels selection: {ViewModel.SelectedLabels.Count} labels");
+
+                // Clear current selection
+                LabelsCollectionView.SelectedItems?.Clear();
+
+                // Select items that are in ViewModel.SelectedLabels
+                foreach (var label in ViewModel.SelectedLabels)
+                {
+                    // Find matching label in AvailableLabels by Id
+                    var matchingLabel = ViewModel.AvailableLabels.FirstOrDefault(l => l.Id == label.Id);
+                    if (matchingLabel != null)
+                    {
+                        LabelsCollectionView.SelectedItems?.Add(matchingLabel);
+                        System.Diagnostics.Debug.WriteLine($"   ? Selected: {matchingLabel.Name}");
+                    }
+                }
+
+                _isUpdatingLabelsSelection = false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"? Error syncing labels selection: {ex.Message}");
+                _isUpdatingLabelsSelection = false;
+            }
+        }
+
+        // Handle CollectionView selection changes
+        private void OnLabelsSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                if (ViewModel == null || _isUpdatingLabelsSelection) return;
+
+                _isUpdatingLabelsSelection = true;
+                System.Diagnostics.Debug.WriteLine("??? Labels selection changed");
+
+                // Clear and update SelectedLabels in ViewModel
+                ViewModel.SelectedLabels.Clear();
+                
+                foreach (var item in e.CurrentSelection)
+                {
+                    if (item is RecipeLabel label)
+                    {
+                        ViewModel.SelectedLabels.Add(label);
+                        System.Diagnostics.Debug.WriteLine($"   ? Added to ViewModel: {label.Name}");
+                    }
+                }
+
+                System.Diagnostics.Debug.WriteLine($"??? Total selected labels: {ViewModel.SelectedLabels.Count}");
+                _isUpdatingLabelsSelection = false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"? Error handling labels selection: {ex.Message}");
+                _isUpdatingLabelsSelection = false;
+            }
+        }
+
+        // Open labels management popup
+        private async void OnManageLabelsClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                // Get SettingsViewModel from DI
+                var settingsVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<SettingsViewModel>();
+                if (settingsVm == null)
+                {
+                    await DisplayAlert("B³¹d", "Nie mo¿na otworzyæ zarz¹dzania etykietami", "OK");
+                    return;
+                }
+
+                var popup = new CRUDComponentPopup(settingsVm);
+                var hostPage = Application.Current?.Windows.FirstOrDefault()?.Page ?? this;
+                await hostPage.ShowPopupAsync(popup);
+                
+                // Refresh labels list after popup closes
+                await (ViewModel?.LoadAvailableLabelsAsync() ?? Task.CompletedTask);
+                // Re-sync selection after refresh
+                SyncLabelsSelection();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] CRUDComponentPopup error: {ex.Message}");
+                await DisplayAlert("B³¹d", "Nie mo¿na otworzyæ zarz¹dzania etykietami", "OK");
             }
         }
     }

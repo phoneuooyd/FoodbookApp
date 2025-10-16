@@ -56,6 +56,11 @@ public class CRUDComponentPopup : Popup
     {
         _vm = vm;
         CanBeDismissedByTappingOutsideOfPopup = true;
+        
+        // Match SimpleListPopup: zero padding and margin at popup level
+        Padding = 0;
+        Margin = 0;
+        
         Content = BuildRoot();
         BuildList();
     }
@@ -94,7 +99,7 @@ public class CRUDComponentPopup : Popup
             HeightRequest = 42
         };
         cancelButton.SetDynamicResource(Button.BackgroundColorProperty, "Secondary");
-        cancelButton.TextColor = Colors.White;
+        cancelButton.SetDynamicResource(Button.TextColorProperty, "ButtonPrimaryText");
 
         var addButton = new Button { Text = "+", WidthRequest = 44, HeightRequest = 44, CornerRadius = 22 };
         addButton.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
@@ -110,10 +115,10 @@ public class CRUDComponentPopup : Popup
             IsVisible = false,
             Padding = 12,
             StrokeThickness = 1,
-            Stroke = new SolidColorBrush(Color.FromArgb("#2D2D2D")),
             StrokeShape = new RoundRectangle { CornerRadius = 12 }
         };
         _detailsPanel.SetDynamicResource(Border.BackgroundColorProperty, "ShellBackgroundColor");
+        _detailsPanel.SetDynamicResource(Border.StrokeProperty, "Secondary");
 
         var gridDetails = new Grid
         {
@@ -132,9 +137,19 @@ public class CRUDComponentPopup : Popup
             ColumnSpacing = 12,
             RowSpacing = 8
         };
-        gridDetails.Add(new Label { Text = "Nazwa", FontSize = 12 }, 0, 0); Grid.SetColumnSpan(_nameEntry, 2); gridDetails.Add(_nameEntry, 0, 1);
-        gridDetails.Add(new Label { Text = "Kolor", FontSize = 12, Margin = new Thickness(0, 4, 0, 0) }, 0, 2);
-        gridDetails.Add(_colorPicker, 0, 3); Grid.SetColumnSpan(_colorPicker, 2);
+        
+        var nameLabel = new Label { Text = "Nazwa", FontSize = 12 };
+        nameLabel.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
+        
+        var colorLabel = new Label { Text = "Kolor", FontSize = 12, Margin = new Thickness(0, 4, 0, 0) };
+        colorLabel.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
+        
+        gridDetails.Add(nameLabel, 0, 0); 
+        Grid.SetColumnSpan(_nameEntry, 2); 
+        gridDetails.Add(_nameEntry, 0, 1);
+        gridDetails.Add(colorLabel, 0, 2);
+        gridDetails.Add(_colorPicker, 0, 3); 
+        Grid.SetColumnSpan(_colorPicker, 2);
         _detailsPanel.Content = gridDetails;
 
         _footerBar = new Grid
@@ -142,33 +157,40 @@ public class CRUDComponentPopup : Popup
             IsVisible = false,
             ColumnDefinitions = new ColumnDefinitionCollection
             {
+                new ColumnDefinition(GridLength.Star),
                 new ColumnDefinition(GridLength.Auto),
                 new ColumnDefinition(GridLength.Auto),
-                new ColumnDefinition(GridLength.Auto),
-                new ColumnDefinition(GridLength.Star)
+                new ColumnDefinition(GridLength.Auto)
             },
             Padding = new Thickness(0,12,0,0)
         };
-        // Buttons moved to left: Save, Cancel, Delete (if editing)
-        _footerBar.Add(_saveButton, 0, 0);
-        _footerBar.Add(cancelButton, 1, 0);
-        _footerBar.Add(_deleteButton, 2, 0);
-        _footerBar.Add(new Label { Text = "" }, 3, 0); // spacer
+        _footerBar.Add(new Label { Text = " " }, 0, 0);
+        _footerBar.Add(_deleteButton, 1, 0);
+        _footerBar.Add(cancelButton, 2, 0);
+        _footerBar.Add(_saveButton, 3, 0);
 
-        // Toolbar with plus button on left now
         var toolbar = new Grid
         {
             ColumnDefinitions = new ColumnDefinitionCollection
             {
-                new ColumnDefinition(GridLength.Auto),
-                new ColumnDefinition(GridLength.Star)
+                new ColumnDefinition(GridLength.Star),
+                new ColumnDefinition(GridLength.Auto)
             },
             Padding = 0,
             Margin = new Thickness(0,0,0,4)
         };
-        toolbar.Add(addButton,0,0);
-        toolbar.Add(new Label { Text = "" },1,0);
+        var toolbarLabel = new Label
+        {
+            Text = "Lista etykiet",
+            FontSize = 16,
+            FontAttributes = FontAttributes.Bold,
+            VerticalOptions = LayoutOptions.Center
+        };
+        toolbarLabel.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
+        toolbar.Add(toolbarLabel,0,0);
+        toolbar.Add(addButton,1,0);
 
+        // Header
         var header = new Grid
         {
             ColumnDefinitions = new ColumnDefinitionCollection
@@ -177,25 +199,34 @@ public class CRUDComponentPopup : Popup
                 new ColumnDefinition(GridLength.Auto)
             },
             Padding = new Thickness(16,14),
-            Margin = new Thickness(0,0,0,8)
+            Margin = new Thickness(0)
         };
         header.SetDynamicResource(BackgroundColorProperty, "ShellBackgroundColor");
         var title = new Label { Text = "Etykiety", FontSize = 20, FontAttributes = FontAttributes.Bold, HorizontalTextAlignment = TextAlignment.Center, VerticalOptions = LayoutOptions.Center };
         title.SetDynamicResource(Label.TextColorProperty, "ShellTitleColor");
-        var closeBtn = new Button { Text = "?", WidthRequest = 36, HeightRequest = 36, CornerRadius = 18, BackgroundColor = Colors.Transparent };
+        var closeBtn = new Button { Text = "?", WidthRequest = 32, HeightRequest = 32, CornerRadius = 16, BackgroundColor = Colors.Transparent };
         closeBtn.SetDynamicResource(Button.TextColorProperty, "ShellTitleColor");
         closeBtn.Clicked += async (_,__) => await CloseAsync();
         header.Add(title,0,0); header.Add(closeBtn,1,0);
 
-        var body = new ScrollView { Content = _listHost, Padding = new Thickness(0,0,0,4) };
+        // Body
+        var bodyContent = new VerticalStackLayout
+        {
+            Spacing = 8,
+            Children = { toolbar, new ScrollView { Content = _listHost, Padding = new Thickness(0,0,0,4) }, _detailsPanel, _footerBar }
+        };
+
+        var body = new Grid
+        {
+            Padding = new Thickness(16, 12),
+            Children = { bodyContent }
+        };
 
         var mainStack = new VerticalStackLayout
         {
-            Spacing = 8,
-            Children = { header, toolbar, body, _detailsPanel, _footerBar }
+            Spacing = 0,
+            Children = { header, body }
         };
-        // mainStack inherits themed background (avoid hard white)
-        mainStack.SetDynamicResource(BackgroundColorProperty, "ShellBackgroundColor");
 
         var outerBorder = new Border
         {
@@ -206,8 +237,7 @@ public class CRUDComponentPopup : Popup
             MaximumWidthRequest = 520,
             Content = mainStack
         };
-        // Use shell background instead of white page background to remove white block effect
-        outerBorder.SetDynamicResource(Border.BackgroundColorProperty, "ShellBackgroundColor");
+        outerBorder.SetDynamicResource(Border.BackgroundColorProperty, "PageBackgroundColor");
         outerBorder.SetDynamicResource(Border.StrokeProperty, "Secondary");
         return outerBorder;
     }
@@ -226,12 +256,13 @@ public class CRUDComponentPopup : Popup
     {
         var border = new Border
         {
-            StrokeThickness = 1,
+            StrokeThickness = 2,
             Padding = new Thickness(10,6),
             StrokeShape = new RoundRectangle { CornerRadius = 10 }
         };
-        border.SetDynamicResource(Border.StrokeProperty, "Secondary");
+        // Neutral background, colored only the border for readability
         border.SetDynamicResource(Border.BackgroundColorProperty, "ShellBackgroundColor");
+        border.Stroke = Color.FromArgb(lbl.ColorHex ?? "#757575");
 
         var grid = new Grid
         {
@@ -267,10 +298,11 @@ public class CRUDComponentPopup : Popup
             CornerRadius = 18,
             BackgroundColor = Colors.Transparent,
             Padding = 0,
+            FontSize = 18,
             FontAttributes = FontAttributes.Bold,
             Command = new Command(() => DeleteLabel(lbl))
         };
-        deleteBtn.SetDynamicResource(Button.TextColorProperty, "ShellTitleColor");
+        deleteBtn.SetDynamicResource(Button.TextColorProperty, "PrimaryText");
         grid.Add(deleteBtn,2,0);
 
         var tap = new TapGestureRecognizer();
