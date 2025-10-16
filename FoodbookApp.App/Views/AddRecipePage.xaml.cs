@@ -293,12 +293,88 @@ namespace Foodbook.Views
                 }
 
                 System.Diagnostics.Debug.WriteLine($"??? Total selected labels: {ViewModel.SelectedLabels.Count}");
+                
+                // Update visual state of all label frames
+                UpdateLabelFramesVisualState();
+                
                 _isUpdatingLabelsSelection = false;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"? Error handling labels selection: {ex.Message}");
                 _isUpdatingLabelsSelection = false;
+            }
+        }
+
+        // Update border colors of all label frames based on selection
+        private void UpdateLabelFramesVisualState()
+        {
+            try
+            {
+                if (ViewModel == null) return;
+
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    var selectedIds = ViewModel.SelectedLabels.Select(l => l.Id).ToHashSet();
+                    
+                    // Iterate through all items in CollectionView
+                    for (int i = 0; i < ViewModel.AvailableLabels.Count; i++)
+                    {
+                        var label = ViewModel.AvailableLabels[i];
+                        
+                        // Try to find the visual element for this item
+                        // Note: This is a workaround since CollectionView doesn't expose direct access to item containers
+                        // We'll use a different approach - iterate through visual tree
+                    }
+                    
+                    // Alternative: Force CollectionView to update its item visuals
+                    UpdateAllFrameBorders(LabelsCollectionView, selectedIds);
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"? Error updating label frames visual state: {ex.Message}");
+            }
+        }
+
+        // Recursively find and update all Frame elements in CollectionView
+        private void UpdateAllFrameBorders(Element element, HashSet<int> selectedIds)
+        {
+            try
+            {
+                if (element is Frame frame && frame.BindingContext is RecipeLabel label)
+                {
+                    // Update border color based on selection
+                    var primaryColor = Application.Current?.Resources.TryGetValue("Primary", out var color) == true 
+                        ? (Color)color 
+                        : Color.FromArgb("#FF6200");
+                    
+                    frame.BorderColor = selectedIds.Contains(label.Id) ? primaryColor : Colors.Transparent;
+                }
+
+                // Recursively process children
+                if (element is Layout layout)
+                {
+                    foreach (var child in layout.Children)
+                    {
+                        if (child is Element childElement)
+                        {
+                            UpdateAllFrameBorders(childElement, selectedIds);
+                        }
+                    }
+                }
+                else if (element is ContentView contentView && contentView.Content != null)
+                {
+                    UpdateAllFrameBorders(contentView.Content, selectedIds);
+                }
+                else if (element is ScrollView scrollView && scrollView.Content != null)
+                {
+                    UpdateAllFrameBorders(scrollView.Content, selectedIds);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"? Error in UpdateAllFrameBorders: {ex.Message}");
             }
         }
 

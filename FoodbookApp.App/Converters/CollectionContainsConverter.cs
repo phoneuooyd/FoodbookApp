@@ -16,9 +16,25 @@ namespace Foodbook.Converters
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             // value should be the item to check
-            // parameter should be the collection to check against (via binding)
-            if (value == null || parameter == null) return false;
+            // parameter should be the CollectionView to check its SelectedItems
+            if (value == null) return false;
             
+            // If parameter is CollectionView, check its SelectedItems
+            if (parameter is CollectionView collectionView)
+            {
+                if (collectionView.SelectedItems == null) return false;
+                
+                if (value is RecipeLabel label)
+                {
+                    // Check if the label is in the selected collection by comparing IDs
+                    return collectionView.SelectedItems.Cast<RecipeLabel>().Any(l => l.Id == label.Id);
+                }
+                
+                // Fallback: direct contains check
+                return collectionView.SelectedItems.Contains(value);
+            }
+            
+            // Legacy: If parameter is IEnumerable, check directly
             if (parameter is IEnumerable collection)
             {
                 if (value is RecipeLabel label)
