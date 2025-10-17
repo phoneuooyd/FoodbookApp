@@ -108,10 +108,10 @@
                                     <DataTemplate x:DataType="models:RecipeLabel">
                                         <Border Padding="6,4"
                                                 Margin="3,2"
-                                                MinimumWidthRequest="60"
-                                                MaximumWidthRequest="200"
-                                                MinimumHeightRequest="32"
-                                                MaximumHeightRequest="32"
+                                                MinimumWidthRequest="69"
+                                                MaximumWidthRequest="230"
+                                                MinimumHeightRequest="34"
+                                                MaximumHeightRequest="34"
                                                 BackgroundColor="Transparent"
                                                 Stroke="{StaticResource ModernBorderColor}"
                                                 StrokeShape="RoundRectangle 8"
@@ -137,7 +137,7 @@
                                             </VisualStateManager.VisualStateGroups>
 
                                             <HorizontalStackLayout Spacing="6" HorizontalOptions="Start" VerticalOptions="Center">
-                                                <Frame WidthRequest="10" HeightRequest="10" Padding="0" HasShadow="False" CornerRadius="5"
+                                                <Frame WidthRequest="12" HeightRequest="12" Padding="0" HasShadow="False" CornerRadius="6"
                                                        BackgroundColor="{Binding ColorHex}" />
                                                 <Label Text="{Binding Name}"
                                                        FontSize="10"
