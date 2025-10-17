@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:components="clr-namespace:Foodbook.Views.Components"
              x:Class="Foodbook.Views.Components.FloatingActionButtonComponent"
-             x:Name="FabComponent">
+             x:Name="FabComponent"
+             x:DataType="components:FloatingActionButtonComponent">
 
     <Grid>
         <!-- Overlay to close the menu (only used in expandable mode) -->

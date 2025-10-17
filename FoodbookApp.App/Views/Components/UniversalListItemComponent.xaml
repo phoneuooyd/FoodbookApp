@@ -1,8 +1,10 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:converters="clr-namespace:Foodbook.Converters"
+             xmlns:components="clr-namespace:Foodbook.Views.Components"
              x:Class="Foodbook.Views.Components.UniversalListItemComponent"
-             x:Name="ItemComponent">
+             x:Name="ItemComponent"
+             x:DataType="components:UniversalListItemComponent">
 
     <ContentView.GestureRecognizers>
         <TapGestureRecognizer Command="{Binding EditCommand, Source={x:Reference ItemComponent}}"

@@ -210,12 +210,26 @@ namespace Foodbook.Services
                 else if (_currentTheme == Foodbook.Models.AppTheme.Dark) isDark = true;
                 else isDark = app.UserAppTheme == Microsoft.Maui.ApplicationModel.AppTheme.Dark || (app.UserAppTheme == Microsoft.Maui.ApplicationModel.AppTheme.Unspecified && app.RequestedTheme == Microsoft.Maui.ApplicationModel.AppTheme.Dark);
 
-                var primary = isDark ? themeColors.PrimaryDark : themeColors.PrimaryLight;
-                var secondary = isDark ? themeColors.SecondaryDark : themeColors.SecondaryLight;
-                var tertiary = isDark ? themeColors.TertiaryDark : themeColors.TertiaryLight;
-                var accent = isDark ? themeColors.AccentDark : themeColors.AccentLight;
-                var primaryText = isDark ? themeColors.PrimaryTextDark : themeColors.PrimaryTextLight;
-                var secondaryText = isDark ? themeColors.SecondaryTextDark : themeColors.SecondaryTextLight;
+                var primaryLight = themeColors.PrimaryLight;
+                var secondaryLight = themeColors.SecondaryLight;
+                var tertiaryLight = themeColors.TertiaryLight;
+                var accentLight = themeColors.AccentLight;
+                var primaryDark = themeColors.PrimaryDark;
+                var secondaryDark = themeColors.SecondaryDark;
+                var tertiaryDark = themeColors.TertiaryDark;
+                var accentDark = themeColors.AccentDark;
+
+                var primaryTextLight = themeColors.PrimaryTextLight;
+                var secondaryTextLight = themeColors.SecondaryTextLight;
+                var primaryTextDark = themeColors.PrimaryTextDark;
+                var secondaryTextDark = themeColors.SecondaryTextDark;
+
+                var primary = isDark ? primaryDark : primaryLight;
+                var secondary = isDark ? secondaryDark : secondaryLight;
+                var tertiary = isDark ? tertiaryDark : tertiaryLight;
+                var accent = isDark ? accentDark : accentLight;
+                var primaryText = isDark ? primaryTextDark : primaryTextLight;
+                var secondaryText = isDark ? secondaryTextDark : secondaryTextLight;
 
                 if (_isColorfulBackgroundEnabled && !_isWallpaperEnabled && !isDark)
                 {
@@ -225,6 +239,7 @@ namespace Foodbook.Services
                     accent = Lighten(accent, 0.12);
                 }
 
+                // Publish general (current) colors
                 app.Resources["Primary"] = primary;
                 app.Resources["Secondary"] = secondary;
                 app.Resources["Tertiary"] = tertiary;
@@ -234,6 +249,20 @@ namespace Foodbook.Services
                 app.Resources["PrimaryBrush"] = new SolidColorBrush(primary);
                 app.Resources["SecondaryBrush"] = new SolidColorBrush(secondary);
                 app.Resources["TertiaryBrush"] = new SolidColorBrush(tertiary);
+
+                // Publish light/dark specific keys so converters can query them directly
+                app.Resources["PrimaryLight"] = primaryLight;
+                app.Resources["SecondaryLight"] = secondaryLight;
+                app.Resources["TertiaryLight"] = tertiaryLight;
+                app.Resources["AccentLight"] = accentLight;
+                app.Resources["PrimaryDark"] = primaryDark;
+                app.Resources["SecondaryDark"] = secondaryDark;
+                app.Resources["TertiaryDark"] = tertiaryDark;
+                app.Resources["AccentDark"] = accentDark;
+                app.Resources["PrimaryTextLight"] = primaryTextLight;
+                app.Resources["SecondaryTextLight"] = secondaryTextLight;
+                app.Resources["PrimaryTextDark"] = primaryTextDark;
+                app.Resources["SecondaryTextDark"] = secondaryTextDark;
 
                 // Background
                 Color pageBackground;

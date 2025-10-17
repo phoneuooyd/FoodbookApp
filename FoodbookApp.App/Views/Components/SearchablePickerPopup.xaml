@@ -6,6 +6,7 @@
            xmlns:components="clr-namespace:Foodbook.Views.Components"
            x:Class="Foodbook.Views.Components.SearchablePickerPopup"
            x:Name="ThisPopup"
+           x:DataType="components:SearchablePickerPopup"
            CanBeDismissedByTappingOutsideOfPopup="True"
            Padding="0"
            Margin="0">

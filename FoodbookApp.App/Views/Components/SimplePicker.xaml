@@ -2,8 +2,10 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:converters="clr-namespace:Foodbook.Converters"
+             xmlns:components="clr-namespace:Foodbook.Views.Components"
              x:Class="Foodbook.Views.Components.SimplePicker"
-             x:Name="ThisPicker">
+             x:Name="ThisPicker"
+             x:DataType="components:SimplePicker">
     <ContentView.Resources>
         <converters:UnitToStringConverter x:Key="UnitToStringConverter" />
     </ContentView.Resources>
