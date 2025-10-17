@@ -102,7 +102,7 @@
                                             SelectionMode="Multiple"
                                             SelectionChanged="OnLabelsSelectionChanged">
                                 <CollectionView.ItemsLayout>
-                                    <GridItemsLayout Orientation="Vertical" Span="4" />
+                                    <GridItemsLayout Orientation="Vertical" Span="3" />
                                 </CollectionView.ItemsLayout>
                                 <CollectionView.ItemTemplate>
                                     <DataTemplate x:DataType="models:RecipeLabel">
@@ -110,8 +110,7 @@
                                                 Margin="3,2"
                                                 MinimumWidthRequest="69"
                                                 MaximumWidthRequest="230"
-                                                MinimumHeightRequest="34"
-                                                MaximumHeightRequest="34"
+                                                HeightRequest="34"
                                                 BackgroundColor="Transparent"
                                                 Stroke="{StaticResource ModernBorderColor}"
                                                 StrokeShape="RoundRectangle 8"
