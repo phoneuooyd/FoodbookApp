@@ -75,4 +75,7 @@
   <data name="RestoreSuccess" xml:space="preserve">
     <value>Restaurado. Reinicie la aplicacion.</value>
   </data>
+  <data name="SearchArchivesButton" xml:space="preserve">
+    <value>Buscar archivos del dispositivo</value>
+  </data>
 </root>

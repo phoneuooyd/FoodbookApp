@@ -59,66 +59,69 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Title" xml:space="preserve">
-    <value>??? ??</value>
+    <value>데이터 보관</value>
   </data>
   <data name="HeaderTitle" xml:space="preserve">
-    <value>??? ??</value>
+    <value>데이터 보관</value>
   </data>
   <data name="HeaderDescription" xml:space="preserve">
-    <value>?? ????(.fbk)? ?????. ??????? ?? ??? ?????.</value>
+    <value>백업 보관(.fbk)을 만듭니다. 보관에는 데이터베이스와 주요 설정이 포함됩니다.</value>
   </data>
   <data name="CreateArchiveButton" xml:space="preserve">
-    <value>???? ??</value>
+    <value>보관 만들기</value>
   </data>
   <data name="RestoreHeader" xml:space="preserve">
-    <value>??? ??</value>
+    <value>데이터 복원</value>
   </data>
   <data name="RestoreDescription" xml:space="preserve">
-    <value>??? ???? ??(.fbk ?? .zip)? ?????.</value>
+    <value>복원할 보관 파일(.fbk 또는 .zip)을 선택하세요.</value>
   </data>
   <data name="RestoreArchiveButton" xml:space="preserve">
-    <value>?????? ??</value>
+    <value>보관에서 복원</value>
   </data>
   <data name="DefaultFolderLabel" xml:space="preserve">
-    <value>?? ???? ??</value>
+    <value>기본 보관 폴더</value>
   </data>
   <data name="RefreshList" xml:space="preserve">
-    <value>?? ????</value>
+    <value>목록 새로 고침</value>
   </data>
   <data name="ArchivesInFolder" xml:space="preserve">
-    <value>??? ????</value>
+    <value>폴더의 보관</value>
   </data>
   <data name="NoArchivesFound" xml:space="preserve">
-    <value>????? ????</value>
+    <value>보관을 찾을 수 없음</value>
   </data>
   <data name="RestoreFromThis" xml:space="preserve">
-    <value>??</value>
+    <value>복원</value>
   </data>
   <data name="ArchiveNameLabel" xml:space="preserve">
-    <value>???? ??</value>
+    <value>보관 이름</value>
   </data>
   <data name="ArchiveNamePlaceholder" xml:space="preserve">
-    <value>?? ?? (??? ??)</value>
+    <value>선택 사항 이름(확장자 제외)</value>
   </data>
   <data name="DeleteFromThis" xml:space="preserve">
-    <value>??</value>
+    <value>삭제</value>
   </data>
   <data name="NoArchivesInDefault" xml:space="preserve">
-    <value>?? ??? ????? ????. ??? ?????.</value>
+    <value>기본 폴더에 보관이 없습니다. 파일을 선택하세요.</value>
   </data>
   <data name="ConfirmTitle" xml:space="preserve">
-    <value>??</value>
+    <value>확인</value>
   </data>
   <data name="ConfirmDelete" xml:space="preserve">
-    <value>{0} ?????????</value>
+    <value>{0}을(를) 삭제하시겠습니까?</value>
   </data>
   <data name="DeletedMessage" xml:space="preserve">
-    <value>???: {0}</value>
+    <value>삭제됨: {0}</value>
   </data>
   <data name="ArchiveCreatedSuffix" xml:space="preserve">
-    <value>????? ???</value>
+    <value>성공적으로 생성됨</value>
   </data>
   <data name="RestoreSuccess" xml:space="preserve">
-    <value>???????. ?? ?? ?????.</value>
+    <value>복원되었습니다. 앱을 다시 시작하세요.</value>
+  </data>
+  <data name="SearchArchivesButton" xml:space="preserve">
+    <value>장치 파일 검색</value>
   </data>
 </root>

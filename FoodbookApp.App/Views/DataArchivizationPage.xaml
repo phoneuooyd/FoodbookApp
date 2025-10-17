@@ -35,9 +35,15 @@
                         <Button Text="{loc:Translate Resource=DataArchivizationPageResources, Key=RefreshList}" HeightRequest="36" Clicked="OnRefreshListClicked" BackgroundColor="{DynamicResource Primary}" TextColor="White" />
                         <Button x:Name="CreateArchiveButton" Text="{loc:Translate Resource=DataArchivizationPageResources, Key=CreateArchiveButton}" BackgroundColor="{DynamicResource Primary}" TextColor="White" HeightRequest="36" Clicked="OnExportClicked" />
                     </HorizontalStackLayout>
-                    <!-- Row 2: manual search to avoid overcrowding on small screens -->
+                    <!-- Row 2: manual search button -->
                     <HorizontalStackLayout Spacing="8">
-                        <Button Text="{loc:Translate Resource=DataArchivizationPageResources, Key=SearchArchivesButton}" HeightRequest="36" Clicked="OnManualSearchClicked" BackgroundColor="{DynamicResource Secondary}" TextColor="Black" />
+                        <Button x:Name="ManualSearchButton"
+                                Text="{loc:Translate Resource=DataArchivizationPageResources, Key=SearchArchivesButton}"
+                                HeightRequest="36"
+                                Clicked="OnManualSearchClicked"
+                                Loaded="OnManualSearchButtonLoaded"
+                                BackgroundColor="{DynamicResource Primary}"
+                                TextColor="White" />
                     </HorizontalStackLayout>
                 </VerticalStackLayout>
             </Frame>
@@ -57,7 +63,7 @@
                             </VerticalStackLayout>
                             <Button Grid.Column="1"
                                     Style="{StaticResource RestoreButton}"
-                                    Text=""
+                                    Text="{loc:Translate Resource=DataArchivizationPageResources, Key=RestoreFromThis}"
                                     ImageSource="redo.png"
                                     CommandParameter="{Binding FullPath}"
                                     Clicked="OnRestoreFromListClicked" />

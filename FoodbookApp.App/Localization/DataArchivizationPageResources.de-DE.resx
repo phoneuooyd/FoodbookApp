@@ -19,7 +19,7 @@
     <value>Datenarchiv</value>
   </data>
   <data name="HeaderDescription" xml:space="preserve">
-    <value>Erstellen Sie ein Backup-Archiv (.fbk). Das Archiv enthaelt die Datenbank und wichtige Einstellungen.</value>
+    <value>Erstellen Sie ein Backup-Archiv (.fbk). Das Archiv enthält die Datenbank und wichtige Einstellungen.</value>
   </data>
   <data name="CreateArchiveButton" xml:space="preserve">
     <value>Archiv erstellen</value>
@@ -28,7 +28,7 @@
     <value>Daten wiederherstellen</value>
   </data>
   <data name="RestoreDescription" xml:space="preserve">
-    <value>Waehlen Sie eine Archivdatei (.fbk oder .zip), um wiederherzustellen.</value>
+    <value>Wählen Sie eine Archivdatei (.fbk oder .zip) zum Wiederherstellen aus.</value>
   </data>
   <data name="RestoreArchiveButton" xml:space="preserve">
     <value>Aus Archiv wiederherstellen</value>
@@ -55,24 +55,27 @@
     <value>Optionaler Name (ohne Erweiterung)</value>
   </data>
   <data name="DeleteFromThis" xml:space="preserve">
-    <value>Loeschen</value>
+    <value>Löschen</value>
   </data>
   <data name="NoArchivesInDefault" xml:space="preserve">
-    <value>Keine Archive im Standardordner. Bitte waehlen Sie eine Datei.</value>
+    <value>Keine Archive im Standardordner. Bitte Datei auswählen.</value>
   </data>
   <data name="ConfirmTitle" xml:space="preserve">
-    <value>Bestaetigung</value>
+    <value>Bestätigung</value>
   </data>
   <data name="ConfirmDelete" xml:space="preserve">
-    <value>{0} loeschen?</value>
+    <value>{0} löschen?</value>
   </data>
   <data name="DeletedMessage" xml:space="preserve">
-    <value>Geloescht: {0}</value>
+    <value>Gelöscht: {0}</value>
   </data>
   <data name="ArchiveCreatedSuffix" xml:space="preserve">
     <value>erfolgreich erstellt</value>
   </data>
   <data name="RestoreSuccess" xml:space="preserve">
     <value>Wiederhergestellt. Bitte die App neu starten.</value>
+  </data>
+  <data name="SearchArchivesButton" xml:space="preserve">
+    <value>Gerätedateien durchsuchen</value>
   </data>
 </root>

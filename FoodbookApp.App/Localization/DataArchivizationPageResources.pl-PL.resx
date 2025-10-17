@@ -19,34 +19,34 @@
     <value>Archiwizacja danych</value>
   </data>
   <data name="HeaderDescription" xml:space="preserve">
-    <value>Utworz archiwum (.fbk) z baza danych i kluczowymi ustawieniami.</value>
+    <value>Utwórz archiwum (.fbk) z bazą danych i kluczowymi ustawieniami.</value>
   </data>
   <data name="CreateArchiveButton" xml:space="preserve">
-    <value>Utworz archiwum</value>
+    <value>Utwórz archiwum</value>
   </data>
   <data name="RestoreHeader" xml:space="preserve">
     <value>Przywracanie danych</value>
   </data>
   <data name="RestoreDescription" xml:space="preserve">
-    <value>Wybierz plik archiwum (.fbk lub .zip), aby przywrocic dane.</value>
+    <value>Wybierz plik archiwum (.fbk lub .zip), aby przywrócić dane.</value>
   </data>
   <data name="RestoreArchiveButton" xml:space="preserve">
-    <value>Przywroc z archiwum</value>
+    <value>Przywróć z archiwum</value>
   </data>
   <data name="DefaultFolderLabel" xml:space="preserve">
-    <value>Domyslny folder archiwum</value>
+    <value>Domyślny folder archiwum</value>
   </data>
   <data name="RefreshList" xml:space="preserve">
-    <value>Odswiez liste</value>
+    <value>Odśwież listę</value>
   </data>
   <data name="ArchivesInFolder" xml:space="preserve">
     <value>Archiwa w folderze</value>
   </data>
   <data name="NoArchivesFound" xml:space="preserve">
-    <value>Brak archiow</value>
+    <value>Brak archiwów</value>
   </data>
   <data name="RestoreFromThis" xml:space="preserve">
-    <value>Przywroc</value>
+    <value>Przywróć</value>
   </data>
   <data name="ArchiveNameLabel" xml:space="preserve">
     <value>Nazwa archiwum</value>
@@ -55,24 +55,27 @@
     <value>Opcjonalna nazwa (bez rozszerzenia)</value>
   </data>
   <data name="DeleteFromThis" xml:space="preserve">
-    <value>Usun</value>
+    <value>Usuń</value>
   </data>
   <data name="NoArchivesInDefault" xml:space="preserve">
-    <value>Brak archiwow w domyslnym folderze. Wybierz plik.</value>
+    <value>Brak archiwów w domyślnym folderze. Wybierz plik.</value>
   </data>
   <data name="ConfirmTitle" xml:space="preserve">
     <value>Potwierdzenie</value>
   </data>
   <data name="ConfirmDelete" xml:space="preserve">
-    <value>Usunac {0}?</value>
+    <value>Usunąć {0}?</value>
   </data>
   <data name="DeletedMessage" xml:space="preserve">
-    <value>Usunieto: {0}</value>
+    <value>Usunięto: {0}</value>
   </data>
   <data name="ArchiveCreatedSuffix" xml:space="preserve">
-    <value>utworzono pomyslnie</value>
+    <value>utworzono pomyślnie</value>
   </data>
   <data name="RestoreSuccess" xml:space="preserve">
-    <value>Przywrocono. Uruchom ponownie aplikacje.</value>
+    <value>Przywrócono. Uruchom ponownie aplikację.</value>
+  </data>
+  <data name="SearchArchivesButton" xml:space="preserve">
+    <value>Wyszukaj w danych telefonu</value>
   </data>
 </root>

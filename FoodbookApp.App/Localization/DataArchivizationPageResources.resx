@@ -121,4 +121,7 @@
   <data name="RestoreSuccess" xml:space="preserve">
     <value>Restored. Please restart app.</value>
   </data>
+  <data name="SearchArchivesButton" xml:space="preserve">
+    <value>Search device files</value>
+  </data>
 </root>

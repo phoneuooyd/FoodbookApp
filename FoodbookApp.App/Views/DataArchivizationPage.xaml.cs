@@ -1,11 +1,16 @@
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using CommunityToolkit.Maui.Storage;
-using Microsoft.Maui.ApplicationModel;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.Data.Sqlite;
+using Microsoft.Maui;
+using Microsoft.Maui.Controls;
 using Microsoft.Maui.Devices;
 using Microsoft.Maui.Storage;
 using FoodbookApp.Interfaces;
-using Microsoft.Data.Sqlite;
+using CommunityToolkit.Maui.Storage;
 
 namespace Foodbook.Views
 {
@@ -18,7 +23,7 @@ namespace Foodbook.Views
 
         private static readonly string[] ArchiveExtensions = new[] { ".fbk", ".zip" };
 
-        private record ArchiveItem(string FileName, string FullPath, DateTime ModifiedUtc)
+        private record ArchiveItem(string FileName, string FullPath, DateTime ModifiedUtc, long Length)
         {
             public string ModifiedDisplay => $"{ModifiedUtc.ToLocalTime():yyyy-MM-dd HH:mm}";
         }
@@ -37,7 +42,38 @@ namespace Foodbook.Views
             await EnsureLegacyStoragePermissionsAsync();
 #endif
             DefaultFolderPathLabel.Text = GetDefaultArchiveFolder();
+
+            // Ensure the manual search button has a visible caption even if localization key is missing
+            try
+            {
+                var caption = GetLocalizedText("DataArchivizationPageResources", "SearchArchivesButton", "Wyszukaj w danych telefonu");
+                var manualBtn = this.FindByName<Button>("ManualSearchButton");
+                if (manualBtn != null && string.IsNullOrWhiteSpace(manualBtn.Text))
+                {
+                    manualBtn.Text = caption;
+                    manualBtn.BackgroundColor = (Color)Application.Current!.Resources["Primary"];
+                    manualBtn.TextColor = Colors.White;
+                }
+            }
+            catch { }
+
             LoadArchivesList();
+        }
+
+        private void OnManualSearchButtonLoaded(object? sender, EventArgs e)
+        {
+            try
+            {
+                if (sender is Button b)
+                {
+                    if (string.IsNullOrWhiteSpace(b.Text))
+                        b.Text = GetLocalizedText("DataArchivizationPageResources", "SearchArchivesButton", "Wyszukaj w danych telefonu");
+                    // Enforce primary styling in case default style overrides it
+                    b.BackgroundColor = (Color)Application.Current!.Resources["Primary"];
+                    b.TextColor = Colors.White;
+                }
+            }
+            catch { }
         }
 
         private string GetDefaultArchiveFolder()
@@ -72,7 +108,6 @@ namespace Foodbook.Views
                     result.Add(downloads);
                     var fb = Path.Combine(downloads, "Foodbook");
                     result.Add(fb);
-                    result.Add(Path.Combine(downloads, "Foodbook"));
                 }
 
                 // Some devices/localizations may use alternative casing or alias; include common variants
@@ -80,7 +115,7 @@ namespace Foodbook.Views
                 var altDownloads = Path.Combine(storageRoot, "Download");
                 result.Add(altDownloads);
                 result.Add(Path.Combine(altDownloads, "Foodbook"));
-                // Common roots shown by file managers as "Urz¹dzenie" (primary storage)
+
                 var roots = new List<string?>
                 {
                     Android.OS.Environment.ExternalStorageDirectory?.AbsolutePath, // often /storage/emulated/0
@@ -91,7 +126,6 @@ namespace Foodbook.Views
 
                 foreach (var root in roots.Where(r => !string.IsNullOrWhiteSpace(r)))
                 {
-                    // Handle both Download and Downloads variants
                     var d1 = Path.Combine(root!, "Download");
                     var d2 = Path.Combine(root!, "Downloads");
                     result.Add(d1);
@@ -105,8 +139,29 @@ namespace Foodbook.Views
         }
 #endif
 
+        private static bool IsArchivePath(string? path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return false;
+            try { return ArchiveExtensions.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase); }
+            catch { return false; }
+        }
+
+        private static ArchiveItem CreateItem(string p)
+        {
+            var fi = new FileInfo(p);
+            var modifiedUtc = fi.Exists ? fi.LastWriteTimeUtc : File.GetLastWriteTimeUtc(p);
+            var len = fi.Exists ? fi.Length : 0L;
+            return new ArchiveItem(Path.GetFileName(p), p, modifiedUtc, len);
+        }
+
         private void LoadArchivesList()
         {
+            if (_isExporting)
+            {
+                // Avoid listing partially created files during export
+                return;
+            }
+
             try
             {
                 List<ArchiveItem> items;
@@ -117,9 +172,9 @@ namespace Foodbook.Views
                 {
                     try
                     {
-                        items.AddRange(Directory.EnumerateFiles(folder, "*.fbk", SearchOption.TopDirectoryOnly)
-                            .Concat(Directory.EnumerateFiles(folder, "*.zip", SearchOption.TopDirectoryOnly))
-                            .Select(p => new ArchiveItem(Path.GetFileName(p), p, File.GetLastWriteTimeUtc(p))));
+                        var fbk = Directory.EnumerateFiles(folder, "*.fbk", SearchOption.TopDirectoryOnly).Select(CreateItem);
+                        var zip = Directory.EnumerateFiles(folder, "*.zip", SearchOption.TopDirectoryOnly).Select(CreateItem);
+                        items.AddRange(fbk.Concat(zip));
                     }
                     catch (Exception ex)
                     {
@@ -131,15 +186,19 @@ namespace Foodbook.Views
                 items = Directory.Exists(folder)
                     ? Directory.EnumerateFiles(folder, "*.fbk", SearchOption.TopDirectoryOnly)
                         .Concat(Directory.EnumerateFiles(folder, "*.zip", SearchOption.TopDirectoryOnly))
-                        .Select(p => new ArchiveItem(Path.GetFileName(p), p, File.GetLastWriteTimeUtc(p)))
+                        .Select(CreateItem)
                         .ToList()
                     : new List<ArchiveItem>();
 #endif
-                ArchivesCollection.ItemsSource = items
-                    .GroupBy(i => i.FullPath, StringComparer.OrdinalIgnoreCase)
+                // Deduplicate across alias paths (same physical file visible under different roots)
+                // Group by FileName + ModifiedUtc + Length to keep a single entry per actual file
+                var list = items
+                    .GroupBy(i => $"{i.FileName.ToUpperInvariant()}|{i.ModifiedUtc.Ticks}|{i.Length}")
                     .Select(g => g.First())
                     .OrderByDescending(i => i.ModifiedUtc)
                     .ToList();
+
+                ArchivesCollection.ItemsSource = list;
             }
             catch (Exception ex)
             {
@@ -154,13 +213,6 @@ namespace Foodbook.Views
 #endif
             LoadArchivesList();
             await Task.CompletedTask;
-        }
-
-        private static bool IsArchivePath(string? path)
-        {
-            if (string.IsNullOrWhiteSpace(path)) return false;
-            try { return ArchiveExtensions.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase); }
-            catch { return false; }
         }
 
         private async void OnManualSearchClicked(object sender, EventArgs e)
@@ -198,8 +250,12 @@ namespace Foodbook.Views
                 {
                     try
                     {
-                        var item = new ArchiveItem(Path.GetFileName(p), p, File.GetLastWriteTimeUtc(p));
-                        current.RemoveAll(x => string.Equals(x.FullPath, p, StringComparison.OrdinalIgnoreCase));
+                        var fi = new FileInfo(p);
+                        var item = new ArchiveItem(Path.GetFileName(p), p, fi.Exists ? fi.LastWriteTimeUtc : File.GetLastWriteTimeUtc(p), fi.Exists ? fi.Length : 0L);
+                        // Remove all possible aliases for the same physical file
+                        current.RemoveAll(x => string.Equals(x.FileName, item.FileName, StringComparison.OrdinalIgnoreCase)
+                                               && x.ModifiedUtc == item.ModifiedUtc
+                                               && x.Length == item.Length);
                         current.Add(item);
                     }
                     catch (Exception ex)
@@ -209,7 +265,7 @@ namespace Foodbook.Views
                 }
 
                 ArchivesCollection.ItemsSource = current
-                    .GroupBy(i => i.FullPath, StringComparer.OrdinalIgnoreCase)
+                    .GroupBy(i => $"{i.FileName.ToUpperInvariant()}|{i.ModifiedUtc.Ticks}|{i.Length}")
                     .Select(g => g.First())
                     .OrderByDescending(i => i.ModifiedUtc)
                     .ToList();
@@ -364,6 +420,8 @@ namespace Foodbook.Views
                 try { File.Delete(tempZip); } catch { }
 
                 StatusLabel.Text = $"Saved: {outName}";
+
+                // Refresh list now that export is complete
                 LoadArchivesList();
 
                 await DisplayAlert("OK", $"{outName} {GetLocalizedText("DataArchivizationPageResources", "ArchiveCreatedSuffix", defaultText: "created successfully")}", "OK");

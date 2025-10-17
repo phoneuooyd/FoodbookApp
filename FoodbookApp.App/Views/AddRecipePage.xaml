@@ -106,11 +106,16 @@
                                 </CollectionView.ItemsLayout>
                                 <CollectionView.ItemTemplate>
                                     <DataTemplate x:DataType="models:RecipeLabel">
-                                        <Border Padding="4,3"
+                                        <Border Padding="6,4"
                                                 Margin="3,2"
+                                                MinimumWidthRequest="60"
+                                                MaximumWidthRequest="200"
+                                                MinimumHeightRequest="32"
+                                                MaximumHeightRequest="32"
                                                 BackgroundColor="Transparent"
                                                 Stroke="{StaticResource ModernBorderColor}"
-                                                StrokeShape="RoundRectangle 8">
+                                                StrokeShape="RoundRectangle 8"
+                                                HorizontalOptions="FillAndExpand">
                                             <Border.GestureRecognizers>
                                                 <TapGestureRecognizer Tapped="OnLabelTapped" />
                                             </Border.GestureRecognizers>
@@ -131,12 +136,14 @@
                                                 </VisualStateGroup>
                                             </VisualStateManager.VisualStateGroups>
 
-                                            <HorizontalStackLayout Spacing="6" HorizontalOptions="Center" VerticalOptions="Center">
+                                            <HorizontalStackLayout Spacing="6" HorizontalOptions="Start" VerticalOptions="Center">
                                                 <Frame WidthRequest="10" HeightRequest="10" Padding="0" HasShadow="False" CornerRadius="5"
                                                        BackgroundColor="{Binding ColorHex}" />
                                                 <Label Text="{Binding Name}"
-                                                       FontSize="12"
-                                                       VerticalOptions="Center" />
+                                                       FontSize="10"
+                                                       VerticalOptions="Center"
+                                                       LineBreakMode="TailTruncation"
+                                                       MaxLines="1" />
                                             </HorizontalStackLayout>
                                         </Border>
                                     </DataTemplate>
