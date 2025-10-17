@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Archivage des données</value>
+  </data>
+  <data name="HeaderTitle" xml:space="preserve">
+    <value>Archivage des données</value>
+  </data>
+  <data name="HeaderDescription" xml:space="preserve">
+    <value>Créer une archive de sauvegarde (.fbk). L'archive inclut la base de données et les paramètres clés.</value>
+  </data>
+  <data name="CreateArchiveButton" xml:space="preserve">
+    <value>Créer une archive</value>
+  </data>
+  <data name="RestoreHeader" xml:space="preserve">
+    <value>Restauration des données</value>
+  </data>
+  <data name="RestoreDescription" xml:space="preserve">
+    <value>Sélectionnez un fichier d'archive (.fbk ou .zip) pour restaurer.</value>
+  </data>
+  <data name="RestoreArchiveButton" xml:space="preserve">
+    <value>Restaurer depuis l'archive</value>
+  </data>
+  <data name="DefaultFolderLabel" xml:space="preserve">
+    <value>Dossier d'archive par défaut</value>
+  </data>
+  <data name="RefreshList" xml:space="preserve">
+    <value>Actualiser la liste</value>
+  </data>
+  <data name="ArchivesInFolder" xml:space="preserve">
+    <value>Archives dans le dossier</value>
+  </data>
+  <data name="NoArchivesFound" xml:space="preserve">
+    <value>Aucune archive trouvée</value>
+  </data>
+  <data name="RestoreFromThis" xml:space="preserve">
+    <value>Restaurer</value>
+  </data>
+  <data name="ArchiveNameLabel" xml:space="preserve">
+    <value>Nom de l'archive</value>
+  </data>
+  <data name="ArchiveNamePlaceholder" xml:space="preserve">
+    <value>Nom optionnel (sans extension)</value>
+  </data>
+  <data name="DeleteFromThis" xml:space="preserve">
+    <value>Supprimer</value>
+  </data>
+  <data name="NoArchivesInDefault" xml:space="preserve">
+    <value>Aucune archive dans le dossier par défaut. Veuillez choisir un fichier.</value>
+  </data>
+  <data name="ConfirmTitle" xml:space="preserve">
+    <value>Confirmation</value>
+  </data>
+  <data name="ConfirmDelete" xml:space="preserve">
+    <value>Supprimer {0} ?</value>
+  </data>
+  <data name="DeletedMessage" xml:space="preserve">
+    <value>Supprimé : {0}</value>
+  </data>
+  <data name="ArchiveCreatedSuffix" xml:space="preserve">
+    <value>créé avec succès</value>
+  </data>
+  <data name="RestoreSuccess" xml:space="preserve">
+    <value>Restauré. Veuillez redémarrer l'application.</value>
+  </data>
+  <data name="SearchArchivesButton" xml:space="preserve">
+    <value>Rechercher dans les fichiers de l'appareil</value>
+  </data>
+</root>

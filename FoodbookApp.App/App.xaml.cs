@@ -45,6 +45,11 @@ namespace FoodbookApp
                 _themeService.SetColorfulBackground(isColorfulBackgroundEnabled);
                 System.Diagnostics.Debug.WriteLine($"[App][Ctor] Colorful background: {isColorfulBackgroundEnabled}");
 
+                // NEW: Apply saved wallpaper setting
+                var isWallpaperEnabled = LoadSavedWallpaperSetting();
+                _themeService.EnableWallpaperBackground(isWallpaperEnabled);
+                System.Diagnostics.Debug.WriteLine($"[App][Ctor] Wallpaper background: {isWallpaperEnabled}");
+
                 LoadSavedFontSettings();
                 System.Diagnostics.Debug.WriteLine("[App] Application initialization completed successfully");
             }
@@ -157,6 +162,22 @@ namespace FoodbookApp
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[App] Failed to load colorful background preference: {ex.Message}");
+                return false;
+            }
+        }
+
+        // NEW: Read saved wallpaper preference
+        private bool LoadSavedWallpaperSetting()
+        {
+            try
+            {
+                var isEnabled = _preferencesService.GetIsWallpaperEnabled();
+                System.Diagnostics.Debug.WriteLine($"[App] Loaded wallpaper background preference: {isEnabled}");
+                return isEnabled;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[App] Failed to load wallpaper background preference: {ex.Message}");
                 return false;
             }
         }

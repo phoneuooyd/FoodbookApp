@@ -37,12 +37,23 @@
         
         <!-- Removed ActivityIndicator spinner -->
 
-        <!-- Modern Search Bar Component -->
-        <components:ModernSearchBarComponent Grid.Row="1"
-                                           SearchText="{Binding SearchText}"
-                                           PlaceholderText="{loc:Translate Resource=RecipesPageResources, Key=SearchPlaceholder}"
-                                           ClearCommand="{Binding ClearSearchCommand}"
-                                           IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+        <!-- Search bar with filter button -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" VerticalOptions="Center" Padding="0,0,6,0">
+            <components:ModernSearchBarComponent Grid.Column="0"
+                                               SearchText="{Binding SearchText}"
+                                               PlaceholderText="{loc:Translate Resource=RecipesPageResources, Key=SearchPlaceholder}"
+                                               ClearCommand="{Binding ClearSearchCommand}"
+                                               IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+            <ImageButton Grid.Column="1"
+                         WidthRequest="28"
+                         HeightRequest="28"
+                         BackgroundColor="Transparent"
+                         HorizontalOptions="End"
+                         Source="Resources/Images/filter.png"
+                         Opacity="0.4"
+                         Clicked="OnFilterSortClicked"
+                         AutomationId="RecipesFilterButton"/>
+        </Grid>
 
         <!-- Breadcrumb with Back button under search bar -->
         <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Padding="8,4" BackgroundColor="{DynamicResource PageBackgroundColor}">

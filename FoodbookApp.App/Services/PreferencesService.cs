@@ -12,6 +12,7 @@ public class PreferencesService : IPreferencesService
     private const string SelectedThemeKey = "SelectedTheme";
     private const string SelectedColorThemeKey = "SelectedColorTheme";
     private const string ColorfulBackgroundEnabledKey = "ColorfulBackgroundEnabled"; // NEW
+    private const string WallpaperEnabledKey = "WallpaperEnabled"; // NEW: wallpaper
     private const string SelectedFontFamilyKey = "SelectedFontFamily";
     private const string SelectedFontSizeKey = "SelectedFontSize";
     private const string IsFirstLaunchKey = "IsFirstLaunch";
@@ -173,6 +174,36 @@ public class PreferencesService : IPreferencesService
     }
 
     /// <inheritdoc/>
+    public bool GetIsWallpaperEnabled()
+    {
+        try
+        {
+            var isEnabled = Preferences.Get(WallpaperEnabledKey, false);
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Retrieved wallpaper enabled: {isEnabled}");
+            return isEnabled;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to get wallpaper enabled: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <inheritdoc/>
+    public void SaveWallpaperEnabled(bool isEnabled)
+    {
+        try
+        {
+            Preferences.Set(WallpaperEnabledKey, isEnabled);
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved wallpaper enabled: {isEnabled}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to save wallpaper enabled: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc/>
     public AppFontFamily GetSavedFontFamily()
     {
         try
@@ -297,7 +328,7 @@ public class PreferencesService : IPreferencesService
     {
         try
         {
-            // Domyœlnie true - jeœli nie ma zapisanej preferencji, to oznacza pierwszy start
+            // Domyœlnie true - je¿eli nie ma zapisanej preferencji, to oznacza pierwszy start
             var isFirstLaunch = Preferences.Get(IsFirstLaunchKey, true);
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Is first launch: {isFirstLaunch}");
             return isFirstLaunch;
@@ -364,6 +395,22 @@ public class PreferencesService : IPreferencesService
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to save install basic ingredients preference: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc/>
+    public void ResetAllToDefaults()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[PreferencesService] Clearing all preferences and setting first launch");
+            Preferences.Clear();
+            // Ensure first-launch flow on next app start
+            Preferences.Set(IsFirstLaunchKey, true);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to reset all preferences to defaults: {ex.Message}");
         }
     }
 }

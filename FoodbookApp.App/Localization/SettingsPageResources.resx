@@ -135,6 +135,9 @@
   <data name="ColorfulBackgroundOption" xml:space="preserve">
     <value>Background</value>
   </data>
+  <data name="WallpaperBackgroundOption" xml:space="preserve">
+    <value>Wallpaper</value>
+  </data>
   <data name="ColorThemeDefault" xml:space="preserve">
     <value>Default</value>
   </data>
@@ -158,6 +161,18 @@
   </data>
   <data name="ColorThemeMint" xml:space="preserve">
     <value>Mint</value>
+  </data>
+  <data name="ColorThemeForest" xml:space="preserve">
+    <value>Forest</value>
+  </data>
+  <data name="ColorThemeSunset" xml:space="preserve">
+    <value>Sunset</value>
+  </data>
+  <data name="ColorThemeBubblegum" xml:space="preserve">
+    <value>Bubblegum</value>
+  </data>
+  <data name="ColorThemeSky" xml:space="preserve">
+    <value>Sky</value>
   </data>
   <data name="ThemeTitle" xml:space="preserve">
     <value>Theme</value>
@@ -278,5 +293,72 @@
   </data>
   <data name="DatabaseResetWarning" xml:space="preserve">
     <value>Irreversible operation!</value>
+  </data>
+  <!-- Tabs -->
+  <data name="TabLanguage" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="TabAppearance" xml:space="preserve">
+    <value>Appearance</value>
+  </data>
+  <data name="TabData" xml:space="preserve">
+    <value>Data</value>
+  </data>
+
+  <!-- NEW: Factory reset localization -->
+  <data name="FactoryResetTitle" xml:space="preserve">
+    <value>Factory reset</value>
+  </data>
+  <data name="FactoryResetDescription" xml:space="preserve">
+    <value>Restores the app to the initial state: deletes the database and all preferences. The setup wizard will run after restart.</value>
+  </data>
+  <data name="FactoryResetButton" xml:space="preserve">
+    <value>Restore factory settings</value>
+  </data>
+  <data name="FactoryResetWarning" xml:space="preserve">
+    <value>Irreversible operation. The app will close after reset.</value>
+  </data>
+  <data name="FactoryResetConfirmTitle" xml:space="preserve">
+    <value>Factory reset</value>
+  </data>
+  <data name="FactoryResetConfirmMessage" xml:space="preserve">
+    <value>This will reset the app to defaults: all database data, labels, folders and preferences will be removed. The setup wizard will run after restart. Continue?</value>
+  </data>
+  <data name="FactoryResetConfirmOk" xml:space="preserve">
+    <value>Yes, reset</value>
+  </data>
+  <data name="FactoryResetConfirmCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="FactoryResetSuccessTitle" xml:space="preserve">
+    <value>Success</value>
+  </data>
+  <data name="FactoryResetSuccessMessage" xml:space="preserve">
+    <value>Factory settings restored. The app will close. Start again to launch the setup wizard.</value>
+  </data>
+  <data name="FactoryResetErrorTitle" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="FactoryResetErrorMessage" xml:space="preserve">
+    <value>An error occurred while restoring factory settings: {0}</value>
+  </data>
+  <data name="FactoryResetFailedTitle" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="FactoryResetFailedMessage" xml:space="preserve">
+    <value>Failed to restore factory settings. Check application logs.</value>
+  </data>
+  <!-- Ensure short status keys exist for VM fallbacks -->
+  <data name="FactoryResetInProgress" xml:space="preserve">
+    <value>Restoring factory settings...</value>
+  </data>
+  <data name="FactoryResetDone" xml:space="preserve">
+    <value>Factory settings restored</value>
+  </data>
+  <data name="FactoryResetFailedShort" xml:space="preserve">
+    <value>Factory reset failed</value>
+  </data>
+  <data name="FactoryResetErrorShort" xml:space="preserve">
+    <value>Factory reset error</value>
   </data>
 </root>

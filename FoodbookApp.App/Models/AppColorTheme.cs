@@ -4,11 +4,15 @@ namespace Foodbook.Models
     {
         Default,
         Nature,
+        Forest,
+        Autumn,
         Warm,
+        Sunset,
         Vibrant,
         Monochrome,
-        Navy,      // NEW: Ciemny niebieski
-        Autumn,    // NEW: Br¹zowy jesienny  
-        Mint       // NEW: Miêtowy
+        Navy,      
+        Mint,
+        Sky,
+        Bubblegum
     }
 }

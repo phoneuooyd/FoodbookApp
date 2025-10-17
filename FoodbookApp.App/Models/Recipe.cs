@@ -25,5 +25,8 @@ namespace Foodbook.Models
         public bool IsBeingDraggedOver { get; set; }
 
         public List<Ingredient> Ingredients { get; set; } = new List<Ingredient>();
+
+        // Labels (many-to-many via join table RecipeRecipeLabel)
+        public List<RecipeLabel> Labels { get; set; } = new();
     }
 }

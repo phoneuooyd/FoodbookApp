@@ -28,13 +28,6 @@
                    LineBreakMode="TailTruncation" 
                    Text="{Binding DisplayText, Source={x:Reference ThisComponent}}" 
                    TextColor="{Binding SelectedRecipe, Source={x:Reference ThisComponent}, Converter={StaticResource IsNotNullToColorConverter}}" />
-            
-            <!-- Dropdown arrow -->
-            <Label Grid.Column="1" 
-                   Text="⏷"
-                   FontSize="14"
-                   VerticalOptions="Center"
-                   TextColor="{DynamicResource FrameTextColor}" />
         </Grid>
     </Border>
 </ContentView>

@@ -8,7 +8,7 @@ using FoodbookApp.Localization;
 
 namespace Foodbook.ViewModels;
 
-public class SettingsViewModel : INotifyPropertyChanged
+public partial class SettingsViewModel : INotifyPropertyChanged
 {
     private readonly LocalizationResourceManager _locManager;
     private readonly IPreferencesService _preferencesService;
@@ -16,8 +16,32 @@ public class SettingsViewModel : INotifyPropertyChanged
     private readonly IFontService _fontService;
     private readonly IDatabaseService _databaseService;
 
+    // Tabs management
+    private int _selectedTabIndex;
+    public int SelectedTabIndex
+    {
+        get => _selectedTabIndex;
+        set
+        {
+            if (_selectedTabIndex == value) return;
+            _selectedTabIndex = value;
+            OnPropertyChanged(nameof(SelectedTabIndex));
+            OnPropertyChanged(nameof(IsLanguageTabSelected));
+            OnPropertyChanged(nameof(IsAppearanceTabSelected));
+            OnPropertyChanged(nameof(IsDataTabSelected));
+        }
+    }
+
+    public bool IsLanguageTabSelected => SelectedTabIndex == 0;
+    public bool IsAppearanceTabSelected => SelectedTabIndex == 1;
+    public bool IsDataTabSelected => SelectedTabIndex == 2;
+
+    public ICommand SelectTabCommand { get; }
+
     // Guard to prevent re-entrancy and UI loops when changing culture
     private bool _isChangingCulture;
+    // Guard to avoid recursion when toggling mutually exclusive background options
+    private bool _isUpdatingBackgroundOptions;
 
     // Expose if current build is DEBUG so UI can hide dev-only actions in Release
 #if DEBUG
@@ -79,10 +103,6 @@ public class SettingsViewModel : INotifyPropertyChanged
                 // Save preference
                 _preferencesService.SaveLanguage(safeValue);
 
-                // Do NOT repopulate ItemsSource collections here – it causes the picker to rebind
-                // and can retrigger SelectedItem changes, leading to re-entrancy and freezes.
-                // If display text depends on resources, bindings will refresh via CultureChanged.
-
                 // Notify dependent properties so their display can update if necessary
                 OnPropertyChanged(nameof(SelectedTheme));
                 OnPropertyChanged(nameof(SelectedColorTheme));
@@ -124,11 +144,44 @@ public class SettingsViewModel : INotifyPropertyChanged
             _selectedColorTheme = value;
             OnPropertyChanged(nameof(SelectedColorTheme));
             
+            // Update wallpaper availability for this color theme
+            IsWallpaperAvailable = _themeService.IsWallpaperAvailableFor(_selectedColorTheme);
+            
+            // If wallpaper not available, ensure it's turned off in UI and service
+            if (!IsWallpaperAvailable && IsWallpaperBackgroundEnabled)
+            {
+                if (!_isUpdatingBackgroundOptions)
+                {
+                    try
+                    {
+                        _isUpdatingBackgroundOptions = true;
+                        IsWallpaperBackgroundEnabled = false; // will call service and save pref
+                    }
+                    finally
+                    {
+                        _isUpdatingBackgroundOptions = false;
+                    }
+                }
+            }
+            
             // Apply the color theme immediately
             _themeService.SetColorTheme(value);
             
             // Save the selected color theme to preferences
             _preferencesService.SaveColorTheme(value);
+        }
+    }
+
+    // NEW: Availability of wallpaper option for selected color theme
+    private bool _isWallpaperAvailable;
+    public bool IsWallpaperAvailable
+    {
+        get => _isWallpaperAvailable;
+        private set
+        {
+            if (_isWallpaperAvailable == value) return;
+            _isWallpaperAvailable = value;
+            OnPropertyChanged(nameof(IsWallpaperAvailable));
         }
     }
 
@@ -148,8 +201,69 @@ public class SettingsViewModel : INotifyPropertyChanged
             
             // Save the colorful background preference
             _preferencesService.SaveColorfulBackground(value);
+
+            // Ensure mutual exclusion with wallpaper option
+            if (value && IsWallpaperBackgroundEnabled)
+            {
+                if (_isUpdatingBackgroundOptions) return;
+                try
+                {
+                    _isUpdatingBackgroundOptions = true;
+                    IsWallpaperBackgroundEnabled = false;
+                }
+                finally
+                {
+                    _isUpdatingBackgroundOptions = false;
+                }
+            }
             
             System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Colorful background changed to: {value}");
+        }
+    }
+
+    // NEW: Wallpaper background property
+    private bool _isWallpaperBackgroundEnabled;
+    public bool IsWallpaperBackgroundEnabled
+    {
+        get => _isWallpaperBackgroundEnabled;
+        set
+        {
+            if (_isWallpaperBackgroundEnabled == value) return;
+
+            // Block enabling when not available for current color theme
+            if (value && !_themeService.IsWallpaperAvailableFor(_selectedColorTheme))
+            {
+                // keep disabled
+                _isWallpaperBackgroundEnabled = false;
+                OnPropertyChanged(nameof(IsWallpaperBackgroundEnabled));
+                return;
+            }
+
+            _isWallpaperBackgroundEnabled = value;
+            OnPropertyChanged(nameof(IsWallpaperBackgroundEnabled));
+
+            // Apply wallpaper background immediately
+            _themeService.EnableWallpaperBackground(value);
+            
+            // Save preference
+            _preferencesService.SaveWallpaperEnabled(value);
+
+            // Ensure mutual exclusion with colorful background option
+            if (value && IsColorfulBackgroundEnabled)
+            {
+                if (_isUpdatingBackgroundOptions) return;
+                try
+                {
+                    _isUpdatingBackgroundOptions = true;
+                    IsColorfulBackgroundEnabled = false;
+                }
+                finally
+                {
+                    _isUpdatingBackgroundOptions = false;
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Wallpaper background changed to: {value}");
         }
     }
 
@@ -213,6 +327,7 @@ public class SettingsViewModel : INotifyPropertyChanged
     // Commands for database operations
     public ICommand MigrateDatabaseCommand { get; }
     public ICommand ResetDatabaseCommand { get; }
+    public ICommand FactoryResetCommand { get; }
 
     public SettingsViewModel(LocalizationResourceManager locManager, IPreferencesService preferencesService, IThemeService themeService, IFontService fontService, IDatabaseService databaseService)
     {
@@ -221,6 +336,21 @@ public class SettingsViewModel : INotifyPropertyChanged
         _themeService = themeService;
         _fontService = fontService;
         _databaseService = databaseService;
+        
+        // Tabs
+        SelectTabCommand = new Command<object>(p =>
+        {
+            try
+            {
+                int index = 0;
+                if (p is int i) index = i;
+                else if (p is string s && int.TryParse(s, out var parsed)) index = parsed;
+                if (index < 0 || index > 2) index = 0;
+                SelectedTabIndex = index;
+            }
+            catch { SelectedTabIndex = 0; }
+        });
+        SelectedTabIndex = 0; // default: Language
         
         // Initialize supported cultures from preferences service
         SupportedCultures = new ObservableCollection<string>(_preferencesService.GetSupportedCultures());
@@ -233,17 +363,21 @@ public class SettingsViewModel : INotifyPropertyChanged
             Foodbook.Models.AppTheme.Dark 
         };
         
-        // Initialize supported color themes
+        // Picker order requested by user
         SupportedColorThemes = new ObservableCollection<AppColorTheme>
         {
             AppColorTheme.Default,
             AppColorTheme.Nature,
+            AppColorTheme.Forest,
+            AppColorTheme.Autumn,
             AppColorTheme.Warm,
+            AppColorTheme.Sunset,
             AppColorTheme.Vibrant,
             AppColorTheme.Monochrome,
-            AppColorTheme.Navy,     // NEW: Navy theme
-            AppColorTheme.Autumn,   // NEW: Autumn theme
-            AppColorTheme.Mint      // NEW: Mint theme
+            AppColorTheme.Navy,
+            AppColorTheme.Mint,
+            AppColorTheme.Sky,
+            AppColorTheme.Bubblegum
         };
         
         // Initialize supported font families
@@ -256,7 +390,12 @@ public class SettingsViewModel : INotifyPropertyChanged
         _selectedCulture = LoadSelectedCulture();
         _selectedTheme = LoadSelectedTheme();
         _selectedColorTheme = LoadSelectedColorTheme();
-        _isColorfulBackgroundEnabled = LoadColorfulBackgroundSetting(); // NEW
+        _isColorfulBackgroundEnabled = LoadColorfulBackgroundSetting();
+        _isWallpaperBackgroundEnabled = LoadWallpaperBackgroundSetting();
+        
+        // Initialize wallpaper availability for initial color theme
+        _isWallpaperAvailable = _themeService.IsWallpaperAvailableFor(_selectedColorTheme);
+        
         LoadSelectedFontSettings();
         
         // Set the culture without triggering the setter to avoid recursive calls
@@ -265,7 +404,14 @@ public class SettingsViewModel : INotifyPropertyChanged
         // Apply saved theme and color theme
         _themeService.SetTheme(_selectedTheme);
         _themeService.SetColorTheme(_selectedColorTheme);
-        _themeService.SetColorfulBackground(_isColorfulBackgroundEnabled); // NEW: Apply saved colorful background setting
+        _themeService.SetColorfulBackground(_isColorfulBackgroundEnabled);
+        // If initial theme does not support wallpapers, ensure it's off
+        if (!_isWallpaperAvailable && _isWallpaperBackgroundEnabled)
+        {
+            _isWallpaperBackgroundEnabled = false;
+            _preferencesService.SaveWallpaperEnabled(false);
+        }
+        _themeService.EnableWallpaperBackground(_isWallpaperBackgroundEnabled);
         
         // Apply saved font settings
         _fontService.LoadSavedSettings();
@@ -273,8 +419,12 @@ public class SettingsViewModel : INotifyPropertyChanged
         // Initialize commands
         MigrateDatabaseCommand = new Command(async () => await MigrateDatabaseAsync(), () => CanExecuteMigration);
         ResetDatabaseCommand = new Command(async () => await ResetDatabaseAsync(), () => CanExecuteMigration);
+        FactoryResetCommand = new Command(async () => await FactoryResetAsync(), () => CanExecuteMigration);
         
-        System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Initialized with color theme and colorful background support");
+        System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Initialized with color theme and colorful/wallpaper background support");
+
+        // Initialize labels feature (in partial)
+        InitializeLabelsFeature();
     }
 
     private void RefreshCollectionsForLocalization()
@@ -293,8 +443,22 @@ public class SettingsViewModel : INotifyPropertyChanged
         foreach (var t in themes)
             SupportedThemes.Add(t);
 
-        // Color themes
-        var colorThemes = new[] { AppColorTheme.Default, AppColorTheme.Nature, AppColorTheme.Warm, AppColorTheme.Vibrant, AppColorTheme.Monochrome, AppColorTheme.Navy, AppColorTheme.Autumn, AppColorTheme.Mint };
+        // Keep the same explicit order as the enum requested by the user
+        var colorThemes = new[]
+        {
+            AppColorTheme.Default,
+            AppColorTheme.Nature,
+            AppColorTheme.Forest,
+            AppColorTheme.Autumn,
+            AppColorTheme.Warm,
+            AppColorTheme.Sunset,
+            AppColorTheme.Vibrant,
+            AppColorTheme.Monochrome,
+            AppColorTheme.Navy,
+            AppColorTheme.Mint,
+            AppColorTheme.Sky,
+            AppColorTheme.Bubblegum
+        };
         SupportedColorThemes.Clear();
         foreach (var ct in colorThemes)
             SupportedColorThemes.Add(ct);
@@ -437,6 +601,77 @@ public class SettingsViewModel : INotifyPropertyChanged
         }
     }
 
+    private async Task FactoryResetAsync()
+    {
+        try
+        {
+            var page = Application.Current?.MainPage;
+            if (page == null) return;
+
+            // Localized strings via ResourceManager to avoid relying on generated properties
+            var rm = SettingsPageResources.ResourceManager;
+            string L(string key, string fallback) => rm.GetString(key) ?? fallback;
+
+            bool confirm = await page.DisplayAlert(
+                L("FactoryResetConfirmTitle", "Ustawienia fabryczne"),
+                L("FactoryResetConfirmMessage", "Ta operacja przywróci aplikacjê do ustawieñ zerowych. Kontynuowaæ?"),
+                L("FactoryResetConfirmOk", "Tak, przywróæ"),
+                L("FactoryResetConfirmCancel", "Anuluj"));
+
+            if (!confirm) return;
+
+            IsMigrationInProgress = true;
+            MigrationStatus = L("FactoryResetInProgress", "Przywracanie ustawieñ fabrycznych...");
+
+            _preferencesService.ResetAllToDefaults();
+            var dbOk = await _databaseService.ResetDatabaseAsync();
+
+            if (dbOk)
+            {
+                MigrationStatus = L("FactoryResetDone", "Ustawienia fabryczne przywrócone");
+                await page.DisplayAlert(
+                    L("FactoryResetSuccessTitle", "Sukces"),
+                    L("FactoryResetSuccessMessage", "Przywrócono ustawienia fabryczne. Aplikacja zostanie zamkniêta. Uruchom ponownie, aby rozpocz¹æ kreator pocz¹tkowy."),
+                    "OK");
+
+                Application.Current?.Quit();
+            }
+            else
+            {
+                MigrationStatus = L("FactoryResetFailedShort", "Ustawienia fabryczne nieudane");
+                await page.DisplayAlert(
+                    L("FactoryResetFailedTitle", "B³¹d"),
+                    L("FactoryResetFailedMessage", "Nie uda³o siê przywróciæ ustawieñ fabrycznych. SprawdŸ logi aplikacji."),
+                    "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Factory reset error: {ex.Message}");
+            var rm = SettingsPageResources.ResourceManager;
+            string L(string key, string fallback) => rm.GetString(key) ?? fallback;
+
+            MigrationStatus = L("FactoryResetErrorShort", "B³¹d przywracania ustawieñ fabrycznych");
+            var page = Application.Current?.MainPage;
+            if (page != null)
+            {
+                await page.DisplayAlert(
+                    L("FactoryResetErrorTitle", "B³¹d"),
+                    string.Format(L("FactoryResetErrorMessage", "Wyst¹pi³ b³¹d podczas przywracania ustawieñ fabrycznych: {0}"), ex.Message),
+                    "OK");
+            }
+        }
+        finally
+        {
+            IsMigrationInProgress = false;
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(3000);
+                MainThread.BeginInvokeOnMainThread(() => MigrationStatus = string.Empty);
+            });
+        }
+    }
+
     private string LoadSelectedCulture()
     {
         try
@@ -510,6 +745,22 @@ public class SettingsViewModel : INotifyPropertyChanged
         }
     }
 
+    // NEW: Load wallpaper background setting
+    private bool LoadWallpaperBackgroundSetting()
+    {
+        try
+        {
+            var isEnabled = _preferencesService.GetIsWallpaperEnabled();
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Loaded wallpaper background preference: {isEnabled}");
+            return isEnabled;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Failed to load wallpaper background preference: {ex.Message}");
+            return false;
+        }
+    }
+
     private void LoadSelectedFontSettings()
     {
         try
@@ -530,4 +781,7 @@ public class SettingsViewModel : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
     private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+    // Partial hook to initialize labels feature
+    partial void InitializeLabelsFeature();
 }

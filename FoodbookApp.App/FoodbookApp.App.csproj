@@ -24,6 +24,9 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 
+		<!-- Enable compiled bindings with explicit Source in XAML -->
+		<MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
+
 		<!-- Display name -->
 		<ApplicationTitle>Foodbook App</ApplicationTitle>
 
@@ -74,6 +77,20 @@
 	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-ios' or '$(TargetFramework)' == 'net9.0-maccatalyst'">
 		<PublishTrimmed>false</PublishTrimmed>
 	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android|AnyCPU'">
+	  <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
+	  <AndroidUseAapt2>True</AndroidUseAapt2>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-windows10.0.19041.0|AnyCPU'">
+	  <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android|AnyCPU'">
+	  <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
+	  <AndroidUseAapt2>False</AndroidUseAapt2>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-windows10.0.19041.0|AnyCPU'">
+	  <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
+	</PropertyGroup>
 
 	<ItemGroup>
 		<!-- App Icon -->
@@ -84,6 +101,8 @@
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
+		<!-- Wallpapers -->
+		<MauiImage Include="Resources\Wallpapers\**" />
 		<MauiImage Update="Resources\Images\dotnet_bot.png" Resize="True" BaseSize="300,185" />
 
 		<!-- Custom Fonts -->
@@ -149,44 +168,30 @@
             <AutoGen>True</AutoGen>
             <DependentUpon>UnitResources.resx</DependentUpon>
           </Compile>
-          <Compile Update="Localization\\SetupWizardResources.Designer.cs">
-            <DesignTime>True</DesignTime>
-            <AutoGen>True</AutoGen>
-            <DependentUpon>SetupWizardResources.resx</DependentUpon>
-          </Compile>
-          <!-- NEW SetupWizardPage resources -->
           <Compile Update="Localization\\SetupWizardPageResources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>SetupWizardPageResources.resx</DependentUpon>
           </Compile>
-          <Compile Update="Properties\\Resources.Designer.cs">
+          <Compile Update="Localization\\Properties\\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>Resources.resx</DependentUpon>
           </Compile>
+          <!-- NEW: DataArchivizationPage resources (designer auto-gen at design-time) -->
+          <Compile Update="Localization\\DataArchivizationPageResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>DataArchivizationPageResources.resx</DependentUpon>
+          </Compile>
         </ItemGroup>
 
         <ItemGroup>
-          <EmbeddedResource Update="Localization\\ButtonResources.resx">
+          <EmbeddedResource Update="Localization\\DataArchivizationPageResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
-            <LastGenOutput>ButtonResources.Designer.cs</LastGenOutput>
+            <LastGenOutput>DataArchivizationPageResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
-          <EmbeddedResource Update="Localization\\TabBarResources.resx">
-            <Generator>ResXFileCodeGenerator</Generator>
-            <LastGenOutput>TabBarResources.Designer.cs</LastGenOutput>
-          </EmbeddedResource>
-          <EmbeddedResource Update="Localization\\SetupWizardResources.resx">
-            <Generator>ResXFileCodeGenerator</Generator>
-            <LastGenOutput>SetupWizardResources.Designer.cs</LastGenOutput>
-          </EmbeddedResource>
-          <!-- Embed main setup wizard page resource -->
-          <EmbeddedResource Update="Localization\\SetupWizardPageResources.resx">
-            <Generator>ResXFileCodeGenerator</Generator>
-            <LastGenOutput>SetupWizardPageResources.Designer.cs</LastGenOutput>
-          </EmbeddedResource>
-          <!-- Polish satellite file (no generator needed) -->
-          <EmbeddedResource Update="Localization\\SetupWizardPageResources.pl-PL.resx" />
+          <EmbeddedResource Update="Localization\\DataArchivizationPageResources.pl-PL.resx" />
         </ItemGroup>
 
         <!-- Localization resources for individual pages -->
@@ -297,6 +302,10 @@
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>UnitResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
+          <EmbeddedResource Update="Localization\\DataArchivizationPageResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>DataArchivizationPageResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
           <EmbeddedResource Update="Properties\\Resources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -358,6 +367,12 @@
 	  <MauiXaml Update="Views\Components\UniversalListItemComponent.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="Views\Components\WallpaperBackgroundComponent.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\DataArchivizationPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Views\HomePage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
@@ -379,9 +394,6 @@
           <MauiXaml Update="Views\SettingsPage.xaml">
             <Generator>MSBuild:Compile</Generator>
           </MauiXaml>
-          <MauiXaml Update="Views\SetupWizardPage.xaml">
-            <Generator>MSBuild:Compile</Generator>
-          </MauiXaml>
           <MauiXaml Update="Views\ShoppingListPage.xaml">
             <Generator>MSBuild:Compile</Generator>
           </MauiXaml>
@@ -391,8 +403,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include=".github\\workflows\\" />
-	  <Folder Include="Data\\Migrations\" />
+	  <Folder Include=".github\workflows\" />
 	</ItemGroup>
 
 </Project>

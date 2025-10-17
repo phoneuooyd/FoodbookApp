@@ -85,9 +85,6 @@ namespace FoodbookApp.Data.Migrations
                     b.HasIndex("Name")
                         .HasDatabaseName("IX_Ingredients_Name");
 
-                    b.HasIndex("RecipeId")
-                        .HasDatabaseName("IX_Ingredients_RecipeId");
-
                     b.HasIndex("RecipeId", "Name")
                         .HasDatabaseName("IX_Ingredients_RecipeId_Name");
 
@@ -178,6 +175,32 @@ namespace FoodbookApp.Data.Migrations
                     b.ToTable("Recipes");
                 });
 
+            modelBuilder.Entity("Foodbook.Models.RecipeLabel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ColorHex")
+                        .HasMaxLength(9)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .HasDatabaseName("IX_RecipeLabels_Name");
+
+                    b.ToTable("RecipeLabels");
+                });
+
             modelBuilder.Entity("Foodbook.Models.ShoppingListItem", b =>
                 {
                     b.Property<int>("Id")
@@ -210,6 +233,21 @@ namespace FoodbookApp.Data.Migrations
                         .HasDatabaseName("IX_ShoppingListItems_PlanId_IngredientName_Unit");
 
                     b.ToTable("ShoppingListItems");
+                });
+
+            modelBuilder.Entity("RecipeRecipeLabel", b =>
+                {
+                    b.Property<int>("LabelsId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RecipesId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("LabelsId", "RecipesId");
+
+                    b.HasIndex("RecipesId");
+
+                    b.ToTable("RecipeRecipeLabel");
                 });
 
             modelBuilder.Entity("Foodbook.Models.Folder", b =>
@@ -262,6 +300,21 @@ namespace FoodbookApp.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Plan");
+                });
+
+            modelBuilder.Entity("RecipeRecipeLabel", b =>
+                {
+                    b.HasOne("Foodbook.Models.RecipeLabel", null)
+                        .WithMany()
+                        .HasForeignKey("LabelsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Foodbook.Models.Recipe", null)
+                        .WithMany()
+                        .HasForeignKey("RecipesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Foodbook.Models.Folder", b =>

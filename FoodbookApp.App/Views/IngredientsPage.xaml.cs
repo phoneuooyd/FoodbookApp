@@ -4,6 +4,9 @@ using Foodbook.Data;
 using Foodbook.Views.Base;
 using Microsoft.Extensions.DependencyInjection;
 using FoodbookApp;
+using Foodbook.Views.Components;
+using CommunityToolkit.Maui.Extensions;
+using Foodbook.Models;
 
 namespace Foodbook.Views;
 
@@ -89,6 +92,25 @@ public partial class IngredientsPage : ContentPage
         {
             System.Diagnostics.Debug.WriteLine($"Error handling empty ingredients: {ex.Message}");
             await DisplayAlert("Błąd", "Wystąpił problem podczas ładowania składników.", "OK");
+        }
+    }
+
+    private async void OnIngredientSortClicked(object? sender, EventArgs e)
+    {
+        try
+        {
+            var popup = new FilterSortPopup(showLabels: false, labels: null, preselectedLabelIds: null, sortOrder: _viewModel.SortOrder);
+            var hostPage = Application.Current?.MainPage ?? this;
+            hostPage.ShowPopup(popup);
+            var result = await popup.ResultTask;
+            if (result != null)
+            {
+                _viewModel.SortOrder = result.SortOrder;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientsPage] OnIngredientSortClicked error: {ex.Message}");
         }
     }
 }

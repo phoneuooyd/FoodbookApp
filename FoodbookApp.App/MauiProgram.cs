@@ -60,6 +60,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<IPlanService, PlanService>();
             builder.Services.AddScoped<IIngredientService, IngredientService>();
             builder.Services.AddScoped<IFolderService, FolderService>();
+            builder.Services.AddScoped<IRecipeLabelService, RecipeLabelService>();
             builder.Services.AddSingleton<ILocalizationService, LocalizationService>();
             builder.Services.AddSingleton<LocalizationResourceManager>();
             builder.Services.AddSingleton<IPreferencesService, PreferencesService>();
@@ -96,6 +97,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<ArchivePage>();
             builder.Services.AddScoped<SettingsPage>();
             builder.Services.AddScoped<SetupWizardPage>();
+            builder.Services.AddScoped<DataArchivizationPage>();
 
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering routes");
             Routing.RegisterRoute(nameof(HomePage), typeof(HomePage));
@@ -110,6 +112,7 @@ namespace FoodbookApp
             Routing.RegisterRoute(nameof(ArchivePage), typeof(ArchivePage));
             Routing.RegisterRoute(nameof(SettingsPage), typeof(SettingsPage));
             Routing.RegisterRoute(nameof(SetupWizardPage), typeof(SetupWizardPage));
+            Routing.RegisterRoute(nameof(DataArchivizationPage), typeof(DataArchivizationPage));
 
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Building app");
             var app = builder.Build();

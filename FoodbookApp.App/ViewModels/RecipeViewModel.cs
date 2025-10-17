@@ -34,6 +34,25 @@ namespace Foodbook.ViewModels
         private List<Folder> _allFolders = new();
         private Folder? _currentFolder;
 
+        // New: sorting and label filter state
+        private SortOrder _sortOrder = SortOrder.Asc;
+        public SortOrder SortOrder
+        {
+            get => _sortOrder;
+            set { if (_sortOrder == value) return; _sortOrder = value; OnPropertyChanged(); FilterItems(); }
+        }
+
+        private HashSet<int> _selectedLabelIds = new();
+        public IReadOnlyCollection<int> SelectedLabelIds => _selectedLabelIds;
+
+        public void ApplySortingAndLabelFilter(SortOrder sortOrder, IEnumerable<int> labelIds)
+        {
+            _sortOrder = sortOrder;
+            _selectedLabelIds = new HashSet<int>(labelIds ?? Enumerable.Empty<int>());
+            OnPropertyChanged(nameof(SortOrder));
+            FilterItems();
+        }
+
         public event EventHandler? DataLoaded; // Raised when recipes and folders are loaded and filtered
 
         // Mixed list: folders on top, then recipes
@@ -148,8 +167,6 @@ namespace Foodbook.ViewModels
                 {
                     var title = FolderResources.RenameFolderTitle;
                     var prompt = FolderResources.RenameFolderPrompt;
-                    var descTitle = FolderResources.EditDescriptionTitle;
-                    var descPrompt = FolderResources.EditDescriptionPrompt;
 
                     string newName = await Shell.Current.DisplayPromptAsync(title, prompt, initialValue: f.Name, maxLength: 200);
                     if (newName == null) return; // user cancelled
@@ -159,9 +176,9 @@ namespace Foodbook.ViewModels
                         await Shell.Current.DisplayAlert(title, FolderResources.ValidationNameRequired, "OK");
                         return;
                     }
-                    string newDesc = await Shell.Current.DisplayPromptAsync(descTitle, descPrompt, initialValue: f.Description ?? string.Empty, maxLength: 1000);
+
+                    // Only rename folder. Description editing dialog removed per request.
                     f.Name = newName;
-                    f.Description = string.IsNullOrWhiteSpace(newDesc) ? null : newDesc.Trim();
                     await _folderService.UpdateFolderAsync(f);
                     FilterItems();
                 }
@@ -256,24 +273,47 @@ namespace Foodbook.ViewModels
         private void FilterItems()
         {
             IEnumerable<object> src;
+            IEnumerable<Folder> folderQuery;
+            IEnumerable<Recipe> recipeQuery;
+
             if (_currentFolder == null)
             {
-                src = _allFolders.Where(f => f.ParentFolderId == null).Cast<object>()
-                      .Concat(_allRecipes.Where(r => r.FolderId == null));
+                folderQuery = _allFolders.Where(f => f.ParentFolderId == null);
+                recipeQuery = _allRecipes.Where(r => r.FolderId == null);
             }
             else
             {
-                src = _allFolders.Where(f => f.ParentFolderId == _currentFolder.Id).Cast<object>()
-                      .Concat(_allRecipes.Where(r => r.FolderId == _currentFolder.Id));
+                folderQuery = _allFolders.Where(f => f.ParentFolderId == _currentFolder.Id);
+                recipeQuery = _allRecipes.Where(r => r.FolderId == _currentFolder.Id);
             }
 
+            // Apply search
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
-                src = src.Where(o => o is Recipe rr && (
-                                         rr.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                                         (rr.Description?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false))
-                                      || o is Folder ff && ff.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+                folderQuery = folderQuery.Where(ff => ff.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+                recipeQuery = recipeQuery.Where(rr => rr.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                                                       (rr.Description?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
             }
+
+            // Apply label filter (recipes only)
+            if (_selectedLabelIds.Count > 0)
+            {
+                recipeQuery = recipeQuery.Where(r => (r.Labels?.Any(l => _selectedLabelIds.Contains(l.Id)) ?? false));
+            }
+
+            // Apply sorting (A-Z or Z-A)
+            if (SortOrder == SortOrder.Asc)
+            {
+                folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
+                recipeQuery = recipeQuery.OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase);
+            }
+            else
+            {
+                folderQuery = folderQuery.OrderByDescending(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
+                recipeQuery = recipeQuery.OrderByDescending(r => r.Name, StringComparer.CurrentCultureIgnoreCase);
+            }
+
+            src = folderQuery.Cast<object>().Concat(recipeQuery);
 
             Items.Clear();
             foreach (var o in src)

@@ -1,23 +1,41 @@
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using CommunityToolkit.Maui.Views;
-using Microsoft.Maui.Controls;
 using System.Windows.Input;
 
 namespace Foodbook.Views.Components;
 
-public partial class SearchablePickerPopup : Popup
+public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
 {
     private readonly List<string> _allItems;
     private readonly TaskCompletionSource<object?> _tcs = new();
 
     public Task<object?> ResultTask => _tcs.Task;
 
-    // Expose a CloseCommand for X and Cancel buttons in XAML
+    // Expose a CloseCommand for X button in XAML
     public ICommand CloseCommand { get; }
+
+    // Clear search command for ModernSearchBarComponent
+    public ICommand ClearSearchCommand { get; }
+
+    private string _searchText = string.Empty;
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            if (_searchText == value) return;
+            _searchText = value;
+            OnPropertyChanged();
+            ApplySearch();
+        }
+    }
 
     public SearchablePickerPopup(List<string> allItems, string? selected)
     {
         _allItems = allItems ?? new List<string>();
         CloseCommand = new Command(async () => await CloseWithResultAsync(null));
+        ClearSearchCommand = new Command(() => SearchText = string.Empty);
         InitializeComponent();
         Populate(_allItems);
     }
@@ -53,9 +71,10 @@ public partial class SearchablePickerPopup : Popup
         }
     }
 
-    private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
+    // Replaces Entry.TextChanged handler using two-way bound SearchText
+    private void ApplySearch()
     {
-        var query = e.NewTextValue?.Trim() ?? string.Empty;
+        var query = SearchText?.Trim() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(query))
         {
             Populate(_allItems);
@@ -67,10 +86,22 @@ public partial class SearchablePickerPopup : Popup
         Populate(filtered);
     }
 
+    // Kept for backward compatibility; no longer wired in XAML
+    private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
+    {
+        SearchText = e.NewTextValue;
+    }
+
     private async Task CloseWithResultAsync(object? result)
     {
         if (!_tcs.Task.IsCompleted)
             _tcs.SetResult(result);
         await CloseAsync();
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

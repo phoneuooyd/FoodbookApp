@@ -4,6 +4,9 @@ using Foodbook.Views.Base;
 using CommunityToolkit.Mvvm.Messaging;
 using System.Threading.Tasks;
 using Foodbook.Models; // added for Recipe type
+using CommunityToolkit.Maui.Extensions;
+using Foodbook.Views.Components;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Foodbook.Views;
 
@@ -145,5 +148,34 @@ public partial class RecipesPage : ContentPage
             }
         }
         catch { }
+    }
+
+    // Open filter/sort popup from breadcrumb image button
+    private async void OnFilterSortClicked(object? sender, EventArgs e)
+    {
+        try
+        {
+            // Labels available for filtering are managed in SettingsViewModel
+            var settingsVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<SettingsViewModel>();
+            var allLabels = settingsVm?.Labels?.ToList() ?? new List<RecipeLabel>();
+
+            var popup = new FilterSortPopup(
+                showLabels: true,
+                labels: allLabels,
+                preselectedLabelIds: _viewModel.SelectedLabelIds,
+                sortOrder: _viewModel.SortOrder);
+
+            var hostPage = Application.Current?.MainPage ?? this;
+            hostPage.ShowPopup(popup);
+            var result = await popup.ResultTask;
+            if (result != null)
+            {
+                _viewModel.ApplySortingAndLabelFilter(result.SortOrder, result.SelectedLabelIds);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[RecipesPage] OnFilterSortClicked error: {ex.Message}");
+        }
     }
 }
