@@ -10,6 +10,7 @@
   <data name="ColorThemeTitle" xml:space="preserve"><value>Farbschema</value></data>
   <data name="ColorThemeDescription" xml:space="preserve"><value>App-Farbpalette</value></data>
   <data name="ColorfulBackgroundOption" xml:space="preserve"><value>Hintergrund</value></data>
+  <data name="WallpaperBackgroundOption" xml:space="preserve"><value>Tapete</value></data>
   <data name="ColorThemeDefault" xml:space="preserve"><value>Standard</value></data>
   <data name="ColorThemeNature" xml:space="preserve"><value>Natur</value></data>
   <data name="ColorThemeWarm" xml:space="preserve"><value>Warm</value></data>
@@ -62,4 +63,26 @@
   <data name="TabLanguage" xml:space="preserve"><value>Sprache</value></data>
   <data name="TabAppearance" xml:space="preserve"><value>Erscheinungsbild</value></data>
   <data name="TabData" xml:space="preserve"><value>Daten</value></data>
+
+  <!-- NEU: Werkseinstellungen -->
+  <data name="FactoryResetTitle" xml:space="preserve"><value>Werkseinstellungen</value></data>
+  <data name="FactoryResetDescription" xml:space="preserve"><value>Stellt die App in den Anfangszustand zurück: löscht die Datenbank und alle Einstellungen. Der Einrichtungsassistent wird nach dem Neustart gestartet.</value></data>
+  <data name="FactoryResetButton" xml:space="preserve"><value>Werkseinstellungen wiederherstellen</value></data>
+  <data name="FactoryResetWarning" xml:space="preserve"><value>Nicht umkehrbar. Die App wird nach dem Zurücksetzen geschlossen.</value></data>
+  <data name="FactoryResetConfirmTitle" xml:space="preserve"><value>Werkseinstellungen</value></data>
+  <data name="FactoryResetConfirmMessage" xml:space="preserve"><value>Dies setzt die App auf die Standardwerte zurück: Alle Datenbankdaten, Labels, Ordner und Einstellungen werden entfernt. Der Einrichtungsassistent wird nach dem Neustart gestartet. Fortfahren?</value></data>
+  <data name="FactoryResetConfirmOk" xml:space="preserve"><value>Ja, zurücksetzen</value></data>
+  <data name="FactoryResetConfirmCancel" xml:space="preserve"><value>Abbrechen</value></data>
+  <data name="FactoryResetSuccessTitle" xml:space="preserve"><value>Erfolg</value></data>
+  <data name="FactoryResetSuccessMessage" xml:space="preserve"><value>Werkseinstellungen wiederhergestellt. Die App wird geschlossen. Starten Sie sie neu, um den Einrichtungsassistenten zu starten.</value></data>
+  <data name="FactoryResetErrorTitle" xml:space="preserve"><value>Fehler</value></data>
+  <data name="FactoryResetErrorMessage" xml:space="preserve"><value>Beim Wiederherstellen der Werkseinstellungen ist ein Fehler aufgetreten: {0}</value></data>
+  <data name="FactoryResetFailedTitle" xml:space="preserve"><value>Fehler</value></data>
+  <data name="FactoryResetFailedMessage" xml:space="preserve"><value>Werkseinstellungen konnten nicht wiederhergestellt werden. Prüfen Sie die Anwendungsprotokolle.</value></data>
+
+  <!-- Short status strings for VM -->
+  <data name="FactoryResetInProgress" xml:space="preserve"><value>Werkseinstellungen werden wiederhergestellt...</value></data>
+  <data name="FactoryResetDone" xml:space="preserve"><value>Werkseinstellungen wiederhergestellt</value></data>
+  <data name="FactoryResetFailedShort" xml:space="preserve"><value>Werkseinstellungen fehlgeschlagen</value></data>
+  <data name="FactoryResetErrorShort" xml:space="preserve"><value>Fehler bei Werkseinstellungen</value></data>
 </root>

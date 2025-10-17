@@ -53,6 +53,10 @@
     <Color x:Key="Gray900">#212121</Color>
     <Color x:Key="Gray950">#141414</Color>
 
+    <!-- Modern Border Color for consistent UI (adaptive) -->
+    <Color x:Key="ModernBorderColor">#E0E0E0</Color>
+    <Color x:Key="ModernBorderColorDark">#404040</Color>
+
     <!-- Dynamic Brushes - These will be updated when color theme changes -->
     <SolidColorBrush x:Key="PrimaryBrush" Color="{DynamicResource Primary}"/>
     <SolidColorBrush x:Key="SecondaryBrush" Color="{DynamicResource Secondary}"/>
@@ -60,6 +64,9 @@
     <SolidColorBrush x:Key="AccentBrush" Color="{DynamicResource Accent}"/>
     <SolidColorBrush x:Key="PrimaryTextBrush" Color="{DynamicResource PrimaryText}"/>
     <SolidColorBrush x:Key="SecondaryTextBrush" Color="{DynamicResource SecondaryText}"/>
+    
+    <!-- Modern Border Brush (adaptive) -->
+    <SolidColorBrush x:Key="ModernBorderBrush" Color="{AppThemeBinding Light={StaticResource ModernBorderColor}, Dark={StaticResource ModernBorderColorDark}}"/>
     
     <!-- NEW: Folder card colors derived from Primary (pale/translucent) -->
     <Color x:Key="FolderCardBackgroundColor">#1A512BD4</Color>

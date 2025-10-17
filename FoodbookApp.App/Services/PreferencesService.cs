@@ -328,7 +328,7 @@ public class PreferencesService : IPreferencesService
     {
         try
         {
-            // Domyœlnie true - jeœli nie ma zapisanej preferencji, to oznacza pierwszy start
+            // Domyœlnie true - je¿eli nie ma zapisanej preferencji, to oznacza pierwszy start
             var isFirstLaunch = Preferences.Get(IsFirstLaunchKey, true);
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Is first launch: {isFirstLaunch}");
             return isFirstLaunch;
@@ -395,6 +395,22 @@ public class PreferencesService : IPreferencesService
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to save install basic ingredients preference: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc/>
+    public void ResetAllToDefaults()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[PreferencesService] Clearing all preferences and setting first launch");
+            Preferences.Clear();
+            // Ensure first-launch flow on next app start
+            Preferences.Set(IsFirstLaunchKey, true);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to reset all preferences to defaults: {ex.Message}");
         }
     }
 }

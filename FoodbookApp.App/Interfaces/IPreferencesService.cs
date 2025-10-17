@@ -136,4 +136,9 @@ public interface IPreferencesService
     /// </summary>
     /// <param name="install">True if basic ingredients should be installed</param>
     void SaveInstallBasicIngredients(bool install);
+
+    /// <summary>
+    /// Clears all preferences to defaults and marks the app as first launch.
+    /// </summary>
+    void ResetAllToDefaults();
 }

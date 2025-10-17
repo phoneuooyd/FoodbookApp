@@ -304,4 +304,26 @@
   <data name="TabData" xml:space="preserve">
     <value>Dane</value>
   </data>
+
+  <!-- NOWE: Ustawienia fabryczne -->
+  <data name="FactoryResetTitle" xml:space="preserve"><value>Ustawienia fabryczne</value></data>
+  <data name="FactoryResetDescription" xml:space="preserve"><value>Przywraca aplikację do stanu początkowego: usuwa bazę danych i wszystkie preferencje. Po restarcie uruchomi się kreator początkowy.</value></data>
+  <data name="FactoryResetButton" xml:space="preserve"><value>Przywróć ustawienia fabryczne</value></data>
+  <data name="FactoryResetWarning" xml:space="preserve"><value>Operacja nieodwracalna. Aplikacja zostanie zamknięta po wykonaniu resetu.</value></data>
+  <data name="FactoryResetConfirmTitle" xml:space="preserve"><value>Ustawienia fabryczne</value></data>
+  <data name="FactoryResetConfirmMessage" xml:space="preserve"><value>Ta operacja przywróci aplikację do ustawień zerowych: wszystkie dane w bazie, etykiety, foldery oraz preferencje zostaną usunięte. Aplikacja uruchomi kreator początkowy po restarcie. Czy kontynuować?</value></data>
+  <data name="FactoryResetConfirmOk" xml:space="preserve"><value>Tak, przywróć</value></data>
+  <data name="FactoryResetConfirmCancel" xml:space="preserve"><value>Anuluj</value></data>
+  <data name="FactoryResetSuccessTitle" xml:space="preserve"><value>Sukces</value></data>
+  <data name="FactoryResetSuccessMessage" xml:space="preserve"><value>Przywrócono ustawienia fabryczne. Aplikacja zostanie zamknięta. Uruchom ponownie, aby rozpocząć kreator początkowy.</value></data>
+  <data name="FactoryResetErrorTitle" xml:space="preserve"><value>Błąd</value></data>
+  <data name="FactoryResetErrorMessage" xml:space="preserve"><value>Wystąpił błąd podczas przywracania ustawień fabrycznych: {0}</value></data>
+  <data name="FactoryResetFailedTitle" xml:space="preserve"><value>Błąd</value></data>
+  <data name="FactoryResetFailedMessage" xml:space="preserve"><value>Nie udało się przywrócić ustawień fabrycznych. Sprawdź logi aplikacji.</value></data>
+  
+  <!-- Short status strings for VM -->
+  <data name="FactoryResetInProgress" xml:space="preserve"><value>Przywracanie ustawień fabrycznych...</value></data>
+  <data name="FactoryResetDone" xml:space="preserve"><value>Ustawienia fabryczne przywrócone</value></data>
+  <data name="FactoryResetFailedShort" xml:space="preserve"><value>Ustawienia fabryczne nieudane</value></data>
+  <data name="FactoryResetErrorShort" xml:space="preserve"><value>Błąd przywracania ustawień fabrycznych</value></data>
 </root>

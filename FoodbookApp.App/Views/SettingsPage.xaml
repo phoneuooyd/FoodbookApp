@@ -251,13 +251,13 @@
                         </StackLayout>
                     </Frame>
 
-                    <!-- Database Reset Card -->
+                    <!-- Factory Reset Card -->
                     <Frame Style="{StaticResource DashboardCardStyle}">
                         <StackLayout>
-                            <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseResetTitle}" Style="{StaticResource CardTitleStyle}" />
-                            <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseResetDescription}" Style="{StaticResource DescriptionStyle}" />
-                            <Button Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseResetButton}" Style="{StaticResource DangerButtonStyle}" Command="{Binding ResetDatabaseCommand}" IsEnabled="{Binding CanExecuteMigration}" />
-                            <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseResetWarning}" FontSize="{DynamicResource AppSmallFontSize}" HorizontalTextAlignment="Center" TextColor="{AppThemeBinding Light=#DC3545, Dark=#C62D3A}" FontAttributes="Bold" Margin="0,4,0,0" />
+                            <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FactoryResetTitle}" Style="{StaticResource CardTitleStyle}" />
+                            <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FactoryResetDescription}" Style="{StaticResource DescriptionStyle}" />
+                            <Button Text="{loc:Translate Resource=SettingsPageResources, Key=FactoryResetButton}" Style="{StaticResource DangerButtonStyle}" Command="{Binding FactoryResetCommand}" IsEnabled="{Binding CanExecuteMigration}" />
+                            <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FactoryResetWarning}" FontSize="{DynamicResource AppSmallFontSize}" HorizontalTextAlignment="Center" TextColor="{AppThemeBinding Light=#DC3545, Dark=#C62D3A}" FontAttributes="Bold" Margin="0,4,0,0" />
                         </StackLayout>
                     </Frame>
                 </StackLayout>

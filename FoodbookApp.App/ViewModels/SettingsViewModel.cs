@@ -327,6 +327,7 @@ public partial class SettingsViewModel : INotifyPropertyChanged
     // Commands for database operations
     public ICommand MigrateDatabaseCommand { get; }
     public ICommand ResetDatabaseCommand { get; }
+    public ICommand FactoryResetCommand { get; }
 
     public SettingsViewModel(LocalizationResourceManager locManager, IPreferencesService preferencesService, IThemeService themeService, IFontService fontService, IDatabaseService databaseService)
     {
@@ -418,6 +419,7 @@ public partial class SettingsViewModel : INotifyPropertyChanged
         // Initialize commands
         MigrateDatabaseCommand = new Command(async () => await MigrateDatabaseAsync(), () => CanExecuteMigration);
         ResetDatabaseCommand = new Command(async () => await ResetDatabaseAsync(), () => CanExecuteMigration);
+        FactoryResetCommand = new Command(async () => await FactoryResetAsync(), () => CanExecuteMigration);
         
         System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Initialized with color theme and colorful/wallpaper background support");
 
@@ -591,6 +593,77 @@ public partial class SettingsViewModel : INotifyPropertyChanged
             IsMigrationInProgress = false;
             
             // Clear status after 3 seconds
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(3000);
+                MainThread.BeginInvokeOnMainThread(() => MigrationStatus = string.Empty);
+            });
+        }
+    }
+
+    private async Task FactoryResetAsync()
+    {
+        try
+        {
+            var page = Application.Current?.MainPage;
+            if (page == null) return;
+
+            // Localized strings via ResourceManager to avoid relying on generated properties
+            var rm = SettingsPageResources.ResourceManager;
+            string L(string key, string fallback) => rm.GetString(key) ?? fallback;
+
+            bool confirm = await page.DisplayAlert(
+                L("FactoryResetConfirmTitle", "Ustawienia fabryczne"),
+                L("FactoryResetConfirmMessage", "Ta operacja przywróci aplikacjê do ustawieñ zerowych. Kontynuowaæ?"),
+                L("FactoryResetConfirmOk", "Tak, przywróæ"),
+                L("FactoryResetConfirmCancel", "Anuluj"));
+
+            if (!confirm) return;
+
+            IsMigrationInProgress = true;
+            MigrationStatus = L("FactoryResetInProgress", "Przywracanie ustawieñ fabrycznych...");
+
+            _preferencesService.ResetAllToDefaults();
+            var dbOk = await _databaseService.ResetDatabaseAsync();
+
+            if (dbOk)
+            {
+                MigrationStatus = L("FactoryResetDone", "Ustawienia fabryczne przywrócone");
+                await page.DisplayAlert(
+                    L("FactoryResetSuccessTitle", "Sukces"),
+                    L("FactoryResetSuccessMessage", "Przywrócono ustawienia fabryczne. Aplikacja zostanie zamkniêta. Uruchom ponownie, aby rozpocz¹æ kreator pocz¹tkowy."),
+                    "OK");
+
+                Application.Current?.Quit();
+            }
+            else
+            {
+                MigrationStatus = L("FactoryResetFailedShort", "Ustawienia fabryczne nieudane");
+                await page.DisplayAlert(
+                    L("FactoryResetFailedTitle", "B³¹d"),
+                    L("FactoryResetFailedMessage", "Nie uda³o siê przywróciæ ustawieñ fabrycznych. SprawdŸ logi aplikacji."),
+                    "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Factory reset error: {ex.Message}");
+            var rm = SettingsPageResources.ResourceManager;
+            string L(string key, string fallback) => rm.GetString(key) ?? fallback;
+
+            MigrationStatus = L("FactoryResetErrorShort", "B³¹d przywracania ustawieñ fabrycznych");
+            var page = Application.Current?.MainPage;
+            if (page != null)
+            {
+                await page.DisplayAlert(
+                    L("FactoryResetErrorTitle", "B³¹d"),
+                    string.Format(L("FactoryResetErrorMessage", "Wyst¹pi³ b³¹d podczas przywracania ustawieñ fabrycznych: {0}"), ex.Message),
+                    "OK");
+            }
+        }
+        finally
+        {
+            IsMigrationInProgress = false;
             _ = Task.Run(async () =>
             {
                 await Task.Delay(3000);

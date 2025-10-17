@@ -6,19 +6,19 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Title" xml:space="preserve"><value>Ajustes</value></data>
   <data name="HeaderTitle" xml:space="preserve"><value>Ajustes</value></data>
-  <data name="HeaderSubtitle" xml:space="preserve"><value>Personaliza tu aplicacion</value></data>
-  <data name="ColorThemeTitle" xml:space="preserve"><value>Tema de Color</value></data>
+  <data name="HeaderSubtitle" xml:space="preserve"><value>Personaliza tu aplicación</value></data>
+  <data name="ColorThemeTitle" xml:space="preserve"><value>Tema de color</value></data>
   <data name="ColorThemeDescription" xml:space="preserve"><value>Paleta de la app</value></data>
   <data name="ColorfulBackgroundOption" xml:space="preserve"><value>Fondo</value></data>
+  <data name="WallpaperBackgroundOption" xml:space="preserve"><value>Papel tapiz</value></data>
   <data name="ColorThemeDefault" xml:space="preserve"><value>Predeterminado</value></data>
   <data name="ColorThemeNature" xml:space="preserve"><value>Naturaleza</value></data>
-  <data name="ColorThemeWarm" xml:space="preserve"><value>Calido</value></data>
+  <data name="ColorThemeWarm" xml:space="preserve"><value>Cálido</value></data>
   <data name="ColorThemeVibrant" xml:space="preserve"><value>Vibrante</value></data>
   <data name="ColorThemeMonochrome" xml:space="preserve"><value>Monocromo</value></data>
   <data name="ColorThemeNavy" xml:space="preserve"><value>Marino</value></data>
-  <data name="ColorThemeAutumn" xml:space="preserve"><value>Otono</value></data>
-  <data name="ColorThemeMint" xml:space="preserve"><value>Mentol</value></data>
-  <!-- Nuevos nombres de temas -->
+  <data name="ColorThemeAutumn" xml:space="preserve"><value>Otoño</value></data>
+  <data name="ColorThemeMint" xml:space="preserve"><value>Menta</value></data>
   <data name="ColorThemeForest" xml:space="preserve"><value>Bosque</value></data>
   <data name="ColorThemeSunset" xml:space="preserve"><value>Atardecer</value></data>
   <data name="ColorThemeBubblegum" xml:space="preserve"><value>Chicle</value></data>
@@ -30,37 +30,59 @@
   <data name="ThemeSystem" xml:space="preserve"><value>Sistema</value></data>
   <data name="LanguageTitle" xml:space="preserve"><value>Idioma</value></data>
   <data name="LanguageDescription" xml:space="preserve"><value>Idioma de la interfaz</value></data>
-  <data name="LanguageEnglish" xml:space="preserve"><value>Ingles</value></data>
+  <data name="LanguageEnglish" xml:space="preserve"><value>Inglés</value></data>
   <data name="LanguagePolish" xml:space="preserve"><value>Polaco</value></data>
-  <data name="FontFamilyTitle" xml:space="preserve"><value>Tipografia</value></data>
+  <data name="FontFamilyTitle" xml:space="preserve"><value>Tipografía</value></data>
   <data name="FontFamilyDescription" xml:space="preserve"><value>Tipo de letra</value></data>
   <data name="FontFamilyDefault" xml:space="preserve"><value>Predeterminada</value></data>
   <data name="FontFamilySansSerif" xml:space="preserve"><value>Sans-serif</value></data>
   <data name="FontFamilySerif" xml:space="preserve"><value>Serif</value></data>
   <data name="FontFamilyMonospace" xml:space="preserve"><value>Monoespaciada</value></data>
-  <data name="FontSizeTitle" xml:space="preserve"><value>Tamano de Fuente</value></data>
-  <data name="FontSizeDescription" xml:space="preserve"><value>Tamano del texto</value></data>
-  <data name="FontSizeSmall" xml:space="preserve"><value>Pequena</value></data>
+  <data name="FontSizeTitle" xml:space="preserve"><value>Tamaño de fuente</value></data>
+  <data name="FontSizeDescription" xml:space="preserve"><value>Tamaño del texto</value></data>
+  <data name="FontSizeSmall" xml:space="preserve"><value>Pequeña</value></data>
   <data name="FontSizeDefault" xml:space="preserve"><value>Normal</value></data>
   <data name="FontSizeLarge" xml:space="preserve"><value>Grande</value></data>
   <data name="FontSizeExtraLarge" xml:space="preserve"><value>Muy grande</value></data>
-  <data name="VersionInfoTitle" xml:space="preserve"><value>Informacion de version</value></data>
-  <data name="VersionNumber" xml:space="preserve"><value>Version 1.0</value></data>
+  <data name="VersionInfoTitle" xml:space="preserve"><value>Información de versión</value></data>
+  <data name="VersionNumber" xml:space="preserve"><value>Versión 1.0</value></data>
   <data name="AuthorLabel" xml:space="preserve"><value>Autor: Przemyslaw Przybyszewski</value></data>
   <data name="RightsLabel" xml:space="preserve"><value>Todos los derechos reservados 2025</value></data>
   <data name="AppName" xml:space="preserve"><value>FoodBook App</value></data>
   <data name="DataExportTitle" xml:space="preserve"><value>Exportar datos</value></data>
   <data name="DataExportDescription" xml:space="preserve"><value>Guardar recetas y planes</value></data>
   <data name="ComingSoon" xml:space="preserve"><value>Pronto</value></data>
-  <data name="DatabaseMigrationTitle" xml:space="preserve"><value>Migracion de Base de Datos</value></data>
-  <data name="DatabaseMigrationDescription" xml:space="preserve"><value>Actualizar estructura de base de datos</value></data>
-  <data name="DatabaseMigrationButton" xml:space="preserve"><value>Ejecutar Migracion</value></data>
-  <data name="DatabaseResetTitle" xml:space="preserve"><value>Restablecer Base de Datos</value></data>
-  <data name="DatabaseResetDescription" xml:space="preserve"><value>Eliminar todos los datos</value></data>
+  <data name="DatabaseMigrationTitle" xml:space="preserve"><value>Migración de base de datos</value></data>
+  <data name="DatabaseMigrationDescription" xml:space="preserve"><value>Actualizar estructura a la última versión</value></data>
+  <data name="DatabaseMigrationButton" xml:space="preserve"><value>Ejecutar migración</value></data>
+  <data name="DatabaseResetTitle" xml:space="preserve"><value>Restablecer base de datos</value></data>
+  <data name="DatabaseResetDescription" xml:space="preserve"><value>⚠️ Eliminar todos los datos y restaurar valores predeterminados</value></data>
   <data name="DatabaseResetButton" xml:space="preserve"><value>Restablecer</value></data>
-  <data name="DatabaseResetWarning" xml:space="preserve"><value>Operacion irreversible!</value></data>
+  <data name="DatabaseResetWarning" xml:space="preserve"><value>¡Operación irreversible!</value></data>
   <!-- Tabs -->
   <data name="TabLanguage" xml:space="preserve"><value>Idioma</value></data>
   <data name="TabAppearance" xml:space="preserve"><value>Apariencia</value></data>
   <data name="TabData" xml:space="preserve"><value>Datos</value></data>
+
+  <!-- NUEVO: Restablecimiento de fábrica -->
+  <data name="FactoryResetTitle" xml:space="preserve"><value>Restablecimiento de fábrica</value></data>
+  <data name="FactoryResetDescription" xml:space="preserve"><value>Restaura la app al estado inicial: elimina la base de datos y todas las preferencias. El asistente de inicio se ejecutará tras reiniciar.</value></data>
+  <data name="FactoryResetButton" xml:space="preserve"><value>Restaurar valores de fábrica</value></data>
+  <data name="FactoryResetWarning" xml:space="preserve"><value>Operación irreversible. La app se cerrará tras el restablecimiento.</value></data>
+  <data name="FactoryResetConfirmTitle" xml:space="preserve"><value>Restablecimiento de fábrica</value></data>
+  <data name="FactoryResetConfirmMessage" xml:space="preserve"><value>Esto restablecerá la app: se eliminarán todos los datos de la base, etiquetas, carpetas y preferencias. El asistente de inicio se ejecutará tras reiniciar. ¿Continuar?</value></data>
+  <data name="FactoryResetConfirmOk" xml:space="preserve"><value>Sí, restablecer</value></data>
+  <data name="FactoryResetConfirmCancel" xml:space="preserve"><value>Cancelar</value></data>
+  <data name="FactoryResetSuccessTitle" xml:space="preserve"><value>Éxito</value></data>
+  <data name="FactoryResetSuccessMessage" xml:space="preserve"><value>Se han restaurado los valores de fábrica. La app se cerrará. Iníciala de nuevo para abrir el asistente.</value></data>
+  <data name="FactoryResetErrorTitle" xml:space="preserve"><value>Error</value></data>
+  <data name="FactoryResetErrorMessage" xml:space="preserve"><value>Se produjo un error al restaurar valores de fábrica: {0}</value></data>
+  <data name="FactoryResetFailedTitle" xml:space="preserve"><value>Error</value></data>
+  <data name="FactoryResetFailedMessage" xml:space="preserve"><value>No se pudo restablecer a valores de fábrica. Revisa los registros.</value></data>
+
+  <!-- Short status strings for VM -->
+  <data name="FactoryResetInProgress" xml:space="preserve"><value>Restaurando valores de fábrica...</value></data>
+  <data name="FactoryResetDone" xml:space="preserve"><value>Valores de fábrica restaurados</value></data>
+  <data name="FactoryResetFailedShort" xml:space="preserve"><value>Error al restablecer</value></data>
+  <data name="FactoryResetErrorShort" xml:space="preserve"><value>Error de restablecimiento</value></data>
 </root>
