@@ -7,6 +7,8 @@ using Foodbook.Models;
 using Microsoft.Maui.Controls;
 using Foodbook.ViewModels; // for SettingsViewModel
 using CommunityToolkit.Maui.Extensions; // for ShowPopup extension
+using Foodbook.Views; // for AddRecipePage
+using CommunityToolkit.Maui.Core;
 
 namespace Foodbook.Views.Components;
 
@@ -22,7 +24,16 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
     // NEW: sorting and label filtering state
     private SortOrder _sortOrder = SortOrder.Asc;
     private readonly HashSet<int> _selectedLabelIds = new();
+
+    // Track if we're in edit mode to prevent unnecessary refreshes
+    private bool _isEditingRecipe = false;
     
+    // Simple flag to prevent tap after long press
+    private volatile bool _suppressNextTap;
+    
+    // Track which item triggered long press
+    private FolderPickerItem? _longPressedItem;
+
     public static readonly BindableProperty TitleProperty = 
         BindableProperty.Create(nameof(Title), typeof(string), typeof(FolderAwarePickerPopup), "Select Recipe");
 
@@ -65,6 +76,7 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
     public ICommand RefreshCommand { get; }
     public ICommand BackCommand { get; }
     public ICommand ClearSearchCommand { get; }
+    public ICommand LongPressCommand { get; }
 
     public Task<object?> ResultTask => _tcs.Task;
 
@@ -81,10 +93,141 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
         RefreshCommand = new Command(async () => await RefreshDataAsync());
         BackCommand = new Command(GoBack);
         ClearSearchCommand = new Command(() => { SearchText = string.Empty; });
+        LongPressCommand = new Command<FolderPickerItem>(async (item) => 
+        {
+            System.Diagnostics.Debug.WriteLine($"============ LONG PRESS COMMAND EXECUTED ============");
+            System.Diagnostics.Debug.WriteLine($"Item: {item?.DisplayName}, Type: {item?.ItemType}");
+            
+            // Mark that long press happened - this will suppress the tap command
+            _suppressNextTap = true;
+            _longPressedItem = item;
+            
+            // Add haptic feedback for long press
+            try
+            {
+#if ANDROID || IOS
+                Microsoft.Maui.Devices.HapticFeedback.Perform(Microsoft.Maui.Devices.HapticFeedbackType.LongPress);
+#endif
+            }
+            catch { /* Haptic not supported */ }
+            
+            await OnItemLongPressedAsync(item);
+        });
+        
+        System.Diagnostics.Debug.WriteLine($"[FolderAwarePickerPopup] Constructor - Using command-based long press detection");
         
         InitializeComponent();
         
         LoadCurrentFolderContents();
+    }
+
+    // NEW: Command-based long press handling
+    private async Task OnItemLongPressedAsync(FolderPickerItem? item)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"[FolderAwarePickerPopup] Long press detected on item: {item?.DisplayName}");
+            
+            if (item == null || item.ItemType != FolderPickerItemType.Recipe)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FolderAwarePickerPopup] Item is not a recipe, ignoring. ItemType: {item?.ItemType}");
+                _suppressNextTap = false; // Reset flag if not a recipe
+                return;
+            }
+
+            if (item.Data is not Recipe recipe)
+            {
+                System.Diagnostics.Debug.WriteLine("[FolderAwarePickerPopup] Item data is not a Recipe");
+                _suppressNextTap = false;
+                return;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[FolderAwarePickerPopup] Opening edit page for recipe: {recipe.Name} (ID: {recipe.Id})");
+
+            // Set flag to indicate we're editing
+            _isEditingRecipe = true;
+
+            // Resolve edit page from DI
+            var editPage = FoodbookApp.MauiProgram.ServiceProvider?.GetService<AddRecipePage>();
+            if (editPage == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[FolderAwarePickerPopup] Failed to resolve AddRecipePage from DI");
+                _isEditingRecipe = false;
+                _suppressNextTap = false;
+                return;
+            }
+
+            // Pass parameters
+            editPage.RecipeId = recipe.Id;
+            if (_currentFolder != null)
+                editPage.FolderId = _currentFolder.Id;
+
+            void OnEditPageDisappearing(object? s, EventArgs ev)
+            {
+                try
+                {
+                    if (s is AddRecipePage p)
+                        p.Disappearing -= OnEditPageDisappearing;
+                    
+                    MainThread.BeginInvokeOnMainThread(async () =>
+                    {
+                        System.Diagnostics.Debug.WriteLine("[FolderAwarePickerPopup] Edit page closed, refreshing popup data");
+                        // Only refresh popup's internal data, don't trigger full parent refresh
+                        await RefreshPopupDataOnlyAsync();
+                        
+                        // Delay resetting flags to avoid immediate tap
+                        await Task.Delay(500);
+                        _suppressNextTap = false;
+                        _isEditingRecipe = false;
+                    });
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[FolderAwarePickerPopup] Refresh after edit failed: {ex.Message}");
+                    _isEditingRecipe = false;
+                    _suppressNextTap = false;
+                }
+            }
+            editPage.Disappearing += OnEditPageDisappearing;
+
+            var nav = Application.Current?.MainPage?.Navigation;
+            if (nav != null)
+            {
+                await nav.PushModalAsync(editPage);
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[FolderAwarePickerPopup] Navigation is null");
+                _isEditingRecipe = false;
+                _suppressNextTap = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[FolderAwarePickerPopup] OnItemLongPressedAsync error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[FolderAwarePickerPopup] Stack trace: {ex.StackTrace}");
+            _isEditingRecipe = false;
+            _suppressNextTap = false;
+        }
+    }
+
+    // Event handler: Called when touch gesture ends
+    private void OnItemTouchCompleted(object? sender, EventArgs e)
+    {
+        try
+        {
+            // If long press was NOT triggered, allow normal tap behavior
+            if (_longPressedItem != null)
+            {
+                System.Diagnostics.Debug.WriteLine("[FolderAwarePickerPopup] Touch completed but long press was active - resetting");
+                _longPressedItem = null;
+                // Keep _suppressNextTap true for a moment to block the tap
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[FolderAwarePickerPopup] OnItemTouchCompleted error: {ex.Message}");
+        }
     }
 
     private async void CloseWithResult(object? result)
@@ -182,7 +325,18 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
             FontAttributes = FontAttributes.None,
             ShowArrow = false,
             Data = recipe,
-            TapAction = () => CloseWithResult(recipe)
+            TapAction = () => 
+            { 
+                if (!_suppressNextTap)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[FolderAwarePickerPopup] Tap action for recipe: {recipe.Name}");
+                    CloseWithResult(recipe);
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[FolderAwarePickerPopup] Tap suppressed (after long press)");
+                }
+            }
         };
     }
 
@@ -242,6 +396,16 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
 
     private void OnItemTapped(FolderPickerItem item)
     {
+        // Check if this tap is after a long press
+        if (_suppressNextTap)
+        {
+            System.Diagnostics.Debug.WriteLine("[FolderAwarePickerPopup] Tap ignored (suppressed after long press)");
+            // Reset the flag after short delay
+            Task.Delay(300).ContinueWith(_ => _suppressNextTap = false);
+            return;
+        }
+        
+        System.Diagnostics.Debug.WriteLine($"[FolderAwarePickerPopup] Tap command for item: {item?.DisplayName}");
         item?.TapAction?.Invoke();
     }
 
@@ -275,6 +439,13 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
 
     private async Task RefreshDataAsync()
     {
+        // Don't refresh if we're just editing a recipe
+        if (_isEditingRecipe)
+        {
+            System.Diagnostics.Debug.WriteLine("[FolderAwarePickerPopup] Skipping full refresh - editing recipe");
+            return;
+        }
+
         if (_dataRefreshFunc == null) return;
 
         try
@@ -295,6 +466,42 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
         {
             // Handle refresh error - could show toast or log
             System.Diagnostics.Debug.WriteLine($"Error refreshing data: {ex.Message}");
+        }
+    }
+
+    // New method: Refresh only popup's internal data without triggering parent refresh
+    private async Task RefreshPopupDataOnlyAsync()
+    {
+        if (_dataRefreshFunc == null)
+        {
+            // If no refresh function provided, just reload current view with existing data
+            LoadCurrentFolderContents();
+            return;
+        }
+
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[FolderAwarePickerPopup] Refreshing popup data only (lightweight)");
+            
+            var (recipes, folders) = await _dataRefreshFunc();
+            
+            // Update internal data
+            _allRecipes.Clear();
+            _allRecipes.AddRange(recipes);
+            
+            _allFolders.Clear();
+            _allFolders.AddRange(folders);
+            
+            // Reload current folder contents with fresh data
+            LoadCurrentFolderContents();
+            
+            System.Diagnostics.Debug.WriteLine("[FolderAwarePickerPopup] Popup data refreshed successfully");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[FolderAwarePickerPopup] Error refreshing popup data: {ex.Message}");
+            // Fallback to reloading with existing data
+            LoadCurrentFolderContents();
         }
     }
 
