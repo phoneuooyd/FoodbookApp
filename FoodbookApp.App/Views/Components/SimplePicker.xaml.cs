@@ -93,6 +93,14 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
         InitializeComponent();
     }
 
+    /// <summary>
+    /// Refresh the DisplayText - useful when culture/language changes
+    /// </summary>
+    public void RefreshDisplayText()
+    {
+        OnPropertyChanged(nameof(DisplayText));
+    }
+
     private static void OnSelectedItemChanged(BindableObject bindable, object oldValue, object newValue)
     {
         if (bindable is SimplePicker picker)

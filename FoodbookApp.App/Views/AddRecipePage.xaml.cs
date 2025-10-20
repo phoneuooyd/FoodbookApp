@@ -36,6 +36,7 @@ namespace Foodbook.Views
                 base.OnAppearing();
                 _themeHelper.Initialize();
                 _themeHelper.ThemeChanged += OnThemeChanged;
+                _themeHelper.CultureChanged += OnCultureChanged;
 
                 if (!_hasEverLoaded)
                 {
@@ -84,9 +85,10 @@ namespace Foodbook.Views
         {
             base.OnDisappearing();
             _themeHelper.ThemeChanged -= OnThemeChanged;
+            _themeHelper.CultureChanged -= OnCultureChanged;
             _themeHelper.Cleanup();
             
-            System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Disappearing - preserving current state");
+            System.Diagnostics.Debug.WriteLine("? AddRecipePage: Disappearing - preserving current state");
         }
 
         private void OnThemeChanged(object? sender, EventArgs e)
@@ -105,6 +107,91 @@ namespace Foodbook.Views
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[AddRecipePage] OnThemeChanged error: {ex.Message}");
+            }
+        }
+
+        private void OnCultureChanged(object? sender, EventArgs e)
+        {
+            try
+            {
+                if (ViewModel == null) return;
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    System.Diagnostics.Debug.WriteLine("[AddRecipePage] Culture changed - refreshing unit pickers");
+                    
+                    // Force refresh of all SimplePicker controls by triggering property changes
+                    // This will cause the DisplayText to be recalculated with the new culture
+                    RefreshUnitPickers();
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] OnCultureChanged error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Refresh all unit pickers by finding SimplePicker controls in the visual tree
+        /// </summary>
+        private void RefreshUnitPickers()
+        {
+            try
+            {
+                // Find all SimplePicker controls and trigger their DisplayText refresh
+                var pickers = FindVisualChildren<SimplePicker>(this);
+                foreach (var picker in pickers)
+                {
+                    picker.RefreshDisplayText();
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] Refreshed {pickers.Count()} unit pickers");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] Error refreshing unit pickers: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Helper method to find all visual children of a specific type
+        /// </summary>
+        private static IEnumerable<T> FindVisualChildren<T>(Element element) where T : Element
+        {
+            if (element is T match)
+                yield return match;
+
+            // Special handling for TabComponent - search all tabs, not just the visible one
+            if (element is TabComponent tabComponent)
+            {
+                foreach (var tab in tabComponent.Tabs)
+                {
+                    if (tab.Content != null)
+                    {
+                        foreach (var descendant in FindVisualChildren<T>(tab.Content))
+                            yield return descendant;
+                    }
+                }
+            }
+            else if (element is Layout layout)
+            {
+                foreach (var child in layout.Children)
+                {
+                    if (child is Element childElement)
+                    {
+                        foreach (var descendant in FindVisualChildren<T>(childElement))
+                            yield return descendant;
+                    }
+                }
+            }
+            else if (element is ContentView contentView && contentView.Content != null)
+            {
+                foreach (var descendant in FindVisualChildren<T>(contentView.Content))
+                    yield return descendant;
+            }
+            else if (element is ScrollView scrollView && scrollView.Content != null)
+            {
+                foreach (var descendant in FindVisualChildren<T>(scrollView.Content))
+                    yield return descendant;
             }
         }
 
@@ -441,7 +528,8 @@ namespace Foodbook.Views
                         selected?.Remove(tappedLabel);
                         // Remove from ViewModel selection
                         var vmItem = ViewModel.SelectedLabels.FirstOrDefault(l => l.Id == tappedLabel.Id);
-                        if (vmItem != null) ViewModel.SelectedLabels.Remove(vmItem);
+                        if (vmItem != null) 
+                            ViewModel.SelectedLabels.Remove(vmItem);
                     }
                     else
                     {
