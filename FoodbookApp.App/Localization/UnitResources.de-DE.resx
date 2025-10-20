@@ -6,8 +6,8 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Gram" xml:space="preserve"><value>Gramm</value></data>
   <data name="Milliliter" xml:space="preserve"><value>Milliliter</value></data>
-  <data name="Piece" xml:space="preserve"><value>Stuck</value></data>
+  <data name="Piece" xml:space="preserve"><value>Stück</value></data>
   <data name="GramShort" xml:space="preserve"><value>g</value></data>
   <data name="MilliliterShort" xml:space="preserve"><value>ml</value></data>
-  <data name="PieceShort" xml:space="preserve"><value>Stk</value></data>
+  <data name="PieceShort" xml:space="preserve"><value>St.</value></data>
 </root>

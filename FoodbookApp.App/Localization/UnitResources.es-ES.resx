@@ -9,5 +9,5 @@
   <data name="Piece" xml:space="preserve"><value>Unidad</value></data>
   <data name="GramShort" xml:space="preserve"><value>g</value></data>
   <data name="MilliliterShort" xml:space="preserve"><value>ml</value></data>
-  <data name="PieceShort" xml:space="preserve"><value>uds</value></data>
+  <data name="PieceShort" xml:space="preserve"><value>ud.</value></data>
 </root>
