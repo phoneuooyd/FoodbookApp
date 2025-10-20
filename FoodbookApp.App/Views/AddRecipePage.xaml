@@ -263,15 +263,11 @@
 
                 <!-- Save button (consistent with IngredientFormPage) -->
                 <StackLayout Spacing="10" Margin="0,20,0,0">
-                    <Button Command="{Binding SaveRecipeCommand}"
-                            BackgroundColor="{DynamicResource Primary}"
-                            TextColor="White"
-                            HeightRequest="50"
-                            FontSize="16"
-                            FontAttributes="Bold"
-                            CornerRadius="8"
-                            HorizontalOptions="FillAndExpand"
-                            Text="{Binding SaveButtonText}" />
+                    <Button Command="{Binding SaveRecipeCommand}" BackgroundColor="{DynamicResource Primary}" TextColor="White" HeightRequest="50" FontSize="16" FontAttributes="Bold" CornerRadius="8" HorizontalOptions="FillAndExpand">
+                        <Button.ImageSource>
+                            <FileImageSource File="save.png" />
+                        </Button.ImageSource>
+                    </Button>
                 </StackLayout>
             </VerticalStackLayout>
         </ScrollView>
