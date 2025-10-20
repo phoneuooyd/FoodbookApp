@@ -193,7 +193,10 @@
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                     </CollectionView>
-                    <Button Command="{Binding AddIngredientCommand}" BackgroundColor="{DynamicResource Primary}" HeightRequest="45" Text="{loc:Translate Resource=AddRecipePageResources, Key=AddIngredient}" />
+                    <Button Command="{Binding AddIngredientCommand}" 
+                            StyleClass="Secondary"
+                            HeightRequest="45" 
+                            Text="{loc:Translate Resource=AddRecipePageResources, Key=AddIngredient}" />
                 </StackLayout>
 
                 <!-- Nutrition Tab -->

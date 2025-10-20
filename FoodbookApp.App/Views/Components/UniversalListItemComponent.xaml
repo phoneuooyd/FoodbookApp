@@ -4,11 +4,6 @@
              x:Class="Foodbook.Views.Components.UniversalListItemComponent"
              x:Name="ItemComponent">
 
-    <ContentView.GestureRecognizers>
-        <TapGestureRecognizer Command="{Binding EditCommand, Source={x:Reference ItemComponent}}"
-                              CommandParameter="{Binding .}" />
-    </ContentView.GestureRecognizers>
-
     <ContentView Style="{StaticResource ListItemContainer}">
         <!-- Frame as the outer card; ribbon moved INSIDE and flush with the card's left edge -->
         <Frame Style="{StaticResource ListItemFrame}" Padding="0">

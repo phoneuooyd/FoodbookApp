@@ -82,7 +82,7 @@
                         <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=VerifyLabel}" FontSize="14" FontAttributes="Bold" Margin="0,0,0,8" />
                         <Button Text="{loc:Translate Resource=IngredientFormPageResources, Key=VerifyButton}"
                                 Command="{Binding VerifyNutritionCommand}"
-                                BackgroundColor="{DynamicResource Primary}" TextColor="White"
+                                StyleClass="Secondary"
                                 FontSize="14" FontAttributes="Bold" HeightRequest="45" CornerRadius="8" Margin="0,0,0,8"
                                 HorizontalOptions="FillAndExpand" IsEnabled="{Binding IsVerifying, Converter={StaticResource InvertedBoolConverter}}" />
                         <Label Text="{Binding VerificationStatus}" FontSize="12" HorizontalTextAlignment="Center" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" IsVisible="{Binding VerificationStatus, Converter={StaticResource StringToBoolConverter}}" Margin="0,0,0,8" />
