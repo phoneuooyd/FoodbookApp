@@ -98,8 +98,16 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
             _isPopupOpen = true;
             ((Command)OpenSelectionDialogCommand).ChangeCanExecute();
 
-            // Create and show the popup
-            var popup = new FolderAwarePickerPopup(_allRecipes, _allFolders);
+            // Create refresh function that reloads data from services
+            Func<Task<(List<Recipe> recipes, List<Folder> folders)>> refreshFunc = async () =>
+            {
+                var recipes = await _recipeService.GetRecipesAsync();
+                var folders = await _folderService.GetFoldersAsync();
+                return (recipes, folders);
+            };
+
+            // Create and show the popup WITH refresh function
+            var popup = new FolderAwarePickerPopup(_allRecipes, _allFolders, refreshFunc);
             
             // Show the popup and get the result
             var page = Application.Current?.Windows.FirstOrDefault()?.Page;
@@ -132,6 +140,9 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
                 // User cleared selection or cancelled
                 // Keep current selection for cancel, clear for explicit clear
             }
+
+            // After popup closes, refresh local data to stay in sync
+            await LoadDataAsync();
         }
         catch (Exception ex)
         {
