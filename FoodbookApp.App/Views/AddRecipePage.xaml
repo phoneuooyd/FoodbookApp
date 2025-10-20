@@ -84,11 +84,10 @@
                                             <Button Grid.Column="1"
                                                     Text="+" 
                                                     Clicked="OnManageLabelsClicked"
+                                                    StyleClass="Secondary"
                                                     WidthRequest="36"
                                                     HeightRequest="36"
                                                     Padding="0"
-                                                    BackgroundColor="{DynamicResource Primary}"
-                                                    TextColor="White"
                                                     CornerRadius="18" />
                                         </Grid>
                                         <!-- Labels list -->

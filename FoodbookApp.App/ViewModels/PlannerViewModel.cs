@@ -130,6 +130,9 @@ public class PlannerViewModel : INotifyPropertyChanged
                         $"Zapisano listę zakupów ({plan.StartDate:dd.MM.yyyy} - {plan.EndDate:dd.MM.yyyy})",
                         "OK");
                     
+                    // Reset widoku po udanym zapisie
+                    Reset();
+                    
                     // Po udanym zapisie, wróć do głównego widoku
                     await Shell.Current.GoToAsync("..");
                 }

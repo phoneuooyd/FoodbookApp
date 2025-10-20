@@ -15,6 +15,8 @@
         <converters:StringToBoolConverter x:Key="StringToBoolConverter" />
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
+        <!-- Localized unit converter to show unit names from resx and respect language changes -->
+        <converters:UnitToLocalizedStringConverter x:Key="UnitToStringConverter" />
     </ContentPage.Resources>
     
     <Grid RowDefinitions="*,Auto">
@@ -44,7 +46,8 @@
                                         <StackLayout Spacing="5" Padding="12,8">
                                             <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=UnitLabel}" Style="{StaticResource FieldLabel}" />
                                             <controls:SimplePicker ItemsSource="{Binding Units}"
-                                                                   SelectedItem="{Binding SelectedUnit}" />
+                                                                   SelectedItem="{Binding SelectedUnit}"
+                                                                   ItemDisplayBinding="{Binding Converter={StaticResource UnitToStringConverter}}" />
                                         </StackLayout>
                                     </Border>
                                 </Grid>

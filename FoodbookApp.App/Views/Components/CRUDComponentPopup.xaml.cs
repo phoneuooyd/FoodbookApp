@@ -42,6 +42,7 @@ public class CRUDComponentPopup : Popup
         });
 
     private RecipeLabel? _editing;
+    private bool _isAddingNew = false; // Protection flag
 
     // UI references
     private VerticalStackLayout _listHost = null!;
@@ -49,6 +50,7 @@ public class CRUDComponentPopup : Popup
     private Picker _colorPicker = null!;
     private Button _deleteButton = null!;
     private Button _saveButton = null!;
+    private Button _addButton = null!; // Reference to add button for enabling/disabling
     private Border _detailsPanel = null!;
     private Grid _footerBar = null!;
 
@@ -90,25 +92,29 @@ public class CRUDComponentPopup : Popup
             CornerRadius = 8,
             HeightRequest = 42
         };
-        // Default (edit) style is neutral; add-mode will switch to Primary
-        _saveButton.BackgroundColor = Color.FromArgb("#E0E0E0");
-        _saveButton.SetDynamicResource(Button.TextColorProperty, "PrimaryText");
+        // In edit mode (default), use Secondary style
+        _saveButton.StyleClass = new List<string> { "Secondary" };
+        
         var cancelButton = new Button
         {
             Text = "Anuluj",
             CornerRadius = 8,
             HeightRequest = 42
         };
-        // Make cancel clearly visible with neutral, less transparent background
-        cancelButton.BackgroundColor = Color.FromArgb("#D6D6D6");
-        cancelButton.SetDynamicResource(Button.TextColorProperty, "PrimaryText");
+        // Use Secondary style for cancel button
+        cancelButton.StyleClass = new List<string> { "Secondary" };
 
-        var addButton = new Button { Text = "+", WidthRequest = 44, HeightRequest = 44, CornerRadius = 22 };
-        // Neutralize Primary background for consistency
-        addButton.BackgroundColor = Color.FromArgb("#E0E0E0");
-        addButton.SetDynamicResource(Button.TextColorProperty, "PrimaryText");
+        _addButton = new Button 
+        { 
+            Text = "+", 
+            WidthRequest = 44, 
+            HeightRequest = 44, 
+            CornerRadius = 22 
+        };
+        // Use Secondary style for add button
+        _addButton.StyleClass = new List<string> { "Secondary" };
 
-        addButton.Clicked += OnAddClicked;
+        _addButton.Clicked += OnAddClicked;
         _saveButton.Clicked += OnSaveClicked;
         _deleteButton.Clicked += OnDeleteClicked;
         cancelButton.Clicked += OnCancelClicked;
@@ -192,7 +198,7 @@ public class CRUDComponentPopup : Popup
         };
         toolbarLabel.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
         toolbar.Add(toolbarLabel,0,0);
-        toolbar.Add(addButton,1,0);
+        toolbar.Add(_addButton,1,0);
 
         // Header
         var header = new Grid
@@ -303,38 +309,43 @@ public class CRUDComponentPopup : Popup
 
     private void OnAddClicked(object? sender, EventArgs e)
     {
+        // Prevent multiple clicks when already adding
+        if (_isAddingNew)
+        {
+            System.Diagnostics.Debug.WriteLine("CRUDComponentPopup: Add already in progress, ignoring click");
+            return;
+        }
+
+        _isAddingNew = true;
+        _addButton.IsEnabled = false; // Disable the button
+        
         _editing = null;
         _nameEntry.Text = string.Empty;
         _colorPicker.SelectedIndex = -1;
         _deleteButton.IsVisible = false;
         _saveButton.Text = "Dodaj";
-        // In add mode, make the main action Primary (full button background)
-        if (Application.Current?.Resources.TryGetValue("Primary", out var primaryObj) == true && primaryObj is Color primaryColor)
-        {
-            _saveButton.BackgroundColor = primaryColor;
-        }
-        else
-        {
-            // fallback
-            _saveButton.BackgroundColor = Color.FromArgb("#FF6200");
-        }
-        _saveButton.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
-        _saveButton.SetDynamicResource(Button.TextColorProperty, "ButtonPrimaryText");
+        
+        // In add mode, use Primary style
+        _saveButton.StyleClass = new List<string> { "Primary" };
+        
         ShowDetailsPanels();
     }
 
     private void StartEdit(RecipeLabel lbl)
     {
         _editing = lbl;
+        _isAddingNew = false; // Not adding new, just editing
+        _addButton.IsEnabled = false; // Disable add button during edit
+        
         _nameEntry.Text = lbl.Name;
         var idx = _colorOptions.IndexOf(_colorOptions.FirstOrDefault(c => string.Equals(c.Hex, lbl.ColorHex, StringComparison.OrdinalIgnoreCase)) ?? _colorOptions.First());
         _colorPicker.SelectedIndex = idx;
         _deleteButton.IsVisible = true;
         _saveButton.Text = "Zapisz";
-        // In edit mode, keep neutral style
-        _saveButton.ClearValue(Button.BackgroundColorProperty);
-        _saveButton.BackgroundColor = Color.FromArgb("#E0E0E0");
-        _saveButton.SetDynamicResource(Button.TextColorProperty, "PrimaryText");
+        
+        // In edit mode, use Secondary style
+        _saveButton.StyleClass = new List<string> { "Secondary" };
+        
         ShowDetailsPanels();
     }
 
@@ -392,5 +403,7 @@ public class CRUDComponentPopup : Popup
         _detailsPanel.IsVisible = false;
         _footerBar.IsVisible = false;
         _editing = null;
+        _isAddingNew = false; // Reset flag
+        _addButton.IsEnabled = true; // Re-enable add button
     }
 }

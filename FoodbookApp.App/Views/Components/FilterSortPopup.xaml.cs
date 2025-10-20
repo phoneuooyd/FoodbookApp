@@ -108,8 +108,8 @@ public class FilterSortPopup : Popup
             }
         };
 
-        var clear = new Button { Text = "Wyczyœæ", BackgroundColor = Color.FromArgb("#E0E0E0") };
-        clear.SetDynamicResource(Button.TextColorProperty, "PrimaryText");
+        var clear = new Button { Text = "Wyczyœæ" };
+        clear.StyleClass = new List<string> { "Secondary" };
         clear.Clicked += (_, __) =>
         {
             _sortPicker.SelectedIndex = 0;
