@@ -16,113 +16,112 @@
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
     </ContentPage.Resources>
-    <Grid RowDefinitions="Auto,*">
-        <Grid Grid.Row="0" RowDefinitions="*,3" ColumnDefinitions="*,*" HeightRequest="{OnPlatform Default=60, iOS=70}" BackgroundColor="{AppThemeBinding Light=White, Dark=#2D2D30}">
-            <!-- Tab Buttons with dynamic text colors -->
-            <Button Grid.Row="0" Grid.Column="0"
-                    Text="{loc:Translate Resource=IngredientFormPageResources, Key=BasicInfoTab}"
-                    Command="{Binding SelectTabCommand}" CommandParameter="0"
-                    BackgroundColor="{Binding IsBasicInfoTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=TabBackground}"
-                    TextColor="{Binding IsBasicInfoTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=Text}"
-                    FontSize="14" FontAttributes="{Binding IsBasicInfoTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=Bold}"
-                    CornerRadius="0" BorderWidth="0" Padding="0" />
-            <Button Grid.Row="0" Grid.Column="1"
-                    Text="{loc:Translate Resource=IngredientFormPageResources, Key=NutritionTab}"
-                    Command="{Binding SelectTabCommand}" CommandParameter="1"
-                    BackgroundColor="{Binding IsNutritionTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=TabBackground}"
-                    TextColor="{Binding IsNutritionTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=Text}"
-                    FontSize="14" FontAttributes="{Binding IsNutritionTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=Bold}"
-                    CornerRadius="0" BorderWidth="0" Padding="0" />
-            <BoxView Grid.Row="1" Grid.Column="0"
-                     BackgroundColor="{Binding IsBasicInfoTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=TabBorder}"
-                     HeightRequest="3" HorizontalOptions="FillAndExpand" />
-            <BoxView Grid.Row="1" Grid.Column="1"
-                     BackgroundColor="{Binding IsNutritionTabSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=TabBorder}"
-                     HeightRequest="3" HorizontalOptions="FillAndExpand" />
-            <BoxView Grid.Row="1" Grid.ColumnSpan="2" BackgroundColor="{AppThemeBinding Light=#E1E1E1, Dark=#404040}" HeightRequest="1" HorizontalOptions="FillAndExpand" VerticalOptions="End" />
-        </Grid>
-        <ScrollView Grid.Row="1">
-            <VerticalStackLayout Padding="20" Spacing="15">
+    
+    <Grid RowDefinitions="*,Auto">
+        <controls:TabComponent Grid.Row="0" SelectedIndex="{Binding SelectedTabIndex}" SelectTabCommand="{Binding SelectTabCommand}">
+            <controls:TabComponent.Tabs>
                 <!-- Basic Info Tab -->
-                <StackLayout IsVisible="{Binding IsBasicInfoTabSelected}" Spacing="15">
-                    <Label Text="{Binding Title}" FontSize="24" FontAttributes="Bold" HorizontalOptions="Center" Margin="0,0,0,10" />
-                    <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=BasicInfoHeader}" FontSize="18" FontAttributes="Bold" Margin="0,10,0,5" />
-                    <Border Style="{StaticResource ModernBorder}">
-                        <StackLayout Spacing="5" Padding="12,8">
-                            <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=NameLabel}" Style="{StaticResource FieldLabel}" />
-                            <Entry Placeholder="{loc:Translate Resource=IngredientFormPageResources, Key=NamePlaceholder}" Text="{Binding Name}" ClearButtonVisibility="WhileEditing" Style="{StaticResource ModernEntry}" />
-                        </StackLayout>
-                    </Border>
-                    <Grid ColumnDefinitions="2*,*" ColumnSpacing="10">
-                        <Border Grid.Column="0" Style="{StaticResource ModernBorder}">
-                            <StackLayout Spacing="5" Padding="12,8">
-                                <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=QuantityLabel}" Style="{StaticResource FieldLabel}" />
-                                <Entry Placeholder="100" Keyboard="Numeric" Text="{Binding Quantity}" ClearButtonVisibility="WhileEditing" HorizontalTextAlignment="Center" Style="{StaticResource ModernEntry}" />
-                            </StackLayout>
-                        </Border>
-                        <Border Grid.Column="1" Style="{StaticResource ModernBorder}">
-                            <StackLayout Spacing="5" Padding="12,8">
-                                <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=UnitLabel}" Style="{StaticResource FieldLabel}" />
-                                <controls:SimplePicker ItemsSource="{Binding Units}"
-                                                       SelectedItem="{Binding SelectedUnit}" />
-                            </StackLayout>
-                        </Border>
-                    </Grid>
-                    <StackLayout Spacing="5" IsVisible="{Binding IsPartOfRecipe}" Margin="0,15,0,0">
-                        <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=InfoLabel}" FontSize="14" FontAttributes="Bold" />
-                        <Border BackgroundColor="{AppThemeBinding Light=#E6F4FF, Dark=#203040}" StrokeThickness="0" StrokeShape="RoundRectangle 6">
-                            <Label Padding="10" Text="{Binding RecipeInfo}" FontSize="12" HorizontalTextAlignment="Center" />
-                        </Border>
-                    </StackLayout>
-                </StackLayout>
+                <controls:TabItem Name="{loc:Translate Resource=IngredientFormPageResources, Key=BasicInfoTab}">
+                    <controls:TabItem.Content>
+                        <ScrollView>
+                            <VerticalStackLayout Padding="20" Spacing="15">
+                                <Label Text="{Binding Title}" FontSize="24" FontAttributes="Bold" HorizontalOptions="Center" Margin="0,0,0,10" />
+                                <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=BasicInfoHeader}" FontSize="18" FontAttributes="Bold" Margin="0,10,0,5" />
+                                <Border Style="{StaticResource ModernBorder}">
+                                    <StackLayout Spacing="5" Padding="12,8">
+                                        <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=NameLabel}" Style="{StaticResource FieldLabel}" />
+                                        <Entry Placeholder="{loc:Translate Resource=IngredientFormPageResources, Key=NamePlaceholder}" Text="{Binding Name}" ClearButtonVisibility="WhileEditing" Style="{StaticResource ModernEntry}" />
+                                    </StackLayout>
+                                </Border>
+                                <Grid ColumnDefinitions="2*,*" ColumnSpacing="10">
+                                    <Border Grid.Column="0" Style="{StaticResource ModernBorder}">
+                                        <StackLayout Spacing="5" Padding="12,8">
+                                            <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=QuantityLabel}" Style="{StaticResource FieldLabel}" />
+                                            <Entry Placeholder="100" Keyboard="Numeric" Text="{Binding Quantity}" ClearButtonVisibility="WhileEditing" HorizontalTextAlignment="Center" Style="{StaticResource ModernEntry}" />
+                                        </StackLayout>
+                                    </Border>
+                                    <Border Grid.Column="1" Style="{StaticResource ModernBorder}">
+                                        <StackLayout Spacing="5" Padding="12,8">
+                                            <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=UnitLabel}" Style="{StaticResource FieldLabel}" />
+                                            <controls:SimplePicker ItemsSource="{Binding Units}"
+                                                                   SelectedItem="{Binding SelectedUnit}" />
+                                        </StackLayout>
+                                    </Border>
+                                </Grid>
+                                <StackLayout Spacing="5" IsVisible="{Binding IsPartOfRecipe}" Margin="0,15,0,0">
+                                    <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=InfoLabel}" FontSize="14" FontAttributes="Bold" />
+                                    <Border BackgroundColor="{AppThemeBinding Light=#E6F4FF, Dark=#203040}" StrokeThickness="0" StrokeShape="RoundRectangle 6">
+                                        <Label Padding="10" Text="{Binding RecipeInfo}" FontSize="12" HorizontalTextAlignment="Center" />
+                                    </Border>
+                                </StackLayout>
+                            </VerticalStackLayout>
+                        </ScrollView>
+                    </controls:TabItem.Content>
+                </controls:TabItem>
+                
                 <!-- Nutrition Tab -->
-                <StackLayout IsVisible="{Binding IsNutritionTabSelected}" Spacing="15">
-                    <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=NutritionHeader}" FontSize="18" FontAttributes="Bold" Margin="0,10,0,5" />
-                    <StackLayout Spacing="8">
-                        <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=VerifyLabel}" FontSize="14" FontAttributes="Bold" Margin="0,0,0,8" />
-                        <Button Text="{loc:Translate Resource=IngredientFormPageResources, Key=VerifyButton}"
-                                Command="{Binding VerifyNutritionCommand}"
-                                StyleClass="Secondary"
-                                FontSize="14" FontAttributes="Bold" HeightRequest="45" CornerRadius="8" Margin="0,0,0,8"
-                                HorizontalOptions="FillAndExpand" IsEnabled="{Binding IsVerifying, Converter={StaticResource InvertedBoolConverter}}" />
-                        <Label Text="{Binding VerificationStatus}" FontSize="12" HorizontalTextAlignment="Center" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" IsVisible="{Binding VerificationStatus, Converter={StaticResource StringToBoolConverter}}" Margin="0,0,0,8" />
-                    </StackLayout>
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
-                        <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource ModernBorder}">
-                            <StackLayout Spacing="5" Padding="12,8">
-                                <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=CaloriesLabel}" Style="{StaticResource FieldLabel}" />
-                                <Entry Placeholder="0.0" Keyboard="Numeric" Text="{Binding Calories}" ClearButtonVisibility="WhileEditing" HorizontalTextAlignment="Center" Style="{StaticResource ModernEntry}" />
-                            </StackLayout>
-                        </Border>
-                        <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource ModernBorder}">
-                            <StackLayout Spacing="5" Padding="12,8">
-                                <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=ProteinLabel}" Style="{StaticResource FieldLabel}" />
-                                <Entry Placeholder="0.0" Keyboard="Numeric" Text="{Binding Protein}" ClearButtonVisibility="WhileEditing" HorizontalTextAlignment="Center" Style="{StaticResource ModernEntry}" />
-                            </StackLayout>
-                        </Border>
-                        <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource ModernBorder}">
-                            <StackLayout Spacing="5" Padding="12,8">
-                                <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=FatLabel}" Style="{StaticResource FieldLabel}" />
-                                <Entry Placeholder="0.0" Keyboard="Numeric" Text="{Binding Fat}" ClearButtonVisibility="WhileEditing" HorizontalTextAlignment="Center" Style="{StaticResource ModernEntry}" />
-                            </StackLayout>
-                        </Border>
-                        <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource ModernBorder}">
-                            <StackLayout Spacing="5" Padding="12,8">
-                                <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=CarbsLabel}" Style="{StaticResource FieldLabel}" />
-                                <Entry Placeholder="0.0" Keyboard="Numeric" Text="{Binding Carbs}" ClearButtonVisibility="WhileEditing" HorizontalTextAlignment="Center" Style="{StaticResource ModernEntry}" />
-                            </StackLayout>
-                        </Border>
-                    </Grid>
-                </StackLayout>
-                <StackLayout Spacing="10" Margin="0,20,0,0">
-                    <Button Command="{Binding SaveCommand}" BackgroundColor="{DynamicResource Primary}" TextColor="White" HeightRequest="50" FontSize="16" FontAttributes="Bold" CornerRadius="8" HorizontalOptions="FillAndExpand">
-                        <Button.ImageSource>
-                            <FileImageSource File="save.png" />
-                        </Button.ImageSource>
-                    </Button>
-                </StackLayout>
-                <Label Text="{Binding ValidationMessage}" FontSize="12" IsVisible="{Binding HasValidationError}" HorizontalTextAlignment="Center" TextColor="Red" Margin="0,10,0,0" />
-            </VerticalStackLayout>
-        </ScrollView>
+                <controls:TabItem Name="{loc:Translate Resource=IngredientFormPageResources, Key=NutritionTab}">
+                    <controls:TabItem.Content>
+                        <ScrollView>
+                            <VerticalStackLayout Padding="20" Spacing="15">
+                                <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=NutritionHeader}" FontSize="18" FontAttributes="Bold" Margin="0,10,0,5" />
+                                <StackLayout Spacing="8">
+                                    <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=VerifyLabel}" FontSize="14" FontAttributes="Bold" Margin="0,0,0,8" />
+                                    <Button Text="{loc:Translate Resource=IngredientFormPageResources, Key=VerifyButton}"
+                                            Command="{Binding VerifyNutritionCommand}"
+                                            StyleClass="Secondary"
+                                            FontSize="14" FontAttributes="Bold" HeightRequest="45" CornerRadius="8" Margin="0,0,0,8"
+                                            HorizontalOptions="FillAndExpand" IsEnabled="{Binding IsVerifying, Converter={StaticResource InvertedBoolConverter}}" />
+                                    <Label Text="{Binding VerificationStatus}" FontSize="12" HorizontalTextAlignment="Center" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" IsVisible="{Binding VerificationStatus, Converter={StaticResource StringToBoolConverter}}" Margin="0,0,0,8" />
+                                </StackLayout>
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
+                                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource ModernBorder}">
+                                        <StackLayout Spacing="5" Padding="12,8">
+                                            <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=CaloriesLabel}" Style="{StaticResource FieldLabel}" />
+                                            <Entry Placeholder="0.0" Keyboard="Numeric" Text="{Binding Calories}" ClearButtonVisibility="WhileEditing" HorizontalTextAlignment="Center" Style="{StaticResource ModernEntry}" />
+                                        </StackLayout>
+                                    </Border>
+                                    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource ModernBorder}">
+                                        <StackLayout Spacing="5" Padding="12,8">
+                                            <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=ProteinLabel}" Style="{StaticResource FieldLabel}" />
+                                            <Entry Placeholder="0.0" Keyboard="Numeric" Text="{Binding Protein}" ClearButtonVisibility="WhileEditing" HorizontalTextAlignment="Center" Style="{StaticResource ModernEntry}" />
+                                        </StackLayout>
+                                    </Border>
+                                    <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource ModernBorder}">
+                                        <StackLayout Spacing="5" Padding="12,8">
+                                            <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=FatLabel}" Style="{StaticResource FieldLabel}" />
+                                            <Entry Placeholder="0.0" Keyboard="Numeric" Text="{Binding Fat}" ClearButtonVisibility="WhileEditing" HorizontalTextAlignment="Center" Style="{StaticResource ModernEntry}" />
+                                        </StackLayout>
+                                    </Border>
+                                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource ModernBorder}">
+                                        <StackLayout Spacing="5" Padding="12,8">
+                                            <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=CarbsLabel}" Style="{StaticResource FieldLabel}" />
+                                            <Entry Placeholder="0.0" Keyboard="Numeric" Text="{Binding Carbs}" ClearButtonVisibility="WhileEditing" HorizontalTextAlignment="Center" Style="{StaticResource ModernEntry}" />
+                                        </StackLayout>
+                                    </Border>
+                                </Grid>
+                            </VerticalStackLayout>
+                        </ScrollView>
+                    </controls:TabItem.Content>
+                </controls:TabItem>
+            </controls:TabComponent.Tabs>
+        </controls:TabComponent>
+        
+        <!-- Save button - always visible at the bottom -->
+        <VerticalStackLayout Grid.Row="1" Padding="20,10" Spacing="10" BackgroundColor="{DynamicResource PageBackgroundColor}">
+            <Button Command="{Binding SaveCommand}" 
+                    StyleClass="Primary"
+                    HeightRequest="50" 
+                    HorizontalOptions="FillAndExpand">
+                <Button.ImageSource>
+                    <FileImageSource File="save.png" />
+                </Button.ImageSource>
+            </Button>
+            <Label Text="{Binding ValidationMessage}" 
+                   FontSize="12" 
+                   IsVisible="{Binding HasValidationError}" 
+                   HorizontalTextAlignment="Center" 
+                   TextColor="Red" />
+        </VerticalStackLayout>
     </Grid>
 </ContentPage>
