@@ -7,6 +7,7 @@ using System.Windows.Input;
 using Microsoft.Extensions.DependencyInjection; // for GetService
 using FoodbookApp; // to access MauiProgram.ServiceProvider
 using Foodbook.Models;
+using Foodbook.Utils;
 
 namespace Foodbook.Views.Components;
 
@@ -220,17 +221,38 @@ public partial class SimpleListPopup : Popup
             case string s:
                 return CreateRow(s, primaryText);
 
-            case IEnumerable<string> group:
+            case IEnumerable<string> groupStr:
             {
                 var container = new VerticalStackLayout { Spacing = 6 };
-                foreach (var s2 in group)
+                foreach (var s2 in groupStr)
                     container.Children.Add(CreateRow(s2, primaryText));
                 return container;
             }
 
+            case IEnumerable<object> groupObj:
+            {
+                var container = new VerticalStackLayout { Spacing = 6 };
+                foreach (var o in groupObj)
+                    container.Children.Add(CreateRow(GetDisplayText(o), primaryText));
+                return container;
+            }
+
             default:
-                return CreateRow(obj?.ToString() ?? string.Empty, primaryText);
+                // Generic path: format using enum Display attributes if applicable
+                return CreateRow(GetDisplayText(obj), primaryText);
         }
+    }
+
+    private static string GetDisplayText(object? obj)
+    {
+        if (obj is null) return string.Empty;
+        if (obj is Enum e)
+        {
+            // Prefer ShortName when available for compact chips, fall back to Name
+            var shortName = e.GetDisplayShortName();
+            return string.IsNullOrWhiteSpace(shortName) ? e.GetDisplayName() : shortName;
+        }
+        return obj.ToString() ?? string.Empty;
     }
 
     private View CreateRow(string text, Color primaryText)
@@ -379,13 +401,8 @@ public partial class SimpleListPopup : Popup
 
     private static string GetUnitText(Unit unit)
     {
-        return unit switch
-        {
-            Unit.Gram => FoodbookApp.Localization.UnitResources.GramShort,
-            Unit.Milliliter => FoodbookApp.Localization.UnitResources.MilliliterShort,
-            Unit.Piece => FoodbookApp.Localization.UnitResources.PieceShort,
-            _ => string.Empty
-        };
+        // Use Display ShortName from enum annotations (resx-backed)
+        return unit.GetDisplayShortName();
     }
 
     private async Task CloseWithResultAsync(object? result)

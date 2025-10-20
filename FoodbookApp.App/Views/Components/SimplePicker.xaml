@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Foodbook.Views.Components.SimplePicker"
              x:Name="ThisPicker">
-    <!-- Removed internal UnitToStringConverter to allow parent pages to provide localized ItemDisplayBinding converter -->
     <Border Style="{StaticResource ModernBorder}">
         <Button x:Name="PickerButton"
                 Text="{Binding DisplayText, Source={x:Reference ThisPicker}}"

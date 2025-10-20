@@ -1,13 +1,18 @@
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.CompilerServices;
+using FoodbookApp.Localization;
 
 namespace Foodbook.Models
 {
     public enum Unit
     {
+        [Display(Name = nameof(UnitResources.Gram), ShortName = nameof(UnitResources.GramShort), ResourceType = typeof(UnitResources))]
         Gram,
+        [Display(Name = nameof(UnitResources.Milliliter), ShortName = nameof(UnitResources.MilliliterShort), ResourceType = typeof(UnitResources))]
         Milliliter,
+        [Display(Name = nameof(UnitResources.Piece), ShortName = nameof(UnitResources.PieceShort), ResourceType = typeof(UnitResources))]
         Piece
     }
 
