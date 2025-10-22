@@ -14,6 +14,8 @@ public class FilterSortResult
 {
     public SortOrder SortOrder { get; set; } = SortOrder.Asc;
     public List<int> SelectedLabelIds { get; set; } = new();
+    // NEW: multi-ingredient filtering support (by name)
+    public List<string> SelectedIngredientNames { get; set; } = new();
 }
 
 public class FilterSortPopup : Popup
@@ -22,17 +24,37 @@ public class FilterSortPopup : Popup
     private readonly ObservableCollection<RecipeLabel> _labels;
     private readonly HashSet<int> _selected;
 
+    // NEW: ingredients support
+    private readonly bool _showIngredients;
+    private readonly List<Ingredient> _allIngredients;
+    private readonly HashSet<string> _selectedIngredientNames; // compare by name
+
     private readonly Picker _sortPicker;
     private readonly VerticalStackLayout _labelsHost;
+
+    // NEW: UI for ingredients
+    private readonly VerticalStackLayout _ingredientsHost;
+    private readonly Entry _ingredientSearchEntry;
 
     private readonly TaskCompletionSource<FilterSortResult?> _tcs = new();
     public Task<FilterSortResult?> ResultTask => _tcs.Task;
 
-    public FilterSortPopup(bool showLabels, IEnumerable<RecipeLabel>? labels, IEnumerable<int>? preselectedLabelIds, SortOrder sortOrder)
+    public FilterSortPopup(
+        bool showLabels,
+        IEnumerable<RecipeLabel>? labels,
+        IEnumerable<int>? preselectedLabelIds,
+        SortOrder sortOrder,
+        bool showIngredients = false,
+        IEnumerable<Ingredient>? ingredients = null,
+        IEnumerable<string>? preselectedIngredientNames = null)
     {
         _showLabels = showLabels;
         _labels = new ObservableCollection<RecipeLabel>(labels ?? Enumerable.Empty<RecipeLabel>());
         _selected = new HashSet<int>(preselectedLabelIds ?? Enumerable.Empty<int>());
+
+        _showIngredients = showIngredients;
+        _allIngredients = (ingredients ?? Enumerable.Empty<Ingredient>()).ToList();
+        _selectedIngredientNames = new HashSet<string>(preselectedIngredientNames ?? Enumerable.Empty<string>(), System.StringComparer.OrdinalIgnoreCase);
 
         CanBeDismissedByTappingOutsideOfPopup = true;
         Padding = 0; // match SimpleListPopup
@@ -42,11 +64,25 @@ public class FilterSortPopup : Popup
         _sortPicker.SelectedIndex = sortOrder == SortOrder.Desc ? 1 : 0;
         _labelsHost = new VerticalStackLayout { Spacing = 6 };
 
+        // NEW: ingredients UI containers
+        _ingredientsHost = new VerticalStackLayout { Spacing = 6 };
+        _ingredientSearchEntry = new Entry
+        {
+            Placeholder = "Szukaj sk³adników...",
+            IsVisible = _showIngredients,
+            ClearButtonVisibility = ClearButtonVisibility.WhileEditing
+        };
+        _ingredientSearchEntry.TextChanged += (_, __) => BuildIngredients();
+
         Content = BuildContent();
 
         if (_showLabels)
         {
             BuildLabels();
+        }
+        if (_showIngredients)
+        {
+            BuildIngredients();
         }
     }
 
@@ -85,7 +121,19 @@ public class FilterSortPopup : Popup
         };
         labelsHeader.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
 
-        var scroll = new ScrollView { Content = _labelsHost, IsVisible = _showLabels, HeightRequest = 360 };
+        var labelsScroll = new ScrollView { Content = _labelsHost, IsVisible = _showLabels, HeightRequest = 240 };
+
+        // NEW: ingredients header + search + list
+        var ingredientsHeader = new Label
+        {
+            Text = "Filtruj po sk³adnikach",
+            FontSize = 16,
+            Margin = new Thickness(0,12,0,6),
+            IsVisible = _showIngredients
+        };
+        ingredientsHeader.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
+
+        var ingredientsScroll = new ScrollView { Content = _ingredientsHost, IsVisible = _showIngredients, HeightRequest = 240 };
 
         var ok = new Button { Text = "Zastosuj" };
         ok.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
@@ -97,7 +145,8 @@ public class FilterSortPopup : Popup
                 var result = new FilterSortResult
                 {
                     SortOrder = _sortPicker.SelectedIndex == 1 ? SortOrder.Desc : SortOrder.Asc,
-                    SelectedLabelIds = _selected.ToList()
+                    SelectedLabelIds = _selected.ToList(),
+                    SelectedIngredientNames = _selectedIngredientNames.ToList()
                 };
                 if (!_tcs.Task.IsCompleted)
                     _tcs.SetResult(result);
@@ -114,8 +163,15 @@ public class FilterSortPopup : Popup
         {
             _sortPicker.SelectedIndex = 0;
             _selected.Clear();
+            _selectedIngredientNames.Clear();
+            _ingredientSearchEntry.Text = string.Empty;
+
             // update visuals
             foreach (var chip in _labelsHost.Children.OfType<Border>())
+            {
+                chip.Stroke = Colors.Transparent;
+            }
+            foreach (var chip in _ingredientsHost.Children.OfType<Border>())
             {
                 chip.Stroke = Colors.Transparent;
             }
@@ -131,7 +187,17 @@ public class FilterSortPopup : Popup
         var body = new VerticalStackLayout
         {
             Spacing = 6,
-            Children = { title, sortRow, labelsHeader, scroll, buttons }
+            Children =
+            {
+                title,
+                sortRow,
+                labelsHeader,
+                labelsScroll,
+                ingredientsHeader,
+                _ingredientSearchEntry,
+                ingredientsScroll,
+                buttons
+            }
         };
 
         var outer = new Border
@@ -206,6 +272,59 @@ public class FilterSortPopup : Popup
             else
             {
                 _selected.Add(label.Id);
+                border.Stroke = GetPrimary();
+            }
+        };
+        border.GestureRecognizers.Add(tap);
+
+        return border;
+    }
+
+    // NEW: Build ingredients chips with search support
+    private void BuildIngredients()
+    {
+        _ingredientsHost.Children.Clear();
+        IEnumerable<Ingredient> source = _allIngredients;
+        var query = _ingredientSearchEntry.Text?.Trim();
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            source = source.Where(i => i.Name?.Contains(query, System.StringComparison.OrdinalIgnoreCase) == true);
+        }
+
+        foreach (var ing in source.OrderBy(i => i.Name, System.StringComparer.CurrentCultureIgnoreCase))
+        {
+            var chip = BuildIngredientChip(ing);
+            _ingredientsHost.Children.Add(chip);
+        }
+    }
+
+    private View BuildIngredientChip(Ingredient ingredient)
+    {
+        var border = new Border
+        {
+            StrokeThickness = 2,
+            Padding = new Thickness(10,6),
+            StrokeShape = new RoundRectangle { CornerRadius = 16 },
+            Margin = new Thickness(0,2)
+        };
+        var isSelected = _selectedIngredientNames.Contains(ingredient.Name);
+        border.Stroke = isSelected ? GetPrimary() : Colors.Transparent;
+
+        var name = new Label { Text = ingredient.Name, VerticalOptions = LayoutOptions.Center };
+        name.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
+        border.Content = name;
+
+        var tap = new TapGestureRecognizer();
+        tap.Tapped += (_, __) =>
+        {
+            if (_selectedIngredientNames.Contains(ingredient.Name))
+            {
+                _selectedIngredientNames.Remove(ingredient.Name);
+                border.Stroke = Colors.Transparent;
+            }
+            else
+            {
+                _selectedIngredientNames.Add(ingredient.Name);
                 border.Stroke = GetPrimary();
             }
         };

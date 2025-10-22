@@ -25,6 +25,9 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
     private SortOrder _sortOrder = SortOrder.Asc;
     private readonly HashSet<int> _selectedLabelIds = new();
 
+    // NEW: ingredient names filter state
+    private readonly HashSet<string> _selectedIngredientNames = new(System.StringComparer.OrdinalIgnoreCase);
+
     // Track if we're in edit mode to prevent unnecessary refreshes
     private bool _isEditingRecipe = false;
     
@@ -272,6 +275,11 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
         {
             recipes = recipes.Where(r => (r.Labels?.Any(l => _selectedLabelIds.Contains(l.Id)) ?? false)).ToList();
         }
+        // NEW: apply ingredient names filter (if any)
+        if (_selectedIngredientNames.Count > 0)
+        {
+            recipes = recipes.Where(r => (r.Ingredients?.Any(i => !string.IsNullOrEmpty(i.Name) && _selectedIngredientNames.Contains(i.Name)) ?? false)).ToList();
+        }
 
         // Sort
         recipes = (_sortOrder == SortOrder.Desc)
@@ -376,6 +384,11 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
             if (_selectedLabelIds.Count > 0)
             {
                 matchedRecipes = matchedRecipes.Where(r => (r.Labels?.Any(l => _selectedLabelIds.Contains(l.Id)) ?? false)).ToList();
+            }
+            // Apply ingredient names filter
+            if (_selectedIngredientNames.Count > 0)
+            {
+                matchedRecipes = matchedRecipes.Where(r => (r.Ingredients?.Any(i => !string.IsNullOrEmpty(i.Name) && _selectedIngredientNames.Contains(i.Name)) ?? false)).ToList();
             }
 
             // Sort
@@ -514,11 +527,23 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
             var settingsVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<SettingsViewModel>();
             var allLabels = settingsVm?.Labels?.ToList() ?? new List<RecipeLabel>();
 
+            // Ingredients available for filtering come from all recipes' ingredients distinct by name
+            var allIngredientNames = _allRecipes
+                .SelectMany(r => r.Ingredients ?? new List<Ingredient>())
+                .Where(i => !string.IsNullOrWhiteSpace(i.Name))
+                .Select(i => i.Name!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(n => n, StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
+
             var popup = new FilterSortPopup(
                 showLabels: true,
                 labels: allLabels,
                 preselectedLabelIds: _selectedLabelIds,
-                sortOrder: _sortOrder);
+                sortOrder: _sortOrder,
+                showIngredients: true,
+                ingredients: allIngredientNames.Select(n => new Ingredient { Name = n }),
+                preselectedIngredientNames: _selectedIngredientNames);
 
             var hostPage = Application.Current?.MainPage ?? (Page?)this.Parent;
             hostPage?.ShowPopup(popup);
@@ -528,6 +553,10 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
                 _sortOrder = result.SortOrder;
                 _selectedLabelIds.Clear();
                 foreach (var id in result.SelectedLabelIds.Distinct()) _selectedLabelIds.Add(id);
+
+                _selectedIngredientNames.Clear();
+                foreach (var name in result.SelectedIngredientNames.Distinct(StringComparer.OrdinalIgnoreCase))
+                    _selectedIngredientNames.Add(name);
 
                 // Refresh current listing with applied filters
                 if (string.IsNullOrWhiteSpace(_searchText))

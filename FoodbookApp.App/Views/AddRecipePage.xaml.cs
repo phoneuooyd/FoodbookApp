@@ -12,6 +12,8 @@ using CommunityToolkit.Maui.Extensions; // For ShowPopupAsync extension
 
 namespace Foodbook.Views
 {
+    [QueryProperty(nameof(RecipeId), "id")]
+    [QueryProperty(nameof(FolderId), "folderId")]
     public partial class AddRecipePage : ContentPage
     {
         private AddRecipeViewModel? ViewModel => BindingContext as AddRecipeViewModel;

@@ -7,6 +7,7 @@ using Foodbook.Models; // added for Recipe type
 using CommunityToolkit.Maui.Extensions;
 using Foodbook.Views.Components;
 using Microsoft.Extensions.DependencyInjection;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.Views;
 
@@ -159,18 +160,32 @@ public partial class RecipesPage : ContentPage
             var settingsVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<SettingsViewModel>();
             var allLabels = settingsVm?.Labels?.ToList() ?? new List<RecipeLabel>();
 
+            // Ingredient names from all recipes (distinct) for filtering
+            var ingredientNames = _viewModel
+                .Recipes
+                .SelectMany(r => r.Ingredients ?? new List<Ingredient>())
+                .Where(i => !string.IsNullOrWhiteSpace(i.Name))
+                .Select(i => i.Name!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(n => n, StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
+
             var popup = new FilterSortPopup(
                 showLabels: true,
                 labels: allLabels,
                 preselectedLabelIds: _viewModel.SelectedLabelIds,
-                sortOrder: _viewModel.SortOrder);
+                sortOrder: _viewModel.SortOrder,
+                showIngredients: true,
+                ingredients: ingredientNames.Select(n => new Ingredient { Name = n }),
+                preselectedIngredientNames: _viewModel.SelectedIngredientNames);
 
             var hostPage = Application.Current?.MainPage ?? this;
             hostPage.ShowPopup(popup);
             var result = await popup.ResultTask;
             if (result != null)
             {
-                _viewModel.ApplySortingAndLabelFilter(result.SortOrder, result.SelectedLabelIds);
+                // New method applies labels + ingredients together
+                _viewModel.ApplySortingLabelAndIngredientFilter(result.SortOrder, result.SelectedLabelIds, result.SelectedIngredientNames);
             }
         }
         catch (Exception ex)

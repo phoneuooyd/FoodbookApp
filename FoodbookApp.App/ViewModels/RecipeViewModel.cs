@@ -45,10 +45,24 @@ namespace Foodbook.ViewModels
         private HashSet<int> _selectedLabelIds = new();
         public IReadOnlyCollection<int> SelectedLabelIds => _selectedLabelIds;
 
+        // NEW: ingredient names filter state
+        private HashSet<string> _selectedIngredientNames = new(System.StringComparer.OrdinalIgnoreCase);
+        public IReadOnlyCollection<string> SelectedIngredientNames => _selectedIngredientNames;
+
         public void ApplySortingAndLabelFilter(SortOrder sortOrder, IEnumerable<int> labelIds)
         {
             _sortOrder = sortOrder;
             _selectedLabelIds = new HashSet<int>(labelIds ?? Enumerable.Empty<int>());
+            OnPropertyChanged(nameof(SortOrder));
+            FilterItems();
+        }
+
+        // NEW: overload that also accepts ingredient names
+        public void ApplySortingLabelAndIngredientFilter(SortOrder sortOrder, IEnumerable<int> labelIds, IEnumerable<string> ingredientNames)
+        {
+            _sortOrder = sortOrder;
+            _selectedLabelIds = new HashSet<int>(labelIds ?? Enumerable.Empty<int>());
+            _selectedIngredientNames = new HashSet<string>(ingredientNames ?? Enumerable.Empty<string>(), System.StringComparer.OrdinalIgnoreCase);
             OnPropertyChanged(nameof(SortOrder));
             FilterItems();
         }
@@ -299,6 +313,12 @@ namespace Foodbook.ViewModels
             if (_selectedLabelIds.Count > 0)
             {
                 recipeQuery = recipeQuery.Where(r => (r.Labels?.Any(l => _selectedLabelIds.Contains(l.Id)) ?? false));
+            }
+
+            // NEW: Apply ingredient names filter (recipes only)
+            if (_selectedIngredientNames.Count > 0)
+            {
+                recipeQuery = recipeQuery.Where(r => (r.Ingredients?.Any(i => !string.IsNullOrEmpty(i.Name) && _selectedIngredientNames.Contains(i.Name)) ?? false));
             }
 
             // Apply sorting (A-Z or Z-A)
