@@ -21,6 +21,7 @@ internal sealed class ColorOption
 public class CRUDComponentPopup : Popup
 {
     private readonly SettingsViewModel _vm;
+    private readonly TaskCompletionSource<object?> _tcs = new(); // Add task completion source
     private readonly ObservableCollection<ColorOption> _colorOptions = new(
         new[]
         {
@@ -43,13 +44,13 @@ public class CRUDComponentPopup : Popup
         });
 
     private RecipeLabel? _editing;
-    private bool _isAddingNew = false; // Protection flag
+    private bool _isAddingNew = false;
 
     // Selection storage (acts as Select control)
     private readonly HashSet<int> _selectedIds = new();
-
-    // Result task for selection
-    private readonly TaskCompletionSource<object?> _tcs = new();
+    public IReadOnlyCollection<int> SelectedIds => _selectedIds;
+    
+    // Task to await for result
     public Task<object?> ResultTask => _tcs.Task;
 
     // UI references
@@ -58,7 +59,7 @@ public class CRUDComponentPopup : Popup
     private Picker _colorPicker = null!;
     private Button _deleteButton = null!;
     private Button _saveButton = null!;
-    private Button _addButton = null!; // Reference to add button for enabling/disabling
+    private Button _addButton = null!;
     private Border _detailsPanel = null!;
     private Grid _footerBar = null!;
 
@@ -73,7 +74,6 @@ public class CRUDComponentPopup : Popup
                 _selectedIds.Add(id);
         }
         
-        // Match SimpleListPopup: zero padding and margin at popup level
         Padding = 0;
         Margin = 0;
         
@@ -106,7 +106,6 @@ public class CRUDComponentPopup : Popup
             CornerRadius = 8,
             HeightRequest = 42
         };
-        // In edit mode (default), use Secondary style
         _saveButton.StyleClass = new List<string> { "Secondary" };
         
         var cancelButton = new Button
@@ -115,7 +114,6 @@ public class CRUDComponentPopup : Popup
             CornerRadius = 8,
             HeightRequest = 42
         };
-        // Use Secondary style for cancel button
         cancelButton.StyleClass = new List<string> { "Secondary" };
 
         _addButton = new Button 
@@ -125,7 +123,6 @@ public class CRUDComponentPopup : Popup
             HeightRequest = 44, 
             CornerRadius = 22 
         };
-        // Use Secondary style for add button
         _addButton.StyleClass = new List<string> { "Secondary" };
 
         _addButton.Clicked += OnAddClicked;
@@ -140,7 +137,6 @@ public class CRUDComponentPopup : Popup
             StrokeThickness = 1.5,
             StrokeShape = new RoundRectangle { CornerRadius = 12 }
         };
-        // Neutral background with Primary stroke
         _detailsPanel.SetDynamicResource(Border.BackgroundColorProperty, "PageBackgroundColor");
         _detailsPanel.SetDynamicResource(Border.StrokeProperty, "Primary");
 
@@ -283,9 +279,8 @@ public class CRUDComponentPopup : Popup
             StrokeThickness = 2,
             Padding = new Thickness(10,6),
             StrokeShape = new RoundRectangle { CornerRadius = 10 },
-            BackgroundColor = Colors.Transparent // ensure no Primary background
+            BackgroundColor = Colors.Transparent
         };
-        // Default stroke uses label color; if selected, we will swap to Primary
         UpdateBorderSelectionVisual(border, lbl);
 
         var grid = new Grid
@@ -298,7 +293,6 @@ public class CRUDComponentPopup : Popup
             ColumnSpacing = 8
         };
 
-        // Colored dot (Border instead of Frame)
         var colorDot = new Border
         {
             WidthRequest = 16,
@@ -313,12 +307,10 @@ public class CRUDComponentPopup : Popup
         nameLabel.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
         grid.Add(nameLabel,1,0);
 
-        // Tap => toggle selection
         var tap = new TapGestureRecognizer();
         tap.Tapped += (_,__) => ToggleSelection(lbl, border);
         grid.GestureRecognizers.Add(tap);
 
-        // Double tap => edit (fallback when no long-press support)
         var dtap = new TapGestureRecognizer { NumberOfTapsRequired = 2 };
         dtap.Tapped += (_, __) => StartEdit(lbl);
         grid.GestureRecognizers.Add(dtap);
@@ -343,20 +335,17 @@ public class CRUDComponentPopup : Popup
 
         if (isSelected)
         {
-            // Selected => highlight with Primary stroke
             var primary = Application.Current?.Resources.TryGetValue("Primary", out var c) == true ? (Color)c : Color.FromArgb("#FF6200");
             border.Stroke = primary;
         }
         else
         {
-            // Not selected => show label color
             border.Stroke = Color.FromArgb(lbl.ColorHex ?? "#757575");
         }
     }
 
     private void OnAddClicked(object? sender, EventArgs e)
     {
-        // Prevent multiple clicks when already adding
         if (_isAddingNew)
         {
             System.Diagnostics.Debug.WriteLine("CRUDComponentPopup: Add already in progress, ignoring click");
@@ -364,15 +353,13 @@ public class CRUDComponentPopup : Popup
         }
 
         _isAddingNew = true;
-        _addButton.IsEnabled = false; // Disable the button
+        _addButton.IsEnabled = false;
         
         _editing = null;
         _nameEntry.Text = string.Empty;
         _colorPicker.SelectedIndex = -1;
         _deleteButton.IsVisible = false;
         _saveButton.Text = "Dodaj";
-        
-        // In add mode, use Primary style
         _saveButton.StyleClass = new List<string> { "Primary" };
         
         ShowDetailsPanels();
@@ -381,16 +368,14 @@ public class CRUDComponentPopup : Popup
     private void StartEdit(RecipeLabel lbl)
     {
         _editing = lbl;
-        _isAddingNew = false; // Not adding new, just editing
-        _addButton.IsEnabled = false; // Disable add button during edit
+        _isAddingNew = false;
+        _addButton.IsEnabled = false;
         
         _nameEntry.Text = lbl.Name;
         var idx = _colorOptions.IndexOf(_colorOptions.FirstOrDefault(c => string.Equals(c.Hex, lbl.ColorHex, StringComparison.OrdinalIgnoreCase)) ?? _colorOptions.First());
         _colorPicker.SelectedIndex = idx;
         _deleteButton.IsVisible = true;
         _saveButton.Text = "Zapisz";
-        
-        // In edit mode, use Secondary style
         _saveButton.StyleClass = new List<string> { "Secondary" };
         
         ShowDetailsPanels();
@@ -402,7 +387,6 @@ public class CRUDComponentPopup : Popup
         if (_vm.DeleteLabelCommand.CanExecute(null))
             _vm.DeleteLabelCommand.Execute(null);
         if (_editing == lbl) HideDetailsPanels();
-        // Keep selection in sync: remove if present
         _selectedIds.Remove(lbl.Id);
         BuildList();
     }
@@ -452,8 +436,8 @@ public class CRUDComponentPopup : Popup
         _detailsPanel.IsVisible = false;
         _footerBar.IsVisible = false;
         _editing = null;
-        _isAddingNew = false; // Reset flag
-        _addButton.IsEnabled = true; // Re-enable add button
+        _isAddingNew = false;
+        _addButton.IsEnabled = true;
     }
 
     private async Task CloseWithResultAsync(object? result)
@@ -467,22 +451,6 @@ public class CRUDComponentPopup : Popup
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[CRUDComponentPopup] Close error: {ex.Message}");
-        }
-    }
-}
-
-// Helper to safely add gesture when collection exists
-internal static class GestureExtensions
-{
-    public static void GesturerecognizersAddSafe(this View view, IGestureRecognizer gesture)
-    {
-        try
-        {
-            view.GestureRecognizers.Add(gesture);
-        }
-        catch
-        {
-            // ignore
         }
     }
 }

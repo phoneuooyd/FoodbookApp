@@ -1,16 +1,17 @@
-using Microsoft.Maui.Controls;
-using Foodbook.Services;
-using Foodbook.ViewModels;
-using Foodbook.Models;
-using Foodbook.Views.Base;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Maui.Controls;
+using Foodbook.Models;
+using Foodbook.ViewModels;
 using Foodbook.Views.Components;
-using CommunityToolkit.Maui.Extensions;
+using Foodbook.Views.Base;
+using CommunityToolkit.Maui.Views;
+using CommunityToolkit.Maui.Extensions; // For ShowPopupAsync extension
 
 namespace Foodbook.Views
 {
-    [QueryProperty(nameof(RecipeId), "id")]
-    [QueryProperty(nameof(FolderId), "folderId")]
     public partial class AddRecipePage : ContentPage
     {
         private AddRecipeViewModel? ViewModel => BindingContext as AddRecipeViewModel;
@@ -323,16 +324,13 @@ namespace Foodbook.Views
         {
             try
             {
-                // Prevent multiple modal opens
                 if (_isModalOpen)
                 {
                     System.Diagnostics.Debug.WriteLine("Modal already open, ignoring click");
                     return;
                 }
-
                 _isModalOpen = true;
 
-                // Get SettingsViewModel from DI
                 var settingsVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<SettingsViewModel>();
                 if (settingsVm == null)
                 {
@@ -342,24 +340,24 @@ namespace Foodbook.Views
 
                 var initiallySelected = ViewModel?.SelectedLabels.Select(l => l.Id).ToList() ?? new List<int>();
                 var popup = new CRUDComponentPopup(settingsVm, initiallySelected);
-                var hostPage = Application.Current?.Windows.FirstOrDefault()?.Page ?? this;
-                var result = await hostPage.ShowPopupAsync(popup);
 
-                // If user closed with selection, update SelectedLabels
-                if (ViewModel != null && result is IEnumerable<int> selectedIds)
+                // Use extension method from CommunityToolkit.Maui.Extensions and await ResultTask
+                var showTask = this.ShowPopupAsync(popup);
+                var resultTask = popup.ResultTask;
+                
+                // Wait for either popup to close or result to be set
+                await Task.WhenAny(showTask, resultTask);
+                
+                var result = resultTask.IsCompleted ? await resultTask : null;
+
+                // Handle result
+                if (result is IEnumerable<int> selectedIds && ViewModel != null)
                 {
-                    var idSet = selectedIds.ToHashSet();
-                    // Ensure we have fresh labels list (may have changed inside popup)
                     await ViewModel.LoadAvailableLabelsAsync();
-
+                    var idSet = selectedIds.ToHashSet();
                     ViewModel.SelectedLabels.Clear();
                     foreach (var lbl in ViewModel.AvailableLabels.Where(l => idSet.Contains(l.Id)))
                         ViewModel.SelectedLabels.Add(lbl);
-                }
-                else
-                {
-                    // Still refresh labels to reflect CRUD changes
-                    await (ViewModel?.LoadAvailableLabelsAsync() ?? Task.CompletedTask);
                 }
             }
             catch (Exception ex)
@@ -369,7 +367,6 @@ namespace Foodbook.Views
             }
             finally
             {
-                // Always reset the flag, even if an error occurred
                 _isModalOpen = false;
             }
         }
