@@ -130,6 +130,16 @@
     "unit": "Gram"
   },
   {
+    "name_pl": "Pomidorki koktajlowe",
+    "name_en": "Coctail tomatoes",
+    "calories": 18,
+    "protein": 1,
+    "fat": 0.2,
+    "carbs": 4,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
     "name_pl": "Ziemniak surowy",
     "name_en": "Raw potato",
     "calories": 77,
@@ -1133,9 +1143,19 @@
     "name_pl": "Mozzarella",
     "name_en": "Mozzarella",
     "calories": 280,
-    "protein": 27.5,
+    "protein": 17.5,
     "fat": 17.1,
     "carbs": 3.1,
+    "amount": 100,
+    "unit": "Gram"
+  },
+  {
+    "name_pl": "Mozzarella light",
+    "name_en": "Mozzarella light",
+    "calories": 157,
+    "protein": 19,
+    "fat": 8.5,
+    "carbs": 1,
     "amount": 100,
     "unit": "Gram"
   },
