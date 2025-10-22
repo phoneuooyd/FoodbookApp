@@ -19,7 +19,6 @@ namespace Foodbook.Views
         private IDispatcherTimer? _valueChangeTimer;
         private bool _isInitialized;
         private bool _hasEverLoaded;
-        private bool _isUpdatingLabelsSelection; // Flag to prevent circular updates
         private bool _isModalOpen = false; // Flag to prevent multiple modal opens
 
         public AddRecipePage(AddRecipeViewModel vm)
@@ -50,8 +49,6 @@ namespace Foodbook.Views
                     if (RecipeId > 0 && ViewModel != null)
                     {
                         await ViewModel.LoadRecipeAsync(RecipeId);
-                        // Synchronize CollectionView selection with ViewModel after loading
-                        SyncLabelsSelection();
                     }
 
                     // If navigation passed FolderId, preselect it
@@ -67,8 +64,6 @@ namespace Foodbook.Views
                     System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Skipping reset on re-appear");
                     // Refresh labels list in case user added/removed labels
                     await (ViewModel?.LoadAvailableLabelsAsync() ?? Task.CompletedTask);
-                    // Re-sync selection after refresh
-                    SyncLabelsSelection();
                 }
             }
             catch (Exception ex)
@@ -323,149 +318,7 @@ namespace Foodbook.Views
             }
         }
 
-        // Synchronize CollectionView selected items with ViewModel
-        private void SyncLabelsSelection()
-        {
-            try
-            {
-                if (ViewModel == null || _isUpdatingLabelsSelection) return;
-
-                _isUpdatingLabelsSelection = true;
-                System.Diagnostics.Debug.WriteLine($"??? Syncing labels selection: {ViewModel.SelectedLabels.Count} labels");
-
-                // Clear current selection
-                LabelsCollectionView.SelectedItems?.Clear();
-
-                // Select items that are in ViewModel.SelectedLabels
-                foreach (var label in ViewModel.SelectedLabels)
-                {
-                    // Find matching label in AvailableLabels by Id
-                    var matchingLabel = ViewModel.AvailableLabels.FirstOrDefault(l => l.Id == label.Id);
-                    if (matchingLabel != null)
-                    {
-                        LabelsCollectionView.SelectedItems?.Add(matchingLabel);
-                        System.Diagnostics.Debug.WriteLine($"   ? Selected: {matchingLabel.Name}");
-                    }
-                }
-
-                _isUpdatingLabelsSelection = false;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"? Error syncing labels selection: {ex.Message}");
-                _isUpdatingLabelsSelection = false;
-            }
-        }
-
-        // Handle CollectionView selection changes
-        private void OnLabelsSelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            try
-            {
-                if (ViewModel == null || _isUpdatingLabelsSelection) return;
-
-                _isUpdatingLabelsSelection = true;
-                System.Diagnostics.Debug.WriteLine("??? Labels selection changed");
-
-                // Clear and update SelectedLabels in ViewModel
-                ViewModel.SelectedLabels.Clear();
-                
-                foreach (var item in e.CurrentSelection)
-                {
-                    if (item is RecipeLabel label)
-                    {
-                        ViewModel.SelectedLabels.Add(label);
-                        System.Diagnostics.Debug.WriteLine($"   ? Added to ViewModel: {label.Name}");
-                    }
-                }
-
-                System.Diagnostics.Debug.WriteLine($"??? Total selected labels: {ViewModel.SelectedLabels.Count}");
-                
-                // Update visual state of all label frames
-                UpdateLabelFramesVisualState();
-                
-                _isUpdatingLabelsSelection = false;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"? Error handling labels selection: {ex.Message}");
-                _isUpdatingLabelsSelection = false;
-            }
-        }
-
-        // Update border colors of all label frames based on selection
-        private void UpdateLabelFramesVisualState()
-        {
-            try
-            {
-                if (ViewModel == null) return;
-
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    var selectedIds = ViewModel.SelectedLabels.Select(l => l.Id).ToHashSet();
-                    
-                    // Iterate through all items in CollectionView
-                    for (int i = 0; i < ViewModel.AvailableLabels.Count; i++)
-                    {
-                        var label = ViewModel.AvailableLabels[i];
-                        
-                        // Try to find the visual element for this item
-                        // Note: This is a workaround since CollectionView doesn't expose direct access to item containers
-                        // We'll use a different approach - iterate through visual tree
-                    }
-                    
-                    // Alternative: Force CollectionView to update its item visuals
-                    UpdateAllFrameBorders(LabelsCollectionView, selectedIds);
-                });
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"? Error updating label frames visual state: {ex.Message}");
-            }
-        }
-
-        // Recursively find and update all Frame elements in CollectionView
-        private void UpdateAllFrameBorders(Element element, HashSet<int> selectedIds)
-        {
-            try
-            {
-                if (element is Frame frame && frame.BindingContext is RecipeLabel label)
-                {
-                    // Update border color based on selection
-                    var primaryColor = Application.Current?.Resources.TryGetValue("Primary", out var color) == true 
-                        ? (Color)color 
-                        : Color.FromArgb("#FF6200");
-                    
-                    frame.BorderColor = selectedIds.Contains(label.Id) ? primaryColor : Colors.Transparent;
-                }
-
-                // Recursively process children
-                if (element is Layout layout)
-                {
-                    foreach (var child in layout.Children)
-                    {
-                        if (child is Element childElement)
-                        {
-                            UpdateAllFrameBorders(childElement, selectedIds);
-                        }
-                    }
-                }
-                else if (element is ContentView contentView && contentView.Content != null)
-                {
-                    UpdateAllFrameBorders(contentView.Content, selectedIds);
-                }
-                else if (element is ScrollView scrollView && scrollView.Content != null)
-                {
-                    UpdateAllFrameBorders(scrollView.Content, selectedIds);
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"? Error in UpdateAllFrameBorders: {ex.Message}");
-            }
-        }
-
-        // Open labels management popup
+        // Open labels management popup (also acts as selector)
         private async void OnManageLabelsClicked(object sender, EventArgs e)
         {
             try
@@ -487,14 +340,27 @@ namespace Foodbook.Views
                     return;
                 }
 
-                var popup = new CRUDComponentPopup(settingsVm);
+                var initiallySelected = ViewModel?.SelectedLabels.Select(l => l.Id).ToList() ?? new List<int>();
+                var popup = new CRUDComponentPopup(settingsVm, initiallySelected);
                 var hostPage = Application.Current?.Windows.FirstOrDefault()?.Page ?? this;
-                await hostPage.ShowPopupAsync(popup);
-                
-                // Refresh labels list after popup closes
-                await (ViewModel?.LoadAvailableLabelsAsync() ?? Task.CompletedTask);
-                // Re-sync selection after refresh
-                SyncLabelsSelection();
+                var result = await hostPage.ShowPopupAsync(popup);
+
+                // If user closed with selection, update SelectedLabels
+                if (ViewModel != null && result is IEnumerable<int> selectedIds)
+                {
+                    var idSet = selectedIds.ToHashSet();
+                    // Ensure we have fresh labels list (may have changed inside popup)
+                    await ViewModel.LoadAvailableLabelsAsync();
+
+                    ViewModel.SelectedLabels.Clear();
+                    foreach (var lbl in ViewModel.AvailableLabels.Where(l => idSet.Contains(l.Id)))
+                        ViewModel.SelectedLabels.Add(lbl);
+                }
+                else
+                {
+                    // Still refresh labels to reflect CRUD changes
+                    await (ViewModel?.LoadAvailableLabelsAsync() ?? Task.CompletedTask);
+                }
             }
             catch (Exception ex)
             {
@@ -505,44 +371,6 @@ namespace Foodbook.Views
             {
                 // Always reset the flag, even if an error occurred
                 _isModalOpen = false;
-            }
-        }
-
-        // Toggle selection when a label chip is tapped
-        private void OnLabelTapped(object? sender, TappedEventArgs e)
-        {
-            try
-            {
-                if (ViewModel == null) return;
-
-                // Resolve tapped item from BindingContext of Border
-                if (sender is Element element && element.BindingContext is RecipeLabel tappedLabel)
-                {
-                    var selected = LabelsCollectionView.SelectedItems;
-
-                    // Toggle: if selected -> remove; else -> add
-                    var alreadySelected = selected?.OfType<RecipeLabel>().Any(l => l.Id == tappedLabel.Id) == true;
-                    if (alreadySelected)
-                    {
-                        // Remove from CollectionView selection
-                        selected?.Remove(tappedLabel);
-                        // Remove from ViewModel selection
-                        var vmItem = ViewModel.SelectedLabels.FirstOrDefault(l => l.Id == tappedLabel.Id);
-                        if (vmItem != null) 
-                            ViewModel.SelectedLabels.Remove(vmItem);
-                    }
-                    else
-                    {
-                        selected?.Add(tappedLabel);
-                        // Keep VM in sync (avoid duplicates by Id)
-                        if (!ViewModel.SelectedLabels.Any(l => l.Id == tappedLabel.Id))
-                            ViewModel.SelectedLabels.Add(tappedLabel);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"? Error in OnLabelTapped: {ex.Message}");
             }
         }
     }

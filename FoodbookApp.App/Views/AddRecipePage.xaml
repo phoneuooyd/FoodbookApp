@@ -90,11 +90,9 @@
                                                     Padding="0"
                                                     CornerRadius="18" />
                                         </Grid>
-                                        <!-- Labels list -->
+                                        <!-- Selected labels only -->
                                         <CollectionView x:Name="LabelsCollectionView"
-                                                        ItemsSource="{Binding AvailableLabels}"
-                                                        SelectionMode="Multiple"
-                                                        SelectionChanged="OnLabelsSelectionChanged">
+                                                        ItemsSource="{Binding SelectedLabels}">
                                             <CollectionView.ItemsLayout>
                                                 <GridItemsLayout Orientation="Vertical" Span="3" />
                                             </CollectionView.ItemsLayout>
@@ -106,29 +104,9 @@
                                                             MaximumWidthRequest="230"
                                                             HeightRequest="34"
                                                             BackgroundColor="Transparent"
-                                                            Stroke="{StaticResource ModernBorderColor}"
+                                                            Stroke="{DynamicResource Primary}"
                                                             StrokeShape="RoundRectangle 8"
                                                             HorizontalOptions="FillAndExpand">
-                                                        <Border.GestureRecognizers>
-                                                            <TapGestureRecognizer Tapped="OnLabelTapped" />
-                                                        </Border.GestureRecognizers>
-                                                        <VisualStateManager.VisualStateGroups>
-                                                            <VisualStateGroup Name="CommonStates">
-                                                                <VisualState Name="Normal">
-                                                                    <VisualState.Setters>
-                                                                        <Setter Property="BackgroundColor" Value="Transparent" />
-                                                                        <Setter Property="Stroke" Value="{StaticResource ModernBorderColor}" />
-                                                                    </VisualState.Setters>
-                                                                </VisualState>
-                                                                <VisualState Name="Selected">
-                                                                    <VisualState.Setters>
-                                                                        <Setter Property="BackgroundColor" Value="Transparent" />
-                                                                        <Setter Property="Stroke" Value="{DynamicResource Primary}" />
-                                                                    </VisualState.Setters>
-                                                                </VisualState>
-                                                            </VisualStateGroup>
-                                                        </VisualStateManager.VisualStateGroups>
-
                                                         <HorizontalStackLayout Spacing="6" HorizontalOptions="Start" VerticalOptions="Center">
                                                             <Frame WidthRequest="12" HeightRequest="12" Padding="0" HasShadow="False" CornerRadius="6"
                                                                    BackgroundColor="{Binding ColorHex}" />

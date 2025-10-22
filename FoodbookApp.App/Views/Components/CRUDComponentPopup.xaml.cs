@@ -1,12 +1,13 @@
 using System;
 using System.Linq;
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using CommunityToolkit.Maui.Views;
 using Foodbook.Models;
 using Foodbook.ViewModels;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
-using MauiAppTheme = Microsoft.Maui.ApplicationModel.AppTheme;
 
 namespace Foodbook.Views.Components;
 
@@ -44,6 +45,13 @@ public class CRUDComponentPopup : Popup
     private RecipeLabel? _editing;
     private bool _isAddingNew = false; // Protection flag
 
+    // Selection storage (acts as Select control)
+    private readonly HashSet<int> _selectedIds = new();
+
+    // Result task for selection
+    private readonly TaskCompletionSource<object?> _tcs = new();
+    public Task<object?> ResultTask => _tcs.Task;
+
     // UI references
     private VerticalStackLayout _listHost = null!;
     private Entry _nameEntry = null!;
@@ -54,10 +62,16 @@ public class CRUDComponentPopup : Popup
     private Border _detailsPanel = null!;
     private Grid _footerBar = null!;
 
-    public CRUDComponentPopup(SettingsViewModel vm)
+    public CRUDComponentPopup(SettingsViewModel vm, IEnumerable<int>? initiallySelectedIds = null)
     {
         _vm = vm;
         CanBeDismissedByTappingOutsideOfPopup = true;
+        
+        if (initiallySelectedIds != null)
+        {
+            foreach (var id in initiallySelectedIds)
+                _selectedIds.Add(id);
+        }
         
         // Match SimpleListPopup: zero padding and margin at popup level
         Padding = 0;
@@ -191,7 +205,7 @@ public class CRUDComponentPopup : Popup
         };
         var toolbarLabel = new Label
         {
-            Text = "Lista etykiet",
+            Text = "",
             FontSize = 16,
             FontAttributes = FontAttributes.Bold,
             VerticalOptions = LayoutOptions.Center
@@ -216,7 +230,7 @@ public class CRUDComponentPopup : Popup
         title.SetDynamicResource(Label.TextColorProperty, "ShellTitleColor");
         var closeBtn = new Button { Text = "X", WidthRequest = 32, HeightRequest = 32, CornerRadius = 16, BackgroundColor = Colors.Transparent };
         closeBtn.SetDynamicResource(Button.TextColorProperty, "ShellTitleColor");
-        closeBtn.Clicked += async (_,__) => await CloseAsync();
+        closeBtn.Clicked += async (_,__) => await CloseWithResultAsync(_selectedIds.ToList());
         header.Add(title,0,0); header.Add(closeBtn,1,0);
 
         // Body
@@ -271,8 +285,8 @@ public class CRUDComponentPopup : Popup
             StrokeShape = new RoundRectangle { CornerRadius = 10 },
             BackgroundColor = Colors.Transparent // ensure no Primary background
         };
-        // Neutral background, colored only the border for readability
-        border.Stroke = Color.FromArgb(lbl.ColorHex ?? "#757575");
+        // Default stroke uses label color; if selected, we will swap to Primary
+        UpdateBorderSelectionVisual(border, lbl);
 
         var grid = new Grid
         {
@@ -299,12 +313,45 @@ public class CRUDComponentPopup : Popup
         nameLabel.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
         grid.Add(nameLabel,1,0);
 
+        // Tap => toggle selection
         var tap = new TapGestureRecognizer();
-        tap.Tapped += (_,__) => StartEdit(lbl);
+        tap.Tapped += (_,__) => ToggleSelection(lbl, border);
         grid.GestureRecognizers.Add(tap);
+
+        // Double tap => edit (fallback when no long-press support)
+        var dtap = new TapGestureRecognizer { NumberOfTapsRequired = 2 };
+        dtap.Tapped += (_, __) => StartEdit(lbl);
+        grid.GestureRecognizers.Add(dtap);
 
         border.Content = grid;
         return border;
+    }
+
+    private void ToggleSelection(RecipeLabel lbl, Border border)
+    {
+        if (_selectedIds.Contains(lbl.Id))
+            _selectedIds.Remove(lbl.Id);
+        else
+            _selectedIds.Add(lbl.Id);
+
+        UpdateBorderSelectionVisual(border, lbl);
+    }
+
+    private void UpdateBorderSelectionVisual(Border border, RecipeLabel lbl)
+    {
+        var isSelected = _selectedIds.Contains(lbl.Id);
+
+        if (isSelected)
+        {
+            // Selected => highlight with Primary stroke
+            var primary = Application.Current?.Resources.TryGetValue("Primary", out var c) == true ? (Color)c : Color.FromArgb("#FF6200");
+            border.Stroke = primary;
+        }
+        else
+        {
+            // Not selected => show label color
+            border.Stroke = Color.FromArgb(lbl.ColorHex ?? "#757575");
+        }
     }
 
     private void OnAddClicked(object? sender, EventArgs e)
@@ -355,6 +402,8 @@ public class CRUDComponentPopup : Popup
         if (_vm.DeleteLabelCommand.CanExecute(null))
             _vm.DeleteLabelCommand.Execute(null);
         if (_editing == lbl) HideDetailsPanels();
+        // Keep selection in sync: remove if present
+        _selectedIds.Remove(lbl.Id);
         BuildList();
     }
 
@@ -405,5 +454,35 @@ public class CRUDComponentPopup : Popup
         _editing = null;
         _isAddingNew = false; // Reset flag
         _addButton.IsEnabled = true; // Re-enable add button
+    }
+
+    private async Task CloseWithResultAsync(object? result)
+    {
+        try
+        {
+            if (!_tcs.Task.IsCompleted)
+                _tcs.SetResult(result);
+            await CloseAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[CRUDComponentPopup] Close error: {ex.Message}");
+        }
+    }
+}
+
+// Helper to safely add gesture when collection exists
+internal static class GestureExtensions
+{
+    public static void GesturerecognizersAddSafe(this View view, IGestureRecognizer gesture)
+    {
+        try
+        {
+            view.GestureRecognizers.Add(gesture);
+        }
+        catch
+        {
+            // ignore
+        }
     }
 }
