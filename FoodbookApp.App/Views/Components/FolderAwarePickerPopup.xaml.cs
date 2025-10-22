@@ -9,6 +9,7 @@ using Foodbook.ViewModels; // for SettingsViewModel
 using CommunityToolkit.Maui.Extensions; // for ShowPopup extension
 using Foodbook.Views; // for AddRecipePage
 using CommunityToolkit.Maui.Core;
+using FoodbookApp.Interfaces; // IIngredientService
 
 namespace Foodbook.Views.Components;
 
@@ -527,14 +528,9 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
             var settingsVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<SettingsViewModel>();
             var allLabels = settingsVm?.Labels?.ToList() ?? new List<RecipeLabel>();
 
-            // Ingredients available for filtering come from all recipes' ingredients distinct by name
-            var allIngredientNames = _allRecipes
-                .SelectMany(r => r.Ingredients ?? new List<Ingredient>())
-                .Where(i => !string.IsNullOrWhiteSpace(i.Name))
-                .Select(i => i.Name!)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(n => n, StringComparer.CurrentCultureIgnoreCase)
-                .ToList();
+            // Ingredients from DB (not from recipe list)
+            var ingredientService = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IIngredientService>();
+            var allIngredients = ingredientService != null ? await ingredientService.GetIngredientsAsync() : new List<Ingredient>();
 
             var popup = new FilterSortPopup(
                 showLabels: true,
@@ -542,7 +538,7 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
                 preselectedLabelIds: _selectedLabelIds,
                 sortOrder: _sortOrder,
                 showIngredients: true,
-                ingredients: allIngredientNames.Select(n => new Ingredient { Name = n }),
+                ingredients: allIngredients,
                 preselectedIngredientNames: _selectedIngredientNames);
 
             var hostPage = Application.Current?.MainPage ?? (Page?)this.Parent;

@@ -30,7 +30,7 @@ public class FilterSortPopup : Popup
     private readonly HashSet<string> _selectedIngredientNames; // compare by name
 
     private readonly Picker _sortPicker;
-    private readonly VerticalStackLayout _labelsHost;
+    private readonly Grid _labelsHost;
 
     // NEW: UI for ingredients
     private readonly VerticalStackLayout _ingredientsHost;
@@ -62,7 +62,18 @@ public class FilterSortPopup : Popup
 
         _sortPicker = new Picker { Title = "Sortuj", ItemsSource = new List<string> { "A-Z", "Z-A" } };
         _sortPicker.SelectedIndex = sortOrder == SortOrder.Desc ? 1 : 0;
-        _labelsHost = new VerticalStackLayout { Spacing = 6 };
+
+        // Labels host as 2-column grid
+        _labelsHost = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitionCollection
+            {
+                new ColumnDefinition{ Width = GridLength.Star },
+                new ColumnDefinition{ Width = GridLength.Star }
+            },
+            ColumnSpacing = 8,
+            RowSpacing = 6
+        };
 
         // NEW: ingredients UI containers
         _ingredientsHost = new VerticalStackLayout { Spacing = 6 };
@@ -92,13 +103,45 @@ public class FilterSortPopup : Popup
         double displayWidth = DeviceDisplay.Current.MainDisplayInfo.Width / DeviceDisplay.Current.MainDisplayInfo.Density;
         double popupWidth = Math.Min(displayWidth * 0.92, 560);
 
+        // Top bar with title and close (X)
         var title = new Label
         {
             Text = "Sortowanie i filtrowanie",
             FontSize = 18,
-            FontAttributes = FontAttributes.Bold
+            FontAttributes = FontAttributes.Bold,
+            VerticalTextAlignment = TextAlignment.Center
         };
         title.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
+
+        var closeBtn = new Button
+        {
+            Text = "X", // use alphanumeric X for cross
+            WidthRequest = 36,
+            HeightRequest = 36,
+            Padding = new Thickness(0),
+            BackgroundColor = Colors.Transparent,
+            HorizontalOptions = LayoutOptions.End,
+            VerticalOptions = LayoutOptions.Center
+        };
+        closeBtn.SetDynamicResource(Button.TextColorProperty, "PrimaryText");
+        closeBtn.Clicked += async (_, __) =>
+        {
+            if (!_tcs.Task.IsCompleted)
+                _tcs.SetResult(null);
+            await CloseAsync();
+        };
+
+        var header = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitionCollection
+            {
+                new ColumnDefinition{ Width = GridLength.Star },
+                new ColumnDefinition{ Width = GridLength.Auto }
+            },
+            Padding = new Thickness(0,0,0,6)
+        };
+        header.Add(title, 0, 0);
+        header.Add(closeBtn, 1, 0);
 
         var sortRow = new Grid
         {
@@ -109,7 +152,7 @@ public class FilterSortPopup : Popup
             },
             Margin = new Thickness(0,8)
         };
-        sortRow.Add(new Label { Text = "Sortuj alfabetycznie", VerticalOptions = LayoutOptions.Center });
+        sortRow.Add(new Label { Text = "Sortuj alfabetycznie", VerticalOptions = LayoutOptions.Center }, 0, 0);
         sortRow.Add(_sortPicker,1,0);
 
         var labelsHeader = new Label
@@ -121,9 +164,10 @@ public class FilterSortPopup : Popup
         };
         labelsHeader.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
 
-        var labelsScroll = new ScrollView { Content = _labelsHost, IsVisible = _showLabels, HeightRequest = 240 };
+        // Reduce labels area; same scroll behavior as ingredients
+        var labelsScroll = new ScrollView { Content = _labelsHost, IsVisible = _showLabels, HeightRequest = 120 };
 
-        // NEW: ingredients header + search + list
+        // NEW: ingredients header + search + list (increase area)
         var ingredientsHeader = new Label
         {
             Text = "Filtruj po sk³adnikach",
@@ -133,7 +177,7 @@ public class FilterSortPopup : Popup
         };
         ingredientsHeader.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
 
-        var ingredientsScroll = new ScrollView { Content = _ingredientsHost, IsVisible = _showIngredients, HeightRequest = 240 };
+        var ingredientsScroll = new ScrollView { Content = _ingredientsHost, IsVisible = _showIngredients, HeightRequest = 280 };
 
         var ok = new Button { Text = "Zastosuj" };
         ok.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
@@ -189,7 +233,7 @@ public class FilterSortPopup : Popup
             Spacing = 6,
             Children =
             {
-                title,
+                header,
                 sortRow,
                 labelsHeader,
                 labelsScroll,
@@ -207,7 +251,8 @@ public class FilterSortPopup : Popup
             StrokeShape = new RoundRectangle { CornerRadius = 12 },
             Content = body,
             WidthRequest = popupWidth,
-            MaximumWidthRequest = 560
+            MaximumWidthRequest = 560,
+            MaximumHeightRequest = 560
         };
         outer.SetDynamicResource(Border.BackgroundColorProperty, "PageBackgroundColor");
         outer.SetDynamicResource(Border.StrokeProperty, "Secondary");
@@ -218,10 +263,21 @@ public class FilterSortPopup : Popup
     private void BuildLabels()
     {
         _labelsHost.Children.Clear();
-        foreach (var lbl in _labels)
+        _labelsHost.RowDefinitions.Clear();
+
+        // two chips per row
+        int count = _labels.Count;
+        int rows = (count + 1) / 2;
+        for (int r = 0; r < rows; r++)
+            _labelsHost.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+        for (int i = 0; i < count; i++)
         {
+            var lbl = _labels[i];
             var chip = BuildLabelChip(lbl);
-            _labelsHost.Children.Add(chip);
+            int row = i / 2;
+            int col = i % 2;
+            _labelsHost.Add(chip, col, row);
         }
     }
 

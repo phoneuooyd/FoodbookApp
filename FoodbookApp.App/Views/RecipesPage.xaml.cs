@@ -160,15 +160,9 @@ public partial class RecipesPage : ContentPage
             var settingsVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<SettingsViewModel>();
             var allLabels = settingsVm?.Labels?.ToList() ?? new List<RecipeLabel>();
 
-            // Ingredient names from all recipes (distinct) for filtering
-            var ingredientNames = _viewModel
-                .Recipes
-                .SelectMany(r => r.Ingredients ?? new List<Ingredient>())
-                .Where(i => !string.IsNullOrWhiteSpace(i.Name))
-                .Select(i => i.Name!)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(n => n, StringComparer.CurrentCultureIgnoreCase)
-                .ToList();
+            // Ingredients from DB (not from recipe list)
+            var ingredientService = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IIngredientService>();
+            var allIngredients = ingredientService != null ? await ingredientService.GetIngredientsAsync() : new List<Ingredient>();
 
             var popup = new FilterSortPopup(
                 showLabels: true,
@@ -176,7 +170,7 @@ public partial class RecipesPage : ContentPage
                 preselectedLabelIds: _viewModel.SelectedLabelIds,
                 sortOrder: _viewModel.SortOrder,
                 showIngredients: true,
-                ingredients: ingredientNames.Select(n => new Ingredient { Name = n }),
+                ingredients: allIngredients,
                 preselectedIngredientNames: _viewModel.SelectedIngredientNames);
 
             var hostPage = Application.Current?.MainPage ?? this;
