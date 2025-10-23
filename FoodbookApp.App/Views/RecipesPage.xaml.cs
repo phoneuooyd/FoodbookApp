@@ -179,7 +179,8 @@ public partial class RecipesPage : ContentPage
                 showIngredients: true,
                 ingredients: allIngredients,
                 preselectedIngredientNames: _viewModel.SelectedIngredientNames,
-                sortBy: _viewModel.CurrentSortBy);
+                sortBy: _viewModel.CurrentSortBy,
+                showApplyButton: false);
 
             var hostPage = Application.Current?.MainPage ?? this;
             hostPage.ShowPopup(popup);

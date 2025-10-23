@@ -99,7 +99,7 @@ public partial class IngredientsPage : ContentPage
     {
         try
         {
-            var popup = new FilterSortPopup(showLabels: false, labels: null, preselectedLabelIds: null, sortOrder: _viewModel.SortOrder);
+            var popup = new FilterSortPopup(showLabels: false, labels: null, preselectedLabelIds: null, sortOrder: _viewModel.SortOrder, showApplyButton: false);
             var hostPage = Application.Current?.MainPage ?? this;
             hostPage.ShowPopup(popup);
             var result = await popup.ResultTask;

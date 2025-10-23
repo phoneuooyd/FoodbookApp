@@ -57,6 +57,9 @@ public class FilterSortPopup : Popup
     private readonly VerticalStackLayout _ingredientsHost;
     private readonly Entry _ingredientSearchEntry;
 
+    // NEW: show apply button
+    private readonly bool _showApplyButton;
+
     private readonly TaskCompletionSource<FilterSortResult?> _tcs = new();
     public Task<FilterSortResult?> ResultTask => _tcs.Task;
 
@@ -68,7 +71,8 @@ public class FilterSortPopup : Popup
         bool showIngredients = false,
         IEnumerable<Ingredient>? ingredients = null,
         IEnumerable<string>? preselectedIngredientNames = null,
-        SortBy? sortBy = null)
+        SortBy? sortBy = null,
+        bool showApplyButton = true)
     {
         _showLabels = showLabels;
         _labels = new ObservableCollection<RecipeLabel>(labels ?? Enumerable.Empty<RecipeLabel>());
@@ -77,6 +81,8 @@ public class FilterSortPopup : Popup
         _showIngredients = showIngredients;
         _allIngredients = (ingredients ?? Enumerable.Empty<Ingredient>()).ToList();
         _selectedIngredientNames = new HashSet<string>(preselectedIngredientNames ?? Enumerable.Empty<string>(), System.StringComparer.OrdinalIgnoreCase);
+
+        _showApplyButton = showApplyButton;
 
         // Close only via X button; outside tap should not close
         CanBeDismissedByTappingOutsideOfPopup = false;
@@ -133,7 +139,16 @@ public class FilterSortPopup : Popup
         }
 
         // Only release the flag once popup is closed
-        this.Closed += (_, __) => ReleaseOpen();
+        this.Closed += (_, __) =>
+        {
+            if (!_showApplyButton)
+            {
+                var result = GetResult();
+                if (!_tcs.Task.IsCompleted)
+                    _tcs.SetResult(result);
+            }
+            ReleaseOpen();
+        };
     }
 
     private static SortBy MapOrderToSortBy(SortOrder order) => order == SortOrder.Desc ? SortBy.NameDesc : SortBy.NameAsc;
@@ -278,8 +293,13 @@ public class FilterSortPopup : Popup
         {
             Spacing = 12,
             HorizontalOptions = LayoutOptions.End,
-            Children = { clear, ok }
+            Children = { clear }
         };
+
+        if (_showApplyButton)
+        {
+            buttons.Children.Add(ok);
+        }
 
         var body = new VerticalStackLayout
         {
@@ -338,14 +358,7 @@ public class FilterSortPopup : Popup
     {
         try
         {
-            var chosen = MapIndexToSort(_sortPicker.SelectedIndex);
-            var result = new FilterSortResult
-            {
-                SortBy = chosen,
-                SortOrder = chosen == SortBy.NameDesc ? SortOrder.Desc : SortOrder.Asc,
-                SelectedLabelIds = _selected.ToList(),
-                SelectedIngredientNames = _selectedIngredientNames.ToList()
-            };
+            var result = GetResult();
             if (!_tcs.Task.IsCompleted)
                 _tcs.SetResult(result);
         }
@@ -353,6 +366,18 @@ public class FilterSortPopup : Popup
         {
             await CloseAsync();
         }
+    }
+
+    private FilterSortResult GetResult()
+    {
+        var chosen = MapIndexToSort(_sortPicker.SelectedIndex);
+        return new FilterSortResult
+        {
+            SortBy = chosen,
+            SortOrder = chosen == SortBy.NameDesc ? SortOrder.Desc : SortOrder.Asc,
+            SelectedLabelIds = _selected.ToList(),
+            SelectedIngredientNames = _selectedIngredientNames.ToList()
+        };
     }
 
     private View BuildLabelChip(RecipeLabel label)
