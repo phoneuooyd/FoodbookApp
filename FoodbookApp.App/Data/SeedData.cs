@@ -232,6 +232,10 @@ namespace Foodbook.Data
         {
             [JsonProperty("name_pl")] public string NamePl { get; set; } = string.Empty;
             [JsonProperty("name_en")] public string NameEn { get; set; } = string.Empty;
+            [JsonProperty("name_de")] public string NameDe { get; set; } = string.Empty;
+            [JsonProperty("name_es")] public string NameEs { get; set; } = string.Empty;
+            [JsonProperty("name_fr")] public string NameFr { get; set; } = string.Empty;
+            [JsonProperty("name_kr")] public string NameKr { get; set; } = string.Empty;
             [JsonProperty("calories")] public double Calories { get; set; }
             [JsonProperty("protein")] public double Protein { get; set; }
             [JsonProperty("fat")] public double Fat { get; set; }
@@ -299,12 +303,20 @@ namespace Foodbook.Data
                 LogDebug($"Deserialized {infos.Count} ingredient infos");
 
                 var lang = NormalizeLanguage(languageOverride) ?? NormalizeLanguage(Preferences.Get("SelectedCulture", string.Empty)) ?? NormalizeLanguage(CultureInfo.CurrentUICulture.Name) ?? "en";
-                bool isPolish = lang.StartsWith("pl", StringComparison.OrdinalIgnoreCase);
-                LogDebug($"Ingredient language resolved to: {lang} (isPolish={isPolish})");
+                var isPolish = lang.StartsWith("pl", StringComparison.OrdinalIgnoreCase);
+                var isGerman = lang.StartsWith("de", StringComparison.OrdinalIgnoreCase);
+                var isSpanish = lang.StartsWith("es", StringComparison.OrdinalIgnoreCase);
+                var isFrench = lang.StartsWith("fr", StringComparison.OrdinalIgnoreCase);
+                var isKorean = lang.StartsWith("kr", StringComparison.OrdinalIgnoreCase);
+                LogDebug($"Ingredient language resolved to: {lang} (pl={isPolish}, de={isGerman}, es={isSpanish}, fr={isFrench}, kr={isKorean})");
 
                 var ingredients = infos.Select(i => new Ingredient
                 {
                     Name = isPolish ? (string.IsNullOrWhiteSpace(i.NamePl) ? (string.IsNullOrWhiteSpace(i.NameEn) ? "Unknown ingredient" : i.NameEn) : i.NamePl)
+                                     : isGerman ? (string.IsNullOrWhiteSpace(i.NameDe) ? (string.IsNullOrWhiteSpace(i.NameEn) ? (string.IsNullOrWhiteSpace(i.NamePl) ? "Unknown ingredient" : i.NamePl) : i.NameEn) : i.NameDe)
+                                     : isSpanish ? (string.IsNullOrWhiteSpace(i.NameEs) ? (string.IsNullOrWhiteSpace(i.NameEn) ? (string.IsNullOrWhiteSpace(i.NamePl) ? "Unknown ingredient" : i.NamePl) : i.NameEn) : i.NameEs)
+                                     : isFrench ? (string.IsNullOrWhiteSpace(i.NameFr) ? (string.IsNullOrWhiteSpace(i.NameEn) ? (string.IsNullOrWhiteSpace(i.NamePl) ? "Unknown ingredient" : i.NamePl) : i.NameEn) : i.NameFr)
+                                     : isKorean ? (string.IsNullOrWhiteSpace(i.NameKr) ? (string.IsNullOrWhiteSpace(i.NameEn) ? (string.IsNullOrWhiteSpace(i.NamePl) ? "Unknown ingredient" : i.NamePl) : i.NameEn) : i.NameKr)
                                      : (string.IsNullOrWhiteSpace(i.NameEn) ? (string.IsNullOrWhiteSpace(i.NamePl) ? "Unknown ingredient" : i.NamePl) : i.NameEn),
                     Quantity = i.Amount,
                     Unit = ParseUnit(i.Unit),
@@ -344,6 +356,10 @@ namespace Foodbook.Data
             code = code.Trim();
             if (code.StartsWith("pl", StringComparison.OrdinalIgnoreCase)) return "pl-PL";
             if (code.StartsWith("en", StringComparison.OrdinalIgnoreCase)) return "en";
+            if (code.StartsWith("de", StringComparison.OrdinalIgnoreCase)) return "de";
+            if (code.StartsWith("es", StringComparison.OrdinalIgnoreCase)) return "es";
+            if (code.StartsWith("fr", StringComparison.OrdinalIgnoreCase)) return "fr";
+            if (code.StartsWith("ko", StringComparison.OrdinalIgnoreCase) || code.StartsWith("kr", StringComparison.OrdinalIgnoreCase)) return "kr";
             return null; // fallback wyżej
         }
 
