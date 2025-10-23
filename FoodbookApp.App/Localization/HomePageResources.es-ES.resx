@@ -26,4 +26,10 @@
   <data name="Customize" xml:space="preserve"><value>Personalizar</value></data>
   <data name="ComingSoon" xml:space="preserve"><value>Pronto</value></data>
   <data name="GoToSettings" xml:space="preserve"><value>Abrir</value></data>
+  <data name="ExitAppConfirmation" xml:space="preserve">
+    <value>¿Quieres cerrar la aplicación?</value>
+  </data>
+  <data name="ExitAppTitle" xml:space="preserve">
+    <value>Salir</value>
+  </data>
 </root>

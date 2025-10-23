@@ -26,4 +26,10 @@
   <data name="Customize" xml:space="preserve"><value>사용자 정의</value></data>
   <data name="ComingSoon" xml:space="preserve"><value>곧 출시</value></data>
   <data name="GoToSettings" xml:space="preserve"><value>열기</value></data>
+  <data name="ExitAppConfirmation" xml:space="preserve">
+    <value>애플리케이션을 닫으시겠습니까?</value>
+  </data>
+  <data name="ExitAppTitle" xml:space="preserve">
+    <value>종료</value>
+  </data>
 </root>

@@ -78,4 +78,10 @@
   <data name="GoToSettings" xml:space="preserve">
     <value>Przejdź</value>
   </data>
+  <data name="ExitAppConfirmation" xml:space="preserve">
+    <value>Czy chcesz zamknąć aplikację?</value>
+  </data>
+  <data name="ExitAppTitle" xml:space="preserve">
+    <value>Wyjście</value>
+  </data>
 </root>

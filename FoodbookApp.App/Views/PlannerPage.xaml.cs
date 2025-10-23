@@ -98,13 +98,6 @@ public partial class PlannerPage : ContentPage
         }
     }
 
-    protected override bool OnBackButtonPressed()
-    {
-        if (_viewModel?.CancelCommand?.CanExecute(null) == true)
-            _viewModel.CancelCommand.Execute(null);
-        return true;
-    }
-
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
