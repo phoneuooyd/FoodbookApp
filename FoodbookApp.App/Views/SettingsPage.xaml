@@ -219,7 +219,7 @@
                                 <StackLayout>
                                     <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DataExportTitle}" Style="{StaticResource CardTitleStyle}" />
                                     <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DataExportDescription}" Style="{StaticResource DescriptionStyle}" />
-                                    <Button Text="Archiwizacja danych" Style="{StaticResource CardButtonStyle}" BackgroundColor="{DynamicResource Primary}" TextColor="White" Clicked="OnOpenArchivizationClicked" />
+                                    <Button Text="{loc:Translate Resource=SettingsPageResources, Key=DataExportButton}" Style="{StaticResource CardButtonStyle}" BackgroundColor="{DynamicResource Primary}" TextColor="White" Clicked="OnOpenArchivizationClicked" />
                                 </StackLayout>
                             </Frame>
 

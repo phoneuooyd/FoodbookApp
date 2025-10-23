@@ -434,11 +434,11 @@ namespace Foodbook.ViewModels
             {
                 await EnsureIngredientsAreCachedAsync();
                 
-                // Do not preselect the first available ingredient; start with empty name and defaults
+                // Pre-fill default quantity 100 and unit Gram so per-100g nutrition shows immediately
                 var ingredient = new Ingredient 
                 { 
                     Name = string.Empty, 
-                    Quantity = 1, 
+                    Quantity = 100, 
                     Unit = Unit.Gram, 
                     Calories = 0, 
                     Protein = 0, 
@@ -574,14 +574,14 @@ namespace Foodbook.ViewModels
                 }
                 else
                 {
-                    // Reset wartości dla nieistniejących składników
+                    // Reset values for non-existing items
                     ingredient.Calories = 0;
                     ingredient.Protein = 0;
                     ingredient.Fat = 0;
                     ingredient.Carbs = 0;
                 }
 
-                // Wyzwól przeliczenie z debouncing
+                // Immediately schedule nutritional recalculation so Display* update now
                 await ScheduleNutritionalCalculationAsync();
             }
             catch (Exception ex)

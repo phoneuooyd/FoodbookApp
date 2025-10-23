@@ -149,7 +149,7 @@
                                                     <StackLayout Grid.Row="0" Grid.Column="1" Spacing="3">
                                                         <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=QuantityLabelShort}" Style="{StaticResource FieldLabel}" />
                                                         <Border Style="{StaticResource ModernBorder}">
-                                                            <Entry Placeholder="1.0" Keyboard="Numeric" Text="{Binding Quantity}" HorizontalTextAlignment="Center" TextChanged="OnIngredientValueChanged" Style="{StaticResource ModernEntry}" />
+                                                            <Entry Placeholder="100" Keyboard="Numeric" Text="{Binding Quantity}" HorizontalTextAlignment="Center" TextChanged="OnIngredientValueChanged" Style="{StaticResource ModernEntry}" />
                                                         </Border>
                                                     </StackLayout>
                                                     <StackLayout Grid.Row="0" Grid.Column="2" Spacing="3">
@@ -161,10 +161,10 @@
                                                     </StackLayout>
                                                     <Button Grid.Row="0" Grid.Column="3" Style="{StaticResource DeleteButton}" Command="{Binding BindingContext.RemoveIngredientCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" VerticalOptions="End" HorizontalOptions="Center" />
                                                     <StackLayout Grid.Row="1" Grid.ColumnSpan="4" Orientation="Horizontal" Spacing="15" Margin="0,5,0,0">
-                                                        <Label Text="{Binding Calories, StringFormat='⚡ {0:F1} kcal'}" FontSize="11" TextColor="Gray" />
-                                                        <Label Text="{Binding Protein, StringFormat='🥩 {0:F1}g'}" FontSize="11" TextColor="Gray" />
-                                                        <Label Text="{Binding Fat, StringFormat='🧈 {0:F1}g'}" FontSize="11" TextColor="Gray" />
-                                                        <Label Text="{Binding Carbs, StringFormat='🌾 {0:F1}g'}" FontSize="11" TextColor="Gray" />
+                                                        <Label Text="{Binding DisplayCalories, StringFormat='⚡ {0:F1} kcal'}" FontSize="11" TextColor="Gray" />
+                                                        <Label Text="{Binding DisplayProtein, StringFormat='🥩 {0:F1}g'}" FontSize="11" TextColor="Gray" />
+                                                        <Label Text="{Binding DisplayFat, StringFormat='🧈 {0:F1}g'}" FontSize="11" TextColor="Gray" />
+                                                        <Label Text="{Binding DisplayCarbs, StringFormat='🌾 {0:F1}g'}" FontSize="11" TextColor="Gray" />
                                                     </StackLayout>
                                                 </Grid>
                                             </Border>

@@ -270,6 +270,9 @@
   <data name="DataExportDescription" xml:space="preserve">
     <value>Zapisz przepisy i plany</value>
   </data>
+  <data name="DataExportButton" xml:space="preserve">
+    <value>Archiwizacja danych</value>
+  </data>
   <data name="ComingSoon" xml:space="preserve">
     <value>Wkrótce</value>
   </data>
