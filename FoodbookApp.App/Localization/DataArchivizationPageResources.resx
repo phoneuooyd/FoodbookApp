@@ -124,4 +124,16 @@
   <data name="SearchArchivesButton" xml:space="preserve">
     <value>Search device files</value>
   </data>
+  <!-- New keys used in code-behind for localized errors and messages -->
+  <data name="ErrorLoadingList" xml:space="preserve"><value>Error loading list: {0}</value></data>
+  <data name="PickArchiveTitle" xml:space="preserve"><value>Pick archive (.fbk/.zip)</value></data>
+  <data name="ManualSearchDone" xml:space="preserve"><value>Selected archives added to the list.</value></data>
+  <data name="ErrorTitle" xml:space="preserve"><value>Error</value></data>
+  <data name="InfoTitle" xml:space="preserve"><value>Info</value></data>
+  <data name="ManualSearchFailed" xml:space="preserve"><value>Manual search failed: {0}</value></data>
+  <data name="SavedMessage" xml:space="preserve"><value>Saved: {0}</value></data>
+  <data name="ExportFailed" xml:space="preserve"><value>Export failed: {0}</value></data>
+  <data name="ImportFailed" xml:space="preserve"><value>Import failed: {0}</value></data>
+  <data name="DeleteFailed" xml:space="preserve"><value>Delete failed: {0}</value></data>
+  <data name="RestoreFailed" xml:space="preserve"><value>Restore failed: {0}</value></data>
 </root>

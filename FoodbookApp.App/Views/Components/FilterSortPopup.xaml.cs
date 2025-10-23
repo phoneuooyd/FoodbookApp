@@ -11,11 +11,26 @@ using System.Threading; // added
 
 namespace Foodbook.Views.Components;
 
+public enum SortBy
+{
+    NameAsc,
+    NameDesc,
+    CaloriesAsc,
+    CaloriesDesc,
+    ProteinAsc,
+    ProteinDesc,
+    CarbsAsc,
+    CarbsDesc,
+    FatAsc,
+    FatDesc
+}
+
 public class FilterSortResult
 {
+    // Back-compat: keep SortOrder, but prefer SortBy
     public SortOrder SortOrder { get; set; } = SortOrder.Asc;
+    public SortBy SortBy { get; set; } = SortBy.NameAsc;
     public List<int> SelectedLabelIds { get; set; } = new();
-    // NEW: multi-ingredient filtering support (by name)
     public List<string> SelectedIngredientNames { get; set; } = new();
 }
 
@@ -52,7 +67,8 @@ public class FilterSortPopup : Popup
         SortOrder sortOrder,
         bool showIngredients = false,
         IEnumerable<Ingredient>? ingredients = null,
-        IEnumerable<string>? preselectedIngredientNames = null)
+        IEnumerable<string>? preselectedIngredientNames = null,
+        SortBy? sortBy = null)
     {
         _showLabels = showLabels;
         _labels = new ObservableCollection<RecipeLabel>(labels ?? Enumerable.Empty<RecipeLabel>());
@@ -67,8 +83,21 @@ public class FilterSortPopup : Popup
         Padding = 0; // match SimpleListPopup
         Margin = 0;  // match SimpleListPopup
 
-        _sortPicker = new Picker { Title = "Sortuj", ItemsSource = new List<string> { "A-Z", "Z-A" } };
-        _sortPicker.SelectedIndex = sortOrder == SortOrder.Desc ? 1 : 0;
+        _sortPicker = new Picker { Title = FoodbookApp.Localization.FilterSortPopupResources.SortLabel };
+        _sortPicker.ItemsSource = new List<string>
+        {
+            FoodbookApp.Localization.FilterSortPopupResources.SortAZ,
+            FoodbookApp.Localization.FilterSortPopupResources.SortZA,
+            FoodbookApp.Localization.FilterSortPopupResources.SortCaloriesAsc,
+            FoodbookApp.Localization.FilterSortPopupResources.SortCaloriesDesc,
+            FoodbookApp.Localization.FilterSortPopupResources.SortProteinAsc,
+            FoodbookApp.Localization.FilterSortPopupResources.SortProteinDesc,
+            FoodbookApp.Localization.FilterSortPopupResources.SortCarbsAsc,
+            FoodbookApp.Localization.FilterSortPopupResources.SortCarbsDesc,
+            FoodbookApp.Localization.FilterSortPopupResources.SortFatAsc,
+            FoodbookApp.Localization.FilterSortPopupResources.SortFatDesc
+        };
+        _sortPicker.SelectedIndex = MapSortToIndex(sortBy ?? MapOrderToSortBy(sortOrder));
 
         // Labels host as 2-column grid
         _labelsHost = new Grid
@@ -86,7 +115,7 @@ public class FilterSortPopup : Popup
         _ingredientsHost = new VerticalStackLayout { Spacing = 6 };
         _ingredientSearchEntry = new Entry
         {
-            Placeholder = "Szukaj sk³adników...",
+            Placeholder = FoodbookApp.Localization.FilterSortPopupResources.IngredientSearchPlaceholder,
             IsVisible = _showIngredients,
             ClearButtonVisibility = ClearButtonVisibility.WhileEditing
         };
@@ -107,6 +136,36 @@ public class FilterSortPopup : Popup
         this.Closed += (_, __) => ReleaseOpen();
     }
 
+    private static SortBy MapOrderToSortBy(SortOrder order) => order == SortOrder.Desc ? SortBy.NameDesc : SortBy.NameAsc;
+    private static int MapSortToIndex(SortBy sort) => sort switch
+    {
+        SortBy.NameAsc => 0,
+        SortBy.NameDesc => 1,
+        SortBy.CaloriesAsc => 2,
+        SortBy.CaloriesDesc => 3,
+        SortBy.ProteinAsc => 4,
+        SortBy.ProteinDesc => 5,
+        SortBy.CarbsAsc => 6,
+        SortBy.CarbsDesc => 7,
+        SortBy.FatAsc => 8,
+        SortBy.FatDesc => 9,
+        _ => 0
+    };
+    private static SortBy MapIndexToSort(int index) => index switch
+    {
+        0 => SortBy.NameAsc,
+        1 => SortBy.NameDesc,
+        2 => SortBy.CaloriesAsc,
+        3 => SortBy.CaloriesDesc,
+        4 => SortBy.ProteinAsc,
+        5 => SortBy.ProteinDesc,
+        6 => SortBy.CarbsAsc,
+        7 => SortBy.CarbsDesc,
+        8 => SortBy.FatAsc,
+        9 => SortBy.FatDesc,
+        _ => SortBy.NameAsc
+    };
+
     private View BuildContent()
     {
         // Calculate popup width similar to SimpleListPopup
@@ -116,7 +175,7 @@ public class FilterSortPopup : Popup
         // Top bar with title and close (X)
         var title = new Label
         {
-            Text = "Sortowanie i filtrowanie",
+            Text = FoodbookApp.Localization.FilterSortPopupResources.Title,
             FontSize = 18,
             FontAttributes = FontAttributes.Bold,
             VerticalTextAlignment = TextAlignment.Center
@@ -160,12 +219,12 @@ public class FilterSortPopup : Popup
             },
             Margin = new Thickness(0,8)
         };
-        sortRow.Add(new Label { Text = "Sortuj alfabetycznie", VerticalOptions = LayoutOptions.Center }, 0, 0);
+        sortRow.Add(new Label { Text = FoodbookApp.Localization.FilterSortPopupResources.SortLabel, VerticalOptions = LayoutOptions.Center }, 0, 0);
         sortRow.Add(_sortPicker,1,0);
 
         var labelsHeader = new Label
         {
-            Text = "Filtruj po etykietach",
+            Text = FoodbookApp.Localization.FilterSortPopupResources.LabelsHeader,
             FontSize = 16,
             Margin = new Thickness(0,12,0,6),
             IsVisible = _showLabels
@@ -178,7 +237,7 @@ public class FilterSortPopup : Popup
         // NEW: ingredients header + search + list (increase area)
         var ingredientsHeader = new Label
         {
-            Text = "Filtruj po sk³adnikach",
+            Text = FoodbookApp.Localization.FilterSortPopupResources.IngredientsHeader,
             FontSize = 16,
             Margin = new Thickness(0,12,0,6),
             IsVisible = _showIngredients
@@ -187,7 +246,7 @@ public class FilterSortPopup : Popup
 
         var ingredientsScroll = new ScrollView { Content = _ingredientsHost, IsVisible = _showIngredients, HeightRequest = 330 };
 
-        var ok = new Button { Text = "Zastosuj" };
+        var ok = new Button { Text = FoodbookApp.Localization.FilterSortPopupResources.ApplyButton };
         ok.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
         ok.SetDynamicResource(Button.TextColorProperty, "ButtonPrimaryText");
         ok.Clicked += async (_, __) =>
@@ -195,7 +254,7 @@ public class FilterSortPopup : Popup
             await SubmitAndCloseAsync();
         };
 
-        var clear = new Button { Text = "Wyczyœæ" };
+        var clear = new Button { Text = FoodbookApp.Localization.FilterSortPopupResources.ClearButton };
         clear.StyleClass = new List<string> { "Secondary" };
         clear.Clicked += (_, __) =>
         {
@@ -279,9 +338,11 @@ public class FilterSortPopup : Popup
     {
         try
         {
+            var chosen = MapIndexToSort(_sortPicker.SelectedIndex);
             var result = new FilterSortResult
             {
-                SortOrder = _sortPicker.SelectedIndex == 1 ? SortOrder.Desc : SortOrder.Asc,
+                SortBy = chosen,
+                SortOrder = chosen == SortBy.NameDesc ? SortOrder.Desc : SortOrder.Asc,
                 SelectedLabelIds = _selected.ToList(),
                 SelectedIngredientNames = _selectedIngredientNames.ToList()
             };

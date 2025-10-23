@@ -63,7 +63,6 @@
                             </VerticalStackLayout>
                             <Button Grid.Column="1"
                                     Style="{StaticResource RestoreButton}"
-                                    Text="{loc:Translate Resource=DataArchivizationPageResources, Key=RestoreFromThis}"
                                     ImageSource="redo.png"
                                     CommandParameter="{Binding FullPath}"
                                     Clicked="OnRestoreFromListClicked" />

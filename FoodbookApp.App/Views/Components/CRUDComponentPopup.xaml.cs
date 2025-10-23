@@ -27,22 +27,22 @@ public class CRUDComponentPopup : Popup
     private readonly ObservableCollection<ColorOption> _colorOptions = new(
         new[]
         {
-            new ColorOption{ Name="Czerwony", Hex="#E53935"},
-            new ColorOption{ Name="Ró¿owy", Hex="#D81B60"},
-            new ColorOption{ Name="Fioletowy", Hex="#8E24AA"},
-            new ColorOption{ Name="Indygo", Hex="#3949AB"},
-            new ColorOption{ Name="Niebieski", Hex="#1E88E5"},
-            new ColorOption{ Name="Jasny Niebieski", Hex="#039BE5"},
-            new ColorOption{ Name="Cyjan", Hex="#00ACC1"},
-            new ColorOption{ Name="Turkus", Hex="#00897B"},
-            new ColorOption{ Name="Zielony", Hex="#43A047"},
-            new ColorOption{ Name="Jasny Zielony", Hex="#7CB342"},
-            new ColorOption{ Name="Limonka", Hex="#C0CA33"},
-            new ColorOption{ Name="¯ó³ty", Hex="#FBC02D"},
-            new ColorOption{ Name="Pomarañczowy", Hex="#FB8C00"},
-            new ColorOption{ Name="G³êboki Pomarañcz", Hex="#F4511E"},
-            new ColorOption{ Name="Br¹zowy", Hex="#6D4C41"},
-            new ColorOption{ Name="Szary", Hex="#757575"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Red, Hex="#E53935"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Pink, Hex="#D81B60"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Purple, Hex="#8E24AA"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Indigo, Hex="#3949AB"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Blue, Hex="#1E88E5"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_LightBlue, Hex="#039BE5"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Cyan, Hex="#00ACC1"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Teal, Hex="#00897B"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Green, Hex="#43A047"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_LightGreen, Hex="#7CB342"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Lime, Hex="#C0CA33"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Yellow, Hex="#FBC02D"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Orange, Hex="#FB8C00"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_DeepOrange, Hex="#F4511E"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Brown, Hex="#6D4C41"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Gray, Hex="#757575"},
         });
 
     private RecipeLabel? _editing;
@@ -89,14 +89,14 @@ public class CRUDComponentPopup : Popup
         double popupWidth = Math.Min(displayWidth * 0.92, 560);
 
         _listHost = new VerticalStackLayout { Spacing = 6 };
-        _nameEntry = new Entry { Placeholder = "Nazwa etykiety", BackgroundColor = Colors.Transparent };
-        _colorPicker = new Picker { Title = "Kolor", BackgroundColor = Colors.Transparent };
+        _nameEntry = new Entry { Placeholder = FoodbookApp.Localization.CRUDComponentPopupResources.NamePlaceholder, BackgroundColor = Colors.Transparent };
+        _colorPicker = new Picker { Title = FoodbookApp.Localization.CRUDComponentPopupResources.ColorLabel, BackgroundColor = Colors.Transparent };
         _colorPicker.ItemsSource = _colorOptions;
         _colorPicker.ItemDisplayBinding = new Binding(nameof(ColorOption.Name));
 
         _deleteButton = new Button
         {
-            Text = "Usuñ",
+            Text = FoodbookApp.Localization.CRUDComponentPopupResources.DeleteButton,
             BackgroundColor = Color.FromArgb("#C62D3A"),
             TextColor = Colors.White,
             CornerRadius = 8,
@@ -105,7 +105,7 @@ public class CRUDComponentPopup : Popup
         };
         _saveButton = new Button
         {
-            Text = "Zapisz",
+            Text = FoodbookApp.Localization.CRUDComponentPopupResources.SaveButton_Save,
             CornerRadius = 8,
             HeightRequest = 42
         };
@@ -113,7 +113,7 @@ public class CRUDComponentPopup : Popup
         
         var cancelButton = new Button
         {
-            Text = "Anuluj",
+            Text = FoodbookApp.Localization.CRUDComponentPopupResources.CancelButton,
             CornerRadius = 8,
             HeightRequest = 42
         };
@@ -121,7 +121,7 @@ public class CRUDComponentPopup : Popup
 
         _addButton = new Button 
         { 
-            Text = "+", 
+            Text = FoodbookApp.Localization.CRUDComponentPopupResources.AddButton, 
             WidthRequest = 44, 
             HeightRequest = 44, 
             CornerRadius = 22 
@@ -161,10 +161,10 @@ public class CRUDComponentPopup : Popup
             RowSpacing = 8
         };
         
-        var nameLabel = new Label { Text = "Nazwa", FontSize = 12 };
+        var nameLabel = new Label { Text = FoodbookApp.Localization.CRUDComponentPopupResources.NameLabel, FontSize = 12 };
         nameLabel.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
         
-        var colorLabel = new Label { Text = "Kolor", FontSize = 12, Margin = new Thickness(0, 4, 0, 0) };
+        var colorLabel = new Label { Text = FoodbookApp.Localization.CRUDComponentPopupResources.ColorLabel, FontSize = 12, Margin = new Thickness(0, 4, 0, 0) };
         colorLabel.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
         
         gridDetails.Add(nameLabel, 0, 0); 
@@ -204,7 +204,7 @@ public class CRUDComponentPopup : Popup
         };
         var toolbarLabel = new Label
         {
-            Text = "",
+            Text = string.Empty,
             FontSize = 16,
             FontAttributes = FontAttributes.Bold,
             VerticalOptions = LayoutOptions.Center
@@ -225,9 +225,9 @@ public class CRUDComponentPopup : Popup
             Margin = new Thickness(0)
         };
         header.SetDynamicResource(BackgroundColorProperty, "ShellBackgroundColor");
-        var title = new Label { Text = "Etykiety", FontSize = 20, FontAttributes = FontAttributes.Bold, HorizontalTextAlignment = TextAlignment.Center, VerticalOptions = LayoutOptions.Center };
+        var title = new Label { Text = FoodbookApp.Localization.CRUDComponentPopupResources.Title, FontSize = 20, FontAttributes = FontAttributes.Bold, HorizontalTextAlignment = TextAlignment.Center, VerticalOptions = LayoutOptions.Center };
         title.SetDynamicResource(Label.TextColorProperty, "ShellTitleColor");
-        var closeBtn = new Button { Text = "X", WidthRequest = 32, HeightRequest = 32, CornerRadius = 16, BackgroundColor = Colors.Transparent };
+        var closeBtn = new Button { Text = FoodbookApp.Localization.CRUDComponentPopupResources.CloseButton, WidthRequest = 32, HeightRequest = 32, CornerRadius = 16, BackgroundColor = Colors.Transparent };
         closeBtn.SetDynamicResource(Button.TextColorProperty, "ShellTitleColor");
         closeBtn.Clicked += async (_,__) => await CloseWithResultAsync(_selectedIds.ToList());
         header.Add(title,0,0); header.Add(closeBtn,1,0);
@@ -369,7 +369,7 @@ public class CRUDComponentPopup : Popup
         _nameEntry.Text = string.Empty;
         _colorPicker.SelectedIndex = -1;
         _deleteButton.IsVisible = false;
-        _saveButton.Text = "Dodaj";
+        _saveButton.Text = FoodbookApp.Localization.CRUDComponentPopupResources.SaveButton_Add;
         _saveButton.StyleClass = new List<string> { "Primary" };
         
         ShowDetailsPanels();
@@ -385,7 +385,7 @@ public class CRUDComponentPopup : Popup
         var idx = _colorOptions.IndexOf(_colorOptions.FirstOrDefault(c => string.Equals(c.Hex, lbl.ColorHex, StringComparison.OrdinalIgnoreCase)) ?? _colorOptions.First());
         _colorPicker.SelectedIndex = idx;
         _deleteButton.IsVisible = true;
-        _saveButton.Text = "Zapisz";
+        _saveButton.Text = FoodbookApp.Localization.CRUDComponentPopupResources.SaveButton_Save;
         _saveButton.StyleClass = new List<string> { "Secondary" };
         
         ShowDetailsPanels();

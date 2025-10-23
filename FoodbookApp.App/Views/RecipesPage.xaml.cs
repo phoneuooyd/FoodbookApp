@@ -178,15 +178,16 @@ public partial class RecipesPage : ContentPage
                 sortOrder: _viewModel.SortOrder,
                 showIngredients: true,
                 ingredients: allIngredients,
-                preselectedIngredientNames: _viewModel.SelectedIngredientNames);
+                preselectedIngredientNames: _viewModel.SelectedIngredientNames,
+                sortBy: _viewModel.CurrentSortBy);
 
             var hostPage = Application.Current?.MainPage ?? this;
             hostPage.ShowPopup(popup);
             var result = await popup.ResultTask;
             if (result != null)
             {
-                // New method applies labels + ingredients together
-                _viewModel.ApplySortingLabelAndIngredientFilter(result.SortOrder, result.SelectedLabelIds, result.SelectedIngredientNames);
+                // Prefer SortBy (macros/name) when provided
+                _viewModel.ApplySortingLabelAndIngredientFilter(result.SortBy, result.SelectedLabelIds, result.SelectedIngredientNames);
             }
         }
         catch (Exception ex)

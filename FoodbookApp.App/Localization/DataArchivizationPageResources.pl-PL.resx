@@ -78,4 +78,16 @@
   <data name="SearchArchivesButton" xml:space="preserve">
     <value>Wyszukaj w danych telefonu</value>
   </data>
+  <!-- New keys -->
+  <data name="ErrorLoadingList" xml:space="preserve"><value>Błąd ładowania listy: {0}</value></data>
+  <data name="PickArchiveTitle" xml:space="preserve"><value>Wybierz archiwum (.fbk/.zip)</value></data>
+  <data name="ManualSearchDone" xml:space="preserve"><value>Wybrane archiwa dodano do listy.</value></data>
+  <data name="ErrorTitle" xml:space="preserve"><value>Błąd</value></data>
+  <data name="InfoTitle" xml:space="preserve"><value>Informacja</value></data>
+  <data name="ManualSearchFailed" xml:space="preserve"><value>Wyszukiwanie ręczne nie powiodło się: {0}</value></data>
+  <data name="SavedMessage" xml:space="preserve"><value>Zapisano: {0}</value></data>
+  <data name="ExportFailed" xml:space="preserve"><value>Eksport nie powiódł się: {0}</value></data>
+  <data name="ImportFailed" xml:space="preserve"><value>Import nie powiódł się: {0}</value></data>
+  <data name="DeleteFailed" xml:space="preserve"><value>Usuwanie nie powiodło się: {0}</value></data>
+  <data name="RestoreFailed" xml:space="preserve"><value>Przywracanie nie powiodło się: {0}</value></data>
 </root>

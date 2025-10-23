@@ -12,6 +12,7 @@ using FoodbookApp.Localization;
 using FoodbookApp.Localization;
 using CommunityToolkit.Mvvm.Messaging;
 using FoodbookApp.Interfaces;
+using Foodbook.Views.Components; // for SortBy
 
 namespace Foodbook.ViewModels
 {
@@ -42,6 +43,14 @@ namespace Foodbook.ViewModels
             set { if (_sortOrder == value) return; _sortOrder = value; OnPropertyChanged(); FilterItems(); }
         }
 
+        // NEW: selected SortBy (optional, overrides SortOrder when set)
+        private SortBy? _currentSortBy;
+        public SortBy? CurrentSortBy
+        {
+            get => _currentSortBy;
+            set { if (_currentSortBy == value) return; _currentSortBy = value; OnPropertyChanged(); FilterItems(); }
+        }
+
         private HashSet<int> _selectedLabelIds = new();
         public IReadOnlyCollection<int> SelectedLabelIds => _selectedLabelIds;
 
@@ -51,6 +60,7 @@ namespace Foodbook.ViewModels
 
         public void ApplySortingAndLabelFilter(SortOrder sortOrder, IEnumerable<int> labelIds)
         {
+            _currentSortBy = null;
             _sortOrder = sortOrder;
             _selectedLabelIds = new HashSet<int>(labelIds ?? Enumerable.Empty<int>());
             OnPropertyChanged(nameof(SortOrder));
@@ -60,10 +70,22 @@ namespace Foodbook.ViewModels
         // NEW: overload that also accepts ingredient names
         public void ApplySortingLabelAndIngredientFilter(SortOrder sortOrder, IEnumerable<int> labelIds, IEnumerable<string> ingredientNames)
         {
+            _currentSortBy = null;
             _sortOrder = sortOrder;
             _selectedLabelIds = new HashSet<int>(labelIds ?? Enumerable.Empty<int>());
             _selectedIngredientNames = new HashSet<string>(ingredientNames ?? Enumerable.Empty<string>(), System.StringComparer.OrdinalIgnoreCase);
             OnPropertyChanged(nameof(SortOrder));
+            FilterItems();
+        }
+
+        // NEW: Accept SortBy directly from popup
+        public void ApplySortingLabelAndIngredientFilter(SortBy sortBy, IEnumerable<int> labelIds, IEnumerable<string> ingredientNames)
+        {
+            _currentSortBy = sortBy;
+            _sortOrder = sortBy == SortBy.NameDesc ? SortOrder.Desc : SortOrder.Asc; // keep legacy field in sync for A-Z cases
+            _selectedLabelIds = new HashSet<int>(labelIds ?? Enumerable.Empty<int>());
+            _selectedIngredientNames = new HashSet<string>(ingredientNames ?? Enumerable.Empty<string>(), System.StringComparer.OrdinalIgnoreCase);
+            OnPropertyChanged(nameof(CurrentSortBy));
             FilterItems();
         }
 
@@ -321,16 +343,65 @@ namespace Foodbook.ViewModels
                 recipeQuery = recipeQuery.Where(r => (r.Ingredients?.Any(i => !string.IsNullOrEmpty(i.Name) && _selectedIngredientNames.Contains(i.Name)) ?? false));
             }
 
-            // Apply sorting (A-Z or Z-A)
-            if (SortOrder == SortOrder.Asc)
+            // Apply sorting (Name or macros)
+            if (CurrentSortBy.HasValue)
             {
-                folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
-                recipeQuery = recipeQuery.OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase);
+                switch (CurrentSortBy.Value)
+                {
+                    case SortBy.NameAsc:
+                        folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
+                        recipeQuery = recipeQuery.OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase);
+                        break;
+                    case SortBy.NameDesc:
+                        folderQuery = folderQuery.OrderByDescending(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
+                        recipeQuery = recipeQuery.OrderByDescending(r => r.Name, StringComparer.CurrentCultureIgnoreCase);
+                        break;
+                    case SortBy.CaloriesAsc:
+                        folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
+                        recipeQuery = recipeQuery.OrderBy(r => r.Calories);
+                        break;
+                    case SortBy.CaloriesDesc:
+                        folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
+                        recipeQuery = recipeQuery.OrderByDescending(r => r.Calories);
+                        break;
+                    case SortBy.ProteinAsc:
+                        folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
+                        recipeQuery = recipeQuery.OrderBy(r => r.Protein);
+                        break;
+                    case SortBy.ProteinDesc:
+                        folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
+                        recipeQuery = recipeQuery.OrderByDescending(r => r.Protein);
+                        break;
+                    case SortBy.CarbsAsc:
+                        folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
+                        recipeQuery = recipeQuery.OrderBy(r => r.Carbs);
+                        break;
+                    case SortBy.CarbsDesc:
+                        folderQuery = folderQuery.OrderByDescending(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
+                        recipeQuery = recipeQuery.OrderByDescending(r => r.Carbs);
+                        break;
+                    case SortBy.FatAsc:
+                        folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
+                        recipeQuery = recipeQuery.OrderBy(r => r.Fat);
+                        break;
+                    case SortBy.FatDesc:
+                        folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
+                        recipeQuery = recipeQuery.OrderByDescending(r => r.Fat);
+                        break;
+                }
             }
             else
             {
-                folderQuery = folderQuery.OrderByDescending(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
-                recipeQuery = recipeQuery.OrderByDescending(r => r.Name, StringComparer.CurrentCultureIgnoreCase);
+                if (SortOrder == SortOrder.Asc)
+                {
+                    folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
+                    recipeQuery = recipeQuery.OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase);
+                }
+                else
+                {
+                    folderQuery = folderQuery.OrderByDescending(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
+                    recipeQuery = recipeQuery.OrderByDescending(r => r.Name, StringComparer.CurrentCultureIgnoreCase);
+                }
             }
 
             src = folderQuery.Cast<object>().Concat(recipeQuery);

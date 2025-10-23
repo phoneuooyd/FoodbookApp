@@ -78,4 +78,16 @@
   <data name="SearchArchivesButton" xml:space="preserve">
     <value>Buscar archivos del dispositivo</value>
   </data>
+  <!-- New keys -->
+  <data name="ErrorLoadingList" xml:space="preserve"><value>Error al cargar la lista: {0}</value></data>
+  <data name="PickArchiveTitle" xml:space="preserve"><value>Seleccionar archivo (.fbk/.zip)</value></data>
+  <data name="ManualSearchDone" xml:space="preserve"><value>Archivos seleccionados agregados a la lista.</value></data>
+  <data name="ErrorTitle" xml:space="preserve"><value>Error</value></data>
+  <data name="InfoTitle" xml:space="preserve"><value>Información</value></data>
+  <data name="ManualSearchFailed" xml:space="preserve"><value>La búsqueda manual falló: {0}</value></data>
+  <data name="SavedMessage" xml:space="preserve"><value>Guardado: {0}</value></data>
+  <data name="ExportFailed" xml:space="preserve"><value>Error de exportación: {0}</value></data>
+  <data name="ImportFailed" xml:space="preserve"><value>Error de importación: {0}</value></data>
+  <data name="DeleteFailed" xml:space="preserve"><value>Error al eliminar: {0}</value></data>
+  <data name="RestoreFailed" xml:space="preserve"><value>Error de restauración: {0}</value></data>
 </root>

@@ -46,7 +46,7 @@ namespace Foodbook.Views
             // Ensure the manual search button has a visible caption even if localization key is missing
             try
             {
-                var caption = GetLocalizedText("DataArchivizationPageResources", "SearchArchivesButton", "Wyszukaj w danych telefonu");
+                var caption = GetLocalizedText("DataArchivizationPageResources", "SearchArchivesButton", "Search device files");
                 var manualBtn = this.FindByName<Button>("ManualSearchButton");
                 if (manualBtn != null && string.IsNullOrWhiteSpace(manualBtn.Text))
                 {
@@ -67,7 +67,7 @@ namespace Foodbook.Views
                 if (sender is Button b)
                 {
                     if (string.IsNullOrWhiteSpace(b.Text))
-                        b.Text = GetLocalizedText("DataArchivizationPageResources", "SearchArchivesButton", "Wyszukaj w danych telefonu");
+                        b.Text = GetLocalizedText("DataArchivizationPageResources", "SearchArchivesButton", "Search device files");
                     // Enforce primary styling in case default style overrides it
                     b.BackgroundColor = (Color)Application.Current!.Resources["Primary"];
                     b.TextColor = Colors.White;
@@ -202,7 +202,7 @@ namespace Foodbook.Views
             }
             catch (Exception ex)
             {
-                StatusLabel.Text = $"Error loading list: {ex.Message}";
+                StatusLabel.Text = string.Format(GetLocalizedText("DataArchivizationPageResources", "ErrorLoadingList", "Error loading list: {0}"), ex.Message);
             }
         }
 
@@ -274,7 +274,10 @@ namespace Foodbook.Views
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", $"Manual search failed: {ex.Message}", "OK");
+                await DisplayAlert(
+                    GetLocalizedText("DataArchivizationPageResources", "ErrorTitle", "Error"),
+                    string.Format(GetLocalizedText("DataArchivizationPageResources", "ManualSearchFailed", "Manual search failed: {0}"), ex.Message),
+                    GetLocalizedText("ButtonResources", "OK", "OK"));
             }
         }
 
@@ -419,16 +422,22 @@ namespace Foodbook.Views
                 // Cleanup temp
                 try { File.Delete(tempZip); } catch { }
 
-                StatusLabel.Text = $"Saved: {outName}";
+                StatusLabel.Text = string.Format(GetLocalizedText("DataArchivizationPageResources", "SavedMessage", "Saved: {0}"), outName);
 
                 // Refresh list now that export is complete
                 LoadArchivesList();
 
-                await DisplayAlert("OK", $"{outName} {GetLocalizedText("DataArchivizationPageResources", "ArchiveCreatedSuffix", defaultText: "created successfully")}", "OK");
+                await DisplayAlert(
+                    GetLocalizedText("DataArchivizationPageResources", "InfoTitle", "Info"),
+                    $"{outName} {GetLocalizedText("DataArchivizationPageResources", "ArchiveCreatedSuffix", defaultText: "created successfully")}",
+                    GetLocalizedText("ButtonResources", "OK", "OK"));
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", $"Export failed: {ex.Message}", "OK");
+                await DisplayAlert(
+                    GetLocalizedText("DataArchivizationPageResources", "ErrorTitle", "Error"),
+                    string.Format(GetLocalizedText("DataArchivizationPageResources", "ExportFailed", "Export failed: {0}"), ex.Message),
+                    GetLocalizedText("ButtonResources", "OK", "OK"));
             }
             finally
             {
@@ -464,7 +473,10 @@ namespace Foodbook.Views
                 var latest = Directory.Exists(folder) ? Directory.EnumerateFiles(folder, "*.fbk").OrderByDescending(File.GetLastWriteTimeUtc).FirstOrDefault() : null;
                 if (latest == null)
                 {
-                    await DisplayAlert("Info", GetLocalizedText("DataArchivizationPageResources", "NoArchivesInDefault", "No archives in default folder. Please pick a file."), "OK");
+                    await DisplayAlert(
+                        GetLocalizedText("DataArchivizationPageResources", "InfoTitle", "Info"),
+                        GetLocalizedText("DataArchivizationPageResources", "NoArchivesInDefault", "No archives in default folder. Please pick a file."),
+                        GetLocalizedText("ButtonResources", "OK", "OK"));
                     var result = await FilePicker.PickAsync(new PickOptions
                     {
                         PickerTitle = GetLocalizedText("DataArchivizationPageResources", "PickArchiveTitle", "Pick archive (.fbk)"),
@@ -480,7 +492,10 @@ namespace Foodbook.Views
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", $"Import failed: {ex.Message}", "OK");
+                await DisplayAlert(
+                    GetLocalizedText("DataArchivizationPageResources", "ErrorTitle", "Error"),
+                    string.Format(GetLocalizedText("DataArchivizationPageResources", "ImportFailed", "Import failed: {0}"), ex.Message),
+                    GetLocalizedText("ButtonResources", "OK", "OK"));
             }
         }
 
@@ -520,7 +535,10 @@ namespace Foodbook.Views
                     }
                     catch (Exception ex)
                     {
-                        await DisplayAlert("Error", $"Delete failed: {ex.Message}", "OK");
+                        await DisplayAlert(
+                            GetLocalizedText("DataArchivizationPageResources", "ErrorTitle", "Error"),
+                            string.Format(GetLocalizedText("DataArchivizationPageResources", "DeleteFailed", "Delete failed: {0}"), ex.Message),
+                            GetLocalizedText("ButtonResources", "OK", "OK"));
                     }
                 }
             }
@@ -583,7 +601,10 @@ namespace Foodbook.Views
             }
             catch (Exception ioex)
             {
-                await DisplayAlert("Error", $"Restore failed: {ioex.Message}", "OK");
+                await DisplayAlert(
+                    GetLocalizedText("DataArchivizationPageResources", "ErrorTitle", "Error"),
+                    string.Format(GetLocalizedText("DataArchivizationPageResources", "RestoreFailed", "Restore failed: {0}"), ioex.Message),
+                    GetLocalizedText("ButtonResources", "OK", "OK"));
             }
         }
 
