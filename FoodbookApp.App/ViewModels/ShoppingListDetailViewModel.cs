@@ -25,6 +25,20 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     
     public IEnumerable<Unit> Units => Enum.GetValues(typeof(Unit)).Cast<Unit>();
 
+    private bool _isEditing;
+    public bool IsEditing
+    {
+        get => _isEditing;
+        set
+        {
+            if (_isEditing != value)
+            {
+                _isEditing = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public ICommand AddItemCommand { get; }
     public ICommand RemoveItemCommand { get; }
     public ICommand MoveUpCommand { get; }
@@ -33,6 +47,8 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     public ICommand ItemDraggedOverCommand { get; }
     public ICommand ItemDragLeaveCommand { get; }
     public ICommand ItemDroppedCommand { get; }
+
+    public event Action<Ingredient>? ItemEditingCompleted;
 
     public ShoppingListDetailViewModel(IShoppingListService shoppingListService, IPlanService planService)
     {
@@ -49,6 +65,9 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         ItemDraggedOverCommand = new Command<Ingredient>(OnItemDraggedOver);
         ItemDragLeaveCommand = new Command<Ingredient>(OnItemDragLeave);
         ItemDroppedCommand = new Command<Ingredient>(async (item) => await OnItemDroppedAsync(item));
+        
+        // Subscribe to editing completed event
+        ItemEditingCompleted += async (item) => await SaveItemStateAsync(item);
         
         // S³uchaj zmian w kolekcjach
         UncheckedItems.CollectionChanged += (s, e) => OnPropertyChanged(nameof(HasCheckedItems));
@@ -107,8 +126,6 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
 
             // Save the state immediately when any relevant property changes
             if (e.PropertyName == nameof(Ingredient.IsChecked) || 
-                e.PropertyName == nameof(Ingredient.Name) || 
-                e.PropertyName == nameof(Ingredient.Quantity) ||
                 e.PropertyName == nameof(Ingredient.Unit))
             {
                 await SaveItemStateAsync(item);
@@ -377,6 +394,11 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         {
             _itemBeingDragged = null;
         }
+    }
+
+    public void OnItemEditingCompleted(Ingredient item)
+    {
+        ItemEditingCompleted?.Invoke(item);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

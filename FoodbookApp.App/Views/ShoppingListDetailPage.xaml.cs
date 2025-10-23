@@ -1,6 +1,7 @@
 using Microsoft.Maui.Controls;
 using Foodbook.ViewModels;
 using Foodbook.Views.Base;
+using Foodbook.Models;
 
 namespace Foodbook.Views;
 
@@ -37,13 +38,34 @@ public partial class ShoppingListDetailPage : ContentPage
         // Cleanup theme and font handling
         _themeHelper.Cleanup();
         
-        // Save all states when leaving the page
-        await _viewModel.SaveAllStatesAsync();
+        // Save all states when leaving the page, but only if not editing
+        if (!_viewModel.IsEditing)
+        {
+            await _viewModel.SaveAllStatesAsync();
+        }
     }
 
     protected override bool OnBackButtonPressed()
     {
         Shell.Current.GoToAsync("..");
         return true;
+    }
+
+    private void OnEntryFocused(object sender, FocusEventArgs e)
+    {
+        _viewModel.IsEditing = true;
+    }
+
+    private void OnEntryUnfocused(object sender, FocusEventArgs e)
+    {
+        _viewModel.IsEditing = false;
+        
+        // Save the item state when editing is completed
+        var entry = sender as Entry;
+        var ingredient = entry?.BindingContext as Ingredient;
+        if (ingredient != null)
+        {
+            _viewModel.OnItemEditingCompleted(ingredient);
+        }
     }
 }

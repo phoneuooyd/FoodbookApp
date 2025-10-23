@@ -93,14 +93,18 @@
                                     <!-- Nazwa składnika -->
                                     <Entry Grid.Column="2" 
                                            Text="{Binding Name}" 
-                                           Placeholder="Nazwa" />
+                                           Placeholder="Nazwa"
+                                           Focused="OnEntryFocused"
+                                           Unfocused="OnEntryUnfocused" />
 
                                     <!-- Ilość -->
                                     <Entry Grid.Column="3" 
                                            Text="{Binding Quantity}" 
                                            Keyboard="Numeric" 
                                            WidthRequest="60"
-                                           HorizontalTextAlignment="Center" />
+                                           HorizontalTextAlignment="Center"
+                                           Focused="OnEntryFocused"
+                                           Unfocused="OnEntryUnfocused" />
 
                                     <!-- Jednostka -->
                                     <Picker Grid.Column="4" 
