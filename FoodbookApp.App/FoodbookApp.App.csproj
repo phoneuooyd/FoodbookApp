@@ -117,6 +117,9 @@
         <!-- Embedded Resource as fallback -->
         <EmbeddedResource Include="Resources\Raw\ingredients.json" />
         
+        <!-- Copy to output for file system fallback -->
+        <Content Include="Resources\Raw\ingredients.json" CopyToOutputDirectory="PreserveNewest" />
+        
         <!-- JSON Data Files -->
         <!-- Other data files -->
         <MauiAsset Include="Resources\Data\**" Exclude="Resources\Data\ingredients.json" LogicalName="Data/%(RecursiveDir)%(Filename)%(Extension)" />

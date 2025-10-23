@@ -65,6 +65,8 @@ namespace Foodbook.Models
             }
         }
 
+        public double UnitWeight { get; set; } = 1.0;
+
         private bool _isChecked;
         [NotMapped]
         public bool IsChecked
@@ -181,15 +183,15 @@ namespace Foodbook.Models
 
         // Computed nutrition for the specified Quantity and Unit
         [NotMapped]
-        public double DisplayCalories => Math.Round(Calories * GetUnitFactor(Unit, Quantity), 1);
+        public double DisplayCalories => Math.Round(Calories * GetUnitFactor(Unit, Quantity, UnitWeight), 1);
         [NotMapped]
-        public double DisplayProtein => Math.Round(Protein * GetUnitFactor(Unit, Quantity), 1);
+        public double DisplayProtein => Math.Round(Protein * GetUnitFactor(Unit, Quantity, UnitWeight), 1);
         [NotMapped]
-        public double DisplayFat => Math.Round(Fat * GetUnitFactor(Unit, Quantity), 1);
+        public double DisplayFat => Math.Round(Fat * GetUnitFactor(Unit, Quantity, UnitWeight), 1);
         [NotMapped]
-        public double DisplayCarbs => Math.Round(Carbs * GetUnitFactor(Unit, Quantity), 1);
+        public double DisplayCarbs => Math.Round(Carbs * GetUnitFactor(Unit, Quantity, UnitWeight), 1);
 
-        private static double GetUnitFactor(Unit unit, double quantity)
+        private static double GetUnitFactor(Unit unit, double quantity, double unitWeight)
         {
             try
             {
@@ -197,7 +199,7 @@ namespace Foodbook.Models
                 {
                     Unit.Gram => quantity / 100.0,
                     Unit.Milliliter => quantity / 100.0,
-                    Unit.Piece => quantity,
+                    Unit.Piece => unitWeight > 0 ? (quantity * unitWeight) / 100.0 : quantity,
                     _ => quantity / 100.0
                 };
             }

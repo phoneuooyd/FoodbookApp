@@ -146,6 +146,7 @@ namespace Foodbook.Data
                     LogDebug($"Inserted batch {i / batchSize + 1}/{(ingredients.Count + batchSize - 1) / batchSize}");
                 }
 
+                LogDebug("About to commit transaction");
                 await trx.CommitAsync();
                 LogDebug($"✅ Successfully seeded {ingredients.Count} ingredients (transaction committed)");
             }
@@ -242,6 +243,7 @@ namespace Foodbook.Data
             [JsonProperty("carbs")] public double Carbs { get; set; }
             [JsonProperty("amount")] public double Amount { get; set; }
             [JsonProperty("unit")] public string Unit { get; set; } = string.Empty;
+            [JsonProperty("unit_weight")] public double UnitWeight { get; set; } = 1.0;
         }
 
         private static async Task<List<Ingredient>> LoadPopularIngredientsAsync(string? languageOverride)
@@ -250,7 +252,10 @@ namespace Foodbook.Data
             try
             {
                 var assembly = Assembly.GetExecutingAssembly();
-                var resourceName = assembly.GetManifestResourceNames().FirstOrDefault(name => name.EndsWith("ingredients.json"));
+                var resourceNames = assembly.GetManifestResourceNames();
+                LogDebug($"Manifest resources: {string.Join(", ", resourceNames)}");
+                var resourceName = resourceNames.FirstOrDefault(name => name.EndsWith("ingredients.json"));
+                LogDebug($"Trying embedded resource: {resourceName ?? "null"}");
                 if (!string.IsNullOrEmpty(resourceName))
                 {
                     LogDebug($"Found embedded resource: {resourceName}");
@@ -289,7 +294,7 @@ namespace Foodbook.Data
                     json = string.Empty; // avoid assigning null to non-nullable
                     foreach (var path in paths)
                     {
-                        LogDebug($"Checking path: {path}");
+                        LogDebug($"Checking path: {path} - Exists: {File.Exists(path)}");
                         if (File.Exists(path)) { json = await File.ReadAllTextAsync(path); LogDebug($"Loaded {json.Length} characters from {path}"); break; }
                     }
                     if (string.IsNullOrEmpty(json)) { LogError("All loading methods failed! Creating fallback data"); return CreateFallbackIngredients(); }
@@ -301,6 +306,11 @@ namespace Foodbook.Data
                 LogDebug("Deserializing JSON");
                 var infos = JsonConvert.DeserializeObject<List<IngredientInfo>>(json) ?? new();
                 LogDebug($"Deserialized {infos.Count} ingredient infos");
+                if (infos.Count > 0)
+                {
+                    var firstInfo = infos.First();
+                    LogDebug($"First info: NamePl={firstInfo.NamePl}, Unit={firstInfo.Unit}, Calories={firstInfo.Calories}, UnitWeight={firstInfo.UnitWeight}");
+                }
 
                 var lang = NormalizeLanguage(languageOverride) ?? NormalizeLanguage(Preferences.Get("SelectedCulture", string.Empty)) ?? NormalizeLanguage(CultureInfo.CurrentUICulture.Name) ?? "en";
                 var isPolish = lang.StartsWith("pl", StringComparison.OrdinalIgnoreCase);
@@ -320,17 +330,20 @@ namespace Foodbook.Data
                                      : (string.IsNullOrWhiteSpace(i.NameEn) ? (string.IsNullOrWhiteSpace(i.NamePl) ? "Unknown ingredient" : i.NamePl) : i.NameEn),
                     Quantity = i.Amount,
                     Unit = ParseUnit(i.Unit),
-                    Calories = i.Calories,
-                    Protein = i.Protein,
-                    Fat = i.Fat,
-                    Carbs = i.Carbs,
+                    Calories = i.Unit == "Piece" && i.UnitWeight > 0 ? i.Calories * (100.0 / i.UnitWeight) : i.Calories,
+                    Protein = i.Unit == "Piece" && i.UnitWeight > 0 ? i.Protein * (100.0 / i.UnitWeight) : i.Protein,
+                    Fat = i.Unit == "Piece" && i.UnitWeight > 0 ? i.Fat * (100.0 / i.UnitWeight) : i.Fat,
+                    Carbs = i.Unit == "Piece" && i.UnitWeight > 0 ? i.Carbs * (100.0 / i.UnitWeight) : i.Carbs,
+                    UnitWeight = i.UnitWeight,
                     RecipeId = null
                 }).ToList();
 
-                if (ingredients.Any(x => x.Name == "Unknown ingredient"))
-                    LogWarning("Some ingredients had missing names in both languages.");
-
-                LogDebug($"Created {ingredients.Count} ingredients with language: {lang}");
+                LogDebug($"Created {ingredients.Count} ingredients");
+                if (ingredients.Count > 0)
+                {
+                    var firstIng = ingredients.First();
+                    LogDebug($"First ingredient: Name={firstIng.Name}, Unit={firstIng.Unit}, Calories={firstIng.Calories}, UnitWeight={firstIng.UnitWeight}");
+                }
 
                 if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
                 {

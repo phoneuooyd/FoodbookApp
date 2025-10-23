@@ -571,6 +571,7 @@ namespace Foodbook.ViewModels
                     ingredient.Protein = existingIngredient.Protein;
                     ingredient.Fat = existingIngredient.Fat;
                     ingredient.Carbs = existingIngredient.Carbs;
+                    ingredient.UnitWeight = existingIngredient.UnitWeight;
                 }
                 else
                 {
@@ -579,6 +580,7 @@ namespace Foodbook.ViewModels
                     ingredient.Protein = 0;
                     ingredient.Fat = 0;
                     ingredient.Carbs = 0;
+                    ingredient.UnitWeight = 1.0;
                 }
 
                 // Immediately schedule nutritional recalculation so Display* update now
@@ -612,9 +614,10 @@ namespace Foodbook.ViewModels
                         ingredient.Protein = dbIngredient.Protein;
                         ingredient.Fat = dbIngredient.Fat;
                         ingredient.Carbs = dbIngredient.Carbs;
+                        ingredient.UnitWeight = dbIngredient.UnitWeight;
                     }
 
-                    double factor = GetUnitConversionFactor(ingredient.Unit, ingredient.Quantity);
+                    double factor = GetUnitConversionFactor(ingredient.Unit, ingredient.Quantity, ingredient.UnitWeight);
                     
                     totalCalories += ingredient.Calories * factor;
                     totalProtein += ingredient.Protein * factor;
@@ -645,7 +648,7 @@ namespace Foodbook.ViewModels
             }
         }
 
-        private double GetUnitConversionFactor(Unit unit, double quantity)
+        private double GetUnitConversionFactor(Unit unit, double quantity, double unitWeight)
         {
             try
             {
@@ -654,7 +657,7 @@ namespace Foodbook.ViewModels
                 {
                     Unit.Gram => quantity / 100.0,        // wartości na 100g
                     Unit.Milliliter => quantity / 100.0,  // wartości na 100ml  
-                    Unit.Piece => quantity,               // wartości na 1 sztukę
+                    Unit.Piece => unitWeight > 0 ? (quantity * unitWeight) / 100.0 : quantity, // estimate weight
                     _ => quantity / 100.0
                 };
             }
