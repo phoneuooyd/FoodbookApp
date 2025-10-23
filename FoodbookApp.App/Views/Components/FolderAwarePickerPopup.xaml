@@ -10,7 +10,7 @@
            x:Name="ThisPopup"
            CanBeDismissedByTappingOutsideOfPopup="True"
            Padding="0"
-		   Margin="0">
+	   Margin="0">
 
     <mct:Popup.Resources>
         <ResourceDictionary>
@@ -33,7 +33,7 @@
                 <Setter Property="TextColor" Value="{AppThemeBinding Light=#999999, Dark=#CCCCCC}" />
             </Style>
             <Style x:Key="ClearSearchButton" TargetType="Button">
-                <Setter Property="Text" Value="✕" />
+                <Setter Property="Text" Value="X" />
                 <Setter Property="FontSize" Value="12" />
                 <Setter Property="WidthRequest" Value="26" />
                 <Setter Property="HeightRequest" Value="26" />
@@ -50,18 +50,18 @@
             StrokeShape="RoundRectangle 12"
             StrokeThickness="1"
             Stroke="{DynamicResource Secondary}"
-            MinimumWidthRequest="300"
-            MaximumWidthRequest="400"
-			MinimumHeightRequest="350"
-            MaximumHeightRequest="600">
+            MinimumWidthRequest="320"
+            MaximumWidthRequest="560"
+	    MinimumHeightRequest="360"
+            MaximumHeightRequest="630">
         
         <Grid RowDefinitions="Auto,Auto,*">
             
             <!-- Header with search, filter and close -->
-			<StackLayout Grid.Row="0"
+	    <StackLayout Grid.Row="0"
                         BackgroundColor="{DynamicResource ShellBackgroundColor}"
                         Padding="12,8"
-						Margin="0,0">
+				Margin="0,0">
 
                 <Grid ColumnDefinitions="*,Auto,Auto" Padding="6,6">
                     <!-- Search bar full width -->
@@ -71,7 +71,7 @@
                             PlaceholderText="Szukaj..."
                             ClearCommand="{Binding ClearSearchCommand, Source={x:Reference ThisPopup}}"
                             />
-					</StackLayout>
+			    </StackLayout>
 
                     <!-- Filter button -->
                     <ImageButton Grid.Column="1"
@@ -84,7 +84,7 @@
                                  VerticalOptions="Center" />
 
                     <!-- Close button -->
-					<Button Grid.Column="2"
+		    <Button Grid.Column="2"
                             Text="X"
                             FontSize="16"
                             WidthRequest="32"
@@ -93,8 +93,8 @@
                             BackgroundColor="Transparent"
                             TextColor="{DynamicResource ShellTitleColor}"
                             Command="{Binding CloseCommand, Source={x:Reference ThisPopup}}" />
-				</Grid>
-			</StackLayout>
+			</Grid>
+		</StackLayout>
 
             <!-- Back row under header -->
             <Grid Grid.Row="1"
@@ -115,8 +115,7 @@
             <!-- Content -->
             <ScrollView Grid.Row="2" 
                         BackgroundColor="{DynamicResource PageBackgroundColor}"
-                        Padding="6,4"
-                        MaximumHeightRequest="600">
+                        Padding="6,4">
                 <StackLayout BindableLayout.ItemsSource="{Binding Items, Source={x:Reference ThisPopup}}"
                              Spacing="8">
                     

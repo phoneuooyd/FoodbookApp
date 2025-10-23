@@ -8,6 +8,8 @@ using Foodbook.Models;
 using Foodbook.ViewModels;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
+using Microsoft.Maui.Devices;
+using Microsoft.Maui.Graphics;
 
 namespace Foodbook.Views.Components;
 
@@ -83,7 +85,8 @@ public class CRUDComponentPopup : Popup
 
     private View BuildRoot()
     {
-        double popupWidth = Math.Min(DeviceDisplay.Current.MainDisplayInfo.Width / DeviceDisplay.Current.MainDisplayInfo.Density * 0.9, 520);
+        double displayWidth = DeviceDisplay.Current.MainDisplayInfo.Width / DeviceDisplay.Current.MainDisplayInfo.Density;
+        double popupWidth = Math.Min(displayWidth * 0.92, 560);
 
         _listHost = new VerticalStackLayout { Spacing = 6 };
         _nameEntry = new Entry { Placeholder = "Nazwa etykiety", BackgroundColor = Colors.Transparent };
@@ -229,17 +232,21 @@ public class CRUDComponentPopup : Popup
         closeBtn.Clicked += async (_,__) => await CloseWithResultAsync(_selectedIds.ToList());
         header.Add(title,0,0); header.Add(closeBtn,1,0);
 
-        // Body
-        var bodyContent = new VerticalStackLayout
+        // Labels list wrapped in ScrollView (pattern from FilterSortPopup)
+        var listScroll = new ScrollView
         {
-            Spacing = 8,
-            Children = { toolbar, new ScrollView { Content = _listHost, Padding = new Thickness(0,0,0,4) }, _detailsPanel, _footerBar }
+            Content = _listHost,
+            Padding = new Thickness(0,0,0,4),
+            HeightRequest = 330,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Default
         };
 
-        var body = new Grid
+        // Body content: editor (separate) and scrollable list below
+        var body = new VerticalStackLayout
         {
+            Spacing = 8,
             Padding = new Thickness(16, 12),
-            Children = { bodyContent }
+            Children = { toolbar, _detailsPanel, _footerBar, listScroll }
         };
 
         var mainStack = new VerticalStackLayout
@@ -254,7 +261,10 @@ public class CRUDComponentPopup : Popup
             StrokeShape = new RoundRectangle { CornerRadius = 16 },
             Padding = 0,
             WidthRequest = popupWidth,
-            MaximumWidthRequest = 520,
+            MinimumWidthRequest = 360,
+            MinimumHeightRequest = 480,
+            MaximumWidthRequest = 560,
+            MaximumHeightRequest = 630,
             Content = mainStack
         };
         outerBorder.SetDynamicResource(Border.BackgroundColorProperty, "PageBackgroundColor");

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Devices;
+using System.Threading; // added
 
 namespace Foodbook.Views.Components;
 
@@ -20,6 +21,11 @@ public class FilterSortResult
 
 public class FilterSortPopup : Popup
 {
+    // Prevent multiple popups opened rapidly
+    private static int _openFlag = 0;
+    public static bool TryAcquireOpen() => Interlocked.CompareExchange(ref _openFlag, 1, 0) == 0;
+    public static void ReleaseOpen() => Interlocked.Exchange(ref _openFlag, 0);
+
     private readonly bool _showLabels;
     private readonly ObservableCollection<RecipeLabel> _labels;
     private readonly HashSet<int> _selected;
@@ -95,6 +101,16 @@ public class FilterSortPopup : Popup
         {
             BuildIngredients();
         }
+
+        // Always release the flag when closed and return current selection as result
+        this.Closed += async (_, __) =>
+        {
+            if (!_tcs.Task.IsCompleted)
+            {
+                await SubmitAndCloseAsync(); // will set result if not completed and close is already in progress
+            }
+            ReleaseOpen();
+        };
     }
 
     private View BuildContent()
@@ -126,9 +142,7 @@ public class FilterSortPopup : Popup
         closeBtn.SetDynamicResource(Button.TextColorProperty, "PrimaryText");
         closeBtn.Clicked += async (_, __) =>
         {
-            if (!_tcs.Task.IsCompleted)
-                _tcs.SetResult(null);
-            await CloseAsync();
+            await SubmitAndCloseAsync();
         };
 
         var header = new Grid
@@ -164,8 +178,8 @@ public class FilterSortPopup : Popup
         };
         labelsHeader.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
 
-        // Reduce labels area; same scroll behavior as ingredients
-        var labelsScroll = new ScrollView { Content = _labelsHost, IsVisible = _showLabels, HeightRequest = 120 };
+        // Increase popup height by ~70px and distribute proportionally between sections
+        var labelsScroll = new ScrollView { Content = _labelsHost, IsVisible = _showLabels, HeightRequest = 140 };
 
         // NEW: ingredients header + search + list (increase area)
         var ingredientsHeader = new Label
@@ -177,28 +191,14 @@ public class FilterSortPopup : Popup
         };
         ingredientsHeader.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
 
-        var ingredientsScroll = new ScrollView { Content = _ingredientsHost, IsVisible = _showIngredients, HeightRequest = 280 };
+        var ingredientsScroll = new ScrollView { Content = _ingredientsHost, IsVisible = _showIngredients, HeightRequest = 330 };
 
         var ok = new Button { Text = "Zastosuj" };
         ok.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
         ok.SetDynamicResource(Button.TextColorProperty, "ButtonPrimaryText");
         ok.Clicked += async (_, __) =>
         {
-            try
-            {
-                var result = new FilterSortResult
-                {
-                    SortOrder = _sortPicker.SelectedIndex == 1 ? SortOrder.Desc : SortOrder.Asc,
-                    SelectedLabelIds = _selected.ToList(),
-                    SelectedIngredientNames = _selectedIngredientNames.ToList()
-                };
-                if (!_tcs.Task.IsCompleted)
-                    _tcs.SetResult(result);
-            }
-            finally
-            {
-                await CloseAsync();
-            }
+            await SubmitAndCloseAsync();
         };
 
         var clear = new Button { Text = "Wyczyœæ" };
@@ -252,7 +252,7 @@ public class FilterSortPopup : Popup
             Content = body,
             WidthRequest = popupWidth,
             MaximumWidthRequest = 560,
-            MaximumHeightRequest = 560
+            MaximumHeightRequest = 630
         };
         outer.SetDynamicResource(Border.BackgroundColorProperty, "PageBackgroundColor");
         outer.SetDynamicResource(Border.StrokeProperty, "Secondary");
@@ -278,6 +278,25 @@ public class FilterSortPopup : Popup
             int row = i / 2;
             int col = i % 2;
             _labelsHost.Add(chip, col, row);
+        }
+    }
+
+    private async Task SubmitAndCloseAsync()
+    {
+        try
+        {
+            var result = new FilterSortResult
+            {
+                SortOrder = _sortPicker.SelectedIndex == 1 ? SortOrder.Desc : SortOrder.Asc,
+                SelectedLabelIds = _selected.ToList(),
+                SelectedIngredientNames = _selectedIngredientNames.ToList()
+            };
+            if (!_tcs.Task.IsCompleted)
+                _tcs.SetResult(result);
+        }
+        finally
+        {
+            await CloseAsync();
         }
     }
 
@@ -320,6 +339,7 @@ public class FilterSortPopup : Popup
         var tap = new TapGestureRecognizer();
         tap.Tapped += (_, __) =>
         {
+            // Toggle selection only (do not close)
             if (_selected.Contains(label.Id))
             {
                 _selected.Remove(label.Id);
@@ -373,6 +393,7 @@ public class FilterSortPopup : Popup
         var tap = new TapGestureRecognizer();
         tap.Tapped += (_, __) =>
         {
+            // Toggle selection only (do not close)
             if (_selectedIngredientNames.Contains(ingredient.Name))
             {
                 _selectedIngredientNames.Remove(ingredient.Name);

@@ -17,6 +17,9 @@ public partial class RecipesPage : ContentPage
     private readonly PageThemeHelper _themeHelper;
     private bool _isInitialized;
 
+    // Guard to avoid opening FilterSortPopup multiple times rapidly
+    private bool _isFilterPopupOpening;
+
     public RecipesPage(RecipeViewModel viewModel)
     {
         InitializeComponent();
@@ -154,6 +157,10 @@ public partial class RecipesPage : ContentPage
     // Open filter/sort popup from breadcrumb image button
     private async void OnFilterSortClicked(object? sender, EventArgs e)
     {
+        if (_isFilterPopupOpening || !FilterSortPopup.TryAcquireOpen())
+            return;
+        _isFilterPopupOpening = true;
+
         try
         {
             // Labels available for filtering are managed in SettingsViewModel
@@ -185,6 +192,11 @@ public partial class RecipesPage : ContentPage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[RecipesPage] OnFilterSortClicked error: {ex.Message}");
+        }
+        finally
+        {
+            _isFilterPopupOpening = false;
+            FilterSortPopup.ReleaseOpen();
         }
     }
 }
