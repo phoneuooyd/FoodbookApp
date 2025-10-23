@@ -62,7 +62,8 @@ public class FilterSortPopup : Popup
         _allIngredients = (ingredients ?? Enumerable.Empty<Ingredient>()).ToList();
         _selectedIngredientNames = new HashSet<string>(preselectedIngredientNames ?? Enumerable.Empty<string>(), System.StringComparer.OrdinalIgnoreCase);
 
-        CanBeDismissedByTappingOutsideOfPopup = true;
+        // Close only via X button; outside tap should not close
+        CanBeDismissedByTappingOutsideOfPopup = false;
         Padding = 0; // match SimpleListPopup
         Margin = 0;  // match SimpleListPopup
 
@@ -102,15 +103,8 @@ public class FilterSortPopup : Popup
             BuildIngredients();
         }
 
-        // Always release the flag when closed and return current selection as result
-        this.Closed += async (_, __) =>
-        {
-            if (!_tcs.Task.IsCompleted)
-            {
-                await SubmitAndCloseAsync(); // will set result if not completed and close is already in progress
-            }
-            ReleaseOpen();
-        };
+        // Only release the flag once popup is closed
+        this.Closed += (_, __) => ReleaseOpen();
     }
 
     private View BuildContent()
@@ -224,7 +218,7 @@ public class FilterSortPopup : Popup
         var buttons = new HorizontalStackLayout
         {
             Spacing = 12,
-            HorizontalOptions = LayoutOptions.End, // align buttons group to the right
+            HorizontalOptions = LayoutOptions.End,
             Children = { clear, ok }
         };
 
