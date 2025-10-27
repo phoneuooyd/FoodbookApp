@@ -3404,5 +3404,35 @@
     "amount": 100,
     "unit": "Gram",
     "unit_weight": 5
+  },
+  {
+    "name_pl": "Ksylitol",
+    "name_en": "Xylitol",
+    "name_de": "Xylit",
+    "name_es": "Xilitol",
+    "name_fr": "Xylitol",
+    "name_kr": "자일리톨",
+    "calories": 240,
+    "protein": 0.0,
+    "fat": 0.0,
+    "carbs": 100.0,
+    "amount": 100,
+    "unit": "Gram",
+    "unit_weight": 1
+  },
+  {
+    "name_pl": "Erytrytol",
+    "name_en": "Erythritol",
+    "name_de": "Erythrit",
+    "name_es": "Eritritol",
+    "name_fr": "Érythritol",
+    "name_kr": "에리스리톨",
+    "calories": 20,
+    "protein": 0.0,
+    "fat": 0.0,
+    "carbs": 100.0,
+    "amount": 100,
+    "unit": "Gram",
+    "unit_weight": 1
   }
 ]
