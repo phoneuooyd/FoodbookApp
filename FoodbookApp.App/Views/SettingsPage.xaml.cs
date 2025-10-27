@@ -2,6 +2,8 @@ using System;
 using Microsoft.Maui.Controls;
 using Foodbook.ViewModels;
 using Foodbook.Views.Base;
+using Microsoft.Extensions.DependencyInjection;
+using Foodbook.Data;
 
 namespace Foodbook.Views
 {
@@ -55,6 +57,33 @@ namespace Foodbook.Views
                 FoodbookApp.MauiProgram.ServiceProvider.GetRequiredService<FoodbookApp.Interfaces.IDatabaseService>(),
                 FoodbookApp.MauiProgram.ServiceProvider.GetRequiredService<FoodbookApp.Interfaces.IPreferencesService>()
             ));
+        }
+
+        private async void OnUpdateIngredientsClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                bool confirm = await DisplayAlert("Aktualizacja sk³adników", "Czy na pewno chcesz za³adowaæ/aktualizowaæ bazê sk³adników z pliku ingredients.json?", "Tak", "Nie");
+                if (!confirm) return;
+
+                if (FoodbookApp.MauiProgram.ServiceProvider == null)
+                {
+                    await DisplayAlert("B³¹d", "Serwis DI niedostêpny.", "OK");
+                    return;
+                }
+
+                using var scope = FoodbookApp.MauiProgram.ServiceProvider.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+                await SeedData.SeedIngredientsAsync(db);
+
+                await DisplayAlert("Sukces", "Baza sk³adników zosta³a zaktualizowana.", "OK");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SettingsPage] OnUpdateIngredientsClicked error: {ex.Message}");
+                await DisplayAlert("B³¹d", $"Aktualizacja nie powiod³a siê: {ex.Message}", "OK");
+            }
         }
     }
 }

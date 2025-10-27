@@ -214,6 +214,9 @@
                 <controls:TabItem.Content>
                     <ScrollView>
                         <VerticalStackLayout Padding="16" Spacing="8" BackgroundColor="{DynamicResource PageBackgroundColor}">
+                            <!-- NEW: Update Ingredients Button placed at the very top of Data section -->
+                            <Button Text="Aktualizuj bazę składników" Style="{StaticResource MigrationButtonStyle}" Clicked="OnUpdateIngredientsClicked" />
+
                             <!-- Data Export Card -->
                             <Frame Style="{StaticResource DashboardCardStyle}">
                                 <StackLayout>
