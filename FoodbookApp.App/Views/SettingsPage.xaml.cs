@@ -63,7 +63,7 @@ namespace Foodbook.Views
         {
             try
             {
-                bool confirm = await DisplayAlert("Aktualizacja sk³adników", "Czy na pewno chcesz za³adowaæ/aktualizowaæ bazê sk³adników z pliku ingredients.json?", "Tak", "Nie");
+                bool confirm = await DisplayAlert("Aktualizacja sk³adników", "Czy na pewno chcesz dodaæ brakuj¹ce sk³adniki z pliku ingredients.json do bazy? (nie nadpisze ani nie usunie istniej¹cych)", "Tak", "Nie");
                 if (!confirm) return;
 
                 if (FoodbookApp.MauiProgram.ServiceProvider == null)
@@ -75,9 +75,12 @@ namespace Foodbook.Views
                 using var scope = FoodbookApp.MauiProgram.ServiceProvider.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-                await SeedData.SeedIngredientsAsync(db);
+                int added = await SeedData.AddMissingIngredientsFromJsonAsync(db);
 
-                await DisplayAlert("Sukces", "Baza sk³adników zosta³a zaktualizowana.", "OK");
+                if (added > 0)
+                    await DisplayAlert("Sukces", $"Dodano {added} nowych sk³adników do bazy.", "OK");
+                else
+                    await DisplayAlert("Informacja", "Wszystkie sk³adniki z pliku ju¿ istniej¹ w bazie.", "OK");
             }
             catch (Exception ex)
             {

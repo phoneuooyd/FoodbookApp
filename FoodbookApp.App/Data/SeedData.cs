@@ -161,6 +161,41 @@ namespace Foodbook.Data
             }
         }
 
+        /// <summary>
+        /// Dodaje do bazy tylko te składniki z pliku ingredients.json, których nie ma w bazie (porównanie po nazwie, bez RecipeId).
+        /// Nie usuwa ani nie nadpisuje istniejących składników.
+        /// </summary>
+        public static async Task<int> AddMissingIngredientsFromJsonAsync(AppDbContext context, string? languageOverride = null)
+        {
+            var loaded = await LoadPopularIngredientsAsync(languageOverride);
+            // Pobierz istniejące składniki bazowe (RecipeId == null)
+            var existing = await context.Ingredients
+                .Where(i => i.RecipeId == null)
+                .AsNoTracking()
+                .ToListAsync();
+
+            // Porównanie po nazwie (ignoruj wielkość liter i diakrytyki)
+            static string Normalize(string s) => s
+                .ToLowerInvariant()
+                .Replace("ą", "a").Replace("ć", "c").Replace("ę", "e")
+                .Replace("ł", "l").Replace("ń", "n").Replace("ó", "o")
+                .Replace("ś", "s").Replace("ź", "z").Replace("ż", "z")
+                .Trim();
+
+            var existingNames = new HashSet<string>(existing.Select(i => Normalize(i.Name)));
+            var toAdd = loaded
+                .Where(i => !existingNames.Contains(Normalize(i.Name)))
+                .ToList();
+
+            if (toAdd.Count > 0)
+            {
+                context.Ingredients.AddRange(toAdd);
+                await context.SaveChangesAsync();
+            }
+            LogDebug($"AddMissingIngredientsFromJsonAsync: {toAdd.Count} new ingredients added.");
+            return toAdd.Count;
+        }
+
         public static async Task<bool> UpdateIngredientWithOpenFoodFactsAsync(Ingredient ingredient)
         {
             using var httpClient = new HttpClient() { Timeout = TimeSpan.FromSeconds(10) };

@@ -44,7 +44,21 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     public string Quantity { get => _quantity; set { _quantity = value; OnPropertyChanged(); ValidateInput(); } }
     private string _quantity = "100";  // Default value
 
-    public Unit SelectedUnit { get => _unit; set { _unit = value; OnPropertyChanged(); } }
+    public string UnitWeight
+    {
+        get => _unitWeight;
+        set
+        {
+            _unitWeight = value;
+            OnPropertyChanged();
+            ValidateInput();
+        }
+    }
+    private string _unitWeight = "1.0";
+
+    public bool IsUnitWeightVisible => SelectedUnit == Unit.Piece;
+
+    public Unit SelectedUnit { get => _unit; set { _unit = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsUnitWeightVisible)); ValidateInput(); } }
     private Unit _unit = Unit.Gram;  // Default value
 
     // Nutritional information fields
@@ -151,22 +165,21 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 Protein = ing.Protein.ToString("F1");
                 Fat = ing.Fat.ToString("F1");
                 Carbs = ing.Carbs.ToString("F1");
-                
+                UnitWeight = ing.UnitWeight.ToString("F2");
                 // Reset to first tab when loading
                 SelectedTabIndex = 0;
-                
                 // Notify UI about property changes
                 OnPropertyChanged(nameof(Title));
                 OnPropertyChanged(nameof(SaveButtonText));
                 OnPropertyChanged(nameof(IsPartOfRecipe));
                 OnPropertyChanged(nameof(RecipeInfo));
-                
+                OnPropertyChanged(nameof(IsUnitWeightVisible));
                 ValidateInput();
             }
         }
         catch (Exception ex)
         {
-            ValidationMessage = $"B³¹d podczas ³adowania sk³adnika: {ex.Message}";
+            ValidationMessage = $"B??d podczas ?adowania sk?adnika: {ex.Message}";
             System.Diagnostics.Debug.WriteLine($"Error in LoadAsync: {ex.Message}");
         }
     }
@@ -332,6 +345,8 @@ public class IngredientFormViewModel : INotifyPropertyChanged
             var prot = ParseDoubleValue(Protein);
             var fat = ParseDoubleValue(Fat);
             var carbs = ParseDoubleValue(Carbs);
+            var unitWeight = ParseDoubleValue(UnitWeight);
+            if (unitWeight <= 0) unitWeight = 1.0;
             
             if (_ingredient == null)
             {
@@ -345,6 +360,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                     Protein = prot,
                     Fat = fat,
                     Carbs = carbs,
+                    UnitWeight = unitWeight,
                     RecipeId = null  // Explicitly set to null for standalone ingredients
                 };
                 
@@ -361,6 +377,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 _ingredient.Protein = prot;
                 _ingredient.Fat = fat;
                 _ingredient.Carbs = carbs;
+                _ingredient.UnitWeight = unitWeight;
                 // Preserve existing RecipeId and Recipe navigation property
                 await _service.UpdateIngredientAsync(_ingredient);
                 System.Diagnostics.Debug.WriteLine($"Updated ingredient: {Name}, {qty}, {SelectedUnit}, {cal} cal");
@@ -371,7 +388,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error saving ingredient: {ex.Message}");
-            ValidationMessage = $"Nie uda³o siê zapisaæ sk³adnika: {ex.Message}";
+            ValidationMessage = $"Nie uda?o si? zapisa? sk?adnika: {ex.Message}";
         }
     }
 
