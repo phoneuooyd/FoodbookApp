@@ -16,11 +16,15 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     private int _currentPlanId;
     private Ingredient? _itemBeingDragged;
 
-    // Dwie oddzielne kolekcje
+    // Two separate backing collections (data model)
     public ObservableCollection<Ingredient> UncheckedItems { get; } = new();
     public ObservableCollection<Ingredient> CheckedItems { get; } = new();
+
+    // Grouped view for UI (prevents nested ScrollView + multiple CollectionViews causing jumpiness)
+    public ObservableCollection<IngredientGroup> Groups { get; } = new();
+    private IngredientGroup? _uncheckedGroup;
+    private IngredientGroup? _checkedGroup;
     
-    // W³aœciwoœæ do sprawdzania czy s¹ zebrane produkty
     public bool HasCheckedItems => CheckedItems.Count > 0;
     
     public IEnumerable<Unit> Units => Enum.GetValues(typeof(Unit)).Cast<Unit>();
@@ -69,9 +73,27 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         // Subscribe to editing completed event
         ItemEditingCompleted += async (item) => await SaveItemStateAsync(item);
         
-        // S³uchaj zmian w kolekcjach
+        // Listen to changes in collections for HasCheckedItems re-evaluation
         UncheckedItems.CollectionChanged += (s, e) => OnPropertyChanged(nameof(HasCheckedItems));
         CheckedItems.CollectionChanged += (s, e) => OnPropertyChanged(nameof(HasCheckedItems));
+    }
+
+    private void EnsureGroups()
+    {
+        if (_uncheckedGroup == null)
+        {
+            _uncheckedGroup = new IngredientGroup("ToBuy", UncheckedItems, isUnchecked: true);
+            Groups.Add(_uncheckedGroup);
+        }
+
+        if (_checkedGroup == null)
+        {
+            _checkedGroup = new IngredientGroup("Collected", CheckedItems, isUnchecked: false);
+            Groups.Add(_checkedGroup);
+        }
+
+        OnPropertyChanged(nameof(Groups));
+        OnPropertyChanged(nameof(HasCheckedItems));
     }
 
     public async Task LoadAsync(int planId)
@@ -80,7 +102,6 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         var plan = await _planService.GetPlanAsync(planId);
         if (plan == null) return;
 
-        // Use the new method that includes checked state
         var items = await _shoppingListService.GetShoppingListWithCheckedStateAsync(planId);
         
         UncheckedItems.Clear();
@@ -88,14 +109,18 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         
         foreach (var item in items)
         {
-            // Dodaj obs³ugê zmiany stanu CheckBox
             item.PropertyChanged += OnItemPropertyChanged;
-            
             if (item.IsChecked)
                 CheckedItems.Add(item);
             else
                 UncheckedItems.Add(item);
         }
+
+        // Recreate groups after data load (ensures a single CV in UI)
+        Groups.Clear();
+        _uncheckedGroup = null;
+        _checkedGroup = null;
+        EnsureGroups();
     }
 
     private async void OnItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -106,7 +131,6 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
             {
                 if (item.IsChecked)
                 {
-                    // Przenoszenie z UncheckedItems do CheckedItems
                     if (UncheckedItems.Contains(item))
                     {
                         UncheckedItems.Remove(item);
@@ -115,7 +139,6 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
                 }
                 else
                 {
-                    // Przenoszenie z CheckedItems do UncheckedItems
                     if (CheckedItems.Contains(item))
                     {
                         CheckedItems.Remove(item);
@@ -124,7 +147,6 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
                 }
             }
 
-            // Save the state immediately when any relevant property changes
             if (e.PropertyName == nameof(Ingredient.IsChecked) || 
                 e.PropertyName == nameof(Ingredient.Unit))
             {
@@ -167,15 +189,14 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     {
         var newItem = new Ingredient 
         { 
-            Name = "", // Empty name instead of default text
-            Quantity = 1, // Default quantity
-            Unit = Unit.Piece, // Default unit
-            Order = UncheckedItems.Count // Set order to the end of unchecked items
+            Name = string.Empty,
+            Quantity = 1,
+            Unit = Unit.Piece,
+            Order = UncheckedItems.Count
         };
         newItem.PropertyChanged += OnItemPropertyChanged;
         UncheckedItems.Add(newItem);
         
-        // Immediately save the new item to ensure it persists
         _ = Task.Run(async () => await SaveItemStateAsync(newItem));
     }
 
@@ -183,14 +204,11 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     {
         if (item == null) return;
         
-        // Usuñ event handler
         item.PropertyChanged -= OnItemPropertyChanged;
         
-        // Usuñ z odpowiedniej kolekcji
         var removedFromUnchecked = UncheckedItems.Remove(item);
         var removedFromChecked = CheckedItems.Remove(item);
         
-        // Remove from database if it was saved there
         if (removedFromUnchecked || removedFromChecked)
         {
             try
@@ -208,11 +226,9 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     {
         try
         {
-            // Determine which collection the items belong to
             var draggedInUnchecked = UncheckedItems.Contains(draggedItem);
             var targetInUnchecked = UncheckedItems.Contains(targetItem);
 
-            // Only allow reordering within the same collection (checked/unchecked)
             if (draggedInUnchecked != targetInUnchecked)
                 return;
 
@@ -223,17 +239,13 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
 
             if (draggedIndex != -1 && targetIndex != -1 && draggedIndex != targetIndex)
             {
-                // Remove the dragged item
                 targetCollection.RemoveAt(draggedIndex);
 
-                // Adjust target index if needed
                 if (draggedIndex < targetIndex)
                     targetIndex--;
 
-                // Insert at new position
                 targetCollection.Insert(targetIndex, draggedItem);
 
-                // Notify UI about changes
                 OnPropertyChanged(nameof(UncheckedItems));
                 OnPropertyChanged(nameof(CheckedItems));
 
@@ -250,7 +262,6 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     {
         try
         {
-            // Assign order indices to all items
             for (int i = 0; i < UncheckedItems.Count; i++)
             {
                 UncheckedItems[i].Order = i;
@@ -261,7 +272,6 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
                 CheckedItems[i].Order = i;
             }
 
-            // Save all items with their new order
             var allItems = UncheckedItems.Concat(CheckedItems).ToList();
             await _shoppingListService.SaveAllShoppingListStatesAsync(_currentPlanId, allItems);
         }
@@ -334,13 +344,11 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         
         System.Diagnostics.Debug.WriteLine($"ItemDraggedOver: {item.Name}");
         
-        // Reset drag state for the dragged item when it's over another item
         if (item == _itemBeingDragged)
         {
             item.IsBeingDragged = false;
         }
         
-        // Only show drag over state if it's not the same item being dragged
         item.IsBeingDraggedOver = item != _itemBeingDragged;
     }
 
@@ -363,11 +371,10 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
             
             if (itemToMove == itemToInsertBefore) return;
             
-            // Check if items are in the same collection
             var draggedInUnchecked = UncheckedItems.Contains(itemToMove);
             var targetInUnchecked = UncheckedItems.Contains(itemToInsertBefore);
             
-            if (draggedInUnchecked != targetInUnchecked) return; // Can't move between collections
+            if (draggedInUnchecked != targetInUnchecked) return;
             
             var collection = draggedInUnchecked ? UncheckedItems : CheckedItems;
             
@@ -377,7 +384,6 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
                 collection.Remove(itemToMove);
                 collection.Insert(insertAtIndex, itemToMove);
                 
-                // Reset drag states
                 itemToMove.IsBeingDragged = false;
                 itemToInsertBefore.IsBeingDraggedOver = false;
                 

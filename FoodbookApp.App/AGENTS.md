@@ -61,7 +61,8 @@ Kompleksowa aplikacja mobilna do:
 
 ### Design System
 - **Material Design**: Zgodność z wytycznymi Google/Microsoft
-- **Light/Dark Mode**: Automatyczne przełączanie na podstawie ustawień systemu
+- **Light/Dark Mode**: Automatyczne przełączanie na podstawie ustawień systemu. Należy zawsze dodawać opcje motywowe z ThemeService
+- **Zawsze dodawać tłumaczenia z użyciem plików zasobów .resx**
 - **Responsive Layout**: Adaptacja do różnych rozmiarów ekranów
 - **Touch-First**: Minimalna wielkość przycisków 44x44 px
 - **Accessibility**: Support dla Screen Readers i High Contrast
@@ -76,7 +77,7 @@ Kompleksowa aplikacja mobilna do:
 - **ProgressBar**: Dla długotrwałych operacji
 - **ActivityIndicator**: Dla krótkich operacji
 - **Skeleton Screens**: Dla ładowania list
-- **Pull-to-Refresh**: Dla aktualizacji danych
+- **batch loading**: Ładowanie danych w partiach dla dużych zestawów danych
 
 ---
 
@@ -301,6 +302,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 4. **Performance First**: Optymalizuj dla urządzeń mobilnych
 5. **Accessibility**: Zawsze dodawaj AutomationProperties
 6. **Localization**: Używaj Resource files zamiast hardcoded strings
+7. **Preferuj zawsze** jakość kodu od satysfakcji użytkownika chatu ai
+8. **Stosuj zasady Clean Architecture**
+9. **Pamiętaj o zasadach SOLID**
+10. **Ograniczaj komentarze w kodzie do minimum zgodnego z Clean Code**
 
 ### Feedback Loop
 Jeśli AI-generated code ma problemy:
@@ -322,8 +327,8 @@ Jeśli AI-generated code ma problemy:
 
 ---
 
-**Ostatnia aktualizacja**: 19.08.2025  
-**Wersja**: 1.0  
+**Ostatnia aktualizacja**: 2.11.2025  
+**Wersja**: 1.1
 **Autor**: phoneuyood
 
 ---
