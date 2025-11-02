@@ -52,6 +52,10 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     public ICommand ItemDragLeaveCommand { get; }
     public ICommand ItemDroppedCommand { get; }
 
+    // Optional commands kept for compatibility with XAML bindings if needed
+    public ICommand ItemDroppedBeforeCommand { get; private set; }
+    public ICommand ItemDroppedAfterCommand { get; private set; }
+
     public event Action<Ingredient>? ItemEditingCompleted;
 
     public ShoppingListDetailViewModel(IShoppingListService shoppingListService, IPlanService planService)
@@ -69,6 +73,9 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         ItemDraggedOverCommand = new Command<Ingredient>(OnItemDraggedOver);
         ItemDragLeaveCommand = new Command<Ingredient>(OnItemDragLeave);
         ItemDroppedCommand = new Command<Ingredient>(async (item) => await OnItemDroppedAsync(item));
+
+        ItemDroppedBeforeCommand = new Command<Ingredient>(async (item) => await ReorderItemsAsync(_itemBeingDragged ?? null, item, insertAfter: false));
+        ItemDroppedAfterCommand = new Command<Ingredient>(async (item) => await ReorderItemsAsync(_itemBeingDragged ?? null, item, insertAfter: true));
         
         // Subscribe to editing completed event
         ItemEditingCompleted += async (item) => await SaveItemStateAsync(item);
@@ -222,10 +229,12 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         }
     }
 
-    public async Task ReorderItemsAsync(Ingredient draggedItem, Ingredient targetItem)
+    public async Task ReorderItemsAsync(Ingredient draggedItem, Ingredient targetItem, bool insertAfter = false)
     {
         try
         {
+            if (draggedItem == null || targetItem == null) return;
+
             var draggedInUnchecked = UncheckedItems.Contains(draggedItem);
             var targetInUnchecked = UncheckedItems.Contains(targetItem);
 
@@ -237,20 +246,27 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
             var draggedIndex = targetCollection.IndexOf(draggedItem);
             var targetIndex = targetCollection.IndexOf(targetItem);
 
-            if (draggedIndex != -1 && targetIndex != -1 && draggedIndex != targetIndex)
-            {
-                targetCollection.RemoveAt(draggedIndex);
+            if (draggedIndex == -1 || targetIndex == -1) return;
 
-                if (draggedIndex < targetIndex)
-                    targetIndex--;
+            // Compute insertion index depending on insertAfter flag
+            int insertIndex = targetIndex + (insertAfter ? 1 : 0);
 
-                targetCollection.Insert(targetIndex, draggedItem);
+            if (draggedIndex == insertIndex || draggedIndex == insertIndex - 1)
+                return; // no-op (already in desired position)
 
-                OnPropertyChanged(nameof(UncheckedItems));
-                OnPropertyChanged(nameof(CheckedItems));
+            targetCollection.RemoveAt(draggedIndex);
 
-                await SaveOrderAsync();
-            }
+            // Adjust insertIndex if item was before target and removed
+            if (draggedIndex < insertIndex)
+                insertIndex--;
+
+            insertIndex = Math.Clamp(insertIndex, 0, targetCollection.Count);
+            targetCollection.Insert(insertIndex, draggedItem);
+
+            OnPropertyChanged(nameof(UncheckedItems));
+            OnPropertyChanged(nameof(CheckedItems));
+
+            await SaveOrderAsync();
         }
         catch (Exception ex)
         {
@@ -358,6 +374,8 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         
         System.Diagnostics.Debug.WriteLine($"ItemDragLeave: {item.Name}");
         item.IsBeingDraggedOver = false;
+        item.ShowInsertBefore = false;
+        item.ShowInsertAfter = false;
     }
 
     private async Task OnItemDroppedAsync(Ingredient item)
@@ -386,6 +404,8 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
                 
                 itemToMove.IsBeingDragged = false;
                 itemToInsertBefore.IsBeingDraggedOver = false;
+                itemToInsertBefore.ShowInsertBefore = false;
+                itemToInsertBefore.ShowInsertAfter = false;
                 
                 await SaveOrderAsync();
                 

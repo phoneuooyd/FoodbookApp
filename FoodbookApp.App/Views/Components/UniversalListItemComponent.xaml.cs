@@ -4,7 +4,9 @@ using Microsoft.Maui.Controls;
 
 namespace Foodbook.Views.Components
 {
-    public record DragDropInfo(object? Source, object? Target);
+    public enum DropIntent { On, Before, After }
+
+    public record DragDropInfo(object? Source, object? Target, DropIntent Intent = DropIntent.On);
 
     public partial class UniversalListItemComponent : ContentView
     {
@@ -223,7 +225,56 @@ namespace Foodbook.Views.Components
             if (!ShowDragAndDrop) return;
 
             e.Data.Properties.TryGetValue("SourceItem", out var source);
-            var payload = new DragDropInfo(source, BindingContext);
+            var payload = new DragDropInfo(source, BindingContext, DropIntent.On);
+            if (DropCommand?.CanExecute(payload) == true)
+            {
+                DropCommand.Execute(payload);
+            }
+        }
+
+        private void OnTopInsertDragOver(object? sender, DragEventArgs e)
+        {
+            if (!ShowDragAndDrop) return;
+            // Show the top indicator
+            if (TopInsertZone != null) TopInsertZone.Opacity = 0.6;
+        }
+
+        private void OnTopInsertDragLeave(object? sender, DragEventArgs e)
+        {
+            if (TopInsertZone != null) TopInsertZone.Opacity = 0;
+        }
+
+        private void OnTopInsertDrop(object? sender, DropEventArgs e)
+        {
+            if (!ShowDragAndDrop) return;
+            if (TopInsertZone != null) TopInsertZone.Opacity = 0;
+
+            e.Data.Properties.TryGetValue("SourceItem", out var source);
+            var payload = new DragDropInfo(source, BindingContext, DropIntent.Before);
+            if (DropCommand?.CanExecute(payload) == true)
+            {
+                DropCommand.Execute(payload);
+            }
+        }
+
+        private void OnBottomInsertDragOver(object? sender, DragEventArgs e)
+        {
+            if (!ShowDragAndDrop) return;
+            if (BottomInsertZone != null) BottomInsertZone.Opacity = 0.6;
+        }
+
+        private void OnBottomInsertDragLeave(object? sender, DragEventArgs e)
+        {
+            if (BottomInsertZone != null) BottomInsertZone.Opacity = 0;
+        }
+
+        private void OnBottomInsertDrop(object? sender, DropEventArgs e)
+        {
+            if (!ShowDragAndDrop) return;
+            if (BottomInsertZone != null) BottomInsertZone.Opacity = 0;
+
+            e.Data.Properties.TryGetValue("SourceItem", out var source);
+            var payload = new DragDropInfo(source, BindingContext, DropIntent.After);
             if (DropCommand?.CanExecute(payload) == true)
             {
                 DropCommand.Execute(payload);

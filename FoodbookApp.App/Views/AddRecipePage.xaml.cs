@@ -24,6 +24,9 @@ namespace Foodbook.Views
         private bool _hasEverLoaded;
         private bool _isModalOpen = false; // Flag to prevent multiple modal opens
 
+        // drag state for reordering ingredients
+        private Ingredient? _draggingIngredient;
+
         public AddRecipePage(AddRecipeViewModel vm)
         {
             InitializeComponent();
@@ -319,6 +322,100 @@ namespace Foodbook.Views
                     ViewModel.ValidationMessage = $"B³¹d aktualizacji sk³adnika: {ex.Message}";
                 }
             }
+        }
+
+        // Drag start for ingredient reordering
+        private void OnIngredientDragStarting(object? sender, DragStartingEventArgs e)
+        {
+            if (sender is Element el && el.BindingContext is Ingredient ing)
+            {
+                _draggingIngredient = ing;
+                e.Data.Properties["SourceItem"] = ing;
+            }
+        }
+
+        // Insert zone handlers
+        private void OnIngredientTopInsertDragOver(object? sender, DragEventArgs e)
+        {
+            if (sender is Element el && el.BindingContext is Ingredient ing)
+            {
+                ing.ShowInsertBefore = true;
+            }
+        }
+        private void OnIngredientTopInsertDragLeave(object? sender, DragEventArgs e)
+        {
+            if (sender is Element el && el.BindingContext is Ingredient ing)
+            {
+                ing.ShowInsertBefore = false;
+            }
+        }
+        private void OnIngredientTopInsertDrop(object? sender, DropEventArgs e)
+        {
+            try
+            {
+                if (ViewModel?.Ingredients == null || _draggingIngredient == null) return;
+                if (sender is Element el && el.BindingContext is Ingredient target)
+                {
+                    target.ShowInsertBefore = false;
+                    ReorderIngredient(_draggingIngredient, target, before: true);
+                }
+            }
+            finally
+            {
+                _draggingIngredient = null;
+            }
+        }
+
+        private void OnIngredientBottomInsertDragOver(object? sender, DragEventArgs e)
+        {
+            if (sender is Element el && el.BindingContext is Ingredient ing)
+            {
+                ing.ShowInsertAfter = true;
+            }
+        }
+        private void OnIngredientBottomInsertDragLeave(object? sender, DragEventArgs e)
+        {
+            if (sender is Element el && el.BindingContext is Ingredient ing)
+            {
+                ing.ShowInsertAfter = false;
+            }
+        }
+        private void OnIngredientBottomInsertDrop(object? sender, DropEventArgs e)
+        {
+            try
+            {
+                if (ViewModel?.Ingredients == null || _draggingIngredient == null) return;
+                if (sender is Element el && el.BindingContext is Ingredient target)
+                {
+                    target.ShowInsertAfter = false;
+                    ReorderIngredient(_draggingIngredient, target, before: false);
+                }
+            }
+            finally
+            {
+                _draggingIngredient = null;
+            }
+        }
+
+        private void ReorderIngredient(Ingredient source, Ingredient target, bool before)
+        {
+            if (ViewModel == null) return;
+            var items = ViewModel.Ingredients;
+            if (source == target) return;
+
+            var oldIndex = items.IndexOf(source);
+            var targetIndex = items.IndexOf(target);
+            if (oldIndex < 0 || targetIndex < 0) return;
+
+            if (!before) targetIndex += 1; // after
+
+            // adjust for removal when moving forward
+            if (oldIndex < targetIndex) targetIndex--;
+
+            items.Move(oldIndex, targetIndex);
+
+            // trigger recalculation to update nutrition display order if needed
+            _ = ViewModel.RecalculateNutritionalValuesAsync();
         }
 
         // Open labels management popup (also acts as selector)

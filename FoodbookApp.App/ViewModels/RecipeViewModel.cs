@@ -35,6 +35,11 @@ namespace Foodbook.ViewModels
         private List<Folder> _allFolders = new();
         private Folder? _currentFolder;
 
+        // drag reorder state for folders
+        private object? _dragSource;
+        private bool _showInsertBefore;
+        private bool _showInsertAfter;
+
         // New: sorting and label filter state
         private SortOrder _sortOrder = SortOrder.Asc;
         public SortOrder SortOrder
@@ -343,49 +348,42 @@ namespace Foodbook.ViewModels
                 recipeQuery = recipeQuery.Where(r => (r.Ingredients?.Any(i => !string.IsNullOrEmpty(i.Name) && _selectedIngredientNames.Contains(i.Name)) ?? false));
             }
 
-            // Apply sorting (Name or macros)
+            // Sort folders by Order, name as tiebreaker; recipes by selected sort
+            folderQuery = folderQuery.OrderBy(f => f.Order).ThenBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
+
+            // Apply sorting (Name or macros) for recipes
             if (CurrentSortBy.HasValue)
             {
                 switch (CurrentSortBy.Value)
                 {
                     case SortBy.NameAsc:
-                        folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
                         recipeQuery = recipeQuery.OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase);
                         break;
                     case SortBy.NameDesc:
-                        folderQuery = folderQuery.OrderByDescending(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
                         recipeQuery = recipeQuery.OrderByDescending(r => r.Name, StringComparer.CurrentCultureIgnoreCase);
                         break;
                     case SortBy.CaloriesAsc:
-                        folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
                         recipeQuery = recipeQuery.OrderBy(r => r.Calories);
                         break;
                     case SortBy.CaloriesDesc:
-                        folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
                         recipeQuery = recipeQuery.OrderByDescending(r => r.Calories);
                         break;
                     case SortBy.ProteinAsc:
-                        folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
                         recipeQuery = recipeQuery.OrderBy(r => r.Protein);
                         break;
                     case SortBy.ProteinDesc:
-                        folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
                         recipeQuery = recipeQuery.OrderByDescending(r => r.Protein);
                         break;
                     case SortBy.CarbsAsc:
-                        folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
                         recipeQuery = recipeQuery.OrderBy(r => r.Carbs);
                         break;
                     case SortBy.CarbsDesc:
-                        folderQuery = folderQuery.OrderByDescending(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
                         recipeQuery = recipeQuery.OrderByDescending(r => r.Carbs);
                         break;
                     case SortBy.FatAsc:
-                        folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
                         recipeQuery = recipeQuery.OrderBy(r => r.Fat);
                         break;
                     case SortBy.FatDesc:
-                        folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
                         recipeQuery = recipeQuery.OrderByDescending(r => r.Fat);
                         break;
                 }
@@ -394,12 +392,10 @@ namespace Foodbook.ViewModels
             {
                 if (SortOrder == SortOrder.Asc)
                 {
-                    folderQuery = folderQuery.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
                     recipeQuery = recipeQuery.OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase);
                 }
                 else
                 {
-                    folderQuery = folderQuery.OrderByDescending(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
                     recipeQuery = recipeQuery.OrderByDescending(r => r.Name, StringComparer.CurrentCultureIgnoreCase);
                 }
             }
@@ -519,16 +515,19 @@ namespace Foodbook.ViewModels
         public ICommand DragLeaveCommand { get; private set; }
         public ICommand DropCommand { get; private set; }
 
-        private object? _dragSource;
-
         private void InitializeDragDrop()
         {
             DragStartingCommand = new Command<object>(o =>
             {
                 _dragSource = o;
-                if (o is Recipe r)
+                switch (o)
                 {
-                    r.IsBeingDragged = true;
+                    case Recipe r:
+                        r.IsBeingDragged = true;
+                        break;
+                    case Folder f:
+                        f.IsBeingDragged = true;
+                        break;
                 }
             });
 
@@ -552,39 +551,89 @@ namespace Foodbook.ViewModels
             {
                 try
                 {
-                    // payload may be a DragDropInfo or direct target binding context
-                    if (_dragSource is not Recipe dragged)
-                        return;
-
-                    Folder? targetFolder = null;
                     switch (payload)
                     {
                         case Foodbook.Views.Components.DragDropInfo info:
-                            targetFolder = info.Target as Folder;
+                            await HandleDropAsync(info);
                             break;
                         case Folder f:
-                            targetFolder = f;
+                            // backward compat: treat as drop ON
+                            await HandleDropAsync(new Foodbook.Views.Components.DragDropInfo(_dragSource, f, DropIntent.On));
                             break;
                     }
-
-                    if (targetFolder == null)
-                        return; // we only allow dropping onto folders
-
-                    // Update folder id and persist
-                    dragged.FolderId = targetFolder.Id;
-                    await _recipeService.UpdateRecipeAsync(dragged);
-
-                    // Refresh lists locally without full reload
-                    FilterItems();
                 }
                 finally
                 {
                     // clear flags
-                    if (_dragSource is Recipe r2) r2.IsBeingDragged = false;
-                    if (payload is Folder f2) f2.IsBeingDraggedOver = false;
+                    switch (_dragSource)
+                    {
+                        case Recipe r2: r2.IsBeingDragged = false; break;
+                        case Folder f2: f2.IsBeingDragged = false; break;
+                    }
+                    if (payload is Folder f3) f3.IsBeingDraggedOver = false;
                     _dragSource = null;
                 }
             });
+        }
+
+        private async Task HandleDropAsync(Foodbook.Views.Components.DragDropInfo info)
+        {
+            var source = info.Source;
+            var target = info.Target;
+
+            // 1) Recipe dropped onto folder moves recipe under that folder
+            if (source is Recipe draggedRecipe && target is Folder targetFolder && info.Intent == DropIntent.On)
+            {
+                draggedRecipe.FolderId = targetFolder.Id;
+                await _recipeService.UpdateRecipeAsync(draggedRecipe);
+                FilterItems();
+                return;
+            }
+
+            // 2) Folder dropped onto folder: move folder under target folder
+            if (source is Folder draggedFolder)
+            {
+                if (target is Folder targetFolder2)
+                {
+                    // Same-parent reorder not handled here due to lack of intent/insert index in UI.Try move under folder when On
+                    if (info.Intent == DropIntent.On)
+                    {
+                        if (await _folderService.IsValidFolderMoveAsync(draggedFolder.Id, targetFolder2.Id))
+                        {
+                            await _folderService.MoveFolderAsync(draggedFolder.Id, targetFolder2.Id);
+                            await LoadRecipesAsync();
+                        }
+                        return;
+                    }
+                }
+
+                // Reorder among siblings when target is Folder, intent Before/After
+                if (target is Folder sibling && (info.Intent == DropIntent.Before || info.Intent == DropIntent.After))
+                {
+                    // Only when same parent; otherwise keep parent and move index in that parent
+                    var parentId = sibling.ParentFolderId;
+                    // Build siblings list for index
+                    var siblings = (_currentFolder == null ? _allFolders.Where(f => f.ParentFolderId == null) : _allFolders.Where(f => f.ParentFolderId == _currentFolder.Id))
+                        .OrderBy(f => f.Order).ThenBy(f => f.Name).ToList();
+
+                    int targetIndex = siblings.FindIndex(f => f.Id == sibling.Id);
+                    if (targetIndex < 0) return;
+                    if (info.Intent == DropIntent.After) targetIndex++;
+
+                    // If dragged folder has different parent, first set its parent to that parent
+                    if (draggedFolder.ParentFolderId != parentId)
+                    {
+                        var moved = await _folderService.MoveFolderAsync(draggedFolder.Id, parentId);
+                        if (!moved) return;
+                        // refresh local copy parent
+                        draggedFolder.ParentFolderId = parentId;
+                    }
+
+                    await _folderService.ReorderFolderAsync(draggedFolder.Id, parentId, targetIndex);
+                    await LoadRecipesAsync();
+                    return;
+                }
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

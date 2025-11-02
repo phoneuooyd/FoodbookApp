@@ -25,6 +25,9 @@ namespace Foodbook.Data
             var hasIngredients = await context.Ingredients.AnyAsync();
             var hasRecipes = await context.Recipes.AnyAsync();
 
+            // Ensure Folder.Order initialized for existing data (new column added by migration may be default 0 for all rows)
+            await EnsureFolderOrderInitializedAsync(context);
+
             // Jeżeli pierwszy start i nie ma składników – NIE seedujemy tutaj.
             // Seeding wykona SetupWizard po wyborze języka (przekaże go jawnie), co eliminuje problem języka domyślnego.
             if (isFirstLaunch && !hasIngredients)
@@ -38,6 +41,9 @@ namespace Foodbook.Data
                 LogDebug($"No ingredients found after initial setup. Seeding now with saved language: {savedLang ?? "(null)"}");
                 await SeedIngredientsAsync(context, savedLang);
             }
+
+            // If there are folders but Order values are all zero and we didn't initialize earlier, ensure a stable order
+            await EnsureFolderOrderInitializedAsync(context);
 
             // Jeśli mamy już składniki i przepisy – nic dalej.
             if (hasIngredients && hasRecipes)
@@ -83,6 +89,36 @@ namespace Foodbook.Data
 #else
             LogDebug("RELEASE: Skipping example recipe seeding");
 #endif
+        }
+
+        private static async Task EnsureFolderOrderInitializedAsync(AppDbContext context)
+        {
+            try
+            {
+                // Check if any folder has Order != 0. If yes, assume initialization done.
+                bool anyNonZero = await context.Folders.AnyAsync(f => f.Order != 0);
+                if (anyNonZero) return;
+
+                // Initialize Order by grouping siblings and assigning sequential values
+                var allFolders = await context.Folders.OrderBy(f => f.ParentFolderId).ThenBy(f => f.Name).ToListAsync();
+                var grouped = allFolders.GroupBy(f => f.ParentFolderId);
+                foreach (var group in grouped)
+                {
+                    int idx = 0;
+                    foreach (var folder in group.OrderBy(f => f.Name))
+                    {
+                        folder.Order = idx++;
+                        context.Folders.Update(folder);
+                    }
+                }
+
+                await context.SaveChangesAsync();
+                LogDebug("Initialized Folder.Order values for existing folders");
+            }
+            catch (Exception ex)
+            {
+                LogWarning($"Failed to initialize Folder.Order: {ex.Message}");
+            }
         }
 
         /// <summary>

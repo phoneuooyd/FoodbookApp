@@ -113,6 +113,23 @@ namespace Foodbook.Models
             }
         }
 
+        // Insert indicator flags for drag-and-drop reordering (UI-only)
+        private bool _showInsertBefore;
+        [NotMapped]
+        public bool ShowInsertBefore
+        {
+            get => _showInsertBefore;
+            set { if (_showInsertBefore == value) return; _showInsertBefore = value; OnPropertyChanged(); }
+        }
+
+        private bool _showInsertAfter;
+        [NotMapped]
+        public bool ShowInsertAfter
+        {
+            get => _showInsertAfter;
+            set { if (_showInsertAfter == value) return; _showInsertAfter = value; OnPropertyChanged(); }
+        }
+
         // Order for reordering functionality in shopping lists
         [NotMapped]
         public int Order { get; set; } = 0;

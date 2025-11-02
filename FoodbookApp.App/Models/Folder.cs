@@ -20,6 +20,9 @@ namespace Foodbook.Models
         public int? ParentFolderId { get; set; }
         public Folder? ParentFolder { get; set; }
 
+        // Manual ordering among siblings. Lower numbers appear first.
+        public int Order { get; set; } = 0;
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public ICollection<Folder> SubFolders { get; set; } = new Collection<Folder>();

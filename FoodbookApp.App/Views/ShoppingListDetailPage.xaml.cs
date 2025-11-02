@@ -68,4 +68,82 @@ public partial class ShoppingListDetailPage : ContentPage
             _viewModel.OnItemEditingCompleted(ingredient);
         }
     }
+
+    // Drag helpers for insert zones (top/bottom)
+    private void OnDragStarting(object? sender, DragStartingEventArgs e)
+    {
+        // DragStartingCommand already invoked via binding; nothing to do here except ensure Data contains SourceItem
+        if (sender is VisualElement el && el.BindingContext is Ingredient ing)
+        {
+            e.Data.Properties["SourceItem"] = ing;
+        }
+    }
+
+    private void OnTopInsertDragOver(object? sender, DragEventArgs e)
+    {
+        if (!e.Data.Properties.TryGetValue("SourceItem", out var src)) return;
+        if (sender is VisualElement el && el.BindingContext is Ingredient ing)
+        {
+            ing.ShowInsertBefore = true;
+        }
+    }
+
+    private void OnTopInsertDragLeave(object? sender, DragEventArgs e)
+    {
+        if (sender is VisualElement el && el.BindingContext is Ingredient ing)
+        {
+            ing.ShowInsertBefore = false;
+        }
+    }
+
+    private async void OnTopInsertDrop(object? sender, DropEventArgs e)
+    {
+        try
+        {
+            if (!e.Data.Properties.TryGetValue("SourceItem", out var src)) return;
+            if (!(src is Ingredient dragged)) return;
+            if (!(sender is VisualElement el && el.BindingContext is Ingredient target)) return;
+
+            // call VM reorder with insertAfter = false
+            await _viewModel.ReorderItemsAsync(dragged, target, insertAfter: false);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"TopInsertDrop error: {ex.Message}");
+        }
+    }
+
+    private void OnBottomInsertDragOver(object? sender, DragEventArgs e)
+    {
+        if (!e.Data.Properties.TryGetValue("SourceItem", out var src)) return;
+        if (sender is VisualElement el && el.BindingContext is Ingredient ing)
+        {
+            ing.ShowInsertAfter = true;
+        }
+    }
+
+    private void OnBottomInsertDragLeave(object? sender, DragEventArgs e)
+    {
+        if (sender is VisualElement el && el.BindingContext is Ingredient ing)
+        {
+            ing.ShowInsertAfter = false;
+        }
+    }
+
+    private async void OnBottomInsertDrop(object? sender, DropEventArgs e)
+    {
+        try
+        {
+            if (!e.Data.Properties.TryGetValue("SourceItem", out var src)) return;
+            if (!(src is Ingredient dragged)) return;
+            if (!(sender is VisualElement el && el.BindingContext is Ingredient target)) return;
+
+            // call VM reorder with insertAfter = true
+            await _viewModel.ReorderItemsAsync(dragged, target, insertAfter: true);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"BottomInsertDrop error: {ex.Message}");
+        }
+    }
 }

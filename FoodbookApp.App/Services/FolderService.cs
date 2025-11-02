@@ -15,6 +15,8 @@ namespace Foodbook.Services
         Task<bool> MoveFolderAsync(int folderId, int? newParentFolderId, CancellationToken ct = default);
         Task<bool> MoveRecipeToFolderAsync(int recipeId, int? targetFolderId, CancellationToken ct = default);
         Task<bool> IsValidFolderMoveAsync(int folderId, int? newParentFolderId, CancellationToken ct = default);
+        // New: reorder folder among siblings
+        Task<bool> ReorderFolderAsync(int folderId, int? parentFolderId, int newIndex, CancellationToken ct = default);
     }
 
     public class FolderService : IFolderService
@@ -88,6 +90,13 @@ namespace Foodbook.Services
 
             try
             {
+                // Set Order to be last among siblings
+                var siblingsMax = await _db.Folders
+                    .Where(f => f.ParentFolderId == folder.ParentFolderId)
+                    .Select(f => (int?)f.Order)
+                    .MaxAsync(ct) ?? -1;
+                folder.Order = siblingsMax + 1;
+
                 _db.Folders.Add(folder);
                 await _db.SaveChangesAsync(ct);
                 return folder;
@@ -161,6 +170,14 @@ namespace Foodbook.Services
                 if (folder == null) return false;
 
                 folder.ParentFolderId = newParentFolderId;
+
+                // When moving to a new parent, assign order to the end of that parent's list
+                var maxOrder = await _db.Folders
+                    .Where(f => f.ParentFolderId == newParentFolderId)
+                    .Select(f => (int?)f.Order)
+                    .MaxAsync(ct) ?? -1;
+                folder.Order = maxOrder + 1;
+
                 await _db.SaveChangesAsync(ct);
                 return true;
             }
@@ -221,6 +238,39 @@ namespace Foodbook.Services
             }
         }
 
+        public async Task<bool> ReorderFolderAsync(int folderId, int? parentFolderId, int newIndex, CancellationToken ct = default)
+        {
+            try
+            {
+                // get siblings ordered by current Order
+                var siblings = await _db.Folders
+                    .Where(f => f.ParentFolderId == parentFolderId)
+                    .OrderBy(f => f.Order)
+                    .ToListAsync(ct);
+
+                var target = siblings.FirstOrDefault(f => f.Id == folderId);
+                if (target == null) return false;
+
+                siblings.Remove(target);
+                newIndex = Math.Clamp(newIndex, 0, siblings.Count);
+                siblings.Insert(newIndex, target);
+
+                // reassign sequential Order values
+                for (int i = 0; i < siblings.Count; i++)
+                {
+                    siblings[i].Order = i;
+                }
+
+                await _db.SaveChangesAsync(ct);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FolderService] ReorderFolderAsync failed: {ex.Message}");
+                return false;
+            }
+        }
+
         // Build a hierarchical tree with Level/DisplayName populated
         private static List<Folder> BuildHierarchy(List<Folder> flat)
         {
@@ -247,11 +297,11 @@ namespace Foodbook.Services
             {
                 folder.Level = level;
                 folder.DisplayName = new string('?', Math.Max(0, level)) + (level > 0 ? " " : string.Empty) + folder.Name;
-                foreach (var child in folder.SubFolders.OrderBy(x => x.Name))
+                foreach (var child in folder.SubFolders.OrderBy(x => x.Order).ThenBy(x => x.Name))
                     AssignMeta(child, level + 1);
             }
 
-            foreach (var root in roots.OrderBy(x => x.Name))
+            foreach (var root in roots.OrderBy(x => x.Order).ThenBy(x => x.Name))
                 AssignMeta(root, 0);
 
             return roots;
