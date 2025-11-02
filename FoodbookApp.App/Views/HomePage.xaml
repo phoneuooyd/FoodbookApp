@@ -89,7 +89,8 @@
 
         <!-- Planned Meal Styles -->
         <Style x:Key="DateHeaderStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="16" />
+            <!-- reduced from 16 -->
+            <Setter Property="FontSize" Value="13" />
             <Setter Property="FontAttributes" Value="Bold" />
             <!-- Make date header light in dark mode -->
             <Setter Property="TextColor" Value="{AppThemeBinding Light={DynamicResource Primary}, Dark=White}" />
@@ -181,8 +182,7 @@
                 </Frame>
 
                 <!-- Planned Meals History Card -->
-                <Frame Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}"
-                       IsVisible="{Binding HasPlannedMeals}">
+                <Frame Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="8" Margin="0,0,0,16">
                             <Label Text="📅" FontSize="24" />
@@ -195,21 +195,29 @@
                                 Command="{Binding ChangePlannedMealsPeriodCommand}"
                                 BackgroundColor="{DynamicResource Primary}"
                                 TextColor="White"
-                                FontSize="14"
+                                FontSize="12"
                                 FontAttributes="Bold"
-                                HeightRequest="35"
-                                CornerRadius="8"
-                                Margin="0,0,0,16"
+                                HeightRequest="30"
+                                CornerRadius="6"
+                                Margin="0,0,0,12"
                                 HorizontalOptions="Center" />
                         
                         <Label FontSize="12"
                                HorizontalTextAlignment="Center"
                                TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
-                               Margin="0,0,0,12"
+                               Margin="0,0,0,8"
                                Text="{loc:Translate Resource=HomePageResources, Key=ClickRecipeHint}" />
+
+                        <!-- Empty state info when no meals -->
+                        <Label IsVisible="{Binding HasPlannedMeals, Converter={StaticResource InvertedBoolConverter}}"
+                               FontSize="12"
+                               HorizontalTextAlignment="Center"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
+                               Margin="0,0,0,8"
+                               Text="Brak zaplanowanych posiłków dla wybranego okresu" />
                         
-                        <!-- Scrollable CollectionView with limited height -->
-                        <ScrollView MaximumHeightRequest="250" 
+                        <!-- Scrollable CollectionView with limited height (expands on Today) -->
+                        <ScrollView MaximumHeightRequest="{Binding PlannedMealsMaxHeight}"
                                     VerticalScrollBarVisibility="Always">
                             <CollectionView ItemsSource="{Binding PlannedMealHistory}"
                                             ItemSizingStrategy="MeasureAllItems">
@@ -231,12 +239,12 @@
                                                             </Frame.GestureRecognizers>
                                                             <StackLayout Orientation="Horizontal">
                                                                 <Label Text="•" 
-                                                                       FontSize="14"
+                                                                       FontSize="16"
                                                                        TextColor="{DynamicResource Primary}"
                                                                        VerticalOptions="Center"
                                                                        Margin="0,0,8,0" />
                                                                 <Label Text="{Binding Recipe.Name}" 
-                                                                       FontSize="14"
+                                                                       FontSize="16"
                                                                        TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"
                                                                        VerticalOptions="Center"
                                                                        LineBreakMode="TailTruncation"
