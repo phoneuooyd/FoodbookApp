@@ -950,11 +950,14 @@ namespace Foodbook.ViewModels
         {
             try
             {
-                await EnsureIngredientsAreCachedAsync();
-                
+                // Always fetch fresh data from the service, bypassing cache
+                var freshIngredients = await _ingredientService.GetIngredientsAsync();
                 AvailableIngredientNames.Clear();
-                foreach (var ing in _cachedIngredients)
+                foreach (var ing in freshIngredients)
                     AvailableIngredientNames.Add(ing.Name);
+                // Also update the local cache for consistency
+                _cachedIngredients = freshIngredients.ToList();
+                _lastCacheUpdate = DateTime.Now;
             }
             catch (Exception ex)
             {
@@ -996,6 +999,14 @@ namespace Foodbook.ViewModels
             {
                 System.Diagnostics.Debug.WriteLine($"Error in SelectTab: {ex.Message}");
             }
+        }
+
+        // Public method to invalidate the ingredients cache
+        public void InvalidateIngredientsCache()
+        {
+            _cachedIngredients.Clear();
+            _lastCacheUpdate = DateTime.MinValue;
+            System.Diagnostics.Debug.WriteLine("[AddRecipeViewModel] Ingredients cache invalidated");
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

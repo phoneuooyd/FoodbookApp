@@ -8,6 +8,8 @@ using Microsoft.Extensions.DependencyInjection; // for GetService
 using FoodbookApp; // to access MauiProgram.ServiceProvider
 using Foodbook.Models;
 using Foodbook.Utils;
+using Foodbook.ViewModels;
+using Foodbook.Views;
 
 namespace Foodbook.Views.Components;
 
@@ -25,6 +27,10 @@ public partial class SimpleListPopup : Popup
 
     public static readonly BindableProperty IsBulletedProperty =
         BindableProperty.Create(nameof(IsBulleted), typeof(bool), typeof(SimpleListPopup), false);
+
+    // New: shows add action in first row for AddRecipePage context
+    public static readonly BindableProperty ShowAddIngredientButtonProperty =
+        BindableProperty.Create(nameof(ShowAddIngredientButton), typeof(bool), typeof(SimpleListPopup), false);
 
     public string TitleText
     {
@@ -44,7 +50,16 @@ public partial class SimpleListPopup : Popup
         set => SetValue(IsBulletedProperty, value);
     }
 
+    public bool ShowAddIngredientButton
+    {
+        get => (bool)GetValue(ShowAddIngredientButtonProperty);
+        set => SetValue(ShowAddIngredientButtonProperty, value);
+    }
+
     public ICommand CloseCommand { get; }
+
+    // New: command to add ingredient
+    public ICommand AddIngredientCommand { get; }
 
     // Structured item models for richer rendering
     public class SectionHeader { public string Text { get; set; } = string.Empty; }
@@ -71,6 +86,7 @@ public partial class SimpleListPopup : Popup
     public SimpleListPopup()
     {
         CloseCommand = new Command(async () => await CloseWithResultAsync(null));
+        AddIngredientCommand = new Command(async () => await OnAddIngredientAsync());
 
         // Resolve theme service from DI if available
         try
@@ -80,7 +96,70 @@ public partial class SimpleListPopup : Popup
         catch { /* ignore and keep null -> we'll fallback in BuildItems */ }
 
         InitializeComponent();
-        Loaded += (_, __) => BuildItems();
+        Loaded += (_, __) =>
+        {
+            DetectContext();
+            BuildItems();
+        };
+    }
+
+    private void DetectContext()
+    {
+        try
+        {
+            // When opened while AddRecipePage is the active page, enable add action in first row
+            var currentPage = Shell.Current?.CurrentPage;
+            ShowAddIngredientButton = currentPage is Foodbook.Views.AddRecipePage;
+        }
+        catch
+        {
+            ShowAddIngredientButton = false;
+        }
+    }
+
+    private async Task OnAddIngredientAsync()
+    {
+        try
+        {
+            var currentPage = Shell.Current?.CurrentPage;
+            if (currentPage == null)
+                return;
+
+            var vm = MauiProgram.ServiceProvider?.GetService<IngredientFormViewModel>();
+            if (vm == null)
+            {
+                await Shell.Current.DisplayAlert("Błąd", "Nie można otworzyć formularza składnika.", "OK");
+                return;
+            }
+
+            var formPage = new IngredientFormPage(vm);
+
+            // Await page dismissal using Disappearing
+            var dismissedTcs = new TaskCompletionSource();
+            formPage.Disappearing += (_, __) => dismissedTcs.TrySetResult();
+            await currentPage.Navigation.PushModalAsync(formPage);
+            await dismissedTcs.Task;
+
+            // After returning, refresh caches and UI lists in AddRecipe context
+            var ingredientService = MauiProgram.ServiceProvider?.GetService<IIngredientService>();
+            ingredientService?.InvalidateCache();
+
+            if (currentPage is Foodbook.Views.AddRecipePage arp)
+            {
+                var recipeVm = arp.BindingContext as Foodbook.ViewModels.AddRecipeViewModel;
+                if (recipeVm != null)
+                {
+                    await recipeVm.LoadAvailableIngredientsAsync();
+                }
+            }
+
+            // Rebuild items to reflect possible new entries
+            BuildItems();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SimpleListPopup] Error adding ingredient: {ex.Message}");
+        }
     }
 
     private void BuildItems()
@@ -128,6 +207,44 @@ public partial class SimpleListPopup : Popup
 
             // Ensure header title adopts the same tuned colour
             TitleLabel.TextColor = contentPrimary;
+
+            // Inject first-row add action when applicable
+            if (ShowAddIngredientButton)
+            {
+                var addRow = new HorizontalStackLayout
+                {
+                    Spacing = 12,
+                    Padding = new Thickness(0, 0, 0, 8),
+                    VerticalOptions = LayoutOptions.Center
+                };
+
+                var plusButton = new Button
+                {
+                    Text = "+",
+                    WidthRequest = 36,
+                    HeightRequest = 36,
+                    CornerRadius = 18,
+                    Padding = 0,
+                    VerticalOptions = LayoutOptions.Center
+                };
+                plusButton.StyleClass = new[] { "Secondary" };
+                plusButton.Clicked += async (_, __) => await OnAddIngredientAsync();
+
+                var textLabel = new Label
+                {
+                    Text = "Dodaj składnik",
+                    TextColor = contentPrimary,
+                    FontSize = 15,
+                    VerticalOptions = LayoutOptions.Center
+                };
+                var tap = new TapGestureRecognizer();
+                tap.Tapped += async (_, __) => await OnAddIngredientAsync();
+                textLabel.GestureRecognizers.Add(tap);
+
+                addRow.Children.Add(plusButton);
+                addRow.Children.Add(textLabel);
+                host.Children.Add(addRow);
+            }
 
             foreach (var obj in data)
             {

@@ -6,6 +6,9 @@ using FoodbookApp.Interfaces;
 using Microsoft.Maui.Controls;
 using System.Collections.Generic;
 using System.Linq;
+using Foodbook.Services;
+using Microsoft.Extensions.DependencyInjection;
+using System.Threading.Tasks;
 
 namespace Foodbook.ViewModels;
 
@@ -13,6 +16,9 @@ public class IngredientFormViewModel : INotifyPropertyChanged
 {
     private readonly IIngredientService _service;
     private Ingredient? _ingredient;
+
+    // Event raised after a successful save; subscribers can await it
+    public event Func<Task>? SavedAsync;
 
     // Tab management
     private int _selectedTabIndex = 0;
@@ -386,12 +392,94 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 System.Diagnostics.Debug.WriteLine($"Updated ingredient: {Name}, {qty}, {SelectedUnit}, {cal} cal");
             }
             
-            await Shell.Current.GoToAsync("..");
+            // Invalidate potential cache in service
+            try { _service.InvalidateCache(); } catch { }
+
+            // Invalidate AddRecipeViewModel cache if available
+            try
+            {
+                var addRecipeVm = Application.Current?.Handler?.MauiContext?.Services?.GetService<AddRecipeViewModel>();
+                if (addRecipeVm == null)
+                {
+                    addRecipeVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<AddRecipeViewModel>();
+                }
+                addRecipeVm?.InvalidateIngredientsCache();
+            }
+            catch { }
+
+            // Reload IngredientsViewModel
+            try
+            {
+                var ingVm = Application.Current?.Handler?.MauiContext?.Services?.GetService<IngredientsViewModel>();
+                if (ingVm == null)
+                {
+                    ingVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IngredientsViewModel>();
+                }
+                if (ingVm != null)
+                {
+                    await ingVm.ReloadAsync();
+                }
+            }
+            catch { }
+
+            // Directly refresh IngredientsPage if it's alive
+            try 
+            { 
+                if (Foodbook.Views.IngredientsPage.Current != null)
+                {
+                    await Foodbook.Views.IngredientsPage.Current.ForceReloadAsync();
+                }
+            } 
+            catch { }
+
+            // Notify globally so any listeners can reload (backup mechanism)
+            try { AppEvents.RaiseIngredientsChanged(); } catch { }
+
+            // Raise SavedAsync for subscribers (popup) so they know save completed
+            if (SavedAsync != null)
+            {
+                try
+                {
+                    var handlers = SavedAsync.GetInvocationList().Cast<Func<Task>>();
+                    var tasks = handlers.Select(h => h());
+                    await Task.WhenAll(tasks);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error raising SavedAsync: {ex.Message}");
+                }
+            }
+
+            // Close appropriately depending on how the page was opened - now after refresh and notifications
+            var nav = Shell.Current?.Navigation;
+            if (nav?.ModalStack?.Count > 0)
+                await nav.PopModalAsync();
+            else
+                await Shell.Current.GoToAsync("..");
+            
+            int savedId = 0;
+            if (_ingredient == null)
+            {
+                // newIng was added above; need to fetch its id
+                // try to get last added by querying service (best-effort)
+                try
+                {
+                    var list = await _service.GetIngredientsAsync();
+                    var match = list.FirstOrDefault(i => i.Name == Name.Trim());
+                    if (match != null) savedId = match.Id;
+                }
+                catch { }
+            }
+            else
+            {
+                savedId = _ingredient.Id;
+            }
+            try { AppEvents.RaiseIngredientSaved(savedId); } catch { }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error saving ingredient: {ex.Message}");
-            ValidationMessage = $"Nie uda?o si? zapisa? sk?adnika: {ex.Message}";
+            ValidationMessage = $"Nie uda³o siê zapisaæ sk³adnika: {ex.Message}";
         }
     }
 
@@ -399,7 +487,11 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     {
         try
         {
-            await Shell.Current.GoToAsync("..");
+            var nav = Shell.Current?.Navigation;
+            if (nav?.ModalStack?.Count > 0)
+                await nav.PopModalAsync();
+            else
+                await Shell.Current.GoToAsync("..");
         }
         catch (Exception ex)
         {

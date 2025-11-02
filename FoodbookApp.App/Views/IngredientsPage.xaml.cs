@@ -7,6 +7,7 @@ using FoodbookApp;
 using Foodbook.Views.Components;
 using CommunityToolkit.Maui.Extensions;
 using Foodbook.Models;
+using Foodbook.Services;
 
 namespace Foodbook.Views;
 
@@ -15,6 +16,9 @@ public partial class IngredientsPage : ContentPage
     private readonly IngredientsViewModel _viewModel;
     private readonly PageThemeHelper _themeHelper;
     private bool _isInitialized;
+
+    // Expose current instance for direct refresh from other views/popups
+    public static IngredientsPage? Current { get; private set; }
 
     public IngredientsPage(IngredientsViewModel vm)
     {
@@ -40,8 +44,13 @@ public partial class IngredientsPage : ContentPage
     {
         base.OnAppearing();
         
+        Current = this; // register current instance for external refresh
+        
         // Initialize theme and font handling
         _themeHelper.Initialize();
+        
+        // Subscribe to global ingredients-changed event
+        AppEvents.IngredientsChangedAsync += OnIngredientsChangedAsync;
         
         // Only load once or if explicitly needed
         if (!_isInitialized)
@@ -69,6 +78,37 @@ public partial class IngredientsPage : ContentPage
         
         // Cleanup theme and font handling
         _themeHelper.Cleanup();
+
+        // Unsubscribe to avoid leaks
+        AppEvents.IngredientsChangedAsync -= OnIngredientsChangedAsync;
+
+        if (Current == this)
+            Current = null;
+    }
+
+    // Direct refresh API used by other components
+    public async Task ForceReloadAsync()
+    {
+        try
+        {
+            await _viewModel.ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientsPage] ForceReloadAsync error: {ex.Message}");
+        }
+    }
+
+    private async Task OnIngredientsChangedAsync()
+    {
+        try
+        {
+            await _viewModel.ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientsPage] Reload on IngredientsChanged failed: {ex.Message}");
+        }
     }
 
     private async Task HandleEmptyIngredientsAsync()

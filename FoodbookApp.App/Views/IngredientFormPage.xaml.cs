@@ -5,6 +5,9 @@ using Foodbook.Views.Components;
 using System.Threading.Tasks;
 using Foodbook.Models;
 using FoodbookApp;
+using CommunityToolkit.Maui.Views;
+using System.ComponentModel;
+using System.Threading.Tasks;
 
 namespace Foodbook.Views;
 
@@ -19,6 +22,52 @@ public partial class IngredientFormPage : ContentPage
         InitializeComponent();
         BindingContext = vm;
         _themeHelper = new PageThemeHelper();
+
+        // Subscribe to ViewModel events (if we expose Saved event)
+        try
+        {
+            vm.PropertyChanged += OnVmPropertyChanged;
+        }
+        catch { }
+    }
+
+    // Returns a task that completes when ViewModel raises SavedAsync or the page disappears
+    public Task AwaitSaveAsync(int timeoutMs = 30000)
+    {
+        var tcs = new TaskCompletionSource();
+
+        void OnSavedHandler()
+        {
+            try { tcs.TrySetResult(); } catch { }
+        }
+
+        void OnPageDisappearing(object? s, EventArgs e)
+        {
+            try { tcs.TrySetResult(); } catch { }
+            try { this.Disappearing -= OnPageDisappearing; } catch { }
+        }
+
+        if (ViewModel != null)
+        {
+            // Subscribe to SavedAsync by adding an async handler that sets the TCS
+            ViewModel.SavedAsync += async () => { OnSavedHandler(); await Task.CompletedTask; };
+        }
+
+        this.Disappearing += OnPageDisappearing;
+
+        // Timeout fallback
+        var ct = new CancellationTokenSource(timeoutMs);
+        ct.Token.Register(() => tcs.TrySetResult());
+
+        return tcs.Task;
+    }
+
+    private async void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(IngredientFormViewModel.ValidationMessage))
+        {
+            // ignore
+        }
     }
 
     protected override void OnAppearing()
