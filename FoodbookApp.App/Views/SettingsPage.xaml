@@ -53,7 +53,7 @@
         
         <!-- Migration Button Style -->
         <Style x:Key="MigrationButtonStyle" TargetType="Button">
-            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={DynamicResource Secondary}, Dark={DynamicResource Secondary}}" />
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={DynamicResource Primary}, Dark={DynamicResource Primary}}" />
             <Setter Property="TextColor" Value="White" />
             <Setter Property="FontSize" Value="{DynamicResource AppFontSize}" />
             <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
@@ -228,7 +228,7 @@
                                 <StackLayout>
                                     <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DataExportTitle}" Style="{StaticResource CardTitleStyle}" />
                                     <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DataExportDescription}" Style="{StaticResource DescriptionStyle}" />
-                                    <Button Text="{loc:Translate Resource=SettingsPageResources, Key=DataExportButton}" Style="{StaticResource CardButtonStyle}" BackgroundColor="{DynamicResource Primary}" TextColor="White" Clicked="OnOpenArchivizationClicked" />
+                                    <Button Text="{loc:Translate Resource=SettingsPageResources, Key=DataExportButton}" Style="{StaticResource MigrationButtonStyle}" Clicked="OnOpenArchivizationClicked" />
                                 </StackLayout>
                             </Frame>
 

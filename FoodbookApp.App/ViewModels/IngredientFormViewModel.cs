@@ -4,6 +4,8 @@ using System.Windows.Input;
 using Foodbook.Models;
 using FoodbookApp.Interfaces;
 using Microsoft.Maui.Controls;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Foodbook.ViewModels;
 
@@ -58,7 +60,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
 
     public bool IsUnitWeightVisible => SelectedUnit == Unit.Piece;
 
-    public Unit SelectedUnit { get => _unit; set { _unit = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsUnitWeightVisible)); ValidateInput(); } }
+    public Unit SelectedUnit { get => _unit; set { if (_unit != value) { _unit = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsUnitWeightVisible)); ValidateInput(); } } }
     private Unit _unit = Unit.Gram;  // Default value
 
     // Nutritional information fields
@@ -98,7 +100,8 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     public bool IsVerifying { get => _isVerifying; set { _isVerifying = value; OnPropertyChanged(); } }
     private bool _isVerifying = false;
 
-    public IEnumerable<Unit> Units { get; } = Enum.GetValues(typeof(Unit)).Cast<Unit>();
+    // Use a concrete list for ItemsSource so picker can match items reliably
+    public IList<Unit> Units { get; } = Enum.GetValues(typeof(Unit)).Cast<Unit>().ToList();
 
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
