@@ -6,6 +6,7 @@
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:converters="clr-namespace:Foodbook.Converters"
              xmlns:resources="clr-namespace:FoodbookApp.Localization"
+             xmlns:components="clr-namespace:Foodbook.Views.Components"
              x:Class="Foodbook.Views.ShoppingListDetailPage"
              x:Name="ThisPage"
              x:DataType="vm:ShoppingListDetailViewModel"
@@ -27,9 +28,9 @@
         </Style>
     </ContentPage.Resources>
 
-    <!-- Re-introduced single ScrollView to allow vertical scrolling without nested scrolling conflicts -->
+    <!-- Single ScrollView to allow vertical scrolling -->
     <ScrollView>
-        <VerticalStackLayout Padding="10" Spacing="15">
+        <VerticalStackLayout Padding="10" Spacing="14">
             <!-- To buy section header -->
             <Label FontSize="18"
                    FontAttributes="Bold"
@@ -37,91 +38,99 @@
                    Margin="0,0,0,4"
                    Text="{loc:Translate Resource=ShoppingListDetailPageResources, Key=ToBuy}" />
 
-            <!-- Unchecked items rendered via BindableLayout to avoid nested CollectionViews -->
+            <!-- Unchecked items (editable) -->
             <VerticalStackLayout BindableLayout.ItemsSource="{Binding UncheckedItems}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="models:Ingredient">
-                        <Frame BorderColor="{Binding IsBeingDraggedOver, Converter={StaticResource DropZoneBorderColorConverter}}" 
-                               Padding="5" 
-                               Margin="0,2"
-                               BackgroundColor="{Binding IsBeingDraggedOver, Converter={StaticResource DropZoneToColorConverter}}"
-                               CornerRadius="8"
-                               HasShadow="False">
-                            <Grid ColumnDefinitions="Auto,Auto,2*,Auto,Auto,Auto" 
-                                  ColumnSpacing="5"
+                        <Frame Padding="8,8" Margin="0,4"
+                               CornerRadius="10"
+                               HasShadow="False"
+                               BorderColor="{Binding IsBeingDraggedOver, Converter={StaticResource DropZoneBorderColorConverter}}"
+                               BackgroundColor="{Binding IsBeingDraggedOver, Converter={StaticResource DropZoneToColorConverter}}">
+                            <!-- Two rows, shared 3-column grid to align elements across rows -->
+                            <Grid RowDefinitions="Auto,Auto" ColumnSpacing="8"
                                   BackgroundColor="{Binding IsBeingDragged, Converter={StaticResource DragStateToColorConverter}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-                                <!-- Drag Handle -->
-                                <StackLayout Grid.Column="0" 
-                                             Orientation="Vertical"
-                                             WidthRequest="30" 
-                                             HeightRequest="30"
-                                             VerticalOptions="Center"
-                                             HorizontalOptions="Center"
-                                             Spacing="2"
-                                             Padding="5">
-                                    <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" 
-                                             HeightRequest="2" 
-                                             WidthRequest="20" 
-                                             CornerRadius="1" />
-                                    <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" 
-                                             HeightRequest="2" 
-                                             WidthRequest="20" 
-                                             CornerRadius="1" />
-                                    <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" 
-                                             HeightRequest="2" 
-                                             WidthRequest="20" 
-                                             CornerRadius="1" />
-                                    <StackLayout.GestureRecognizers>
+                                <!-- Row 0: Checkbox | Name (Editor with wrap) | Delete -->
+                                <CheckBox Grid.Row="0" Grid.Column="0"
+                                          IsChecked="{Binding IsChecked}"
+                                          Style="{StaticResource ShoppingCheckBoxStyle}" />
+
+                                <Editor Grid.Row="0" Grid.Column="1"
+                                        Text="{Binding Name}"
+                                        Placeholder="{loc:Translate Resource=ShoppingListDetailPageResources, Key=NameHeader}"
+                                        AutoSize="TextChanges"
+                                        MinimumHeightRequest="36"
+                                        BackgroundColor="Transparent"
+                                        Focused="OnEntryFocused"
+                                        Unfocused="OnEntryUnfocused" />
+
+                                <Button Grid.Row="0" Grid.Column="2"
+                                        Text="✕"
+                                        Command="{Binding BindingContext.RemoveItemCommand, Source={x:Reference ThisPage}}"
+                                        CommandParameter="{Binding .}"
+                                        WidthRequest="32"
+                                        HeightRequest="32"
+                                        Padding="0"
+                                        BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}"
+                                        TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}"
+                                        FontSize="14"
+                                        CornerRadius="16"
+                                        BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}"
+                                        BorderWidth="1" />
+
+                                <!-- Row 1: Drag | qty+unit group in column 1, spacer in column 2 -->
+                                <!-- Drag handle aligned with checkbox (same Grid.Column=0), centered and larger (44x44) -->
+                                <Grid Grid.Row="1" Grid.Column="0"
+                                      WidthRequest="44" HeightRequest="44"
+                                      VerticalOptions="Center" HorizontalOptions="Center">
+                                    <VerticalStackLayout Spacing="5"
+                                                         HorizontalOptions="Center"
+                                                         VerticalOptions="Center">
+                                        <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
+                                                 HeightRequest="3" WidthRequest="24" CornerRadius="1.5"/>
+                                        <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
+                                                 HeightRequest="3" WidthRequest="24" CornerRadius="1.5"/>
+                                        <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
+                                                 HeightRequest="3" WidthRequest="24" CornerRadius="1.5"/>
+                                    </VerticalStackLayout>
+                                    <Grid.GestureRecognizers>
                                         <DragGestureRecognizer
                                             CanDrag="True"
                                             DragStartingCommand="{Binding BindingContext.ItemDraggedCommand, Source={x:Reference ThisPage}}"
                                             DragStartingCommandParameter="{Binding .}" />
-                                    </StackLayout.GestureRecognizers>
-                                </StackLayout>
+                                    </Grid.GestureRecognizers>
+                                </Grid>
 
-                                <CheckBox Grid.Column="1" 
-                                          IsChecked="{Binding IsChecked}"
-                                          Style="{StaticResource ShoppingCheckBoxStyle}" />
+                                <!-- Qty + Unit compact group aligned under name (Grid.Column=1) -->
+                                <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="Auto,Auto,*" ColumnSpacing="8" Margin="0,6,0,0">
+                                    <Entry Grid.Column="0"
+                                           Text="{Binding Quantity}"
+                                           Placeholder="{loc:Translate Resource=ShoppingListDetailPageResources, Key=QuantityHeader}"
+                                           Keyboard="Numeric"
+                                           WidthRequest="72"
+                                           HorizontalTextAlignment="Center"
+                                           FontSize="13"
+                                           Focused="OnEntryFocused"
+                                           Unfocused="OnEntryUnfocused" />
 
-                                <!-- Name -->
-                                <Entry Grid.Column="2" 
-                                       Text="{Binding Name}" 
-                                       Placeholder="{loc:Translate Resource=ShoppingListDetailPageResources, Key=NameHeader}"
-                                       Focused="OnEntryFocused"
-                                       Unfocused="OnEntryUnfocused" />
+                                    <components:SimplePicker Grid.Column="1"
+                                                            WidthRequest="100"
+                                                            Scale="0.95"
+                                                            ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}"
+                                                            SelectedItem="{Binding Unit}"
+                                                            ItemDisplayBinding="{Binding ., Converter={StaticResource UnitToLocalizedStringConverter}}"
+                                                            PlaceholderText="{loc:Translate Resource=ShoppingListDetailPageResources, Key=UnitHeader}" />
 
-                                <!-- Quantity -->
-                                <Entry Grid.Column="3" 
-                                       Text="{Binding Quantity}" 
-                                       Keyboard="Numeric" 
-                                       WidthRequest="60"
-                                       HorizontalTextAlignment="Center"
-                                       Focused="OnEntryFocused"
-                                       Unfocused="OnEntryUnfocused" />
+                                    <Grid Grid.Column="2"/>
+                                </Grid>
 
-                                <!-- Unit -->
-                                <Picker Grid.Column="4" 
-                                        WidthRequest="80" 
-                                        ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}" 
-                                        SelectedItem="{Binding Unit}"
-                                        ItemDisplayBinding="{Binding ., Converter={StaticResource UnitToLocalizedStringConverter}}" />
-
-                                <!-- Delete button -->
-                                <Button Grid.Column="5" 
-                                        Text="✕" 
-                                        Command="{Binding BindingContext.RemoveItemCommand, Source={x:Reference ThisPage}}" 
-                                        CommandParameter="{Binding .}" 
-                                        WidthRequest="35" 
-                                        HeightRequest="35"
-                                        BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}"
-                                        TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}"
-                                        FontSize="16"
-                                        CornerRadius="17"
-                                        BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}"
-                                        BorderWidth="1" />
-
-                                <!-- Drop targets on full row -->
+                                <!-- DnD drop area on whole card -->
                                 <Grid.GestureRecognizers>
                                     <DropGestureRecognizer
                                         AllowDrop="True"
@@ -139,13 +148,13 @@
             </VerticalStackLayout>
 
             <Button Command="{Binding AddItemCommand}"
-                    Margin="0,10,0,0"
+                    Margin="0,6,0,0"
                     BackgroundColor="{DynamicResource Primary}"
                     Text="{loc:Translate Resource=ShoppingListDetailPageResources, Key=AddItem}" />
 
             <!-- Separator -->
-            <BoxView HeightRequest="1" 
-                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" 
+            <BoxView HeightRequest="1"
+                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
                      Margin="0,10" />
 
             <!-- Collected section header -->
@@ -155,91 +164,84 @@
                    Margin="0,0,0,4"
                    Text="{loc:Translate Resource=ShoppingListDetailPageResources, Key=Collected}" />
 
-            <!-- Checked items rendered via BindableLayout -->
+            <!-- Checked items (read-only, allow wrapping names) -->
             <VerticalStackLayout BindableLayout.ItemsSource="{Binding CheckedItems}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="models:Ingredient">
-                        <Frame BorderColor="{Binding IsBeingDraggedOver, Converter={StaticResource DropZoneBorderColorConverter}}" 
-                               Padding="5" 
-                               Margin="0,2"
-                               BackgroundColor="{Binding IsBeingDraggedOver, Converter={StaticResource DropZoneToColorConverter}}"
-                               CornerRadius="8"
-                               HasShadow="False">
-                            <Grid ColumnDefinitions="Auto,Auto,2*,Auto,Auto,Auto" 
-                                  ColumnSpacing="5"
+                        <Frame Padding="8,8" Margin="0,4"
+                               CornerRadius="10"
+                               HasShadow="False"
+                               BorderColor="{Binding IsBeingDraggedOver, Converter={StaticResource DropZoneBorderColorConverter}}"
+                               BackgroundColor="{Binding IsBeingDraggedOver, Converter={StaticResource DropZoneToColorConverter}}">
+                            <Grid RowDefinitions="Auto,Auto" ColumnSpacing="8"
                                   BackgroundColor="{Binding IsBeingDragged, Converter={StaticResource DragStateToColorConverter}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-                                <!-- Drag Handle -->
-                                <StackLayout Grid.Column="0" 
-                                             Orientation="Vertical"
-                                             WidthRequest="30" 
-                                             HeightRequest="30"
-                                             VerticalOptions="Center"
-                                             HorizontalOptions="Center"
-                                             Spacing="2"
-                                             Padding="5">
-                                    <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
-                                             HeightRequest="2" 
-                                             WidthRequest="20" 
-                                             CornerRadius="1" />
-                                    <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
-                                             HeightRequest="2" 
-                                             WidthRequest="20" 
-                                             CornerRadius="1" />
-                                    <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
-                                             HeightRequest="2" 
-                                             WidthRequest="20" 
-                                             CornerRadius="1" />
-                                    <StackLayout.GestureRecognizers>
-                                        <DragGestureRecognizer
-                                            CanDrag="True"
-                                            DragStartingCommand="{Binding BindingContext.ItemDraggedCommand, Source={x:Reference ThisPage}}"
-                                            DragStartingCommandParameter="{Binding .}" />
-                                    </StackLayout.GestureRecognizers>
-                                </StackLayout>
-
-                                <CheckBox Grid.Column="1" 
+                                <CheckBox Grid.Row="0" Grid.Column="0"
                                           IsChecked="{Binding IsChecked}"
                                           Style="{StaticResource ShoppingCheckBoxStyle}" />
 
-                                <!-- Name - strikethrough -->
-                                <Label Grid.Column="2" 
-                                       Text="{Binding Name}" 
-                                       TextDecorations="Strikethrough" 
+                                <!-- Wrap long names, show strikethrough -->
+                                <Label Grid.Row="0" Grid.Column="1"
+                                       Text="{Binding Name}"
+                                       LineBreakMode="WordWrap"
+                                       MaxLines="3"
+                                       TextDecorations="Strikethrough"
                                        TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
                                        VerticalTextAlignment="Center" />
 
-                                <!-- Quantity - strikethrough -->
-                                <Label Grid.Column="3" 
-                                       Text="{Binding Quantity}" 
-                                       TextDecorations="Strikethrough" 
-                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
-                                       VerticalTextAlignment="Center"
-                                       HorizontalTextAlignment="Center" />
-
-                                <!-- Unit - strikethrough -->
-                                <Label Grid.Column="4" 
-                                       Text="{Binding Unit, Converter={StaticResource UnitToLocalizedStringConverter}}" 
-                                       TextDecorations="Strikethrough" 
-                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
-                                       VerticalTextAlignment="Center"
-                                       HorizontalTextAlignment="Center" />
-
-                                <!-- Delete button -->
-                                <Button Grid.Column="5" 
-                                        Text="✕" 
-                                        Command="{Binding BindingContext.RemoveItemCommand, Source={x:Reference ThisPage}}" 
-                                        CommandParameter="{Binding .}" 
-                                        WidthRequest="35" 
-                                        HeightRequest="35"
+                                <Button Grid.Row="0" Grid.Column="2"
+                                        Text="✕"
+                                        Command="{Binding BindingContext.RemoveItemCommand, Source={x:Reference ThisPage}}"
+                                        CommandParameter="{Binding .}"
+                                        WidthRequest="32"
+                                        HeightRequest="32"
+                                        Padding="0"
                                         BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}"
                                         TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}"
-                                        FontSize="16"
-                                        CornerRadius="17"
+                                        FontSize="14"
+                                        CornerRadius="16"
                                         BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}"
                                         BorderWidth="1" />
 
-                                <!-- Drop targets on full row -->
+                                <!-- Row 1: Drag | qty | unit (all struck-through), centered and larger handle (44x44) -->
+                                <Grid Grid.Row="1" Grid.Column="0"
+                                      WidthRequest="44" HeightRequest="44"
+                                      VerticalOptions="Center" HorizontalOptions="Center">
+                                    <VerticalStackLayout Spacing="5"
+                                                         HorizontalOptions="Center"
+                                                         VerticalOptions="Center">
+                                        <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
+                                                 HeightRequest="3" WidthRequest="24" CornerRadius="1.5"/>
+                                        <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
+                                                 HeightRequest="3" WidthRequest="24" CornerRadius="1.5"/>
+                                        <BoxView BackgroundColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
+                                                 HeightRequest="3" WidthRequest="24" CornerRadius="1.5"/>
+                                    </VerticalStackLayout>
+                                </Grid>
+
+                                <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="Auto,Auto,*" ColumnSpacing="8" Margin="0,6,0,0">
+                                    <Label Grid.Column="0" Text="{Binding Quantity}"
+                                           FontSize="13"
+                                           TextDecorations="Strikethrough"
+                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
+                                           VerticalTextAlignment="Center"
+                                           HorizontalTextAlignment="Center" />
+
+                                    <Label Grid.Column="1" Text="{Binding Unit, Converter={StaticResource UnitToLocalizedStringConverter}}"
+                                           FontSize="13"
+                                           TextDecorations="Strikethrough"
+                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
+                                           VerticalTextAlignment="Center"
+                                           HorizontalTextAlignment="Center" />
+
+                                    <Grid Grid.Column="2"/>
+                                </Grid>
+
                                 <Grid.GestureRecognizers>
                                     <DropGestureRecognizer
                                         AllowDrop="True"
