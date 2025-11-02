@@ -96,11 +96,44 @@ namespace Foodbook.Views.Components
         private void OnComponentLoaded(object? sender, EventArgs e)
         {
             _themeHelper.Initialize();
+
+            // Ensure dynamic height works when templates change at runtime
+            InnerCollectionView.ItemTemplate = ItemTemplate;
+            InnerCollectionView.ItemsSource = ItemsSource;
+
+            this.PropertyChanged += OnHostPropertyChanged;
         }
 
         private void OnComponentUnloaded(object? sender, EventArgs e)
         {
             _themeHelper.Cleanup();
+            this.PropertyChanged -= OnHostPropertyChanged;
+        }
+
+        // Keep CollectionView bindings in sync when host bindable properties change
+        private void OnHostPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(ItemTemplate))
+            {
+                InnerCollectionView.ItemTemplate = ItemTemplate;
+                InvalidateListItemSizes();
+            }
+            else if (e.PropertyName == nameof(ItemsSource))
+            {
+                InnerCollectionView.ItemsSource = ItemsSource;
+                InvalidateListItemSizes();
+            }
+        }
+
+        // Helper method: request remeasure of items after template/data changes
+        private void InvalidateListItemSizes()
+        {
+            try
+            {
+                // InvalidateMeasure is sufficient; ForceLayout is not available across all targets
+                InnerCollectionView.InvalidateMeasure();
+            }
+            catch { }
         }
 
         private bool IsItemsSourceEmpty()
