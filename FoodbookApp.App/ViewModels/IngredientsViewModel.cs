@@ -7,6 +7,7 @@ using Microsoft.Maui.Controls;
 using Foodbook.Views;
 using Foodbook.Data;
 using FoodbookApp.Interfaces;
+using Foodbook.Services;
 
 namespace Foodbook.ViewModels;
 
@@ -113,6 +114,27 @@ public class IngredientsViewModel : INotifyPropertyChanged
         RefreshCommand = new Command(async () => await ReloadAsync());
         BulkVerifyCommand = new Command(async () => await BulkVerifyIngredientsAsync(), () => !IsBulkVerifying && Ingredients.Count > 0);
         ClearSearchCommand = new Command(() => SearchText = string.Empty); // Komenda do czyszczenia wyszukiwania
+
+        // Subscribe to global ingredient save/change signals so VM stays fresh even off-page
+        try
+        {
+            AppEvents.IngredientSaved += OnIngredientSaved;
+            AppEvents.IngredientsChangedAsync += OnIngredientsChangedSignal;
+        }
+        catch { }
+    }
+
+    private async void OnIngredientSaved(int id)
+    {
+        // Ensure next fetch hits DB, then refresh
+        try { _service.InvalidateCache(); } catch { }
+        await HardReloadAsync();
+    }
+
+    private async Task OnIngredientsChangedSignal()
+    {
+        try { _service.InvalidateCache(); } catch { }
+        await HardReloadAsync();
     }
 
     private void RaiseDataLoaded()
@@ -158,6 +180,16 @@ public class IngredientsViewModel : INotifyPropertyChanged
 
         // Signal that all data required by the view is ready
         RaiseDataLoaded();
+    }
+
+    /// <summary>
+    /// Hard reload: invalidate service cache and reload from DB.
+    /// </summary>
+    public async Task HardReloadAsync()
+    {
+        if (IsRefreshing) return;
+        try { _service.InvalidateCache(); } catch { }
+        await ReloadAsync();
     }
 
     /// <summary>
@@ -256,7 +288,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
                 "OK");
 
             // Odœwie¿ listê
-            await ReloadAsync();
+            await HardReloadAsync();
         }
         catch (Exception ex)
         {
@@ -365,7 +397,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
         try
         {
             await _service.DeleteIngredientAsync(ing.Id);
-            await ReloadAsync();
+            await HardReloadAsync();
         }
         catch (Exception ex)
         {

@@ -51,6 +51,8 @@ public partial class IngredientsPage : ContentPage
         
         // Subscribe to global ingredients-changed event
         AppEvents.IngredientsChangedAsync += OnIngredientsChangedAsync;
+        // Subscribe to single-ingredient saved event to force reload immediately
+        AppEvents.IngredientSaved += OnIngredientSaved;
         
         // Only load once or if explicitly needed
         if (!_isInitialized)
@@ -81,6 +83,7 @@ public partial class IngredientsPage : ContentPage
 
         // Unsubscribe to avoid leaks
         AppEvents.IngredientsChangedAsync -= OnIngredientsChangedAsync;
+        AppEvents.IngredientSaved -= OnIngredientSaved;
 
         if (Current == this)
             Current = null;
@@ -108,6 +111,19 @@ public partial class IngredientsPage : ContentPage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[IngredientsPage] Reload on IngredientsChanged failed: {ex.Message}");
+        }
+    }
+
+    // Handler for AppEvents.IngredientSaved
+    private void OnIngredientSaved(int id)
+    {
+        try
+        {
+            MainThread.BeginInvokeOnMainThread(() => _ = ForceReloadAsync());
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientsPage] OnIngredientSaved handler error: {ex.Message}");
         }
     }
 
