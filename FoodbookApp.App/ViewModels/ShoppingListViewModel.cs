@@ -2,9 +2,9 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Foodbook.Models;
 using Foodbook.Views;
-using Foodbook.Services;
 using FoodbookApp.Interfaces;
 using Microsoft.Maui.Controls;
+using Foodbook.Services;
 
 namespace Foodbook.ViewModels;
 
@@ -18,12 +18,34 @@ public class ShoppingListViewModel
     public ICommand OpenPlanCommand { get; }
     public ICommand ArchivePlanCommand { get; }
 
+    // Handler stored so we can unsubscribe later
+    private readonly Func<Task> _planChangedHandler;
+    private bool _isListening = false;
+
     public ShoppingListViewModel(IPlanService planService, IPlannerService plannerService)
     {
         _planService = planService;
         _plannerService = plannerService;
         OpenPlanCommand = new Command<Plan>(async p => await OpenPlanAsync(p));
         ArchivePlanCommand = new Command<Plan>(async p => await ArchivePlanAsync(p));
+
+        _planChangedHandler = async () => await LoadPlansAsync();
+    }
+
+    // Called by the page when it appears to start listening for global changes
+    public void StartListening()
+    {
+        if (_isListening) return;
+        AppEvents.PlanChangedAsync += _planChangedHandler;
+        _isListening = true;
+    }
+
+    // Called by the page when it disappears to avoid leaking handlers
+    public void StopListening()
+    {
+        if (!_isListening) return;
+        AppEvents.PlanChangedAsync -= _planChangedHandler;
+        _isListening = false;
     }
 
     public async Task LoadPlansAsync()

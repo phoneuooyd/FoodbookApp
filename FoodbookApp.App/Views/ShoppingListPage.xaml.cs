@@ -23,6 +23,7 @@ namespace Foodbook.Views
             
             // Initialize theme and font handling
             _themeHelper.Initialize();
+            _viewModel.StartListening();
             
             await _viewModel.LoadPlansAsync();
         }
@@ -33,6 +34,7 @@ namespace Foodbook.Views
             
             // Cleanup theme and font handling
             _themeHelper.Cleanup();
+            _viewModel.StopListening();
         }
     }
 }
