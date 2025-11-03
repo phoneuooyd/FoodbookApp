@@ -26,6 +26,14 @@ public class PlannerViewModel : INotifyPropertyChanged
     private List<Recipe> _cachedRecipes = new();
     private List<PlannerDay> _cachedDays = new();
 
+    private bool _isEditing;
+    private int? _editingPlanId;
+    public bool IsEditing
+    {
+        get => _isEditing;
+        private set { if (_isEditing == value) return; _isEditing = value; OnPropertyChanged(); }
+    }
+
     private bool _isLoading;
     public bool IsLoading
     {
@@ -130,10 +138,11 @@ public class PlannerViewModel : INotifyPropertyChanged
                         $"Zapisano listę zakupów ({plan.StartDate:dd.MM.yyyy} - {plan.EndDate:dd.MM.yyyy})",
                         "OK");
                     
-                    // Reset widoku po udanym zapisie
-                    Reset();
+                    // Notify shopping lists/plans
+                    Foodbook.Services.AppEvents.RaisePlanChanged();
                     
-                    // Po udanym zapisie, wróć do głównego widoku
+                    // Reset widoku po udanym zapisie i wyjście
+                    Reset();
                     await Shell.Current.GoToAsync("..");
                 }
             }
@@ -144,6 +153,25 @@ public class PlannerViewModel : INotifyPropertyChanged
             }
         });
         CancelCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
+    }
+
+    public async Task InitializeForEditAsync(int planId)
+    {
+        try
+        {
+            var plan = await _planService.GetPlanAsync(planId);
+            if (plan == null) return;
+            _editingPlanId = plan.Id;
+            IsEditing = true;
+            _startDate = plan.StartDate;
+            _endDate = plan.EndDate;
+            OnPropertyChanged(nameof(StartDate));
+            OnPropertyChanged(nameof(EndDate));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"InitializeForEditAsync error: {ex.Message}");
+        }
     }
 
     public async Task LoadAsync(bool forceReload = false)
@@ -166,7 +194,7 @@ public class PlannerViewModel : INotifyPropertyChanged
             // Etap 1: Czyszczenie danych
             LoadingStatus = "Przygotowywanie danych...";
             LoadingProgress = 0.1;
-            await Task.Delay(50); // Pozwól UI się odświeżyć
+            await Task.Delay(50);
 
             Days.Clear();
             Recipes.Clear();
@@ -178,7 +206,6 @@ public class PlannerViewModel : INotifyPropertyChanged
 
             var rec = await _recipeService.GetRecipesAsync();
             
-            // Dodaj przepisy w pakietach aby nie blokować UI
             const int batchSize = 20;
             for (int i = 0; i < rec.Count; i += batchSize)
             {
@@ -186,12 +213,11 @@ public class PlannerViewModel : INotifyPropertyChanged
                 foreach (var r in batch)
                     Recipes.Add(r);
                 
-                // Update progress podczas dodawania przepisów
-                var recipeProgress = 0.2 + (0.3 * (double)(i + batchSize) / rec.Count);
+                var recipeProgress = 0.2 + (0.3 * (double)(i + batchSize) / Math.Max(1, rec.Count));
                 LoadingProgress = Math.Min(recipeProgress, 0.5);
                 
                 if (i + batchSize < rec.Count)
-                    await Task.Delay(10); // Krótkie opóźnienie dla UI
+                    await Task.Delay(10);
             }
 
             // Etap 3: Ładowanie istniejących posiłków
@@ -209,6 +235,7 @@ public class PlannerViewModel : INotifyPropertyChanged
             var totalDays = (EndDate.Date - StartDate.Date).Days + 1;
             var currentDay = 0;
 
+            int maxMeals = 0;
             for (var d = StartDate.Date; d <= EndDate.Date; d = d.AddDays(1))
             {
                 var day = new PlannerDay(d);
@@ -228,17 +255,13 @@ public class PlannerViewModel : INotifyPropertyChanged
                         Portions = existingMeal.Portions
                     };
                     meal.PropertyChanged += OnMealRecipeChanged;
-
-                    //day.Meals.Add(meal); // This adds sample meals for the days from top to bottom
-                                           // will be used later when an AI planner is implemented
+                    day.Meals.Add(meal);
                 }
+                maxMeals = Math.Max(maxMeals, day.Meals.Count);
 
-                // Update progress podczas tworzenia dni
                 currentDay++;
-                var dayProgress = 0.7 + (0.2 * (double)currentDay / totalDays);
+                var dayProgress = 0.7 + (0.2 * (double)currentDay / Math.Max(1, totalDays));
                 LoadingProgress = dayProgress;
-                
-                // Pozwól UI się odświeżyć co kilka dni
                 if (currentDay % 3 == 0)
                     await Task.Delay(10);
             }
@@ -248,10 +271,14 @@ public class PlannerViewModel : INotifyPropertyChanged
             LoadingProgress = 0.9;
             await Task.Delay(50);
 
+            if (maxMeals > 0)
+            {
+                MealsPerDay = Math.Max(MealsPerDay, maxMeals);
+            }
             AdjustMealsPerDay();
             
             LoadingProgress = 1.0;
-            await Task.Delay(100); // Krótkie pokazanie 100%
+            await Task.Delay(100);
 
             // Cache the loaded data
             CacheCurrentData();
@@ -261,7 +288,6 @@ public class PlannerViewModel : INotifyPropertyChanged
             LoadingStatus = "Błąd ładowania danych";
             System.Diagnostics.Debug.WriteLine($"Error loading planner data: {ex.Message}");
             
-            // Show user-friendly error message
             await Shell.Current.DisplayAlert(
                 "Błąd", 
                 "Wystąpił problem podczas ładowania danych planera. Spróbuj ponownie.", 
@@ -277,7 +303,6 @@ public class PlannerViewModel : INotifyPropertyChanged
 
     private bool CanUseCachedData()
     {
-        // Check if the date range and meals per day haven't changed significantly
         return _cachedStartDate == StartDate && 
                _cachedEndDate == EndDate && 
                _cachedMealsPerDay == MealsPerDay;
@@ -291,10 +316,8 @@ public class PlannerViewModel : INotifyPropertyChanged
             _cachedEndDate = EndDate;
             _cachedMealsPerDay = MealsPerDay;
             
-            // Deep copy recipes
             _cachedRecipes = Recipes.ToList();
             
-            // Deep copy days and meals
             _cachedDays.Clear();
             foreach (var day in Days)
             {
@@ -330,17 +353,14 @@ public class PlannerViewModel : INotifyPropertyChanged
         {
             System.Diagnostics.Debug.WriteLine("🔄 Restoring planner data from cache");
             
-            // Clear current collections
             Days.Clear();
             Recipes.Clear();
             
-            // Restore recipes
             foreach (var recipe in _cachedRecipes)
             {
                 Recipes.Add(recipe);
             }
             
-            // Restore days and meals
             foreach (var cachedDay in _cachedDays)
             {
                 var day = new PlannerDay(cachedDay.Date);
@@ -365,7 +385,6 @@ public class PlannerViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"❌ Error restoring from cache: {ex.Message}");
-            // If cache restore fails, force a reload
             _ = LoadAsync(forceReload: true);
         }
     }
@@ -420,14 +439,12 @@ public class PlannerViewModel : INotifyPropertyChanged
     {
         if (e.PropertyName == nameof(PlannedMeal.Recipe) && sender is PlannedMeal meal && meal.Recipe != null)
         {
-            // Ustaw domyślną liczbę porcji z przepisu
             meal.Portions = meal.Recipe.IloscPorcji;
         }
     }
 
     private void Reset()
     {
-        // Usuń event handlery przed czyszczeniem
         foreach (var day in Days)
         {
             foreach (var meal in day.Meals)
@@ -443,7 +460,10 @@ public class PlannerViewModel : INotifyPropertyChanged
         MealsPerDay = 3;
         Days.Clear();
         
-        // Clear cache when resetting (after save)
+        // Clear edit mode
+        _editingPlanId = null;
+        IsEditing = false;
+        
         ClearCache();
         
         _ = LoadAsync();
@@ -453,14 +473,70 @@ public class PlannerViewModel : INotifyPropertyChanged
     {
         try
         {
-            if (await _planService.HasOverlapAsync(StartDate, EndDate))
+            if (await _planService.HasOverlapAsync(StartDate, EndDate, _editingPlanId))
             {
                 await Shell.Current.DisplayAlert("Błąd", "Plan na podane daty już istnieje.", "OK");
                 return null;
             }
 
-            var plan = new Plan { StartDate = StartDate, EndDate = EndDate };
-            await _planService.AddPlanAsync(plan);
+            Plan plan;
+            if (_editingPlanId.HasValue)
+            {
+                plan = await _planService.GetPlanAsync(_editingPlanId.Value) ?? new Plan { Type = PlanType.Planner };
+                plan.StartDate = StartDate;
+                plan.EndDate = EndDate;
+                if (plan.Id == 0)
+                    await _planService.AddPlanAsync(plan);
+                else
+                    await _planService.UpdatePlanAsync(plan);
+            }
+            else
+            {
+                plan = new Plan 
+                { 
+                    StartDate = StartDate, 
+                    EndDate = EndDate,
+                    Type = PlanType.Planner  // Set type to Planner
+                };
+                await _planService.AddPlanAsync(plan);
+            }
+
+            // Ensure there is a ShoppingList plan for the same date range so ShoppingListPage can show it
+            try
+            {
+                var all = await _planService.GetPlansAsync();
+                var shopping = all.FirstOrDefault(p => p.Type == PlanType.ShoppingList && p.StartDate == plan.StartDate && p.EndDate == plan.EndDate);
+                if (shopping == null)
+                {
+                    var newShopping = new Plan
+                    {
+                        StartDate = plan.StartDate,
+                        EndDate = plan.EndDate,
+                        Type = PlanType.ShoppingList,
+                        IsArchived = false
+                    };
+                    await _planService.AddPlanAsync(newShopping);
+                }
+                else
+                {
+                    // ensure it's active and date-aligned
+                    if (shopping.IsArchived)
+                    {
+                        shopping.IsArchived = false;
+                        await _planService.UpdatePlanAsync(shopping);
+                    }
+                    if (shopping.StartDate != plan.StartDate || shopping.EndDate != plan.EndDate)
+                    {
+                        shopping.StartDate = plan.StartDate;
+                        shopping.EndDate = plan.EndDate;
+                        await _planService.UpdatePlanAsync(shopping);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error ensuring shopping list plan exists: {ex.Message}");
+            }
 
             var existing = await _plannerService.GetPlannedMealsAsync(StartDate, EndDate);
             foreach (var m in existing)
@@ -482,11 +558,7 @@ public class PlannerViewModel : INotifyPropertyChanged
                 }
             }
 
-            // Wyczyść cache po zapisie - nie wywołuj Reset() który może powodować konflikty
             ClearCache();
-
-            // Notify other parts of the app (e.g., HomeViewModel) that plan data changed
-            Foodbook.Services.AppEvents.RaisePlanChanged();
             
             return plan;
         }

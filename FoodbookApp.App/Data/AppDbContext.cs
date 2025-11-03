@@ -47,6 +47,12 @@ namespace Foodbook.Data
                 .HasIndex(r => r.Name)
                 .HasDatabaseName("IX_Recipes_Name");
 
+            // Plan configuration - add Type property with default value
+            modelBuilder.Entity<Plan>()
+                .Property(p => p.Type)
+                .HasConversion<int>()
+                .HasDefaultValue(PlanType.Planner);
+
             // ShoppingListItem configuration
             modelBuilder.Entity<ShoppingListItem>()
                 .HasOne(sli => sli.Plan)

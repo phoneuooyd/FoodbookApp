@@ -174,7 +174,7 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
             // Await save completion from the page (or timeout)
             try
             {
-                await formPage.AwaitSaveAsync(30000);
+                await formPage.AwaitSaveAsync(500000);
             }
             catch { }
 

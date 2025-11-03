@@ -380,6 +380,9 @@
 	  <MauiXaml Update="Views\HomePage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="Views\PlannerListsPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
           <MauiXaml Update="Views\PlannerPage.xaml">
             <Generator>MSBuild:Compile</Generator>
           </MauiXaml>

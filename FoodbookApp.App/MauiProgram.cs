@@ -79,6 +79,8 @@ namespace FoodbookApp
             builder.Services.AddScoped<ArchiveViewModel>();
             builder.Services.AddSingleton<SettingsViewModel>();
             builder.Services.AddTransient<SetupWizardViewModel>();
+            // New: Planner lists VM
+            builder.Services.AddTransient<PlannerListsViewModel>();
 
             // Http / import
             builder.Services.AddScoped<HttpClient>();
@@ -91,6 +93,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<IngredientsPage>();
             builder.Services.AddScoped<IngredientFormPage>();
             builder.Services.AddScoped<PlannerPage>();
+            builder.Services.AddScoped<PlannerListsPage>();
             builder.Services.AddScoped<MealFormPage>();
             builder.Services.AddScoped<ShoppingListPage>();
             builder.Services.AddScoped<ShoppingListDetailPage>();
@@ -106,6 +109,7 @@ namespace FoodbookApp
             Routing.RegisterRoute(nameof(IngredientFormPage), typeof(IngredientFormPage));
             Routing.RegisterRoute(nameof(IngredientsPage), typeof(IngredientsPage));
             Routing.RegisterRoute(nameof(PlannerPage), typeof(PlannerPage));
+            Routing.RegisterRoute(nameof(PlannerListsPage), typeof(PlannerListsPage));
             Routing.RegisterRoute(nameof(MealFormPage), typeof(MealFormPage));
             Routing.RegisterRoute(nameof(ShoppingListPage), typeof(ShoppingListPage));
             Routing.RegisterRoute(nameof(ShoppingListDetailPage), typeof(ShoppingListDetailPage));

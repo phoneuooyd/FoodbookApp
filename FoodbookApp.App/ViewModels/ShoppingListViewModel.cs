@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Foodbook.Models;
 using Foodbook.Views;
+using Foodbook.Services;
 using FoodbookApp.Interfaces;
 using Microsoft.Maui.Controls;
 
@@ -29,8 +30,8 @@ public class ShoppingListViewModel
     {
         Plans.Clear();
         var plans = await _planService.GetPlansAsync();
-        // Pokazuj tylko niearchiwizowane plany
-        foreach (var p in plans.Where(pl => !pl.IsArchived).OrderByDescending(pl => pl.StartDate))
+        // Show only non-archived shopping list plans
+        foreach (var p in plans.Where(pl => !pl.IsArchived && pl.Type == PlanType.ShoppingList).OrderByDescending(pl => pl.StartDate))
             Plans.Add(p);
     }
 
@@ -55,6 +56,9 @@ public class ShoppingListViewModel
             plan.IsArchived = true;
             await _planService.UpdatePlanAsync(plan);
             await LoadPlansAsync();
+            
+            // Notify archive page
+            AppEvents.RaisePlanChanged();
         }
     }
 }

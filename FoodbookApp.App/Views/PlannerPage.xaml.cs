@@ -5,12 +5,26 @@ using System;
 
 namespace Foodbook.Views;
 
+[QueryProperty(nameof(PlanId), "planId")]
 public partial class PlannerPage : ContentPage
 {
     private readonly PlannerViewModel _viewModel;
     private readonly PageThemeHelper _themeHelper;
     private bool _isInitialized;
     private bool _hasEverLoaded;
+
+    // Accept plan id for editing existing plan
+    public int PlanId
+    {
+        get => _planId;
+        set
+        {
+            _planId = value;
+            _pendingPlanId = value > 0 ? value : null;
+        }
+    }
+    private int _planId;
+    private int? _pendingPlanId;
 
     public PlannerPage(PlannerViewModel viewModel)
     {
@@ -29,6 +43,23 @@ public partial class PlannerPage : ContentPage
         
         // Hook date validation once
         EnsureDatePickersHandlers();
+
+        // If navigation provided a plan id, initialize edit mode before the first load
+        if (_pendingPlanId.HasValue && !_hasEverLoaded)
+        {
+            try
+            {
+                await _viewModel.InitializeForEditAsync(_pendingPlanId.Value);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlannerPage: InitializeForEditAsync failed: {ex.Message}");
+            }
+            finally
+            {
+                _pendingPlanId = null;
+            }
+        }
         
         if (!_hasEverLoaded)
         {
