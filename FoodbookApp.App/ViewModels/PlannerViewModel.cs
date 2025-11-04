@@ -473,10 +473,90 @@ public class PlannerViewModel : INotifyPropertyChanged
     {
         try
         {
-            if (await _planService.HasOverlapAsync(StartDate, EndDate, _editingPlanId))
+            // Check for exact existing plan in the same period (ignore archived and the plan being edited)
+            var allPlans = await _planService.GetPlansAsync();
+            var conflictingPlan = allPlans.FirstOrDefault(p =>
+                !p.IsArchived &&
+                (p.Id != _editingPlanId) &&
+                p.StartDate.Date == StartDate.Date &&
+                p.EndDate.Date == EndDate.Date);
+
+            if (conflictingPlan != null)
             {
-                await Shell.Current.DisplayAlert("Błąd", "Plan na podane daty już istnieje.", "OK");
-                return null;
+                // Ask user how to proceed: overwrite, merge or cancel
+                var choice = await Shell.Current.DisplayActionSheet(
+                    "Plan na podane daty już istnieje.",
+                    "Anuluj",
+                    null,
+                    "Nadpisz",
+                    "Scal");
+
+                if (string.IsNullOrEmpty(choice) || choice == "Anuluj")
+                {
+                    return null;
+                }
+
+                if (choice == "Scal")
+                {
+                    try
+                    {
+                        // Merge: add only meals that do not already exist in the existing plan
+                        var existingMeals = await _plannerService.GetPlannedMealsAsync(conflictingPlan.StartDate, conflictingPlan.EndDate);
+                        var existingKeys = new HashSet<string>(existingMeals.Select(m => $"{m.Date.Date:yyyy-MM-dd}|{m.RecipeId}"));
+
+                        foreach (var day in Days)
+                        {
+                            foreach (var meal in day.Meals)
+                            {
+                                if (meal.RecipeId <= 0) continue;
+                                var key = $"{meal.Date.Date:yyyy-MM-dd}|{meal.RecipeId}";
+                                if (existingKeys.Contains(key))
+                                    continue;
+
+                                await _plannerService.AddPlannedMealAsync(new PlannedMeal
+                                {
+                                    RecipeId = meal.RecipeId,
+                                    Date = meal.Date,
+                                    Portions = meal.Portions
+                                });
+                            }
+                        }
+
+                        await Shell.Current.DisplayAlert(
+                            "Scalono",
+                            $"Posiłki zostały scalone z istniejącym planem ({conflictingPlan.StartDate:dd.MM.yyyy} - {conflictingPlan.EndDate:dd.MM.yyyy}).",
+                            "OK");
+
+                        // Notify and reset/navigate back similar to normal save
+                        Foodbook.Services.AppEvents.RaisePlanChanged();
+                        Reset();
+                        await Shell.Current.GoToAsync("..");
+
+                        return conflictingPlan;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error during merge: {ex.Message}");
+                        await Shell.Current.DisplayAlert("Błąd", "Scalanie planów nie powiodło się.", "OK");
+                        return null;
+                    }
+                }
+
+                if (choice == "Nadpisz")
+                {
+                    try
+                    {
+                        // Remove the conflicting plan entity first
+                        await _planService.RemovePlanAsync(conflictingPlan.Id);
+                        // continue to normal save flow which will remove planned meals in the date range and add current ones
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to remove existing plan during overwrite: {ex.Message}");
+                        await Shell.Current.DisplayAlert("Błąd", "Nie udało się usunąć istniejącego planu.", "OK");
+                        return null;
+                    }
+                }
             }
 
             Plan plan;
