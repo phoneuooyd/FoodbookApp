@@ -44,26 +44,32 @@ public partial class PlannerPage : ContentPage
         // Hook date validation once
         EnsureDatePickersHandlers();
 
-        // If navigation provided a plan id, initialize edit mode before the first load
-        if (_pendingPlanId.HasValue && !_hasEverLoaded)
+        // If navigation provided a plan id, initialize edit mode and load edit data
+        if (_pendingPlanId.HasValue)
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine($"?? PlannerPage: Entering edit mode for plan {_pendingPlanId.Value}");
                 await _viewModel.InitializeForEditAsync(_pendingPlanId.Value);
+                await _viewModel.LoadForEditAsync();
+                _hasEverLoaded = true;
+                _isInitialized = true;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"PlannerPage: InitializeForEditAsync failed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"PlannerPage: LoadForEditAsync failed: {ex.Message}");
             }
             finally
             {
                 _pendingPlanId = null;
             }
+
+            return; // edit mode load complete - skip regular first-time load
         }
         
         if (!_hasEverLoaded)
         {
-            // First time loading - always load fresh data
+            // First time loading - always load fresh data (new planner)
             System.Diagnostics.Debug.WriteLine("?? PlannerPage: First load - loading fresh data");
             await _viewModel.LoadAsync(forceReload: false);
             _hasEverLoaded = true;

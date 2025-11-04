@@ -142,7 +142,7 @@ public class PlannerViewModel : INotifyPropertyChanged
                     Foodbook.Services.AppEvents.RaisePlanChanged();
                     
                     // Reset widoku po udanym zapisie i wyjście
-                    Reset();
+                    await ResetAsync();
                     await Shell.Current.GoToAsync("..");
                 }
             }
@@ -155,6 +155,10 @@ public class PlannerViewModel : INotifyPropertyChanged
         CancelCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
     }
 
+    /// <summary>
+    /// Initialize view model for editing an existing plan. This only sets editing flags and dates;
+    /// actual data loading can be triggered via LoadAsync or LoadForEditAsync.
+    /// </summary>
     public async Task InitializeForEditAsync(int planId)
     {
         try
@@ -171,6 +175,74 @@ public class PlannerViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"InitializeForEditAsync error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Fully load planner data for the currently selected edit plan (uses StartDate/EndDate set earlier).
+    /// This method forces a reload and is intended to be used when entering edit mode to ensure
+    /// data is loaded specifically for the plan being edited.
+    /// </summary>
+    public Task LoadForEditAsync()
+    {
+        // Force reload to ensure we don't use stale cache when editing
+        return LoadAsync(forceReload: true);
+    }
+
+    /// <summary>
+    /// Initialize a new empty planner (no planned meals) for the current StartDate/EndDate and MealsPerDay.
+    /// This is intended to be used after saving a plan to present a fresh planner to the user.
+    /// </summary>
+    public async Task InitializeEmptyPlannerAsync()
+    {
+        try
+        {
+            // Detach handlers from existing meals
+            foreach (var day in Days)
+            {
+                foreach (var meal in day.Meals)
+                {
+                    meal.PropertyChanged -= OnMealRecipeChanged;
+                }
+            }
+
+            // Reset collections and state
+            Days.Clear();
+            Recipes.Clear();
+
+            _editingPlanId = null;
+            IsEditing = false;
+
+            _startDate = DateTime.Today;
+            _endDate = DateTime.Today.AddDays(6);
+            OnPropertyChanged(nameof(StartDate));
+            OnPropertyChanged(nameof(EndDate));
+
+            MealsPerDay = 3;
+
+            ClearCache();
+
+            // Load recipes so the picker has data, but do not load planned meals from the service
+            var rec = await _recipeService.GetRecipesAsync();
+            foreach (var r in rec)
+                Recipes.Add(r);
+
+            // Create empty days with empty meals
+            for (var d = StartDate.Date; d <= EndDate.Date; d = d.AddDays(1))
+            {
+                var day = new PlannerDay(d);
+                for (int i = 0; i < MealsPerDay; i++)
+                {
+                    var meal = new PlannedMeal { Date = d, Portions = 1 };
+                    meal.PropertyChanged += OnMealRecipeChanged;
+                    day.Meals.Add(meal);
+                }
+                Days.Add(day);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error initializing empty planner: {ex.Message}");
         }
     }
 
@@ -443,30 +515,12 @@ public class PlannerViewModel : INotifyPropertyChanged
         }
     }
 
-    private void Reset()
+    /// <summary>
+    /// Reset planner to a fresh empty state. Use ResetAsync when awaiting is required.
+    /// </summary>
+    private async Task ResetAsync()
     {
-        foreach (var day in Days)
-        {
-            foreach (var meal in day.Meals)
-            {
-                meal.PropertyChanged -= OnMealRecipeChanged;
-            }
-        }
-
-        _startDate = DateTime.Today;
-        _endDate = DateTime.Today.AddDays(6);
-        OnPropertyChanged(nameof(StartDate));
-        OnPropertyChanged(nameof(EndDate));
-        MealsPerDay = 3;
-        Days.Clear();
-        
-        // Clear edit mode
-        _editingPlanId = null;
-        IsEditing = false;
-        
-        ClearCache();
-        
-        _ = LoadAsync();
+        await InitializeEmptyPlannerAsync();
     }
 
     private async Task<Plan?> SaveAsync()
@@ -529,7 +583,7 @@ public class PlannerViewModel : INotifyPropertyChanged
 
                         // Notify and reset/navigate back similar to normal save
                         Foodbook.Services.AppEvents.RaisePlanChanged();
-                        Reset();
+                        await ResetAsync();
                         await Shell.Current.GoToAsync("..");
 
                         return conflictingPlan;
