@@ -642,7 +642,9 @@ public class PlannerViewModel : INotifyPropertyChanged
                     "Anuluj",
                     null,
                     "Nadpisz",
-                    "Scal");
+                    "Scal",
+                    "Zapisz i utwórz nową listę"
+                );
 
                 if (string.IsNullOrEmpty(choice) || choice == "Anuluj")
                 {
@@ -807,6 +809,7 @@ public class PlannerViewModel : INotifyPropertyChanged
         {
             // Check if this planner already has a linked shopping list
             Plan? existingShoppingList = null;
+            Plan? manualShoppingList = null;
             
             if (plan.LinkedShoppingListPlanId.HasValue)
             {
@@ -814,32 +817,58 @@ public class PlannerViewModel : INotifyPropertyChanged
                 System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Found linked shopping list: {existingShoppingList?.Id}");
             }
 
-            string? choice;
-            
+            // Find a manual (unlinked) shopping list for the same date range
+            var allPlans = await _planService.GetPlansAsync();
+            manualShoppingList = allPlans.FirstOrDefault(p =>
+                !p.IsArchived &&
+                p.Type == PlanType.ShoppingList &&
+                p.StartDate.Date == plan.StartDate.Date &&
+                p.EndDate.Date == plan.EndDate.Date &&
+                (!p.LinkedShoppingListPlanId.HasValue || p.LinkedShoppingListPlanId == 0)
+            );
+            if (manualShoppingList != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Found manual shopping list: {manualShoppingList.Id}");
+            }
+
+            string? choice = null;
             if (existingShoppingList != null && !existingShoppingList.IsArchived)
             {
                 // Shopping list exists and is linked - offer merge or overwrite options
                 System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Existing linked shopping list found: {existingShoppingList.Id}");
-                
                 choice = await Shell.Current.DisplayActionSheet(
                     "Czy chcesz zaktualizować powiązaną listę zakupów?",
                     "Anuluj",
                     null,
                     "Tylko zapisz planer",
                     "Zapisz i scal z listą",
-                    "Zapisz i nadpisz listę");
+                    "Zapisz i nadpisz listę"
+                );
+            }
+            else if (manualShoppingList != null)
+            {
+                // Manual shopping list exists for this date range
+                System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Manual shopping list found: {manualShoppingList.Id}");
+                choice = await Shell.Current.DisplayActionSheet(
+                    "Znaleziono ręcznie utworzoną listę zakupów dla tego zakresu dat. Co chcesz zrobić?",
+                    "Anuluj",
+                    null,
+                    "Tylko zapisz planer",
+                    "Scal z ręcznie utworzoną listą",
+                    "Zapisz i utwórz nową listę"
+                );
             }
             else
             {
                 // No shopping list exists or it was archived - offer to create one
                 System.Diagnostics.Debug.WriteLine("[PlannerViewModel] No linked shopping list found for this planner");
-                
                 choice = await Shell.Current.DisplayActionSheet(
                     "Czy chcesz stworzyć listę zakupów?",
                     "Anuluj",
                     null,
                     "Tylko zapisz planer",
-                    "Zapisz i stwórz listę");
+                    "Zapisz i stwórz listę"
+                );
             }
 
             // Handle user choice
@@ -849,7 +878,7 @@ public class PlannerViewModel : INotifyPropertyChanged
                 return;
             }
 
-            if (choice == "Zapisz i stwórz listę")
+            if (choice == "Zapisz i stwórz listę" || choice == "Zapisz i utwórz nową listę")
             {
                 await CreateShoppingListPlanAsync(plan);
             }
@@ -860,6 +889,14 @@ public class PlannerViewModel : INotifyPropertyChanged
             else if (choice == "Zapisz i nadpisz listę")
             {
                 await OverwriteShoppingListAsync(existingShoppingList!, plan);
+            }
+            else if (choice == "Scal z ręcznie utworzoną listą")
+            {
+                // Link manual list to this planner and update
+                plan.LinkedShoppingListPlanId = manualShoppingList!.Id;
+                await _planService.UpdatePlanAsync(plan);
+                System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Linked manual shopping list {manualShoppingList.Id} to planner {plan.Id}");
+                await MergeWithShoppingListAsync(manualShoppingList, plan);
             }
         }
         catch (Exception ex)
