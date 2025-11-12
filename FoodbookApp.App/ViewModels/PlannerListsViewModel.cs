@@ -25,6 +25,7 @@ public class PlannerListsViewModel
         _planService = planService;
 
         LoadCommand = new Command(async () => await LoadPlansAsync());
+        // Do not create a Plan immediately on FAB click. Navigate to PlannerPage so user can configure and Save there.
         CreatePlanCommand = new Command(async () =>
         {
             try

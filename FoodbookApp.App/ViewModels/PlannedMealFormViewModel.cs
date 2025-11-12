@@ -100,7 +100,7 @@ public class PlannedMealFormViewModel : INotifyPropertyChanged
         if (_meal == null)
         {
             var selectedId = SelectedRecipe?.Id ?? 0;
-            var m = new PlannedMeal { RecipeId = selectedId, Date = Date };
+            var m = new PlannedMeal { RecipeId = selectedId, Date = Date, PlanId = _meal?.PlanId };
             await _plannerService.AddPlannedMealAsync(m);
         }
         else

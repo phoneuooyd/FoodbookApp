@@ -42,6 +42,13 @@ namespace Foodbook.Data
                 .WithMany()
                 .HasForeignKey(pm => pm.RecipeId);
 
+            // Link planned meals optionally to Plan (enables multiple planners)
+            modelBuilder.Entity<PlannedMeal>()
+                .HasOne<Plan>()
+                .WithMany()
+                .HasForeignKey(pm => pm.PlanId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             // Index for recipe searches
             modelBuilder.Entity<Recipe>()
                 .HasIndex(r => r.Name)

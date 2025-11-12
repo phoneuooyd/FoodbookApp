@@ -297,7 +297,17 @@ public class PlannerViewModel : INotifyPropertyChanged
             LoadingProgress = 0.5;
             await Task.Delay(50);
 
-            var existingMeals = await _plannerService.GetPlannedMealsAsync(StartDate, EndDate);
+            List<PlannedMeal> existingMeals;
+            if (_editingPlanId.HasValue)
+            {
+                // When editing a specific plan, load its meals by PlanId only
+                existingMeals = await _plannerService.GetPlannedMealsAsync(_editingPlanId.Value);
+            }
+            else
+            {
+                // For new planner, we do not load meals from other plans; keep empty
+                existingMeals = new List<PlannedMeal>();
+            }
             
             // Etap 4: Tworzenie dni planera
             LoadingStatus = "Przygotowywanie kalendarza...";
@@ -313,7 +323,7 @@ public class PlannerViewModel : INotifyPropertyChanged
                 var day = new PlannerDay(d);
                 Days.Add(day);
 
-                // Dodaj istniejące posiłki dla tego dnia
+                // Dodaj istniejące posiłki dla tego dnia (for current plan only)
                 var mealsForDay = existingMeals.Where(m => m.Date.Date == d.Date).ToList();
                 foreach (var existingMeal in mealsForDay)
                 {
@@ -324,7 +334,8 @@ public class PlannerViewModel : INotifyPropertyChanged
                         RecipeId = existingMeal.RecipeId,
                         Recipe = recipe,
                         Date = existingMeal.Date,
-                        Portions = existingMeal.Portions
+                        Portions = existingMeal.Portions,
+                        PlanId = existingMeal.PlanId
                     };
                     meal.PropertyChanged += OnMealRecipeChanged;
                     day.Meals.Add(meal);
@@ -402,7 +413,8 @@ public class PlannerViewModel : INotifyPropertyChanged
                         RecipeId = meal.RecipeId,
                         Recipe = meal.Recipe,
                         Date = meal.Date,
-                        Portions = meal.Portions
+                        Portions = meal.Portions,
+                        PlanId = meal.PlanId
                     };
                     cachedMeal.PropertyChanged += OnMealRecipeChanged;
                     cachedDay.Meals.Add(cachedMeal);
@@ -444,7 +456,8 @@ public class PlannerViewModel : INotifyPropertyChanged
                         RecipeId = cachedMeal.RecipeId,
                         Recipe = cachedMeal.Recipe,
                         Date = cachedMeal.Date,
-                        Portions = cachedMeal.Portions
+                        Portions = cachedMeal.Portions,
+                        PlanId = cachedMeal.PlanId
                     };
                     meal.PropertyChanged += OnMealRecipeChanged;
                     day.Meals.Add(meal);
@@ -472,7 +485,7 @@ public class PlannerViewModel : INotifyPropertyChanged
     private void AddMeal(PlannerDay? day)
     {
         if (day == null) return;
-        var meal = new PlannedMeal { Date = day.Date, Portions = 1 };
+        var meal = new PlannedMeal { Date = day.Date, Portions = 1, PlanId = _editingPlanId };
         meal.PropertyChanged += OnMealRecipeChanged;
         day.Meals.Add(meal);
     }
@@ -494,7 +507,7 @@ public class PlannerViewModel : INotifyPropertyChanged
         {
             while (day.Meals.Count < MealsPerDay)
             {
-                var meal = new PlannedMeal { Date = day.Date, Portions = 1 };
+                var meal = new PlannedMeal { Date = day.Date, Portions = 1, PlanId = _editingPlanId };
                 meal.PropertyChanged += OnMealRecipeChanged;
                 day.Meals.Add(meal);
             }
@@ -533,7 +546,8 @@ public class PlannerViewModel : INotifyPropertyChanged
                 !p.IsArchived &&
                 (p.Id != _editingPlanId) &&
                 p.StartDate.Date == StartDate.Date &&
-                p.EndDate.Date == EndDate.Date);
+                p.EndDate.Date == EndDate.Date &&
+                p.Type == PlanType.Planner);
 
             if (conflictingPlan != null)
             {
@@ -555,7 +569,7 @@ public class PlannerViewModel : INotifyPropertyChanged
                     try
                     {
                         // Merge: add only meals that do not already exist in the existing plan
-                        var existingMeals = await _plannerService.GetPlannedMealsAsync(conflictingPlan.StartDate, conflictingPlan.EndDate);
+                        var existingMeals = await _plannerService.GetPlannedMealsAsync(conflictingPlan.Id);
                         var existingKeys = new HashSet<string>(existingMeals.Select(m => $"{m.Date.Date:yyyy-MM-dd}|{m.RecipeId}"));
 
                         foreach (var day in Days)
@@ -571,7 +585,8 @@ public class PlannerViewModel : INotifyPropertyChanged
                                 {
                                     RecipeId = meal.RecipeId,
                                     Date = meal.Date,
-                                    Portions = meal.Portions
+                                    Portions = meal.Portions,
+                                    PlanId = conflictingPlan.Id
                                 });
                             }
                         }
@@ -602,7 +617,7 @@ public class PlannerViewModel : INotifyPropertyChanged
                     {
                         // Remove the conflicting plan entity first
                         await _planService.RemovePlanAsync(conflictingPlan.Id);
-                        // continue to normal save flow which will remove planned meals in the date range and add current ones
+                        // continue to normal save flow
                     }
                     catch (Exception ex)
                     {
@@ -630,9 +645,11 @@ public class PlannerViewModel : INotifyPropertyChanged
                 { 
                     StartDate = StartDate, 
                     EndDate = EndDate,
-                    Type = PlanType.Planner  // Set type to Planner
+                    Type = PlanType.Planner
                 };
                 await _planService.AddPlanAsync(plan);
+                _editingPlanId = plan.Id; // assign after create to save meals under this plan
+                IsEditing = true;
             }
 
             // Ensure there is a ShoppingList plan for the same date range so ShoppingListPage can show it
@@ -672,10 +689,15 @@ public class PlannerViewModel : INotifyPropertyChanged
                 System.Diagnostics.Debug.WriteLine($"Error ensuring shopping list plan exists: {ex.Message}");
             }
 
-            var existing = await _plannerService.GetPlannedMealsAsync(StartDate, EndDate);
-            foreach (var m in existing)
-                await _plannerService.RemovePlannedMealAsync(m.Id);
+            // Remove meals only for this plan (if existing) or for this date range old entries of this plan
+            if (plan.Id > 0)
+            {
+                var existing = await _plannerService.GetPlannedMealsAsync(plan.Id);
+                foreach (var m in existing)
+                    await _plannerService.RemovePlannedMealAsync(m.Id);
+            }
 
+            // Add meals for current plan only
             foreach (var day in Days)
             {
                 foreach (var meal in day.Meals)
@@ -687,7 +709,8 @@ public class PlannerViewModel : INotifyPropertyChanged
                         {
                             RecipeId = meal.RecipeId,
                             Date = meal.Date,
-                            Portions = meal.Portions
+                            Portions = meal.Portions,
+                            PlanId = plan.Id
                         });
                 }
             }
@@ -698,8 +721,12 @@ public class PlannerViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"❌ Error saving meal plan: {ex.Message}");
-            await Shell.Current.DisplayAlert("Błąd", "Wystąpił problem podczas zapisywania planu. Spróbuj ponownie.", "OK");
+            System.Diagnostics.Debug.WriteLine($"❌ Error saving meal plan: {ex.Message}\n{ex.StackTrace}");
+            // Show detailed error to help diagnosing why save fails
+            var message = ex.Message;
+            if (ex.InnerException != null)
+                message += "\n" + ex.InnerException.Message;
+            await Shell.Current.DisplayAlert("Błąd", $"Wystąpił problem podczas zapisywania planu:\n{message}", "OK");
             return null;
         }
     }

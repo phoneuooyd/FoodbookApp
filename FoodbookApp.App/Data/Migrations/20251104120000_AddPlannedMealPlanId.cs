@@ -1,29 +1,38 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace FoodbookApp.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class version_1_01 : Migration
+    public partial class AddPlannedMealPlanId : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // Add nullable PlanId column to PlannedMeals so planned meals can be associated with a Plan
             migrationBuilder.AddColumn<int>(
                 name: "PlanId",
                 table: "PlannedMeals",
                 type: "INTEGER",
                 nullable: true);
 
-            // Create index for the new foreign key column
             migrationBuilder.CreateIndex(
                 name: "IX_PlannedMeals_PlanId",
                 table: "PlannedMeals",
                 column: "PlanId");
 
-            // Add foreign key constraint to Plans.Id (cascade delete to remove planned meals when a plan is deleted)
+            // Best-effort backfill: attach existing meals to the most recent active Planner plan that covers the meal date
+            migrationBuilder.Sql(@"
+                UPDATE PlannedMeals
+                SET PlanId = (
+                    SELECT Id FROM Plans p
+                    WHERE p.Type = 0 /* Planner */ AND p.IsArchived = 0 AND PlannedMeals.Date BETWEEN p.StartDate AND p.EndDate
+                    ORDER BY p.StartDate DESC
+                    LIMIT 1
+                )
+                WHERE PlanId IS NULL;
+            ");
+
             migrationBuilder.AddForeignKey(
                 name: "FK_PlannedMeals_Plans_PlanId",
                 table: "PlannedMeals",

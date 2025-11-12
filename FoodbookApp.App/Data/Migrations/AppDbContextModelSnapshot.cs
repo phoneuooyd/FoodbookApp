@@ -131,6 +131,9 @@ namespace FoodbookApp.Data.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("PlanId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Portions")
                         .HasColumnType("INTEGER");
 
@@ -138,6 +141,8 @@ namespace FoodbookApp.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PlanId");
 
                     b.HasIndex("RecipeId");
 
@@ -283,6 +288,11 @@ namespace FoodbookApp.Data.Migrations
 
             modelBuilder.Entity("Foodbook.Models.PlannedMeal", b =>
                 {
+                    b.HasOne("Foodbook.Models.Plan", null)
+                        .WithMany()
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("Foodbook.Models.Recipe", "Recipe")
                         .WithMany()
                         .HasForeignKey("RecipeId")
