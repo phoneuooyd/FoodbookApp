@@ -100,19 +100,38 @@ public class ShoppingListService : IShoppingListService
         return resultIngredients.OrderBy(i => i.Order).ToList();
     }
 
-    public async Task SaveShoppingListItemStateAsync(int planId, string ingredientName, Unit unit, bool isChecked, double quantity)
+    // UPDATED: match new interface and update-or-insert by Id or (PlanId+Order) fallback
+    public async Task SaveShoppingListItemStateAsync(int planId, int id, int order, string ingredientName, Unit unit, bool isChecked, double quantity)
     {
         if (ingredientName == null) throw new ArgumentNullException(nameof(ingredientName));
 
-        var existingItem = await _context.ShoppingListItems
-            .FirstOrDefaultAsync(sli => sli.PlanId == planId && 
-                                      sli.IngredientName == ingredientName && 
-                                      sli.Unit == unit);
+        ShoppingListItem? existingItem = null;
+
+        if (id > 0)
+        {
+            existingItem = await _context.ShoppingListItems.FirstOrDefaultAsync(sli => sli.Id == id);
+        }
+
+        if (existingItem == null)
+        {
+            // Fallback to PlanId + Order (stable position-identification while editing)
+            existingItem = await _context.ShoppingListItems.FirstOrDefaultAsync(sli => sli.PlanId == planId && sli.Order == order);
+        }
+
+        if (existingItem == null)
+        {
+            // Final fallback: match by composite of name+unit within plan (legacy behavior)
+            existingItem = await _context.ShoppingListItems.FirstOrDefaultAsync(sli => sli.PlanId == planId && sli.IngredientName == ingredientName && sli.Unit == unit);
+        }
 
         if (existingItem != null)
         {
+            existingItem.IngredientName = ingredientName;
+            existingItem.Unit = unit;
             existingItem.IsChecked = isChecked;
             existingItem.Quantity = quantity;
+            existingItem.Order = order;
+            _context.ShoppingListItems.Update(existingItem);
         }
         else
         {
@@ -122,7 +141,8 @@ public class ShoppingListService : IShoppingListService
                 IngredientName = ingredientName,
                 Unit = unit,
                 IsChecked = isChecked,
-                Quantity = quantity
+                Quantity = quantity,
+                Order = order
             };
             _context.ShoppingListItems.Add(newItem);
         }
@@ -158,11 +178,24 @@ public class ShoppingListService : IShoppingListService
         // Process each ingredient
         foreach (var ingredient in safeIngredients)
         {
-            var existingItem = existingItems.FirstOrDefault(sli => 
-                sli.IngredientName == ingredient.Name && sli.Unit == ingredient.Unit);
+            ShoppingListItem? existingItem = null;
+            if (ingredient.Id > 0)
+            {
+                existingItem = existingItems.FirstOrDefault(sli => sli.Id == ingredient.Id);
+            }
+            if (existingItem == null)
+            {
+                existingItem = existingItems.FirstOrDefault(sli => sli.Order == ingredient.Order);
+            }
+            if (existingItem == null)
+            {
+                existingItem = existingItems.FirstOrDefault(sli => sli.IngredientName == ingredient.Name && sli.Unit == ingredient.Unit);
+            }
 
             if (existingItem != null)
             {
+                existingItem.IngredientName = ingredient.Name;
+                existingItem.Unit = ingredient.Unit;
                 existingItem.IsChecked = ingredient.IsChecked;
                 existingItem.Quantity = ingredient.Quantity;
                 existingItem.Order = ingredient.Order;
@@ -182,12 +215,9 @@ public class ShoppingListService : IShoppingListService
             }
         }
 
-        // Only remove items that have empty/invalid names (these are temporary items that shouldn't be saved)
-        // Don't remove manually added items that user created
+        // Only remove items that have empty/invalid names (temporary items that shouldn't be saved)
         var itemsToRemove = existingItems.Where(existing => 
-            string.IsNullOrWhiteSpace(existing.IngredientName) ||
-            (!safeIngredients.Any(i => i.Name == existing.IngredientName && i.Unit == existing.Unit) &&
-             !IsManuallyAddedItem(existing.IngredientName)))
+            string.IsNullOrWhiteSpace(existing.IngredientName))
             .ToList();
 
         _context.ShoppingListItems.RemoveRange(itemsToRemove);
@@ -199,7 +229,7 @@ public class ShoppingListService : IShoppingListService
     {
         // Check if this is a manually added item (not from recipe ingredients)
         // We consider items with default names or custom names as manually added
-        return ingredientName.StartsWith("Nowy sk³adnik") || 
+        return ingredientName.StartsWith("Nowy sk³adnik", StringComparison.OrdinalIgnoreCase) || 
                !string.IsNullOrWhiteSpace(ingredientName);
     }
 }

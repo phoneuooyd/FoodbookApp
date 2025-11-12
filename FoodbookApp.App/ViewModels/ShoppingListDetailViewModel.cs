@@ -134,6 +134,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     {
         if (sender is Ingredient item)
         {
+            // Save on any relevant property change
             if (e.PropertyName == nameof(Ingredient.IsChecked))
             {
                 if (item.IsChecked)
@@ -154,12 +155,21 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
                 }
             }
 
-            if (e.PropertyName == nameof(Ingredient.IsChecked) || 
-                e.PropertyName == nameof(Ingredient.Unit))
+            // Save on any change to Name, Quantity, Unit, IsChecked
+            if (e.PropertyName == nameof(Ingredient.IsChecked) ||
+                e.PropertyName == nameof(Ingredient.Unit) ||
+                e.PropertyName == nameof(Ingredient.Name) ||
+                e.PropertyName == nameof(Ingredient.Quantity))
             {
                 await SaveItemStateAsync(item);
             }
         }
+    }
+
+    // Public method for code-behind to call on any UI change
+    public async Task SaveItemImmediatelyAsync(Ingredient item)
+    {
+        await SaveItemStateAsync(item);
     }
 
     private async Task SaveItemStateAsync(Ingredient item)
@@ -167,11 +177,14 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         try
         {
             await _shoppingListService.SaveShoppingListItemStateAsync(
-                _currentPlanId, 
-                item.Name, 
-                item.Unit, 
-                item.IsChecked, 
-                item.Quantity);
+                _currentPlanId,
+                item.Id,      // przekazuj Id
+                item.Order,   // przekazuj Order
+                item.Name,
+                item.Unit,
+                item.IsChecked,
+                item.Quantity
+            );
         }
         catch (Exception ex)
         {
@@ -184,6 +197,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         try
         {
             var allItems = UncheckedItems.Concat(CheckedItems).ToList();
+            // Save all, including new/empty items
             await _shoppingListService.SaveAllShoppingListStatesAsync(_currentPlanId, allItems);
         }
         catch (Exception ex)
@@ -203,8 +217,8 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         };
         newItem.PropertyChanged += OnItemPropertyChanged;
         UncheckedItems.Add(newItem);
-        
-        _ = Task.Run(async () => await SaveItemStateAsync(newItem));
+        // Save immediately after adding
+        _ = SaveItemStateAsync(newItem);
     }
 
     private async void RemoveItem(Ingredient? item)

@@ -69,6 +69,17 @@ public partial class ShoppingListDetailPage : ContentPage
         }
     }
 
+    private void OnEntryTextChanged(object sender, TextChangedEventArgs e)
+    {
+        var entry = sender as Entry;
+        var ingredient = entry?.BindingContext as Ingredient;
+        if (ingredient != null)
+        {
+            // Save immediately on text change
+            _ = _viewModel.SaveItemImmediatelyAsync(ingredient);
+        }
+    }
+
     // Drag helpers for insert zones (top/bottom)
     private void OnDragStarting(object? sender, DragStartingEventArgs e)
     {
