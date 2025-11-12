@@ -17,6 +17,7 @@ public class ShoppingListViewModel
 
     public ICommand OpenPlanCommand { get; }
     public ICommand ArchivePlanCommand { get; }
+    public ICommand CreateShoppingListCommand { get; }
 
     // Handler stored so we can unsubscribe later
     private readonly Func<Task> _planChangedHandler;
@@ -28,6 +29,7 @@ public class ShoppingListViewModel
         _plannerService = plannerService;
         OpenPlanCommand = new Command<Plan>(async p => await OpenPlanAsync(p));
         ArchivePlanCommand = new Command<Plan>(async p => await ArchivePlanAsync(p));
+        CreateShoppingListCommand = new Command(async () => await CreateShoppingListAsync());
 
         _planChangedHandler = async () => await LoadPlansAsync();
     }
@@ -81,6 +83,42 @@ public class ShoppingListViewModel
             
             // Notify archive page
             AppEvents.RaisePlanChanged();
+        }
+    }
+
+    private async Task CreateShoppingListAsync()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[ShoppingListVM] Creating new empty shopping list");
+            
+            // Create a new empty shopping list (no dates, not tied to any planner)
+            var newPlan = new Plan
+            {
+                Type = PlanType.ShoppingList,
+                StartDate = DateTime.Today,
+                EndDate = DateTime.Today,
+                IsArchived = false,
+                LinkedShoppingListPlanId = null // Ensure not linked to any planner
+            };
+            
+            // Add to database
+            await _planService.AddPlanAsync(newPlan);
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListVM] Created shopping list with ID: {newPlan.Id}");
+            
+            // Navigate to detail page to add items
+            await Shell.Current.GoToAsync($"{nameof(ShoppingListDetailPage)}?id={newPlan.Id}");
+            
+            // Reload the list
+            await LoadPlansAsync();
+            
+            // Notify other views
+            AppEvents.RaisePlanChanged();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListVM] Error creating shopping list: {ex.Message}");
+            await Shell.Current.DisplayAlert("B³¹d", "Nie uda³o siê utworzyæ listy zakupów.", "OK");
         }
     }
 }
