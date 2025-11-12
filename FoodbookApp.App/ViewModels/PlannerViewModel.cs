@@ -745,44 +745,6 @@ public class PlannerViewModel : INotifyPropertyChanged
                 IsEditing = true;
             }
 
-            // Ensure there is a ShoppingList plan for the same date range so ShoppingListPage can show it
-            try
-            {
-                var all = await _planService.GetPlansAsync();
-                var shopping = all.FirstOrDefault(p => p.Type == PlanType.ShoppingList && p.StartDate == plan.StartDate && p.EndDate == plan.EndDate);
-                if (shopping == null)
-                {
-                    var newShopping = new Plan
-                    {
-                        StartDate = plan.StartDate,
-                        EndDate = plan.EndDate,
-                        Type = PlanType.ShoppingList,
-                        IsArchived = false
-                    };
-                    await _planService.AddPlanAsync(newShopping);
-                    System.Diagnostics.Debug.WriteLine("[PlannerViewModel] Created associated shopping list plan");
-                }
-                else
-                {
-                    // ensure it's active and date-aligned
-                    if (shopping.IsArchived)
-                    {
-                        shopping.IsArchived = false;
-                        await _planService.UpdatePlanAsync(shopping);
-                    }
-                    if (shopping.StartDate != plan.StartDate || shopping.EndDate != plan.EndDate)
-                    {
-                        shopping.StartDate = plan.StartDate;
-                        shopping.EndDate = plan.EndDate;
-                        await _planService.UpdatePlanAsync(shopping);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Error ensuring shopping list plan exists: {ex.Message}");
-            }
-
             // Remove meals only for this plan (if existing) or for this date range old entries of this plan
             if (plan.Id > 0)
             {
@@ -817,6 +779,9 @@ public class PlannerViewModel : INotifyPropertyChanged
 
             System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Saved {savedMealsCount} meals for plan {plan.Id}");
 
+            // Ask user about shopping list handling
+            await HandleShoppingListDialogAsync(plan);
+
             ClearCache();
             
             return plan;
@@ -830,6 +795,167 @@ public class PlannerViewModel : INotifyPropertyChanged
                 message += "\n" + ex.InnerException.Message;
             await Shell.Current.DisplayAlert("Błąd", $"Wystąpił problem podczas zapisywania planu:\n{message}", "OK");
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Handle shopping list creation/update through user dialog
+    /// </summary>
+    private async Task HandleShoppingListDialogAsync(Plan plan)
+    {
+        try
+        {
+            // Check if this planner already has a linked shopping list
+            Plan? existingShoppingList = null;
+            
+            if (plan.LinkedShoppingListPlanId.HasValue)
+            {
+                existingShoppingList = await _planService.GetPlanAsync(plan.LinkedShoppingListPlanId.Value);
+                System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Found linked shopping list: {existingShoppingList?.Id}");
+            }
+
+            string? choice;
+            
+            if (existingShoppingList != null && !existingShoppingList.IsArchived)
+            {
+                // Shopping list exists and is linked - offer merge or overwrite options
+                System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Existing linked shopping list found: {existingShoppingList.Id}");
+                
+                choice = await Shell.Current.DisplayActionSheet(
+                    "Czy chcesz zaktualizować powiązaną listę zakupów?",
+                    "Anuluj",
+                    null,
+                    "Tylko zapisz planer",
+                    "Zapisz i scal z listą",
+                    "Zapisz i nadpisz listę");
+            }
+            else
+            {
+                // No shopping list exists or it was archived - offer to create one
+                System.Diagnostics.Debug.WriteLine("[PlannerViewModel] No linked shopping list found for this planner");
+                
+                choice = await Shell.Current.DisplayActionSheet(
+                    "Czy chcesz stworzyć listę zakupów?",
+                    "Anuluj",
+                    null,
+                    "Tylko zapisz planer",
+                    "Zapisz i stwórz listę");
+            }
+
+            // Handle user choice
+            if (string.IsNullOrEmpty(choice) || choice == "Anuluj" || choice == "Tylko zapisz planer")
+            {
+                System.Diagnostics.Debug.WriteLine("[PlannerViewModel] User chose to skip shopping list operation");
+                return;
+            }
+
+            if (choice == "Zapisz i stwórz listę")
+            {
+                await CreateShoppingListPlanAsync(plan);
+            }
+            else if (choice == "Zapisz i scal z listą")
+            {
+                await MergeWithShoppingListAsync(existingShoppingList!, plan);
+            }
+            else if (choice == "Zapisz i nadpisz listę")
+            {
+                await OverwriteShoppingListAsync(existingShoppingList!, plan);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Error handling shopping list: {ex.Message}");
+            // Don't throw - shopping list is optional
+        }
+    }
+
+    /// <summary>
+    /// Create a new shopping list plan for the same date range and link it
+    /// </summary>
+    private async Task CreateShoppingListPlanAsync(Plan plan)
+    {
+        try
+        {
+            var newShoppingPlan = new Plan
+            {
+                StartDate = plan.StartDate,
+                EndDate = plan.EndDate,
+                Type = PlanType.ShoppingList,
+                IsArchived = false
+            };
+            await _planService.AddPlanAsync(newShoppingPlan);
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Created new shopping list plan with ID: {newShoppingPlan.Id}");
+            
+            // Link the shopping list to this planner
+            plan.LinkedShoppingListPlanId = newShoppingPlan.Id;
+            await _planService.UpdatePlanAsync(plan);
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Linked shopping list {newShoppingPlan.Id} to planner {plan.Id}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Error creating shopping list: {ex.Message}");
+            await Shell.Current.DisplayAlert("Błąd", "Nie udało się stworzyć listy zakupów", "OK");
+        }
+    }
+
+    /// <summary>
+    /// Merge with existing shopping list (keep existing items, update dates)
+    /// </summary>
+    private async Task MergeWithShoppingListAsync(Plan shoppingPlan, Plan mealPlan)
+    {
+        try
+        {
+            // Update dates to match planner
+            bool needsUpdate = false;
+            
+            if (shoppingPlan.StartDate != mealPlan.StartDate || shoppingPlan.EndDate != mealPlan.EndDate)
+            {
+                shoppingPlan.StartDate = mealPlan.StartDate;
+                shoppingPlan.EndDate = mealPlan.EndDate;
+                needsUpdate = true;
+            }
+
+            if (shoppingPlan.IsArchived)
+            {
+                shoppingPlan.IsArchived = false;
+                needsUpdate = true;
+            }
+
+            if (needsUpdate)
+            {
+                await _planService.UpdatePlanAsync(shoppingPlan);
+                System.Diagnostics.Debug.WriteLine("[PlannerViewModel] Merged with existing shopping list (updated dates)");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[PlannerViewModel] Shopping list already up to date");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Error merging shopping list: {ex.Message}");
+            await Shell.Current.DisplayAlert("Błąd", "Nie udało się scalić listy zakupów", "OK");
+        }
+    }
+
+    /// <summary>
+    /// Overwrite existing shopping list (recreate from scratch)
+    /// </summary>
+    private async Task OverwriteShoppingListAsync(Plan shoppingPlan, Plan mealPlan)
+    {
+        try
+        {
+            // Remove the old shopping list
+            await _planService.RemovePlanAsync(shoppingPlan.Id);
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Removed old shopping list: {shoppingPlan.Id}");
+            
+            // Create a new one (which will also update the link)
+            await CreateShoppingListPlanAsync(mealPlan);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Error overwriting shopping list: {ex.Message}");
+            await Shell.Current.DisplayAlert("Błąd", "Nie udało się nadpisać listy zakupów", "OK");
         }
     }
 

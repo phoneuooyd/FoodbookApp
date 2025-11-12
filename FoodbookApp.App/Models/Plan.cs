@@ -19,6 +19,10 @@ namespace Foodbook.Models
         // Type of plan - determines if it's a planner or shopping list
         public PlanType Type { get; set; } = PlanType.Planner;
 
+        // Link to associated shopping list plan (for Planner type)
+        // This creates a one-to-one relationship between meal planner and its shopping list
+        public int? LinkedShoppingListPlanId { get; set; }
+
         // Custom name for the planner (optional, user-defined)
         [NotMapped]
         public string? PlannerName { get; set; }
