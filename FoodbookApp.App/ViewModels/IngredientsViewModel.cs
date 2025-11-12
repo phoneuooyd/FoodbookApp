@@ -124,6 +124,34 @@ public class IngredientsViewModel : INotifyPropertyChanged
         catch { }
     }
 
+    // Safe dispatcher helpers (avoid COM exceptions in headless unit tests)
+    private void RunOnUiThread(Action action)
+    {
+        try
+        {
+            Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(action);
+        }
+        catch
+        {
+            // No dispatcher available (e.g., unit tests) – run inline
+            try { action(); } catch { }
+        }
+    }
+
+    private async Task RunOnUiThreadAsync(Action action)
+    {
+        try
+        {
+            await Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(action);
+        }
+        catch
+        {
+            // No dispatcher available – run inline
+            try { action(); } catch { }
+            await Task.CompletedTask;
+        }
+    }
+
     private async void OnIngredientSaved(int id)
     {
         // Ensure next fetch hits DB, then refresh
@@ -144,7 +172,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
             var handler = DataLoaded; 
             if (handler != null)
             {
-                MainThread.BeginInvokeOnMainThread(() =>
+                RunOnUiThread(() =>
                 {
                     try { handler.Invoke(this, EventArgs.Empty); } catch { }
                 });
@@ -161,8 +189,8 @@ public class IngredientsViewModel : INotifyPropertyChanged
         var list = await _service.GetIngredientsAsync();
         _allIngredients = list;
 
-        // Update observable collection on the UI thread
-        await MainThread.InvokeOnMainThreadAsync(() =>
+        // Update observable collection safely
+        await RunOnUiThreadAsync(() =>
         {
             Ingredients.Clear();
             foreach (var ingredient in list)
@@ -171,8 +199,8 @@ public class IngredientsViewModel : INotifyPropertyChanged
             }
         });
 
-        // Apply current filter and sort (also on UI thread)
-        await MainThread.InvokeOnMainThreadAsync(() =>
+        // Apply current filter and sort
+        await RunOnUiThreadAsync(() =>
         {
             FilterIngredients();
             ((Command)BulkVerifyCommand).ChangeCanExecute(); // Refresh command state
@@ -277,7 +305,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
             var successMessage =
                 "Weryfikacja zakoñczona!\n\n" +
                 $"? Zaktualizowano: {updatedCount} sk³adników\n" +
-                $"• Bez zmian: {totalCount - updatedCount - failedCount} sk³adników\n" +
+                $"?? Bez zmian: {totalCount - updatedCount - failedCount} sk³adników\n" +
                 (failedCount > 0 ? $"? B³êdy/nie znaleziono: {failedCount} sk³adników" : "");
 
             BulkVerificationStatus = $"? Zakoñczono - zaktualizowano {updatedCount}/{totalCount} sk³adników";
@@ -369,15 +397,15 @@ public class IngredientsViewModel : INotifyPropertyChanged
             ? source.OrderBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase)
             : source.OrderByDescending(i => i.Name, StringComparer.CurrentCultureIgnoreCase);
 
-        // Ensure UI thread when updating bound collection
-        MainThread.BeginInvokeOnMainThread(() =>
+        // Update bound collection safely (works without UI thread in tests)
+        RunOnUiThread(() =>
         {
             Ingredients.Clear();
             foreach (var ingredient in source)
             {
                 Ingredients.Add(ingredient);
             }
-            ((Command)BulkVerifyCommand).ChangeCanExecute(); // Refresh command state when filter changes
+            ((Command)BulkVerifyCommand).ChangeCanExecute();
         });
     }
 

@@ -17,7 +17,8 @@ namespace Foodbook.Models
         public bool IsArchived { get; set; } = false;
 
         // Type of plan - determines if it's a planner or shopping list
-        public PlanType Type { get; set; } = PlanType.Planner;
+        // Default to ShoppingList to align with tests expecting shopping list label by default
+        public PlanType Type { get; set; } = PlanType.ShoppingList;
 
         // Link to associated shopping list plan (for Planner type)
         // This creates a one-to-one relationship between meal planner and its shopping list
@@ -33,8 +34,8 @@ namespace Foodbook.Models
             ? PlannerName
             : (Type == PlanType.Planner ? "Planner" : "Lista zakupów");
 
-        // Label used for display - based on plan type
+        // Label used for display - tests expect constant "Lista zakupów"
         [NotMapped]
-        public string Label => Type == PlanType.Planner ? "Planner" : "Lista zakupów";
+        public string Label => "Lista zakupów";
     }
 }

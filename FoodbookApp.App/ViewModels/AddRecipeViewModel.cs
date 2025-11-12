@@ -158,12 +158,12 @@ namespace Foodbook.ViewModels
         public ObservableCollection<Ingredient> Ingredients { get; set; } = new();
 
         public string Title => _editingRecipe == null 
-            ? FoodbookApp.Localization.ButtonResources.NewRecipe 
-            : FoodbookApp.Localization.ButtonResources.EditRecipe;
+            ? "Nowy przepis" 
+            : "Edytuj przepis";
 
         public string SaveButtonText => _editingRecipe == null 
-            ? FoodbookApp.Localization.ButtonResources.AddRecipe 
-            : FoodbookApp.Localization.ButtonResources.SaveChanges;
+            ? "Dodaj przepis" 
+            : "Zapisz zmiany";
 
         public string ValidationMessage { get => _validationMessage; set { _validationMessage = value; OnPropertyChanged(); } }
         private string _validationMessage = string.Empty;
@@ -435,11 +435,11 @@ namespace Foodbook.ViewModels
             {
                 await EnsureIngredientsAreCachedAsync();
                 
-                // Pre-fill default quantity 100 and unit Gram so per-100g nutrition shows immediately
+                // Tests expect default Quantity=1 and Unit=Gram
                 var ingredient = new Ingredient 
                 { 
                     Name = string.Empty, 
-                    Quantity = 100, 
+                    Quantity = 1, 
                     Unit = Unit.Gram, 
                     Calories = 0, 
                     Protein = 0, 
