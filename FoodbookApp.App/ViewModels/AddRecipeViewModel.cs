@@ -255,6 +255,7 @@ namespace Foodbook.ViewModels
             public Task<bool> EnsureDatabaseSchemaAsync() => Task.FromResult(true);
             public Task<bool> MigrateDatabaseAsync() => Task.FromResult(true);
             public Task<bool> ResetDatabaseAsync() => Task.FromResult(true);
+            public Task<bool> ConditionalDeploymentAsync() => Task.FromResult(true);
         }
 
         private sealed class NullLabelService : IRecipeLabelService

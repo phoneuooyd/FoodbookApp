@@ -16,80 +16,8 @@ namespace Foodbook.Data
         private static bool _seedStarted = false; // set when seeding begins
         private static bool _seedCompleted = false; // set when seeding (or a decision to skip) finishes
 
-        public static async Task InitializeAsync(AppDbContext context)
-        {
-            // Pobierz serwis preferencji (może być null bardzo wcześnie)
-            var preferencesService = Microsoft.Maui.Controls.Application.Current?.Handler?.MauiContext?.Services?.GetService<IPreferencesService>();
-            bool isFirstLaunch = preferencesService?.IsFirstLaunch() ?? true; // Domyślnie true jeśli brak serwisu
-
-            var hasIngredients = await context.Ingredients.AnyAsync();
-            var hasRecipes = await context.Recipes.AnyAsync();
-
-            // Ensure Folder.Order initialized for existing data (new column added by migration may be default 0 for all rows)
-            await EnsureFolderOrderInitializedAsync(context);
-
-            // Jeżeli pierwszy start i nie ma składników – NIE seedujemy tutaj.
-            // Seeding wykona SetupWizard po wyborze języka (przekaże go jawnie), co eliminuje problem języka domyślnego.
-            if (isFirstLaunch && !hasIngredients)
-            {
-                LogDebug("First launch detected – deferring ingredient seeding to SetupWizard (language will be chosen by user)");
-            }
-            else if (!hasIngredients)
-            {
-                // Kolejne uruchomienie (setup zakończony) – możemy seeding wykonać jeśli z jakiegoś powodu brak danych.
-                var savedLang = preferencesService?.GetSavedLanguage();
-                LogDebug($"No ingredients found after initial setup. Seeding now with saved language: {savedLang ?? "(null)"}");
-                await SeedIngredientsAsync(context, savedLang);
-            }
-
-            // If there are folders but Order values are all zero and we didn't initialize earlier, ensure a stable order
-            await EnsureFolderOrderInitializedAsync(context);
-
-            // Jeśli mamy już składniki i przepisy – nic dalej.
-            if (hasIngredients && hasRecipes)
-                return;
-
-            if (hasRecipes)
-                return;
-
-#if DEBUG
-            try
-            {
-                var isFirstLaunchForRecipe = isFirstLaunch; // użyj tej samej informacji
-                if (isFirstLaunchForRecipe)
-                {
-                    var recipe = new Recipe
-                    {
-                        Name = "Prosta sałatka",
-                        Description = "Przykładowa sałatka.",
-                        Calories = 150,
-                        Protein = 3,
-                        Fat = 7,
-                        Carbs = 18,
-                        Ingredients = new List<Ingredient>
-                        {
-                            new Ingredient { Name = "Sałata", Quantity = 100, Unit = Unit.Gram, Calories = 25, Protein = 1, Fat = 0, Carbs = 5 },
-                            new Ingredient { Name = "Pomidor", Quantity = 50, Unit = Unit.Gram, Calories = 25, Protein = 1, Fat = 0, Carbs = 5 }
-                        }
-                    };
-
-                    context.Recipes.Add(recipe);
-                    await context.SaveChangesAsync();
-                    LogDebug("DEBUG: Added example recipe 'Prosta sałatka' (first launch)");
-                }
-                else
-                {
-                    LogDebug("DEBUG: Skipping example recipe seeding (not first launch)");
-                }
-            }
-            catch (Exception ex)
-            {
-                LogWarning($"DEBUG: Failed to conditionally seed example recipe: {ex.Message}");
-            }
-#else
-            LogDebug("RELEASE: Skipping example recipe seeding");
-#endif
-        }
+        // Simplified: no automatic data creation on startup
+        public static Task InitializeAsync(AppDbContext context) => Task.CompletedTask;
 
         private static async Task EnsureFolderOrderInitializedAsync(AppDbContext context)
         {
@@ -248,7 +176,7 @@ namespace Foodbook.Data
 
                 // Parse with strongly-typed JObject to avoid nullability warnings
                 var root = JsonConvert.DeserializeObject<JObject>(content);
-                var products = root?["products"] as JArray;
+                var products = root? ["products"] as JArray;
                 if (products == null || products.Count == 0)
                 {
                     LogWarning($"{ingredient.Name}: Product not found in OpenFoodFacts");
@@ -256,7 +184,7 @@ namespace Foodbook.Data
                 }
 
                 var product = products[0] as JObject;
-                var nutriments = product?["nutriments"] as JObject;
+                var nutriments = product? ["nutriments"] as JObject;
                 if (nutriments == null)
                 {
                     LogWarning($"{ingredient.Name}: No nutritional data in found product");

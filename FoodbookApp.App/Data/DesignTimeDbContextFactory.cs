@@ -4,18 +4,18 @@ using System.IO;
 
 namespace Foodbook.Data
 {
-    // Umo¿liwia generowanie migracji EF Core bez uruchamiania aplikacji MAUI (design-time)
+#if DEBUG && (WINDOWS || MACCATALYST)
+    // Only available for design-time tooling on desktop during development.
+    // Prevents interference with Android packaging and Release builds.
     public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
     {
         public AppDbContext CreateDbContext(string[] args)
         {
             var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
-
-            // Lokalna œcie¿ka pliku DB tylko na potrzeby design-time
             var dbPath = Path.Combine(Directory.GetCurrentDirectory(), "foodbook.dev.db");
             optionsBuilder.UseSqlite($"Data Source={dbPath}");
-
             return new AppDbContext(optionsBuilder.Options);
         }
     }
+#endif
 }
