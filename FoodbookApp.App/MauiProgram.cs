@@ -70,6 +70,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<RecipeViewModel>();
             builder.Services.AddTransient<AddRecipeViewModel>();
             builder.Services.AddScoped<PlannerViewModel>();
+            builder.Services.AddScoped<PlannerEditViewModel>(); // NEW: Dedicated edit VM
             builder.Services.AddScoped<HomeViewModel>();
             builder.Services.AddScoped<ShoppingListViewModel>();
             builder.Services.AddScoped<ShoppingListDetailViewModel>();

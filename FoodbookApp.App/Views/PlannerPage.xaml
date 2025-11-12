@@ -9,7 +9,6 @@
              xmlns:resources="clr-namespace:FoodbookApp.Localization"
              x:Class="Foodbook.Views.PlannerPage"
              x:Name="ThisPage"
-             x:DataType="vm:PlannerViewModel"
              Title="{loc:Translate Resource=PlannerPageResources, Key=Title}"
              BackgroundColor="{DynamicResource PageBackgroundColor}">
     <ContentPage.Resources>

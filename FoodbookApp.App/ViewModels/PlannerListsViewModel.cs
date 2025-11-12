@@ -5,6 +5,7 @@ using Foodbook.Services;
 using Foodbook.Views;
 using FoodbookApp.Interfaces;
 using Microsoft.Maui.Controls;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Foodbook.ViewModels;
 
@@ -25,28 +26,69 @@ public class PlannerListsViewModel
         _planService = planService;
 
         LoadCommand = new Command(async () => await LoadPlansAsync());
-        // Do not create a Plan immediately on FAB click. Navigate to PlannerPage so user can configure and Save there.
+        
+        // Navigate to PlannerPage with NEW planner ViewModel
         CreatePlanCommand = new Command(async () =>
         {
             try
             {
-                await Shell.Current.GoToAsync($"{nameof(PlannerPage)}");
+                System.Diagnostics.Debug.WriteLine("[PlannerListsVM] Creating NEW planner");
+                
+                // Resolve PlannerViewModel and PlannerPage from DI
+                var newVM = FoodbookApp.MauiProgram.ServiceProvider?.GetService<PlannerViewModel>();
+                if (newVM != null)
+                {
+                    var page = new PlannerPage(newVM);
+                    await Shell.Current.Navigation.PushAsync(page);
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[PlannerListsVM] Failed to resolve PlannerViewModel");
+                }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[PlannerListsVM] Navigation to PlannerPage failed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[PlannerListsVM] Navigation to NEW PlannerPage failed: {ex.Message}");
             }
         });
+        
+        // Navigate to PlannerPage with EDIT ViewModel
         EditPlanCommand = new Command<Plan>(async (p) =>
         {
             if (p == null) return;
-            await Shell.Current.GoToAsync($"{nameof(PlannerPage)}?planId={p.Id}");
+            
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[PlannerListsVM] EDITING existing plan {p.Id}");
+                
+                // Resolve PlannerEditViewModel from DI
+                var editVM = FoodbookApp.MauiProgram.ServiceProvider?.GetService<PlannerEditViewModel>();
+                if (editVM != null)
+                {
+                    var page = new PlannerPage(editVM);
+                    
+                    // Set the PlanId property for QueryProperty
+                    page.PlanId = p.Id;
+                    
+                    await Shell.Current.Navigation.PushAsync(page);
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[PlannerListsVM] Failed to resolve PlannerEditViewModel");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PlannerListsVM] Navigation to EDIT PlannerPage failed: {ex.Message}");
+            }
         });
+        
         OpenShoppingListCommand = new Command<Plan>(async (p) =>
         {
             if (p == null) return;
             await Shell.Current.GoToAsync($"{nameof(ShoppingListDetailPage)}?id={p.Id}");
         });
+        
         ArchivePlanCommand = new Command<Plan>(async (p) => await ArchivePlanAsync(p));
 
         // Refresh when plans change elsewhere

@@ -28,6 +28,10 @@ public class PlannerViewModel : INotifyPropertyChanged
 
     private bool _isEditing;
     private int? _editingPlanId;
+    
+    // NEW: Flag to suppress auto-reload when user is actively editing
+    private bool _suppressAutoReload = false;
+    
     public bool IsEditing
     {
         get => _isEditing;
@@ -79,7 +83,16 @@ public class PlannerViewModel : INotifyPropertyChanged
             if (_startDate == value) return;
             _startDate = value;
             OnPropertyChanged();
-            _ = LoadAsync();
+            
+            // FIXED: Don't auto-reload when editing
+            if (!_suppressAutoReload && !IsEditing)
+            {
+                _ = LoadAsync();
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[PlannerViewModel] StartDate changed but auto-reload suppressed (editing mode)");
+            }
         }
     }
 
@@ -92,7 +105,16 @@ public class PlannerViewModel : INotifyPropertyChanged
             if (_endDate == value) return;
             _endDate = value;
             OnPropertyChanged();
-            _ = LoadAsync();
+            
+            // FIXED: Don't auto-reload when editing
+            if (!_suppressAutoReload && !IsEditing)
+            {
+                _ = LoadAsync();
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[PlannerViewModel] EndDate changed but auto-reload suppressed (editing mode)");
+            }
         }
     }
 
@@ -105,7 +127,12 @@ public class PlannerViewModel : INotifyPropertyChanged
             if (_mealsPerDay == value) return;
             _mealsPerDay = value;
             OnPropertyChanged();
-            AdjustMealsPerDay();
+            
+            // FIXED: Only adjust meals structure, don't reload data
+            if (!_suppressAutoReload)
+            {
+                AdjustMealsPerDay();
+            }
         }
     }
 
@@ -163,18 +190,31 @@ public class PlannerViewModel : INotifyPropertyChanged
     {
         try
         {
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] InitializeForEditAsync: planId={planId}");
+            
             var plan = await _planService.GetPlanAsync(planId);
-            if (plan == null) return;
+            if (plan == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[PlannerViewModel] Plan not found");
+                return;
+            }
+            
             _editingPlanId = plan.Id;
             IsEditing = true;
+            
+            // IMPORTANT: Suppress auto-reload while setting dates in edit mode
+            _suppressAutoReload = true;
+            
             _startDate = plan.StartDate;
             _endDate = plan.EndDate;
             OnPropertyChanged(nameof(StartDate));
             OnPropertyChanged(nameof(EndDate));
+            
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Edit mode initialized: {plan.StartDate:yyyy-MM-dd} to {plan.EndDate:yyyy-MM-dd}");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"InitializeForEditAsync error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] InitializeForEditAsync error: {ex.Message}");
         }
     }
 
@@ -183,10 +223,17 @@ public class PlannerViewModel : INotifyPropertyChanged
     /// This method forces a reload and is intended to be used when entering edit mode to ensure
     /// data is loaded specifically for the plan being edited.
     /// </summary>
-    public Task LoadForEditAsync()
+    public async Task LoadForEditAsync()
     {
+        System.Diagnostics.Debug.WriteLine("[PlannerViewModel] LoadForEditAsync called");
+        
         // Force reload to ensure we don't use stale cache when editing
-        return LoadAsync(forceReload: true);
+        await LoadAsync(forceReload: true);
+        
+        // IMPORTANT: After loading edit data, keep suppression ON to prevent auto-reloads during editing
+        _suppressAutoReload = true;
+        
+        System.Diagnostics.Debug.WriteLine("[PlannerViewModel] LoadForEditAsync complete - auto-reload suppressed for editing");
     }
 
     /// <summary>
@@ -197,6 +244,8 @@ public class PlannerViewModel : INotifyPropertyChanged
     {
         try
         {
+            System.Diagnostics.Debug.WriteLine("[PlannerViewModel] InitializeEmptyPlannerAsync called");
+            
             // Detach handlers from existing meals
             foreach (var day in Days)
             {
@@ -212,6 +261,7 @@ public class PlannerViewModel : INotifyPropertyChanged
 
             _editingPlanId = null;
             IsEditing = false;
+            _suppressAutoReload = false; // Re-enable auto-reload for new planner
 
             _startDate = DateTime.Today;
             _endDate = DateTime.Today.AddDays(6);
@@ -239,15 +289,24 @@ public class PlannerViewModel : INotifyPropertyChanged
                 }
                 Days.Add(day);
             }
+            
+            System.Diagnostics.Debug.WriteLine("[PlannerViewModel] Empty planner initialized - auto-reload enabled");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error initializing empty planner: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Error initializing empty planner: {ex.Message}");
         }
     }
 
     public async Task LoadAsync(bool forceReload = false)
     {
+        // FIXED: Don't reload if we're in edit mode and reload is suppressed
+        if (_suppressAutoReload && !forceReload)
+        {
+            System.Diagnostics.Debug.WriteLine("[PlannerViewModel] LoadAsync skipped - auto-reload suppressed (editing mode)");
+            return;
+        }
+        
         // Check if we can use cached data
         if (!forceReload && _isDataCached && CanUseCachedData())
         {
@@ -263,6 +322,8 @@ public class PlannerViewModel : INotifyPropertyChanged
         
         try
         {
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] LoadAsync started - forceReload={forceReload}, isEditing={IsEditing}");
+            
             // Etap 1: Czyszczenie danych
             LoadingStatus = "Przygotowywanie danych...";
             LoadingProgress = 0.1;
@@ -302,11 +363,13 @@ public class PlannerViewModel : INotifyPropertyChanged
             {
                 // When editing a specific plan, load its meals by PlanId only
                 existingMeals = await _plannerService.GetPlannedMealsAsync(_editingPlanId.Value);
+                System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Loaded {existingMeals.Count} meals for plan {_editingPlanId.Value}");
             }
             else
             {
                 // For new planner, we do not load meals from other plans; keep empty
                 existingMeals = new List<PlannedMeal>();
+                System.Diagnostics.Debug.WriteLine("[PlannerViewModel] New planner - no existing meals");
             }
             
             // Etap 4: Tworzenie dni planera
@@ -356,20 +419,31 @@ public class PlannerViewModel : INotifyPropertyChanged
 
             if (maxMeals > 0)
             {
+                _suppressAutoReload = true; // Temporarily suppress to avoid triggering reload
                 MealsPerDay = Math.Max(MealsPerDay, maxMeals);
+                _suppressAutoReload = IsEditing; // Keep suppressed if editing
             }
+            
+            // IMPORTANT: Suppress auto-reload for empty slots adjustment in edit mode
+            bool wasSuppressed = _suppressAutoReload;
+            if (IsEditing) _suppressAutoReload = true;
+            
             AdjustMealsPerDay();
+            
+            if (IsEditing) _suppressAutoReload = wasSuppressed;
             
             LoadingProgress = 1.0;
             await Task.Delay(100);
 
             // Cache the loaded data
             CacheCurrentData();
+            
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] LoadAsync complete - {Days.Count} days, {existingMeals.Count} meals");
         }
         catch (Exception ex)
         {
             LoadingStatus = "Błąd ładowania danych";
-            System.Diagnostics.Debug.WriteLine($"Error loading planner data: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Error loading planner data: {ex.Message}");
             
             await Shell.Current.DisplayAlert(
                 "Błąd", 
@@ -488,6 +562,8 @@ public class PlannerViewModel : INotifyPropertyChanged
         var meal = new PlannedMeal { Date = day.Date, Portions = 1, PlanId = _editingPlanId };
         meal.PropertyChanged += OnMealRecipeChanged;
         day.Meals.Add(meal);
+        
+        System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Meal added to {day.Date:yyyy-MM-dd}");
     }
 
     private void RemoveMeal(PlannedMeal? meal)
@@ -498,11 +574,14 @@ public class PlannerViewModel : INotifyPropertyChanged
         {
             meal.PropertyChanged -= OnMealRecipeChanged;
             day.Meals.Remove(meal);
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Meal removed from {day.Date:yyyy-MM-dd}");
         }
     }
 
     private void AdjustMealsPerDay()
     {
+        System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] AdjustMealsPerDay: target={MealsPerDay}");
+        
         foreach (var day in Days)
         {
             while (day.Meals.Count < MealsPerDay)
@@ -524,6 +603,7 @@ public class PlannerViewModel : INotifyPropertyChanged
     {
         if (e.PropertyName == nameof(PlannedMeal.Recipe) && sender is PlannedMeal meal && meal.Recipe != null)
         {
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Recipe changed: {meal.Recipe.Name} - auto-adjusting portions");
             meal.Portions = meal.Recipe.IloscPorcji;
         }
     }
@@ -533,6 +613,7 @@ public class PlannerViewModel : INotifyPropertyChanged
     /// </summary>
     private async Task ResetAsync()
     {
+        System.Diagnostics.Debug.WriteLine("[PlannerViewModel] ResetAsync called");
         await InitializeEmptyPlannerAsync();
     }
 
@@ -540,6 +621,8 @@ public class PlannerViewModel : INotifyPropertyChanged
     {
         try
         {
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] SaveAsync started - IsEditing={IsEditing}, PlanId={_editingPlanId}");
+            
             // Check for exact existing plan in the same period (ignore archived and the plan being edited)
             var allPlans = await _planService.GetPlansAsync();
             var conflictingPlan = allPlans.FirstOrDefault(p =>
@@ -551,6 +634,8 @@ public class PlannerViewModel : INotifyPropertyChanged
 
             if (conflictingPlan != null)
             {
+                System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Conflicting plan found: {conflictingPlan.Id}");
+                
                 // Ask user how to proceed: overwrite, merge or cancel
                 var choice = await Shell.Current.DisplayActionSheet(
                     "Plan na podane daty już istnieje.",
@@ -568,6 +653,8 @@ public class PlannerViewModel : INotifyPropertyChanged
                 {
                     try
                     {
+                        System.Diagnostics.Debug.WriteLine("[PlannerViewModel] User chose to merge plans");
+                        
                         // Merge: add only meals that do not already exist in the existing plan
                         var existingMeals = await _plannerService.GetPlannedMealsAsync(conflictingPlan.Id);
                         var existingKeys = new HashSet<string>(existingMeals.Select(m => $"{m.Date.Date:yyyy-MM-dd}|{m.RecipeId}"));
@@ -605,7 +692,7 @@ public class PlannerViewModel : INotifyPropertyChanged
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Error during merge: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Error during merge: {ex.Message}");
                         await Shell.Current.DisplayAlert("Błąd", "Scalanie planów nie powiodło się.", "OK");
                         return null;
                     }
@@ -615,13 +702,15 @@ public class PlannerViewModel : INotifyPropertyChanged
                 {
                     try
                     {
+                        System.Diagnostics.Debug.WriteLine("[PlannerViewModel] User chose to overwrite existing plan");
+                        
                         // Remove the conflicting plan entity first
                         await _planService.RemovePlanAsync(conflictingPlan.Id);
                         // continue to normal save flow
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Failed to remove existing plan during overwrite: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Failed to remove existing plan during overwrite: {ex.Message}");
                         await Shell.Current.DisplayAlert("Błąd", "Nie udało się usunąć istniejącego planu.", "OK");
                         return null;
                     }
@@ -631,6 +720,8 @@ public class PlannerViewModel : INotifyPropertyChanged
             Plan plan;
             if (_editingPlanId.HasValue)
             {
+                System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Updating existing plan: {_editingPlanId.Value}");
+                
                 plan = await _planService.GetPlanAsync(_editingPlanId.Value) ?? new Plan { Type = PlanType.Planner };
                 plan.StartDate = StartDate;
                 plan.EndDate = EndDate;
@@ -641,6 +732,8 @@ public class PlannerViewModel : INotifyPropertyChanged
             }
             else
             {
+                System.Diagnostics.Debug.WriteLine("[PlannerViewModel] Creating new plan");
+                
                 plan = new Plan 
                 { 
                     StartDate = StartDate, 
@@ -667,6 +760,7 @@ public class PlannerViewModel : INotifyPropertyChanged
                         IsArchived = false
                     };
                     await _planService.AddPlanAsync(newShopping);
+                    System.Diagnostics.Debug.WriteLine("[PlannerViewModel] Created associated shopping list plan");
                 }
                 else
                 {
@@ -686,7 +780,7 @@ public class PlannerViewModel : INotifyPropertyChanged
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error ensuring shopping list plan exists: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Error ensuring shopping list plan exists: {ex.Message}");
             }
 
             // Remove meals only for this plan (if existing) or for this date range old entries of this plan
@@ -695,9 +789,12 @@ public class PlannerViewModel : INotifyPropertyChanged
                 var existing = await _plannerService.GetPlannedMealsAsync(plan.Id);
                 foreach (var m in existing)
                     await _plannerService.RemovePlannedMealAsync(m.Id);
+                
+                System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Removed {existing.Count} old meals");
             }
 
             // Add meals for current plan only
+            int savedMealsCount = 0;
             foreach (var day in Days)
             {
                 foreach (var meal in day.Meals)
@@ -705,6 +802,7 @@ public class PlannerViewModel : INotifyPropertyChanged
                     if (meal.Recipe != null)
                         meal.RecipeId = meal.Recipe.Id;
                     if (meal.RecipeId > 0)
+                    {
                         await _plannerService.AddPlannedMealAsync(new PlannedMeal
                         {
                             RecipeId = meal.RecipeId,
@@ -712,8 +810,12 @@ public class PlannerViewModel : INotifyPropertyChanged
                             Portions = meal.Portions,
                             PlanId = plan.Id
                         });
+                        savedMealsCount++;
+                    }
                 }
             }
+
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Saved {savedMealsCount} meals for plan {plan.Id}");
 
             ClearCache();
             
@@ -721,7 +823,7 @@ public class PlannerViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"❌ Error saving meal plan: {ex.Message}\n{ex.StackTrace}");
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] ❌ Error saving meal plan: {ex.Message}\n{ex.StackTrace}");
             // Show detailed error to help diagnosing why save fails
             var message = ex.Message;
             if (ex.InnerException != null)
