@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Foodbook.Views.PlannerListsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:Foodbook.Services"
+    xmlns:vm="clr-namespace:Foodbook.ViewModels"
+    xmlns:models="clr-namespace:Foodbook.Models"
+    xmlns:components="clr-namespace:Foodbook.Views.Components"
+    xmlns:resources="clr-namespace:FoodbookApp.Localization"
+    xmlns:converters="clr-namespace:Foodbook.Converters"
+    x:Name="ThisPage"
+    x:DataType="vm:PlannerListsViewModel"
+    BackgroundColor="{DynamicResource PageBackgroundColor}">
+
+    <ContentPage.Resources>
+        <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        <DataTemplate x:Key="PlanRowTemplate" x:DataType="models:Plan">
+            <components:UniversalListItemComponent 
+                EditCommand="{Binding BindingContext.EditPlanCommand, Source={x:Reference ThisPage}}"
+                ArchiveCommand="{Binding BindingContext.ArchivePlanCommand, Source={x:Reference ThisPage}}"
+                ShowNutritionLayout="False"
+                ShowPlanLayout="True"
+                ShowDeleteButton="False"
+                ShowArchiveButton="True"
+                ShowSubtitle="False" />
+        </DataTemplate>
+    </ContentPage.Resources>
+
+    <Grid>
+        <components:GenericListComponent
+            x:Name="PlannerList"
+            ItemsSource="{Binding Plans}"
+            ItemTemplate="{StaticResource PlanRowTemplate}"
+            EmptyTitle="{loc:Translate Resource=PlannerListsPageResources, Key=EmptyTitle}"
+            EmptyHint="{loc:Translate Resource=PlannerListsPageResources, Key=EmptyHint}"
+            IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+
+        <components:FloatingActionButtonComponent
+            Command="{Binding CreatePlanCommand}"
+            IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+            ButtonText="+"
+            IsExpandable="False" />
+    </Grid>
+</ContentPage>

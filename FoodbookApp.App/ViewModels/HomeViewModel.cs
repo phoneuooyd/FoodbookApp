@@ -63,7 +63,7 @@ public class HomeViewModel : INotifyPropertyChanged
     }
 
     // Planned meals period settings
-    private PlannedMealsPeriod _selectedPlannedMealsPeriod = PlannedMealsPeriod.Week;
+    private PlannedMealsPeriod _selectedPlannedMealsPeriod = PlannedMealsPeriod.Today;
     public PlannedMealsPeriod SelectedPlannedMealsPeriod
     {
         get => _selectedPlannedMealsPeriod;
@@ -74,10 +74,14 @@ public class HomeViewModel : INotifyPropertyChanged
                 _selectedPlannedMealsPeriod = value; 
                 OnPropertyChanged(); 
                 OnPropertyChanged(nameof(PlannedMealsPeriodDisplay));
+                OnPropertyChanged(nameof(PlannedMealsMaxHeight));
                 _ = LoadPlannedMealsAsync(); 
             } 
         }
     }
+
+    // Dynamic height for planned meals panel (expand on Today)
+    public double PlannedMealsMaxHeight => SelectedPlannedMealsPeriod == PlannedMealsPeriod.Today ? 10000 : 250;
 
     private DateTime _plannedMealsCustomStartDate = DateTime.Today;
     public DateTime PlannedMealsCustomStartDate
@@ -938,7 +942,7 @@ public class HomeViewModel : INotifyPropertyChanged
 
             if (DateTime.TryParseExact(endDateInput, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out var endDate))
             {
-                if (endDate >= startDate) { PlannedMealsCustomStartDate = startDate; PlannedMealsCustomEndDate = endDate; SelectedPlannedMealsPeriod = PlannedMealsPeriod.Custom; }
+                if (endDate >= startDate) { PlannedMealsCustomStartDate = startDate; PlannedMealsCustomEndDate = endDate; SelectedPlannedMealsPeriod = PlannedMealsPeriod.Custom; OnPropertyChanged(nameof(PlannedMealsMaxHeight)); }
                 else await page.DisplayAlert("B³¹d", "Data koñcowa musi byæ póŸniejsza ni¿ pocz¹tkowa", "OK");
             }
         }
@@ -1060,6 +1064,7 @@ public class HomeViewModel : INotifyPropertyChanged
             // Refresh all display properties that depend on localized resources
             OnPropertyChanged(nameof(NutritionPeriodDisplay));
             OnPropertyChanged(nameof(PlannedMealsPeriodDisplay));
+            OnPropertyChanged(nameof(PlannedMealsMaxHeight));
         }
         catch (Exception ex)
         {

@@ -16,73 +16,37 @@ namespace Foodbook.Data
         private static bool _seedStarted = false; // set when seeding begins
         private static bool _seedCompleted = false; // set when seeding (or a decision to skip) finishes
 
-        public static async Task InitializeAsync(AppDbContext context)
+        // Simplified: no automatic data creation on startup
+        public static Task InitializeAsync(AppDbContext context) => Task.CompletedTask;
+
+        private static async Task EnsureFolderOrderInitializedAsync(AppDbContext context)
         {
-            // Pobierz serwis preferencji (może być null bardzo wcześnie)
-            var preferencesService = Microsoft.Maui.Controls.Application.Current?.Handler?.MauiContext?.Services?.GetService<IPreferencesService>();
-            bool isFirstLaunch = preferencesService?.IsFirstLaunch() ?? true; // Domyślnie true jeśli brak serwisu
-
-            var hasIngredients = await context.Ingredients.AnyAsync();
-            var hasRecipes = await context.Recipes.AnyAsync();
-
-            // Jeżeli pierwszy start i nie ma składników – NIE seedujemy tutaj.
-            // Seeding wykona SetupWizard po wyborze języka (przekaże go jawnie), co eliminuje problem języka domyślnego.
-            if (isFirstLaunch && !hasIngredients)
-            {
-                LogDebug("First launch detected – deferring ingredient seeding to SetupWizard (language will be chosen by user)");
-            }
-            else if (!hasIngredients)
-            {
-                // Kolejne uruchomienie (setup zakończony) – możemy seeding wykonać jeśli z jakiegoś powodu brak danych.
-                var savedLang = preferencesService?.GetSavedLanguage();
-                LogDebug($"No ingredients found after initial setup. Seeding now with saved language: {savedLang ?? "(null)"}");
-                await SeedIngredientsAsync(context, savedLang);
-            }
-
-            // Jeśli mamy już składniki i przepisy – nic dalej.
-            if (hasIngredients && hasRecipes)
-                return;
-
-            if (hasRecipes)
-                return;
-
-#if DEBUG
             try
             {
-                var isFirstLaunchForRecipe = isFirstLaunch; // użyj tej samej informacji
-                if (isFirstLaunchForRecipe)
-                {
-                    var recipe = new Recipe
-                    {
-                        Name = "Prosta sałatka",
-                        Description = "Przykładowa sałatka.",
-                        Calories = 150,
-                        Protein = 3,
-                        Fat = 7,
-                        Carbs = 18,
-                        Ingredients = new List<Ingredient>
-                        {
-                            new Ingredient { Name = "Sałata", Quantity = 100, Unit = Unit.Gram, Calories = 25, Protein = 1, Fat = 0, Carbs = 5 },
-                            new Ingredient { Name = "Pomidor", Quantity = 50, Unit = Unit.Gram, Calories = 25, Protein = 1, Fat = 0, Carbs = 5 }
-                        }
-                    };
+                // Check if any folder has Order != 0. If yes, assume initialization done.
+                bool anyNonZero = await context.Folders.AnyAsync(f => f.Order != 0);
+                if (anyNonZero) return;
 
-                    context.Recipes.Add(recipe);
-                    await context.SaveChangesAsync();
-                    LogDebug("DEBUG: Added example recipe 'Prosta sałatka' (first launch)");
-                }
-                else
+                // Initialize Order by grouping siblings and assigning sequential values
+                var allFolders = await context.Folders.OrderBy(f => f.ParentFolderId).ThenBy(f => f.Name).ToListAsync();
+                var grouped = allFolders.GroupBy(f => f.ParentFolderId);
+                foreach (var group in grouped)
                 {
-                    LogDebug("DEBUG: Skipping example recipe seeding (not first launch)");
+                    int idx = 0;
+                    foreach (var folder in group.OrderBy(f => f.Name))
+                    {
+                        folder.Order = idx++;
+                        context.Folders.Update(folder);
+                    }
                 }
+
+                await context.SaveChangesAsync();
+                LogDebug("Initialized Folder.Order values for existing folders");
             }
             catch (Exception ex)
             {
-                LogWarning($"DEBUG: Failed to conditionally seed example recipe: {ex.Message}");
+                LogWarning($"Failed to initialize Folder.Order: {ex.Message}");
             }
-#else
-            LogDebug("RELEASE: Skipping example recipe seeding");
-#endif
         }
 
         /// <summary>
@@ -146,6 +110,7 @@ namespace Foodbook.Data
                     LogDebug($"Inserted batch {i / batchSize + 1}/{(ingredients.Count + batchSize - 1) / batchSize}");
                 }
 
+                LogDebug("About to commit transaction");
                 await trx.CommitAsync();
                 LogDebug($"✅ Successfully seeded {ingredients.Count} ingredients (transaction committed)");
             }
@@ -158,6 +123,41 @@ namespace Foodbook.Data
             {
                 _seedCompleted = true; // Koniec procesu – nawet przy błędzie nie powtarzamy automatycznie
             }
+        }
+
+        /// <summary>
+        /// Dodaje do bazy tylko te składniki z pliku ingredients.json, których nie ma w bazie (porównanie po nazwie, bez RecipeId).
+        /// Nie usuwa ani nie nadpisuje istniejących składników.
+        /// </summary>
+        public static async Task<int> AddMissingIngredientsFromJsonAsync(AppDbContext context, string? languageOverride = null)
+        {
+            var loaded = await LoadPopularIngredientsAsync(languageOverride);
+            // Pobierz istniejące składniki bazowe (RecipeId == null)
+            var existing = await context.Ingredients
+                .Where(i => i.RecipeId == null)
+                .AsNoTracking()
+                .ToListAsync();
+
+            // Porównanie po nazwie (ignoruj wielkość liter i diakrytyki)
+            static string Normalize(string s) => s
+                .ToLowerInvariant()
+                .Replace("ą", "a").Replace("ć", "c").Replace("ę", "e")
+                .Replace("ł", "l").Replace("ń", "n").Replace("ó", "o")
+                .Replace("ś", "s").Replace("ź", "z").Replace("ż", "z")
+                .Trim();
+
+            var existingNames = new HashSet<string>(existing.Select(i => Normalize(i.Name)));
+            var toAdd = loaded
+                .Where(i => !existingNames.Contains(Normalize(i.Name)))
+                .ToList();
+
+            if (toAdd.Count > 0)
+            {
+                context.Ingredients.AddRange(toAdd);
+                await context.SaveChangesAsync();
+            }
+            LogDebug($"AddMissingIngredientsFromJsonAsync: {toAdd.Count} new ingredients added.");
+            return toAdd.Count;
         }
 
         public static async Task<bool> UpdateIngredientWithOpenFoodFactsAsync(Ingredient ingredient)
@@ -176,7 +176,7 @@ namespace Foodbook.Data
 
                 // Parse with strongly-typed JObject to avoid nullability warnings
                 var root = JsonConvert.DeserializeObject<JObject>(content);
-                var products = root?["products"] as JArray;
+                var products = root? ["products"] as JArray;
                 if (products == null || products.Count == 0)
                 {
                     LogWarning($"{ingredient.Name}: Product not found in OpenFoodFacts");
@@ -184,7 +184,7 @@ namespace Foodbook.Data
                 }
 
                 var product = products[0] as JObject;
-                var nutriments = product?["nutriments"] as JObject;
+                var nutriments = product? ["nutriments"] as JObject;
                 if (nutriments == null)
                 {
                     LogWarning($"{ingredient.Name}: No nutritional data in found product");
@@ -232,12 +232,17 @@ namespace Foodbook.Data
         {
             [JsonProperty("name_pl")] public string NamePl { get; set; } = string.Empty;
             [JsonProperty("name_en")] public string NameEn { get; set; } = string.Empty;
+            [JsonProperty("name_de")] public string NameDe { get; set; } = string.Empty;
+            [JsonProperty("name_es")] public string NameEs { get; set; } = string.Empty;
+            [JsonProperty("name_fr")] public string NameFr { get; set; } = string.Empty;
+            [JsonProperty("name_kr")] public string NameKr { get; set; } = string.Empty;
             [JsonProperty("calories")] public double Calories { get; set; }
             [JsonProperty("protein")] public double Protein { get; set; }
             [JsonProperty("fat")] public double Fat { get; set; }
             [JsonProperty("carbs")] public double Carbs { get; set; }
             [JsonProperty("amount")] public double Amount { get; set; }
             [JsonProperty("unit")] public string Unit { get; set; } = string.Empty;
+            [JsonProperty("unit_weight")] public double UnitWeight { get; set; } = 1.0;
         }
 
         private static async Task<List<Ingredient>> LoadPopularIngredientsAsync(string? languageOverride)
@@ -246,7 +251,10 @@ namespace Foodbook.Data
             try
             {
                 var assembly = Assembly.GetExecutingAssembly();
-                var resourceName = assembly.GetManifestResourceNames().FirstOrDefault(name => name.EndsWith("ingredients.json"));
+                var resourceNames = assembly.GetManifestResourceNames();
+                LogDebug($"Manifest resources: {string.Join(", ", resourceNames)}");
+                var resourceName = resourceNames.FirstOrDefault(name => name.EndsWith("ingredients.json"));
+                LogDebug($"Trying embedded resource: {resourceName ?? "null"}");
                 if (!string.IsNullOrEmpty(resourceName))
                 {
                     LogDebug($"Found embedded resource: {resourceName}");
@@ -285,7 +293,7 @@ namespace Foodbook.Data
                     json = string.Empty; // avoid assigning null to non-nullable
                     foreach (var path in paths)
                     {
-                        LogDebug($"Checking path: {path}");
+                        LogDebug($"Checking path: {path} - Exists: {File.Exists(path)}");
                         if (File.Exists(path)) { json = await File.ReadAllTextAsync(path); LogDebug($"Loaded {json.Length} characters from {path}"); break; }
                     }
                     if (string.IsNullOrEmpty(json)) { LogError("All loading methods failed! Creating fallback data"); return CreateFallbackIngredients(); }
@@ -297,28 +305,44 @@ namespace Foodbook.Data
                 LogDebug("Deserializing JSON");
                 var infos = JsonConvert.DeserializeObject<List<IngredientInfo>>(json) ?? new();
                 LogDebug($"Deserialized {infos.Count} ingredient infos");
+                if (infos.Count > 0)
+                {
+                    var firstInfo = infos.First();
+                    LogDebug($"First info: NamePl={firstInfo.NamePl}, Unit={firstInfo.Unit}, Calories={firstInfo.Calories}, UnitWeight={firstInfo.UnitWeight}");
+                }
 
                 var lang = NormalizeLanguage(languageOverride) ?? NormalizeLanguage(Preferences.Get("SelectedCulture", string.Empty)) ?? NormalizeLanguage(CultureInfo.CurrentUICulture.Name) ?? "en";
-                bool isPolish = lang.StartsWith("pl", StringComparison.OrdinalIgnoreCase);
-                LogDebug($"Ingredient language resolved to: {lang} (isPolish={isPolish})");
+                var isPolish = lang.StartsWith("pl", StringComparison.OrdinalIgnoreCase);
+                var isGerman = lang.StartsWith("de", StringComparison.OrdinalIgnoreCase);
+                var isSpanish = lang.StartsWith("es", StringComparison.OrdinalIgnoreCase);
+                var isFrench = lang.StartsWith("fr", StringComparison.OrdinalIgnoreCase);
+                var isKorean = lang.StartsWith("kr", StringComparison.OrdinalIgnoreCase);
+                LogDebug($"Ingredient language resolved to: {lang} (pl={isPolish}, de={isGerman}, es={isSpanish}, fr={isFrench}, kr={isKorean})");
 
                 var ingredients = infos.Select(i => new Ingredient
                 {
                     Name = isPolish ? (string.IsNullOrWhiteSpace(i.NamePl) ? (string.IsNullOrWhiteSpace(i.NameEn) ? "Unknown ingredient" : i.NameEn) : i.NamePl)
+                                     : isGerman ? (string.IsNullOrWhiteSpace(i.NameDe) ? (string.IsNullOrWhiteSpace(i.NameEn) ? (string.IsNullOrWhiteSpace(i.NamePl) ? "Unknown ingredient" : i.NamePl) : i.NameEn) : i.NameDe)
+                                     : isSpanish ? (string.IsNullOrWhiteSpace(i.NameEs) ? (string.IsNullOrWhiteSpace(i.NameEn) ? (string.IsNullOrWhiteSpace(i.NamePl) ? "Unknown ingredient" : i.NamePl) : i.NameEn) : i.NameEs)
+                                     : isFrench ? (string.IsNullOrWhiteSpace(i.NameFr) ? (string.IsNullOrWhiteSpace(i.NameEn) ? (string.IsNullOrWhiteSpace(i.NamePl) ? "Unknown ingredient" : i.NamePl) : i.NameEn) : i.NameFr)
+                                     : isKorean ? (string.IsNullOrWhiteSpace(i.NameKr) ? (string.IsNullOrWhiteSpace(i.NameEn) ? (string.IsNullOrWhiteSpace(i.NamePl) ? "Unknown ingredient" : i.NamePl) : i.NameEn) : i.NameKr)
                                      : (string.IsNullOrWhiteSpace(i.NameEn) ? (string.IsNullOrWhiteSpace(i.NamePl) ? "Unknown ingredient" : i.NamePl) : i.NameEn),
                     Quantity = i.Amount,
                     Unit = ParseUnit(i.Unit),
-                    Calories = i.Calories,
-                    Protein = i.Protein,
-                    Fat = i.Fat,
-                    Carbs = i.Carbs,
+                    Calories = i.Unit == "Piece" && i.UnitWeight > 0 ? i.Calories * (100.0 / i.UnitWeight) : i.Calories,
+                    Protein = i.Unit == "Piece" && i.UnitWeight > 0 ? i.Protein * (100.0 / i.UnitWeight) : i.Protein,
+                    Fat = i.Unit == "Piece" && i.UnitWeight > 0 ? i.Fat * (100.0 / i.UnitWeight) : i.Fat,
+                    Carbs = i.Unit == "Piece" && i.UnitWeight > 0 ? i.Carbs * (100.0 / i.UnitWeight) : i.Carbs,
+                    UnitWeight = i.UnitWeight,
                     RecipeId = null
                 }).ToList();
 
-                if (ingredients.Any(x => x.Name == "Unknown ingredient"))
-                    LogWarning("Some ingredients had missing names in both languages.");
-
-                LogDebug($"Created {ingredients.Count} ingredients with language: {lang}");
+                LogDebug($"Created {ingredients.Count} ingredients");
+                if (ingredients.Count > 0)
+                {
+                    var firstIng = ingredients.First();
+                    LogDebug($"First ingredient: Name={firstIng.Name}, Unit={firstIng.Unit}, Calories={firstIng.Calories}, UnitWeight={firstIng.UnitWeight}");
+                }
 
                 if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
                 {
@@ -344,6 +368,10 @@ namespace Foodbook.Data
             code = code.Trim();
             if (code.StartsWith("pl", StringComparison.OrdinalIgnoreCase)) return "pl-PL";
             if (code.StartsWith("en", StringComparison.OrdinalIgnoreCase)) return "en";
+            if (code.StartsWith("de", StringComparison.OrdinalIgnoreCase)) return "de";
+            if (code.StartsWith("es", StringComparison.OrdinalIgnoreCase)) return "es";
+            if (code.StartsWith("fr", StringComparison.OrdinalIgnoreCase)) return "fr";
+            if (code.StartsWith("ko", StringComparison.OrdinalIgnoreCase) || code.StartsWith("kr", StringComparison.OrdinalIgnoreCase)) return "kr";
             return null; // fallback wyżej
         }
 

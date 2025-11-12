@@ -7,6 +7,9 @@ using System.Windows.Input;
 using Microsoft.Extensions.DependencyInjection; // for GetService
 using FoodbookApp; // to access MauiProgram.ServiceProvider
 using Foodbook.Models;
+using Foodbook.Utils;
+using Foodbook.ViewModels;
+using Foodbook.Views;
 
 namespace Foodbook.Views.Components;
 
@@ -24,6 +27,10 @@ public partial class SimpleListPopup : Popup
 
     public static readonly BindableProperty IsBulletedProperty =
         BindableProperty.Create(nameof(IsBulleted), typeof(bool), typeof(SimpleListPopup), false);
+
+    // New: shows add action in first row for AddRecipePage context
+    public static readonly BindableProperty ShowAddIngredientButtonProperty =
+        BindableProperty.Create(nameof(ShowAddIngredientButton), typeof(bool), typeof(SimpleListPopup), false);
 
     public string TitleText
     {
@@ -43,7 +50,16 @@ public partial class SimpleListPopup : Popup
         set => SetValue(IsBulletedProperty, value);
     }
 
+    public bool ShowAddIngredientButton
+    {
+        get => (bool)GetValue(ShowAddIngredientButtonProperty);
+        set => SetValue(ShowAddIngredientButtonProperty, value);
+    }
+
     public ICommand CloseCommand { get; }
+
+    // New: command to add ingredient
+    public ICommand AddIngredientCommand { get; }
 
     // Structured item models for richer rendering
     public class SectionHeader { public string Text { get; set; } = string.Empty; }
@@ -70,6 +86,7 @@ public partial class SimpleListPopup : Popup
     public SimpleListPopup()
     {
         CloseCommand = new Command(async () => await CloseWithResultAsync(null));
+        AddIngredientCommand = new Command(async () => await OnAddIngredientAsync());
 
         // Resolve theme service from DI if available
         try
@@ -79,7 +96,70 @@ public partial class SimpleListPopup : Popup
         catch { /* ignore and keep null -> we'll fallback in BuildItems */ }
 
         InitializeComponent();
-        Loaded += (_, __) => BuildItems();
+        Loaded += (_, __) =>
+        {
+            DetectContext();
+            BuildItems();
+        };
+    }
+
+    private void DetectContext()
+    {
+        try
+        {
+            // When opened while AddRecipePage is the active page, enable add action in first row
+            var currentPage = Shell.Current?.CurrentPage;
+            ShowAddIngredientButton = currentPage is Foodbook.Views.AddRecipePage;
+        }
+        catch
+        {
+            ShowAddIngredientButton = false;
+        }
+    }
+
+    private async Task OnAddIngredientAsync()
+    {
+        try
+        {
+            var currentPage = Shell.Current?.CurrentPage;
+            if (currentPage == null)
+                return;
+
+            var vm = MauiProgram.ServiceProvider?.GetService<IngredientFormViewModel>();
+            if (vm == null)
+            {
+                await Shell.Current.DisplayAlert("Błąd", "Nie można otworzyć formularza składnika.", "OK");
+                return;
+            }
+
+            var formPage = new IngredientFormPage(vm);
+
+            // Await page dismissal using Disappearing
+            var dismissedTcs = new TaskCompletionSource();
+            formPage.Disappearing += (_, __) => dismissedTcs.TrySetResult();
+            await currentPage.Navigation.PushModalAsync(formPage);
+            await dismissedTcs.Task;
+
+            // After returning, refresh caches and UI lists in AddRecipe context
+            var ingredientService = MauiProgram.ServiceProvider?.GetService<IIngredientService>();
+            ingredientService?.InvalidateCache();
+
+            if (currentPage is Foodbook.Views.AddRecipePage arp)
+            {
+                var recipeVm = arp.BindingContext as Foodbook.ViewModels.AddRecipeViewModel;
+                if (recipeVm != null)
+                {
+                    await recipeVm.LoadAvailableIngredientsAsync();
+                }
+            }
+
+            // Rebuild items to reflect possible new entries
+            BuildItems();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SimpleListPopup] Error adding ingredient: {ex.Message}");
+        }
     }
 
     private void BuildItems()
@@ -127,6 +207,44 @@ public partial class SimpleListPopup : Popup
 
             // Ensure header title adopts the same tuned colour
             TitleLabel.TextColor = contentPrimary;
+
+            // Inject first-row add action when applicable
+            if (ShowAddIngredientButton)
+            {
+                var addRow = new HorizontalStackLayout
+                {
+                    Spacing = 12,
+                    Padding = new Thickness(0, 0, 0, 8),
+                    VerticalOptions = LayoutOptions.Center
+                };
+
+                var plusButton = new Button
+                {
+                    Text = "+",
+                    WidthRequest = 36,
+                    HeightRequest = 36,
+                    CornerRadius = 18,
+                    Padding = 0,
+                    VerticalOptions = LayoutOptions.Center
+                };
+                plusButton.StyleClass = new[] { "Secondary" };
+                plusButton.Clicked += async (_, __) => await OnAddIngredientAsync();
+
+                var textLabel = new Label
+                {
+                    Text = "Dodaj składnik",
+                    TextColor = contentPrimary,
+                    FontSize = 15,
+                    VerticalOptions = LayoutOptions.Center
+                };
+                var tap = new TapGestureRecognizer();
+                tap.Tapped += async (_, __) => await OnAddIngredientAsync();
+                textLabel.GestureRecognizers.Add(tap);
+
+                addRow.Children.Add(plusButton);
+                addRow.Children.Add(textLabel);
+                host.Children.Add(addRow);
+            }
 
             foreach (var obj in data)
             {
@@ -220,17 +338,38 @@ public partial class SimpleListPopup : Popup
             case string s:
                 return CreateRow(s, primaryText);
 
-            case IEnumerable<string> group:
+            case IEnumerable<string> groupStr:
             {
                 var container = new VerticalStackLayout { Spacing = 6 };
-                foreach (var s2 in group)
+                foreach (var s2 in groupStr)
                     container.Children.Add(CreateRow(s2, primaryText));
                 return container;
             }
 
+            case IEnumerable<object> groupObj:
+            {
+                var container = new VerticalStackLayout { Spacing = 6 };
+                foreach (var o in groupObj)
+                    container.Children.Add(CreateRow(GetDisplayText(o), primaryText));
+                return container;
+            }
+
             default:
-                return CreateRow(obj?.ToString() ?? string.Empty, primaryText);
+                // Generic path: format using enum Display attributes if applicable
+                return CreateRow(GetDisplayText(obj), primaryText);
         }
+    }
+
+    private static string GetDisplayText(object? obj)
+    {
+        if (obj is null) return string.Empty;
+        if (obj is Enum e)
+        {
+            // Prefer ShortName when available for compact chips, fall back to Name
+            var shortName = e.GetDisplayShortName();
+            return string.IsNullOrWhiteSpace(shortName) ? e.GetDisplayName() : shortName;
+        }
+        return obj.ToString() ?? string.Empty;
     }
 
     private View CreateRow(string text, Color primaryText)
@@ -379,13 +518,8 @@ public partial class SimpleListPopup : Popup
 
     private static string GetUnitText(Unit unit)
     {
-        return unit switch
-        {
-            Unit.Gram => FoodbookApp.Localization.UnitResources.GramShort,
-            Unit.Milliliter => FoodbookApp.Localization.UnitResources.MilliliterShort,
-            Unit.Piece => FoodbookApp.Localization.UnitResources.PieceShort,
-            _ => string.Empty
-        };
+        // Use Display ShortName from enum annotations (resx-backed)
+        return unit.GetDisplayShortName();
     }
 
     private async Task CloseWithResultAsync(object? result)

@@ -5,12 +5,17 @@ using System.Windows.Input;
 using CommunityToolkit.Maui.Views;
 using CommunityToolkit.Maui.Extensions;
 using System.Collections; // Added for IEnumerable
+using Microsoft.Extensions.DependencyInjection;
+using FoodbookApp.Interfaces;
+using System.Globalization;
+using Foodbook.Utils;
 
 namespace Foodbook.Views.Components;
 
 public partial class SimplePicker : ContentView, INotifyPropertyChanged
 {
     private bool _isPopupOpen = false; // Protection against multiple opens
+    private ILocalizationService? _localizationService; // Localization service subscription
 
     public static readonly BindableProperty ItemsSourceProperty =
         BindableProperty.Create(nameof(ItemsSource), typeof(IEnumerable), typeof(SimplePicker), null);
@@ -64,18 +69,28 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
             if (SelectedItem == null)
                 return PlaceholderText;
 
-            // If ItemDisplayBinding is provided, use converter
+            // Try ItemDisplayBinding converter first (with current UI culture)
             if (ItemDisplayBinding is Binding binding && binding.Converter != null)
             {
                 try
                 {
-                    var converted = binding.Converter.Convert(SelectedItem, typeof(string), binding.ConverterParameter, System.Globalization.CultureInfo.CurrentCulture);
-                    return converted?.ToString() ?? PlaceholderText;
+                    var converted = binding.Converter.Convert(SelectedItem, typeof(string), binding.ConverterParameter, CultureInfo.CurrentUICulture);
+                    var convertedText = converted?.ToString();
+                    if (!string.IsNullOrWhiteSpace(convertedText))
+                        return convertedText!;
                 }
                 catch
                 {
-                    // Fallback to ToString if conversion fails
+                    // Fallback below
                 }
+            }
+
+            // Fallback: enum display attributes
+            if (SelectedItem is Enum e)
+            {
+                var name = e.GetDisplayName();
+                if (!string.IsNullOrWhiteSpace(name))
+                    return name;
             }
 
             return SelectedItem?.ToString() ?? PlaceholderText;
@@ -91,6 +106,120 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
     {
         OpenSelectionDialogCommand = new Command(async () => await OpenSelectionDialog(), () => !_isPopupOpen);
         InitializeComponent();
+        SubscribeLocalization();
+    }
+
+    private void SubscribeLocalization()
+    {
+        try
+        {
+            var sp = FoodbookApp.MauiProgram.ServiceProvider;
+            _localizationService = sp?.GetService<ILocalizationService>();
+            if (_localizationService != null)
+            {
+                _localizationService.CultureChanged += OnCultureChanged;
+                // Subscribe to explicit picker refresh requests
+                _localizationService.PickerRefreshRequested += OnPickerRefreshRequested;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SimplePicker] Failed to subscribe localization: {ex.Message}");
+        }
+    }
+
+    private void UnsubscribeLocalization()
+    {
+        try
+        {
+            if (_localizationService != null)
+            {
+                _localizationService.CultureChanged -= OnCultureChanged;
+                _localizationService.PickerRefreshRequested -= OnPickerRefreshRequested;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SimplePicker] Failed to unsubscribe localization: {ex.Message}");
+        }
+    }
+
+    private void OnPickerRefreshRequested(object? sender, EventArgs e)
+    {
+        try
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                // Force refresh of display text and any consumer listening to selection text changes
+                OnPropertyChanged(nameof(DisplayText));
+                SelectionChanged?.Invoke(this, EventArgs.Empty);
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SimplePicker] OnPickerRefreshRequested error: {ex.Message}");
+        }
+    }
+
+    private void OnCultureChanged(object? sender, EventArgs e)
+    {
+        try
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                // Recompute text using ItemDisplayBinding converter with new culture
+                OnPropertyChanged(nameof(DisplayText));
+                // Notify any listeners that selection visual text changed
+                SelectionChanged?.Invoke(this, EventArgs.Empty);
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SimplePicker] OnCultureChanged error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Determine display text for an option, honoring ItemDisplayBinding and falling back to Enum Display attributes.
+    /// Always uses the current UI culture at call time.
+    /// </summary>
+    private string GetOptionText(object? item)
+    {
+        if (item == null) return string.Empty;
+
+        // Prefer ItemDisplayBinding converter if present
+        if (ItemDisplayBinding is Binding binding && binding.Converter != null)
+        {
+            try
+            {
+                var converted = binding.Converter.Convert(item, typeof(string), binding.ConverterParameter, CultureInfo.CurrentUICulture);
+                var text = converted?.ToString();
+                if (!string.IsNullOrWhiteSpace(text))
+                    return text!;
+            }
+            catch
+            {
+                // Ignore and fallback below
+            }
+        }
+
+        // Fallback for enums via Display attributes (resx-backed)
+        if (item is Enum e)
+        {
+            var name = e.GetDisplayName();
+            if (!string.IsNullOrWhiteSpace(name))
+                return name;
+        }
+
+        return item.ToString() ?? string.Empty;
+    }
+
+    /// <summary>
+    /// Refresh the DisplayText - useful when culture/language changes
+    /// </summary>
+    public void RefreshDisplayText()
+    {
+        OnPropertyChanged(nameof(DisplayText));
     }
 
     private static void OnSelectedItemChanged(BindableObject bindable, object oldValue, object newValue)
@@ -99,6 +228,15 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
         {
             picker.OnPropertyChanged(nameof(DisplayText));
             picker.SelectionChanged?.Invoke(picker, EventArgs.Empty);
+        }
+    }
+
+    protected override void OnParentSet()
+    {
+        base.OnParentSet();
+        if (Parent == null)
+        {
+            UnsubscribeLocalization();
         }
     }
 
@@ -116,24 +254,8 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
             _isPopupOpen = true;
             ((Command)OpenSelectionDialogCommand).ChangeCanExecute();
 
-            // Convert items to string list for SearchablePickerPopup
-            var options = ItemsSource?.Cast<object>().Select(item =>
-            {
-                // Use ItemDisplayBinding converter if available
-                if (ItemDisplayBinding is Binding binding && binding.Converter != null)
-                {
-                    try
-                    {
-                        var converted = binding.Converter.Convert(item, typeof(string), binding.ConverterParameter, System.Globalization.CultureInfo.CurrentCulture);
-                        return converted?.ToString() ?? item?.ToString() ?? string.Empty;
-                    }
-                    catch
-                    {
-                        // Fallback to ToString if conversion fails
-                    }
-                }
-                return item?.ToString() ?? string.Empty;
-            }).ToList() ?? new List<string>();
+            // IMPORTANT: Build option list using CURRENT UI culture at open time
+            var options = ItemsSource?.Cast<object>().Select(GetOptionText).ToList() ?? new List<string>();
 
             var currentSelection = DisplayText == PlaceholderText ? null : DisplayText;
             var popup = new SearchablePickerPopup(options, currentSelection);
@@ -162,24 +284,8 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
             // Handle the result
             if (result is string selectedText && !string.IsNullOrEmpty(selectedText))
             {
-                // Find the corresponding object in ItemsSource
-                var matchingItem = ItemsSource?.Cast<object>().FirstOrDefault(item =>
-                {
-                    // Use ItemDisplayBinding converter if available
-                    if (ItemDisplayBinding is Binding binding && binding.Converter != null)
-                    {
-                        try
-                        {
-                            var converted = binding.Converter.Convert(item, typeof(string), binding.ConverterParameter, System.Globalization.CultureInfo.CurrentCulture);
-                            return converted?.ToString() == selectedText;
-                        }
-                        catch
-                        {
-                            // Fallback to ToString comparison
-                        }
-                    }
-                    return item?.ToString() == selectedText;
-                });
+                // Find the corresponding object in ItemsSource by recomputing display text with current culture
+                var matchingItem = ItemsSource?.Cast<object>().FirstOrDefault(item => GetOptionText(item) == selectedText);
 
                 if (matchingItem != null)
                 {

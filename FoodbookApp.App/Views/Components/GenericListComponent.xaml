@@ -9,10 +9,13 @@
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
     </ContentView.Resources>
 
-    <CollectionView ItemsSource="{Binding ItemsSource, Source={x:Reference ListComponent}}"
+    <!-- Use MeasureAllItems so items with wrapped titles can grow vertically without clipping -->
+    <CollectionView x:Name="InnerCollectionView"
+                    ItemsSource="{Binding ItemsSource, Source={x:Reference ListComponent}}"
                     Style="{StaticResource ListCollectionView}"
                     RemainingItemsThreshold="10"
-                    ItemTemplate="{Binding ItemTemplate, Source={x:Reference ListComponent}}">
+                    ItemTemplate="{Binding ItemTemplate, Source={x:Reference ListComponent}}"
+                    ItemSizingStrategy="MeasureAllItems">
         
         <CollectionView.ItemsLayout>
             <LinearItemsLayout Orientation="Vertical" ItemSpacing="0" />

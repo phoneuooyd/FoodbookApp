@@ -9,4 +9,7 @@ public interface ILocalizationService
     string GetString(string baseName, string key);
 
     event EventHandler? CultureChanged;
+    event EventHandler? PickerRefreshRequested;
+
+    void RequestPickerRefresh();
 }

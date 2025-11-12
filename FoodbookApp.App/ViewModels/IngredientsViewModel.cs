@@ -7,6 +7,7 @@ using Microsoft.Maui.Controls;
 using Foodbook.Views;
 using Foodbook.Data;
 using FoodbookApp.Interfaces;
+using Foodbook.Services;
 
 namespace Foodbook.ViewModels;
 
@@ -113,46 +114,82 @@ public class IngredientsViewModel : INotifyPropertyChanged
         RefreshCommand = new Command(async () => await ReloadAsync());
         BulkVerifyCommand = new Command(async () => await BulkVerifyIngredientsAsync(), () => !IsBulkVerifying && Ingredients.Count > 0);
         ClearSearchCommand = new Command(() => SearchText = string.Empty); // Komenda do czyszczenia wyszukiwania
+
+        // Subscribe to global ingredient save/change signals so VM stays fresh even off-page
+        try
+        {
+            AppEvents.IngredientSaved += OnIngredientSaved;
+            AppEvents.IngredientsChangedAsync += OnIngredientsChangedSignal;
+        }
+        catch { }
+    }
+
+    private async void OnIngredientSaved(int id)
+    {
+        // Ensure next fetch hits DB, then refresh
+        try { _service.InvalidateCache(); } catch { }
+        await HardReloadAsync();
+    }
+
+    private async Task OnIngredientsChangedSignal()
+    {
+        try { _service.InvalidateCache(); } catch { }
+        await HardReloadAsync();
     }
 
     private void RaiseDataLoaded()
     {
-        try { DataLoaded?.Invoke(this, EventArgs.Empty); } catch { }
+        try 
+        { 
+            var handler = DataLoaded; 
+            if (handler != null)
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    try { handler.Invoke(this, EventArgs.Empty); } catch { }
+                });
+            }
+        } 
+        catch { }
     }
 
     /// <summary>
-    /// Core data fetch without toggling UI loader flags. Used by both LoadAsync and ReloadAsync.
+    /// Core data fetch with UI-thread marshaling for collection updates.
     /// </summary>
     private async Task FetchIngredientsAsync()
     {
         var list = await _service.GetIngredientsAsync();
         _allIngredients = list;
 
-        // Clear and add in batches to improve UI responsiveness
-        Ingredients.Clear();
-
-        // Add items in smaller batches to prevent UI blocking
-        const int batchSize = 50;
-        for (int i = 0; i < list.Count; i += batchSize)
+        // Update observable collection on the UI thread
+        await MainThread.InvokeOnMainThreadAsync(() =>
         {
-            var batch = list.Skip(i).Take(batchSize);
-            foreach (var ingredient in batch)
+            Ingredients.Clear();
+            foreach (var ingredient in list)
             {
                 Ingredients.Add(ingredient);
             }
+        });
 
-            // Allow UI to update between batches
-            if (i + batchSize < list.Count)
-            {
-                await Task.Delay(1);
-            }
-        }
-
-        FilterIngredients();
-        ((Command)BulkVerifyCommand).ChangeCanExecute(); // Refresh command state
+        // Apply current filter and sort (also on UI thread)
+        await MainThread.InvokeOnMainThreadAsync(() =>
+        {
+            FilterIngredients();
+            ((Command)BulkVerifyCommand).ChangeCanExecute(); // Refresh command state
+        });
 
         // Signal that all data required by the view is ready
         RaiseDataLoaded();
+    }
+
+    /// <summary>
+    /// Hard reload: invalidate service cache and reload from DB.
+    /// </summary>
+    public async Task HardReloadAsync()
+    {
+        if (IsRefreshing) return;
+        try { _service.InvalidateCache(); } catch { }
+        await ReloadAsync();
     }
 
     /// <summary>
@@ -240,7 +277,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
             var successMessage =
                 "Weryfikacja zakoñczona!\n\n" +
                 $"? Zaktualizowano: {updatedCount} sk³adników\n" +
-                $"? Bez zmian: {totalCount - updatedCount - failedCount} sk³adników\n" +
+                $"• Bez zmian: {totalCount - updatedCount - failedCount} sk³adników\n" +
                 (failedCount > 0 ? $"? B³êdy/nie znaleziono: {failedCount} sk³adników" : "");
 
             BulkVerificationStatus = $"? Zakoñczono - zaktualizowano {updatedCount}/{totalCount} sk³adników";
@@ -251,7 +288,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
                 "OK");
 
             // Odœwie¿ listê
-            await ReloadAsync();
+            await HardReloadAsync();
         }
         catch (Exception ex)
         {
@@ -332,13 +369,16 @@ public class IngredientsViewModel : INotifyPropertyChanged
             ? source.OrderBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase)
             : source.OrderByDescending(i => i.Name, StringComparer.CurrentCultureIgnoreCase);
 
-        Ingredients.Clear();
-        foreach (var ingredient in source)
+        // Ensure UI thread when updating bound collection
+        MainThread.BeginInvokeOnMainThread(() =>
         {
-            Ingredients.Add(ingredient);
-        }
-        
-        ((Command)BulkVerifyCommand).ChangeCanExecute(); // Refresh command state when filter changes
+            Ingredients.Clear();
+            foreach (var ingredient in source)
+            {
+                Ingredients.Add(ingredient);
+            }
+            ((Command)BulkVerifyCommand).ChangeCanExecute(); // Refresh command state when filter changes
+        });
     }
 
     private async Task DeleteIngredientAsync(Ingredient? ing)
@@ -357,14 +397,11 @@ public class IngredientsViewModel : INotifyPropertyChanged
         try
         {
             await _service.DeleteIngredientAsync(ing.Id);
-            Ingredients.Remove(ing);
-            _allIngredients.Remove(ing);
-            ((Command)BulkVerifyCommand).ChangeCanExecute(); // Refresh command state
+            await HardReloadAsync();
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error deleting ingredient: {ex.Message}");
-            // Could show user-friendly error message here
         }
     }
 

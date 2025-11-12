@@ -14,6 +14,9 @@ public class LocalizationService : ILocalizationService
 
     public event EventHandler? CultureChanged;
 
+    // New event for explicit picker refresh requests
+    public event EventHandler? PickerRefreshRequested;
+
     public void SetCulture(string cultureName)
     {
         // Guard against null/empty and invalid culture names; use safe fallbacks
@@ -66,6 +69,9 @@ public class LocalizationService : ILocalizationService
 
         System.Diagnostics.Debug.WriteLine($"[LocalizationService] Culture changed to: {culture.Name} (requested: '{cultureName}')");
         CultureChanged?.Invoke(this, EventArgs.Empty);
+
+        // Immediately request pickers to refresh their localized strings
+        RequestPickerRefresh();
     }
 
     public string GetString(string baseName, string key)
@@ -77,5 +83,19 @@ public class LocalizationService : ILocalizationService
         }
 
         return manager.GetString(key, CurrentCulture) ?? string.Empty;
+    }
+
+    // New: helper to raise explicit picker refresh requests
+    public void RequestPickerRefresh()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[LocalizationService] PickerRefreshRequested raised");
+            PickerRefreshRequested?.Invoke(this, EventArgs.Empty);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[LocalizationService] RequestPickerRefresh error: {ex.Message}");
+        }
     }
 }

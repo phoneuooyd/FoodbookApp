@@ -1,12 +1,15 @@
 using System;
 using System.Linq;
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using CommunityToolkit.Maui.Views;
 using Foodbook.Models;
 using Foodbook.ViewModels;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
-using MauiAppTheme = Microsoft.Maui.ApplicationModel.AppTheme;
+using Microsoft.Maui.Devices;
+using Microsoft.Maui.Graphics;
 
 namespace Foodbook.Views.Components;
 
@@ -20,28 +23,37 @@ internal sealed class ColorOption
 public class CRUDComponentPopup : Popup
 {
     private readonly SettingsViewModel _vm;
+    private readonly TaskCompletionSource<object?> _tcs = new(); // Add task completion source
     private readonly ObservableCollection<ColorOption> _colorOptions = new(
         new[]
         {
-            new ColorOption{ Name="Czerwony", Hex="#E53935"},
-            new ColorOption{ Name="Ró¿owy", Hex="#D81B60"},
-            new ColorOption{ Name="Fioletowy", Hex="#8E24AA"},
-            new ColorOption{ Name="Indygo", Hex="#3949AB"},
-            new ColorOption{ Name="Niebieski", Hex="#1E88E5"},
-            new ColorOption{ Name="Jasny Niebieski", Hex="#039BE5"},
-            new ColorOption{ Name="Cyjan", Hex="#00ACC1"},
-            new ColorOption{ Name="Turkus", Hex="#00897B"},
-            new ColorOption{ Name="Zielony", Hex="#43A047"},
-            new ColorOption{ Name="Jasny Zielony", Hex="#7CB342"},
-            new ColorOption{ Name="Limonka", Hex="#C0CA33"},
-            new ColorOption{ Name="¯ó³ty", Hex="#FBC02D"},
-            new ColorOption{ Name="Pomarañczowy", Hex="#FB8C00"},
-            new ColorOption{ Name="G³êboki Pomarañcz", Hex="#F4511E"},
-            new ColorOption{ Name="Br¹zowy", Hex="#6D4C41"},
-            new ColorOption{ Name="Szary", Hex="#757575"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Red, Hex="#E53935"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Pink, Hex="#D81B60"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Purple, Hex="#8E24AA"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Indigo, Hex="#3949AB"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Blue, Hex="#1E88E5"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_LightBlue, Hex="#039BE5"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Cyan, Hex="#00ACC1"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Teal, Hex="#00897B"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Green, Hex="#43A047"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_LightGreen, Hex="#7CB342"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Lime, Hex="#C0CA33"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Yellow, Hex="#FBC02D"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Orange, Hex="#FB8C00"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_DeepOrange, Hex="#F4511E"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Brown, Hex="#6D4C41"},
+            new ColorOption{ Name=FoodbookApp.Localization.CRUDComponentPopupResources.Color_Gray, Hex="#757575"},
         });
 
     private RecipeLabel? _editing;
+    private bool _isAddingNew = false;
+
+    // Selection storage (acts as Select control)
+    private readonly HashSet<int> _selectedIds = new();
+    public IReadOnlyCollection<int> SelectedIds => _selectedIds;
+    
+    // Task to await for result
+    public Task<object?> ResultTask => _tcs.Task;
 
     // UI references
     private VerticalStackLayout _listHost = null!;
@@ -49,15 +61,21 @@ public class CRUDComponentPopup : Popup
     private Picker _colorPicker = null!;
     private Button _deleteButton = null!;
     private Button _saveButton = null!;
+    private Button _addButton = null!;
     private Border _detailsPanel = null!;
     private Grid _footerBar = null!;
 
-    public CRUDComponentPopup(SettingsViewModel vm)
+    public CRUDComponentPopup(SettingsViewModel vm, IEnumerable<int>? initiallySelectedIds = null)
     {
         _vm = vm;
         CanBeDismissedByTappingOutsideOfPopup = true;
         
-        // Match SimpleListPopup: zero padding and margin at popup level
+        if (initiallySelectedIds != null)
+        {
+            foreach (var id in initiallySelectedIds)
+                _selectedIds.Add(id);
+        }
+        
         Padding = 0;
         Margin = 0;
         
@@ -67,17 +85,18 @@ public class CRUDComponentPopup : Popup
 
     private View BuildRoot()
     {
-        double popupWidth = Math.Min(DeviceDisplay.Current.MainDisplayInfo.Width / DeviceDisplay.Current.MainDisplayInfo.Density * 0.9, 520);
+        double displayWidth = DeviceDisplay.Current.MainDisplayInfo.Width / DeviceDisplay.Current.MainDisplayInfo.Density;
+        double popupWidth = Math.Min(displayWidth * 0.92, 560);
 
         _listHost = new VerticalStackLayout { Spacing = 6 };
-        _nameEntry = new Entry { Placeholder = "Nazwa etykiety", BackgroundColor = Colors.Transparent };
-        _colorPicker = new Picker { Title = "Kolor", BackgroundColor = Colors.Transparent };
+        _nameEntry = new Entry { Placeholder = FoodbookApp.Localization.CRUDComponentPopupResources.NamePlaceholder, BackgroundColor = Colors.Transparent };
+        _colorPicker = new Picker { Title = FoodbookApp.Localization.CRUDComponentPopupResources.ColorLabel, BackgroundColor = Colors.Transparent };
         _colorPicker.ItemsSource = _colorOptions;
         _colorPicker.ItemDisplayBinding = new Binding(nameof(ColorOption.Name));
 
         _deleteButton = new Button
         {
-            Text = "Usuñ",
+            Text = FoodbookApp.Localization.CRUDComponentPopupResources.DeleteButton,
             BackgroundColor = Color.FromArgb("#C62D3A"),
             TextColor = Colors.White,
             CornerRadius = 8,
@@ -86,29 +105,30 @@ public class CRUDComponentPopup : Popup
         };
         _saveButton = new Button
         {
-            Text = "Zapisz",
+            Text = FoodbookApp.Localization.CRUDComponentPopupResources.SaveButton_Save,
             CornerRadius = 8,
             HeightRequest = 42
         };
-        // Default (edit) style is neutral; add-mode will switch to Primary
-        _saveButton.BackgroundColor = Color.FromArgb("#E0E0E0");
-        _saveButton.SetDynamicResource(Button.TextColorProperty, "PrimaryText");
+        _saveButton.StyleClass = new List<string> { "Secondary" };
+        
         var cancelButton = new Button
         {
-            Text = "Anuluj",
+            Text = FoodbookApp.Localization.CRUDComponentPopupResources.CancelButton,
             CornerRadius = 8,
             HeightRequest = 42
         };
-        // Make cancel clearly visible with neutral, less transparent background
-        cancelButton.BackgroundColor = Color.FromArgb("#D6D6D6");
-        cancelButton.SetDynamicResource(Button.TextColorProperty, "PrimaryText");
+        cancelButton.StyleClass = new List<string> { "Secondary" };
 
-        var addButton = new Button { Text = "+", WidthRequest = 44, HeightRequest = 44, CornerRadius = 22 };
-        // Neutralize Primary background for consistency
-        addButton.BackgroundColor = Color.FromArgb("#E0E0E0");
-        addButton.SetDynamicResource(Button.TextColorProperty, "PrimaryText");
+        _addButton = new Button 
+        { 
+            Text = FoodbookApp.Localization.CRUDComponentPopupResources.AddButton, 
+            WidthRequest = 44, 
+            HeightRequest = 44, 
+            CornerRadius = 22 
+        };
+        _addButton.StyleClass = new List<string> { "Secondary" };
 
-        addButton.Clicked += OnAddClicked;
+        _addButton.Clicked += OnAddClicked;
         _saveButton.Clicked += OnSaveClicked;
         _deleteButton.Clicked += OnDeleteClicked;
         cancelButton.Clicked += OnCancelClicked;
@@ -120,7 +140,6 @@ public class CRUDComponentPopup : Popup
             StrokeThickness = 1.5,
             StrokeShape = new RoundRectangle { CornerRadius = 12 }
         };
-        // Neutral background with Primary stroke
         _detailsPanel.SetDynamicResource(Border.BackgroundColorProperty, "PageBackgroundColor");
         _detailsPanel.SetDynamicResource(Border.StrokeProperty, "Primary");
 
@@ -142,10 +161,10 @@ public class CRUDComponentPopup : Popup
             RowSpacing = 8
         };
         
-        var nameLabel = new Label { Text = "Nazwa", FontSize = 12 };
+        var nameLabel = new Label { Text = FoodbookApp.Localization.CRUDComponentPopupResources.NameLabel, FontSize = 12 };
         nameLabel.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
         
-        var colorLabel = new Label { Text = "Kolor", FontSize = 12, Margin = new Thickness(0, 4, 0, 0) };
+        var colorLabel = new Label { Text = FoodbookApp.Localization.CRUDComponentPopupResources.ColorLabel, FontSize = 12, Margin = new Thickness(0, 4, 0, 0) };
         colorLabel.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
         
         gridDetails.Add(nameLabel, 0, 0); 
@@ -185,14 +204,14 @@ public class CRUDComponentPopup : Popup
         };
         var toolbarLabel = new Label
         {
-            Text = "Lista etykiet",
+            Text = string.Empty,
             FontSize = 16,
             FontAttributes = FontAttributes.Bold,
             VerticalOptions = LayoutOptions.Center
         };
         toolbarLabel.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
         toolbar.Add(toolbarLabel,0,0);
-        toolbar.Add(addButton,1,0);
+        toolbar.Add(_addButton,1,0);
 
         // Header
         var header = new Grid
@@ -206,24 +225,28 @@ public class CRUDComponentPopup : Popup
             Margin = new Thickness(0)
         };
         header.SetDynamicResource(BackgroundColorProperty, "ShellBackgroundColor");
-        var title = new Label { Text = "Etykiety", FontSize = 20, FontAttributes = FontAttributes.Bold, HorizontalTextAlignment = TextAlignment.Center, VerticalOptions = LayoutOptions.Center };
+        var title = new Label { Text = FoodbookApp.Localization.CRUDComponentPopupResources.Title, FontSize = 20, FontAttributes = FontAttributes.Bold, HorizontalTextAlignment = TextAlignment.Center, VerticalOptions = LayoutOptions.Center };
         title.SetDynamicResource(Label.TextColorProperty, "ShellTitleColor");
-        var closeBtn = new Button { Text = "X", WidthRequest = 32, HeightRequest = 32, CornerRadius = 16, BackgroundColor = Colors.Transparent };
+        var closeBtn = new Button { Text = FoodbookApp.Localization.CRUDComponentPopupResources.CloseButton, WidthRequest = 32, HeightRequest = 32, CornerRadius = 16, BackgroundColor = Colors.Transparent };
         closeBtn.SetDynamicResource(Button.TextColorProperty, "ShellTitleColor");
-        closeBtn.Clicked += async (_,__) => await CloseAsync();
+        closeBtn.Clicked += async (_,__) => await CloseWithResultAsync(_selectedIds.ToList());
         header.Add(title,0,0); header.Add(closeBtn,1,0);
 
-        // Body
-        var bodyContent = new VerticalStackLayout
+        // Labels list wrapped in ScrollView (pattern from FilterSortPopup)
+        var listScroll = new ScrollView
         {
-            Spacing = 8,
-            Children = { toolbar, new ScrollView { Content = _listHost, Padding = new Thickness(0,0,0,4) }, _detailsPanel, _footerBar }
+            Content = _listHost,
+            Padding = new Thickness(0,0,0,4),
+            HeightRequest = 330,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Default
         };
 
-        var body = new Grid
+        // Body content: editor (separate) and scrollable list below
+        var body = new VerticalStackLayout
         {
+            Spacing = 8,
             Padding = new Thickness(16, 12),
-            Children = { bodyContent }
+            Children = { toolbar, _detailsPanel, _footerBar, listScroll }
         };
 
         var mainStack = new VerticalStackLayout
@@ -238,7 +261,10 @@ public class CRUDComponentPopup : Popup
             StrokeShape = new RoundRectangle { CornerRadius = 16 },
             Padding = 0,
             WidthRequest = popupWidth,
-            MaximumWidthRequest = 520,
+            MinimumWidthRequest = 360,
+            MinimumHeightRequest = 480,
+            MaximumWidthRequest = 560,
+            MaximumHeightRequest = 630,
             Content = mainStack
         };
         outerBorder.SetDynamicResource(Border.BackgroundColorProperty, "PageBackgroundColor");
@@ -263,10 +289,9 @@ public class CRUDComponentPopup : Popup
             StrokeThickness = 2,
             Padding = new Thickness(10,6),
             StrokeShape = new RoundRectangle { CornerRadius = 10 },
-            BackgroundColor = Colors.Transparent // ensure no Primary background
+            BackgroundColor = Colors.Transparent
         };
-        // Neutral background, colored only the border for readability
-        border.Stroke = Color.FromArgb(lbl.ColorHex ?? "#757575");
+        UpdateBorderSelectionVisual(border, lbl);
 
         var grid = new Grid
         {
@@ -278,7 +303,6 @@ public class CRUDComponentPopup : Popup
             ColumnSpacing = 8
         };
 
-        // Colored dot (Border instead of Frame)
         var colorDot = new Border
         {
             WidthRequest = 16,
@@ -294,47 +318,76 @@ public class CRUDComponentPopup : Popup
         grid.Add(nameLabel,1,0);
 
         var tap = new TapGestureRecognizer();
-        tap.Tapped += (_,__) => StartEdit(lbl);
+        tap.Tapped += (_,__) => ToggleSelection(lbl, border);
         grid.GestureRecognizers.Add(tap);
+
+        var dtap = new TapGestureRecognizer { NumberOfTapsRequired = 2 };
+        dtap.Tapped += (_, __) => StartEdit(lbl);
+        grid.GestureRecognizers.Add(dtap);
 
         border.Content = grid;
         return border;
     }
 
+    private void ToggleSelection(RecipeLabel lbl, Border border)
+    {
+        if (_selectedIds.Contains(lbl.Id))
+            _selectedIds.Remove(lbl.Id);
+        else
+            _selectedIds.Add(lbl.Id);
+
+        UpdateBorderSelectionVisual(border, lbl);
+    }
+
+    private void UpdateBorderSelectionVisual(Border border, RecipeLabel lbl)
+    {
+        var isSelected = _selectedIds.Contains(lbl.Id);
+
+        if (isSelected)
+        {
+            var primary = Application.Current?.Resources.TryGetValue("Primary", out var c) == true ? (Color)c : Color.FromArgb("#FF6200");
+            border.Stroke = primary;
+        }
+        else
+        {
+            border.Stroke = Color.FromArgb(lbl.ColorHex ?? "#757575");
+        }
+    }
+
     private void OnAddClicked(object? sender, EventArgs e)
     {
+        if (_isAddingNew)
+        {
+            System.Diagnostics.Debug.WriteLine("CRUDComponentPopup: Add already in progress, ignoring click");
+            return;
+        }
+
+        _isAddingNew = true;
+        _addButton.IsEnabled = false;
+        
         _editing = null;
         _nameEntry.Text = string.Empty;
         _colorPicker.SelectedIndex = -1;
         _deleteButton.IsVisible = false;
-        _saveButton.Text = "Dodaj";
-        // In add mode, make the main action Primary (full button background)
-        if (Application.Current?.Resources.TryGetValue("Primary", out var primaryObj) == true && primaryObj is Color primaryColor)
-        {
-            _saveButton.BackgroundColor = primaryColor;
-        }
-        else
-        {
-            // fallback
-            _saveButton.BackgroundColor = Color.FromArgb("#FF6200");
-        }
-        _saveButton.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
-        _saveButton.SetDynamicResource(Button.TextColorProperty, "ButtonPrimaryText");
+        _saveButton.Text = FoodbookApp.Localization.CRUDComponentPopupResources.SaveButton_Add;
+        _saveButton.StyleClass = new List<string> { "Primary" };
+        
         ShowDetailsPanels();
     }
 
     private void StartEdit(RecipeLabel lbl)
     {
         _editing = lbl;
+        _isAddingNew = false;
+        _addButton.IsEnabled = false;
+        
         _nameEntry.Text = lbl.Name;
         var idx = _colorOptions.IndexOf(_colorOptions.FirstOrDefault(c => string.Equals(c.Hex, lbl.ColorHex, StringComparison.OrdinalIgnoreCase)) ?? _colorOptions.First());
         _colorPicker.SelectedIndex = idx;
         _deleteButton.IsVisible = true;
-        _saveButton.Text = "Zapisz";
-        // In edit mode, keep neutral style
-        _saveButton.ClearValue(Button.BackgroundColorProperty);
-        _saveButton.BackgroundColor = Color.FromArgb("#E0E0E0");
-        _saveButton.SetDynamicResource(Button.TextColorProperty, "PrimaryText");
+        _saveButton.Text = FoodbookApp.Localization.CRUDComponentPopupResources.SaveButton_Save;
+        _saveButton.StyleClass = new List<string> { "Secondary" };
+        
         ShowDetailsPanels();
     }
 
@@ -344,6 +397,7 @@ public class CRUDComponentPopup : Popup
         if (_vm.DeleteLabelCommand.CanExecute(null))
             _vm.DeleteLabelCommand.Execute(null);
         if (_editing == lbl) HideDetailsPanels();
+        _selectedIds.Remove(lbl.Id);
         BuildList();
     }
 
@@ -392,5 +446,21 @@ public class CRUDComponentPopup : Popup
         _detailsPanel.IsVisible = false;
         _footerBar.IsVisible = false;
         _editing = null;
+        _isAddingNew = false;
+        _addButton.IsEnabled = true;
+    }
+
+    private async Task CloseWithResultAsync(object? result)
+    {
+        try
+        {
+            if (!_tcs.Task.IsCompleted)
+                _tcs.SetResult(result);
+            await CloseAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[CRUDComponentPopup] Close error: {ex.Message}");
+        }
     }
 }

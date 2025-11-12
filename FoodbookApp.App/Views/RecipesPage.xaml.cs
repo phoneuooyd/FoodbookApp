@@ -7,6 +7,7 @@ using Foodbook.Models; // added for Recipe type
 using CommunityToolkit.Maui.Extensions;
 using Foodbook.Views.Components;
 using Microsoft.Extensions.DependencyInjection;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.Views;
 
@@ -15,6 +16,9 @@ public partial class RecipesPage : ContentPage
     private readonly RecipeViewModel _viewModel;
     private readonly PageThemeHelper _themeHelper;
     private bool _isInitialized;
+
+    // Guard to avoid opening FilterSortPopup multiple times rapidly
+    private bool _isFilterPopupOpening;
 
     public RecipesPage(RecipeViewModel viewModel)
     {
@@ -153,29 +157,48 @@ public partial class RecipesPage : ContentPage
     // Open filter/sort popup from breadcrumb image button
     private async void OnFilterSortClicked(object? sender, EventArgs e)
     {
+        if (_isFilterPopupOpening || !FilterSortPopup.TryAcquireOpen())
+            return;
+        _isFilterPopupOpening = true;
+
         try
         {
             // Labels available for filtering are managed in SettingsViewModel
             var settingsVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<SettingsViewModel>();
             var allLabels = settingsVm?.Labels?.ToList() ?? new List<RecipeLabel>();
 
+            // Ingredients from DB (not from recipe list)
+            var ingredientService = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IIngredientService>();
+            var allIngredients = ingredientService != null ? await ingredientService.GetIngredientsAsync() : new List<Ingredient>();
+
             var popup = new FilterSortPopup(
                 showLabels: true,
                 labels: allLabels,
                 preselectedLabelIds: _viewModel.SelectedLabelIds,
-                sortOrder: _viewModel.SortOrder);
+                sortOrder: _viewModel.SortOrder,
+                showIngredients: true,
+                ingredients: allIngredients,
+                preselectedIngredientNames: _viewModel.SelectedIngredientNames,
+                sortBy: _viewModel.CurrentSortBy,
+                showApplyButton: false);
 
             var hostPage = Application.Current?.MainPage ?? this;
             hostPage.ShowPopup(popup);
             var result = await popup.ResultTask;
             if (result != null)
             {
-                _viewModel.ApplySortingAndLabelFilter(result.SortOrder, result.SelectedLabelIds);
+                // Prefer SortBy (macros/name) when provided
+                _viewModel.ApplySortingLabelAndIngredientFilter(result.SortBy, result.SelectedLabelIds, result.SelectedIngredientNames);
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[RecipesPage] OnFilterSortClicked error: {ex.Message}");
+        }
+        finally
+        {
+            _isFilterPopupOpening = false;
+            FilterSortPopup.ReleaseOpen();
         }
     }
 }

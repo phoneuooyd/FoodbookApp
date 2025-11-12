@@ -124,4 +124,16 @@
   <data name="SearchArchivesButton" xml:space="preserve">
     <value>장치 파일 검색</value>
   </data>
+  <!-- New keys -->
+  <data name="ErrorLoadingList" xml:space="preserve"><value>목록을 불러오는 중 오류: {0}</value></data>
+  <data name="PickArchiveTitle" xml:space="preserve"><value>보관 선택 (.fbk/.zip)</value></data>
+  <data name="ManualSearchDone" xml:space="preserve"><value>선택한 보관이 목록에 추가되었습니다.</value></data>
+  <data name="ErrorTitle" xml:space="preserve"><value>오류</value></data>
+  <data name="InfoTitle" xml:space="preserve"><value>정보</value></data>
+  <data name="ManualSearchFailed" xml:space="preserve"><value>수동 검색 실패: {0}</value></data>
+  <data name="SavedMessage" xml:space="preserve"><value>저장됨: {0}</value></data>
+  <data name="ExportFailed" xml:space="preserve"><value>내보내기 실패: {0}</value></data>
+  <data name="ImportFailed" xml:space="preserve"><value>가져오기 실패: {0}</value></data>
+  <data name="DeleteFailed" xml:space="preserve"><value>삭제 실패: {0}</value></data>
+  <data name="RestoreFailed" xml:space="preserve"><value>복원 실패: {0}</value></data>
 </root>

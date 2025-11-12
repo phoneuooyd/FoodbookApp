@@ -7,6 +7,7 @@ using FoodbookApp;
 using Foodbook.Views.Components;
 using CommunityToolkit.Maui.Extensions;
 using Foodbook.Models;
+using Foodbook.Services;
 
 namespace Foodbook.Views;
 
@@ -15,6 +16,9 @@ public partial class IngredientsPage : ContentPage
     private readonly IngredientsViewModel _viewModel;
     private readonly PageThemeHelper _themeHelper;
     private bool _isInitialized;
+
+    // Expose current instance for direct refresh from other views/popups
+    public static IngredientsPage? Current { get; private set; }
 
     public IngredientsPage(IngredientsViewModel vm)
     {
@@ -40,8 +44,15 @@ public partial class IngredientsPage : ContentPage
     {
         base.OnAppearing();
         
+        Current = this; // register current instance for external refresh
+        
         // Initialize theme and font handling
         _themeHelper.Initialize();
+        
+        // Subscribe to global ingredients-changed event
+        AppEvents.IngredientsChangedAsync += OnIngredientsChangedAsync;
+        // Subscribe to single-ingredient saved event to force reload immediately
+        AppEvents.IngredientSaved += OnIngredientSaved;
         
         // Only load once or if explicitly needed
         if (!_isInitialized)
@@ -69,6 +80,51 @@ public partial class IngredientsPage : ContentPage
         
         // Cleanup theme and font handling
         _themeHelper.Cleanup();
+
+        // Unsubscribe to avoid leaks
+        AppEvents.IngredientsChangedAsync -= OnIngredientsChangedAsync;
+        AppEvents.IngredientSaved -= OnIngredientSaved;
+
+        if (Current == this)
+            Current = null;
+    }
+
+    // Direct refresh API used by other components
+    public async Task ForceReloadAsync()
+    {
+        try
+        {
+            await _viewModel.ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientsPage] ForceReloadAsync error: {ex.Message}");
+        }
+    }
+
+    private async Task OnIngredientsChangedAsync()
+    {
+        try
+        {
+            await _viewModel.ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientsPage] Reload on IngredientsChanged failed: {ex.Message}");
+        }
+    }
+
+    // Handler for AppEvents.IngredientSaved
+    private void OnIngredientSaved(int id)
+    {
+        try
+        {
+            MainThread.BeginInvokeOnMainThread(() => _ = ForceReloadAsync());
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientsPage] OnIngredientSaved handler error: {ex.Message}");
+        }
     }
 
     private async Task HandleEmptyIngredientsAsync()
@@ -99,7 +155,7 @@ public partial class IngredientsPage : ContentPage
     {
         try
         {
-            var popup = new FilterSortPopup(showLabels: false, labels: null, preselectedLabelIds: null, sortOrder: _viewModel.SortOrder);
+            var popup = new FilterSortPopup(showLabels: false, labels: null, preselectedLabelIds: null, sortOrder: _viewModel.SortOrder, showApplyButton: false);
             var hostPage = Application.Current?.MainPage ?? this;
             hostPage.ShowPopup(popup);
             var result = await popup.ResultTask;

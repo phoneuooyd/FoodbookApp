@@ -255,6 +255,7 @@ namespace Foodbook.ViewModels
             public Task<bool> EnsureDatabaseSchemaAsync() => Task.FromResult(true);
             public Task<bool> MigrateDatabaseAsync() => Task.FromResult(true);
             public Task<bool> ResetDatabaseAsync() => Task.FromResult(true);
+            public Task<bool> ConditionalDeploymentAsync() => Task.FromResult(true);
         }
 
         private sealed class NullLabelService : IRecipeLabelService
@@ -434,11 +435,11 @@ namespace Foodbook.ViewModels
             {
                 await EnsureIngredientsAreCachedAsync();
                 
-                // Do not preselect the first available ingredient; start with empty name and defaults
+                // Pre-fill default quantity 100 and unit Gram so per-100g nutrition shows immediately
                 var ingredient = new Ingredient 
                 { 
                     Name = string.Empty, 
-                    Quantity = 1, 
+                    Quantity = 100, 
                     Unit = Unit.Gram, 
                     Calories = 0, 
                     Protein = 0, 
@@ -571,17 +572,19 @@ namespace Foodbook.ViewModels
                     ingredient.Protein = existingIngredient.Protein;
                     ingredient.Fat = existingIngredient.Fat;
                     ingredient.Carbs = existingIngredient.Carbs;
+                    ingredient.UnitWeight = existingIngredient.UnitWeight;
                 }
                 else
                 {
-                    // Reset wartości dla nieistniejących składników
+                    // Reset values for non-existing items
                     ingredient.Calories = 0;
                     ingredient.Protein = 0;
                     ingredient.Fat = 0;
                     ingredient.Carbs = 0;
+                    ingredient.UnitWeight = 1.0;
                 }
 
-                // Wyzwól przeliczenie z debouncing
+                // Immediately schedule nutritional recalculation so Display* update now
                 await ScheduleNutritionalCalculationAsync();
             }
             catch (Exception ex)
@@ -612,9 +615,10 @@ namespace Foodbook.ViewModels
                         ingredient.Protein = dbIngredient.Protein;
                         ingredient.Fat = dbIngredient.Fat;
                         ingredient.Carbs = dbIngredient.Carbs;
+                        ingredient.UnitWeight = dbIngredient.UnitWeight;
                     }
 
-                    double factor = GetUnitConversionFactor(ingredient.Unit, ingredient.Quantity);
+                    double factor = GetUnitConversionFactor(ingredient.Unit, ingredient.Quantity, ingredient.UnitWeight);
                     
                     totalCalories += ingredient.Calories * factor;
                     totalProtein += ingredient.Protein * factor;
@@ -645,7 +649,7 @@ namespace Foodbook.ViewModels
             }
         }
 
-        private double GetUnitConversionFactor(Unit unit, double quantity)
+        private double GetUnitConversionFactor(Unit unit, double quantity, double unitWeight)
         {
             try
             {
@@ -654,7 +658,7 @@ namespace Foodbook.ViewModels
                 {
                     Unit.Gram => quantity / 100.0,        // wartości na 100g
                     Unit.Milliliter => quantity / 100.0,  // wartości na 100ml  
-                    Unit.Piece => quantity,               // wartości na 1 sztukę
+                    Unit.Piece => unitWeight > 0 ? (quantity * unitWeight) / 100.0 : quantity, // estimate weight
                     _ => quantity / 100.0
                 };
             }
@@ -947,11 +951,14 @@ namespace Foodbook.ViewModels
         {
             try
             {
-                await EnsureIngredientsAreCachedAsync();
-                
+                // Always fetch fresh data from the service, bypassing cache
+                var freshIngredients = await _ingredientService.GetIngredientsAsync();
                 AvailableIngredientNames.Clear();
-                foreach (var ing in _cachedIngredients)
+                foreach (var ing in freshIngredients)
                     AvailableIngredientNames.Add(ing.Name);
+                // Also update the local cache for consistency
+                _cachedIngredients = freshIngredients.ToList();
+                _lastCacheUpdate = DateTime.Now;
             }
             catch (Exception ex)
             {
@@ -993,6 +1000,14 @@ namespace Foodbook.ViewModels
             {
                 System.Diagnostics.Debug.WriteLine($"Error in SelectTab: {ex.Message}");
             }
+        }
+
+        // Public method to invalidate the ingredients cache
+        public void InvalidateIngredientsCache()
+        {
+            _cachedIngredients.Clear();
+            _lastCacheUpdate = DateTime.MinValue;
+            System.Diagnostics.Debug.WriteLine("[AddRecipeViewModel] Ingredients cache invalidated");
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

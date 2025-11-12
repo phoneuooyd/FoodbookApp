@@ -1,11 +1,14 @@
-using Microsoft.Maui.Controls;
-using Foodbook.Services;
-using Foodbook.ViewModels;
-using Foodbook.Models;
-using Foodbook.Views.Base;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Maui.Controls;
+using Foodbook.Models;
+using Foodbook.ViewModels;
 using Foodbook.Views.Components;
-using CommunityToolkit.Maui.Extensions;
+using Foodbook.Views.Base;
+using CommunityToolkit.Maui.Views;
+using CommunityToolkit.Maui.Extensions; // For ShowPopupAsync extension
 
 namespace Foodbook.Views
 {
@@ -19,8 +22,10 @@ namespace Foodbook.Views
         private IDispatcherTimer? _valueChangeTimer;
         private bool _isInitialized;
         private bool _hasEverLoaded;
-        private bool _isUpdatingLabelsSelection; // Flag to prevent circular updates
         private bool _isModalOpen = false; // Flag to prevent multiple modal opens
+
+        // drag state for reordering ingredients
+        private Ingredient? _draggingIngredient;
 
         public AddRecipePage(AddRecipeViewModel vm)
         {
@@ -36,6 +41,7 @@ namespace Foodbook.Views
                 base.OnAppearing();
                 _themeHelper.Initialize();
                 _themeHelper.ThemeChanged += OnThemeChanged;
+                _themeHelper.CultureChanged += OnCultureChanged;
 
                 if (!_hasEverLoaded)
                 {
@@ -49,8 +55,6 @@ namespace Foodbook.Views
                     if (RecipeId > 0 && ViewModel != null)
                     {
                         await ViewModel.LoadRecipeAsync(RecipeId);
-                        // Synchronize CollectionView selection with ViewModel after loading
-                        SyncLabelsSelection();
                     }
 
                     // If navigation passed FolderId, preselect it
@@ -66,8 +70,6 @@ namespace Foodbook.Views
                     System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Skipping reset on re-appear");
                     // Refresh labels list in case user added/removed labels
                     await (ViewModel?.LoadAvailableLabelsAsync() ?? Task.CompletedTask);
-                    // Re-sync selection after refresh
-                    SyncLabelsSelection();
                 }
             }
             catch (Exception ex)
@@ -84,9 +86,10 @@ namespace Foodbook.Views
         {
             base.OnDisappearing();
             _themeHelper.ThemeChanged -= OnThemeChanged;
+            _themeHelper.CultureChanged -= OnCultureChanged;
             _themeHelper.Cleanup();
             
-            System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Disappearing - preserving current state");
+            System.Diagnostics.Debug.WriteLine("? AddRecipePage: Disappearing - preserving current state");
         }
 
         private void OnThemeChanged(object? sender, EventArgs e)
@@ -105,6 +108,91 @@ namespace Foodbook.Views
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[AddRecipePage] OnThemeChanged error: {ex.Message}");
+            }
+        }
+
+        private void OnCultureChanged(object? sender, EventArgs e)
+        {
+            try
+            {
+                if (ViewModel == null) return;
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    System.Diagnostics.Debug.WriteLine("[AddRecipePage] Culture changed - refreshing unit pickers");
+                    
+                    // Force refresh of all SimplePicker controls by triggering property changes
+                    // This will cause the DisplayText to be recalculated with the new culture
+                    RefreshUnitPickers();
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] OnCultureChanged error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Refresh all unit pickers by finding SimplePicker controls in the visual tree
+        /// </summary>
+        private void RefreshUnitPickers()
+        {
+            try
+            {
+                // Find all SimplePicker controls and trigger their DisplayText refresh
+                var pickers = FindVisualChildren<SimplePicker>(this);
+                foreach (var picker in pickers)
+                {
+                    picker.RefreshDisplayText();
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] Refreshed {pickers.Count()} unit pickers");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] Error refreshing unit pickers: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Helper method to find all visual children of a specific type
+        /// </summary>
+        private static IEnumerable<T> FindVisualChildren<T>(Element element) where T : Element
+        {
+            if (element is T match)
+                yield return match;
+
+            // Special handling for TabComponent - search all tabs, not just the visible one
+            if (element is TabComponent tabComponent)
+            {
+                foreach (var tab in tabComponent.Tabs)
+                {
+                    if (tab.Content != null)
+                    {
+                        foreach (var descendant in FindVisualChildren<T>(tab.Content))
+                            yield return descendant;
+                    }
+                }
+            }
+            else if (element is Layout layout)
+            {
+                foreach (var child in layout.Children)
+                {
+                    if (child is Element childElement)
+                    {
+                        foreach (var descendant in FindVisualChildren<T>(childElement))
+                            yield return descendant;
+                    }
+                }
+            }
+            else if (element is ContentView contentView && contentView.Content != null)
+            {
+                foreach (var descendant in FindVisualChildren<T>(contentView.Content))
+                    yield return descendant;
+            }
+            else if (element is ScrollView scrollView && scrollView.Content != null)
+            {
+                foreach (var descendant in FindVisualChildren<T>(scrollView.Content))
+                    yield return descendant;
             }
         }
 
@@ -236,163 +324,112 @@ namespace Foodbook.Views
             }
         }
 
-        // Synchronize CollectionView selected items with ViewModel
-        private void SyncLabelsSelection()
+        // Drag start for ingredient reordering
+        private void OnIngredientDragStarting(object? sender, DragStartingEventArgs e)
         {
-            try
+            if (sender is Element el && el.BindingContext is Ingredient ing)
             {
-                if (ViewModel == null || _isUpdatingLabelsSelection) return;
-
-                _isUpdatingLabelsSelection = true;
-                System.Diagnostics.Debug.WriteLine($"??? Syncing labels selection: {ViewModel.SelectedLabels.Count} labels");
-
-                // Clear current selection
-                LabelsCollectionView.SelectedItems?.Clear();
-
-                // Select items that are in ViewModel.SelectedLabels
-                foreach (var label in ViewModel.SelectedLabels)
-                {
-                    // Find matching label in AvailableLabels by Id
-                    var matchingLabel = ViewModel.AvailableLabels.FirstOrDefault(l => l.Id == label.Id);
-                    if (matchingLabel != null)
-                    {
-                        LabelsCollectionView.SelectedItems?.Add(matchingLabel);
-                        System.Diagnostics.Debug.WriteLine($"   ? Selected: {matchingLabel.Name}");
-                    }
-                }
-
-                _isUpdatingLabelsSelection = false;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"? Error syncing labels selection: {ex.Message}");
-                _isUpdatingLabelsSelection = false;
+                _draggingIngredient = ing;
+                e.Data.Properties["SourceItem"] = ing;
             }
         }
 
-        // Handle CollectionView selection changes
-        private void OnLabelsSelectionChanged(object sender, SelectionChangedEventArgs e)
+        // Insert zone handlers
+        private void OnIngredientTopInsertDragOver(object? sender, DragEventArgs e)
+        {
+            if (sender is Element el && el.BindingContext is Ingredient ing)
+            {
+                ing.ShowInsertBefore = true;
+            }
+        }
+        private void OnIngredientTopInsertDragLeave(object? sender, DragEventArgs e)
+        {
+            if (sender is Element el && el.BindingContext is Ingredient ing)
+            {
+                ing.ShowInsertBefore = false;
+            }
+        }
+        private void OnIngredientTopInsertDrop(object? sender, DropEventArgs e)
         {
             try
             {
-                if (ViewModel == null || _isUpdatingLabelsSelection) return;
-
-                _isUpdatingLabelsSelection = true;
-                System.Diagnostics.Debug.WriteLine("??? Labels selection changed");
-
-                // Clear and update SelectedLabels in ViewModel
-                ViewModel.SelectedLabels.Clear();
-                
-                foreach (var item in e.CurrentSelection)
+                if (ViewModel?.Ingredients == null || _draggingIngredient == null) return;
+                if (sender is Element el && el.BindingContext is Ingredient target)
                 {
-                    if (item is RecipeLabel label)
-                    {
-                        ViewModel.SelectedLabels.Add(label);
-                        System.Diagnostics.Debug.WriteLine($"   ? Added to ViewModel: {label.Name}");
-                    }
+                    target.ShowInsertBefore = false;
+                    ReorderIngredient(_draggingIngredient, target, before: true);
                 }
-
-                System.Diagnostics.Debug.WriteLine($"??? Total selected labels: {ViewModel.SelectedLabels.Count}");
-                
-                // Update visual state of all label frames
-                UpdateLabelFramesVisualState();
-                
-                _isUpdatingLabelsSelection = false;
             }
-            catch (Exception ex)
+            finally
             {
-                System.Diagnostics.Debug.WriteLine($"? Error handling labels selection: {ex.Message}");
-                _isUpdatingLabelsSelection = false;
+                _draggingIngredient = null;
             }
         }
 
-        // Update border colors of all label frames based on selection
-        private void UpdateLabelFramesVisualState()
+        private void OnIngredientBottomInsertDragOver(object? sender, DragEventArgs e)
+        {
+            if (sender is Element el && el.BindingContext is Ingredient ing)
+            {
+                ing.ShowInsertAfter = true;
+            }
+        }
+        private void OnIngredientBottomInsertDragLeave(object? sender, DragEventArgs e)
+        {
+            if (sender is Element el && el.BindingContext is Ingredient ing)
+            {
+                ing.ShowInsertAfter = false;
+            }
+        }
+        private void OnIngredientBottomInsertDrop(object? sender, DropEventArgs e)
         {
             try
             {
-                if (ViewModel == null) return;
-
-                MainThread.BeginInvokeOnMainThread(() =>
+                if (ViewModel?.Ingredients == null || _draggingIngredient == null) return;
+                if (sender is Element el && el.BindingContext is Ingredient target)
                 {
-                    var selectedIds = ViewModel.SelectedLabels.Select(l => l.Id).ToHashSet();
-                    
-                    // Iterate through all items in CollectionView
-                    for (int i = 0; i < ViewModel.AvailableLabels.Count; i++)
-                    {
-                        var label = ViewModel.AvailableLabels[i];
-                        
-                        // Try to find the visual element for this item
-                        // Note: This is a workaround since CollectionView doesn't expose direct access to item containers
-                        // We'll use a different approach - iterate through visual tree
-                    }
-                    
-                    // Alternative: Force CollectionView to update its item visuals
-                    UpdateAllFrameBorders(LabelsCollectionView, selectedIds);
-                });
+                    target.ShowInsertAfter = false;
+                    ReorderIngredient(_draggingIngredient, target, before: false);
+                }
             }
-            catch (Exception ex)
+            finally
             {
-                System.Diagnostics.Debug.WriteLine($"? Error updating label frames visual state: {ex.Message}");
+                _draggingIngredient = null;
             }
         }
 
-        // Recursively find and update all Frame elements in CollectionView
-        private void UpdateAllFrameBorders(Element element, HashSet<int> selectedIds)
+        private void ReorderIngredient(Ingredient source, Ingredient target, bool before)
         {
-            try
-            {
-                if (element is Frame frame && frame.BindingContext is RecipeLabel label)
-                {
-                    // Update border color based on selection
-                    var primaryColor = Application.Current?.Resources.TryGetValue("Primary", out var color) == true 
-                        ? (Color)color 
-                        : Color.FromArgb("#FF6200");
-                    
-                    frame.BorderColor = selectedIds.Contains(label.Id) ? primaryColor : Colors.Transparent;
-                }
+            if (ViewModel == null) return;
+            var items = ViewModel.Ingredients;
+            if (source == target) return;
 
-                // Recursively process children
-                if (element is Layout layout)
-                {
-                    foreach (var child in layout.Children)
-                    {
-                        if (child is Element childElement)
-                        {
-                            UpdateAllFrameBorders(childElement, selectedIds);
-                        }
-                    }
-                }
-                else if (element is ContentView contentView && contentView.Content != null)
-                {
-                    UpdateAllFrameBorders(contentView.Content, selectedIds);
-                }
-                else if (element is ScrollView scrollView && scrollView.Content != null)
-                {
-                    UpdateAllFrameBorders(scrollView.Content, selectedIds);
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"? Error in UpdateAllFrameBorders: {ex.Message}");
-            }
+            var oldIndex = items.IndexOf(source);
+            var targetIndex = items.IndexOf(target);
+            if (oldIndex < 0 || targetIndex < 0) return;
+
+            if (!before) targetIndex += 1; // after
+
+            // adjust for removal when moving forward
+            if (oldIndex < targetIndex) targetIndex--;
+
+            items.Move(oldIndex, targetIndex);
+
+            // trigger recalculation to update nutrition display order if needed
+            _ = ViewModel.RecalculateNutritionalValuesAsync();
         }
 
-        // Open labels management popup
+        // Open labels management popup (also acts as selector)
         private async void OnManageLabelsClicked(object sender, EventArgs e)
         {
             try
             {
-                // Prevent multiple modal opens
                 if (_isModalOpen)
                 {
                     System.Diagnostics.Debug.WriteLine("Modal already open, ignoring click");
                     return;
                 }
-
                 _isModalOpen = true;
 
-                // Get SettingsViewModel from DI
                 var settingsVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<SettingsViewModel>();
                 if (settingsVm == null)
                 {
@@ -400,14 +437,27 @@ namespace Foodbook.Views
                     return;
                 }
 
-                var popup = new CRUDComponentPopup(settingsVm);
-                var hostPage = Application.Current?.Windows.FirstOrDefault()?.Page ?? this;
-                await hostPage.ShowPopupAsync(popup);
+                var initiallySelected = ViewModel?.SelectedLabels.Select(l => l.Id).ToList() ?? new List<int>();
+                var popup = new CRUDComponentPopup(settingsVm, initiallySelected);
+
+                // Use extension method from CommunityToolkit.Maui.Extensions and await ResultTask
+                var showTask = this.ShowPopupAsync(popup);
+                var resultTask = popup.ResultTask;
                 
-                // Refresh labels list after popup closes
-                await (ViewModel?.LoadAvailableLabelsAsync() ?? Task.CompletedTask);
-                // Re-sync selection after refresh
-                SyncLabelsSelection();
+                // Wait for either popup to close or result to be set
+                await Task.WhenAny(showTask, resultTask);
+                
+                var result = resultTask.IsCompleted ? await resultTask : null;
+
+                // Handle result
+                if (result is IEnumerable<int> selectedIds && ViewModel != null)
+                {
+                    await ViewModel.LoadAvailableLabelsAsync();
+                    var idSet = selectedIds.ToHashSet();
+                    ViewModel.SelectedLabels.Clear();
+                    foreach (var lbl in ViewModel.AvailableLabels.Where(l => idSet.Contains(l.Id)))
+                        ViewModel.SelectedLabels.Add(lbl);
+                }
             }
             catch (Exception ex)
             {
@@ -416,45 +466,7 @@ namespace Foodbook.Views
             }
             finally
             {
-                // Always reset the flag, even if an error occurred
                 _isModalOpen = false;
-            }
-        }
-
-        // Toggle selection when a label chip is tapped
-        private void OnLabelTapped(object? sender, TappedEventArgs e)
-        {
-            try
-            {
-                if (ViewModel == null) return;
-
-                // Resolve tapped item from BindingContext of Border
-                if (sender is Element element && element.BindingContext is RecipeLabel tappedLabel)
-                {
-                    var selected = LabelsCollectionView.SelectedItems;
-
-                    // Toggle: if selected -> remove; else -> add
-                    var alreadySelected = selected?.OfType<RecipeLabel>().Any(l => l.Id == tappedLabel.Id) == true;
-                    if (alreadySelected)
-                    {
-                        // Remove from CollectionView selection
-                        selected?.Remove(tappedLabel);
-                        // Remove from ViewModel selection
-                        var vmItem = ViewModel.SelectedLabels.FirstOrDefault(l => l.Id == tappedLabel.Id);
-                        if (vmItem != null) ViewModel.SelectedLabels.Remove(vmItem);
-                    }
-                    else
-                    {
-                        selected?.Add(tappedLabel);
-                        // Keep VM in sync (avoid duplicates by Id)
-                        if (!ViewModel.SelectedLabels.Any(l => l.Id == tappedLabel.Id))
-                            ViewModel.SelectedLabels.Add(tappedLabel);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"? Error in OnLabelTapped: {ex.Message}");
             }
         }
     }

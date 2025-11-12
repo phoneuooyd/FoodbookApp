@@ -1,9 +1,13 @@
 using Microsoft.Maui.Controls;
 using Foodbook.ViewModels;
 using Foodbook.Views.Base;
+using Foodbook.Views.Components;
 using System.Threading.Tasks;
 using Foodbook.Models;
 using FoodbookApp;
+using CommunityToolkit.Maui.Views;
+using System.ComponentModel;
+using System.Threading.Tasks;
 
 namespace Foodbook.Views;
 
@@ -18,6 +22,52 @@ public partial class IngredientFormPage : ContentPage
         InitializeComponent();
         BindingContext = vm;
         _themeHelper = new PageThemeHelper();
+
+        // Subscribe to ViewModel events (if we expose Saved event)
+        try
+        {
+            vm.PropertyChanged += OnVmPropertyChanged;
+        }
+        catch { }
+    }
+
+    // Returns a task that completes when ViewModel raises SavedAsync or the page disappears
+    public Task AwaitSaveAsync(int timeoutMs = 30000)
+    {
+        var tcs = new TaskCompletionSource();
+
+        void OnSavedHandler()
+        {
+            try { tcs.TrySetResult(); } catch { }
+        }
+
+        void OnPageDisappearing(object? s, EventArgs e)
+        {
+            try { tcs.TrySetResult(); } catch { }
+            try { this.Disappearing -= OnPageDisappearing; } catch { }
+        }
+
+        if (ViewModel != null)
+        {
+            // Subscribe to SavedAsync by adding an async handler that sets the TCS
+            ViewModel.SavedAsync += async () => { OnSavedHandler(); await Task.CompletedTask; };
+        }
+
+        this.Disappearing += OnPageDisappearing;
+
+        // Timeout fallback
+        var ct = new CancellationTokenSource(timeoutMs);
+        ct.Token.Register(() => tcs.TrySetResult());
+
+        return tcs.Task;
+    }
+
+    private async void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(IngredientFormViewModel.ValidationMessage))
+        {
+            // ignore
+        }
     }
 
     protected override void OnAppearing()
@@ -27,6 +77,7 @@ public partial class IngredientFormPage : ContentPage
         // Initialize theme and font handling
         _themeHelper.Initialize();
         _themeHelper.ThemeChanged += OnThemeChanged;
+        _themeHelper.CultureChanged += OnCultureChanged;
     }
 
     protected override void OnDisappearing()
@@ -35,6 +86,7 @@ public partial class IngredientFormPage : ContentPage
         
         // Cleanup theme and font handling
         _themeHelper.ThemeChanged -= OnThemeChanged;
+        _themeHelper.CultureChanged -= OnCultureChanged;
         _themeHelper.Cleanup();
     }
 
@@ -52,6 +104,90 @@ public partial class IngredientFormPage : ContentPage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] OnThemeChanged error: {ex.Message}");
+        }
+    }
+
+    private void OnCultureChanged(object? sender, EventArgs e)
+    {
+        try
+        {
+            if (ViewModel == null) return;
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                System.Diagnostics.Debug.WriteLine("[IngredientFormPage] Culture changed - refreshing unit pickers");
+                
+                // Force refresh of all SimplePicker controls by triggering property changes
+                RefreshUnitPickers();
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] OnCultureChanged error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Refresh all unit pickers by finding SimplePicker controls in the visual tree
+    /// </summary>
+    private void RefreshUnitPickers()
+    {
+        try
+        {
+            // Find all SimplePicker controls and trigger their DisplayText refresh
+            var pickers = FindVisualChildren<SimplePicker>(this);
+            foreach (var picker in pickers)
+            {
+                picker.RefreshDisplayText();
+            }
+            
+            System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] Refreshed {pickers.Count()} unit pickers");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] Error refreshing unit pickers: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Helper method to find all visual children of a specific type
+    /// </summary>
+    private static IEnumerable<T> FindVisualChildren<T>(Element element) where T : Element
+    {
+        if (element is T match)
+            yield return match;
+
+        // Special handling for TabComponent - search all tabs, not just the visible one
+        if (element is TabComponent tabComponent)
+        {
+            foreach (var tab in tabComponent.Tabs)
+            {
+                if (tab.Content != null)
+                {
+                    foreach (var descendant in FindVisualChildren<T>(tab.Content))
+                        yield return descendant;
+                }
+            }
+        }
+        else if (element is Layout layout)
+        {
+            foreach (var child in layout.Children)
+            {
+                if (child is Element childElement)
+                {
+                    foreach (var descendant in FindVisualChildren<T>(childElement))
+                        yield return descendant;
+                }
+            }
+        }
+        else if (element is ContentView contentView && contentView.Content != null)
+        {
+            foreach (var descendant in FindVisualChildren<T>(contentView.Content))
+                yield return descendant;
+        }
+        else if (element is ScrollView scrollView && scrollView.Content != null)
+        {
+            foreach (var descendant in FindVisualChildren<T>(scrollView.Content))
+                yield return descendant;
         }
     }
 

@@ -25,13 +25,22 @@
         </DataTemplate>
     </ContentPage.Resources>
 
-    <!-- Generic List Component -->
-    <components:GenericListComponent 
-        ItemsSource="{Binding Plans}"
-        ItemTemplate="{StaticResource PlanItemTemplate}"
-        IsRefreshing="False"
-        EmptyTitle="{loc:Translate Resource=ShoppingListPageResources, Key=EmptyTitle}"
-        EmptyHint="{loc:Translate Resource=ShoppingListPageResources, Key=EmptyHint}"
-        IsVisible="True" />
+    <!-- Grid to hold list and FAB -->
+    <Grid RowDefinitions="*">
+        <!-- Generic List Component -->
+        <components:GenericListComponent 
+            Grid.Row="0"
+            ItemsSource="{Binding Plans}"
+            ItemTemplate="{StaticResource PlanItemTemplate}"
+            IsRefreshing="False"
+            EmptyTitle="{loc:Translate Resource=ShoppingListPageResources, Key=EmptyTitle}"
+            EmptyHint="{loc:Translate Resource=ShoppingListPageResources, Key=EmptyHint}"
+            IsVisible="True" />
+        
+        <!-- Floating Action Button Component -->
+        <components:FloatingActionButtonComponent 
+            Grid.Row="0"
+            Command="{Binding CreateShoppingListCommand}" />
+    </Grid>
         
 </ContentPage>

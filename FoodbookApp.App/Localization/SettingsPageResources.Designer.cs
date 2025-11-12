@@ -268,6 +268,15 @@ namespace FoodbookApp.Localization {
         }
         
         /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Open data archive.
+        /// </summary>
+        internal static string DataExportButton {
+            get {
+                return ResourceManager.GetString("DataExportButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         /// Wyszukuje zlokalizowany ciąg podobny do ciągu System Default.
         /// </summary>
         internal static string FontFamilyDefault {

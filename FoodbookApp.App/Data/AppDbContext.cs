@@ -1,5 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Foodbook.Models;
+using System.IO;
+#if ANDROID
+using Microsoft.Maui.Storage;
+#endif
 
 namespace Foodbook.Data
 {
@@ -13,7 +17,25 @@ namespace Foodbook.Data
         public DbSet<Folder> Folders => Set<Folder>();
         public DbSet<RecipeLabel> RecipeLabels => Set<RecipeLabel>();
 
+        // Used by DI at runtime
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+
+        // Fallback constructor for design-time tooling (dotnet-ef) to avoid requiring IDesignTimeDbContextFactory
+        public AppDbContext() { }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            // Configure only if not already configured by DI
+            if (!optionsBuilder.IsConfigured)
+            {
+#if ANDROID
+                var dbPath = Path.Combine(FileSystem.AppDataDirectory, "foodbookapp.db");
+#else
+                var dbPath = Path.Combine(Directory.GetCurrentDirectory(), "foodbook.dev.db");
+#endif
+                optionsBuilder.UseSqlite($"Data Source={dbPath}");
+            }
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -27,12 +49,10 @@ namespace Foodbook.Data
                 .Property(i => i.RecipeId)
                 .IsRequired(false);
 
-            // Add indexes for better query performance
             modelBuilder.Entity<Ingredient>()
                 .HasIndex(i => i.Name)
                 .HasDatabaseName("IX_Ingredients_Name");
 
-            // Composite index for filtering standalone ingredients and ordering by name
             modelBuilder.Entity<Ingredient>()
                 .HasIndex(i => new { i.RecipeId, i.Name })
                 .HasDatabaseName("IX_Ingredients_RecipeId_Name");
@@ -42,25 +62,32 @@ namespace Foodbook.Data
                 .WithMany()
                 .HasForeignKey(pm => pm.RecipeId);
 
-            // Index for recipe searches
+            modelBuilder.Entity<PlannedMeal>()
+                .HasOne<Plan>()
+                .WithMany()
+                .HasForeignKey(pm => pm.PlanId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             modelBuilder.Entity<Recipe>()
                 .HasIndex(r => r.Name)
                 .HasDatabaseName("IX_Recipes_Name");
 
-            // ShoppingListItem configuration
+            modelBuilder.Entity<Plan>()
+                .Property(p => p.Type)
+                .HasConversion<int>()
+                .HasDefaultValue(PlanType.Planner);
+
             modelBuilder.Entity<ShoppingListItem>()
                 .HasOne(sli => sli.Plan)
                 .WithMany()
                 .HasForeignKey(sli => sli.PlanId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Composite unique index for shopping list items
             modelBuilder.Entity<ShoppingListItem>()
                 .HasIndex(sli => new { sli.PlanId, sli.IngredientName, sli.Unit })
                 .IsUnique()
                 .HasDatabaseName("IX_ShoppingListItems_PlanId_IngredientName_Unit");
 
-            // Folders
             modelBuilder.Entity<Folder>()
                 .HasOne(f => f.ParentFolder)
                 .WithMany(f => f.SubFolders)
@@ -85,7 +112,6 @@ namespace Foodbook.Data
                 .HasIndex(r => r.FolderId)
                 .HasDatabaseName("IX_Recipes_FolderId");
 
-            // Recipe labels: many-to-many
             modelBuilder.Entity<Recipe>()
                 .HasMany(r => r.Labels)
                 .WithMany()

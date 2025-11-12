@@ -78,4 +78,16 @@
   <data name="SearchArchivesButton" xml:space="preserve">
     <value>Gerätedateien durchsuchen</value>
   </data>
+  <!-- New keys -->
+  <data name="ErrorLoadingList" xml:space="preserve"><value>Fehler beim Laden der Liste: {0}</value></data>
+  <data name="PickArchiveTitle" xml:space="preserve"><value>Archiv auswählen (.fbk/.zip)</value></data>
+  <data name="ManualSearchDone" xml:space="preserve"><value>Ausgewählte Archive wurden zur Liste hinzugefügt.</value></data>
+  <data name="ErrorTitle" xml:space="preserve"><value>Fehler</value></data>
+  <data name="InfoTitle" xml:space="preserve"><value>Info</value></data>
+  <data name="ManualSearchFailed" xml:space="preserve"><value>Manuelle Suche fehlgeschlagen: {0}</value></data>
+  <data name="SavedMessage" xml:space="preserve"><value>Gespeichert: {0}</value></data>
+  <data name="ExportFailed" xml:space="preserve"><value>Export fehlgeschlagen: {0}</value></data>
+  <data name="ImportFailed" xml:space="preserve"><value>Import fehlgeschlagen: {0}</value></data>
+  <data name="DeleteFailed" xml:space="preserve"><value>Löschen fehlgeschlagen: {0}</value></data>
+  <data name="RestoreFailed" xml:space="preserve"><value>Wiederherstellung fehlgeschlagen: {0}</value></data>
 </root>

@@ -35,6 +35,9 @@ namespace FoodbookApp.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Order")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("ParentFolderId")
                         .HasColumnType("INTEGER");
 
@@ -80,6 +83,9 @@ namespace FoodbookApp.Data.Migrations
                     b.Property<int>("Unit")
                         .HasColumnType("INTEGER");
 
+                    b.Property<double>("UnitWeight")
+                        .HasColumnType("REAL");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
@@ -103,8 +109,16 @@ namespace FoodbookApp.Data.Migrations
                     b.Property<bool>("IsArchived")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("LinkedShoppingListPlanId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("Type")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
 
                     b.HasKey("Id");
 
@@ -120,6 +134,9 @@ namespace FoodbookApp.Data.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("PlanId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Portions")
                         .HasColumnType("INTEGER");
 
@@ -127,6 +144,8 @@ namespace FoodbookApp.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PlanId");
 
                     b.HasIndex("RecipeId");
 
@@ -272,6 +291,11 @@ namespace FoodbookApp.Data.Migrations
 
             modelBuilder.Entity("Foodbook.Models.PlannedMeal", b =>
                 {
+                    b.HasOne("Foodbook.Models.Plan", null)
+                        .WithMany()
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("Foodbook.Models.Recipe", "Recipe")
                         .WithMany()
                         .HasForeignKey("RecipeId")

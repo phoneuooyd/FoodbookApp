@@ -60,67 +60,40 @@ namespace FoodbookApp.Localization {
             }
         }
         
-        /// <summary>
-        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Create archive.
-        /// </summary>
-        internal static string CreateArchiveButton {
-            get {
-                return ResourceManager.GetString("CreateArchiveButton", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Create a backup archive (.fbk). Archive includes the database and key settings..
-        /// </summary>
-        internal static string HeaderDescription {
-            get {
-                return ResourceManager.GetString("HeaderDescription", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Data archive.
-        /// </summary>
-        internal static string HeaderTitle {
-            get {
-                return ResourceManager.GetString("HeaderTitle", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Restore from archive.
-        /// </summary>
-        internal static string RestoreArchiveButton {
-            get {
-                return ResourceManager.GetString("RestoreArchiveButton", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Pick an archive file (.fbk or .zip) from device storage to restore..
-        /// </summary>
-        internal static string RestoreDescription {
-            get {
-                return ResourceManager.GetString("RestoreDescription", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Restore data.
-        /// </summary>
-        internal static string RestoreHeader {
-            get {
-                return ResourceManager.GetString("RestoreHeader", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Data archive.
-        /// </summary>
-        internal static string Title {
-            get {
-                return ResourceManager.GetString("Title", resourceCulture);
-            }
-        }
+        internal static string CreateArchiveButton => ResourceManager.GetString("CreateArchiveButton", resourceCulture);
+        internal static string HeaderDescription => ResourceManager.GetString("HeaderDescription", resourceCulture);
+        internal static string HeaderTitle => ResourceManager.GetString("HeaderTitle", resourceCulture);
+        internal static string RestoreArchiveButton => ResourceManager.GetString("RestoreArchiveButton", resourceCulture);
+        internal static string RestoreDescription => ResourceManager.GetString("RestoreDescription", resourceCulture);
+        internal static string RestoreHeader => ResourceManager.GetString("RestoreHeader", resourceCulture);
+        internal static string Title => ResourceManager.GetString("Title", resourceCulture);
+
+        // New exposed keys used in code-behind
+        internal static string DefaultFolderLabel => ResourceManager.GetString("DefaultFolderLabel", resourceCulture);
+        internal static string RefreshList => ResourceManager.GetString("RefreshList", resourceCulture);
+        internal static string ArchivesInFolder => ResourceManager.GetString("ArchivesInFolder", resourceCulture);
+        internal static string NoArchivesFound => ResourceManager.GetString("NoArchivesFound", resourceCulture);
+        internal static string RestoreFromThis => ResourceManager.GetString("RestoreFromThis", resourceCulture);
+        internal static string ArchiveNameLabel => ResourceManager.GetString("ArchiveNameLabel", resourceCulture);
+        internal static string ArchiveNamePlaceholder => ResourceManager.GetString("ArchiveNamePlaceholder", resourceCulture);
+        internal static string DeleteFromThis => ResourceManager.GetString("DeleteFromThis", resourceCulture);
+        internal static string NoArchivesInDefault => ResourceManager.GetString("NoArchivesInDefault", resourceCulture);
+        internal static string ConfirmTitle => ResourceManager.GetString("ConfirmTitle", resourceCulture);
+        internal static string ConfirmDelete => ResourceManager.GetString("ConfirmDelete", resourceCulture);
+        internal static string DeletedMessage => ResourceManager.GetString("DeletedMessage", resourceCulture);
+        internal static string ArchiveCreatedSuffix => ResourceManager.GetString("ArchiveCreatedSuffix", resourceCulture);
+        internal static string RestoreSuccess => ResourceManager.GetString("RestoreSuccess", resourceCulture);
+        internal static string SearchArchivesButton => ResourceManager.GetString("SearchArchivesButton", resourceCulture);
+        internal static string ErrorLoadingList => ResourceManager.GetString("ErrorLoadingList", resourceCulture);
+        internal static string PickArchiveTitle => ResourceManager.GetString("PickArchiveTitle", resourceCulture);
+        internal static string ManualSearchDone => ResourceManager.GetString("ManualSearchDone", resourceCulture);
+        internal static string ErrorTitle => ResourceManager.GetString("ErrorTitle", resourceCulture);
+        internal static string InfoTitle => ResourceManager.GetString("InfoTitle", resourceCulture);
+        internal static string ManualSearchFailed => ResourceManager.GetString("ManualSearchFailed", resourceCulture);
+        internal static string SavedMessage => ResourceManager.GetString("SavedMessage", resourceCulture);
+        internal static string ExportFailed => ResourceManager.GetString("ExportFailed", resourceCulture);
+        internal static string ImportFailed => ResourceManager.GetString("ImportFailed", resourceCulture);
+        internal static string DeleteFailed => ResourceManager.GetString("DeleteFailed", resourceCulture);
+        internal static string RestoreFailed => ResourceManager.GetString("RestoreFailed", resourceCulture);
     }
 }

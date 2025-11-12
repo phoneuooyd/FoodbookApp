@@ -22,6 +22,14 @@ namespace Foodbook.Services
                 .ToListAsync();
         }
 
+        public async Task<List<PlannedMeal>> GetPlannedMealsAsync(int planId)
+        {
+            return await _context.PlannedMeals
+                .Include(pm => pm.Recipe)
+                .Where(pm => pm.PlanId == planId)
+                .ToListAsync();
+        }
+
         public async Task<PlannedMeal?> GetPlannedMealAsync(int id)
         {
             return await _context.PlannedMeals.Include(pm => pm.Recipe).FirstOrDefaultAsync(pm => pm.Id == id);

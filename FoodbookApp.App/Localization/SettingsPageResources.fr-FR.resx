@@ -51,6 +51,7 @@
   <data name="AppName" xml:space="preserve"><value>FoodBook App</value></data>
   <data name="DataExportTitle" xml:space="preserve"><value>Export des données</value></data>
   <data name="DataExportDescription" xml:space="preserve"><value>Sauvegarder recettes et plans</value></data>
+  <data name="DataExportButton" xml:space="preserve"><value>Ouvrir l'archive de données</value></data>
   <data name="ComingSoon" xml:space="preserve"><value>Bientôt</value></data>
   <data name="DatabaseMigrationTitle" xml:space="preserve"><value>Migration de base de données</value></data>
   <data name="DatabaseMigrationDescription" xml:space="preserve"><value>Mettre à jour la structure vers la dernière version</value></data>

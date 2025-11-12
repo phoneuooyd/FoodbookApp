@@ -4,6 +4,11 @@ using System.Windows.Input;
 using Foodbook.Models;
 using FoodbookApp.Interfaces;
 using Microsoft.Maui.Controls;
+using System.Collections.Generic;
+using System.Linq;
+using Foodbook.Services;
+using Microsoft.Extensions.DependencyInjection;
+using System.Threading.Tasks;
 
 namespace Foodbook.ViewModels;
 
@@ -11,6 +16,9 @@ public class IngredientFormViewModel : INotifyPropertyChanged
 {
     private readonly IIngredientService _service;
     private Ingredient? _ingredient;
+
+    // Event raised after a successful save; subscribers can await it
+    public event Func<Task>? SavedAsync;
 
     // Tab management
     private int _selectedTabIndex = 0;
@@ -44,7 +52,21 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     public string Quantity { get => _quantity; set { _quantity = value; OnPropertyChanged(); ValidateInput(); } }
     private string _quantity = "100";  // Default value
 
-    public Unit SelectedUnit { get => _unit; set { _unit = value; OnPropertyChanged(); } }
+    public string UnitWeight
+    {
+        get => _unitWeight;
+        set
+        {
+            _unitWeight = value;
+            OnPropertyChanged();
+            ValidateInput();
+        }
+    }
+    private string _unitWeight = "1.0";
+
+    public bool IsUnitWeightVisible => SelectedUnit == Unit.Piece;
+
+    public Unit SelectedUnit { get => _unit; set { if (_unit != value) { _unit = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsUnitWeightVisible)); ValidateInput(); } } }
     private Unit _unit = Unit.Gram;  // Default value
 
     // Nutritional information fields
@@ -84,7 +106,8 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     public bool IsVerifying { get => _isVerifying; set { _isVerifying = value; OnPropertyChanged(); } }
     private bool _isVerifying = false;
 
-    public IEnumerable<Unit> Units { get; } = Enum.GetValues(typeof(Unit)).Cast<Unit>();
+    // Use a concrete list for ItemsSource so picker can match items reliably
+    public IList<Unit> Units { get; } = Enum.GetValues(typeof(Unit)).Cast<Unit>().ToList();
 
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
@@ -151,22 +174,21 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 Protein = ing.Protein.ToString("F1");
                 Fat = ing.Fat.ToString("F1");
                 Carbs = ing.Carbs.ToString("F1");
-                
+                UnitWeight = ing.UnitWeight.ToString("F2");
                 // Reset to first tab when loading
                 SelectedTabIndex = 0;
-                
                 // Notify UI about property changes
                 OnPropertyChanged(nameof(Title));
                 OnPropertyChanged(nameof(SaveButtonText));
                 OnPropertyChanged(nameof(IsPartOfRecipe));
                 OnPropertyChanged(nameof(RecipeInfo));
-                
+                OnPropertyChanged(nameof(IsUnitWeightVisible));
                 ValidateInput();
             }
         }
         catch (Exception ex)
         {
-            ValidationMessage = $"B³¹d podczas ³adowania sk³adnika: {ex.Message}";
+            ValidationMessage = $"B??d podczas ?adowania sk?adnika: {ex.Message}";
             System.Diagnostics.Debug.WriteLine($"Error in LoadAsync: {ex.Message}");
         }
     }
@@ -332,6 +354,8 @@ public class IngredientFormViewModel : INotifyPropertyChanged
             var prot = ParseDoubleValue(Protein);
             var fat = ParseDoubleValue(Fat);
             var carbs = ParseDoubleValue(Carbs);
+            var unitWeight = ParseDoubleValue(UnitWeight);
+            if (unitWeight <= 0) unitWeight = 1.0;
             
             if (_ingredient == null)
             {
@@ -345,6 +369,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                     Protein = prot,
                     Fat = fat,
                     Carbs = carbs,
+                    UnitWeight = unitWeight,
                     RecipeId = null  // Explicitly set to null for standalone ingredients
                 };
                 
@@ -361,12 +386,95 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 _ingredient.Protein = prot;
                 _ingredient.Fat = fat;
                 _ingredient.Carbs = carbs;
+                _ingredient.UnitWeight = unitWeight;
                 // Preserve existing RecipeId and Recipe navigation property
                 await _service.UpdateIngredientAsync(_ingredient);
                 System.Diagnostics.Debug.WriteLine($"Updated ingredient: {Name}, {qty}, {SelectedUnit}, {cal} cal");
             }
             
-            await Shell.Current.GoToAsync("..");
+            // Invalidate potential cache in service
+            try { _service.InvalidateCache(); } catch { }
+
+            // Invalidate AddRecipeViewModel cache if available
+            try
+            {
+                var addRecipeVm = Application.Current?.Handler?.MauiContext?.Services?.GetService<AddRecipeViewModel>();
+                if (addRecipeVm == null)
+                {
+                    addRecipeVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<AddRecipeViewModel>();
+                }
+                addRecipeVm?.InvalidateIngredientsCache();
+            }
+            catch { }
+
+            // Reload IngredientsViewModel
+            try
+            {
+                var ingVm = Application.Current?.Handler?.MauiContext?.Services?.GetService<IngredientsViewModel>();
+                if (ingVm == null)
+                {
+                    ingVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IngredientsViewModel>();
+                }
+                if (ingVm != null)
+                {
+                    await ingVm.ReloadAsync();
+                }
+            }
+            catch { }
+
+            // Directly refresh IngredientsPage if it's alive
+            try 
+            { 
+                if (Foodbook.Views.IngredientsPage.Current != null)
+                {
+                    await Foodbook.Views.IngredientsPage.Current.ForceReloadAsync();
+                }
+            } 
+            catch { }
+
+            // Notify globally so any listeners can reload (backup mechanism)
+            try { AppEvents.RaiseIngredientsChanged(); } catch { }
+
+            // Raise SavedAsync for subscribers (popup) so they know save completed
+            if (SavedAsync != null)
+            {
+                try
+                {
+                    var handlers = SavedAsync.GetInvocationList().Cast<Func<Task>>();
+                    var tasks = handlers.Select(h => h());
+                    await Task.WhenAll(tasks);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error raising SavedAsync: {ex.Message}");
+                }
+            }
+
+            // Close appropriately depending on how the page was opened - now after refresh and notifications
+            var nav = Shell.Current?.Navigation;
+            if (nav?.ModalStack?.Count > 0)
+                await nav.PopModalAsync();
+            else
+                await Shell.Current.GoToAsync("..");
+            
+            int savedId = 0;
+            if (_ingredient == null)
+            {
+                // newIng was added above; need to fetch its id
+                // try to get last added by querying service (best-effort)
+                try
+                {
+                    var list = await _service.GetIngredientsAsync();
+                    var match = list.FirstOrDefault(i => i.Name == Name.Trim());
+                    if (match != null) savedId = match.Id;
+                }
+                catch { }
+            }
+            else
+            {
+                savedId = _ingredient.Id;
+            }
+            try { AppEvents.RaiseIngredientSaved(savedId); } catch { }
         }
         catch (Exception ex)
         {
@@ -379,7 +487,11 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     {
         try
         {
-            await Shell.Current.GoToAsync("..");
+            var nav = Shell.Current?.Navigation;
+            if (nav?.ModalStack?.Count > 0)
+                await nav.PopModalAsync();
+            else
+                await Shell.Current.GoToAsync("..");
         }
         catch (Exception ex)
         {

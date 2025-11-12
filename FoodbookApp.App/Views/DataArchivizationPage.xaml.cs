@@ -46,7 +46,7 @@ namespace Foodbook.Views
             // Ensure the manual search button has a visible caption even if localization key is missing
             try
             {
-                var caption = GetLocalizedText("DataArchivizationPageResources", "SearchArchivesButton", "Wyszukaj w danych telefonu");
+                var caption = GetLocalizedText("DataArchivizationPageResources", "SearchArchivesButton", "Search device files");
                 var manualBtn = this.FindByName<Button>("ManualSearchButton");
                 if (manualBtn != null && string.IsNullOrWhiteSpace(manualBtn.Text))
                 {
@@ -67,7 +67,7 @@ namespace Foodbook.Views
                 if (sender is Button b)
                 {
                     if (string.IsNullOrWhiteSpace(b.Text))
-                        b.Text = GetLocalizedText("DataArchivizationPageResources", "SearchArchivesButton", "Wyszukaj w danych telefonu");
+                        b.Text = GetLocalizedText("DataArchivizationPageResources", "SearchArchivesButton", "Search device files");
                     // Enforce primary styling in case default style overrides it
                     b.BackgroundColor = (Color)Application.Current!.Resources["Primary"];
                     b.TextColor = Colors.White;
@@ -202,7 +202,7 @@ namespace Foodbook.Views
             }
             catch (Exception ex)
             {
-                StatusLabel.Text = $"Error loading list: {ex.Message}";
+                StatusLabel.Text = string.Format(GetLocalizedText("DataArchivizationPageResources", "ErrorLoadingList", "Error loading list: {0}"), ex.Message);
             }
         }
 
@@ -274,7 +274,10 @@ namespace Foodbook.Views
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", $"Manual search failed: {ex.Message}", "OK");
+                await DisplayAlert(
+                    GetLocalizedText("DataArchivizationPageResources", "ErrorTitle", "Error"),
+                    string.Format(GetLocalizedText("DataArchivizationPageResources", "ManualSearchFailed", "Manual search failed: {0}"), ex.Message),
+                    GetLocalizedText("ButtonResources", "OK", "OK"));
             }
         }
 
@@ -341,10 +344,10 @@ namespace Foodbook.Views
 
                 await _dbService.EnsureDatabaseSchemaAsync();
 
-                // Prepare files
+                // Prepare paths
                 var dbPath = Path.Combine(FileSystem.AppDataDirectory, "foodbookapp.db");
 
-                // Ensure all recent changes are checkpointed from WAL to DB before zipping
+                // Ensure WAL is flushed before reading DB
                 await FlushSqliteWalAsync(dbPath);
 
                 var prefsExport = Path.Combine(FileSystem.CacheDirectory, "prefs_export.json");
@@ -358,7 +361,7 @@ namespace Foodbook.Views
                     FontFamily = _prefs.GetSavedFontFamily(),
                     FontSize = _prefs.GetSavedFontSize()
                 });
-                File.WriteAllText(prefsExport, json);
+                await File.WriteAllTextAsync(prefsExport, json);
 
                 // Target name
                 var targetDir = GetDefaultArchiveFolder();
@@ -368,20 +371,30 @@ namespace Foodbook.Views
                     : SanitizeFileName(customNameRaw);
                 var outName = safeName.EndsWith(".fbk", StringComparison.OrdinalIgnoreCase) ? safeName : safeName + ".fbk";
 
-                // Create ZIP in a temporary file first
+                // Create ZIP in a temporary file on background thread to avoid blocking UI
                 var tempZip = Path.Combine(FileSystem.CacheDirectory, $"{Guid.NewGuid():N}.fbk");
-                using (var zip = ZipFile.Open(tempZip, ZipArchiveMode.Create))
+
+                await Task.Run(() =>
                 {
-                    zip.CreateEntryFromFile(dbPath, "database/foodbookapp.db");
-                    if (File.Exists(dbPath + "-shm")) zip.CreateEntryFromFile(dbPath + "-shm", "database/foodbookapp.db-shm");
-                    if (File.Exists(dbPath + "-wal")) zip.CreateEntryFromFile(dbPath + "-wal", "database/foodbookapp.db-wal");
-                    zip.CreateEntryFromFile(prefsExport, "prefs.json");
-                }
+                    try
+                    {
+                        using var zip = ZipFile.Open(tempZip, ZipArchiveMode.Create);
+                        zip.CreateEntryFromFile(dbPath, "database/foodbookapp.db");
+                        if (File.Exists(dbPath + "-shm")) zip.CreateEntryFromFile(dbPath + "-shm", "database/foodbookapp.db-shm");
+                        if (File.Exists(dbPath + "-wal")) zip.CreateEntryFromFile(dbPath + "-wal", "database/foodbookapp.db-wal");
+                        zip.CreateEntryFromFile(prefsExport, "prefs.json");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error creating zip in background: {ex.Message}");
+                        throw;
+                    }
+                });
 
                 bool saved = false;
                 string? outPath = null;
 
-                // Try direct save to default persistent folder
+                // Try direct save to default persistent folder (background IO)
                 try
                 {
 #if ANDROID
@@ -394,7 +407,9 @@ namespace Foodbook.Views
                         outName = $"{Path.GetFileNameWithoutExtension(outName)}_{DateTime.Now:HHmmss}.fbk";
                         outPath = Path.Combine(targetDir, outName);
                     }
-                    File.Copy(tempZip, outPath, overwrite: false);
+
+                    // Do file copy on background thread
+                    await Task.Run(() => File.Copy(tempZip, outPath, overwrite: false));
                     saved = true;
                 }
                 catch (Exception directEx)
@@ -403,7 +418,7 @@ namespace Foodbook.Views
                     saved = false;
                 }
 
-                // Fallback to file saver picker (persists outside sandbox)
+                // Fallback to file saver picker (must be called on UI thread)
                 if (!saved)
                 {
                     await using var stream = File.OpenRead(tempZip);
@@ -419,16 +434,30 @@ namespace Foodbook.Views
                 // Cleanup temp
                 try { File.Delete(tempZip); } catch { }
 
-                StatusLabel.Text = $"Saved: {outName}";
+                StatusLabel.Text = string.Format(GetLocalizedText("DataArchivizationPageResources", "SavedMessage", "Saved: {0}"), outName);
 
                 // Refresh list now that export is complete
                 LoadArchivesList();
 
-                await DisplayAlert("OK", $"{outName} {GetLocalizedText("DataArchivizationPageResources", "ArchiveCreatedSuffix", defaultText: "created successfully")}", "OK");
+                var infoTitle = GetLocalizedText("DataArchivizationPageResources", "InfoTitle", "Info") ?? "Info";
+                var okText = GetLocalizedText("ButtonResources", "OK", "OK") ?? "OK";
+                var createdSuffix = GetLocalizedText("DataArchivizationPageResources", "ArchiveCreatedSuffix", "created successfully") ?? "created successfully";
+
+                // Ensure alerts run on UI thread and button texts are non-null/non-empty
+                var infoTitleSafe = string.IsNullOrWhiteSpace(infoTitle) ? "Info" : infoTitle;
+                var okTextSafe = string.IsNullOrWhiteSpace(okText) ? "OK" : okText;
+                var createdSuffixSafe = string.IsNullOrWhiteSpace(createdSuffix) ? "created successfully" : createdSuffix;
+
+                await MainThread.InvokeOnMainThreadAsync(() => Application.Current?.MainPage?.DisplayAlert(infoTitleSafe, $"{outName} {createdSuffixSafe}", okTextSafe));
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", $"Export failed: {ex.Message}", "OK");
+                var errorTitle = GetLocalizedText("DataArchivizationPageResources", "ErrorTitle", "Error") ?? "Error";
+                var ok = GetLocalizedText("ButtonResources", "OK", "OK") ?? "OK";
+                var msg = string.Format(GetLocalizedText("DataArchivizationPageResources", "ExportFailed", "Export failed: {0}"), ex.Message);
+                var errorTitleSafe = string.IsNullOrWhiteSpace(errorTitle) ? "Error" : errorTitle;
+                var okSafe = string.IsNullOrWhiteSpace(ok) ? "OK" : ok;
+                await MainThread.InvokeOnMainThreadAsync(() => Application.Current?.MainPage?.DisplayAlert(errorTitleSafe, msg, okSafe));
             }
             finally
             {
@@ -464,7 +493,10 @@ namespace Foodbook.Views
                 var latest = Directory.Exists(folder) ? Directory.EnumerateFiles(folder, "*.fbk").OrderByDescending(File.GetLastWriteTimeUtc).FirstOrDefault() : null;
                 if (latest == null)
                 {
-                    await DisplayAlert("Info", GetLocalizedText("DataArchivizationPageResources", "NoArchivesInDefault", "No archives in default folder. Please pick a file."), "OK");
+                    await DisplayAlert(
+                        GetLocalizedText("DataArchivizationPageResources", "InfoTitle", "Info"),
+                        GetLocalizedText("DataArchivizationPageResources", "NoArchivesInDefault", "No archives in default folder. Please pick a file."),
+                        GetLocalizedText("ButtonResources", "OK", "OK"));
                     var result = await FilePicker.PickAsync(new PickOptions
                     {
                         PickerTitle = GetLocalizedText("DataArchivizationPageResources", "PickArchiveTitle", "Pick archive (.fbk)"),
@@ -480,7 +512,10 @@ namespace Foodbook.Views
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", $"Import failed: {ex.Message}", "OK");
+                await DisplayAlert(
+                    GetLocalizedText("DataArchivizationPageResources", "ErrorTitle", "Error"),
+                    string.Format(GetLocalizedText("DataArchivizationPageResources", "ImportFailed", "Import failed: {0}"), ex.Message),
+                    GetLocalizedText("ButtonResources", "OK", "OK"));
             }
         }
 
@@ -502,7 +537,7 @@ namespace Foodbook.Views
                 var accept = GetLocalizedText("ButtonResources", "Yes", "Yes");
                 if (string.IsNullOrWhiteSpace(accept)) accept = "Yes";
                 var cancel = GetLocalizedText("ButtonResources", "No", "No");
-                if (string.IsNullOrWhiteSpace(cancel)) cancel = "Cancel";
+                if (string.IsNullOrWhiteSpace(cancel)) cancel = "No";
 
                 var confirm = await DisplayAlert(
                     GetLocalizedText("DataArchivizationPageResources", "ConfirmTitle", "Confirm"),
@@ -520,7 +555,10 @@ namespace Foodbook.Views
                     }
                     catch (Exception ex)
                     {
-                        await DisplayAlert("Error", $"Delete failed: {ex.Message}", "OK");
+                        await DisplayAlert(
+                            GetLocalizedText("DataArchivizationPageResources", "ErrorTitle", "Error"),
+                            string.Format(GetLocalizedText("DataArchivizationPageResources", "DeleteFailed", "Delete failed: {0}"), ex.Message),
+                            GetLocalizedText("ButtonResources", "OK", "OK"));
                     }
                 }
             }
@@ -583,7 +621,10 @@ namespace Foodbook.Views
             }
             catch (Exception ioex)
             {
-                await DisplayAlert("Error", $"Restore failed: {ioex.Message}", "OK");
+                await DisplayAlert(
+                    GetLocalizedText("DataArchivizationPageResources", "ErrorTitle", "Error"),
+                    string.Format(GetLocalizedText("DataArchivizationPageResources", "RestoreFailed", "Restore failed: {0}"), ioex.Message),
+                    GetLocalizedText("ButtonResources", "OK", "OK"));
             }
         }
 

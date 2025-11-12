@@ -37,7 +37,7 @@
             Title="{loc:Translate Resource=TabBarResources, Key=Planner}"
             Icon="event_upcoming.png"
             Route="PlannerTab"
-            ContentTemplate="{DataTemplate views:PlannerPage}" />
+            ContentTemplate="{DataTemplate views:PlannerListsPage}" />
         <ShellContent
             Title="{loc:Translate Resource=TabBarResources, Key=ShoppingLists}"
             Icon="event_list.png"

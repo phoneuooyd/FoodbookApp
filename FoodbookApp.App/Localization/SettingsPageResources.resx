@@ -270,6 +270,9 @@
   <data name="DataExportDescription" xml:space="preserve">
     <value>Save recipes and plans</value>
   </data>
+  <data name="DataExportButton" xml:space="preserve">
+    <value>Open data archive</value>
+  </data>
   <data name="ComingSoon" xml:space="preserve">
     <value>Soon</value>
   </data>

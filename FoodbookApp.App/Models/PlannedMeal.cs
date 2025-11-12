@@ -9,6 +9,9 @@ namespace Foodbook.Models
         public int Id { get; set; }
         public int RecipeId { get; set; }
         
+        // Optional relation to a specific plan (enables multiple planners)
+        public int? PlanId { get; set; }
+        
         private Recipe? _recipe;
         public Recipe? Recipe 
         { 

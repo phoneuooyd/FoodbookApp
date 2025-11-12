@@ -8,5 +8,6 @@ namespace FoodbookApp.Interfaces
         Task<bool> EnsureDatabaseSchemaAsync();
         Task<bool> MigrateDatabaseAsync();
         Task<bool> ResetDatabaseAsync();
+        Task<bool> ConditionalDeploymentAsync();
     }
 }

@@ -19,7 +19,7 @@
             MinimumHeightRequest="320"
             MaximumHeightRequest="600">
         <Grid RowDefinitions="Auto,*" Padding="0">
-            <!-- Header (search bar + close button) -->
+            <!-- Header (search bar + close button, no add button) -->
             <StackLayout Grid.Row="0"
                          BackgroundColor="{DynamicResource ShellBackgroundColor}"
                          Padding="12,10">

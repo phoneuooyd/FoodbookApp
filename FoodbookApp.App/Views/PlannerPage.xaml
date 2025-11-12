@@ -9,7 +9,6 @@
              xmlns:resources="clr-namespace:FoodbookApp.Localization"
              x:Class="Foodbook.Views.PlannerPage"
              x:Name="ThisPage"
-             x:DataType="vm:PlannerViewModel"
              Title="{loc:Translate Resource=PlannerPageResources, Key=Title}"
              BackgroundColor="{DynamicResource PageBackgroundColor}">
     <ContentPage.Resources>
@@ -132,7 +131,16 @@
                                         </BindableLayout.ItemTemplate>
                                     </StackLayout>
                                     <StackLayout HorizontalOptions="Center" Margin="0,8,0,0">
-                                        <Button Command="{Binding BindingContext.AddMealCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" FontSize="12" FontAttributes="Bold" CornerRadius="6" Padding="12,6" WidthRequest="120" HeightRequest="32" BackgroundColor="{DynamicResource Primary}" Text="{loc:Translate Resource=PlannerPageResources, Key=AddMeal}" />
+                                        <Button Command="{Binding BindingContext.AddMealCommand, Source={x:Reference ThisPage}}" 
+                                                CommandParameter="{Binding .}" 
+                                                StyleClass="Secondary"
+                                                FontSize="12" 
+                                                FontAttributes="Bold" 
+                                                CornerRadius="6" 
+                                                Padding="12,6" 
+                                                WidthRequest="120" 
+                                                HeightRequest="32" 
+                                                Text="{loc:Translate Resource=PlannerPageResources, Key=AddMeal}" />
                                     </StackLayout>
                                 </VerticalStackLayout>
                             </Border>

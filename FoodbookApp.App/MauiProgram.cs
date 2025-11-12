@@ -70,6 +70,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<RecipeViewModel>();
             builder.Services.AddTransient<AddRecipeViewModel>();
             builder.Services.AddScoped<PlannerViewModel>();
+            builder.Services.AddScoped<PlannerEditViewModel>(); // NEW: Dedicated edit VM
             builder.Services.AddScoped<HomeViewModel>();
             builder.Services.AddScoped<ShoppingListViewModel>();
             builder.Services.AddScoped<ShoppingListDetailViewModel>();
@@ -79,6 +80,8 @@ namespace FoodbookApp
             builder.Services.AddScoped<ArchiveViewModel>();
             builder.Services.AddSingleton<SettingsViewModel>();
             builder.Services.AddTransient<SetupWizardViewModel>();
+            // New: Planner lists VM
+            builder.Services.AddTransient<PlannerListsViewModel>();
 
             // Http / import
             builder.Services.AddScoped<HttpClient>();
@@ -91,6 +94,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<IngredientsPage>();
             builder.Services.AddScoped<IngredientFormPage>();
             builder.Services.AddScoped<PlannerPage>();
+            builder.Services.AddScoped<PlannerListsPage>();
             builder.Services.AddScoped<MealFormPage>();
             builder.Services.AddScoped<ShoppingListPage>();
             builder.Services.AddScoped<ShoppingListDetailPage>();
@@ -106,6 +110,7 @@ namespace FoodbookApp
             Routing.RegisterRoute(nameof(IngredientFormPage), typeof(IngredientFormPage));
             Routing.RegisterRoute(nameof(IngredientsPage), typeof(IngredientsPage));
             Routing.RegisterRoute(nameof(PlannerPage), typeof(PlannerPage));
+            Routing.RegisterRoute(nameof(PlannerListsPage), typeof(PlannerListsPage));
             Routing.RegisterRoute(nameof(MealFormPage), typeof(MealFormPage));
             Routing.RegisterRoute(nameof(ShoppingListPage), typeof(ShoppingListPage));
             Routing.RegisterRoute(nameof(ShoppingListDetailPage), typeof(ShoppingListDetailPage));
@@ -122,8 +127,24 @@ namespace FoodbookApp
             // Initialize DB via DatabaseService synchronously to avoid async signature here
             try
             {
+                System.Diagnostics.Debug.WriteLine("[MauiProgram] Starting conditional deployment check...");
                 var dbService = app.Services.GetRequiredService<IDatabaseService>();
+                
+                // FIRST: Run conditional deployment (checks for clean install flag and pending migrations)
+                var deploymentSuccess = dbService.ConditionalDeploymentAsync().GetAwaiter().GetResult();
+                if (deploymentSuccess)
+                {
+                    System.Diagnostics.Debug.WriteLine("[MauiProgram] Conditional deployment completed successfully");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[MauiProgram] WARNING: Conditional deployment reported failure");
+                }
+
+                // THEN: Run normal initialization (ensures migrations are applied if not already done)
+                System.Diagnostics.Debug.WriteLine("[MauiProgram] Running database initialization...");
                 dbService.InitializeAsync().GetAwaiter().GetResult();
+                System.Diagnostics.Debug.WriteLine("[MauiProgram] Database initialization completed");
             }
             catch (Exception ex)
             {

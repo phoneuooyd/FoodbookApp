@@ -49,8 +49,9 @@
   <data name="AuthorLabel" xml:space="preserve"><value>Author: Przemyslaw Przybyszewski</value></data>
   <data name="RightsLabel" xml:space="preserve"><value>All rights reserved 2025</value></data>
   <data name="AppName" xml:space="preserve"><value>FoodBook App</value></data>
-  <data name="DataExportTitle" xml:space="preserve"><value>Data export</value></data>
-  <data name="DataExportDescription" xml:space="preserve"><value>Backup recipes and plans</value></data>
+  <data name="DataExportTitle" xml:space="preserve"><value>데이터 내보내기</value></data>
+  <data name="DataExportDescription" xml:space="preserve"><value>레시피 및 플랜 백업</value></data>
+  <data name="DataExportButton" xml:space="preserve"><value>데이터 아카이브 열기</value></data>
   <data name="ComingSoon" xml:space="preserve"><value>Coming soon</value></data>
   <data name="DatabaseMigrationTitle" xml:space="preserve"><value>Database migration</value></data>
   <data name="DatabaseMigrationDescription" xml:space="preserve"><value>Update database structure</value></data>
