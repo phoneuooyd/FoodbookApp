@@ -25,6 +25,9 @@ public class PlannerEditViewModel : INotifyPropertyChanged
     // Plan being edited
     private int _planId;
     private Plan? _currentPlan;
+    
+    // Track user's MealsPerDay changes independently from database value
+    private int _userDefinedMealsPerDay = 3;
 
     // Loading state
     private bool _isLoading;
@@ -80,8 +83,10 @@ public class PlannerEditViewModel : INotifyPropertyChanged
         {
             if (_mealsPerDay == value) return;
             _mealsPerDay = value;
+            _userDefinedMealsPerDay = value; // Remember user's choice
             OnPropertyChanged();
             System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] MealsPerDay changed to {value} - adjusting structure only");
+            System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] Saved user preference: _userDefinedMealsPerDay = {_userDefinedMealsPerDay}");
             AdjustMealsPerDayStructure();
         }
     }
@@ -237,8 +242,10 @@ public class PlannerEditViewModel : INotifyPropertyChanged
             if (maxMeals > 0)
             {
                 _mealsPerDay = maxMeals;
+                _userDefinedMealsPerDay = maxMeals; // Initialize user preference with loaded value
                 OnPropertyChanged(nameof(MealsPerDay));
                 System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] Set MealsPerDay to {_mealsPerDay}");
+                System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] Initialized user preference: _userDefinedMealsPerDay = {_userDefinedMealsPerDay}");
             }
 
             // Ensure all days have the same number of meal slots (add empty slots if needed)
@@ -275,6 +282,7 @@ public class PlannerEditViewModel : INotifyPropertyChanged
     {
         System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] ===== REBUILDING DAYS FOR NEW DATE RANGE =====");
         System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] New range: {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd}");
+        System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] Current user preference: _userDefinedMealsPerDay = {_userDefinedMealsPerDay}");
 
         // Save current meals in a temporary structure
         var savedMeals = new Dictionary<DateTime, List<PlannedMeal>>();
@@ -329,6 +337,11 @@ public class PlannerEditViewModel : INotifyPropertyChanged
         }
 
         System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] Created {Days.Count} days");
+
+        // Restore user's MealsPerDay preference instead of recalculating
+        _mealsPerDay = _userDefinedMealsPerDay;
+        OnPropertyChanged(nameof(MealsPerDay));
+        System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] Restored MealsPerDay to user preference: {_mealsPerDay}");
 
         // Ensure all days have the same number of meal slots
         AdjustMealsPerDayStructure();
