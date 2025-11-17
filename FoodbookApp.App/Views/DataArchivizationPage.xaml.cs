@@ -11,6 +11,10 @@ using Microsoft.Maui.Devices;
 using Microsoft.Maui.Storage;
 using FoodbookApp.Interfaces;
 using CommunityToolkit.Maui.Storage;
+using Foodbook.Data;
+using Foodbook.Models;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 
 namespace Foodbook.Views
 {
@@ -27,6 +31,10 @@ namespace Foodbook.Views
         {
             public string ModifiedDisplay => $"{ModifiedUtc.ToLocalTime():yyyy-MM-dd HH:mm}";
         }
+
+        private record PrefsDto(string Culture, Foodbook.Models.AppTheme Theme, Foodbook.Models.AppColorTheme ColorTheme,
+                                bool ColorfulBackground, bool WallpaperBackground,
+                                Foodbook.Models.AppFontFamily FontFamily, Foodbook.Models.AppFontSize FontSize);
 
         public DataArchivizationPage(IDatabaseService dbService, IPreferencesService prefs)
         {
@@ -566,70 +574,627 @@ namespace Foodbook.Views
 
         private async Task RestoreFromPathAsync(string archivePath)
         {
+            var logFolder = GetDefaultArchiveFolder();
+            Directory.CreateDirectory(logFolder);
+            var logPath = Path.Combine(logFolder, $"restore_log_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
+            
+            void Log(string msg)
+            {
+                var logMsg = $"[{DateTime.Now:HH:mm:ss}] {msg}";
+                System.Diagnostics.Debug.WriteLine($"[Restore] {msg}");
+                try { File.AppendAllText(logPath, logMsg + "\n"); } catch { }
+            }
+
             try
             {
+                Log($"=== START RESTORE: {Path.GetFileName(archivePath)} ===");
+
+                // 1. Extract archive
                 var tmpDir = Path.Combine(FileSystem.CacheDirectory, "fbk_import");
-                if (Directory.Exists(tmpDir)) Directory.Delete(tmpDir, true);
+                if (Directory.Exists(tmpDir)) 
+                {
+                    Directory.Delete(tmpDir, true);
+                    Log("Cleaned temporary directory");
+                }
                 Directory.CreateDirectory(tmpDir);
 
                 using (var stream = File.OpenRead(archivePath))
                 using (var zip = new ZipArchive(stream, ZipArchiveMode.Read))
                 {
                     zip.ExtractToDirectory(tmpDir, overwriteFiles: true);
+                    Log($"Archive extracted to {tmpDir}");
                 }
 
-                var dbPath = Path.Combine(FileSystem.AppDataDirectory, "foodbookapp.db");
-                var backup = dbPath + ".bak";
-                if (File.Exists(backup)) File.Delete(backup);
-                if (File.Exists(dbPath)) File.Move(dbPath, backup);
-
-                // Clean current WAL/SHM
-                if (File.Exists(dbPath + "-shm")) File.Delete(dbPath + "-shm");
-                if (File.Exists(dbPath + "-wal")) File.Delete(dbPath + "-wal");
-
+                // 2. Locate source database
                 var srcDbDir = Path.Combine(tmpDir, "database");
                 var srcDb = Path.Combine(srcDbDir, "foodbookapp.db");
-                var srcShm = Path.Combine(srcDbDir, "foodbookapp.db-shm");
-                var srcWal = Path.Combine(srcDbDir, "foodbookapp.db-wal");
+                if (!File.Exists(srcDb))
+                {
+                    Log($"ERROR: Database file not found at {srcDb}");
+                    throw new FileNotFoundException("Brak pliku bazy w archiwum", srcDb);
+                }
+                Log($"Source database found: {srcDb}");
 
-                File.Copy(srcDb, dbPath, overwrite: true);
-                if (File.Exists(srcShm)) File.Copy(srcShm, dbPath + "-shm", overwrite: true);
-                if (File.Exists(srcWal)) File.Copy(srcWal, dbPath + "-wal", overwrite: true);
+                // 3. Backup current database
+                var destDb = Path.Combine(FileSystem.AppDataDirectory, "foodbookapp.db");
+                var backup = destDb + $".bak_{DateTime.Now:yyyyMMddHHmmss}";
+                try
+                {
+                    if (File.Exists(destDb))
+                    {
+                        File.Copy(destDb, backup, true);
+                        Log($"Current database backed up to: {backup}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log($"WARNING: Backup failed: {ex.Message}");
+                }
 
+                // 4. Create fresh schema
+                Log("Creating fresh database schema...");
+                await _dbService.ResetDatabaseAsync();
+                Log("Fresh schema created");
+
+                // 5. Import data using EF Core with proper mapping
+                await ImportDataWithEfCoreAsync(srcDb, destDb, Log);
+
+                // 6. Import preferences
                 var prefsJson = Path.Combine(tmpDir, "prefs.json");
                 if (File.Exists(prefsJson))
                 {
-                    var json = await File.ReadAllTextAsync(prefsJson);
-                    var obj = System.Text.Json.JsonSerializer.Deserialize<PrefsDto>(json);
-                    if (obj != null)
+                    try
                     {
-                        _prefs.SaveLanguage(obj.Culture);
-                        _prefs.SaveTheme(obj.Theme);
-                        _prefs.SaveColorTheme(obj.ColorTheme);
-                        _prefs.SaveColorfulBackground(obj.ColorfulBackground);
-                        _prefs.SaveWallpaperEnabled(obj.WallpaperBackground);
-                        _prefs.SaveFontFamily(obj.FontFamily);
-                        _prefs.SaveFontSize(obj.FontSize);
+                        var json = await File.ReadAllTextAsync(prefsJson);
+                        var obj = System.Text.Json.JsonSerializer.Deserialize<PrefsDto>(json);
+                        if (obj != null)
+                        {
+                            _prefs.SaveLanguage(obj.Culture);
+                            _prefs.SaveTheme(obj.Theme);
+                            _prefs.SaveColorTheme(obj.ColorTheme);
+                            _prefs.SaveColorfulBackground(obj.ColorfulBackground);
+                            _prefs.SaveWallpaperEnabled(obj.WallpaperBackground);
+                            _prefs.SaveFontFamily(obj.FontFamily);
+                            _prefs.SaveFontSize(obj.FontSize);
+                            Log("Preferences restored");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log($"WARNING: Preferences import failed: {ex.Message}");
                     }
                 }
+                else
+                {
+                    Log("No preferences file found - skipping");
+                }
 
-                // Open and run a quick checkpoint to make sure DB is clean after copy
-                await FlushSqliteWalAsync(dbPath);
-
+                // 7. Run migrations to ensure schema is up-to-date
                 await _dbService.MigrateDatabaseAsync();
-                StatusLabel.Text = GetLocalizedText("DataArchivizationPageResources", "RestoreSuccess", "Restored. Please restart app.");
+                Log("Final migrations applied");
+
+                Log("=== RESTORE COMPLETED SUCCESSFULLY ===");
+                
+                // Update UI status - more reliable than DisplayAlert
+                StatusLabel.Text = GetLocalizedText("DataArchivizationPageResources", "RestoreSuccess", "? Przywrócono dane. Uruchom ponownie aplikacjê.");
+                StatusLabel.TextColor = Colors.Green;
             }
-            catch (Exception ioex)
+            catch (Exception ex)
             {
-                await DisplayAlert(
-                    GetLocalizedText("DataArchivizationPageResources", "ErrorTitle", "Error"),
-                    string.Format(GetLocalizedText("DataArchivizationPageResources", "RestoreFailed", "Restore failed: {0}"), ioex.Message),
-                    GetLocalizedText("ButtonResources", "OK", "OK"));
+                Log($"? FATAL ERROR: {ex.Message}");
+                Log($"Stack trace: {ex.StackTrace}");
+                
+                // Update UI status - more reliable than DisplayAlert
+                var errorMsg = string.Format(
+                    GetLocalizedText("DataArchivizationPageResources", "RestoreFailed", "? Restore failed: {0}"), 
+                    ex.Message);
+                StatusLabel.Text = errorMsg;
+                StatusLabel.TextColor = Colors.Red;
+                
+                System.Diagnostics.Debug.WriteLine($"[Restore] Error shown to user: {errorMsg}");
             }
         }
 
-        private record PrefsDto(string Culture, Foodbook.Models.AppTheme Theme, Foodbook.Models.AppColorTheme ColorTheme,
-                                bool ColorfulBackground, bool WallpaperBackground,
-                                Foodbook.Models.AppFontFamily FontFamily, Foodbook.Models.AppFontSize FontSize);
+        /// <summary>
+        /// Import data from old database to new database using EF Core with schema-aware mapping
+        /// </summary>
+        private async Task ImportDataWithEfCoreAsync(string srcDb, string destDb, Action<string> log)
+        {
+            log("Starting data import with schema mapping...");
+
+            try
+            {
+                // Create scope and get DbContext
+                using var scope = FoodbookApp.MauiProgram.ServiceProvider!.CreateScope();
+                var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+                // Read data from source database using raw SQL (schema-agnostic)
+                var srcConnectionString = new SqliteConnectionStringBuilder 
+                { 
+                    DataSource = srcDb, 
+                    Mode = SqliteOpenMode.ReadOnly 
+                }.ToString();
+
+                using var srcConnection = new SqliteConnection(srcConnectionString);
+                await srcConnection.OpenAsync();
+                log("Source database opened");
+
+                // Check which tables exist in source
+                var existingTables = await GetExistingTablesAsync(srcConnection, log);
+                log($"Found {existingTables.Count} tables in source database");
+
+                // Import in correct order (respecting foreign keys)
+                await ImportFoldersAsync(srcConnection, context, existingTables, log);
+                await ImportRecipeLabelsAsync(srcConnection, context, existingTables, log);
+                await ImportIngredientsAsync(srcConnection, context, existingTables, log);
+                await ImportRecipesAsync(srcConnection, context, existingTables, log);
+                await ImportRecipeRecipeLabelAsync(srcConnection, context, existingTables, log);
+                await ImportPlansAsync(srcConnection, context, existingTables, log);
+                await ImportPlannedMealsAsync(srcConnection, context, existingTables, log);
+                await ImportShoppingListItemsAsync(srcConnection, context, existingTables, log);
+
+                log("All data imported successfully");
+            }
+            catch (Exception ex)
+            {
+                log($"? Import error: {ex.Message}");
+                throw;
+            }
+        }
+
+        private async Task<HashSet<string>> GetExistingTablesAsync(SqliteConnection connection, Action<string> log)
+        {
+            var tables = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table'";
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                tables.Add(reader.GetString(0));
+            }
+            return tables;
+        }
+
+        private async Task<List<string>> GetColumnNamesAsync(SqliteConnection connection, string tableName, Action<string> log)
+        {
+            var columns = new List<string>();
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = $"PRAGMA table_info('{tableName}')";
+            try
+            {
+                using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    columns.Add(reader.GetString(1)); // Column name is at index 1
+                }
+            }
+            catch (Exception ex)
+            {
+                log($"WARNING: Failed to get columns for {tableName}: {ex.Message}");
+            }
+            return columns;
+        }
+
+        private async Task ImportFoldersAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log)
+        {
+            if (!existingTables.Contains("Folders"))
+            {
+                log("Folders table not found in source - skipping");
+                return;
+            }
+
+            try
+            {
+                var folders = new List<Folder>();
+                using var cmd = srcConnection.CreateCommand();
+                cmd.CommandText = "SELECT * FROM Folders";
+                using var reader = await cmd.ExecuteReaderAsync();
+                
+                while (await reader.ReadAsync())
+                {
+                    var folder = new Folder
+                    {
+                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                        Name = reader.GetString(reader.GetOrdinal("Name")),
+                        Description = !reader.IsDBNull(reader.GetOrdinal("Description")) ? reader.GetString(reader.GetOrdinal("Description")) : null,
+                        ParentFolderId = !reader.IsDBNull(reader.GetOrdinal("ParentFolderId")) ? reader.GetInt32(reader.GetOrdinal("ParentFolderId")) : null,
+                        Order = HasColumn(reader, "Order") && !reader.IsDBNull(reader.GetOrdinal("Order")) ? reader.GetInt32(reader.GetOrdinal("Order")) : 0,
+                        CreatedAt = HasColumn(reader, "CreatedAt") && !reader.IsDBNull(reader.GetOrdinal("CreatedAt")) ? reader.GetDateTime(reader.GetOrdinal("CreatedAt")) : DateTime.Now
+                    };
+                    folders.Add(folder);
+                }
+
+                foreach (var folder in folders)
+                {
+                    context.Folders.Add(folder);
+                }
+                await context.SaveChangesAsync();
+                log($"Imported {folders.Count} folders");
+            }
+            catch (Exception ex)
+            {
+                log($"WARNING: Failed to import Folders: {ex.Message}");
+            }
+        }
+
+        private async Task ImportRecipeLabelsAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log)
+        {
+            if (!existingTables.Contains("RecipeLabels"))
+            {
+                log("RecipeLabels table not found in source - skipping");
+                return;
+            }
+
+            try
+            {
+                var labels = new List<RecipeLabel>();
+                using var cmd = srcConnection.CreateCommand();
+                cmd.CommandText = "SELECT * FROM RecipeLabels";
+                using var reader = await cmd.ExecuteReaderAsync();
+                
+                while (await reader.ReadAsync())
+                {
+                    var label = new RecipeLabel
+                    {
+                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                        Name = reader.GetString(reader.GetOrdinal("Name")),
+                        ColorHex = HasColumn(reader, "ColorHex") && !reader.IsDBNull(reader.GetOrdinal("ColorHex")) ? reader.GetString(reader.GetOrdinal("ColorHex")) : null,
+                        CreatedAt = HasColumn(reader, "CreatedAt") && !reader.IsDBNull(reader.GetOrdinal("CreatedAt")) ? reader.GetDateTime(reader.GetOrdinal("CreatedAt")) : DateTime.Now
+                    };
+                    labels.Add(label);
+                }
+
+                foreach (var label in labels)
+                {
+                    context.RecipeLabels.Add(label);
+                }
+                await context.SaveChangesAsync();
+                log($"Imported {labels.Count} recipe labels");
+            }
+            catch (Exception ex)
+            {
+                log($"WARNING: Failed to import RecipeLabels: {ex.Message}");
+            }
+        }
+
+        private async Task ImportIngredientsAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log)
+        {
+            if (!existingTables.Contains("Ingredients"))
+            {
+                log("Ingredients table not found in source - skipping");
+                return;
+            }
+
+            try
+            {
+                var ingredients = new List<Ingredient>();
+                using var cmd = srcConnection.CreateCommand();
+                cmd.CommandText = "SELECT * FROM Ingredients WHERE RecipeId IS NULL"; // Import standalone ingredients first
+                using var reader = await cmd.ExecuteReaderAsync();
+                
+                while (await reader.ReadAsync())
+                {
+                    var ingredient = new Ingredient
+                    {
+                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                        Name = reader.GetString(reader.GetOrdinal("Name")),
+                        Quantity = reader.GetDouble(reader.GetOrdinal("Quantity")),
+                        Unit = (Unit)reader.GetInt32(reader.GetOrdinal("Unit")),
+                        UnitWeight = HasColumn(reader, "UnitWeight") && !reader.IsDBNull(reader.GetOrdinal("UnitWeight")) ? reader.GetDouble(reader.GetOrdinal("UnitWeight")) : 1.0,
+                        Calories = reader.GetDouble(reader.GetOrdinal("Calories")),
+                        Protein = reader.GetDouble(reader.GetOrdinal("Protein")),
+                        Fat = reader.GetDouble(reader.GetOrdinal("Fat")),
+                        Carbs = reader.GetDouble(reader.GetOrdinal("Carbs")),
+                        RecipeId = null
+                    };
+                    ingredients.Add(ingredient);
+                }
+
+                foreach (var ingredient in ingredients)
+                {
+                    context.Ingredients.Add(ingredient);
+                }
+                await context.SaveChangesAsync();
+                log($"Imported {ingredients.Count} standalone ingredients");
+            }
+            catch (Exception ex)
+            {
+                log($"WARNING: Failed to import standalone Ingredients: {ex.Message}");
+            }
+        }
+
+        private async Task ImportRecipesAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log)
+        {
+            if (!existingTables.Contains("Recipes"))
+            {
+                log("Recipes table not found in source - skipping");
+                return;
+            }
+
+            try
+            {
+                var recipes = new List<Recipe>();
+                using var cmd = srcConnection.CreateCommand();
+                cmd.CommandText = "SELECT * FROM Recipes";
+                using var reader = await cmd.ExecuteReaderAsync();
+                
+                while (await reader.ReadAsync())
+                {
+                    var recipe = new Recipe
+                    {
+                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                        Name = reader.GetString(reader.GetOrdinal("Name")),
+                        Description = !reader.IsDBNull(reader.GetOrdinal("Description")) ? reader.GetString(reader.GetOrdinal("Description")) : null,
+                        Calories = reader.GetDouble(reader.GetOrdinal("Calories")),
+                        Protein = reader.GetDouble(reader.GetOrdinal("Protein")),
+                        Fat = reader.GetDouble(reader.GetOrdinal("Fat")),
+                        Carbs = reader.GetDouble(reader.GetOrdinal("Carbs")),
+                        IloscPorcji = reader.GetInt32(reader.GetOrdinal("IloscPorcji")),
+                        FolderId = HasColumn(reader, "FolderId") && !reader.IsDBNull(reader.GetOrdinal("FolderId")) ? reader.GetInt32(reader.GetOrdinal("FolderId")) : null
+                    };
+                    recipes.Add(recipe);
+                }
+
+                // Import recipes first
+                foreach (var recipe in recipes)
+                {
+                    context.Recipes.Add(recipe);
+                }
+                await context.SaveChangesAsync();
+                log($"Imported {recipes.Count} recipes");
+
+                // Now import recipe ingredients
+                await ImportRecipeIngredientsAsync(srcConnection, context, log);
+            }
+            catch (Exception ex)
+            {
+                log($"WARNING: Failed to import Recipes: {ex.Message}");
+            }
+        }
+
+        private async Task ImportRecipeIngredientsAsync(SqliteConnection srcConnection, AppDbContext context, Action<string> log)
+        {
+            try
+            {
+                var ingredients = new List<Ingredient>();
+                using var cmd = srcConnection.CreateCommand();
+                cmd.CommandText = "SELECT * FROM Ingredients WHERE RecipeId IS NOT NULL";
+                using var reader = await cmd.ExecuteReaderAsync();
+                
+                while (await reader.ReadAsync())
+                {
+                    var ingredient = new Ingredient
+                    {
+                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                        Name = reader.GetString(reader.GetOrdinal("Name")),
+                        Quantity = reader.GetDouble(reader.GetOrdinal("Quantity")),
+                        Unit = (Unit)reader.GetInt32(reader.GetOrdinal("Unit")),
+                        UnitWeight = HasColumn(reader, "UnitWeight") && !reader.IsDBNull(reader.GetOrdinal("UnitWeight")) ? reader.GetDouble(reader.GetOrdinal("UnitWeight")) : 1.0,
+                        Calories = reader.GetDouble(reader.GetOrdinal("Calories")),
+                        Protein = reader.GetDouble(reader.GetOrdinal("Protein")),
+                        Fat = reader.GetDouble(reader.GetOrdinal("Fat")),
+                        Carbs = reader.GetDouble(reader.GetOrdinal("Carbs")),
+                        RecipeId = reader.GetInt32(reader.GetOrdinal("RecipeId"))
+                    };
+                    ingredients.Add(ingredient);
+                }
+
+                foreach (var ingredient in ingredients)
+                {
+                    context.Ingredients.Add(ingredient);
+                }
+                await context.SaveChangesAsync();
+                log($"Imported {ingredients.Count} recipe ingredients");
+            }
+            catch (Exception ex)
+            {
+                log($"WARNING: Failed to import recipe ingredients: {ex.Message}");
+            }
+        }
+
+        private async Task ImportRecipeRecipeLabelAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log)
+        {
+            if (!existingTables.Contains("RecipeRecipeLabel"))
+            {
+                log("RecipeRecipeLabel junction table not found - skipping");
+                return;
+            }
+
+            try
+            {
+                var links = new List<(int RecipeId, int LabelId)>();
+                using var cmd = srcConnection.CreateCommand();
+                cmd.CommandText = "SELECT * FROM RecipeRecipeLabel";
+                using var reader = await cmd.ExecuteReaderAsync();
+                
+                // Column names may vary - try both naming conventions
+                int recipeIdIndex = -1, labelIdIndex = -1;
+                try { recipeIdIndex = reader.GetOrdinal("RecipesId"); } catch { }
+                try { labelIdIndex = reader.GetOrdinal("LabelsId"); } catch { }
+                
+                if (recipeIdIndex == -1) try { recipeIdIndex = reader.GetOrdinal("RecipeId"); } catch { }
+                if (labelIdIndex == -1) try { labelIdIndex = reader.GetOrdinal("RecipeLabelId"); } catch { }
+
+                if (recipeIdIndex >= 0 && labelIdIndex >= 0)
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        links.Add((reader.GetInt32(recipeIdIndex), reader.GetInt32(labelIdIndex)));
+                    }
+                }
+
+                // Add links using raw SQL to avoid EF navigation complexity
+                using var linkCmd = context.Database.GetDbConnection().CreateCommand();
+                linkCmd.CommandText = "INSERT OR IGNORE INTO RecipeRecipeLabel (RecipesId, LabelsId) VALUES (@recipeId, @labelId)";
+                var recipeParam = linkCmd.CreateParameter();
+                recipeParam.ParameterName = "@recipeId";
+                linkCmd.Parameters.Add(recipeParam);
+                var labelParam = linkCmd.CreateParameter();
+                labelParam.ParameterName = "@labelId";
+                linkCmd.Parameters.Add(labelParam);
+
+                await context.Database.OpenConnectionAsync();
+                foreach (var (recipeId, labelId) in links)
+                {
+                    recipeParam.Value = recipeId;
+                    labelParam.Value = labelId;
+                    try
+                    {
+                        await linkCmd.ExecuteNonQueryAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        log($"WARNING: Failed to link recipe {recipeId} to label {labelId}: {ex.Message}");
+                    }
+                }
+                await context.Database.CloseConnectionAsync();
+                log($"Imported {links.Count} recipe-label links");
+            }
+            catch (Exception ex)
+            {
+                log($"WARNING: Failed to import RecipeRecipeLabel: {ex.Message}");
+            }
+        }
+
+        private async Task ImportPlansAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log)
+        {
+            if (!existingTables.Contains("Plans"))
+            {
+                log("Plans table not found in source - skipping");
+                return;
+            }
+
+            try
+            {
+                var plans = new List<Plan>();
+                using var cmd = srcConnection.CreateCommand();
+                cmd.CommandText = "SELECT * FROM Plans";
+                using var reader = await cmd.ExecuteReaderAsync();
+                
+                while (await reader.ReadAsync())
+                {
+                    var plan = new Plan
+                    {
+                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                        StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                        EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
+                        IsArchived = HasColumn(reader, "IsArchived") && !reader.IsDBNull(reader.GetOrdinal("IsArchived")) ? reader.GetBoolean(reader.GetOrdinal("IsArchived")) : false,
+                        // Handle new fields with defaults
+                        Type = HasColumn(reader, "Type") && !reader.IsDBNull(reader.GetOrdinal("Type")) ? (PlanType)reader.GetInt32(reader.GetOrdinal("Type")) : PlanType.ShoppingList,
+                        LinkedShoppingListPlanId = HasColumn(reader, "LinkedShoppingListPlanId") && !reader.IsDBNull(reader.GetOrdinal("LinkedShoppingListPlanId")) ? reader.GetInt32(reader.GetOrdinal("LinkedShoppingListPlanId")) : null
+                    };
+                    plans.Add(plan);
+                }
+
+                foreach (var plan in plans)
+                {
+                    context.Plans.Add(plan);
+                }
+                await context.SaveChangesAsync();
+                log($"Imported {plans.Count} plans");
+            }
+            catch (Exception ex)
+            {
+                log($"WARNING: Failed to import Plans: {ex.Message}");
+            }
+        }
+
+        private async Task ImportPlannedMealsAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log)
+        {
+            if (!existingTables.Contains("PlannedMeals"))
+            {
+                log("PlannedMeals table not found in source - skipping");
+                return;
+            }
+
+            try
+            {
+                var meals = new List<PlannedMeal>();
+                using var cmd = srcConnection.CreateCommand();
+                cmd.CommandText = "SELECT * FROM PlannedMeals";
+                using var reader = await cmd.ExecuteReaderAsync();
+                
+                while (await reader.ReadAsync())
+                {
+                    var meal = new PlannedMeal
+                    {
+                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                        RecipeId = reader.GetInt32(reader.GetOrdinal("RecipeId")),
+                        Date = reader.GetDateTime(reader.GetOrdinal("Date")),
+                        Portions = reader.GetInt32(reader.GetOrdinal("Portions")),
+                        PlanId = HasColumn(reader, "PlanId") && !reader.IsDBNull(reader.GetOrdinal("PlanId")) ? reader.GetInt32(reader.GetOrdinal("PlanId")) : null
+                    };
+                    meals.Add(meal);
+                }
+
+                foreach (var meal in meals)
+                {
+                    context.PlannedMeals.Add(meal);
+                }
+                await context.SaveChangesAsync();
+                log($"Imported {meals.Count} planned meals");
+            }
+            catch (Exception ex)
+            {
+                log($"WARNING: Failed to import PlannedMeals: {ex.Message}");
+            }
+        }
+
+        private async Task ImportShoppingListItemsAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log)
+        {
+            if (!existingTables.Contains("ShoppingListItems"))
+            {
+                log("ShoppingListItems table not found in source - skipping");
+                return;
+            }
+
+            try
+            {
+                var items = new List<ShoppingListItem>();
+                using var cmd = srcConnection.CreateCommand();
+                cmd.CommandText = "SELECT * FROM ShoppingListItems";
+                using var reader = await cmd.ExecuteReaderAsync();
+                
+                while (await reader.ReadAsync())
+                {
+                    var item = new ShoppingListItem
+                    {
+                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                        PlanId = reader.GetInt32(reader.GetOrdinal("PlanId")),
+                        IngredientName = reader.GetString(reader.GetOrdinal("IngredientName")),
+                        Unit = (Unit)reader.GetInt32(reader.GetOrdinal("Unit")),
+                        Quantity = reader.GetDouble(reader.GetOrdinal("Quantity")),
+                        IsChecked = reader.GetBoolean(reader.GetOrdinal("IsChecked")),
+                        Order = HasColumn(reader, "Order") && !reader.IsDBNull(reader.GetOrdinal("Order")) ? reader.GetInt32(reader.GetOrdinal("Order")) : 0
+                    };
+                    items.Add(item);
+                }
+
+                foreach (var item in items)
+                {
+                    context.ShoppingListItems.Add(item);
+                }
+                await context.SaveChangesAsync();
+                log($"Imported {items.Count} shopping list items");
+            }
+            catch (Exception ex)
+            {
+                log($"WARNING: Failed to import ShoppingListItems: {ex.Message}");
+            }
+        }
+
+        private bool HasColumn(SqliteDataReader reader, string columnName)
+        {
+            try
+            {
+                reader.GetOrdinal(columnName);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
     }
 }
