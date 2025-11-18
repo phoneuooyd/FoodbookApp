@@ -97,8 +97,9 @@
                 IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
                 ButtonText="+">
                 <components:FloatingActionButtonComponent.Actions>
-                    <components:FabActionItem Text="Dodaj folder" Command="{Binding BindingContext.AddFolderCommand, Source={x:Reference ThisPage}}" />
+                    <!-- Reordered: Add Recipe on top, Add Folder below -->
                     <components:FabActionItem Text="Dodaj przepis" Command="{Binding BindingContext.AddRecipeCommand, Source={x:Reference ThisPage}}" />
+                    <components:FabActionItem Text="Dodaj folder" Command="{Binding BindingContext.AddFolderCommand, Source={x:Reference ThisPage}}" />
                 </components:FloatingActionButtonComponent.Actions>
             </components:FloatingActionButtonComponent>
         </Grid>

@@ -66,7 +66,8 @@
                                             <Editor Placeholder="{loc:Translate Resource=AddRecipePageResources, Key=DescriptionPlaceholder}" Text="{Binding Description}" AutoSize="TextChanges" MinimumHeightRequest="120" BackgroundColor="Transparent" />
                                         </StackLayout>
                                     </Frame>
-                                    <Frame BorderColor="{StaticResource ModernBorderColor}" CornerRadius="12" Padding="0">
+                                    <!-- Default portions panel is hidden but kept in XAML for future use -->
+                                    <Frame IsVisible="False" BorderColor="{StaticResource ModernBorderColor}" CornerRadius="12" Padding="0">
                                         <StackLayout Spacing="5" Padding="12,8">
                                             <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=PortionsLabel}" Style="{StaticResource FieldLabel}" />
                                             <Entry Placeholder="2" Keyboard="Numeric" Text="{Binding IloscPorcji}" ClearButtonVisibility="WhileEditing" HorizontalTextAlignment="Center" WidthRequest="100" HorizontalOptions="Start" Style="{StaticResource ModernEntry}" />
