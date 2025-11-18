@@ -146,7 +146,16 @@
                                             </DataTemplate>
                                         </BindableLayout.ItemTemplate>
                                     </StackLayout>
-                                    <StackLayout HorizontalOptions="Center" Margin="0,8,0,0">
+                                    
+                                    <!-- Nutritional summary for the day - single horizontal line like AddRecipePage -->
+                                    <StackLayout Orientation="Horizontal" Spacing="15" Margin="0,8,0,4">
+                                        <Label Text="{Binding TotalCalories, StringFormat='⚡ {0:F1} kcal'}" FontSize="11" TextColor="Gray" />
+                                        <Label Text="{Binding TotalProtein, StringFormat='🥩 {0:F1}g'}" FontSize="11" TextColor="Gray" />
+                                        <Label Text="{Binding TotalFat, StringFormat='🧈 {0:F1}g'}" FontSize="11" TextColor="Gray" />
+                                        <Label Text="{Binding TotalCarbs, StringFormat='🌾 {0:F1}g'}" FontSize="11" TextColor="Gray" />
+                                    </StackLayout>
+                                    
+                                    <StackLayout HorizontalOptions="Center" Margin="0,4,0,0">
                                         <Button Command="{Binding BindingContext.AddMealCommand, Source={x:Reference ThisPage}}" 
                                                 CommandParameter="{Binding .}" 
                                                 StyleClass="Secondary"
