@@ -11,7 +11,8 @@
     xmlns:converters="clr-namespace:Foodbook.Converters"
     x:Name="ThisPage"
     x:DataType="vm:PlannerListsViewModel"
-    BackgroundColor="{DynamicResource PageBackgroundColor}">
+    BackgroundColor="{DynamicResource PageBackgroundColor}"
+    Shell.NavBarIsVisible="false">
 
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />

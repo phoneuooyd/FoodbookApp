@@ -10,7 +10,8 @@
              x:Name="ThisPage"
              x:DataType="vm:RecipeViewModel"
              Title="{loc:Translate Resource=RecipesPageResources, Key=Title}"
-             BackgroundColor="{DynamicResource PageBackgroundColor}">
+             BackgroundColor="{DynamicResource PageBackgroundColor}"
+             Shell.NavBarIsVisible="false">
     
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
