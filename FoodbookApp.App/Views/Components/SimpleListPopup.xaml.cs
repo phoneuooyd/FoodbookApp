@@ -473,7 +473,9 @@ public partial class SimpleListPopup : Popup
         void rebuild()
         {
             list.Children.Clear();
-            var multiplier = (double)displayPortions / Math.Max(mpb.Recipe.IloscPorcji, 1);
+            // FIXED: Ingredients are always defined per 1 portion, so multiply by displayPortions directly
+            // No need to divide by recipe.IloscPorcji
+            var multiplier = (double)displayPortions; // Simply use the display portions
             if (mpb.Recipe.Ingredients != null)
             {
                 foreach (var ing in mpb.Recipe.Ingredients)
