@@ -164,70 +164,84 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
                 return;
             }
 
+            // ? CRITICAL: Reset form to clear previous values
+            vm.Reset();
+            System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] IngredientFormViewModel reset before opening");
+
             var formPage = new IngredientFormPage(vm);
 
-            var tcs = new TaskCompletionSource();
-
-            // Show the page modally
+            // ? Show the page modally and await its dismissal
+            var dismissedTcs = new TaskCompletionSource();
+            formPage.Disappearing += (_, __) => dismissedTcs.TrySetResult();
+            
             await currentPage.Navigation.PushModalAsync(formPage);
+            System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] IngredientFormPage opened modally");
+            
+            // ? Wait for form to be dismissed (user saved or cancelled)
+            await dismissedTcs.Task;
+            System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] IngredientFormPage dismissed");
 
-            // Await save completion from the page (or timeout)
-            try
-            {
-                await formPage.AwaitSaveAsync(500000);
-            }
-            catch { }
+            // ? CRITICAL: Small delay to ensure all SaveAsync operations completed
+            // (events, reloads, etc. that happen BEFORE modal closes)
+            await Task.Delay(200);
 
-            // Ensure page closed (if still open, pop it)
-            try
-            {
-                if (currentPage.Navigation.ModalStack.Count > 0 && currentPage.Navigation.ModalStack.LastOrDefault() == formPage)
-                {
-                    await currentPage.Navigation.PopModalAsync();
-                }
-            }
-            catch { }
-
-            // Now reload freshest data directly from service (bypass any VM caches)
+            // ? Now reload fresh data and update popup list
             try
             {
                 var ingredientService = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IIngredientService>();
                 if (ingredientService != null)
                 {
+                    System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] Fetching fresh ingredients from service...");
+                    
+                    // Force cache invalidation
+                    try { ingredientService.InvalidateCache(); } catch { }
+                    
                     var fresh = await ingredientService.GetIngredientsAsync();
-                    // Update IngredientsPage directly if alive
-                    try { await IngredientsPage.Current?.ForceReloadAsync(); } catch { }
+                    System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] Fetched {fresh.Count} ingredients");
 
-                    // Update AddRecipeViewModel list if present
+                    // ? Update AddRecipeViewModel list if we're in AddRecipePage context
                     if (currentPage is Foodbook.Views.AddRecipePage arp)
                     {
                         var recipeVm = arp.BindingContext as Foodbook.ViewModels.AddRecipeViewModel;
                         if (recipeVm != null)
                         {
-                            // Reload available names directly from service to guarantee freshness
-                            recipeVm.AvailableIngredientNames.Clear();
-                            foreach (var ing in fresh)
-                                recipeVm.AvailableIngredientNames.Add(ing.Name);
-
-                            // Update local popup list
+                            System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] Updating AddRecipeViewModel.AvailableIngredientNames...");
+                            
                             await MainThread.InvokeOnMainThreadAsync(() =>
                             {
-                                _allItems.Clear();
-                                _allItems.AddRange(recipeVm.AvailableIngredientNames);
-                                ApplySearch();
+                                recipeVm.AvailableIngredientNames.Clear();
+                                foreach (var ing in fresh)
+                                    recipeVm.AvailableIngredientNames.Add(ing.Name);
                             });
+                            
+                            System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] AddRecipeViewModel updated with {fresh.Count} ingredients");
                         }
                     }
-                    else
+
+                    // ? Update local popup list (this popup's _allItems)
+                    await MainThread.InvokeOnMainThreadAsync(() =>
                     {
-                        // Generic popup update: repopulate from fresh service data
-                        await MainThread.InvokeOnMainThreadAsync(() =>
+                        System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] Updating popup list...");
+                        _allItems.Clear();
+                        foreach (var ing in fresh)
+                            _allItems.Add(ing.Name);
+                        ApplySearch();
+                        System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] Popup list updated with {_allItems.Count} items");
+                    });
+
+                    // ? Force reload IngredientsPage if it's alive (should already be done by events, but double-check)
+                    try 
+                    { 
+                        if (IngredientsPage.Current != null)
                         {
-                            _allItems.Clear();
-                            foreach (var ing in fresh)
-                                _allItems.Add(ing.Name);
-                            ApplySearch();
-                        });
+                            System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] Force reloading IngredientsPage...");
+                            await IngredientsPage.Current.ForceReloadAsync();
+                            System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] IngredientsPage reloaded successfully");
+                        }
+                    } 
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] IngredientsPage reload error: {ex.Message}");
                     }
                 }
             }
