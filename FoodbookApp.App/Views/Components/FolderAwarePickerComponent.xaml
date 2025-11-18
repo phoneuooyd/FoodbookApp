@@ -2,6 +2,7 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:converters="clr-namespace:Foodbook.Converters"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              x:Class="Foodbook.Views.Components.FolderAwarePickerComponent"
              x:Name="ThisComponent">
 
@@ -17,6 +18,13 @@
             MinimumHeightRequest="44">
         
         <Grid ColumnDefinitions="*,Auto" Padding="12,8">
+            <Grid.Behaviors>
+                <!-- Long press behavior for showing recipe details -->
+                <toolkit:TouchBehavior 
+                    LongPressCommand="{Binding ShowRecipeDetailsCommand, Source={x:Reference ThisComponent}}"
+                    LongPressCommandParameter="{Binding SelectedRecipe, Source={x:Reference ThisComponent}}" />
+            </Grid.Behaviors>
+            
             <Grid.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding OpenSelectionDialogCommand, Source={x:Reference ThisComponent}}" />
             </Grid.GestureRecognizers>
