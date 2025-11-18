@@ -9,33 +9,52 @@ public class IngredientService : IIngredientService
 {
     private readonly AppDbContext _context;
     
-    // ? NOWE: Cache sk³adników z invalidacj¹
-    private List<Ingredient>? _cachedIngredients;
-    private DateTime _lastCacheTime = DateTime.MinValue;
-    private readonly TimeSpan _cacheValidity = TimeSpan.FromMinutes(10);
+    // Shared (static) cache so different DI scopes see the same cached data
+    private static List<Ingredient>? _cachedIngredientsStatic;
+    private static DateTime _lastCacheTimeStatic = DateTime.MinValue;
+    private static readonly TimeSpan _cacheValidityStatic = TimeSpan.FromMinutes(10);
+    private static readonly object _cacheLock = new();
     
     public IngredientService(AppDbContext context)
     {
         _context = context;
     }
 
-    // ? ZOPTYMALIZOWANE: Getter z cache
+    // Getter uses shared static cache with lock for thread-safety
     public async Task<List<Ingredient>> GetIngredientsAsync()
     {
-        if (_cachedIngredients == null || 
-            DateTime.Now - _lastCacheTime > _cacheValidity)
+        try
         {
-            _cachedIngredients = await _context.Ingredients
-                .AsNoTracking() // Improves performance for read-only operations
-                .Where(i => i.RecipeId == null) // Only standalone ingredients
+            lock (_cacheLock)
+            {
+                if (_cachedIngredientsStatic != null && DateTime.Now - _lastCacheTimeStatic <= _cacheValidityStatic)
+                {
+                    // Return a copy to prevent caller mutation
+                    return _cachedIngredientsStatic.ToList();
+                }
+            }
+
+            // Load from DB outside lock
+            var fresh = await _context.Ingredients
+                .AsNoTracking()
+                .Where(i => i.RecipeId == null)
                 .OrderBy(i => i.Name)
                 .ToListAsync();
-            _lastCacheTime = DateTime.Now;
-            
-            System.Diagnostics.Debug.WriteLine($"Ingredients cache refreshed: {_cachedIngredients.Count} items");
-        }
 
-        return _cachedIngredients.ToList(); // Return copy to prevent mutations
+            lock (_cacheLock)
+            {
+                _cachedIngredientsStatic = fresh;
+                _lastCacheTimeStatic = DateTime.Now;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"Ingredients cache refreshed (shared): {fresh.Count} items");
+            return fresh.ToList();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientService] GetIngredientsAsync failed: {ex.Message}");
+            return new List<Ingredient>();
+        }
     }
 
     public async Task<Ingredient?> GetIngredientAsync(int id) => 
@@ -54,8 +73,8 @@ public class IngredientService : IIngredientService
             _context.Ingredients.Add(ingredient);
             await _context.SaveChangesAsync();
             
-            // ? OPTYMALIZACJA: Invaliduj cache tylko gdy to konieczne
-            if (ingredient.RecipeId == null) 
+            // Invalidate shared cache only when standalone ingredient added
+            if (ingredient.RecipeId == null)
             {
                 InvalidateCache();
                 System.Diagnostics.Debug.WriteLine($"? Added standalone ingredient: {ingredient.Name}, ID: {ingredient.Id}");
@@ -76,13 +95,11 @@ public class IngredientService : IIngredientService
     {
         try
         {
-            // Use more efficient update approach
             var existingIngredient = await _context.Ingredients
                 .FirstOrDefaultAsync(i => i.Id == ingredient.Id);
                 
             if (existingIngredient != null)
             {
-                // Update only the fields we want to change
                 existingIngredient.Name = ingredient.Name;
                 existingIngredient.Quantity = ingredient.Quantity;
                 existingIngredient.Unit = ingredient.Unit;
@@ -90,11 +107,10 @@ public class IngredientService : IIngredientService
                 existingIngredient.Protein = ingredient.Protein;
                 existingIngredient.Fat = ingredient.Fat;
                 existingIngredient.Carbs = ingredient.Carbs;
-                // RecipeId stays the same
 
                 await _context.SaveChangesAsync();
-                
-                // ? OPTYMALIZACJA: Invaliduj cache tylko dla standalone ingredients
+
+                // Invalidate shared cache for standalone ingredients
                 if (existingIngredient.RecipeId == null)
                 {
                     InvalidateCache();
@@ -121,7 +137,6 @@ public class IngredientService : IIngredientService
     {
         try
         {
-            // ? OPTYMALIZACJA: SprawdŸ czy to standalone ingredient przed usuniêciem
             var ingredient = await _context.Ingredients.FindAsync(id);
             bool wasStandalone = ingredient?.RecipeId == null;
             
@@ -130,7 +145,6 @@ public class IngredientService : IIngredientService
                 _context.Ingredients.Remove(ingredient);
                 await _context.SaveChangesAsync();
                 
-                // Invaliduj cache tylko dla standalone ingredients
                 if (wasStandalone)
                 {
                     InvalidateCache();
@@ -146,7 +160,6 @@ public class IngredientService : IIngredientService
         {
             System.Diagnostics.Debug.WriteLine($"? Error deleting ingredient: {ex.Message}");
             
-            // Fallback to traditional delete if the above fails
             try
             {
                 var ing = await _context.Ingredients.FindAsync(id);
@@ -171,11 +184,14 @@ public class IngredientService : IIngredientService
         }
     }
 
-    // ? NOWE: Publiczna metoda do invalidacji cache
+    // Invalidate the shared cache
     public void InvalidateCache()
     {
-        _cachedIngredients = null;
-        _lastCacheTime = DateTime.MinValue;
-        System.Diagnostics.Debug.WriteLine("Ingredients cache invalidated");
+        lock (_cacheLock)
+        {
+            _cachedIngredientsStatic = null;
+            _lastCacheTimeStatic = DateTime.MinValue;
+        }
+        System.Diagnostics.Debug.WriteLine("Ingredients cache invalidated (shared)");
     }
 }
