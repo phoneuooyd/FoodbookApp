@@ -13,6 +13,8 @@
              BackgroundColor="{DynamicResource PageBackgroundColor}">
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        <converters:RecipeSelectedToStrokeConverter x:Key="RecipeSelectedToStrokeConverter" />
+        <converters:RecipeSelectedToStrokeThicknessConverter x:Key="RecipeSelectedToStrokeThicknessConverter" />
         <!-- Local styles to render cards using Border instead of deprecated Frame -->
         <Style x:Key="PlannerCardBorder" TargetType="Border">
             <Setter Property="Padding" Value="10,6" />
@@ -27,6 +29,14 @@
             <Setter Property="BackgroundColor" Value="Transparent" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="HorizontalOptions" Value="FillAndExpand" />
+        </Style>
+        <!-- Style for recipe picker border - with selected state -->
+        <Style x:Key="RecipePickerBorder" TargetType="Border">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 8" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="Stroke" Value="{AppThemeBinding Light=LightGray, Dark=#555555}" />
         </Style>
     </ContentPage.Resources>
     <Grid RowDefinitions="*">
@@ -90,10 +100,16 @@
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate x:DataType="models:PlannedMeal">
                                                 <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="4" Margin="0,1">
-                                                    <!-- Replace standard Picker with FolderAwarePicker -->
-                                                    <components:FolderAwarePickerComponent Grid.Column="0" 
-                                                                                          SelectedRecipe="{Binding Recipe}" 
-                                                                                          PlaceholderText="{loc:Translate Resource=PlannerPageResources, Key=SelectRecipePlaceholder}" />
+                                                    <!-- Recipe Picker wrapped in Border -->
+                                                    <Border Grid.Column="0" 
+                                                            x:Name="RecipeBorder"
+                                                            Style="{StaticResource RecipePickerBorder}"
+                                                            BackgroundColor="{DynamicResource FrameBackgroundColor}"
+                                                            Stroke="{Binding Recipe, Converter={StaticResource RecipeSelectedToStrokeConverter}}"
+                                                            StrokeThickness="{Binding Recipe, Converter={StaticResource RecipeSelectedToStrokeThicknessConverter}}">
+                                                        <components:FolderAwarePickerComponent SelectedRecipe="{Binding Recipe}" 
+                                                                                              PlaceholderText="{loc:Translate Resource=PlannerPageResources, Key=SelectRecipePlaceholder}" />
+                                                    </Border>
                                                     <Button Grid.Column="1" Text="➖" Command="{Binding BindingContext.DecreasePortionsCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}"
                                                             WidthRequest="35" HeightRequest="35" MinimumWidthRequest="18" MinimumHeightRequest="18"
                                                             CornerRadius="9" FontSize="14" FontAttributes="Bold" BorderWidth="0" Padding="0"

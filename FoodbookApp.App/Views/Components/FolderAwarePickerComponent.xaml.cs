@@ -27,6 +27,9 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
 
     public ICommand OpenSelectionDialogCommand { get; }
 
+    // Event fired when recipe selection changes
+    public event EventHandler? SelectionChanged;
+
     public Recipe? SelectedRecipe
     {
         get => (Recipe?)GetValue(SelectedRecipeProperty);
@@ -60,6 +63,7 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
         if (bindable is FolderAwarePickerComponent component)
         {
             component.OnPropertyChanged(nameof(DisplayText));
+            component.SelectionChanged?.Invoke(component, EventArgs.Empty);
         }
     }
 
