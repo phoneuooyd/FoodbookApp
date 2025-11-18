@@ -159,6 +159,44 @@ public class IngredientFormViewModel : INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Resets the form to default values for adding a new ingredient
+    /// </summary>
+    public void Reset()
+    {
+        try
+        {
+            _ingredient = null;
+            Name = string.Empty;
+            Quantity = "100";
+            SelectedUnit = Unit.Gram;
+            UnitWeight = "1.0";
+            Calories = "0";
+            Protein = "0";
+            Fat = "0";
+            Carbs = "0";
+            ValidationMessage = string.Empty;
+            VerificationStatus = string.Empty;
+            IsVerifying = false;
+            SelectedTabIndex = 0;
+
+            // Notify UI about property changes
+            OnPropertyChanged(nameof(Title));
+            OnPropertyChanged(nameof(SaveButtonText));
+            OnPropertyChanged(nameof(IsPartOfRecipe));
+            OnPropertyChanged(nameof(RecipeInfo));
+            OnPropertyChanged(nameof(IsUnitWeightVisible));
+            
+            ValidateInput();
+            
+            System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Form reset to defaults");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in Reset: {ex.Message}");
+        }
+    }
+
     public async Task LoadAsync(int id)
     {
         try
@@ -357,6 +395,8 @@ public class IngredientFormViewModel : INotifyPropertyChanged
             var unitWeight = ParseDoubleValue(UnitWeight);
             if (unitWeight <= 0) unitWeight = 1.0;
             
+            bool isNewIngredient = _ingredient == null;
+            
             if (_ingredient == null)
             {
                 // Creating new ingredient
@@ -450,6 +490,13 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 }
             }
 
+            // Reset form after saving a new ingredient (before closing)
+            if (isNewIngredient)
+            {
+                Reset();
+                System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Form reset after adding new ingredient");
+            }
+
             // Close appropriately depending on how the page was opened - now after refresh and notifications
             var nav = Shell.Current?.Navigation;
             if (nav?.ModalStack?.Count > 0)
@@ -458,7 +505,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 await Shell.Current.GoToAsync("..");
             
             int savedId = 0;
-            if (_ingredient == null)
+            if (isNewIngredient)
             {
                 // newIng was added above; need to fetch its id
                 // try to get last added by querying service (best-effort)
@@ -479,7 +526,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error saving ingredient: {ex.Message}");
-            ValidationMessage = $"Nie uda³o siê zapisaæ sk³adnika: {ex.Message}";
+            ValidationMessage = $"Nie uda?o si? zapisa? sk?adnika: {ex.Message}";
         }
     }
 

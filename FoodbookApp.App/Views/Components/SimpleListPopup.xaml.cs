@@ -132,6 +132,10 @@ public partial class SimpleListPopup : Popup
                 return;
             }
 
+            // ✅ FIXED: Reset form to clear previous values when adding new ingredient
+            vm.Reset();
+            System.Diagnostics.Debug.WriteLine("[SimpleListPopup] Reset IngredientFormViewModel for new ingredient");
+
             var formPage = new IngredientFormPage(vm);
 
             // Await page dismissal using Disappearing
