@@ -176,7 +176,8 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     {
         try
         {
-            await _shoppingListService.SaveShoppingListItemStateAsync(
+            // ? Save and get back the database Id
+            var savedId = await _shoppingListService.SaveShoppingListItemStateAsync(
                 _currentPlanId,
                 item.Id,      // przekazuj Id
                 item.Order,   // przekazuj Order
@@ -185,6 +186,14 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
                 item.IsChecked,
                 item.Quantity
             );
+
+            // ? CRITICAL FIX: Update the Ingredient.Id with the saved database Id
+            // This prevents duplicate creation when Unit or other properties change
+            if (item.Id != savedId)
+            {
+                item.Id = savedId;
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Updated item '{item.Name}' Id: {savedId}");
+            }
         }
         catch (Exception ex)
         {

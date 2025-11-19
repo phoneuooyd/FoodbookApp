@@ -139,38 +139,50 @@ public class ShoppingListService : IShoppingListService
     }
 
     // Matches new interface: update or insert by Id -> (PlanId+Order) -> (PlanId+Name+Unit)
-    public async Task SaveShoppingListItemStateAsync(int planId, int id, int order, string ingredientName, Unit unit, bool isChecked, double quantity)
+    // ? Returns the database Id of the saved item
+    public async Task<int> SaveShoppingListItemStateAsync(int planId, int id, int order, string ingredientName, Unit unit, bool isChecked, double quantity)
     {
         if (ingredientName == null) throw new ArgumentNullException(nameof(ingredientName));
 
         ShoppingListItem? existingItem = null;
 
+        // ? Priority 1: Try to find by Id (most reliable for existing items)
         if (id > 0)
         {
             existingItem = await _context.ShoppingListItems.FirstOrDefaultAsync(sli => sli.Id == id);
         }
 
-        if (existingItem == null)
+        // ? Priority 2: If not found by Id, try by Order (for newly added items in same session)
+        if (existingItem == null && order >= 0)
         {
-            existingItem = await _context.ShoppingListItems.FirstOrDefaultAsync(sli => sli.PlanId == planId && sli.Order == order);
+            existingItem = await _context.ShoppingListItems
+                .FirstOrDefaultAsync(sli => sli.PlanId == planId && sli.Order == order);
         }
 
+        // ? Priority 3: Fallback to Name+Unit (for legacy items or cross-session sync)
         if (existingItem == null)
         {
-            existingItem = await _context.ShoppingListItems.FirstOrDefaultAsync(sli => sli.PlanId == planId && sli.IngredientName == ingredientName && sli.Unit == unit);
+            existingItem = await _context.ShoppingListItems
+                .FirstOrDefaultAsync(sli => sli.PlanId == planId && 
+                                           sli.IngredientName == ingredientName && 
+                                           sli.Unit == unit);
         }
 
         if (existingItem != null)
         {
+            // ? Update existing item
             existingItem.IngredientName = ingredientName;
             existingItem.Unit = unit;
             existingItem.IsChecked = isChecked;
             existingItem.Quantity = quantity;
             existingItem.Order = order;
+            await _context.SaveChangesAsync();
+            return existingItem.Id;
         }
         else
         {
-            _context.ShoppingListItems.Add(new ShoppingListItem
+            // ? Create new item
+            var newItem = new ShoppingListItem
             {
                 PlanId = planId,
                 IngredientName = ingredientName,
@@ -178,10 +190,13 @@ public class ShoppingListService : IShoppingListService
                 IsChecked = isChecked,
                 Quantity = quantity,
                 Order = order
-            });
+            };
+            _context.ShoppingListItems.Add(newItem);
+            await _context.SaveChangesAsync();
+            
+            // ? Return the auto-generated Id
+            return newItem.Id;
         }
-
-        await _context.SaveChangesAsync();
     }
 
     public async Task RemoveShoppingListItemAsync(int planId, string ingredientName, Unit unit)
