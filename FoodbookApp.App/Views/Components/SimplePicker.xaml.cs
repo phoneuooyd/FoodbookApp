@@ -1,14 +1,18 @@
-using Microsoft.Maui.Controls;
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Windows.Input;
-using CommunityToolkit.Maui.Views;
-using CommunityToolkit.Maui.Extensions;
-using System.Collections; // Added for IEnumerable
-using Microsoft.Extensions.DependencyInjection;
-using FoodbookApp.Interfaces;
 using System.Globalization;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
+using System.Windows.Input;
+using CommunityToolkit.Maui.Extensions;
+using CommunityToolkit.Maui.Views;
 using Foodbook.Utils;
+using FoodbookApp.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Maui.Controls;
 
 namespace Foodbook.Views.Components;
 
@@ -16,6 +20,9 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
 {
     private bool _isPopupOpen = false; // Protection against multiple opens
     private ILocalizationService? _localizationService; // Localization service subscription
+
+    // Static event that SimplePicker instances can fire to notify AddRecipePage (or any page) about popup state
+    public static event EventHandler<bool>? GlobalPopupStateChanged;
 
     public static readonly BindableProperty ItemsSourceProperty =
         BindableProperty.Create(nameof(ItemsSource), typeof(IEnumerable), typeof(SimplePicker), null);
@@ -251,6 +258,10 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
 
         try
         {
+            // ? Notify global event listeners
+            GlobalPopupStateChanged?.Invoke(this, true);
+            System.Diagnostics.Debug.WriteLine("?? SimplePicker: Notified popup opening");
+
             _isPopupOpen = true;
             ((Command)OpenSelectionDialogCommand).ChangeCanExecute();
 
@@ -268,7 +279,7 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
                 return;
             }
 
-            System.Diagnostics.Debug.WriteLine("?? SimplePicker: Opening popup");
+            System.Diagnostics.Debug.WriteLine("? SimplePicker: Opening popup");
 
             var showTask = page.ShowPopupAsync(popup);
             var resultTask = popup.ResultTask;
@@ -327,6 +338,9 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
         }
         finally
         {
+            GlobalPopupStateChanged?.Invoke(this, false);
+            System.Diagnostics.Debug.WriteLine("?? SimplePicker: Notified popup closing");
+
             _isPopupOpen = false;
             ((Command)OpenSelectionDialogCommand).ChangeCanExecute();
             System.Diagnostics.Debug.WriteLine("?? SimplePicker: Popup protection released");

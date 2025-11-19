@@ -27,8 +27,9 @@ namespace Foodbook.Views
         // drag state for reordering ingredients
         private Ingredient? _draggingIngredient;
 
-        // Suppress handling of Shell.Navigating when we do programmatic navigation
+        private int _popupDepth = 0;
         private bool _suppressShellNavigating = false;
+        private bool _isSubscribedToShellNavigating = false;
 
         public AddRecipePage(AddRecipeViewModel vm)
         {
@@ -36,8 +37,7 @@ namespace Foodbook.Views
             BindingContext = vm;
             _themeHelper = new PageThemeHelper();
 
-            // Intercept Shell navigation: subscribe to Navigating event to detect back nav
-            Shell.Current.Navigating += OnShellNavigating;
+            // Do not subscribe here; subscribe in OnAppearing to ensure Shell.Current is ready
         }
 
         protected override async void OnAppearing()
@@ -49,10 +49,24 @@ namespace Foodbook.Views
                 _themeHelper.ThemeChanged += OnThemeChanged;
                 _themeHelper.CultureChanged += OnCultureChanged;
 
+                // Subscribe to Shell.Navigating to intercept top-back navigation
+                try
+                {
+                    if (!_isSubscribedToShellNavigating && Shell.Current != null)
+                    {
+                        Shell.Current.Navigating += OnShellNavigating;
+                        _isSubscribedToShellNavigating = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Warning: failed to subscribe to Shell.Navigating: {ex.Message}");
+                }
+
                 if (!_hasEverLoaded)
                 {
                     // First time loading - perform full initialization
-                    System.Diagnostics.Debug.WriteLine("?? AddRecipePage: First load - performing full initialization");
+                    System.Diagnostics.Debug.WriteLine("? AddRecipePage: First load - performing full initialization");
                     
                     ViewModel?.Reset();
                     await (ViewModel?.LoadAvailableIngredientsAsync() ?? Task.CompletedTask);
@@ -95,10 +109,93 @@ namespace Foodbook.Views
             _themeHelper.CultureChanged -= OnCultureChanged;
             _themeHelper.Cleanup();
 
-            // Unsubscribe Shell navigating to avoid memory leaks
-            try { Shell.Current.Navigating -= OnShellNavigating; } catch { }
+            // Unsubscribe Shell.Navigating
+            try
+            {
+                if (_isSubscribedToShellNavigating && Shell.Current != null)
+                {
+                    Shell.Current.Navigating -= OnShellNavigating;
+                    _isSubscribedToShellNavigating = false;
+                }
+            }
+            catch { }
             
-            System.Diagnostics.Debug.WriteLine("? AddRecipePage: Disappearing - preserving current state");
+            System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Disappearing - preserving current state");
+        }
+
+        // Handle Shell navigation (top-back / shell routing). We cancel navigation when unsaved changes.
+        private void OnShellNavigating(object? sender, ShellNavigatingEventArgs e)
+        {
+            try
+            {
+                if (_suppressShellNavigating)
+                    return;
+
+                // Determine if this is a back/pop navigation. Treat only Pop/PopToRoot or explicit parent ("..") as back.
+                bool isBackNavigation = e.Source == ShellNavigationSource.Pop || e.Source == ShellNavigationSource.PopToRoot;
+
+                var targetLoc = e.Target?.Location?.OriginalString ?? string.Empty;
+                if (!isBackNavigation && !string.IsNullOrEmpty(targetLoc) && targetLoc.Contains(".."))
+                    isBackNavigation = true;
+
+                // If we couldn't detect back, prefer to ignore (do not interrupt non-back navigations)
+                if (!isBackNavigation)
+                {
+                    return;
+                }
+
+                if (ViewModel?.HasUnsavedChanges == true)
+                {
+                    System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Detected shell back-navigation with unsaved changes - prompting user");
+
+                    // Cancel navigation now and ask user
+                    e.Cancel();
+
+                    MainThread.BeginInvokeOnMainThread(async () =>
+                    {
+                        bool leave = await DisplayAlert("PotwierdŸ", "Masz niezapisane zmiany. Czy na pewno chcesz wyjœæ?", "Tak", "Nie");
+                        if (leave)
+                        {
+                            try
+                            {
+                                ViewModel?.DiscardChanges();
+                            }
+                            catch { }
+
+                            _suppressShellNavigating = true;
+                            try
+                            {
+                                // If there is a modal on stack, pop it first (silent)
+                                var nav = Shell.Current?.Navigation;
+                                if (nav?.ModalStack?.Count > 0)
+                                    await nav.PopModalAsync(false);
+
+                                if (!string.IsNullOrEmpty(targetLoc))
+                                {
+                                    await Shell.Current.GoToAsync(targetLoc);
+                                }
+                                else
+                                {
+                                    await Shell.Current.Navigation.PopAsync(false);
+                                }
+                            }
+                            catch (Exception exNav)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Navigation after discard failed: {exNav.Message}");
+                            }
+                            finally
+                            {
+                                await Task.Delay(200);
+                                _suppressShellNavigating = false;
+                            }
+                        }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"OnShellNavigating error: {ex.Message}");
+            }
         }
 
         private void OnThemeChanged(object? sender, EventArgs e)
@@ -231,7 +328,6 @@ namespace Foodbook.Views
                             }
                             catch { }
 
-                            _suppressShellNavigating = true;
                             try
                             {
                                 var nav = Shell.Current?.Navigation;
@@ -240,11 +336,9 @@ namespace Foodbook.Views
                                 else
                                     await Shell.Current.GoToAsync("..");
                             }
-                            finally
+                            catch (Exception navEx)
                             {
-                                // small delay to ensure navigation completes before re-enabling
-                                await Task.Delay(200);
-                                _suppressShellNavigating = false;
+                                System.Diagnostics.Debug.WriteLine($"Navigation after discard failed: {navEx.Message}");
                             }
                         }
                     });
@@ -259,72 +353,6 @@ namespace Foodbook.Views
             {
                 System.Diagnostics.Debug.WriteLine($"Error in OnBackButtonPressed: {ex.Message}");
                 return base.OnBackButtonPressed();
-            }
-        }
-
-        // Handle Shell navigation (top-back / shell routing). We cancel navigation when unsaved changes.
-        private void OnShellNavigating(object? sender, ShellNavigatingEventArgs e)
-        {
-            try
-            {
-                if (_suppressShellNavigating) return;
-
-                // Only care about navigation away from this page
-                if (ViewModel?.HasUnsavedChanges == true)
-                {
-                    System.Diagnostics.Debug.WriteLine("AddRecipePage: Detected shell navigation with unsaved changes - prompting user");
-
-                    // Cancel navigation now and ask user
-                    e.Cancel();
-
-                    MainThread.BeginInvokeOnMainThread(async () =>
-                    {
-                        bool leave = await DisplayAlert("PotwierdŸ", "Masz niezapisane zmiany. Czy na pewno chcesz wyjœæ?", "Tak", "Nie");
-                        if (leave)
-                        {
-                            try
-                            {
-                                // Discard unsaved changes in VM
-                                ViewModel?.DiscardChanges();
-                            }
-                            catch { }
-
-                            // Perform navigation but suppress re-entrance to this handler
-                            _suppressShellNavigating = true;
-                            try
-                            {
-                                // If there is a modal on stack, pop it first (silent)
-                                var nav = Shell.Current?.Navigation;
-                                if (nav?.ModalStack?.Count > 0)
-                                    await nav.PopModalAsync(false);
-
-                                // Navigate to requested location
-                                if (e.Target?.Location?.OriginalString != null)
-                                {
-                                    await Shell.Current.GoToAsync(e.Target.Location.OriginalString);
-                                }
-                            }
-                            catch (Exception exNav)
-                            {
-                                System.Diagnostics.Debug.WriteLine($"Navigation after discard failed: {exNav.Message}");
-                            }
-                            finally
-                            {
-                                // small delay to ensure navigation completes before re-enabling
-                                await Task.Delay(200);
-                                _suppressShellNavigating = false;
-                            }
-                        }
-                        else
-                        {
-                            // Do nothing; remain on the page
-                        }
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"OnShellNavigating error: {ex.Message}");
             }
         }
 

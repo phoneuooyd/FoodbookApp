@@ -13,6 +13,9 @@ public partial class SearchablePickerComponent : ContentView, INotifyPropertyCha
 {
     private bool _isPopupOpen = false; // Protection against multiple opens
 
+    // Static event that SearchablePickerComponent instances can fire to notify AddRecipePage (or any page) about popup state
+    public static event EventHandler<bool>? GlobalPopupStateChanged;
+
     public static readonly BindableProperty ItemsSourceProperty =
         BindableProperty.Create(nameof(ItemsSource), typeof(IList<string>), typeof(SearchablePickerComponent), default(IList<string>));
 
@@ -73,6 +76,10 @@ public partial class SearchablePickerComponent : ContentView, INotifyPropertyCha
 
         try
         {
+            // ? Notify global event listeners
+            GlobalPopupStateChanged?.Invoke(this, true);
+            System.Diagnostics.Debug.WriteLine("?? SearchablePickerComponent: Notified popup opening");
+
             _isPopupOpen = true;
             ((Command)OpenSelectionDialogCommand).ChangeCanExecute();
 
@@ -106,7 +113,7 @@ public partial class SearchablePickerComponent : ContentView, INotifyPropertyCha
                 return;
             }
 
-            System.Diagnostics.Debug.WriteLine("?? SearchablePickerComponent: Opening popup");
+            System.Diagnostics.Debug.WriteLine("? SearchablePickerComponent: Opening popup");
 
             // Show popup and await the popup's own ResultTask to get object result
             page.ShowPopup(popup);
@@ -127,6 +134,9 @@ public partial class SearchablePickerComponent : ContentView, INotifyPropertyCha
         }
         finally
         {
+            GlobalPopupStateChanged?.Invoke(this, false);
+            System.Diagnostics.Debug.WriteLine("?? SearchablePickerComponent: Notified popup closing");
+
             _isPopupOpen = false;
             ((Command)OpenSelectionDialogCommand).ChangeCanExecute();
             System.Diagnostics.Debug.WriteLine("?? SearchablePickerComponent: Popup protection released");
