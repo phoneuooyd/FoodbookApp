@@ -19,6 +19,11 @@ namespace Foodbook.ViewModels
     {
         private Recipe? _editingRecipe;
         
+        // Dirty tracking
+        private bool _isDirty = false;
+        private bool _suppressDirtyTracking = false;
+        public bool HasUnsavedChanges => _isDirty;
+
         // ✅ NOWE: Cache składników z debouncing
         private List<Ingredient> _cachedIngredients = new();
         private DateTime _lastCacheUpdate = DateTime.MinValue;
@@ -32,7 +37,7 @@ namespace Foodbook.ViewModels
         private readonly IFolderService _folderService;
         private readonly IDatabaseService _databaseService;
         public ObservableCollection<Folder> AvailableFolders { get; } = new();
-        public int? SelectedFolderId { get => _selectedFolderId; set { _selectedFolderId = value; OnPropertyChanged(); } }
+        public int? SelectedFolderId { get => _selectedFolderId; set { _selectedFolderId = value; OnPropertyChanged(); MarkDirty(); } }
         private int? _selectedFolderId;
 
         // ✅ Labels support
@@ -54,6 +59,7 @@ namespace Foodbook.ViewModels
                     OnPropertyChanged(nameof(IsBasicInfoTabSelected));
                     OnPropertyChanged(nameof(IsIngredientsTabSelected));
                     OnPropertyChanged(nameof(IsNutritionTabSelected));
+                    MarkDirty();
                 }
                 catch (Exception ex)
                 {
@@ -80,6 +86,7 @@ namespace Foodbook.ViewModels
                     _isManualMode = value;
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(IsImportMode));
+                    MarkDirty();
                 }
                 catch (Exception ex)
                 {
@@ -91,25 +98,25 @@ namespace Foodbook.ViewModels
         public bool IsImportMode => !IsManualMode;
 
         // Pola do recznego dodawania
-        public string Name { get => _name; set { _name = value; OnPropertyChanged(); ValidateInput(); } }
+        public string Name { get => _name; set { _name = value; OnPropertyChanged(); ValidateInput(); MarkDirty(); } }
         private string _name = string.Empty;
         
-        public string Description { get => _description; set { _description = value; OnPropertyChanged(); } }
+        public string Description { get => _description; set { _description = value; OnPropertyChanged(); MarkDirty(); } }
         private string _description = string.Empty;
         
-        public string IloscPorcji { get => _iloscPorcji; set { _iloscPorcji = value; OnPropertyChanged(); ValidateInput(); } }
+        public string IloscPorcji { get => _iloscPorcji; set { _iloscPorcji = value; OnPropertyChanged(); ValidateInput(); MarkDirty(); } }
         private string _iloscPorcji = "2";
         
-        public string Calories { get => _calories; set { _calories = value; OnPropertyChanged(); ValidateInput(); } }
+        public string Calories { get => _calories; set { _calories = value; OnPropertyChanged(); ValidateInput(); MarkDirty(); } }
         private string _calories = "0";
         
-        public string Protein { get => _protein; set { _protein = value; OnPropertyChanged(); ValidateInput(); } }
+        public string Protein { get => _protein; set { _protein = value; OnPropertyChanged(); ValidateInput(); MarkDirty(); } }
         private string _protein = "0";
         
-        public string Fat { get => _fat; set { _fat = value; OnPropertyChanged(); ValidateInput(); } }
+        public string Fat { get => _fat; set { _fat = value; OnPropertyChanged(); ValidateInput(); MarkDirty(); } }
         private string _fat = "0";
         
-        public string Carbs { get => _carbs; set { _carbs = value; OnPropertyChanged(); ValidateInput(); } }
+        public string Carbs { get => _carbs; set { _carbs = value; OnPropertyChanged(); ValidateInput(); MarkDirty(); } }
         private string _carbs = "0";
 
         // Właściwości dla automatycznie obliczanych wartości
@@ -145,6 +152,7 @@ namespace Foodbook.ViewModels
                         Fat = CalculatedFat;
                         Carbs = CalculatedCarbs;
                     }
+                    MarkDirty();
                 }
                 catch (Exception ex)
                 {
@@ -171,7 +179,7 @@ namespace Foodbook.ViewModels
         public bool HasValidationError => !string.IsNullOrEmpty(ValidationMessage);
 
         // Pola do importu
-        public string ImportUrl { get => _importUrl; set { _importUrl = value; OnPropertyChanged(); } }
+        public string ImportUrl { get => _importUrl; set { _importUrl = value; OnPropertyChanged(); MarkDirty(); } }
         private string _importUrl = string.Empty;
 
         public string ImportStatus { get => _importStatus; set { _importStatus = value; OnPropertyChanged(); } }
@@ -212,10 +220,36 @@ namespace Foodbook.ViewModels
             SelectTabCommand = new Command<object>(SelectTab);
 
             // ✅ ZOPTYMALIZOWANE: Asynchroniczne event handling
-            Ingredients.CollectionChanged += async (_, __) => 
+            Ingredients.CollectionChanged += async (_, args) => 
             {
-                await ScheduleNutritionalCalculationAsync();
-                ValidateInput();
+                // Mark dirty for collection changes
+                try
+                {
+                    if (!_suppressDirtyTracking) _isDirty = true;
+
+                    // subscribe/unsubscribe property changed for new/old items
+                    if (args.NewItems != null)
+                    {
+                        foreach (Ingredient ni in args.NewItems)
+                        {
+                            ni.PropertyChanged += Ingredient_PropertyChanged;
+                        }
+                    }
+                    if (args.OldItems != null)
+                    {
+                        foreach (Ingredient oi in args.OldItems)
+                        {
+                            oi.PropertyChanged -= Ingredient_PropertyChanged;
+                        }
+                    }
+
+                    await ScheduleNutritionalCalculationAsync();
+                    ValidateInput();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error in Ingredients.CollectionChanged handler: {ex.Message}");
+                }
             };
 
             // Load folders and labels list in background
@@ -223,6 +257,12 @@ namespace Foodbook.ViewModels
             _ = LoadAvailableLabelsAsync();
 
             ValidateInput();
+        }
+
+        private void Ingredient_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (_suppressDirtyTracking) return;
+            _isDirty = true;
         }
 
         private IDatabaseService? ResolveDatabaseService()
@@ -527,6 +567,7 @@ namespace Foodbook.ViewModels
         {
             try
             {
+                _suppressDirtyTracking = true;
                 _editingRecipe = null;
                 Name = Description = string.Empty;
                 IloscPorcji = "2";
@@ -547,6 +588,10 @@ namespace Foodbook.ViewModels
                 OnPropertyChanged(nameof(SaveButtonText));
 
                 ValidateInput();
+
+                _isDirty = false;
+                _suppressDirtyTracking = false;
+
             }
             catch (Exception ex)
             {
@@ -893,22 +938,14 @@ namespace Foodbook.ViewModels
                     System.Diagnostics.Debug.WriteLine("✅ Recipe updated successfully");
                 }
 
+                // After successful save reset dirty flag
+                _isDirty = false;
+
                 // Reset form po udanym zapisie tylko w trybie dodawania
                 if (_editingRecipe == null)
                 {
-                    Name = Description = string.Empty;
-                    IloscPorcji = "2";
-                    Calories = Protein = Fat = Carbs = "0";
-                    CalculatedCalories = CalculatedProtein = CalculatedFat = CalculatedCarbs = "0";
-                    SelectedFolderId = null;
-                    
-                    Ingredients.Clear();
-                    SelectedLabels.Clear();
-                    
-                    ImportUrl = string.Empty;
-                    ImportStatus = string.Empty;
-                    UseCalculatedValues = true;
-                    
+                    // reset fields
+                    Reset();
                     System.Diagnostics.Debug.WriteLine("🔄 Form reset after successful add");
                 }
 
@@ -1010,6 +1047,32 @@ namespace Foodbook.ViewModels
             System.Diagnostics.Debug.WriteLine("[AddRecipeViewModel] Ingredients cache invalidated");
         }
 
+        // Public method to discard unsaved changes and reset viewmodel to clean state
+        public void DiscardChanges()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("[AddRecipeViewModel] Discarding changes and resetting form");
+                _suppressDirtyTracking = true;
+
+                // Reset form to defaults
+                Reset();
+
+                // Clear any cached ingredient list to ensure fresh load when reopened
+                InvalidateIngredientsCache();
+
+                // Ensure dirty flag cleared
+                _isDirty = false;
+
+                _suppressDirtyTracking = false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Error in DiscardChanges: {ex.Message}");
+            }
+        }
+
+        // Ensure to reset dirty flags in Reset and after successful save
         public event PropertyChangedEventHandler? PropertyChanged;
         void OnPropertyChanged([CallerMemberName] string? name = null)
         {
@@ -1021,6 +1084,13 @@ namespace Foodbook.ViewModels
             {
                 System.Diagnostics.Debug.WriteLine($"Error in OnPropertyChanged: {ex.Message}");
             }
+        }
+
+        // Helper to mark model dirty
+        private void MarkDirty()
+        {
+            if (_suppressDirtyTracking) return;
+            _isDirty = true;
         }
     }
 }

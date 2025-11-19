@@ -18,10 +18,12 @@
 
     <!-- Upewnij się, że czcionka w jasnym motywie jest zawsze czarna (ThemeService wymusza) -->
     <TabBar>
+        
         <ShellContent
             Title="{loc:Translate Resource=TabBarResources, Key=Ingredients}"
             Icon="grocery.png"
             Route="IngredientsTab"
+            
             ContentTemplate="{DataTemplate views:IngredientsPage}" />
         <ShellContent
             Title="{loc:Translate Resource=TabBarResources, Key=Recipes}"
