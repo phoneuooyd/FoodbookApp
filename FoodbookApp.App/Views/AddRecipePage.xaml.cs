@@ -128,27 +128,28 @@ namespace Foodbook.Views
         {
             try
             {
+                // If we're intentionally suppressing shell navigation handling (e.g., when performing programmatic navigation
+                // after user confirmed), ignore this event.
                 if (_suppressShellNavigating)
                     return;
 
-                // Determine if this is a back/pop navigation. Treat only Pop/PopToRoot or explicit parent ("..") as back.
-                bool isBackNavigation = e.Source == ShellNavigationSource.Pop || e.Source == ShellNavigationSource.PopToRoot;
-
-                var targetLoc = e.Target?.Location?.OriginalString ?? string.Empty;
-                if (!isBackNavigation && !string.IsNullOrEmpty(targetLoc) && targetLoc.Contains(".."))
-                    isBackNavigation = true;
-
-                // If we couldn't detect back, prefer to ignore (do not interrupt non-back navigations)
-                if (!isBackNavigation)
+                // If a popup is open (or popup depth > 0), don't treat Shell navigations as user intent to leave.
+                if (_popupDepth > 0)
                 {
+                    System.Diagnostics.Debug.WriteLine($"OnShellNavigating: popup open (depth={_popupDepth}) - ignoring shell navigation");
                     return;
                 }
 
+                // If this is a push/navigation into a new page, we don't need to block it.
+                if (e.Source == ShellNavigationSource.Push)
+                    return;
+
+                // Treat any non-push navigation (Pop/PopToRoot/Unknown/Route change) as potential 'back' action
                 if (ViewModel?.HasUnsavedChanges == true)
                 {
-                    System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Detected shell back-navigation with unsaved changes - prompting user");
+                    System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Detected shell navigation while dirty - cancelling and prompting");
 
-                    // Cancel navigation now and ask user
+                    // Cancel the navigation and prompt the user
                     e.Cancel();
 
                     MainThread.BeginInvokeOnMainThread(async () =>
@@ -165,7 +166,11 @@ namespace Foodbook.Views
                             _suppressShellNavigating = true;
                             try
                             {
-                                // If there is a modal on stack, pop it first (silent)
+                                // Perform the originally intended navigation silently.
+                                // If the event provides a target location, use it; otherwise do a simple pop.
+                                var targetLoc = e.Target?.Location?.OriginalString ?? string.Empty;
+
+                                // If there was a modal on stack, pop it first (silent)
                                 var nav = Shell.Current?.Navigation;
                                 if (nav?.ModalStack?.Count > 0)
                                     await nav.PopModalAsync(false);
@@ -176,7 +181,11 @@ namespace Foodbook.Views
                                 }
                                 else
                                 {
-                                    await Shell.Current.Navigation.PopAsync(false);
+                                    // Default to popping the navigation stack
+                                    if (Shell.Current?.Navigation?.NavigationStack?.Count > 1)
+                                        await Shell.Current.Navigation.PopAsync(false);
+                                    else
+                                        await Shell.Current.GoToAsync("..", false);
                                 }
                             }
                             catch (Exception exNav)
@@ -185,6 +194,7 @@ namespace Foodbook.Views
                             }
                             finally
                             {
+                                // Short delay to avoid immediately re-entering the navigation handler
                                 await Task.Delay(200);
                                 _suppressShellNavigating = false;
                             }
