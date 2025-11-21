@@ -59,22 +59,22 @@ namespace Foodbook.Models
             OnPropertyChanged(nameof(TotalCarbs));
         }
 
-        // Computed totals for the day
+        // Computed totals for the day - values are now reported per 1 portion (do NOT multiply by meal.Portions)
         public double TotalCalories => Meals
             .Where(m => m.Recipe != null)
-            .Sum(m => (m.Recipe!.Calories / Math.Max(m.Recipe.IloscPorcji, 1)) * m.Portions);
+            .Sum(m => (m.Recipe!.Calories / Math.Max(m.Recipe.IloscPorcji, 1)));
 
         public double TotalProtein => Meals
             .Where(m => m.Recipe != null)
-            .Sum(m => (m.Recipe!.Protein / Math.Max(m.Recipe.IloscPorcji, 1)) * m.Portions);
+            .Sum(m => (m.Recipe!.Protein / Math.Max(m.Recipe.IloscPorcji, 1)));
 
         public double TotalFat => Meals
             .Where(m => m.Recipe != null)
-            .Sum(m => (m.Recipe!.Fat / Math.Max(m.Recipe.IloscPorcji, 1)) * m.Portions);
+            .Sum(m => (m.Recipe!.Fat / Math.Max(m.Recipe.IloscPorcji, 1)));
 
         public double TotalCarbs => Meals
             .Where(m => m.Recipe != null)
-            .Sum(m => (m.Recipe!.Carbs / Math.Max(m.Recipe.IloscPorcji, 1)) * m.Portions);
+            .Sum(m => (m.Recipe!.Carbs / Math.Max(m.Recipe.IloscPorcji, 1)));
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected virtual void OnPropertyChanged(string propertyName)
