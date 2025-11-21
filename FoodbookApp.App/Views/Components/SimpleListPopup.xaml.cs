@@ -4,8 +4,8 @@ using FoodbookApp.Interfaces;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
 using System.Windows.Input;
-using Microsoft.Extensions.DependencyInjection; // for GetService
-using FoodbookApp; // to access MauiProgram.ServiceProvider
+using Microsoft.Extensions.DependencyInjection;
+using FoodbookApp;
 using Foodbook.Models;
 using Foodbook.Utils;
 using Foodbook.ViewModels;
@@ -17,6 +17,8 @@ public partial class SimpleListPopup : Popup
 {
     private readonly TaskCompletionSource<object?> _tcs = new();
     private IThemeService? _themeService;
+    private Recipe? _currentRecipe; // Track current recipe for edit button
+
     public Task<object?> ResultTask => _tcs.Task;
 
     public static readonly BindableProperty TitleTextProperty =
@@ -57,9 +59,11 @@ public partial class SimpleListPopup : Popup
     }
 
     public ICommand CloseCommand { get; }
-
-    // New: command to add ingredient
     public ICommand AddIngredientCommand { get; }
+    public ICommand EditRecipeCommand { get; } // NEW: command for edit button
+
+    // NEW: property to control edit button visibility
+    public bool ShowEditButton => _currentRecipe != null;
 
     // Structured item models for richer rendering
     public class SectionHeader { public string Text { get; set; } = string.Empty; }
@@ -73,12 +77,10 @@ public partial class SimpleListPopup : Popup
     }
     public class Description { public string Text { get; set; } = string.Empty; }
 
-    // Interactive block for planned meal preview with +/- and ingredients scaling
     public class MealPreviewBlock
     {
         public PlannedMeal Meal { get; set; } = new PlannedMeal();
         public Recipe Recipe { get; set; } = new Recipe();
-        // Commands kept for backward-compatibility but ignored here to keep changes visual-only
         public ICommand? IncreaseCommand { get; set; }
         public ICommand? DecreaseCommand { get; set; }
     }
@@ -87,6 +89,7 @@ public partial class SimpleListPopup : Popup
     {
         CloseCommand = new Command(async () => await CloseWithResultAsync(null));
         AddIngredientCommand = new Command(async () => await OnAddIngredientAsync());
+        EditRecipeCommand = new Command(async () => await OnEditRecipeAsync()); // NEW
 
         // Resolve theme service from DI if available
         try
@@ -100,6 +103,7 @@ public partial class SimpleListPopup : Popup
         {
             DetectContext();
             BuildItems();
+            UpdateEditButtonVisibility(); // NEW
         };
     }
 
@@ -110,10 +114,86 @@ public partial class SimpleListPopup : Popup
             // When opened while AddRecipePage is the active page, enable add action in first row
             var currentPage = Shell.Current?.CurrentPage;
             ShowAddIngredientButton = currentPage is Foodbook.Views.AddRecipePage;
+            
+            // NEW: Detect if we're showing a recipe (for edit button)
+            if (Items != null)
+            {
+                var mealPreview = Items.OfType<MealPreviewBlock>().FirstOrDefault();
+                _currentRecipe = mealPreview?.Recipe;
+            }
         }
         catch
         {
             ShowAddIngredientButton = false;
+            _currentRecipe = null;
+        }
+    }
+
+    // NEW: Edit recipe handler
+    private async Task OnEditRecipeAsync()
+    {
+        try
+        {
+            if (_currentRecipe == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[SimpleListPopup] No recipe to edit");
+                return;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[SimpleListPopup] Opening edit page for recipe: {_currentRecipe.Name} (ID: {_currentRecipe.Id})");
+
+            // Resolve edit page from DI
+            var editPage = MauiProgram.ServiceProvider?.GetService<AddRecipePage>();
+            if (editPage == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[SimpleListPopup] Failed to resolve AddRecipePage from DI");
+                await Shell.Current.DisplayAlert("Błąd", "Nie można otworzyć formularza edycji przepisu.", "OK");
+                return;
+            }
+
+            // Pass recipe ID parameter
+            editPage.RecipeId = _currentRecipe.Id;
+
+            // Close this popup first
+            await CloseWithResultAsync(null);
+
+            // Wait a moment for popup to close
+            await Task.Delay(100);
+
+            // Navigate to edit page
+            var nav = Application.Current?.MainPage?.Navigation;
+            if (nav != null)
+            {
+                await nav.PushModalAsync(editPage);
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[SimpleListPopup] Navigation is null");
+                await Shell.Current.DisplayAlert("Błąd", "Błąd nawigacji.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SimpleListPopup] OnEditRecipeAsync error: {ex.Message}");
+            await Shell.Current.DisplayAlert("Błąd", $"Nie udało się otworzyć edycji: {ex.Message}", "OK");
+        }
+    }
+
+    // NEW: Update edit button visibility
+    private void UpdateEditButtonVisibility()
+    {
+        try
+        {
+            // Find edit button in footer and update visibility
+            var editBtn = this.FindByName<Button>("EditRecipeButton");
+            if (editBtn != null)
+            {
+                editBtn.IsVisible = _currentRecipe != null;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SimpleListPopup] UpdateEditButtonVisibility error: {ex.Message}");
         }
     }
 
@@ -261,6 +341,8 @@ public partial class SimpleListPopup : Popup
                     host.Children.Add(view);
             }
 
+            // NEW: Update edit button visibility after building items
+            UpdateEditButtonVisibility();
         }
         catch (Exception ex)
         {

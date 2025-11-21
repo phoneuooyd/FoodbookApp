@@ -15,7 +15,7 @@
             MaximumWidthRequest="520"
             MinimumHeightRequest="240"
             MaximumHeightRequest="650">
-        <Grid RowDefinitions="Auto,* ,Auto" Padding="0">
+        <Grid RowDefinitions="Auto,*,Auto" Padding="0">
             <!-- Header (no add button here) -->
             <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="16,14" BackgroundColor="{DynamicResource ShellBackgroundColor}">
                 <Label Grid.Column="0"
@@ -42,16 +42,31 @@
                 <StackLayout x:Name="ItemsHost" Spacing="8" />
             </ScrollView>
 
-            <!-- Footer -->
-            <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Padding="16,12" BackgroundColor="{DynamicResource ShellBackgroundColor}">
-                <Label Grid.Column="0" TextColor="{DynamicResource SecondaryText}" FontSize="12" Text=" "/>
-                <Button Grid.Column="1"
+            <!-- Footer with Edit and Cancel buttons -->
+            <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" Padding="16,12" BackgroundColor="{DynamicResource ShellBackgroundColor}">
+                <!-- Edit button (visible only when showing recipe) -->
+                <Button Grid.Column="0"
+                        x:Name="EditRecipeButton"
+                        Text="Edytuj"
+                        FontSize="15"
+                        FontAttributes="Bold"
+                        BackgroundColor="{DynamicResource Primary}"
+                        TextColor="{DynamicResource ButtonPrimaryText}"
+                        CornerRadius="8"
+                        Padding="16,8"
+                        Command="{Binding EditRecipeCommand, Source={x:Reference ThisPopup}}"
+                        IsVisible="False" />
+                
+                <Label Grid.Column="1" />
+                
+                <!-- Cancel button -->
+                <Button Grid.Column="2"
+                        Text="Anuluj"
                         FontSize="15"
                         FontAttributes="Bold"
                         BackgroundColor="Transparent"
                         TextColor="{DynamicResource ShellTitleColor}"
-                        Command="{Binding CloseCommand, Source={x:Reference ThisPopup}}"
-                        Text="Anuluj" />
+                        Command="{Binding CloseCommand, Source={x:Reference ThisPopup}}" />
             </Grid>
         </Grid>
     </Border>
