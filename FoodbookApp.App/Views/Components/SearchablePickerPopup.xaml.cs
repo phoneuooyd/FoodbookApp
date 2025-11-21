@@ -1,12 +1,12 @@
+using CommunityToolkit.Maui.Views;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using CommunityToolkit.Maui.Views;
 using System.Windows.Input;
+using Foodbook.Views;
+using Foodbook.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using FoodbookApp.Interfaces;
-using Foodbook.ViewModels;
-using Foodbook.Views;
-using Foodbook.Services;
+using System.Collections.ObjectModel;
 
 namespace Foodbook.Views.Components;
 
@@ -14,6 +14,13 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
 {
     private readonly List<string> _allItems;
     private readonly TaskCompletionSource<object?> _tcs = new();
+    
+    // ? OPTYMALIZACJA: Batch loading state
+    private const int INITIAL_BATCH_SIZE = 20;
+    private const int INCREMENTAL_BATCH_SIZE = 20;
+    private int _currentBatchEnd = 0;
+    private bool _isLoadingMore = false;
+    private List<string> _filteredItems = new();
 
     public Task<object?> ResultTask => _tcs.Task;
 
@@ -48,7 +55,9 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
         AddIngredientCommand = new Command(async () => await OnAddIngredientAsync());
         InitializeComponent();
         DetectContext();
-        Populate(_allItems);
+        
+        // ? KRYTYCZNA OPTYMALIZACJA: Asynchroniczne ³adowanie pierwszej partii
+        _ = InitialPopulateAsync(_allItems);
     }
 
     private void DetectContext()
@@ -65,88 +74,216 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
         }
     }
 
-    private void Populate(IEnumerable<string> items)
+    /// <summary>
+    /// ? NOWA METODA: Asynchroniczne ³adowanie pierwszej partii elementów
+    /// </summary>
+    private async Task InitialPopulateAsync(IEnumerable<string> items)
     {
-        var host = ItemsHost;
-        if (host == null)
-            return;
-
-        host.Children.Clear();
-
-        var app = Application.Current;
-        var primaryText = (app?.Resources?.TryGetValue("PrimaryText", out var v1) == true && v1 is Color c1) ? c1 : Colors.Black;
-        var secondary = (app?.Resources?.TryGetValue("Secondary", out var v2) == true && v2 is Color c2) ? c2 : Colors.Gray;
-
-        // First row: add ingredient action in AddRecipe context
-        if (ShowAddIngredientButton)
+        try
         {
-            var addRow = new HorizontalStackLayout
-            {
-                Spacing = 12,
-                Padding = new Thickness(4, 0, 4, 8),
-                VerticalOptions = LayoutOptions.Center
-            };
+            _filteredItems = items.ToList();
+            _currentBatchEnd = 0;
 
-            var plusButton = new Button
+            await MainThread.InvokeOnMainThreadAsync(() =>
             {
-                Text = "+",
-                WidthRequest = 36,
-                HeightRequest = 36,
-                CornerRadius = 18,
-                Padding = 0,
-                VerticalOptions = LayoutOptions.Center
-            };
-            plusButton.StyleClass = new[] { "Secondary" };
-            plusButton.Clicked += async (_, __) => await OnAddIngredientAsync();
+                var host = ItemsHost;
+                if (host == null) return;
+                host.Children.Clear();
 
-            var textLabel = new Label
+                // Add "Add ingredient" button first if applicable
+                if (ShowAddIngredientButton)
+                {
+                    host.Children.Add(CreateAddIngredientRow());
+                }
+            });
+
+            // Load first batch immediately
+            await LoadNextBatchAsync();
+
+            // ? OPTYMALIZACJA: Dodaj scroll listener dla infinite scroll
+            if (ItemsHost?.Parent is ScrollView scrollView)
             {
-                Text = "Dodaj sk³adnik",
-                TextColor = primaryText,
-                FontSize = 15,
-                VerticalOptions = LayoutOptions.Center
-            };
-            var tap = new TapGestureRecognizer();
-            tap.Tapped += async (_, __) => await OnAddIngredientAsync();
-            textLabel.GestureRecognizers.Add(tap);
-
-            addRow.Children.Add(plusButton);
-            addRow.Children.Add(textLabel);
-            host.Children.Add(addRow);
+                scrollView.Scrolled += OnScrolled;
+            }
         }
-
-        foreach (var item in items)
+        catch (Exception ex)
         {
-            var btn = new Button
-            {
-                Text = item,
-                HorizontalOptions = LayoutOptions.Fill,
-                BackgroundColor = Colors.Transparent,
-                TextColor = primaryText,
-                BorderColor = secondary,
-                BorderWidth = 1,
-                CornerRadius = 8,
-                Padding = new Thickness(12, 10),
-                Margin = new Thickness(2, 3)
-            };
-            btn.Clicked += async (_, __) => await CloseWithResultAsync(item);
-            host.Children.Add(btn);
+            System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] InitialPopulateAsync error: {ex.Message}");
         }
     }
 
-    // Replaces Entry.TextChanged handler using two-way bound SearchText
+    /// <summary>
+    /// ? NOWA METODA: £adowanie kolejnej partii elementów w tle
+    /// </summary>
+    private async Task LoadNextBatchAsync()
+    {
+        if (_isLoadingMore || _currentBatchEnd >= _filteredItems.Count)
+            return;
+
+        _isLoadingMore = true;
+
+        try
+        {
+            var batchSize = _currentBatchEnd == 0 ? INITIAL_BATCH_SIZE : INCREMENTAL_BATCH_SIZE;
+            var endIndex = Math.Min(_currentBatchEnd + batchSize, _filteredItems.Count);
+            var batch = _filteredItems.Skip(_currentBatchEnd).Take(endIndex - _currentBatchEnd).ToList();
+
+            System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] Loading batch: {_currentBatchEnd} to {endIndex} of {_filteredItems.Count}");
+
+            // ? KRYTYCZNA OPTYMALIZACJA: Tworzenie kontrolek w tle, dodawanie na UI thread
+            var buttons = await Task.Run(() => batch.Select(item => CreateItemButton(item)).ToList());
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                var host = ItemsHost;
+                if (host == null) return;
+
+                foreach (var button in buttons)
+                {
+                    host.Children.Add(button);
+                }
+            });
+
+            _currentBatchEnd = endIndex;
+            System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] Batch loaded successfully. Total visible: {_currentBatchEnd}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] LoadNextBatchAsync error: {ex.Message}");
+        }
+        finally
+        {
+            _isLoadingMore = false;
+        }
+    }
+
+    /// <summary>
+    /// ? NOWA METODA: Infinite scroll handler
+    /// </summary>
+    private void OnScrolled(object? sender, ScrolledEventArgs e)
+    {
+        try
+        {
+            if (sender is not ScrollView scrollView)
+                return;
+
+            // Load more when user scrolls to bottom 20% of content
+            var threshold = scrollView.ContentSize.Height * 0.8;
+            if (e.ScrollY >= threshold && !_isLoadingMore && _currentBatchEnd < _filteredItems.Count)
+            {
+                _ = LoadNextBatchAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] OnScrolled error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// ? ZOPTYMALIZOWANA: Szybkie filtrowanie i resetowanie widoku
+    /// </summary>
     private void ApplySearch()
     {
         var query = SearchText?.Trim() ?? string.Empty;
+        
         if (string.IsNullOrWhiteSpace(query))
         {
-            Populate(_allItems);
+            _ = InitialPopulateAsync(_allItems);
             return;
         }
+
         var filtered = _allItems
             .Where(x => x?.Contains(query, StringComparison.OrdinalIgnoreCase) == true)
             .ToList();
-        Populate(filtered);
+
+        _ = InitialPopulateAsync(filtered);
+    }
+
+    /// <summary>
+    /// ? NOWA METODA: Tworzenie przycisku "Dodaj sk³adnik"
+    /// </summary>
+    private View CreateAddIngredientRow()
+    {
+        var addRow = new HorizontalStackLayout
+        {
+            Spacing = 12,
+            Padding = new Thickness(4, 0, 4, 8),
+            VerticalOptions = LayoutOptions.Center
+        };
+
+        var plusButton = new Button
+        {
+            Text = "+",
+            WidthRequest = 36,
+            HeightRequest = 36,
+            CornerRadius = 18,
+            Padding = 0,
+            VerticalOptions = LayoutOptions.Center
+        };
+        plusButton.StyleClass = new[] { "Secondary" };
+        plusButton.Clicked += async (_, __) => await OnAddIngredientAsync();
+
+        var textLabel = new Label
+        {
+            Text = "Dodaj sk³adnik",
+            FontSize = 15,
+            VerticalOptions = LayoutOptions.Center
+        };
+        textLabel.SetAppThemeColor(Label.TextColorProperty, 
+            (Color)Application.Current!.Resources["PrimaryText"],
+            (Color)Application.Current!.Resources["PrimaryText"]);
+
+        var tap = new TapGestureRecognizer();
+        tap.Tapped += async (_, __) => await OnAddIngredientAsync();
+        textLabel.GestureRecognizers.Add(tap);
+
+        addRow.Children.Add(plusButton);
+        addRow.Children.Add(textLabel);
+        
+        return addRow;
+    }
+
+    /// <summary>
+    /// ? ZOPTYMALIZOWANA: Lekka metoda tworzenia przycisku elementu
+    /// </summary>
+    private Button CreateItemButton(string item)
+    {
+        var button = new Button
+        {
+            Text = item,
+            HorizontalOptions = LayoutOptions.Fill,
+            BackgroundColor = Colors.Transparent,
+            BorderWidth = 1,
+            CornerRadius = 8,
+            Padding = new Thickness(12, 10),
+            Margin = new Thickness(2, 3),
+            FontSize = 15
+        };
+
+        // ? OPTYMALIZACJA: Binding kolorów bez convertera
+        button.SetAppThemeColor(Button.TextColorProperty,
+            (Color)Application.Current!.Resources["PrimaryText"],
+            (Color)Application.Current!.Resources["PrimaryText"]);
+
+        button.SetAppThemeColor(Button.BorderColorProperty,
+            (Color)Application.Current!.Resources["Secondary"],
+            (Color)Application.Current!.Resources["Secondary"]);
+
+        // ? KRYTYCZNA OPTYMALIZACJA: Async event handler bez blokowania UI
+        button.Clicked += async (_, __) => await CloseWithResultAsync(item);
+
+        return button;
+    }
+
+    /// <summary>
+    /// ? STARA METODA: Zachowana dla backward compatibility (ju¿ nieu¿ywana)
+    /// </summary>
+    [Obsolete("Use InitialPopulateAsync instead for better performance")]
+    private void Populate(IEnumerable<string> items)
+    {
+        // Legacy method - replaced by async batched loading
+        _ = InitialPopulateAsync(items);
     }
 
     private async Task OnAddIngredientAsync()
@@ -182,7 +319,6 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
             System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] IngredientFormPage dismissed");
 
             // ? CRITICAL: Small delay to ensure all SaveAsync operations completed
-            // (events, reloads, etc. that happen BEFORE modal closes)
             await Task.Delay(200);
 
             // ? Now reload fresh data and update popup list
@@ -229,7 +365,7 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
                         System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] Popup list updated with {_allItems.Count} items");
                     });
 
-                    // ? Force reload IngredientsPage if it's alive (should already be done by events, but double-check)
+                    // ? Force reload IngredientsPage if it's alive
                     try 
                     { 
                         if (IngredientsPage.Current != null)
@@ -256,14 +392,14 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
         }
     }
 
-    // Kept for backward compatibility; no longer wired in XAML
-    private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
-    {
-        SearchText = e.NewTextValue;
-    }
-
     private async Task CloseWithResultAsync(object? result)
     {
+        // ? OPTYMALIZACJA: Cleanup scroll listener
+        if (ItemsHost?.Parent is ScrollView scrollView)
+        {
+            scrollView.Scrolled -= OnScrolled;
+        }
+
         if (!_tcs.Task.IsCompleted)
             _tcs.SetResult(result);
         await CloseAsync();

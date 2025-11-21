@@ -31,13 +31,15 @@ namespace Foodbook.Views
         private bool _suppressShellNavigating = false;
         private bool _isSubscribedToShellNavigating = false;
 
+        // ? OPTYMALIZACJA: Task cache dla asynchronicznych operacji
+        private Task? _pendingLoadTask;
+        private readonly SemaphoreSlim _loadSemaphore = new(1, 1);
+
         public AddRecipePage(AddRecipeViewModel vm)
         {
             InitializeComponent();
             BindingContext = vm;
             _themeHelper = new PageThemeHelper();
-
-            // Do not subscribe here; subscribe in OnAppearing to ensure Shell.Current is ready
         }
 
         protected override async void OnAppearing()
@@ -65,22 +67,15 @@ namespace Foodbook.Views
 
                 if (!_hasEverLoaded)
                 {
-                    // First time loading - perform full initialization
-                    System.Diagnostics.Debug.WriteLine("? AddRecipePage: First load - performing full initialization");
+                    // ? KRYTYCZNA OPTYMALIZACJA: Asynchroniczne ³adowanie w tle
+                    System.Diagnostics.Debug.WriteLine("?? AddRecipePage: First load - performing optimized initialization");
                     
+                    // Reset synchronicznie
                     ViewModel?.Reset();
-                    await (ViewModel?.LoadAvailableIngredientsAsync() ?? Task.CompletedTask);
-                    await (ViewModel?.LoadAvailableLabelsAsync() ?? Task.CompletedTask);
 
-                    if (RecipeId > 0 && ViewModel != null)
-                    {
-                        await ViewModel.LoadRecipeAsync(RecipeId);
-                    }
-
-                    // If navigation passed FolderId, preselect it
-                    if (FolderId > 0 && ViewModel != null)
-                        ViewModel.SelectedFolderId = FolderId;
-                        
+                    // ? Pokazuj UI natychmiast, ³aduj dane w tle
+                    _ = InitializeDataAsync();
+                    
                     _hasEverLoaded = true;
                     _isInitialized = true;
                 }
@@ -88,8 +83,9 @@ namespace Foodbook.Views
                 {
                     // Subsequent appearances (e.g., after popup close) - do not reset
                     System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Skipping reset on re-appear");
-                    // Refresh labels list in case user added/removed labels
-                    await (ViewModel?.LoadAvailableLabelsAsync() ?? Task.CompletedTask);
+                    
+                    // ? OPTYMALIZACJA: Tylko labels refresh (l¿ejsze ni¿ pe³ne sk³adniki)
+                    _ = ViewModel?.LoadAvailableLabelsAsync();
                 }
             }
             catch (Exception ex)
@@ -98,6 +94,73 @@ namespace Foodbook.Views
                 if (ViewModel != null)
                 {
                     ViewModel.ValidationMessage = $"B³¹d ³adowania strony: {ex.Message}";
+                }
+            }
+        }
+
+        /// <summary>
+        /// ? NOWA METODA: Asynchroniczne ³adowanie danych w tle bez blokowania UI
+        /// </summary>
+        private async Task InitializeDataAsync()
+        {
+            // Zabezpieczenie przed wielokrotnym ³adowaniem
+            if (_pendingLoadTask != null && !_pendingLoadTask.IsCompleted)
+            {
+                System.Diagnostics.Debug.WriteLine("? AddRecipePage: Load already in progress, waiting...");
+                await _pendingLoadTask;
+                return;
+            }
+
+            await _loadSemaphore.WaitAsync();
+            try
+            {
+                _pendingLoadTask = LoadDataInternalAsync();
+                await _pendingLoadTask;
+            }
+            finally
+            {
+                _loadSemaphore.Release();
+            }
+        }
+
+        /// <summary>
+        /// ? NOWA METODA: Wewnêtrzna metoda ³adowania danych
+        /// </summary>
+        private async Task LoadDataInternalAsync()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Loading data in background...");
+
+                // ? OPTYMALIZACJA: £aduj równolegle sk³adniki i etykiety
+                var ingredientsTask = ViewModel?.LoadAvailableIngredientsAsync() ?? Task.CompletedTask;
+                var labelsTask = ViewModel?.LoadAvailableLabelsAsync() ?? Task.CompletedTask;
+
+                // Poczekaj na oba zadania
+                await Task.WhenAll(ingredientsTask, labelsTask);
+
+                System.Diagnostics.Debug.WriteLine("? AddRecipePage: Background data loaded successfully");
+
+                // Jeœli edytujemy przepis, za³aduj jego dane
+                if (RecipeId > 0 && ViewModel != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"?? AddRecipePage: Loading recipe {RecipeId}...");
+                    await ViewModel.LoadRecipeAsync(RecipeId);
+                }
+
+                // If navigation passed FolderId, preselect it
+                if (FolderId > 0 && ViewModel != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"?? AddRecipePage: Preselecting folder {FolderId}");
+                    ViewModel.SelectedFolderId = FolderId;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"? AddRecipePage: Error loading data: {ex.Message}");
+                if (ViewModel != null)
+                {
+                    ViewModel.ValidationMessage = $"B³¹d ³adowania danych: {ex.Message}";
                 }
             }
         }

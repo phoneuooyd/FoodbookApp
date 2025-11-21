@@ -988,19 +988,63 @@ namespace Foodbook.ViewModels
         {
             try
             {
-                // Always fetch fresh data from the service, bypassing cache
+                System.Diagnostics.Debug.WriteLine("📋 [AddRecipeViewModel] Loading available ingredients...");
+                
+                // ✅ OPTYMALIZACJA: Pobierz dane asynchronicznie z cache
                 var freshIngredients = await _ingredientService.GetIngredientsAsync();
-                AvailableIngredientNames.Clear();
-                foreach (var ing in freshIngredients)
-                    AvailableIngredientNames.Add(ing.Name);
+                
+                System.Diagnostics.Debug.WriteLine($"✅ [AddRecipeViewModel] Fetched {freshIngredients.Count} ingredients from service");
+
+                // ✅ KRYTYCZNA OPTYMALIZACJA: Aktualizuj UI w partiach aby nie blokować
+                await UpdateIngredientNamesInBatchesAsync(freshIngredients);
+
                 // Also update the local cache for consistency
                 _cachedIngredients = freshIngredients.ToList();
                 _lastCacheUpdate = DateTime.Now;
+                
+                System.Diagnostics.Debug.WriteLine("✅ [AddRecipeViewModel] Ingredients loaded successfully");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in LoadAvailableIngredientsAsync: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"❌ [AddRecipeViewModel] Error in LoadAvailableIngredientsAsync: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// ✅ NOWA METODA: Aktualizacja listy składników w partiach aby nie blokować UI
+        /// </summary>
+        private async Task UpdateIngredientNamesInBatchesAsync(List<Ingredient> ingredients)
+        {
+            const int BATCH_SIZE = 50;
+            var names = ingredients.Select(i => i.Name).ToList();
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                AvailableIngredientNames.Clear();
+                System.Diagnostics.Debug.WriteLine($"🔄 [AddRecipeViewModel] Starting batch update of {names.Count} ingredients...");
+            });
+
+            // ✅ Dodaj w partiach z małym opóźnieniem dla lepszej responsywności
+            for (int i = 0; i < names.Count; i += BATCH_SIZE)
+            {
+                var batch = names.Skip(i).Take(BATCH_SIZE).ToList();
+                
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    foreach (var name in batch)
+                    {
+                        AvailableIngredientNames.Add(name);
+                    }
+                });
+
+                // ✅ Małe opóźnienie aby UI było responsywne
+                if (i + BATCH_SIZE < names.Count)
+                {
+                    await Task.Delay(10);
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"✅ [AddRecipeViewModel] Batch update completed: {AvailableIngredientNames.Count} ingredients");
         }
 
         private void SelectTab(object parameter)

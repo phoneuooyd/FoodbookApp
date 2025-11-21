@@ -15,6 +15,10 @@ public class IngredientService : IIngredientService
     private static readonly TimeSpan _cacheValidityStatic = TimeSpan.FromMinutes(10);
     private static readonly object _cacheLock = new();
     
+    // ? NOWA OPTYMALIZACJA: Lightweight cache tylko z nazwami
+    private static List<string>? _cachedIngredientNamesStatic;
+    private static DateTime _lastNamesCacheTimeStatic = DateTime.MinValue;
+    
     public IngredientService(AppDbContext context)
     {
         _context = context;
@@ -45,15 +49,61 @@ public class IngredientService : IIngredientService
             {
                 _cachedIngredientsStatic = fresh;
                 _lastCacheTimeStatic = DateTime.Now;
+                
+                // ? OPTYMALIZACJA: Aktualizuj te¿ cache nazw
+                _cachedIngredientNamesStatic = fresh.Select(i => i.Name).ToList();
+                _lastNamesCacheTimeStatic = DateTime.Now;
             }
 
-            System.Diagnostics.Debug.WriteLine($"Ingredients cache refreshed (shared): {fresh.Count} items");
+            System.Diagnostics.Debug.WriteLine($"? Ingredients cache refreshed (shared): {fresh.Count} items");
             return fresh.ToList();
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[IngredientService] GetIngredientsAsync failed: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"? [IngredientService] GetIngredientsAsync failed: {ex.Message}");
             return new List<Ingredient>();
+        }
+    }
+
+    /// <summary>
+    /// ? NOWA METODA: Szybkie pobieranie tylko nazw sk³adników (lightweight)
+    /// </summary>
+    public async Task<List<string>> GetIngredientNamesAsync()
+    {
+        try
+        {
+            lock (_cacheLock)
+            {
+                if (_cachedIngredientNamesStatic != null && DateTime.Now - _lastNamesCacheTimeStatic <= _cacheValidityStatic)
+                {
+                    System.Diagnostics.Debug.WriteLine($"? [IngredientService] Returning {_cachedIngredientNamesStatic.Count} names from cache");
+                    return _cachedIngredientNamesStatic.ToList();
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine("?? [IngredientService] Loading ingredient names from database...");
+
+            // ? KRYTYCZNA OPTYMALIZACJA: Pobierz TYLKO nazwy bez ca³ych obiektów
+            var names = await _context.Ingredients
+                .AsNoTracking()
+                .Where(i => i.RecipeId == null)
+                .OrderBy(i => i.Name)
+                .Select(i => i.Name)
+                .ToListAsync();
+
+            lock (_cacheLock)
+            {
+                _cachedIngredientNamesStatic = names;
+                _lastNamesCacheTimeStatic = DateTime.Now;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"? [IngredientService] Loaded {names.Count} ingredient names");
+            return names.ToList();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"? [IngredientService] GetIngredientNamesAsync failed: {ex.Message}");
+            return new List<string>();
         }
     }
 
@@ -123,7 +173,7 @@ public class IngredientService : IIngredientService
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"? Ingredient with ID {ingredient.Id} not found for update");
+                System.Diagnostics.Debug.WriteLine($"?? Ingredient with ID {ingredient.Id} not found for update");
             }
         }
         catch (Exception ex)
@@ -191,7 +241,11 @@ public class IngredientService : IIngredientService
         {
             _cachedIngredientsStatic = null;
             _lastCacheTimeStatic = DateTime.MinValue;
+            
+            // ? OPTYMALIZACJA: Inwaliduj te¿ cache nazw
+            _cachedIngredientNamesStatic = null;
+            _lastNamesCacheTimeStatic = DateTime.MinValue;
         }
-        System.Diagnostics.Debug.WriteLine("Ingredients cache invalidated (shared)");
+        System.Diagnostics.Debug.WriteLine("?? Ingredients cache invalidated (shared + names)");
     }
 }
