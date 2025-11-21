@@ -92,7 +92,7 @@
                                     Margin="0,3"
                                     BackgroundColor="{DynamicResource FrameBackgroundColor}">
                                 <VerticalStackLayout>
-                                    <Label Text="{Binding Date, StringFormat='{0:dd.MM.yyyy}'}" 
+                                    <Label Text="{Binding DateLabel}" 
                                            FontAttributes="Bold" 
                                            FontSize="14" 
                                            TextColor="{DynamicResource FrameTextColor}" />
