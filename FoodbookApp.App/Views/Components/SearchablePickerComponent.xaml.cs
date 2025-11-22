@@ -114,7 +114,7 @@ public partial class SearchablePickerComponent : ContentView, INotifyPropertyCha
             var page = Application.Current?.Windows.FirstOrDefault()?.Page;
             if (page == null)
             {
-                await Shell.Current.DisplayAlert("Error", "Unable to resolve current page.", "OK");
+                await Shell.Current.DisplayAlert(FoodbookApp.Localization.AddRecipePageResources.ErrorTitle, FoodbookApp.Localization.AddRecipePageResources.UnableToResolveCurrentPage, FoodbookApp.Localization.AddRecipePageResources.OKButton);
                 return;
             }
 
@@ -135,7 +135,7 @@ public partial class SearchablePickerComponent : ContentView, INotifyPropertyCha
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"? SearchablePickerComponent: Error opening popup: {ex.Message}");
-            await Shell.Current.DisplayAlert("Error", "Could not open selection dialog", "OK");
+            await Shell.Current.DisplayAlert(FoodbookApp.Localization.AddRecipePageResources.ErrorTitle, FoodbookApp.Localization.AddRecipePageResources.CouldNotOpenRecipeSelectionDialog, FoodbookApp.Localization.AddRecipePageResources.OKButton);
         }
         finally
         {

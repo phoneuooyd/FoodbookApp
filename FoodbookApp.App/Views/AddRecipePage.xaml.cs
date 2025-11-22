@@ -1,4 +1,4 @@
-using System;
+Ôªøusing System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -31,7 +31,7 @@ namespace Foodbook.Views
         private bool _suppressShellNavigating = false;
         private bool _isSubscribedToShellNavigating = false;
 
-        // ? OPTYMALIZACJA: Task cache dla asynchronicznych operacji
+        // ‚úÖ OPTYMALIZACJA: Task cache dla asynchronicznych operacji
         private Task? _pendingLoadTask;
         private readonly SemaphoreSlim _loadSemaphore = new(1, 1);
 
@@ -67,13 +67,13 @@ namespace Foodbook.Views
 
                 if (!_hasEverLoaded)
                 {
-                    // ? KRYTYCZNA OPTYMALIZACJA: Asynchroniczne ≥adowanie w tle
-                    System.Diagnostics.Debug.WriteLine("?? AddRecipePage: First load - performing optimized initialization");
+                    // ‚úÖ KRYTYCZNA OPTYMALIZACJA: Asynchroniczne ≈Çadowanie w tle
+                    System.Diagnostics.Debug.WriteLine("üöÄ AddRecipePage: First load - performing optimized initialization");
                     
                     // Reset synchronicznie
                     ViewModel?.Reset();
 
-                    // ? Pokazuj UI natychmiast, ≥aduj dane w tle
+                    // ‚úÖ Pokazuj UI natychmiast, ≈Çaduj dane w tle
                     _ = InitializeDataAsync();
                     
                     _hasEverLoaded = true;
@@ -82,9 +82,9 @@ namespace Foodbook.Views
                 else
                 {
                     // Subsequent appearances (e.g., after popup close) - do not reset
-                    System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Skipping reset on re-appear");
+                    System.Diagnostics.Debug.WriteLine("üîÑ AddRecipePage: Skipping reset on re-appear");
                     
-                    // ? OPTYMALIZACJA: Tylko labels refresh (løejsze niø pe≥ne sk≥adniki)
+                    // ‚úÖ OPTYMALIZACJA: Tylko labels refresh (l≈ºejsze ni≈º pe≈Çne sk≈Çadniki)
                     _ = ViewModel?.LoadAvailableLabelsAsync();
                 }
             }
@@ -93,20 +93,20 @@ namespace Foodbook.Views
                 System.Diagnostics.Debug.WriteLine($"Error in OnAppearing: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"B≥πd ≥adowania strony: {ex.Message}";
+                    ViewModel.ValidationMessage = $"B≈ÇƒÖd ≈Çadowania strony: {ex.Message}";
                 }
             }
         }
 
         /// <summary>
-        /// ? NOWA METODA: Asynchroniczne ≥adowanie danych w tle bez blokowania UI
+        /// ‚úÖ NOWA METODA: Asynchroniczne ≈Çadowanie danych w tle bez blokowania UI
         /// </summary>
         private async Task InitializeDataAsync()
         {
-            // Zabezpieczenie przed wielokrotnym ≥adowaniem
+            // Zabezpieczenie przed wielokrotnym ≈Çadowaniem
             if (_pendingLoadTask != null && !_pendingLoadTask.IsCompleted)
             {
-                System.Diagnostics.Debug.WriteLine("? AddRecipePage: Load already in progress, waiting...");
+                System.Diagnostics.Debug.WriteLine("‚è≥ AddRecipePage: Load already in progress, waiting...");
                 await _pendingLoadTask;
                 return;
             }
@@ -124,43 +124,43 @@ namespace Foodbook.Views
         }
 
         /// <summary>
-        /// ? NOWA METODA: WewnÍtrzna metoda ≥adowania danych
+        /// ‚úÖ NOWA METODA: Wewnƒôtrzna metoda ≈Çadowania danych
         /// </summary>
         private async Task LoadDataInternalAsync()
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Loading data in background...");
+                System.Diagnostics.Debug.WriteLine("üì¶ AddRecipePage: Loading data in background...");
 
-                // ? OPTYMALIZACJA: £aduj rÛwnolegle sk≥adniki i etykiety
+                // ‚úÖ OPTYMALIZACJA: ≈Åaduj r√≥wnolegle sk≈Çadniki i etykiety
                 var ingredientsTask = ViewModel?.LoadAvailableIngredientsAsync() ?? Task.CompletedTask;
                 var labelsTask = ViewModel?.LoadAvailableLabelsAsync() ?? Task.CompletedTask;
 
                 // Poczekaj na oba zadania
                 await Task.WhenAll(ingredientsTask, labelsTask);
 
-                System.Diagnostics.Debug.WriteLine("? AddRecipePage: Background data loaded successfully");
+                System.Diagnostics.Debug.WriteLine("‚úÖ AddRecipePage: Background data loaded successfully");
 
-                // Jeúli edytujemy przepis, za≥aduj jego dane
+                // Je≈õli edytujemy przepis, za≈Çaduj jego dane
                 if (RecipeId > 0 && ViewModel != null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"?? AddRecipePage: Loading recipe {RecipeId}...");
+                    System.Diagnostics.Debug.WriteLine($"üìñ AddRecipePage: Loading recipe {RecipeId}...");
                     await ViewModel.LoadRecipeAsync(RecipeId);
                 }
 
                 // If navigation passed FolderId, preselect it
                 if (FolderId > 0 && ViewModel != null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"?? AddRecipePage: Preselecting folder {FolderId}");
+                    System.Diagnostics.Debug.WriteLine($"üìÅ AddRecipePage: Preselecting folder {FolderId}");
                     ViewModel.SelectedFolderId = FolderId;
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"? AddRecipePage: Error loading data: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"‚ùå AddRecipePage: Error loading data: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"B≥πd ≥adowania danych: {ex.Message}";
+                    ViewModel.ValidationMessage = $"B≈ÇƒÖd ≈Çadowania danych: {ex.Message}";
                 }
             }
         }
@@ -183,7 +183,7 @@ namespace Foodbook.Views
             }
             catch { }
             
-            System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Disappearing - preserving current state");
+            System.Diagnostics.Debug.WriteLine("üëã AddRecipePage: Disappearing - preserving current state");
         }
 
         // Handle Shell navigation (top-back / shell routing). We cancel navigation when unsaved changes.
@@ -217,7 +217,7 @@ namespace Foodbook.Views
 
                     MainThread.BeginInvokeOnMainThread(async () =>
                     {
-                        bool leave = await DisplayAlert("Potwierdü", "Masz niezapisane zmiany. Czy na pewno chcesz wyjúÊ?", "Tak", "Nie");
+                        bool leave = await DisplayAlert(FoodbookApp.Localization.AddRecipePageResources.ConfirmTitle, FoodbookApp.Localization.AddRecipePageResources.UnsavedChangesMessage, FoodbookApp.Localization.AddRecipePageResources.YesButton, FoodbookApp.Localization.AddRecipePageResources.NoButton);
                         if (leave)
                         {
                             try
@@ -391,7 +391,7 @@ namespace Foodbook.Views
                     // Show confirmation dialog synchronously on UI thread
                     MainThread.BeginInvokeOnMainThread(async () =>
                     {
-                        bool leave = await DisplayAlert("Potwierdü", "Masz niezapisane zmiany. Czy na pewno chcesz wyjúÊ?", "Tak", "Nie");
+                        bool leave = await DisplayAlert(FoodbookApp.Localization.AddRecipePageResources.ConfirmTitle, FoodbookApp.Localization.AddRecipePageResources.UnsavedChangesMessage, FoodbookApp.Localization.AddRecipePageResources.YesButton, FoodbookApp.Localization.AddRecipePageResources.NoButton);
                         if (leave)
                         {
                             // Discard changes and navigate back without re-triggering prompt
@@ -443,7 +443,7 @@ namespace Foodbook.Views
                 System.Diagnostics.Debug.WriteLine($"Error in OnAutoModeClicked: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"B≥πd prze≥πczania trybu: {ex.Message}";
+                    ViewModel.ValidationMessage = $"B≈ÇƒÖd prze≈ÇƒÖczania trybu: {ex.Message}";
                 }
             }
         }
@@ -462,7 +462,7 @@ namespace Foodbook.Views
                 System.Diagnostics.Debug.WriteLine($"Error in OnManualModeClicked: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"B≥πd prze≥πczania trybu: {ex.Message}";
+                    ViewModel.ValidationMessage = $"B≈ÇƒÖd prze≈ÇƒÖczania trybu: {ex.Message}";
                 }
             }
         }
@@ -531,7 +531,7 @@ namespace Foodbook.Views
                 System.Diagnostics.Debug.WriteLine($"Error in OnIngredientNameChanged: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"B≥πd aktualizacji sk≥adnika: {ex.Message}";
+                    ViewModel.ValidationMessage = $"B≈ÇƒÖd aktualizacji sk≈Çadnika: {ex.Message}";
                 }
             }
         }
@@ -645,7 +645,7 @@ namespace Foodbook.Views
                 var settingsVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<SettingsViewModel>();
                 if (settingsVm == null)
                 {
-                    await DisplayAlert("B≥πd", "Nie moøna otworzyÊ zarzπdzania etykietami", "OK");
+                    await DisplayAlert(FoodbookApp.Localization.AddRecipePageResources.ErrorTitle, FoodbookApp.Localization.AddRecipePageResources.CannotOpenLabelsManagement, FoodbookApp.Localization.AddRecipePageResources.OKButton);
                     return;
                 }
 
@@ -674,7 +674,7 @@ namespace Foodbook.Views
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[AddRecipePage] CRUDComponentPopup error: {ex.Message}");
-                await DisplayAlert("B≥πd", "Nie moøna otworzyÊ zarzπdzania etykietami", "OK");
+                await DisplayAlert(FoodbookApp.Localization.AddRecipePageResources.ErrorTitle, FoodbookApp.Localization.AddRecipePageResources.CannotOpenLabelsManagement, FoodbookApp.Localization.AddRecipePageResources.OKButton);
             }
             finally
             {

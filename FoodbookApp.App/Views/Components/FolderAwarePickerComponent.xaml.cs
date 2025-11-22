@@ -129,7 +129,7 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
             var page = Application.Current?.Windows.FirstOrDefault()?.Page;
             if (page == null)
             {
-                await Shell.Current.DisplayAlert("Error", "Unable to resolve current page.", "OK");
+                await Shell.Current.DisplayAlert(FoodbookApp.Localization.AddRecipePageResources.ErrorTitle, FoodbookApp.Localization.AddRecipePageResources.UnableToResolveCurrentPage, FoodbookApp.Localization.AddRecipePageResources.OKButton);
                 return;
             }
 
@@ -186,7 +186,7 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
             }
             
             // Fallback to display alert
-            await Shell.Current.DisplayAlert("Error", "Could not open recipe selection dialog", "OK");
+            await Shell.Current.DisplayAlert(FoodbookApp.Localization.AddRecipePageResources.ErrorTitle, FoodbookApp.Localization.AddRecipePageResources.CouldNotOpenRecipeSelectionDialog, FoodbookApp.Localization.AddRecipePageResources.OKButton);
         }
         finally
         {
@@ -245,7 +245,7 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
             var fullRecipe = await _recipeService.GetRecipeAsync(recipe.Id);
             if (fullRecipe == null)
             {
-                await page.DisplayAlert("B³¹d", "Nie uda³o siê pobraæ szczegó³ów przepisu.", "OK");
+                await page.DisplayAlert(FoodbookApp.Localization.AddRecipePageResources.ErrorTitle, FoodbookApp.Localization.AddRecipePageResources.FailedToFetchRecipeDetails, FoodbookApp.Localization.AddRecipePageResources.OKButton);
                 return;
             }
 
@@ -333,7 +333,7 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
             }
             
             // Fallback to display alert
-            await Shell.Current.DisplayAlert("B³¹d", "Nie uda³o siê otworzyæ szczegó³ów przepisu", "OK");
+            await Shell.Current.DisplayAlert(FoodbookApp.Localization.AddRecipePageResources.ErrorTitle, FoodbookApp.Localization.AddRecipePageResources.FailedToOpenRecipeDetails, FoodbookApp.Localization.AddRecipePageResources.OKButton);
         }
         finally
         {

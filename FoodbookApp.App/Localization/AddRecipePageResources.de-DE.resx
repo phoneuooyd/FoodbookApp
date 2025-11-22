@@ -39,4 +39,37 @@
   <data name="QuantityLabelShort" xml:space="preserve"><value>Menge</value></data>
   <data name="UnitLabelShort" xml:space="preserve"><value>Einheit</value></data>
   <data name="SelectIngredientPlaceholder" xml:space="preserve"><value>Zutat auswählen...</value></data>
+  <data name="ConfirmTitle" xml:space="preserve">
+    <value>Bestätigen</value>
+  </data>
+  <data name="UnsavedChangesMessage" xml:space="preserve">
+    <value>Sie haben ungespeicherte Änderungen. Möchten Sie wirklich verlassen?</value>
+  </data>
+  <data name="YesButton" xml:space="preserve">
+    <value>Ja</value>
+  </data>
+  <data name="NoButton" xml:space="preserve">
+    <value>Nein</value>
+  </data>
+  <data name="ErrorTitle" xml:space="preserve">
+    <value>Fehler</value>
+  </data>
+  <data name="CannotOpenLabelsManagement" xml:space="preserve">
+    <value>Kann Label-Verwaltung nicht öffnen</value>
+  </data>
+  <data name="OKButton" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="UnableToResolveCurrentPage" xml:space="preserve">
+    <value>Aktuelle Seite kann nicht aufgelöst werden.</value>
+  </data>
+  <data name="CouldNotOpenRecipeSelectionDialog" xml:space="preserve">
+    <value>Rezeptauswahldialog konnte nicht geöffnet werden</value>
+  </data>
+  <data name="FailedToFetchRecipeDetails" xml:space="preserve">
+    <value>Rezeptdetails konnten nicht abgerufen werden.</value>
+  </data>
+  <data name="FailedToOpenRecipeDetails" xml:space="preserve">
+    <value>Rezeptdetails konnten nicht geöffnet werden</value>
+  </data>
 </root>

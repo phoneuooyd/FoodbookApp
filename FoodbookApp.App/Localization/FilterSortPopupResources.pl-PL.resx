@@ -60,25 +60,25 @@
   </resheader>
 
   <data name="Title" xml:space="preserve">
-    <value>Sorting and filtering</value>
+    <value>Sortowanie i filtrowanie</value>
   </data>
   <data name="SortLabel" xml:space="preserve">
-    <value>Sort</value>
+    <value>Sortuj</value>
   </data>
   <data name="LabelsHeader" xml:space="preserve">
-    <value>Filter by labels</value>
+    <value>Filtruj po etykietach</value>
   </data>
   <data name="IngredientsHeader" xml:space="preserve">
-    <value>Filter by ingredients</value>
+    <value>Filtruj po sk&#322;adnikach</value>
   </data>
   <data name="ApplyButton" xml:space="preserve">
-    <value>Apply</value>
+    <value>Zastosuj</value>
   </data>
   <data name="ClearButton" xml:space="preserve">
-    <value>Clear</value>
+    <value>Wyczy&#347;&#263;</value>
   </data>
   <data name="IngredientSearchPlaceholder" xml:space="preserve">
-    <value>Search ingredients...</value>
+    <value>Szukaj sk&#322;adnik&#243;w...</value>
   </data>
   <data name="SortAZ" xml:space="preserve">
     <value>A-Z</value>
@@ -87,27 +87,27 @@
     <value>Z-A</value>
   </data>
   <data name="SortCaloriesAsc" xml:space="preserve">
-    <value>Calories ascending</value>
+    <value>Kcal rosn&#261;co</value>
   </data>
   <data name="SortCaloriesDesc" xml:space="preserve">
-    <value>Calories descending</value>
+    <value>Kcal malej&#261;co</value>
   </data>
   <data name="SortProteinAsc" xml:space="preserve">
-    <value>Protein ascending</value>
+    <value>Bi&#261;&#322;ko rosn&#261;co</value>
   </data>
   <data name="SortProteinDesc" xml:space="preserve">
-    <value>Protein descending</value>
+    <value>Bi&#261;&#322;ko malej&#261;co</value>
   </data>
   <data name="SortCarbsAsc" xml:space="preserve">
-    <value>Carbs ascending</value>
+    <value>W&#281;glowodany rosn&#261;co</value>
   </data>
   <data name="SortCarbsDesc" xml:space="preserve">
-    <value>Carbs descending</value>
+    <value>W&#281;glowodany malej&#261;co</value>
   </data>
   <data name="SortFatAsc" xml:space="preserve">
-    <value>Fat ascending</value>
+    <value>T&#322;uszcze rosn&#261;co</value>
   </data>
   <data name="SortFatDesc" xml:space="preserve">
-    <value>Fat descending</value>
+    <value>T&#322;uszcze malej&#261;co</value>
   </data>
 </root>

@@ -66,6 +66,8 @@ public class LocalizationService : ILocalizationService
         TabBarResources.Culture = culture;
         ButtonResources.Culture = culture;
         UnitResources.Culture = culture;
+        FilterSortPopupResources.Culture = culture;
+        FolderResources.Culture = culture;
 
         System.Diagnostics.Debug.WriteLine($"[LocalizationService] Culture changed to: {culture.Name} (requested: '{cultureName}')");
         CultureChanged?.Invoke(this, EventArgs.Empty);

@@ -9,4 +9,11 @@
   <data name="AddButton" xml:space="preserve"><value>Zutat hinzufugen</value></data>
   <data name="EmptyTitle" xml:space="preserve"><value>Keine Zutaten</value></data>
   <data name="EmptyHint" xml:space="preserve"><value>'Zutat hinzufugen' tippen</value></data>
+  <data name="EmptyIngredientsTitle" xml:space="preserve"><value>Keine Zutaten</value></data>
+  <data name="EmptyIngredientsMessage" xml:space="preserve"><value>Eine Liste mit Beispielzutaten erstellen?</value></data>
+  <data name="Yes" xml:space="preserve"><value>Ja</value></data>
+  <data name="No" xml:space="preserve"><value>Nein</value></data>
+  <data name="ErrorTitle" xml:space="preserve"><value>Fehler</value></data>
+  <data name="LoadingIngredientsError" xml:space="preserve"><value>Beim Laden der Zutaten ist ein Problem aufgetreten.</value></data>
+  <data name="OK" xml:space="preserve"><value>OK</value></data>
 </root>

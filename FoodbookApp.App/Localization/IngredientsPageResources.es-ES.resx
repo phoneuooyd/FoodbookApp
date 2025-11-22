@@ -9,4 +9,11 @@
   <data name="AddButton" xml:space="preserve"><value>A?adir ingrediente</value></data>
   <data name="EmptyTitle" xml:space="preserve"><value>Sin ingredientes</value></data>
   <data name="EmptyHint" xml:space="preserve"><value>Toca 'A?adir ingrediente'</value></data>
+  <data name="EmptyIngredientsTitle" xml:space="preserve"><value>Sin ingredientes</value></data>
+  <data name="EmptyIngredientsMessage" xml:space="preserve"><value>¿Crear una lista de ingredientes de ejemplo?</value></data>
+  <data name="Yes" xml:space="preserve"><value>Sí</value></data>
+  <data name="No" xml:space="preserve"><value>No</value></data>
+  <data name="ErrorTitle" xml:space="preserve"><value>Error</value></data>
+  <data name="LoadingIngredientsError" xml:space="preserve"><value>Se produjo un problema al cargar los ingredientes.</value></data>
+  <data name="OK" xml:space="preserve"><value>OK</value></data>
 </root>

@@ -172,13 +172,18 @@
                         </DataTemplate>
                     </BindableLayout.ItemTemplate>
                 </VerticalStackLayout>
-                <HorizontalStackLayout Spacing="10" Margin="0,20,0,0" HorizontalOptions="Center">
-                    <Button Command="{Binding SaveCommand}" BackgroundColor="{DynamicResource Primary}">
+
+                <!-- Save button: match style and layout used in IngredientFormPage -->
+                <VerticalStackLayout Padding="20,10" Spacing="10" BackgroundColor="{DynamicResource PageBackgroundColor}">
+                    <Button Command="{Binding SaveCommand}" 
+                            StyleClass="Primary"
+                            HeightRequest="50" 
+                            HorizontalOptions="FillAndExpand">
                         <Button.ImageSource>
                             <FileImageSource File="save.png" />
                         </Button.ImageSource>
                     </Button>
-                </HorizontalStackLayout>
+                </VerticalStackLayout>
             </VerticalStackLayout>
         </ScrollView>
     </Grid>

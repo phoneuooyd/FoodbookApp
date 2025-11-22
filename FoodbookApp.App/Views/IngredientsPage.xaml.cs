@@ -131,8 +131,11 @@ public partial class IngredientsPage : ContentPage
     {
         try
         {
-            bool create = await DisplayAlert("Brak składników", 
-                "Utworzyć listę przykładowych składników?", "Tak", "Nie");
+            bool create = await DisplayAlert(
+                FoodbookApp.Localization.IngredientsPageResources.EmptyIngredientsTitle, 
+                FoodbookApp.Localization.IngredientsPageResources.EmptyIngredientsMessage, 
+                FoodbookApp.Localization.IngredientsPageResources.Yes, 
+                FoodbookApp.Localization.IngredientsPageResources.No);
             
             if (create && MauiProgram.ServiceProvider != null)
             {
@@ -147,7 +150,10 @@ public partial class IngredientsPage : ContentPage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error handling empty ingredients: {ex.Message}");
-            await DisplayAlert("Błąd", "Wystąpił problem podczas ładowania składników.", "OK");
+            await DisplayAlert(
+                FoodbookApp.Localization.IngredientsPageResources.ErrorTitle, 
+                FoodbookApp.Localization.IngredientsPageResources.LoadingIngredientsError, 
+                FoodbookApp.Localization.IngredientsPageResources.OK);
         }
     }
 

@@ -39,4 +39,37 @@
   <data name="QuantityLabelShort" xml:space="preserve"><value>Qt.</value></data>
   <data name="UnitLabelShort" xml:space="preserve"><value>Unite</value></data>
   <data name="SelectIngredientPlaceholder" xml:space="preserve"><value>Sélectionner un ingrédient...</value></data>
+  <data name="ConfirmTitle" xml:space="preserve">
+    <value>Confirmer</value>
+  </data>
+  <data name="UnsavedChangesMessage" xml:space="preserve">
+    <value>Vous avez des modifications non sauvegardées. Voulez-vous vraiment quitter ?</value>
+  </data>
+  <data name="YesButton" xml:space="preserve">
+    <value>Oui</value>
+  </data>
+  <data name="NoButton" xml:space="preserve">
+    <value>Non</value>
+  </data>
+  <data name="ErrorTitle" xml:space="preserve">
+    <value>Erreur</value>
+  </data>
+  <data name="CannotOpenLabelsManagement" xml:space="preserve">
+    <value>Impossible d'ouvrir la gestion des étiquettes</value>
+  </data>
+  <data name="OKButton" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="UnableToResolveCurrentPage" xml:space="preserve">
+    <value>Impossible de résoudre la page actuelle.</value>
+  </data>
+  <data name="CouldNotOpenRecipeSelectionDialog" xml:space="preserve">
+    <value>Impossible d'ouvrir la boîte de dialogue de sélection de recette</value>
+  </data>
+  <data name="FailedToFetchRecipeDetails" xml:space="preserve">
+    <value>Impossible de récupérer les détails de la recette.</value>
+  </data>
+  <data name="FailedToOpenRecipeDetails" xml:space="preserve">
+    <value>Impossible d'ouvrir les détails de la recette</value>
+  </data>
 </root>

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Devices;
+using Microsoft.Maui.ApplicationModel;
 using System.Threading; // added
 
 namespace Foodbook.Views.Components;
@@ -59,6 +60,13 @@ public class FilterSortPopup : Popup
 
     // NEW: show apply button
     private readonly bool _showApplyButton;
+
+    // Keep references to localized UI elements so they can be refreshed when culture changes
+    private Label? _titleLabel;
+    private Label? _labelsHeaderLabel;
+    private Label? _ingredientsHeaderLabel;
+    private Button? _okButton;
+    private Button? _clearButton;
 
     private readonly TaskCompletionSource<FilterSortResult?> _tcs = new();
     public Task<FilterSortResult?> ResultTask => _tcs.Task;
@@ -138,9 +146,24 @@ public class FilterSortPopup : Popup
             BuildIngredients();
         }
 
+        // Subscribe to picker refresh requests from localization service so UI updates when culture changes
+        var loc = FoodbookApp.MauiProgram.ServiceProvider?.GetService(typeof(FoodbookApp.Interfaces.ILocalizationService)) as FoodbookApp.Interfaces.ILocalizationService;
+        if (loc != null)
+        {
+            loc.PickerRefreshRequested += OnPickerRefreshRequested;
+        }
+
         // Only release the flag once popup is closed
         this.Closed += (_, __) =>
         {
+            // Unsubscribe localization event
+            try
+            {
+                if (loc != null)
+                    loc.PickerRefreshRequested -= OnPickerRefreshRequested;
+            }
+            catch { }
+
             if (!_showApplyButton)
             {
                 var result = GetResult();
@@ -149,6 +172,64 @@ public class FilterSortPopup : Popup
             }
             ReleaseOpen();
         };
+
+        // Ensure initial localization is consistent (in case culture changed before popup created)
+        UpdateLocalizedStrings();
+    }
+
+    private void OnPickerRefreshRequested(object? sender, EventArgs e)
+    {
+        try
+        {
+            // Ensure execution on UI thread
+            MainThread.InvokeOnMainThreadAsync(() => {
+                UpdateLocalizedStrings();
+                return Task.CompletedTask;
+            });
+        }
+        catch { }
+    }
+
+    private void UpdateLocalizedStrings()
+    {
+        try
+        {
+            // Update picker items preserving selected index when possible
+            var selectedIndex = _sortPicker.SelectedIndex;
+            var items = new List<string>
+            {
+                FoodbookApp.Localization.FilterSortPopupResources.SortAZ,
+                FoodbookApp.Localization.FilterSortPopupResources.SortZA,
+                FoodbookApp.Localization.FilterSortPopupResources.SortCaloriesAsc,
+                FoodbookApp.Localization.FilterSortPopupResources.SortCaloriesDesc,
+                FoodbookApp.Localization.FilterSortPopupResources.SortProteinAsc,
+                FoodbookApp.Localization.FilterSortPopupResources.SortProteinDesc,
+                FoodbookApp.Localization.FilterSortPopupResources.SortCarbsAsc,
+                FoodbookApp.Localization.FilterSortPopupResources.SortCarbsDesc,
+                FoodbookApp.Localization.FilterSortPopupResources.SortFatAsc,
+                FoodbookApp.Localization.FilterSortPopupResources.SortFatDesc
+            };
+            _sortPicker.ItemsSource = items;
+            // Restore selected index if still valid
+            if (selectedIndex >= 0 && selectedIndex < items.Count)
+                _sortPicker.SelectedIndex = selectedIndex;
+            else
+                _sortPicker.SelectedIndex = 0;
+
+            // Update titles and labels
+            if (_titleLabel != null) _titleLabel.Text = FoodbookApp.Localization.FilterSortPopupResources.Title;
+            if (_labelsHeaderLabel != null) _labelsHeaderLabel.Text = FoodbookApp.Localization.FilterSortPopupResources.LabelsHeader;
+            if (_ingredientsHeaderLabel != null) _ingredientsHeaderLabel.Text = FoodbookApp.Localization.FilterSortPopupResources.IngredientsHeader;
+            if (_ingredientSearchEntry != null) _ingredientSearchEntry.Placeholder = FoodbookApp.Localization.FilterSortPopupResources.IngredientSearchPlaceholder;
+            if (_okButton != null) _okButton.Text = FoodbookApp.Localization.FilterSortPopupResources.ApplyButton;
+            if (_clearButton != null) _clearButton.Text = FoodbookApp.Localization.FilterSortPopupResources.ClearButton;
+            // Also update sortPicker title
+            _sortPicker.Title = FoodbookApp.Localization.FilterSortPopupResources.SortLabel;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[FilterSortPopup] UpdateLocalizedStrings error: {ex.Message}");
+        }
     }
 
     private static SortBy MapOrderToSortBy(SortOrder order) => order == SortOrder.Desc ? SortBy.NameDesc : SortBy.NameAsc;
@@ -196,6 +277,7 @@ public class FilterSortPopup : Popup
             VerticalTextAlignment = TextAlignment.Center
         };
         title.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
+        _titleLabel = title;
 
         var closeBtn = new Button
         {
@@ -245,6 +327,7 @@ public class FilterSortPopup : Popup
             IsVisible = _showLabels
         };
         labelsHeader.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
+        _labelsHeaderLabel = labelsHeader;
 
         // Increase popup height by ~70px and distribute proportionally between sections
         var labelsScroll = new ScrollView { Content = _labelsHost, IsVisible = _showLabels, HeightRequest = 140 };
@@ -258,6 +341,7 @@ public class FilterSortPopup : Popup
             IsVisible = _showIngredients
         };
         ingredientsHeader.SetDynamicResource(Label.TextColorProperty, "PrimaryText");
+        _ingredientsHeaderLabel = ingredientsHeader;
 
         var ingredientsScroll = new ScrollView { Content = _ingredientsHost, IsVisible = _showIngredients, HeightRequest = 330 };
 
@@ -268,6 +352,7 @@ public class FilterSortPopup : Popup
         {
             await SubmitAndCloseAsync();
         };
+        _okButton = ok;
 
         var clear = new Button { Text = FoodbookApp.Localization.FilterSortPopupResources.ClearButton };
         clear.StyleClass = new List<string> { "Secondary" };
@@ -288,6 +373,7 @@ public class FilterSortPopup : Popup
                 chip.Stroke = Colors.Transparent;
             }
         };
+        _clearButton = clear;
 
         var buttons = new HorizontalStackLayout
         {

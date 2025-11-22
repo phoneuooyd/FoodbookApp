@@ -222,4 +222,37 @@
   <data name="SelectIngredientPlaceholder" xml:space="preserve">
     <value>Select ingredient...</value>
   </data>
+  <data name="ConfirmTitle" xml:space="preserve">
+    <value>Confirm</value>
+  </data>
+  <data name="UnsavedChangesMessage" xml:space="preserve">
+    <value>You have unsaved changes. Do you really want to leave?</value>
+  </data>
+  <data name="YesButton" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="NoButton" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="ErrorTitle" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="CannotOpenLabelsManagement" xml:space="preserve">
+    <value>Cannot open label management</value>
+  </data>
+  <data name="OKButton" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="UnableToResolveCurrentPage" xml:space="preserve">
+    <value>Unable to resolve current page.</value>
+  </data>
+  <data name="CouldNotOpenRecipeSelectionDialog" xml:space="preserve">
+    <value>Could not open recipe selection dialog</value>
+  </data>
+  <data name="FailedToFetchRecipeDetails" xml:space="preserve">
+    <value>Failed to fetch recipe details.</value>
+  </data>
+  <data name="FailedToOpenRecipeDetails" xml:space="preserve">
+    <value>Failed to open recipe details</value>
+  </data>
 </root>

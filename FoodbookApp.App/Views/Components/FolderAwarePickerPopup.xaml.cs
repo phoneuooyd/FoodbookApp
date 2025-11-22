@@ -90,7 +90,7 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
         _allFolders = folders ?? new List<Folder>();
         _dataRefreshFunc = dataRefreshFunc;
         Items = new ObservableCollection<FolderPickerItem>();
-        Title = "Wybierz przepis";
+        Title = FoodbookApp.Localization.FolderResources.ChooseRecipeTitle;
         
         TapCommand = new Command<FolderPickerItem>(OnItemTapped);
         CloseCommand = new Command(() => CloseWithResult(null));
@@ -253,8 +253,8 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
             Items.Add(new FolderPickerItem
             {
                 ItemType = FolderPickerItemType.Navigation,
-                DisplayName = "Wróæ",
-                Description = _breadcrumb.LastOrDefault()?.Name ?? "Root",
+                DisplayName = FoodbookApp.Localization.FolderResources.BackButton,
+                Description = _breadcrumb.LastOrDefault()?.Name ?? FoodbookApp.Localization.FolderResources.Root,
                 Icon = "\u2190", // Unicode left arrow
                 FontAttributes = FontAttributes.None,
                 ShowArrow = false,

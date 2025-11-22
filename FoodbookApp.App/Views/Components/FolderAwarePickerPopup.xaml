@@ -68,9 +68,11 @@
                     <StackLayout Grid.Column="0" Orientation="Vertical" Spacing="6">
                         <components:ModernSearchBarComponent
                             SearchText="{Binding SearchText, Source={x:Reference ThisPopup}}"
-                            PlaceholderText="Szukaj..."
-                            ClearCommand="{Binding ClearSearchCommand, Source={x:Reference ThisPopup}}"
-                            />
+                            ClearCommand="{Binding ClearSearchCommand, Source={x:Reference ThisPopup}}">
+                            <components:ModernSearchBarComponent.PlaceholderText>
+                                <loc:Translate Resource="FolderResources" Key="SearchPlaceholder" />
+                            </components:ModernSearchBarComponent.PlaceholderText>
+                        </components:ModernSearchBarComponent>
 			    </StackLayout>
 
                     <!-- Filter button -->
