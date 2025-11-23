@@ -28,7 +28,7 @@ namespace Foodbook.Services
         private readonly IServiceProvider _services;
 
         // **DEVELOPER FLAG: Set to TRUE for clean deployment (wipes all data), FALSE to preserve data**
-        private const bool FORCE_CLEAN_DEPLOYMENT = true;
+        private const bool FORCE_CLEAN_DEPLOYMENT = false;
 
         public DatabaseService(IServiceProvider services)
         {
