@@ -46,7 +46,7 @@
         </ResourceDictionary>
     </mct:Popup.Resources>
 
-    <Border BackgroundColor="{DynamicResource PageBackgroundColor}"
+    <Border BackgroundColor="{DynamicResource PopupBackgroundColor}"
             StrokeShape="RoundRectangle 12"
             StrokeThickness="1"
             Stroke="{DynamicResource Secondary}"
@@ -116,7 +116,7 @@
             
             <!-- Content -->
             <ScrollView Grid.Row="2" 
-                        BackgroundColor="{DynamicResource PageBackgroundColor}"
+                        BackgroundColor="{DynamicResource PopupBackgroundColor}"
                         Padding="6,4">
                 <StackLayout BindableLayout.ItemsSource="{Binding Items, Source={x:Reference ThisPopup}}"
                              Spacing="8">
@@ -151,7 +151,7 @@
                                                 <DataTrigger TargetType="Border" 
                                                            Binding="{Binding ItemType}" 
                                                            Value="Recipe">
-                                                    <Setter Property="BackgroundColor" Value="{DynamicResource PageBackgroundColor}" />
+                                                    <Setter Property="BackgroundColor" Value="{DynamicResource PopupBackgroundColor}" />
                                                     <Setter Property="Stroke" Value="{DynamicResource Secondary}" />
                                                 </DataTrigger>
                                                 <DataTrigger TargetType="Border" 

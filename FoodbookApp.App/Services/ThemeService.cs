@@ -287,14 +287,14 @@ namespace Foodbook.Services
                     if (isDark)
                     {
                         // Dark mode: make overlay a bit darker than before (0.45 vs 0.35)
-                        // Temporarily disable transparency: use fully opaque overlay (alpha = 1.0)
-                        pageBackground = Color.FromRgba(0, 0, 0, 1.0);
+                        // Dark mode: semi-transparent overlay to let wallpaper show through
+                        pageBackground = Color.FromRgba(0, 0, 0, 0.15);
                     }
                     else
                     {
                         // Light mode: a touch stronger to improve contrast on bright wallpapers (0.14 vs 0.10)
-                        // Temporarily disable transparency: use fully opaque overlay (alpha = 1.0)
-                        pageBackground = Color.FromRgba(255, 255, 255, 1.0);
+                        // Light mode: semi-transparent overlay so wallpaper remains visible
+                        pageBackground = Color.FromRgba(255, 255, 255, 0.14);
                     }
                 }
                 else if (_isColorfulBackgroundEnabled)
@@ -302,14 +302,13 @@ namespace Foodbook.Services
                     if (isDark)
                     {
                         var darkened = Darken(secondary, 0.12);
-                        // Temporarily disable transparency: use fully opaque color
-                        pageBackground = Color.FromRgba(darkened.Red, darkened.Green, darkened.Blue, 1.0);
+                        // Keep some translucency so background feels layered but not fully opaque on pages
+                        pageBackground = Color.FromRgba(darkened.Red, darkened.Green, darkened.Blue, 0.35);
                     }
                     else
                     {
                         var lightened = Lighten(secondary, 0.22);
-                        // Temporarily disable transparency: use fully opaque color
-                        pageBackground = Color.FromRgba(lightened.Red, lightened.Green, lightened.Blue, 1.0);
+                        pageBackground = Color.FromRgba(lightened.Red, lightened.Green, lightened.Blue, 0.30);
                     }
                 }
                 else
@@ -325,6 +324,11 @@ namespace Foodbook.Services
                 app.Resources["PageBackgroundImage"] = pageBackgroundImageSource;
                 app.Resources["PageBackgroundColor"] = pageBackground;
                 app.Resources["PageBackgroundBrush"] = new SolidColorBrush(pageBackground);
+
+                // Provide an opaque background resource specifically for popups/modal UI
+                var popupBackground = Color.FromRgba(pageBackground.Red, pageBackground.Green, pageBackground.Blue, 1.0);
+                app.Resources["PopupBackgroundColor"] = popupBackground;
+                app.Resources["PopupBackgroundBrush"] = new SolidColorBrush(popupBackground);
 
                 // Adaptive Text Color
                 Color adaptiveTextColor = (_isColorfulBackgroundEnabled && !wallpaperEnabled)

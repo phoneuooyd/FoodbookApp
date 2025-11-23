@@ -7,7 +7,7 @@
            CanBeDismissedByTappingOutsideOfPopup="True"
            Padding="0"
            Margin="0">
-    <Border BackgroundColor="{DynamicResource PageBackgroundColor}"
+    <Border BackgroundColor="{DynamicResource PopupBackgroundColor}"
             StrokeShape="RoundRectangle 16"
             StrokeThickness="1"
             Stroke="{DynamicResource Secondary}"
