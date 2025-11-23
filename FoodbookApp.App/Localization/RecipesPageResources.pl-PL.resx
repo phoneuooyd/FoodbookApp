@@ -27,4 +27,7 @@
   <data name="EmptyHint" xml:space="preserve">
     <value>Dotknij 'Dodaj przepis' aby dodać pierwszy przepis</value>
   </data>
+  <!-- FAB action texts -->
+  <data name="AddRecipeAction" xml:space="preserve"><value>Dodaj przepis</value></data>
+  <data name="AddFolderAction" xml:space="preserve"><value>Dodaj folder</value></data>
 </root>

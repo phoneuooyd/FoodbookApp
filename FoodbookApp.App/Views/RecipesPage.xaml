@@ -99,8 +99,8 @@
                 ButtonText="+">
                 <components:FloatingActionButtonComponent.Actions>
                     <!-- Reordered: Add Recipe on top, Add Folder below -->
-                    <components:FabActionItem Text="Dodaj przepis" Command="{Binding BindingContext.AddRecipeCommand, Source={x:Reference ThisPage}}" />
-                    <components:FabActionItem Text="Dodaj folder" Command="{Binding BindingContext.AddFolderCommand, Source={x:Reference ThisPage}}" />
+                    <components:FabActionItem Text="{loc:Translate Resource=RecipesPageResources, Key=AddRecipeAction}" Command="{Binding BindingContext.AddRecipeCommand, Source={x:Reference ThisPage}}" />
+                    <components:FabActionItem Text="{loc:Translate Resource=RecipesPageResources, Key=AddFolderAction}" Command="{Binding BindingContext.AddFolderCommand, Source={x:Reference ThisPage}}" />
                 </components:FloatingActionButtonComponent.Actions>
             </components:FloatingActionButtonComponent>
         </Grid>

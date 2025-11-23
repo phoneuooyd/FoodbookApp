@@ -6,7 +6,10 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Title" xml:space="preserve"><value>Recetas</value></data>
   <data name="SearchPlaceholder" xml:space="preserve"><value>Buscar recetas...</value></data>
-  <data name="AddButton" xml:space="preserve"><value>A?adir receta</value></data>
+  <data name="AddButton" xml:space="preserve"><value>Añadir receta</value></data>
   <data name="EmptyTitle" xml:space="preserve"><value>Sin recetas</value></data>
-  <data name="EmptyHint" xml:space="preserve"><value>Toca 'A?adir receta' para crear una</value></data>
+  <data name="EmptyHint" xml:space="preserve"><value>Toca 'Añadir receta' para crear una</value></data>
+  <!-- FAB action texts -->
+  <data name="AddRecipeAction" xml:space="preserve"><value>Añadir receta</value></data>
+  <data name="AddFolderAction" xml:space="preserve"><value>Añadir carpeta</value></data>
 </root>
