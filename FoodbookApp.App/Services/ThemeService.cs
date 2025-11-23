@@ -287,12 +287,14 @@ namespace Foodbook.Services
                     if (isDark)
                     {
                         // Dark mode: make overlay a bit darker than before (0.45 vs 0.35)
-                        pageBackground = Color.FromRgba(0, 0, 0, 0.15);
+                        // Temporarily disable transparency: use fully opaque overlay (alpha = 1.0)
+                        pageBackground = Color.FromRgba(0, 0, 0, 1.0);
                     }
                     else
                     {
                         // Light mode: a touch stronger to improve contrast on bright wallpapers (0.14 vs 0.10)
-                        pageBackground = Color.FromRgba(255, 255, 255, 0.14);
+                        // Temporarily disable transparency: use fully opaque overlay (alpha = 1.0)
+                        pageBackground = Color.FromRgba(255, 255, 255, 1.0);
                     }
                 }
                 else if (_isColorfulBackgroundEnabled)
@@ -300,12 +302,14 @@ namespace Foodbook.Services
                     if (isDark)
                     {
                         var darkened = Darken(secondary, 0.12);
-                        pageBackground = Color.FromRgba(darkened.Red, darkened.Green, darkened.Blue, 0.35);
+                        // Temporarily disable transparency: use fully opaque color
+                        pageBackground = Color.FromRgba(darkened.Red, darkened.Green, darkened.Blue, 1.0);
                     }
                     else
                     {
                         var lightened = Lighten(secondary, 0.22);
-                        pageBackground = Color.FromRgba(lightened.Red, lightened.Green, lightened.Blue, 0.30);
+                        // Temporarily disable transparency: use fully opaque color
+                        pageBackground = Color.FromRgba(lightened.Red, lightened.Green, lightened.Blue, 1.0);
                     }
                 }
                 else
@@ -335,8 +339,9 @@ namespace Foodbook.Services
                 app.Resources["FrameTextColor"] = frameTextColor;
 
                 // Folder card colors
-                var folderBg = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 0.12);
-                var folderStroke = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 0.32);
+                // Temporarily disable transparency for folder card visuals
+                var folderBg = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 1.0);
+                var folderStroke = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 1.0);
                 Color folderTextColor = frameTextColor;
 
                 if (wallpaperEnabled)
