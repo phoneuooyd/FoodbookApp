@@ -329,4 +329,13 @@
   <data name="FactoryResetDone" xml:space="preserve"><value>Ustawienia fabryczne przywrócone</value></data>
   <data name="FactoryResetFailedShort" xml:space="preserve"><value>Ustawienia fabryczne nieudane</value></data>
   <data name="FactoryResetErrorShort" xml:space="preserve"><value>Błąd przywracania ustawień fabrycznych</value></data>
+  <data name="UpdateIngredientsTitle" xml:space="preserve">
+    <value>Aktualizuj bazę składników</value>
+  </data>
+  <data name="UpdateIngredientsDescription" xml:space="preserve">
+    <value>Dodaj brakujące składniki z pliku ingredients.json do bazy. Nie nadpisuje ani nie usuwa istniejących składników.</value>
+  </data>
+  <data name="UpdateIngredientsButton" xml:space="preserve">
+    <value>Aktualizuj bazę składników</value>
+  </data>
 </root>

@@ -85,4 +85,8 @@
   <data name="FactoryResetDone" xml:space="preserve"><value>Paramètres d'usine restaurés</value></data>
   <data name="FactoryResetFailedShort" xml:space="preserve"><value>Échec de la réinitialisation</value></data>
   <data name="FactoryResetErrorShort" xml:space="preserve"><value>Erreur de réinitialisation</value></data>
+  <!-- New keys -->
+  <data name="UpdateIngredientsTitle" xml:space="preserve"><value>Mettre à jour la base d'ingrédients</value></data>
+  <data name="UpdateIngredientsDescription" xml:space="preserve"><value>Ajoute les ingrédients manquants depuis le fichier ingredients.json embarqué. N'écrase ni ne supprime les ingrédients existants.</value></data>
+  <data name="UpdateIngredientsButton" xml:space="preserve"><value>Mettre à jour les ingrédients</value></data>
 </root>

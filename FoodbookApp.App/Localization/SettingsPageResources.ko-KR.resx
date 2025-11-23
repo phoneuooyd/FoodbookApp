@@ -304,4 +304,8 @@
   <data name="FactoryResetErrorShort" xml:space="preserve">
     <value>공장 초기화 오류</value>
   </data>
+  <!-- New keys -->
+  <data name="UpdateIngredientsTitle" xml:space="preserve"><value>재료 데이터베이스 업데이트</value></data>
+  <data name="UpdateIngredientsDescription" xml:space="preserve"><value>내장된 ingredients.json 파일에서 누락된 재료를 추가합니다. 기존 재료는 덮어쓰지 않으며 삭제하지 않습니다.</value></data>
+  <data name="UpdateIngredientsButton" xml:space="preserve"><value>재료 업데이트</value></data>
 </root>
