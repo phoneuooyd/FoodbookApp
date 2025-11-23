@@ -60,7 +60,7 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
         ? string.Join(" / ", _breadcrumb.Select(b => b.Name)) + (_currentFolder != null ? $" / {_currentFolder.Name}" : "")
         : (_currentFolder?.Name ?? "Root");
 
-    public bool HasBreadcrumb => _breadcrumb.Count > 0 || _currentFolder != null;
+    public bool HasBreadcrumb => _breadcrumb.Count > 0;
 
     private string _searchText = string.Empty;
     public string SearchText
@@ -248,7 +248,8 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
         Items.Clear();
 
         // Add back navigation if not at root
-        if (_breadcrumb.Count > 0)
+        // Show boxed "back" item whenever we're inside any folder (either we have breadcrumb history or we're in a folder)
+        if (_breadcrumb.Count > 0 || _currentFolder != null)
         {
             Items.Add(new FolderPickerItem
             {
