@@ -338,37 +338,37 @@ namespace Foodbook.Services
                 app.Resources["FrameBackgroundColor"] = frameBackgroundColor;
                 app.Resources["FrameTextColor"] = frameTextColor;
 
-                // Folder card colors
-                // Temporarily disable transparency for folder card visuals
-                var folderBg = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 1.0);
-                var folderStroke = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 1.0);
-                Color folderTextColor = frameTextColor;
+                // Folder card colors (use translucent accents so the card feels subtle over page background)
+                // Restore translucency specifically for folder cards while page background remains opaque.
+                var folderBg = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 0.12);
+                var folderStroke = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 0.32);
+                 Color folderTextColor = frameTextColor;
 
-                if (wallpaperEnabled)
-                {
-                    // Opaque Secondary background for folder cards
-                    var opaqueSecondary = Color.FromRgb(secondary.Red, secondary.Green, secondary.Blue);
-                    folderBg = opaqueSecondary;
-                    folderStroke = isDark ? Lighten(opaqueSecondary, 0.18) : Darken(opaqueSecondary, 0.18);
-                    var candidateText = ChooseReadableEnhanced(opaqueSecondary, Colors.White, Color.FromArgb("#000000"));
-                    folderTextColor = EnsureContrastEnhanced(candidateText, opaqueSecondary, RelativeLuminance(opaqueSecondary) > 0.45 ? Colors.Black : Colors.White);
-                }
-                else
-                {
-                    if (isDark && _isColorfulBackgroundEnabled)
-                    {
-                        folderStroke = Color.FromArgb("#2A2A2A");
-                        folderTextColor = Color.FromArgb("#000000");
-                    }
-                    else if (!isDark)
-                    {
-                        folderStroke = Color.FromArgb("#424242");
-                    }
-                }
+                 if (wallpaperEnabled)
+                 {
+                     // Opaque Secondary background for folder cards
+                     var opaqueSecondary = Color.FromRgb(secondary.Red, secondary.Green, secondary.Blue);
+                     folderBg = opaqueSecondary;
+                     folderStroke = isDark ? Lighten(opaqueSecondary, 0.18) : Darken(opaqueSecondary, 0.18);
+                     var candidateText = ChooseReadableEnhanced(opaqueSecondary, Colors.White, Color.FromArgb("#000000"));
+                     folderTextColor = EnsureContrastEnhanced(candidateText, opaqueSecondary, RelativeLuminance(opaqueSecondary) > 0.45 ? Colors.Black : Colors.White);
+                 }
+                 else
+                 {
+                     if (isDark && _isColorfulBackgroundEnabled)
+                     {
+                         folderStroke = Color.FromArgb("#2A2A2A");
+                         folderTextColor = Color.FromArgb("#000000");
+                     }
+                     else if (!isDark)
+                     {
+                         folderStroke = Color.FromArgb("#424242");
+                     }
+                 }
 
-                app.Resources["FolderCardBackgroundColor"] = folderBg;
-                app.Resources["FolderCardStrokeColor"] = folderStroke;
-                app.Resources["FolderCardTextColor"] = folderTextColor;
+                 app.Resources["FolderCardBackgroundColor"] = folderBg;
+                 app.Resources["FolderCardStrokeColor"] = folderStroke;
+                 app.Resources["FolderCardTextColor"] = folderTextColor;
 
                 // Buttons & TabBar & Shell
                 var buttonPrimaryText = ChooseReadableEnhanced(primary, Colors.White, Color.FromArgb("#000000"));
