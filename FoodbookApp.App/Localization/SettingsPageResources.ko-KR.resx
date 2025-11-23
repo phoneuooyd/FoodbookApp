@@ -1,63 +1,307 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
-  <resheader name="version"><value>2.0</value></resheader>
-  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="Title" xml:space="preserve"><value>Settings</value></data>
-  <data name="HeaderTitle" xml:space="preserve"><value>Settings</value></data>
-  <data name="HeaderSubtitle" xml:space="preserve"><value>Customize your app</value></data>
-  <data name="ColorThemeTitle" xml:space="preserve"><value>Color Theme</value></data>
-  <data name="ColorThemeDescription" xml:space="preserve"><value>App palette</value></data>
-  <data name="ColorfulBackgroundOption" xml:space="preserve"><value>Background</value></data>
-  <data name="ColorThemeDefault" xml:space="preserve"><value>Default</value></data>
-  <data name="ColorThemeNature" xml:space="preserve"><value>Nature</value></data>
-  <data name="ColorThemeWarm" xml:space="preserve"><value>Warm</value></data>
-  <data name="ColorThemeVibrant" xml:space="preserve"><value>Vibrant</value></data>
-  <data name="ColorThemeMonochrome" xml:space="preserve"><value>Monochrome</value></data>
-  <data name="ColorThemeNavy" xml:space="preserve"><value>Navy</value></data>
-  <data name="ColorThemeAutumn" xml:space="preserve"><value>Autumn</value></data>
-  <data name="ColorThemeMint" xml:space="preserve"><value>Mint</value></data>
-  <!-- Added missing theme names -->
-  <data name="ColorThemeForest" xml:space="preserve"><value>Forest</value></data>
-  <data name="ColorThemeSunset" xml:space="preserve"><value>Sunset</value></data>
-  <data name="ColorThemeBubblegum" xml:space="preserve"><value>Bubblegum</value></data>
-  <data name="ColorThemeSky" xml:space="preserve"><value>Sky</value></data>
-  <data name="ThemeTitle" xml:space="preserve"><value>Theme</value></data>
-  <data name="ThemeDescription" xml:space="preserve"><value>Light / Dark</value></data>
-  <data name="ThemeLight" xml:space="preserve"><value>Light</value></data>
-  <data name="ThemeDark" xml:space="preserve"><value>Dark</value></data>
-  <data name="ThemeSystem" xml:space="preserve"><value>System</value></data>
-  <data name="LanguageTitle" xml:space="preserve"><value>Language</value></data>
-  <data name="LanguageDescription" xml:space="preserve"><value>Interface language</value></data>
-  <data name="LanguageEnglish" xml:space="preserve"><value>English</value></data>
-  <data name="LanguagePolish" xml:space="preserve"><value>Polski</value></data>
-  <data name="FontFamilyTitle" xml:space="preserve"><value>Font Family</value></data>
-  <data name="FontFamilyDescription" xml:space="preserve"><value>Text font</value></data>
-  <data name="FontFamilyDefault" xml:space="preserve"><value>System Default</value></data>
-  <data name="FontFamilySansSerif" xml:space="preserve"><value>Sans-serif</value></data>
-  <data name="FontFamilySerif" xml:space="preserve"><value>Serif</value></data>
-  <data name="FontFamilyMonospace" xml:space="preserve"><value>Monospace</value></data>
-  <data name="FontSizeTitle" xml:space="preserve"><value>Font Size</value></data>
-  <data name="FontSizeDescription" xml:space="preserve"><value>Text size</value></data>
-  <data name="FontSizeSmall" xml:space="preserve"><value>Small</value></data>
-  <data name="FontSizeDefault" xml:space="preserve"><value>Default</value></data>
-  <data name="FontSizeLarge" xml:space="preserve"><value>Large</value></data>
-  <data name="FontSizeExtraLarge" xml:space="preserve"><value>Extra Large</value></data>
-  <data name="VersionInfoTitle" xml:space="preserve"><value>Version Info</value></data>
-  <data name="VersionNumber" xml:space="preserve"><value>Version 1.0</value></data>
-  <data name="AuthorLabel" xml:space="preserve"><value>Author: Przemyslaw Przybyszewski</value></data>
-  <data name="RightsLabel" xml:space="preserve"><value>All rights reserved 2025</value></data>
-  <data name="AppName" xml:space="preserve"><value>FoodBook App</value></data>
-  <data name="DataExportTitle" xml:space="preserve"><value>데이터 내보내기</value></data>
-  <data name="DataExportDescription" xml:space="preserve"><value>레시피 및 플랜 백업</value></data>
-  <data name="DataExportButton" xml:space="preserve"><value>데이터 아카이브 열기</value></data>
-  <data name="ComingSoon" xml:space="preserve"><value>Coming soon</value></data>
-  <data name="DatabaseMigrationTitle" xml:space="preserve"><value>Database migration</value></data>
-  <data name="DatabaseMigrationDescription" xml:space="preserve"><value>Update database structure</value></data>
-  <data name="DatabaseMigrationButton" xml:space="preserve"><value>Run migration</value></data>
-  <data name="DatabaseResetTitle" xml:space="preserve"><value>Reset database</value></data>
-  <data name="DatabaseResetDescription" xml:space="preserve"><value>Delete all data</value></data>
-  <data name="DatabaseResetButton" xml:space="preserve"><value>Reset</value></data>
-  <data name="DatabaseResetWarning" xml:space="preserve"><value>Irreversible!</value></data>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>설정</value>
+  </data>
+  <data name="HeaderTitle" xml:space="preserve">
+    <value>설정</value>
+  </data>
+  <data name="HeaderSubtitle" xml:space="preserve">
+    <value>앱을 개인 설정하세요</value>
+  </data>
+  <data name="ColorThemeTitle" xml:space="preserve">
+    <value>색상 테마</value>
+  </data>
+  <data name="ColorThemeDescription" xml:space="preserve">
+    <value>앱 색상 팔레트</value>
+  </data>
+  <data name="ColorfulBackgroundOption" xml:space="preserve">
+    <value>배경</value>
+  </data>
+  <data name="WallpaperBackgroundOption" xml:space="preserve">
+    <value>배경화면</value>
+  </data>
+  <data name="ColorThemeDefault" xml:space="preserve">
+    <value>기본</value>
+  </data>
+  <data name="ColorThemeNature" xml:space="preserve">
+    <value>자연</value>
+  </data>
+  <data name="ColorThemeWarm" xml:space="preserve">
+    <value>따뜻함</value>
+  </data>
+  <data name="ColorThemeVibrant" xml:space="preserve">
+    <value>선명</value>
+  </data>
+  <data name="ColorThemeMonochrome" xml:space="preserve">
+    <value>단색</value>
+  </data>
+  <data name="ColorThemeNavy" xml:space="preserve">
+    <value>네이비</value>
+  </data>
+  <data name="ColorThemeAutumn" xml:space="preserve">
+    <value>가을</value>
+  </data>
+  <data name="ColorThemeMint" xml:space="preserve">
+    <value>민트</value>
+  </data>
+  <data name="ColorThemeForest" xml:space="preserve">
+    <value>숲</value>
+  </data>
+  <data name="ColorThemeSunset" xml:space="preserve">
+    <value>노을</value>
+  </data>
+  <data name="ColorThemeBubblegum" xml:space="preserve">
+    <value>버블껌</value>
+  </data>
+  <data name="ColorThemeSky" xml:space="preserve">
+    <value>하늘</value>
+  </data>
+  <data name="ThemeTitle" xml:space="preserve">
+    <value>테마</value>
+  </data>
+  <data name="ThemeDescription" xml:space="preserve">
+    <value>밝음 / 어둠</value>
+  </data>
+  <data name="ThemeLight" xml:space="preserve">
+    <value>밝음</value>
+  </data>
+  <data name="ThemeDark" xml:space="preserve">
+    <value>어둠</value>
+  </data>
+  <data name="ThemeSystem" xml:space="preserve">
+    <value>시스템</value>
+  </data>
+  <data name="LanguageTitle" xml:space="preserve">
+    <value>언어</value>
+  </data>
+  <data name="LanguageDescription" xml:space="preserve">
+    <value>인터페이스 언어</value>
+  </data>
+  <data name="LanguageEnglish" xml:space="preserve">
+    <value>영어</value>
+  </data>
+  <data name="LanguagePolish" xml:space="preserve">
+    <value>폴란드어</value>
+  </data>
+  <data name="LanguageGerman" xml:space="preserve">
+    <value>독일어</value>
+  </data>
+  <data name="LanguageSpanish" xml:space="preserve">
+    <value>스페인어</value>
+  </data>
+  <data name="LanguageFrench" xml:space="preserve">
+    <value>프랑스어</value>
+  </data>
+  <data name="LanguageKorean" xml:space="preserve">
+    <value>한국어</value>
+  </data>
+  <data name="FontFamilyTitle" xml:space="preserve">
+    <value>글꼴</value>
+  </data>
+  <data name="FontFamilyDescription" xml:space="preserve">
+    <value>텍스트 글꼴</value>
+  </data>
+  <data name="FontFamilyDefault" xml:space="preserve">
+    <value>시스템 기본</value>
+  </data>
+  <data name="FontFamilySansSerif" xml:space="preserve">
+    <value>산세리프</value>
+  </data>
+  <data name="FontFamilySerif" xml:space="preserve">
+    <value>세리프</value>
+  </data>
+  <data name="FontFamilyMonospace" xml:space="preserve">
+    <value>고정폭</value>
+  </data>
+  <data name="FontSizeTitle" xml:space="preserve">
+    <value>글자 크기</value>
+  </data>
+  <data name="FontSizeDescription" xml:space="preserve">
+    <value>텍스트 크기</value>
+  </data>
+  <data name="FontSizeSmall" xml:space="preserve">
+    <value>작음</value>
+  </data>
+  <data name="FontSizeDefault" xml:space="preserve">
+    <value>기본</value>
+  </data>
+  <data name="FontSizeLarge" xml:space="preserve">
+    <value>큼</value>
+  </data>
+  <data name="FontSizeExtraLarge" xml:space="preserve">
+    <value>매우 큼</value>
+  </data>
+  <data name="VersionInfoTitle" xml:space="preserve">
+    <value>버전 정보</value>
+  </data>
+  <data name="VersionNumber" xml:space="preserve">
+    <value>버전 1.0</value>
+  </data>
+  <data name="AuthorLabel" xml:space="preserve">
+    <value>작성자: Przemyslaw Przybyszewski</value>
+  </data>
+  <data name="RightsLabel" xml:space="preserve">
+    <value>모든 권리 보유 2025</value>
+  </data>
+  <data name="AppName" xml:space="preserve">
+    <value>FoodBook 앱</value>
+  </data>
+  <data name="DataExportTitle" xml:space="preserve">
+    <value>데이터 내보내기</value>
+  </data>
+  <data name="DataExportDescription" xml:space="preserve">
+    <value>레시피 및 계획 저장</value>
+  </data>
+  <data name="DataExportButton" xml:space="preserve">
+    <value>데이터 아카이브 열기</value>
+  </data>
+  <data name="ComingSoon" xml:space="preserve">
+    <value>곧 제공</value>
+  </data>
+  <data name="DatabaseMigrationTitle" xml:space="preserve">
+    <value>데이터베이스 마이그레이션</value>
+  </data>
+  <data name="DatabaseMigrationDescription" xml:space="preserve">
+    <value>데이터베이스 구조를 최신 버전으로 업데이트합니다</value>
+  </data>
+  <data name="DatabaseMigrationButton" xml:space="preserve">
+    <value>마이그레이션 실행</value>
+  </data>
+  <data name="DatabaseResetTitle" xml:space="preserve">
+    <value>데이터베이스 재설정</value>
+  </data>
+  <data name="DatabaseResetDescription" xml:space="preserve">
+    <value>모든 데이터를 삭제하고 기본 설정으로 복원합니다</value>
+  </data>
+  <data name="DatabaseResetButton" xml:space="preserve">
+    <value>재설정</value>
+  </data>
+  <data name="DatabaseResetWarning" xml:space="preserve">
+    <value>되돌릴 수 없음!</value>
+  </data>
+  <!-- Tabs -->
+  <data name="TabLanguage" xml:space="preserve">
+    <value>언어</value>
+  </data>
+  <data name="TabAppearance" xml:space="preserve">
+    <value>외관</value>
+  </data>
+  <data name="TabData" xml:space="preserve">
+    <value>데이터</value>
+  </data>
+
+  <!-- Factory reset -->
+  <data name="FactoryResetTitle" xml:space="preserve">
+    <value>공장 초기화</value>
+  </data>
+  <data name="FactoryResetDescription" xml:space="preserve">
+    <value>앱을 초기 상태로 복원합니다: 데이터베이스와 모든 환경설정이 삭제됩니다. 재시작 후 설정 마법사가 실행됩니다.</value>
+  </data>
+  <data name="FactoryResetButton" xml:space="preserve">
+    <value>공장 초기화 복원</value>
+  </data>
+  <data name="FactoryResetWarning" xml:space="preserve">
+    <value>되돌릴 수 없습니다. 초기화 후 앱이 종료됩니다.</value>
+  </data>
+  <data name="FactoryResetConfirmTitle" xml:space="preserve">
+    <value>공장 초기화</value>
+  </data>
+  <data name="FactoryResetConfirmMessage" xml:space="preserve">
+    <value>이 작업은 앱을 기본값으로 재설정합니다: 데이터베이스의 모든 데이터, 라벨, 폴더 및 환경설정이 삭제됩니다. 재시작 후 설정 마법사가 실행됩니다. 계속하시겠습니까?</value>
+  </data>
+  <data name="FactoryResetConfirmOk" xml:space="preserve">
+    <value>예, 초기화</value>
+  </data>
+  <data name="FactoryResetConfirmCancel" xml:space="preserve">
+    <value>취소</value>
+  </data>
+  <data name="FactoryResetSuccessTitle" xml:space="preserve">
+    <value>성공</value>
+  </data>
+  <data name="FactoryResetSuccessMessage" xml:space="preserve">
+    <value>공장 설정이 복원되었습니다. 앱이 종료됩니다. 다시 시작하여 설정 마법사를 실행하세요.</value>
+  </data>
+  <data name="FactoryResetErrorTitle" xml:space="preserve">
+    <value>오류</value>
+  </data>
+  <data name="FactoryResetErrorMessage" xml:space="preserve">
+    <value>공장 초기화 중 오류가 발생했습니다: {0}</value>
+  </data>
+  <data name="FactoryResetFailedTitle" xml:space="preserve">
+    <value>오류</value>
+  </data>
+  <data name="FactoryResetFailedMessage" xml:space="preserve">
+    <value>공장 설정을 복원하지 못했습니다. 애플리케이션 로그를 확인하세요.</value>
+  </data>
+  <data name="FactoryResetInProgress" xml:space="preserve">
+    <value>공장 설정 복원 중...</value>
+  </data>
+  <data name="FactoryResetDone" xml:space="preserve">
+    <value>공장 설정이 복원되었습니다</value>
+  </data>
+  <data name="FactoryResetFailedShort" xml:space="preserve">
+    <value>공장 초기화 실패</value>
+  </data>
+  <data name="FactoryResetErrorShort" xml:space="preserve">
+    <value>공장 초기화 오류</value>
+  </data>
 </root>
