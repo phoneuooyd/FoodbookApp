@@ -226,9 +226,35 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
 
             var formPage = new IngredientFormPage(vm);
 
+            // ✅ NEW: Notify SearchablePickerComponent listeners that a modal is opening
+            // This allows AddRecipePage to adjust popup background overlay for wallpaper mode
+            try
+            {
+                SearchablePickerComponent.RaiseGlobalPopupStateChanged(this, true);
+                System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] Notified GlobalPopupStateChanged: opening modal");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] Failed to notify GlobalPopupStateChanged: {ex.Message}");
+            }
+
             // ✅ Show the page modally and await its dismissal
             var dismissedTcs = new TaskCompletionSource();
-            formPage.Disappearing += (_, __) => dismissedTcs.TrySetResult();
+            formPage.Disappearing += (_, __) => 
+            {
+                try
+                {
+                    dismissedTcs.TrySetResult();
+                    
+                    // ✅ NEW: Notify that modal is closing
+                    SearchablePickerComponent.RaiseGlobalPopupStateChanged(this, false);
+                    System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] Notified GlobalPopupStateChanged: closing modal");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] Error in modal closing notification: {ex.Message}");
+                }
+            };
             
             await currentPage.Navigation.PushModalAsync(formPage);
             System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] IngredientFormPage opened modally");
@@ -308,6 +334,13 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] Error adding ingredient: {ex.Message}");
+            
+            // ✅ Ensure we reset popup state even on error
+            try
+            {
+                SearchablePickerComponent.RaiseGlobalPopupStateChanged(this, false);
+            }
+            catch { }
         }
     }
 

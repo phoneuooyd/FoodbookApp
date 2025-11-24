@@ -16,6 +16,12 @@ public partial class SearchablePickerComponent : ContentView, INotifyPropertyCha
     // Static event that SearchablePickerComponent instances can fire to notify AddRecipePage (or any page) about popup state
     public static event EventHandler<bool>? GlobalPopupStateChanged;
 
+    // ? NEW: Static method to allow external classes to safely raise the event
+    public static void RaiseGlobalPopupStateChanged(object? sender, bool isOpen)
+    {
+        GlobalPopupStateChanged?.Invoke(sender, isOpen);
+    }
+
     public static readonly BindableProperty ItemsSourceProperty =
         BindableProperty.Create(nameof(ItemsSource), typeof(IList<string>), typeof(SearchablePickerComponent), default(IList<string>));
 

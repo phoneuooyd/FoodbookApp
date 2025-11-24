@@ -30,8 +30,8 @@
 
     <!-- Grid root to allow a fixed header (always-on-top) and scrollable content below -->
     <Grid RowDefinitions="Auto,*" Padding="0">
-        <!-- Fixed header row: contains 'To buy' label and add button (always visible) -->
-        <Grid Row="0" Padding="10" ColumnDefinitions="*,Auto" BackgroundColor="Transparent">
+        <!-- Fixed header row: contains 'To buy' label, save button, and add button (always visible) -->
+        <Grid Row="0" Padding="10" ColumnDefinitions="*,Auto,Auto" BackgroundColor="Transparent">
             <Label Grid.Column="0" FontSize="18"
                    FontAttributes="Bold"
                    TextColor="{DynamicResource Primary}"
@@ -39,6 +39,24 @@
                    Text="{loc:Translate Resource=ShoppingListDetailPageResources, Key=ToBuy}" />
 
             <Button Grid.Column="1"
+                    x:Name="SaveButton"
+                    Command="{Binding SaveAllCommand}"
+                    WidthRequest="44"
+                    HeightRequest="44"
+                    CornerRadius="22"
+                    Padding="0"
+                    Margin="8,0,0,0"
+                    VerticalOptions="Center"
+                    HorizontalOptions="End"
+                    StyleClass="Secondary"
+                    VisualElement.ZIndex="10"
+                    AutomationProperties.HelpText="Zapisz zmiany">
+                <Button.ImageSource>
+                    <FileImageSource File="save.png" />
+                </Button.ImageSource>
+            </Button>
+
+            <Button Grid.Column="2"
                     x:Name="AddTopButton"
                     Command="{Binding AddItemCommand}"
                     WidthRequest="44"

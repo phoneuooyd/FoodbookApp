@@ -51,10 +51,14 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     public ICommand ItemDraggedOverCommand { get; }
     public ICommand ItemDragLeaveCommand { get; }
     public ICommand ItemDroppedCommand { get; }
+    public ICommand SaveAllCommand { get; }
 
     // Optional commands kept for compatibility with XAML bindings if needed
     public ICommand ItemDroppedBeforeCommand { get; private set; }
     public ICommand ItemDroppedAfterCommand { get; private set; }
+
+    // ? FLAG: Enable/disable automatic saving (currently disabled)
+    private const bool AUTO_SAVE_ENABLED = false;
 
     public event Action<Ingredient>? ItemEditingCompleted;
 
@@ -67,6 +71,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         RemoveItemCommand = new Command<Ingredient>(RemoveItem);
         MoveUpCommand = new Command<Ingredient>(async (item) => await MoveItemUpAsync(item));
         MoveDownCommand = new Command<Ingredient>(async (item) => await MoveItemDownAsync(item));
+        SaveAllCommand = new Command(async () => await ManualSaveAllAsync());
         
         // Drag and drop commands
         ItemDraggedCommand = new Command<Ingredient>(OnItemDragged);
@@ -77,8 +82,11 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         ItemDroppedBeforeCommand = new Command<Ingredient>(async (item) => await ReorderItemsAsync(_itemBeingDragged ?? null, item, insertAfter: false));
         ItemDroppedAfterCommand = new Command<Ingredient>(async (item) => await ReorderItemsAsync(_itemBeingDragged ?? null, item, insertAfter: true));
         
-        // Subscribe to editing completed event
-        ItemEditingCompleted += async (item) => await SaveItemStateAsync(item);
+        // Subscribe to editing completed event (only if auto-save is enabled)
+        if (AUTO_SAVE_ENABLED)
+        {
+            ItemEditingCompleted += async (item) => await SaveItemStateAsync(item);
+        }
         
         // Listen to changes in collections for HasCheckedItems re-evaluation
         UncheckedItems.CollectionChanged += (s, e) => OnPropertyChanged(nameof(HasCheckedItems));
@@ -155,14 +163,32 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
                 }
             }
 
-            // Save on any change to Name, Quantity, Unit, IsChecked
-            if (e.PropertyName == nameof(Ingredient.IsChecked) ||
-                e.PropertyName == nameof(Ingredient.Unit) ||
-                e.PropertyName == nameof(Ingredient.Name) ||
-                e.PropertyName == nameof(Ingredient.Quantity))
+            // ? Auto-save only if enabled
+            if (AUTO_SAVE_ENABLED)
             {
-                await SaveItemStateAsync(item);
+                // Save on any change to Name, Quantity, Unit, IsChecked
+                if (e.PropertyName == nameof(Ingredient.IsChecked) ||
+                    e.PropertyName == nameof(Ingredient.Unit) ||
+                    e.PropertyName == nameof(Ingredient.Name) ||
+                    e.PropertyName == nameof(Ingredient.Quantity))
+                {
+                    await SaveItemStateAsync(item);
+                }
             }
+        }
+    }
+
+    // ? Manual save method triggered by save button
+    private async Task ManualSaveAllAsync()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] Manual save triggered");
+            await SaveAllStatesAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Manual save error: {ex.Message}");
         }
     }
 
@@ -226,8 +252,12 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         };
         newItem.PropertyChanged += OnItemPropertyChanged;
         UncheckedItems.Add(newItem);
-        // Save immediately after adding
-        _ = SaveItemStateAsync(newItem);
+        
+        // ? Auto-save only if enabled
+        if (AUTO_SAVE_ENABLED)
+        {
+            _ = SaveItemStateAsync(newItem);
+        }
     }
 
     private async void RemoveItem(Ingredient? item)
@@ -289,7 +319,11 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(UncheckedItems));
             OnPropertyChanged(nameof(CheckedItems));
 
-            await SaveOrderAsync();
+            // ? Auto-save only if enabled
+            if (AUTO_SAVE_ENABLED)
+            {
+                await SaveOrderAsync();
+            }
         }
         catch (Exception ex)
         {
@@ -334,7 +368,12 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
                 collection.RemoveAt(currentIndex);
                 collection.Insert(currentIndex - 1, item);
                 
-                await SaveOrderAsync();
+                // ? Auto-save only if enabled
+                if (AUTO_SAVE_ENABLED)
+                {
+                    await SaveOrderAsync();
+                }
+                
                 System.Diagnostics.Debug.WriteLine($"Moved {item.Name} up from index {currentIndex} to {currentIndex - 1}");
             }
         }
@@ -358,7 +397,12 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
                 collection.RemoveAt(currentIndex);
                 collection.Insert(currentIndex + 1, item);
                 
-                await SaveOrderAsync();
+                // ? Auto-save only if enabled
+                if (AUTO_SAVE_ENABLED)
+                {
+                    await SaveOrderAsync();
+                }
+                
                 System.Diagnostics.Debug.WriteLine($"Moved {item.Name} down from index {currentIndex} to {currentIndex + 1}");
             }
         }
@@ -430,7 +474,11 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
                 itemToInsertBefore.ShowInsertBefore = false;
                 itemToInsertBefore.ShowInsertAfter = false;
                 
-                await SaveOrderAsync();
+                // ? Auto-save only if enabled
+                if (AUTO_SAVE_ENABLED)
+                {
+                    await SaveOrderAsync();
+                }
                 
                 System.Diagnostics.Debug.WriteLine($"ItemDropped: [{itemToMove.Name}] => [{itemToInsertBefore.Name}], target index = [{insertAtIndex}]");
             }

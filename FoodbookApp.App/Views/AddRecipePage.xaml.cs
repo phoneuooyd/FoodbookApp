@@ -9,6 +9,10 @@ using Foodbook.Views.Components;
 using Foodbook.Views.Base;
 using CommunityToolkit.Maui.Views;
 using CommunityToolkit.Maui.Extensions; // For ShowPopupAsync extension
+using Microsoft.Maui.Graphics;
+using Microsoft.Maui.Dispatching;
+using Microsoft.Extensions.DependencyInjection;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.Views
 {
@@ -35,6 +39,15 @@ namespace Foodbook.Views
         private Task? _pendingLoadTask;
         private readonly SemaphoreSlim _loadSemaphore = new(1, 1);
 
+        // Track original popup background resources so we can restore them
+        private object? _originalPopupBackgroundColorResource;
+        private object? _originalPopupBackgroundBrushResource;
+        private bool _isSubscribedToGlobalPopupEvents = false;
+
+        private object? _originalPageBackgroundColorResource;
+        private object? _originalPageBackgroundBrushResource;
+        private bool _appliedLocalOpaqueBackground = false;
+
         public AddRecipePage(AddRecipeViewModel vm)
         {
             InitializeComponent();
@@ -51,6 +64,25 @@ namespace Foodbook.Views
                 _themeHelper.ThemeChanged += OnThemeChanged;
                 _themeHelper.CultureChanged += OnCultureChanged;
 
+                // Hide underlying content and enforce opaque bg when this page is shown modally from a popup (PlannerPage/Popups scenarios)
+                try
+                {
+                    if (IsModalPage())
+                    {
+                        HideUnderlyingContent();
+
+                        var themeService = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IThemeService>();
+                        bool wallpaperEnabled = themeService?.IsWallpaperBackgroundEnabled() == true;
+                        bool colorfulEnabled = themeService?.GetIsColorfulBackgroundEnabled() == true;
+
+                        if (wallpaperEnabled || colorfulEnabled)
+                        {
+                            ApplyOpaqueLocalBackground();
+                        }
+                    }
+                }
+                catch { }
+
                 // Subscribe to Shell.Navigating to intercept top-back navigation
                 try
                 {
@@ -63,6 +95,21 @@ namespace Foodbook.Views
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Warning: failed to subscribe to Shell.Navigating: {ex.Message}");
+                }
+
+                // Subscribe to global popup state events so we can adjust popup overlay when page is modal
+                try
+                {
+                    if (!_isSubscribedToGlobalPopupEvents)
+                    {
+                        SimplePicker.GlobalPopupStateChanged += OnGlobalPopupStateChanged;
+                        SearchablePickerComponent.GlobalPopupStateChanged += OnGlobalPopupStateChanged;
+                        _isSubscribedToGlobalPopupEvents = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AddRecipePage] Failed to subscribe to global popup events: {ex.Message}");
                 }
 
                 if (!_hasEverLoaded)
@@ -168,6 +215,10 @@ namespace Foodbook.Views
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
+
+            // Restore underlying content visibility
+            try { RestoreUnderlyingContent(); } catch { }
+
             _themeHelper.ThemeChanged -= OnThemeChanged;
             _themeHelper.CultureChanged -= OnCultureChanged;
             _themeHelper.Cleanup();
@@ -182,8 +233,179 @@ namespace Foodbook.Views
                 }
             }
             catch { }
+
+            // Unsubscribe global popup events
+            try
+            {
+                if (_isSubscribedToGlobalPopupEvents)
+                {
+                    SimplePicker.GlobalPopupStateChanged -= OnGlobalPopupStateChanged;
+                    SearchablePickerComponent.GlobalPopupStateChanged -= OnGlobalPopupStateChanged;
+                    _isSubscribedToGlobalPopupEvents = false;
+                }
+            }
+            catch { }
+
+            // Cleanup local opaque override
+            try
+            {
+                if (_appliedLocalOpaqueBackground)
+                {
+                    try { this.Resources.Remove("PageBackgroundColor"); } catch { }
+                    try { this.Resources.Remove("PageBackgroundBrush"); } catch { }
+                    _appliedLocalOpaqueBackground = false;
+                }
+            }
+            catch { }
             
             System.Diagnostics.Debug.WriteLine("👋 AddRecipePage: Disappearing - preserving current state");
+        }
+
+        private void ApplyOpaqueLocalBackground()
+        {
+            try
+            {
+                var app = Application.Current;
+                if (app?.Resources == null) return;
+
+                if (_originalPageBackgroundColorResource == null && app.Resources.TryGetValue("PageBackgroundColor", out var origColor))
+                    _originalPageBackgroundColorResource = origColor;
+                if (_originalPageBackgroundBrushResource == null && app.Resources.TryGetValue("PageBackgroundBrush", out var origBrush))
+                    _originalPageBackgroundBrushResource = origBrush;
+
+                Color pageBg = Colors.White;
+                if (app.Resources.TryGetValue("PageBackgroundColor", out var pb) && pb is Color c)
+                    pageBg = c;
+
+                var overlay = Color.FromRgb(pageBg.Red, pageBg.Green, pageBg.Blue); // alpha=1
+                this.Resources["PageBackgroundColor"] = overlay;
+                this.Resources["PageBackgroundBrush"] = new SolidColorBrush(overlay);
+                this.BackgroundColor = overlay;
+                _appliedLocalOpaqueBackground = true;
+                System.Diagnostics.Debug.WriteLine("[AddRecipePage] Applied opaque local background (wallpaper/colorful mode)");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] ApplyOpaqueLocalBackground error: {ex.Message}");
+            }
+        }
+
+        private void HideUnderlyingContent()
+        {
+            try
+            {
+                var underlying = Shell.Current?.CurrentPage;
+                if (underlying != null && !ReferenceEquals(underlying, this))
+                {
+                    MainThread.BeginInvokeOnMainThread(() => underlying.Opacity = 0);
+                    System.Diagnostics.Debug.WriteLine("[AddRecipePage] Hidden underlying page (Opacity=0)");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] HideUnderlyingContent error: {ex.Message}");
+            }
+        }
+
+        private void RestoreUnderlyingContent()
+        {
+            try
+            {
+                var underlying = Shell.Current?.CurrentPage;
+                if (underlying != null && !ReferenceEquals(underlying, this))
+                {
+                    MainThread.BeginInvokeOnMainThread(() => underlying.Opacity = 1);
+                    System.Diagnostics.Debug.WriteLine("[AddRecipePage] Restored underlying page (Opacity=1)");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] RestoreUnderlyingContent error: {ex.Message}");
+            }
+        }
+
+        // Global popup state handler - adjust popup overlay color when this page is presented modally
+        private void OnGlobalPopupStateChanged(object? sender, bool isOpen)
+        {
+            try
+            {
+                // Only adjust when this page is shown modally (e.g., AddRecipePage pushed modally)
+                if (!IsModalPage())
+                    return;
+
+                var app = Application.Current;
+                if (app?.Resources == null)
+                    return;
+
+                // Resolve theme service to check wallpaper mode
+                var themeService = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IThemeService>();
+                bool wallpaperEnabled = themeService?.IsWallpaperBackgroundEnabled() == true;
+
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    try
+                    {
+                        // Grab current page background color if available
+                        Color pageBg = Colors.White;
+                        if (app.Resources.TryGetValue("PageBackgroundColor", out var existing) && existing is Color c)
+                            pageBg = c;
+
+                        if (isOpen)
+                        {
+                            // Store original resources once
+                            if (_originalPopupBackgroundColorResource == null && app.Resources.TryGetValue("PopupBackgroundColor", out var origColor))
+                                _originalPopupBackgroundColorResource = origColor;
+                            if (_originalPopupBackgroundBrushResource == null && app.Resources.TryGetValue("PopupBackgroundBrush", out var origBrush))
+                                _originalPopupBackgroundBrushResource = origBrush;
+
+                            // If wallpaper enabled, use opaque overlay so wallpaper does not show through.
+                            var alpha = wallpaperEnabled ? 1.0f : 0.82f;
+
+                            var overlay = Color.FromRgba(pageBg.Red, pageBg.Green, pageBg.Blue, alpha);
+                            app.Resources["PopupBackgroundColor"] = overlay;
+                            app.Resources["PopupBackgroundBrush"] = new SolidColorBrush(overlay);
+
+                            System.Diagnostics.Debug.WriteLine($"[AddRecipePage] Overrode PopupBackgroundColor for modal context (wallpaperEnabled={wallpaperEnabled})");
+                        }
+                        else
+                        {
+                            // Restore originals if we saved them
+                            if (_originalPopupBackgroundColorResource != null)
+                            {
+                                app.Resources["PopupBackgroundColor"] = _originalPopupBackgroundColorResource;
+                                _originalPopupBackgroundColorResource = null;
+                            }
+                            if (_originalPopupBackgroundBrushResource != null)
+                            {
+                                app.Resources["PopupBackgroundBrush"] = _originalPopupBackgroundBrushResource;
+                                _originalPopupBackgroundBrushResource = null;
+                            }
+
+                            System.Diagnostics.Debug.WriteLine("[AddRecipePage] Restored original PopupBackground resources after modal popup closed");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[AddRecipePage] OnGlobalPopupStateChanged error: {ex.Message}");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] Global popup state handler failed: {ex.Message}");
+            }
+        }
+
+        // Helper to detect whether this page was pushed modally
+        private bool IsModalPage()
+        {
+            try
+            {
+                var nav = Shell.Current?.Navigation ?? Application.Current?.MainPage?.Navigation;
+                if (nav?.ModalStack == null) return false;
+                return nav.ModalStack.Contains(this);
+            }
+            catch { return false; }
         }
 
         // Handle Shell navigation (top-back / shell routing). We cancel navigation when unsaved changes.
@@ -651,6 +873,35 @@ namespace Foodbook.Views
 
                 var initiallySelected = ViewModel?.SelectedLabels.Select(l => l.Id).ToList() ?? new List<int>();
                 var popup = new CRUDComponentPopup(settingsVm, initiallySelected);
+
+                // If this page is modal, override popup resources to use semi-transparent overlay (or opaque when wallpaper enabled)
+                try
+                {
+                    if (IsModalPage())
+                    {
+                        var app = Application.Current;
+                        if (app?.Resources != null)
+                        {
+                            // Resolve theme service to check wallpaper mode
+                            var themeService = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IThemeService>();
+                            bool wallpaperEnabled = themeService?.IsWallpaperBackgroundEnabled() == true;
+
+                            // Try to determine a suitable overlay color based on PageBackgroundColor
+                            if (app.Resources.TryGetValue("PageBackgroundColor", out var pb) && pb is Color pageColor)
+                            {
+                                var alpha = wallpaperEnabled ? 1.0f : 0.82f;
+                                var overlay = Color.FromRgba(pageColor.Red, pageColor.Green, pageColor.Blue, alpha);
+                                popup.Resources["PopupBackgroundColor"] = overlay;
+                                popup.Resources["PopupBackgroundBrush"] = new SolidColorBrush(overlay);
+                                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] Applied local PopupBackgroundColor override for CRUDComponentPopup (modal, wallpaperEnabled={wallpaperEnabled})");
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AddRecipePage] Failed to apply local popup override: {ex.Message}");
+                }
 
                 // Use extension method from CommunityToolkit.Maui.Extensions and await ResultTask
                 var showTask = this.ShowPopupAsync(popup);

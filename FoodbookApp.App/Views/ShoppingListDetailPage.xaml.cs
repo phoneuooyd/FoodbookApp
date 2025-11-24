@@ -74,15 +74,17 @@ public partial class ShoppingListDetailPage : ContentPage
         // Cleanup theme and font handling
         _themeHelper.Cleanup();
         
-        // ? Safe save with proper error handling
-        if (!_viewModel.IsEditing)
-        {
-            await SaveAllStatesSafelyAsync();
-        }
+        // ? DISABLED: Auto-save on page disappearing
+        // Manual save button is now used instead
+        // if (!_viewModel.IsEditing)
+        // {
+        //     await SaveAllStatesSafelyAsync();
+        // }
     }
 
     /// <summary>
     /// ? Safe wrapper for SaveAllStatesAsync with error handling
+    /// ? DISABLED: Now using manual save button instead
     /// </summary>
     private async Task SaveAllStatesSafelyAsync()
     {
@@ -135,27 +137,31 @@ public partial class ShoppingListDetailPage : ContentPage
     {
         _viewModel.IsEditing = false;
         
-        // Save the item state when editing is completed
-        var entry = sender as Entry;
-        var ingredient = entry?.BindingContext as Ingredient;
-        if (ingredient != null)
-        {
-            _viewModel.OnItemEditingCompleted(ingredient);
-        }
+        // ? DISABLED: Auto-save when editing is completed
+        // Manual save button is now used instead
+        // var entry = sender as Entry;
+        // var ingredient = entry?.BindingContext as Ingredient;
+        // if (ingredient != null)
+        // {
+        //     _viewModel.OnItemEditingCompleted(ingredient);
+        // }
     }
 
     private void OnEntryTextChanged(object sender, TextChangedEventArgs e)
     {
-        var entry = sender as Entry;
-        var ingredient = entry?.BindingContext as Ingredient;
-        if (ingredient == null) return;
+        // ? DISABLED: Debounced auto-save on text change
+        // Manual save button is now used instead
+        
+        // var entry = sender as Entry;
+        // var ingredient = entry?.BindingContext as Ingredient;
+        // if (ingredient == null) return;
 
-        // ? Debounced save with proper cancellation
-        SaveItemWithDebounceAsync(ingredient);
+        // SaveItemWithDebounceAsync(ingredient);
     }
 
     /// <summary>
     /// ? Debounced save implementation - prevents excessive saves during rapid typing
+    /// ? DISABLED: Now using manual save button instead
     /// </summary>
     private void SaveItemWithDebounceAsync(Ingredient ingredient)
     {

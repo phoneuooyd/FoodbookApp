@@ -218,6 +218,32 @@ public partial class SimpleListPopup : Popup
 
             var formPage = new IngredientFormPage(vm);
 
+            // Ensure modal page background is opaque when wallpaper mode is enabled
+            try
+            {
+                var app = Application.Current;
+                var themeService = MauiProgram.ServiceProvider?.GetService<IThemeService>();
+                bool wallpaperEnabled = themeService?.IsWallpaperBackgroundEnabled() == true;
+
+                Color pageBg = Colors.White;
+                if (app?.Resources != null && app.Resources.TryGetValue("PageBackgroundColor", out var pb) && pb is Color c)
+                    pageBg = c;
+
+                var alpha = wallpaperEnabled ? 1.0f : pageBg.Alpha;
+                var overlay = Color.FromRgba(pageBg.Red, pageBg.Green, pageBg.Blue, alpha);
+
+                // Apply local resource override so XAML DynamicResource picks it up, and set explicit BackgroundColor as fallback
+                formPage.Resources["PageBackgroundColor"] = overlay;
+                formPage.Resources["PageBackgroundBrush"] = new SolidColorBrush(overlay);
+                formPage.BackgroundColor = overlay;
+
+                System.Diagnostics.Debug.WriteLine($"[SimpleListPopup] Applied local PageBackgroundColor override for IngredientFormPage (wallpaperEnabled={wallpaperEnabled})");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SimpleListPopup] Failed to apply local page background override: {ex.Message}");
+            }
+
             // Await page dismissal using Disappearing
             var dismissedTcs = new TaskCompletionSource();
             formPage.Disappearing += (_, __) => dismissedTcs.TrySetResult();
