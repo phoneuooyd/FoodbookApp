@@ -82,17 +82,27 @@ public class ShoppingListService : IShoppingListService
         // No saved snapshot yet.
         if (plan.Type == PlanType.ShoppingList)
         {
-            // For a manual shopping list (no link) return empty; for linked planner prefill ingredients.
-            if (plan.LinkedShoppingListPlanId.HasValue)
+            // Find the planner that is linked TO this shopping list
+            var linkedPlanner = await _context.Plans
+                .FirstOrDefaultAsync(p => p.Type == PlanType.Planner && p.LinkedShoppingListPlanId == planId);
+            
+            if (linkedPlanner != null)
             {
-                var baseIngredients = await GetShoppingListForPlanAsync(plan.LinkedShoppingListPlanId.Value);
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Found linked planner {linkedPlanner.Id} for shopping list {planId}");
+                
+                // Prefill ingredients from the linked planner's meals
+                var baseIngredients = await GetShoppingListForPlanAsync(linkedPlanner.Id);
                 for (int i = 0; i < baseIngredients.Count; i++)
                 {
                     baseIngredients[i].Order = i;
                     baseIngredients[i].Id = 0; // not persisted yet
                 }
+                
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Loaded {baseIngredients.Count} ingredients from linked planner");
                 return baseIngredients;
             }
+            
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListService] No linked planner found for shopping list {planId}, returning empty list");
             return new List<Ingredient>();
         }
 
