@@ -14,7 +14,7 @@ public partial class ShoppingListDetailPage : ContentPage
     private readonly ShoppingListDetailViewModel _viewModel;
     private readonly PageThemeHelper _themeHelper;
 
-    // ? Debouncing support for text changes
+    // ? Debouncing support for text changes (disabled for auto-save)
     private CancellationTokenSource? _debounceCts;
     private const int DebounceDelayMs = 300;
 
@@ -22,6 +22,10 @@ public partial class ShoppingListDetailPage : ContentPage
     private CancellationTokenSource? _pageCts;
 
     public int PlanId { get; set; }
+
+    // Shell navigation handling
+    private bool _isSubscribedToShellNavigating = false;
+    private bool _suppressShellNavigating = false;
 
     public ShoppingListDetailPage(ShoppingListDetailViewModel viewModel)
     {
@@ -35,13 +39,23 @@ public partial class ShoppingListDetailPage : ContentPage
     {
         base.OnAppearing();
         
-        // ? Create new cancellation token for this page session
         _pageCts = new CancellationTokenSource();
-        
-        // Initialize theme and font handling
         _themeHelper.Initialize();
+
+        // Subscribe Shell navigating for unsaved changes prompt
+        try
+        {
+            if (!_isSubscribedToShellNavigating && Shell.Current != null)
+            {
+                Shell.Current.Navigating += OnShellNavigating;
+                _isSubscribedToShellNavigating = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Failed to subscribe Shell.Navigating: {ex.Message}");
+        }
         
-        // ? Load with cancellation token support
         try
         {
             await _viewModel.LoadAsync(PlanId);
@@ -61,31 +75,31 @@ public partial class ShoppingListDetailPage : ContentPage
     {
         base.OnDisappearing();
         
-        // ? Cancel any pending debounce operations
         _debounceCts?.Cancel();
         _debounceCts?.Dispose();
         _debounceCts = null;
 
-        // ? Cancel page-level operations
         _pageCts?.Cancel();
         _pageCts?.Dispose();
         _pageCts = null;
         
-        // Cleanup theme and font handling
         _themeHelper.Cleanup();
+
+        // Unsubscribe Shell navigating
+        try
+        {
+            if (_isSubscribedToShellNavigating && Shell.Current != null)
+            {
+                Shell.Current.Navigating -= OnShellNavigating;
+                _isSubscribedToShellNavigating = false;
+            }
+        }
+        catch { }
         
-        // ? DISABLED: Auto-save on page disappearing
-        // Manual save button is now used instead
-        // if (!_viewModel.IsEditing)
-        // {
-        //     await SaveAllStatesSafelyAsync();
-        // }
+        // Auto-save disabled intentionally – manual save button only
+        // if (!_viewModel.IsEditing) { await SaveAllStatesSafelyAsync(); }
     }
 
-    /// <summary>
-    /// ? Safe wrapper for SaveAllStatesAsync with error handling
-    /// ? DISABLED: Now using manual save button instead
-    /// </summary>
     private async Task SaveAllStatesSafelyAsync()
     {
         try
@@ -99,20 +113,39 @@ public partial class ShoppingListDetailPage : ContentPage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Save error: {ex.Message}");
-            // Don't show alert on disappearing - just log
         }
     }
 
     protected override bool OnBackButtonPressed()
     {
-        // ? Use async-safe navigation
-        SafeNavigateBack();
-        return true;
+        try
+        {
+            if (_viewModel.HasUnsavedChanges)
+            {
+                MainThread.BeginInvokeOnMainThread(async () =>
+                {
+                    bool leave = await DisplayAlert("Potwierdzenie", "Masz niezapisane zmiany. Czy chcesz opuœciæ stronê bez zapisu?", "Tak", "Nie");
+                    if (leave)
+                    {
+                        try { _viewModel.DiscardChanges(); } catch { }
+                        _suppressShellNavigating = true;
+                        try { await Shell.Current.GoToAsync("..", false); } catch { }
+                        finally { await Task.Delay(200); _suppressShellNavigating = false; }
+                    }
+                });
+                return true; // blokujemy domyœlne zachowanie
+            }
+
+            SafeNavigateBack();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] BackButton error: {ex.Message}");
+            return base.OnBackButtonPressed();
+        }
     }
 
-    /// <summary>
-    /// ? Safe async navigation wrapper
-    /// </summary>
     private void SafeNavigateBack()
     {
         MainThread.BeginInvokeOnMainThread(async () =>
@@ -128,6 +161,51 @@ public partial class ShoppingListDetailPage : ContentPage
         });
     }
 
+    // Shell navigation handler – similar logic to AddRecipePage
+    private void OnShellNavigating(object? sender, ShellNavigatingEventArgs e)
+    {
+        try
+        {
+            if (_suppressShellNavigating) return;
+            if (e.Source == ShellNavigationSource.Push) return; // wchodzimy na now¹ stronê
+
+            if (_viewModel.HasUnsavedChanges)
+            {
+                e.Cancel();
+                MainThread.BeginInvokeOnMainThread(async () =>
+                {
+                    bool leave = await DisplayAlert("Potwierdzenie", "Masz niezapisane zmiany. Czy chcesz opuœciæ stronê bez zapisu?", "Tak", "Nie");
+                    if (leave)
+                    {
+                        try { _viewModel.DiscardChanges(); } catch { }
+                        _suppressShellNavigating = true;
+                        try
+                        {
+                            var targetLoc = e.Target?.Location?.OriginalString ?? string.Empty;
+                            if (!string.IsNullOrEmpty(targetLoc))
+                                await Shell.Current.GoToAsync(targetLoc);
+                            else
+                                await Shell.Current.GoToAsync("..", false);
+                        }
+                        catch (Exception navEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Navigation after discard failed: {navEx.Message}");
+                        }
+                        finally
+                        {
+                            await Task.Delay(200);
+                            _suppressShellNavigating = false;
+                        }
+                    }
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] OnShellNavigating error: {ex.Message}");
+        }
+    }
+
     private void OnEntryFocused(object sender, FocusEventArgs e)
     {
         _viewModel.IsEditing = true;
@@ -136,69 +214,21 @@ public partial class ShoppingListDetailPage : ContentPage
     private void OnEntryUnfocused(object sender, FocusEventArgs e)
     {
         _viewModel.IsEditing = false;
-        
-        // ? DISABLED: Auto-save when editing is completed
-        // Manual save button is now used instead
-        // var entry = sender as Entry;
-        // var ingredient = entry?.BindingContext as Ingredient;
-        // if (ingredient != null)
-        // {
-        //     _viewModel.OnItemEditingCompleted(ingredient);
-        // }
+        // Auto-save disabled intentionally
     }
 
     private void OnEntryTextChanged(object sender, TextChangedEventArgs e)
     {
-        // ? DISABLED: Debounced auto-save on text change
-        // Manual save button is now used instead
-        
-        // var entry = sender as Entry;
-        // var ingredient = entry?.BindingContext as Ingredient;
-        // if (ingredient == null) return;
-
-        // SaveItemWithDebounceAsync(ingredient);
+        // Auto-save disabled intentionally
     }
 
-    /// <summary>
-    /// ? Debounced save implementation - prevents excessive saves during rapid typing
-    /// ? DISABLED: Now using manual save button instead
-    /// </summary>
     private void SaveItemWithDebounceAsync(Ingredient ingredient)
     {
-        // Cancel previous debounce
-        _debounceCts?.Cancel();
-        _debounceCts?.Dispose();
-        _debounceCts = new CancellationTokenSource();
-
-        var ct = _debounceCts.Token;
-
-        // ? Safe fire-and-forget with proper error handling
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await Task.Delay(DebounceDelayMs, ct);
-                
-                if (!ct.IsCancellationRequested)
-                {
-                    await _viewModel.SaveItemImmediatelyAsync(ingredient);
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                // Expected when user types quickly - ignore
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Debounced save error: {ex.Message}");
-            }
-        }, ct);
+        // Auto-save disabled deliberately – method retained for future use
     }
 
-    // Drag helpers for insert zones (top/bottom)
     private void OnDragStarting(object? sender, DragStartingEventArgs e)
     {
-        // DragStartingCommand already invoked via binding; nothing to do here except ensure Data contains SourceItem
         if (sender is VisualElement el && el.BindingContext is Ingredient ing)
         {
             e.Data.Properties["SourceItem"] = ing;
@@ -249,9 +279,6 @@ public partial class ShoppingListDetailPage : ContentPage
         await HandleDropAsync(sender, e, insertAfter: true);
     }
 
-    /// <summary>
-    /// ? Consolidated drop handler with proper error handling and MainThread safety
-    /// </summary>
     private async Task HandleDropAsync(object? sender, DropEventArgs e, bool insertAfter)
     {
         try
@@ -260,22 +287,16 @@ public partial class ShoppingListDetailPage : ContentPage
             if (src is not Ingredient dragged) return;
             if (sender is not VisualElement el || el.BindingContext is not Ingredient target) return;
 
-            // ? Ensure UI updates happen on main thread
             await MainThread.InvokeOnMainThreadAsync(async () =>
             {
-                // Clear visual indicators
                 target.ShowInsertBefore = false;
                 target.ShowInsertAfter = false;
-
-                // Perform reorder
                 await _viewModel.ReorderItemsAsync(dragged, target, insertAfter);
             });
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Drop error: {ex.Message}");
-            
-            // ? Show user-friendly error message
             await MainThread.InvokeOnMainThreadAsync(async () =>
             {
                 await DisplayAlert("B³¹d", "Nie mo¿na zmieniæ kolejnoœci elementu", "OK");

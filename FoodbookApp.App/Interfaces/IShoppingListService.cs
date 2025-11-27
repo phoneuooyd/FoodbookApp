@@ -14,5 +14,9 @@ namespace FoodbookApp.Interfaces
         
         Task SaveAllShoppingListStatesAsync(int planId, List<Ingredient> ingredients);
         Task RemoveShoppingListItemAsync(int planId, string ingredientName, Unit unit);
+        /// <summary>
+        /// Remove item by database Id (preferred removal path when Id is known).
+        /// </summary>
+        Task RemoveShoppingListItemByIdAsync(int id);
     }
 }

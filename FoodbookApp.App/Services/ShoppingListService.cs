@@ -21,21 +21,18 @@ public class ShoppingListService : IShoppingListService
                 .ThenInclude(r => r.Ingredients)
             .Where(pm => pm.Date >= from && pm.Date <= to)
             .ToListAsync();
-
         return AggregateIngredientsFromMeals(meals);
     }
 
     private static List<Ingredient> AggregateIngredientsFromMeals(List<PlannedMeal> meals)
     {
-        var ingredients = meals
-            .SelectMany(pm =>
-                (pm.Recipe?.Ingredients ?? Enumerable.Empty<Ingredient>())
-                .Select(i => new Ingredient
-                {
-                    Name = i.Name,
-                    Unit = i.Unit,
-                    Quantity = i.Quantity * pm.Portions
-                }));
+        var ingredients = meals.SelectMany(pm => (pm.Recipe?.Ingredients ?? Enumerable.Empty<Ingredient>())
+            .Select(i => new Ingredient
+            {
+                Name = i.Name,
+                Unit = i.Unit,
+                Quantity = i.Quantity * pm.Portions
+            }));
 
         return ingredients
             .GroupBy(i => new { i.Name, i.Unit })
@@ -55,7 +52,6 @@ public class ShoppingListService : IShoppingListService
                 .ThenInclude(r => r.Ingredients)
             .Where(pm => pm.PlanId == mealPlanId)
             .ToListAsync();
-
         return AggregateIngredientsFromMeals(meals);
     }
 
@@ -64,113 +60,70 @@ public class ShoppingListService : IShoppingListService
         var plan = await _context.Plans.FindAsync(planId);
         if (plan == null) return new List<Ingredient>();
 
-        List<Ingredient> recipeIngredients = new();
-
-        // Build base items strictly by linkage, not by date range
-        if (plan.Type == PlanType.ShoppingList)
-        {
-            // Find the planner linked to this shopping list (one-to-one expected)
-            var linkedMealPlanId = await _context.Plans
-                .Where(p => p.Type == PlanType.Planner && p.LinkedShoppingListPlanId == planId)
-                .Select(p => (int?)p.Id)
-                .FirstOrDefaultAsync();
-
-            if (linkedMealPlanId.HasValue)
-            {
-                // Shopping list is linked: base on meals of that specific planner
-                recipeIngredients = await GetShoppingListForPlanAsync(linkedMealPlanId.Value);
-            }
-            else
-            {
-                // Manual list (unlinked): do NOT prefill from recipes
-                recipeIngredients = new List<Ingredient>();
-            }
-        }
-        else if (plan.Type == PlanType.Planner)
-        {
-            // Called for a planner directly: base on its meals
-            recipeIngredients = await GetShoppingListForPlanAsync(plan.Id);
-        }
-
-        // Saved item states for this shopping list plan
+        // Load any saved snapshot first
         var savedStates = await _context.ShoppingListItems
             .Where(sli => sli.PlanId == planId)
             .OrderBy(sli => sli.Order)
             .ToListAsync();
 
-        var resultIngredients = new List<Ingredient>();
-
-        // Seed from recipe-derived ingredients (if any), overlay saved states
-        foreach (var ingredient in recipeIngredients)
+        if (savedStates.Any())
         {
-            var savedState = savedStates.FirstOrDefault(s =>
-                s.IngredientName == ingredient.Name && s.Unit == ingredient.Unit);
-
-            if (savedState != null)
+            return savedStates.Select(s => new Ingredient
             {
-                ingredient.IsChecked = savedState.IsChecked;
-                ingredient.Order = savedState.Order;
-                ingredient.Quantity = savedState.Quantity;
+                Id = s.Id,
+                Name = s.IngredientName,
+                Unit = s.Unit,
+                Quantity = s.Quantity,
+                IsChecked = s.IsChecked,
+                Order = s.Order
+            }).OrderBy(i => i.Order).ToList();
+        }
+
+        // No saved snapshot yet.
+        if (plan.Type == PlanType.ShoppingList)
+        {
+            // For a manual shopping list (no link) return empty; for linked planner prefill ingredients.
+            if (plan.LinkedShoppingListPlanId.HasValue)
+            {
+                var baseIngredients = await GetShoppingListForPlanAsync(plan.LinkedShoppingListPlanId.Value);
+                for (int i = 0; i < baseIngredients.Count; i++)
+                {
+                    baseIngredients[i].Order = i;
+                    baseIngredients[i].Id = 0; // not persisted yet
+                }
+                return baseIngredients;
             }
-
-            resultIngredients.Add(ingredient);
+            return new List<Ingredient>();
         }
 
-        // Add manual-only items saved for this list (not present in recipeIngredients)
-        var recipeKeys = recipeIngredients.Select(i => new { i.Name, i.Unit }).ToHashSet();
-        var manualStates = savedStates.Where(s =>
-            !recipeKeys.Contains(new { Name = s.IngredientName, Unit = s.Unit }) &&
-            !string.IsNullOrWhiteSpace(s.IngredientName))
-            .ToList();
-
-        foreach (var manual in manualStates)
+        if (plan.Type == PlanType.Planner)
         {
-            resultIngredients.Add(new Ingredient
+            var recipeIngredients = await GetShoppingListForPlanAsync(plan.Id);
+            for (int i = 0; i < recipeIngredients.Count; i++)
             {
-                Name = manual.IngredientName,
-                Unit = manual.Unit,
-                Quantity = manual.Quantity,
-                IsChecked = manual.IsChecked,
-                Order = manual.Order
-            });
+                recipeIngredients[i].Order = i;
+                recipeIngredients[i].Id = 0;
+            }
+            return recipeIngredients;
         }
 
-        return resultIngredients.OrderBy(i => i.Order).ToList();
+        return new List<Ingredient>();
     }
 
-    // Matches new interface: update or insert by Id -> (PlanId+Order) -> (PlanId+Name+Unit)
-    // ? Returns the database Id of the saved item
     public async Task<int> SaveShoppingListItemStateAsync(int planId, int id, int order, string ingredientName, Unit unit, bool isChecked, double quantity)
     {
         if (ingredientName == null) throw new ArgumentNullException(nameof(ingredientName));
 
         ShoppingListItem? existingItem = null;
-
-        // ? Priority 1: Try to find by Id (most reliable for existing items)
         if (id > 0)
-        {
             existingItem = await _context.ShoppingListItems.FirstOrDefaultAsync(sli => sli.Id == id);
-        }
-
-        // ? Priority 2: If not found by Id, try by Order (for newly added items in same session)
         if (existingItem == null && order >= 0)
-        {
-            existingItem = await _context.ShoppingListItems
-                .FirstOrDefaultAsync(sli => sli.PlanId == planId && sli.Order == order);
-        }
-
-        // ? Priority 3: Fallback to Name+Unit (for legacy items or cross-session sync)
+            existingItem = await _context.ShoppingListItems.FirstOrDefaultAsync(sli => sli.PlanId == planId && sli.Order == order);
         if (existingItem == null)
-        {
-            existingItem = await _context.ShoppingListItems
-                .FirstOrDefaultAsync(sli => sli.PlanId == planId && 
-                                           sli.IngredientName == ingredientName && 
-                                           sli.Unit == unit);
-        }
+            existingItem = await _context.ShoppingListItems.FirstOrDefaultAsync(sli => sli.PlanId == planId && sli.IngredientName == ingredientName && sli.Unit == unit);
 
         if (existingItem != null)
         {
-            // ? Update existing item
             existingItem.IngredientName = ingredientName;
             existingItem.Unit = unit;
             existingItem.IsChecked = isChecked;
@@ -181,7 +134,6 @@ public class ShoppingListService : IShoppingListService
         }
         else
         {
-            // ? Create new item
             var newItem = new ShoppingListItem
             {
                 PlanId = planId,
@@ -193,8 +145,6 @@ public class ShoppingListService : IShoppingListService
             };
             _context.ShoppingListItems.Add(newItem);
             await _context.SaveChangesAsync();
-            
-            // ? Return the auto-generated Id
             return newItem.Id;
         }
     }
@@ -202,11 +152,17 @@ public class ShoppingListService : IShoppingListService
     public async Task RemoveShoppingListItemAsync(int planId, string ingredientName, Unit unit)
     {
         if (ingredientName == null) return;
+        var existingItem = await _context.ShoppingListItems.FirstOrDefaultAsync(sli => sli.PlanId == planId && sli.IngredientName == ingredientName && sli.Unit == unit);
+        if (existingItem != null)
+        {
+            _context.ShoppingListItems.Remove(existingItem);
+            await _context.SaveChangesAsync();
+        }
+    }
 
-        var existingItem = await _context.ShoppingListItems.FirstOrDefaultAsync(sli => sli.PlanId == planId &&
-                                      sli.IngredientName == ingredientName &&
-                                      sli.Unit == unit);
-
+    public async Task RemoveShoppingListItemByIdAsync(int id)
+    {
+        var existingItem = await _context.ShoppingListItems.FirstOrDefaultAsync(sli => sli.Id == id);
         if (existingItem != null)
         {
             _context.ShoppingListItems.Remove(existingItem);
@@ -216,55 +172,31 @@ public class ShoppingListService : IShoppingListService
 
     public async Task SaveAllShoppingListStatesAsync(int planId, List<Ingredient> ingredients)
     {
-        var safeIngredients = ingredients ?? new List<Ingredient>();
-
-        var existingItems = await _context.ShoppingListItems
-            .Where(sli => sli.PlanId == planId)
-            .ToListAsync();
-
-        foreach (var ingredient in safeIngredients)
+        // Full replace mode
+        var existing = await _context.ShoppingListItems.Where(sli => sli.PlanId == planId).ToListAsync();
+        if (existing.Count > 0)
         {
-            ShoppingListItem? existing = null;
-
-            if (ingredient.Id > 0)
-            {
-                existing = existingItems.FirstOrDefault(sli => sli.Id == ingredient.Id);
-            }
-            if (existing == null)
-            {
-                existing = existingItems.FirstOrDefault(sli => sli.Order == ingredient.Order);
-            }
-            if (existing == null)
-            {
-                existing = existingItems.FirstOrDefault(sli => sli.IngredientName == ingredient.Name && sli.Unit == ingredient.Unit);
-            }
-
-            if (existing != null)
-            {
-                existing.IngredientName = ingredient.Name;
-                existing.Unit = ingredient.Unit;
-                existing.IsChecked = ingredient.IsChecked;
-                existing.Quantity = ingredient.Quantity;
-                existing.Order = ingredient.Order;
-            }
-            else
-            {
-                _context.ShoppingListItems.Add(new ShoppingListItem
-                {
-                    PlanId = planId,
-                    IngredientName = ingredient.Name,
-                    Unit = ingredient.Unit,
-                    IsChecked = ingredient.IsChecked,
-                    Quantity = ingredient.Quantity,
-                    Order = ingredient.Order
-                });
-            }
+            _context.ShoppingListItems.RemoveRange(existing);
+            await _context.SaveChangesAsync();
         }
 
-        // Remove only invalid placeholders
-        var toRemove = existingItems.Where(e => string.IsNullOrWhiteSpace(e.IngredientName)).ToList();
-        _context.ShoppingListItems.RemoveRange(toRemove);
+        var normalized = (ingredients ?? new List<Ingredient>()).Where(i => !string.IsNullOrWhiteSpace(i.Name)).ToList();
+        for (int i = 0; i < normalized.Count; i++) normalized[i].Order = i;
 
-        await _context.SaveChangesAsync();
+        foreach (var src in normalized)
+        {
+            var entity = new ShoppingListItem
+            {
+                PlanId = planId,
+                IngredientName = src.Name!,
+                Unit = src.Unit,
+                IsChecked = src.IsChecked,
+                Quantity = src.Quantity,
+                Order = src.Order
+            };
+            _context.ShoppingListItems.Add(entity);
+            await _context.SaveChangesAsync();
+            src.Id = entity.Id; // propagate new Id
+        }
     }
 }

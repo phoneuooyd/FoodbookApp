@@ -16,32 +16,31 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     private int _currentPlanId;
     private Ingredient? _itemBeingDragged;
 
-    // Two separate backing collections (data model)
     public ObservableCollection<Ingredient> UncheckedItems { get; } = new();
     public ObservableCollection<Ingredient> CheckedItems { get; } = new();
 
-    // Grouped view for UI (prevents nested ScrollView + multiple CollectionViews causing jumpiness)
     public ObservableCollection<IngredientGroup> Groups { get; } = new();
     private IngredientGroup? _uncheckedGroup;
     private IngredientGroup? _checkedGroup;
     
     public bool HasCheckedItems => CheckedItems.Count > 0;
-    
     public IEnumerable<Unit> Units => Enum.GetValues(typeof(Unit)).Cast<Unit>();
 
     private bool _isEditing;
     public bool IsEditing
     {
         get => _isEditing;
-        set
-        {
-            if (_isEditing != value)
-            {
-                _isEditing = value;
-                OnPropertyChanged();
-            }
-        }
+        set { if (_isEditing != value) { _isEditing = value; OnPropertyChanged(); } }
     }
+
+    private bool _hasUnsavedChanges;
+    public bool HasUnsavedChanges
+    {
+        get => _hasUnsavedChanges;
+        private set { if (_hasUnsavedChanges != value) { _hasUnsavedChanges = value; OnPropertyChanged(); } }
+    }
+
+    private void MarkDirty() => HasUnsavedChanges = true;
 
     public ICommand AddItemCommand { get; }
     public ICommand RemoveItemCommand { get; }
@@ -53,13 +52,10 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     public ICommand ItemDroppedCommand { get; }
     public ICommand SaveAllCommand { get; }
 
-    // Optional commands kept for compatibility with XAML bindings if needed
     public ICommand ItemDroppedBeforeCommand { get; private set; }
     public ICommand ItemDroppedAfterCommand { get; private set; }
 
-    // ? FLAG: Enable/disable automatic saving (currently disabled)
     private const bool AUTO_SAVE_ENABLED = false;
-
     public event Action<Ingredient>? ItemEditingCompleted;
 
     public ShoppingListDetailViewModel(IShoppingListService shoppingListService, IPlanService planService)
@@ -72,23 +68,17 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         MoveUpCommand = new Command<Ingredient>(async (item) => await MoveItemUpAsync(item));
         MoveDownCommand = new Command<Ingredient>(async (item) => await MoveItemDownAsync(item));
         SaveAllCommand = new Command(async () => await ManualSaveAllAsync());
-        
-        // Drag and drop commands
+
         ItemDraggedCommand = new Command<Ingredient>(OnItemDragged);
         ItemDraggedOverCommand = new Command<Ingredient>(OnItemDraggedOver);
         ItemDragLeaveCommand = new Command<Ingredient>(OnItemDragLeave);
         ItemDroppedCommand = new Command<Ingredient>(async (item) => await OnItemDroppedAsync(item));
-
         ItemDroppedBeforeCommand = new Command<Ingredient>(async (item) => await ReorderItemsAsync(_itemBeingDragged ?? null, item, insertAfter: false));
         ItemDroppedAfterCommand = new Command<Ingredient>(async (item) => await ReorderItemsAsync(_itemBeingDragged ?? null, item, insertAfter: true));
-        
-        // Subscribe to editing completed event (only if auto-save is enabled)
+
         if (AUTO_SAVE_ENABLED)
-        {
             ItemEditingCompleted += async (item) => await SaveItemStateAsync(item);
-        }
-        
-        // Listen to changes in collections for HasCheckedItems re-evaluation
+
         UncheckedItems.CollectionChanged += (s, e) => OnPropertyChanged(nameof(HasCheckedItems));
         CheckedItems.CollectionChanged += (s, e) => OnPropertyChanged(nameof(HasCheckedItems));
     }
@@ -100,13 +90,11 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
             _uncheckedGroup = new IngredientGroup("ToBuy", UncheckedItems, isUnchecked: true);
             Groups.Add(_uncheckedGroup);
         }
-
         if (_checkedGroup == null)
         {
             _checkedGroup = new IngredientGroup("Collected", CheckedItems, isUnchecked: false);
             Groups.Add(_checkedGroup);
         }
-
         OnPropertyChanged(nameof(Groups));
         OnPropertyChanged(nameof(HasCheckedItems));
     }
@@ -118,73 +106,57 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         if (plan == null) return;
 
         var items = await _shoppingListService.GetShoppingListWithCheckedStateAsync(planId);
-        
         UncheckedItems.Clear();
         CheckedItems.Clear();
-        
         foreach (var item in items)
         {
             item.PropertyChanged += OnItemPropertyChanged;
-            if (item.IsChecked)
-                CheckedItems.Add(item);
-            else
-                UncheckedItems.Add(item);
+            if (item.IsChecked) CheckedItems.Add(item); else UncheckedItems.Add(item);
         }
-
-        // Recreate groups after data load (ensures a single CV in UI)
-        Groups.Clear();
-        _uncheckedGroup = null;
-        _checkedGroup = null;
-        EnsureGroups();
+        Groups.Clear(); _uncheckedGroup = null; _checkedGroup = null; EnsureGroups();
+        HasUnsavedChanges = false;
     }
 
     private async void OnItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (sender is Ingredient item)
-        {
-            // Save on any relevant property change
-            if (e.PropertyName == nameof(Ingredient.IsChecked))
-            {
-                if (item.IsChecked)
-                {
-                    if (UncheckedItems.Contains(item))
-                    {
-                        UncheckedItems.Remove(item);
-                        CheckedItems.Add(item);
-                    }
-                }
-                else
-                {
-                    if (CheckedItems.Contains(item))
-                    {
-                        CheckedItems.Remove(item);
-                        UncheckedItems.Add(item);
-                    }
-                }
-            }
+        if (sender is not Ingredient item) return;
 
-            // ? Auto-save only if enabled
-            if (AUTO_SAVE_ENABLED)
+        if (e.PropertyName == nameof(Ingredient.IsChecked))
+        {
+            if (item.IsChecked)
             {
-                // Save on any change to Name, Quantity, Unit, IsChecked
-                if (e.PropertyName == nameof(Ingredient.IsChecked) ||
-                    e.PropertyName == nameof(Ingredient.Unit) ||
-                    e.PropertyName == nameof(Ingredient.Name) ||
-                    e.PropertyName == nameof(Ingredient.Quantity))
-                {
-                    await SaveItemStateAsync(item);
-                }
+                if (UncheckedItems.Contains(item)) { UncheckedItems.Remove(item); CheckedItems.Add(item); }
             }
+            else
+            {
+                if (CheckedItems.Contains(item)) { CheckedItems.Remove(item); UncheckedItems.Add(item); }
+            }
+        }
+
+        if (e.PropertyName == nameof(Ingredient.IsChecked) ||
+            e.PropertyName == nameof(Ingredient.Unit) ||
+            e.PropertyName == nameof(Ingredient.Name) ||
+            e.PropertyName == nameof(Ingredient.Quantity))
+        {
+            MarkDirty();
+        }
+
+        if (AUTO_SAVE_ENABLED && (e.PropertyName == nameof(Ingredient.IsChecked) ||
+                                  e.PropertyName == nameof(Ingredient.Unit) ||
+                                  e.PropertyName == nameof(Ingredient.Name) ||
+                                  e.PropertyName == nameof(Ingredient.Quantity)))
+        {
+            await SaveItemStateAsync(item);
         }
     }
 
-    // ? Manual save method triggered by save button
     private async Task ManualSaveAllAsync()
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] Manual save triggered");
+            PrepareForSave();
             await SaveAllStatesAsync();
+            HasUnsavedChanges = false;
         }
         catch (Exception ex)
         {
@@ -192,39 +164,20 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         }
     }
 
-    // Public method for code-behind to call on any UI change
-    public async Task SaveItemImmediatelyAsync(Ingredient item)
+    private void PrepareForSave()
     {
-        await SaveItemStateAsync(item);
+        for (int i = 0; i < UncheckedItems.Count; i++) UncheckedItems[i].Order = i;
+        for (int i = 0; i < CheckedItems.Count; i++) CheckedItems[i].Order = i;
     }
 
     private async Task SaveItemStateAsync(Ingredient item)
     {
         try
         {
-            // ? Save and get back the database Id
-            var savedId = await _shoppingListService.SaveShoppingListItemStateAsync(
-                _currentPlanId,
-                item.Id,      // przekazuj Id
-                item.Order,   // przekazuj Order
-                item.Name,
-                item.Unit,
-                item.IsChecked,
-                item.Quantity
-            );
-
-            // ? CRITICAL FIX: Update the Ingredient.Id with the saved database Id
-            // This prevents duplicate creation when Unit or other properties change
-            if (item.Id != savedId)
-            {
-                item.Id = savedId;
-                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Updated item '{item.Name}' Id: {savedId}");
-            }
+            var savedId = await _shoppingListService.SaveShoppingListItemStateAsync(_currentPlanId, item.Id, item.Order, item.Name, item.Unit, item.IsChecked, item.Quantity);
+            if (item.Id != savedId) { item.Id = savedId; System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Updated item '{item.Name}' Id: {savedId}"); }
         }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error saving shopping list item state: {ex.Message}");
-        }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error saving shopping list item state: {ex.Message}"); }
     }
 
     public async Task SaveAllStatesAsync()
@@ -232,52 +185,31 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         try
         {
             var allItems = UncheckedItems.Concat(CheckedItems).ToList();
-            // Save all, including new/empty items
             await _shoppingListService.SaveAllShoppingListStatesAsync(_currentPlanId, allItems);
         }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error saving all shopping list states: {ex.Message}");
-        }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error saving all shopping list states: {ex.Message}"); }
     }
 
     private void AddItem()
     {
-        var newItem = new Ingredient 
-        { 
-            Name = string.Empty,
-            Quantity = 1,
-            Unit = Unit.Piece,
-            Order = UncheckedItems.Count
-        };
+        var newItem = new Ingredient { Name = string.Empty, Quantity = 1, Unit = Unit.Piece, Order = UncheckedItems.Count };
         newItem.PropertyChanged += OnItemPropertyChanged;
         UncheckedItems.Add(newItem);
-        
-        // ? Auto-save only if enabled
-        if (AUTO_SAVE_ENABLED)
-        {
-            _ = SaveItemStateAsync(newItem);
-        }
+        MarkDirty();
     }
 
     private async void RemoveItem(Ingredient? item)
     {
         if (item == null) return;
-        
         item.PropertyChanged -= OnItemPropertyChanged;
-        
-        var removedFromUnchecked = UncheckedItems.Remove(item);
-        var removedFromChecked = CheckedItems.Remove(item);
-        
-        if (removedFromUnchecked || removedFromChecked)
+        var removed = UncheckedItems.Remove(item) || CheckedItems.Remove(item);
+        if (removed)
         {
-            try
+            MarkDirty();
+            if (item.Id > 0)
             {
-                await _shoppingListService.RemoveShoppingListItemAsync(_currentPlanId, item.Name, item.Unit);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error removing shopping list item: {ex.Message}");
+                try { await _shoppingListService.RemoveShoppingListItemByIdAsync(item.Id); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error removing item by Id: {ex.Message}"); }
+                item.Id = 0; // ensure not matched later
             }
         }
     }
@@ -287,220 +219,97 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         try
         {
             if (draggedItem == null || targetItem == null) return;
-
             var draggedInUnchecked = UncheckedItems.Contains(draggedItem);
             var targetInUnchecked = UncheckedItems.Contains(targetItem);
-
-            if (draggedInUnchecked != targetInUnchecked)
-                return;
-
-            var targetCollection = draggedInUnchecked ? UncheckedItems : CheckedItems;
-
-            var draggedIndex = targetCollection.IndexOf(draggedItem);
-            var targetIndex = targetCollection.IndexOf(targetItem);
-
-            if (draggedIndex == -1 || targetIndex == -1) return;
-
-            // Compute insertion index depending on insertAfter flag
-            int insertIndex = targetIndex + (insertAfter ? 1 : 0);
-
-            if (draggedIndex == insertIndex || draggedIndex == insertIndex - 1)
-                return; // no-op (already in desired position)
-
-            targetCollection.RemoveAt(draggedIndex);
-
-            // Adjust insertIndex if item was before target and removed
-            if (draggedIndex < insertIndex)
-                insertIndex--;
-
-            insertIndex = Math.Clamp(insertIndex, 0, targetCollection.Count);
-            targetCollection.Insert(insertIndex, draggedItem);
-
-            OnPropertyChanged(nameof(UncheckedItems));
-            OnPropertyChanged(nameof(CheckedItems));
-
-            // ? Auto-save only if enabled
-            if (AUTO_SAVE_ENABLED)
-            {
-                await SaveOrderAsync();
-            }
+            if (draggedInUnchecked != targetInUnchecked) return;
+            var collection = draggedInUnchecked ? UncheckedItems : CheckedItems;
+            var from = collection.IndexOf(draggedItem); var to = collection.IndexOf(targetItem);
+            if (from == -1 || to == -1) return;
+            int insertIndex = to + (insertAfter ? 1 : 0);
+            if (from == insertIndex || from == insertIndex - 1) return;
+            collection.RemoveAt(from);
+            if (from < insertIndex) insertIndex--;
+            insertIndex = Math.Clamp(insertIndex, 0, collection.Count);
+            collection.Insert(insertIndex, draggedItem);
+            MarkDirty();
         }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error reordering items: {ex.Message}");
-        }
-    }
-
-    public async Task SaveOrderAsync()
-    {
-        try
-        {
-            for (int i = 0; i < UncheckedItems.Count; i++)
-            {
-                UncheckedItems[i].Order = i;
-            }
-            
-            for (int i = 0; i < CheckedItems.Count; i++)
-            {
-                CheckedItems[i].Order = i;
-            }
-
-            var allItems = UncheckedItems.Concat(CheckedItems).ToList();
-            await _shoppingListService.SaveAllShoppingListStatesAsync(_currentPlanId, allItems);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error saving item order: {ex.Message}");
-        }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error reordering items: {ex.Message}"); }
     }
 
     public async Task MoveItemUpAsync(Ingredient? item)
     {
         if (item == null) return;
-
         try
         {
             var collection = UncheckedItems.Contains(item) ? UncheckedItems : CheckedItems;
-            var currentIndex = collection.IndexOf(item);
-            
-            if (currentIndex > 0)
+            var idx = collection.IndexOf(item);
+            if (idx > 0)
             {
-                collection.RemoveAt(currentIndex);
-                collection.Insert(currentIndex - 1, item);
-                
-                // ? Auto-save only if enabled
-                if (AUTO_SAVE_ENABLED)
-                {
-                    await SaveOrderAsync();
-                }
-                
-                System.Diagnostics.Debug.WriteLine($"Moved {item.Name} up from index {currentIndex} to {currentIndex - 1}");
+                collection.RemoveAt(idx); collection.Insert(idx - 1, item); MarkDirty();
             }
         }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error moving item up: {ex.Message}");
-        }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error moving item up: {ex.Message}"); }
     }
 
     public async Task MoveItemDownAsync(Ingredient? item)
     {
         if (item == null) return;
-
         try
         {
             var collection = UncheckedItems.Contains(item) ? UncheckedItems : CheckedItems;
-            var currentIndex = collection.IndexOf(item);
-            
-            if (currentIndex >= 0 && currentIndex < collection.Count - 1)
+            var idx = collection.IndexOf(item);
+            if (idx >= 0 && idx < collection.Count - 1)
             {
-                collection.RemoveAt(currentIndex);
-                collection.Insert(currentIndex + 1, item);
-                
-                // ? Auto-save only if enabled
-                if (AUTO_SAVE_ENABLED)
-                {
-                    await SaveOrderAsync();
-                }
-                
-                System.Diagnostics.Debug.WriteLine($"Moved {item.Name} down from index {currentIndex} to {currentIndex + 1}");
+                collection.RemoveAt(idx); collection.Insert(idx + 1, item); MarkDirty();
             }
         }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error moving item down: {ex.Message}");
-        }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error moving item down: {ex.Message}"); }
     }
 
     private void OnItemDragged(Ingredient item)
     {
         if (item == null) return;
-        
-        System.Diagnostics.Debug.WriteLine($"ItemDragged: {item.Name}");
-        item.IsBeingDragged = true;
-        _itemBeingDragged = item;
+        item.IsBeingDragged = true; _itemBeingDragged = item;
     }
 
     private void OnItemDraggedOver(Ingredient item)
     {
         if (item == null) return;
-        
-        System.Diagnostics.Debug.WriteLine($"ItemDraggedOver: {item.Name}");
-        
-        if (item == _itemBeingDragged)
-        {
-            item.IsBeingDragged = false;
-        }
-        
+        if (item == _itemBeingDragged) item.IsBeingDragged = false;
         item.IsBeingDraggedOver = item != _itemBeingDragged;
     }
 
     private void OnItemDragLeave(Ingredient item)
     {
         if (item == null) return;
-        
-        System.Diagnostics.Debug.WriteLine($"ItemDragLeave: {item.Name}");
-        item.IsBeingDraggedOver = false;
-        item.ShowInsertBefore = false;
-        item.ShowInsertAfter = false;
+        item.IsBeingDraggedOver = false; item.ShowInsertBefore = false; item.ShowInsertAfter = false;
     }
 
     private async Task OnItemDroppedAsync(Ingredient item)
     {
         if (item == null || _itemBeingDragged == null) return;
-        
         try
         {
-            var itemToMove = _itemBeingDragged;
-            var itemToInsertBefore = item;
-            
-            if (itemToMove == itemToInsertBefore) return;
-            
-            var draggedInUnchecked = UncheckedItems.Contains(itemToMove);
-            var targetInUnchecked = UncheckedItems.Contains(itemToInsertBefore);
-            
+            var move = _itemBeingDragged; var before = item;
+            if (move == before) return;
+            var draggedInUnchecked = UncheckedItems.Contains(move);
+            var targetInUnchecked = UncheckedItems.Contains(before);
             if (draggedInUnchecked != targetInUnchecked) return;
-            
             var collection = draggedInUnchecked ? UncheckedItems : CheckedItems;
-            
-            int insertAtIndex = collection.IndexOf(itemToInsertBefore);
-            if (insertAtIndex >= 0 && insertAtIndex < collection.Count)
+            int idx = collection.IndexOf(before);
+            if (idx >= 0 && idx < collection.Count)
             {
-                collection.Remove(itemToMove);
-                collection.Insert(insertAtIndex, itemToMove);
-                
-                itemToMove.IsBeingDragged = false;
-                itemToInsertBefore.IsBeingDraggedOver = false;
-                itemToInsertBefore.ShowInsertBefore = false;
-                itemToInsertBefore.ShowInsertAfter = false;
-                
-                // ? Auto-save only if enabled
-                if (AUTO_SAVE_ENABLED)
-                {
-                    await SaveOrderAsync();
-                }
-                
-                System.Diagnostics.Debug.WriteLine($"ItemDropped: [{itemToMove.Name}] => [{itemToInsertBefore.Name}], target index = [{insertAtIndex}]");
+                collection.Remove(move); collection.Insert(idx, move); MarkDirty();
+                move.IsBeingDragged = false; before.IsBeingDraggedOver = false; before.ShowInsertBefore = false; before.ShowInsertAfter = false;
             }
         }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error in OnItemDroppedAsync: {ex.Message}");
-        }
-        finally
-        {
-            _itemBeingDragged = null;
-        }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error in OnItemDroppedAsync: {ex.Message}"); }
+        finally { _itemBeingDragged = null; }
     }
 
-    public void OnItemEditingCompleted(Ingredient item)
-    {
-        ItemEditingCompleted?.Invoke(item);
-    }
+    public void OnItemEditingCompleted(Ingredient item) => ItemEditingCompleted?.Invoke(item);
+    public void DiscardChanges() => HasUnsavedChanges = false;
 
     public event PropertyChangedEventHandler? PropertyChanged;
-    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }
