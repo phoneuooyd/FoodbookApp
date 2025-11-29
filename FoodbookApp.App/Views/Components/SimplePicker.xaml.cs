@@ -48,7 +48,13 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
     public object? SelectedItem
     {
         get => GetValue(SelectedItemProperty);
-        set => SetValue(SelectedItemProperty, value);
+        set
+        {
+            System.Diagnostics.Debug.WriteLine($"[SimplePicker] SelectedItem setter called. Old: {GetValue(SelectedItemProperty)}, New: {value}");
+            SetValue(SelectedItemProperty, value);
+            
+            // Property change notifications are handled by OnSelectedItemChanged callback
+        }
     }
 
     public BindingBase? ItemDisplayBinding
@@ -235,6 +241,38 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
         {
             picker.OnPropertyChanged(nameof(DisplayText));
             picker.SelectionChanged?.Invoke(picker, EventArgs.Empty);
+            
+            // CRITICAL FIX: Force binding update by notifying the BindingContext (if it's INotifyPropertyChanged)
+            // This ensures changes propagate back to the source object (e.g., Ingredient)
+            if (newValue != oldValue && picker.BindingContext is INotifyPropertyChanged notifyPropertyChanged)
+            {
+                try
+                {
+                    // The BindingContext is typically the source object (e.g., Ingredient)
+                    // We need to find which property on the source is bound to SelectedItem
+                    // For ShoppingListDetailPage, it's the "Unit" property
+                    
+                    // Since we can't easily detect the binding path, we'll use a convention:
+                    // If the new value is an enum (like Unit), try to set a property with the same enum type
+                    if (newValue is Enum enumValue)
+                    {
+                        var enumType = enumValue.GetType();
+                        var sourceProperties = picker.BindingContext.GetType().GetProperties()
+                            .Where(p => p.PropertyType == enumType && p.CanWrite);
+                        
+                        foreach (var prop in sourceProperties)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[SimplePicker] Setting property {prop.Name} on {picker.BindingContext.GetType().Name} to {enumValue}");
+                            prop.SetValue(picker.BindingContext, enumValue);
+                            break; // Only set the first matching property
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SimplePicker] Failed to update source binding: {ex.Message}");
+                }
+            }
         }
     }
 
@@ -258,7 +296,7 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
 
         try
         {
-            // ? Notify global event listeners
+            // ?? Notify global event listeners
             GlobalPopupStateChanged?.Invoke(this, true);
             System.Diagnostics.Debug.WriteLine("?? SimplePicker: Notified popup opening");
 
@@ -269,6 +307,9 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
             var options = ItemsSource?.Cast<object>().Select(GetOptionText).ToList() ?? new List<string>();
 
             var currentSelection = DisplayText == PlaceholderText ? null : DisplayText;
+            
+            System.Diagnostics.Debug.WriteLine($"[SimplePicker] Opening selection dialog. Current selection: {currentSelection}, SelectedItem: {SelectedItem}");
+            
             var popup = new SearchablePickerPopup(options, currentSelection);
 
             // Get the current page to show popup on
@@ -279,7 +320,7 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
                 return;
             }
 
-            System.Diagnostics.Debug.WriteLine("? SimplePicker: Opening popup");
+            System.Diagnostics.Debug.WriteLine("?? SimplePicker: Opening popup");
 
             var showTask = page.ShowPopupAsync(popup);
             var resultTask = popup.ResultTask;
@@ -300,12 +341,42 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
 
                 if (matchingItem != null)
                 {
-                    SelectedItem = matchingItem;
+                    System.Diagnostics.Debug.WriteLine($"[SimplePicker] Setting SelectedItem from '{SelectedItem}' to '{matchingItem}'");
+                    
+                    await MainThread.InvokeOnMainThreadAsync(() =>
+                    {
+                        // Update picker selected item
+                        SelectedItem = matchingItem;
+                        OnPropertyChanged(nameof(SelectedItem));
+                        OnPropertyChanged(nameof(DisplayText));
+                        
+                        // Explicitly update source Ingredient.Unit to avoid binding glitches in BindableLayout templates
+                        try
+                        {
+                            if (BindingContext is Foodbook.Models.Ingredient ingredient && matchingItem is Foodbook.Models.Unit unit)
+                            {
+                                var oldUnit = ingredient.Unit;
+                                ingredient.Unit = unit; // raises PropertyChanged in Ingredient
+                                System.Diagnostics.Debug.WriteLine($"[SimplePicker] Ingredient.Unit changed: {oldUnit} -> {unit}");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[SimplePicker] Failed to set Ingredient.Unit: {ex.Message}");
+                        }
+                    });
+                    
+                    // Give binding system time to propagate changes
+                    await Task.Delay(50);
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SimplePicker] ?? Could not find matching item for selected text: {selectedText}");
                 }
             }
             else if (result == null)
             {
-                // User cancelled or closed popup - keep current selection
+                System.Diagnostics.Debug.WriteLine("[SimplePicker] User cancelled or closed popup - keeping current selection");
             }
         }
         catch (Exception ex)
@@ -329,7 +400,7 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
                 }
                 catch (Exception modalEx)
                 {
-                    System.Diagnostics.Debug.WriteLine($"?? SimplePicker: Could not clear modal stack: {modalEx.Message}");
+                    System.Diagnostics.Debug.WriteLine($"? SimplePicker: Could not clear modal stack: {modalEx.Message}");
                 }
             }
 

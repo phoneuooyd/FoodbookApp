@@ -179,7 +179,8 @@
                                                                     ItemsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}"
                                                                     SelectedItem="{Binding Unit}"
                                                                     ItemDisplayBinding="{Binding ., Converter={StaticResource UnitToLocalizedStringConverter}}"
-                                                                    PlaceholderText="{loc:Translate Resource=ShoppingListDetailPageResources, Key=UnitHeader}" />
+                                                                    PlaceholderText="{loc:Translate Resource=ShoppingListDetailPageResources, Key=UnitHeader}"
+                                                                    SelectionChanged="OnUnitPickerSelectionChanged" />
 
                                             <Grid Grid.Column="2"/>
                                         </Grid>

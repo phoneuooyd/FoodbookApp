@@ -5,6 +5,7 @@ using Microsoft.Maui.Controls;
 using Foodbook.Models;
 using Foodbook.ViewModels;
 using Foodbook.Views.Base;
+using Foodbook.Views.Components; // for SimplePicker
 
 namespace Foodbook.Views;
 
@@ -27,12 +28,47 @@ public partial class ShoppingListDetailPage : ContentPage
     private bool _isSubscribedToShellNavigating = false;
     private bool _suppressShellNavigating = false;
 
+    // Popup state control to avoid reload after closing unit picker
+    private bool _skipNextAppearReload = false;
+    private bool _popupSubscribed = false;
+
     public ShoppingListDetailPage(ShoppingListDetailViewModel viewModel)
     {
         InitializeComponent();
         _viewModel = viewModel;
         BindingContext = _viewModel;
         _themeHelper = new PageThemeHelper();
+
+        // Subscribe to SimplePicker popup open/close to suppress reload after close
+        try
+        {
+            if (!_popupSubscribed)
+            {
+                SimplePicker.GlobalPopupStateChanged += OnGlobalPickerPopupStateChanged;
+                _popupSubscribed = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Failed to subscribe GlobalPopupStateChanged: {ex.Message}");
+        }
+    }
+
+    private void OnGlobalPickerPopupStateChanged(object? sender, bool isOpen)
+    {
+        try
+        {
+            // When popup closes, skip the next OnAppearing-triggered reload
+            if (!isOpen)
+            {
+                _skipNextAppearReload = true;
+                System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Picker popup closed - will skip next reload on appearing");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] GlobalPopupStateChanged handler error: {ex.Message}");
+        }
     }
 
     protected override async void OnAppearing()
@@ -58,7 +94,16 @@ public partial class ShoppingListDetailPage : ContentPage
         
         try
         {
-            await _viewModel.LoadAsync(PlanId);
+            if (_skipNextAppearReload)
+            {
+                // Clear the flag and do not reload data (preserve in-memory edits like Unit changes)
+                System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Skipping reload on appearing (popup just closed)");
+                _skipNextAppearReload = false;
+            }
+            else
+            {
+                await _viewModel.LoadAsync(PlanId);
+            }
         }
         catch (OperationCanceledException)
         {
@@ -92,6 +137,17 @@ public partial class ShoppingListDetailPage : ContentPage
             {
                 Shell.Current.Navigating -= OnShellNavigating;
                 _isSubscribedToShellNavigating = false;
+            }
+        }
+        catch { }
+
+        // Unsubscribe popup event to avoid leaks
+        try
+        {
+            if (_popupSubscribed)
+            {
+                SimplePicker.GlobalPopupStateChanged -= OnGlobalPickerPopupStateChanged;
+                _popupSubscribed = false;
             }
         }
         catch { }
@@ -301,6 +357,26 @@ public partial class ShoppingListDetailPage : ContentPage
             {
                 await DisplayAlert("B³¹d", "Nie mo¿na zmieniæ kolejnoœci elementu", "OK");
             });
+        }
+    }
+
+    private void OnUnitPickerSelectionChanged(object? sender, EventArgs e)
+    {
+        try
+        {
+            if (sender is Foodbook.Views.Components.SimplePicker picker && picker.BindingContext is Foodbook.Models.Ingredient ing)
+            {
+                if (picker.SelectedItem is Foodbook.Models.Unit unit)
+                {
+                    var old = ing.Unit;
+                    ing.Unit = unit; // raises PropertyChanged
+                    System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Unit changed: {old} -> {unit}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] OnUnitPickerSelectionChanged error: {ex.Message}");
         }
     }
 }
