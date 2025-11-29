@@ -42,6 +42,9 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
         }
     }
 
+    // Prevent duplicate UI items by versioning population runs
+    private int _populateVersion = 0;
+
     public SearchablePickerPopup(List<string> allItems, string? selected)
     {
         _allItems = allItems ?? new List<string>();
@@ -57,17 +60,24 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
 
     /// <summary>
     /// ✅ ULTRA ZOPTYMALIZOWANA: Twórz buttony w tle i dodawaj bez bloku UI
+    /// Dodatkowo: wersjonowanie, aby uniknąć duplikatów przy wielu wywołaniach.
     /// </summary>
     private async Task PopulateAsync(IEnumerable<string> items)
     {
         try
         {
+            // Capture a new version and invalidate any previous scheduled additions
+            var myVersion = ++_populateVersion;
+
             _filteredItems = items.ToList();
             var totalCount = _filteredItems.Count;
 
             // Wyczyść UI (await jest OK tutaj bo to jednorazowa szybka operacja)
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
+                // If a newer population has started since scheduling, skip clearing/adds
+                if (myVersion != _populateVersion) return;
+
                 var host = ItemsHost;
                 if (host == null) return;
                 host.Children.Clear();
@@ -84,6 +94,10 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
             {
                 for (int i = 0; i < totalCount; i += batchSize)
                 {
+                    // If a newer population started, stop scheduling further batches
+                    if (myVersion != _populateVersion)
+                        break;
+
                     var batch = _filteredItems.Skip(i).Take(batchSize).ToList();
                     
                     // Twórz buttony w tle
@@ -92,6 +106,9 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
                     // ✅ CRITICAL: BeginInvokeOnMainThread (NIE await!) - schedule i kontynuuj
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
+                        // Drop if stale
+                        if (myVersion != _populateVersion) return;
+
                         var host = ItemsHost;
                         if (host == null) return;
 
@@ -104,10 +121,10 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
                         await Task.Delay(5);
                 }
 
-                System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] All {totalCount} items scheduled for loading");
+                System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] All {totalCount} items scheduled for loading (version={myVersion})");
             });
 
-            System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] Started loading {totalCount} items in background");
+            System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] Started loading {totalCount} items in background (version={myVersion})");
         }
         catch (Exception ex)
         {
