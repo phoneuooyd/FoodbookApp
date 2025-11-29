@@ -183,13 +183,13 @@
                                                    FontSize="17"
                                                    FontAttributes="{Binding FontAttributes}"
                                                    TextColor="{DynamicResource PrimaryText}"
-                                                   LineBreakMode="TailTruncation" />
+                                                   LineBreakMode="WordWrap" />
                                             
                                             <Label Text="{Binding Description}"
                                                    FontSize="13"
                                                    TextColor="{DynamicResource SecondaryText}"
                                                    IsVisible="{Binding HasDescription}"
-                                                   LineBreakMode="TailTruncation" />
+                                                   LineBreakMode="WordWrap" />
                                         </StackLayout>
                                         
                                         <!-- Arrow for folders -->
@@ -214,7 +214,7 @@
                                    FontSize="48"
                                    HorizontalOptions="Center"
                                    TextColor="{DynamicResource SecondaryText}" />
-                            <Label FontSize="16" HorizontalOptions="Center" TextColor="{DynamicResource PrimaryText}" HorizontalTextAlignment="Center">
+                            <Label FontSize="15" HorizontalOptions="Center" TextColor="{DynamicResource PrimaryText}" HorizontalTextAlignment="Center">
                                 <Label.Text>
                                     <loc:Translate Resource="FolderResources" Key="EmptyFolderTitle" />
                                 </Label.Text>

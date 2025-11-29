@@ -103,19 +103,19 @@ namespace Foodbook.Models
         // Computed totals for the day - values are reported per 1 portion (do NOT multiply by meal.Portions)
         public double TotalCalories => Meals
             .Where(m => m.Recipe != null)
-            .Sum(m => (m.Recipe!.Calories / Math.Max(m.Recipe.IloscPorcji, 1)));
+            .Sum(m => m.Recipe!.Calories);
 
         public double TotalProtein => Meals
             .Where(m => m.Recipe != null)
-            .Sum(m => (m.Recipe!.Protein / Math.Max(m.Recipe.IloscPorcji, 1)));
+            .Sum(m => m.Recipe!.Protein);
 
         public double TotalFat => Meals
             .Where(m => m.Recipe != null)
-            .Sum(m => (m.Recipe!.Fat / Math.Max(m.Recipe.IloscPorcji, 1)));
+            .Sum(m => m.Recipe!.Fat);
 
         public double TotalCarbs => Meals
             .Where(m => m.Recipe != null)
-            .Sum(m => (m.Recipe!.Carbs / Math.Max(m.Recipe.IloscPorcji, 1)));
+            .Sum(m => m.Recipe!.Carbs);
 
         // Localized label for the day, e.g. "Pi¹tek 21.12.2025". Uses current UI culture and capitalizes day name.
         public string DateLabel
