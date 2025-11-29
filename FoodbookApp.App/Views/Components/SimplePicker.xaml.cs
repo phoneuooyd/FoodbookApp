@@ -242,36 +242,27 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
             picker.OnPropertyChanged(nameof(DisplayText));
             picker.SelectionChanged?.Invoke(picker, EventArgs.Empty);
             
-            // CRITICAL FIX: Force binding update by notifying the BindingContext (if it's INotifyPropertyChanged)
-            // This ensures changes propagate back to the source object (e.g., Ingredient)
-            if (newValue != oldValue && picker.BindingContext is INotifyPropertyChanged notifyPropertyChanged)
+            // ? SIMPLIFIED: Only propagate to Ingredient model (for shopping lists)
+            // IngredientFormViewModel now handles unit changes internally with immediate DB save
+            try
             {
-                try
+                if (newValue != oldValue && newValue is Enum enumValue)
                 {
-                    // The BindingContext is typically the source object (e.g., Ingredient)
-                    // We need to find which property on the source is bound to SelectedItem
-                    // For ShoppingListDetailPage, it's the "Unit" property
-                    
-                    // Since we can't easily detect the binding path, we'll use a convention:
-                    // If the new value is an enum (like Unit), try to set a property with the same enum type
-                    if (newValue is Enum enumValue)
+                    // Case: Ingredient model bound in lists (ShoppingList/Recipe ingredients)
+                    if (picker.BindingContext is Foodbook.Models.Ingredient ingredient)
                     {
-                        var enumType = enumValue.GetType();
-                        var sourceProperties = picker.BindingContext.GetType().GetProperties()
-                            .Where(p => p.PropertyType == enumType && p.CanWrite);
-                        
-                        foreach (var prop in sourceProperties)
+                        if (enumValue is Foodbook.Models.Unit unit)
                         {
-                            System.Diagnostics.Debug.WriteLine($"[SimplePicker] Setting property {prop.Name} on {picker.BindingContext.GetType().Name} to {enumValue}");
-                            prop.SetValue(picker.BindingContext, enumValue);
-                            break; // Only set the first matching property
+                            var oldUnit = ingredient.Unit;
+                            ingredient.Unit = unit; // raises PropertyChanged in Ingredient
+                            System.Diagnostics.Debug.WriteLine($"[SimplePicker] Ingredient.Unit changed: {oldUnit} -> {unit}");
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[SimplePicker] Failed to update source binding: {ex.Message}");
-                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SimplePicker] Failed to propagate SelectedItem: {ex.Message}");
             }
         }
     }
@@ -350,19 +341,20 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
                         OnPropertyChanged(nameof(SelectedItem));
                         OnPropertyChanged(nameof(DisplayText));
                         
-                        // Explicitly update source Ingredient.Unit to avoid binding glitches in BindableLayout templates
+                        // ? SIMPLIFIED: Only explicit propagation for Ingredient lists
+                        // IngredientFormViewModel handles unit changes via setter with immediate DB save
                         try
                         {
                             if (BindingContext is Foodbook.Models.Ingredient ingredient && matchingItem is Foodbook.Models.Unit unit)
                             {
                                 var oldUnit = ingredient.Unit;
-                                ingredient.Unit = unit; // raises PropertyChanged in Ingredient
-                                System.Diagnostics.Debug.WriteLine($"[SimplePicker] Ingredient.Unit changed: {oldUnit} -> {unit}");
+                                ingredient.Unit = unit;
+                                System.Diagnostics.Debug.WriteLine($"[SimplePicker] Ingredient.Unit changed (popup): {oldUnit} -> {unit}");
                             }
                         }
                         catch (Exception ex)
                         {
-                            System.Diagnostics.Debug.WriteLine($"[SimplePicker] Failed to set Ingredient.Unit: {ex.Message}");
+                            System.Diagnostics.Debug.WriteLine($"[SimplePicker] Failed to set Unit on BindingContext: {ex.Message}");
                         }
                     });
                     

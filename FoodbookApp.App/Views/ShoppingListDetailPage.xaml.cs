@@ -368,9 +368,7 @@ public partial class ShoppingListDetailPage : ContentPage
             {
                 if (picker.SelectedItem is Foodbook.Models.Unit unit)
                 {
-                    var old = ing.Unit;
-                    ing.Unit = unit; // raises PropertyChanged
-                    System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Unit changed: {old} -> {unit}");
+                    _viewModel.ChangeUnit(ing, unit);
                 }
             }
         }

@@ -310,6 +310,21 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     public void OnItemEditingCompleted(Ingredient item) => ItemEditingCompleted?.Invoke(item);
     public void DiscardChanges() => HasUnsavedChanges = false;
 
+    /// <summary>
+    /// Change unit for a given ingredient in a controlled, testable way.
+    /// Encapsulates logic instead of handling it in the page code-behind.
+    /// </summary>
+    public void ChangeUnit(Ingredient? item, Unit newUnit)
+    {
+        if (item == null) return;
+        if (item.Unit == newUnit) return; // no change
+        var old = item.Unit;
+        item.Unit = newUnit; // triggers PropertyChanged + MarkDirty via OnItemPropertyChanged
+        System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Unit changed: {old} -> {newUnit}");
+        // If PropertyChanged did not mark (e.g., event unsubscribed), ensure dirty state
+        if (!HasUnsavedChanges) MarkDirty();
+    }
+
     public event PropertyChangedEventHandler? PropertyChanged;
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }

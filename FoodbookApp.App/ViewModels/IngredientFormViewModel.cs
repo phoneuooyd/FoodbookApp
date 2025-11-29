@@ -66,8 +66,62 @@ public class IngredientFormViewModel : INotifyPropertyChanged
 
     public bool IsUnitWeightVisible => SelectedUnit == Unit.Piece;
 
-    public Unit SelectedUnit { get => _unit; set { if (_unit != value) { _unit = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsUnitWeightVisible)); ValidateInput(); } } }
+    // ? CRITICAL: Immediately save to database on unit change in EDIT mode
+    public Unit SelectedUnit 
+    { 
+        get => _unit; 
+        set 
+        { 
+            if (_unit != value) 
+            { 
+                var oldUnit = _unit;
+                _unit = value; 
+                OnPropertyChanged(); 
+                OnPropertyChanged(nameof(IsUnitWeightVisible)); 
+                ValidateInput();
+                
+                // ? CRITICAL: In edit mode, immediately persist to database to prevent reverting
+                if (_ingredient != null && _ingredient.Id > 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[IngredientFormViewModel] SelectedUnit changed in EDIT mode: {oldUnit} -> {value} - saving to DB immediately");
+                    _ = SaveUnitChangeToDatabase(value); // Fire and forget
+                }
+            }
+        } 
+    }
     private Unit _unit = Unit.Gram;  // Default value
+
+    /// <summary>
+    /// ? NEW: Immediately save unit change to database in edit mode to prevent VM refresh from overwriting
+    /// </summary>
+    private async Task SaveUnitChangeToDatabase(Unit newUnit)
+    {
+        if (_ingredient == null || _ingredient.Id <= 0)
+        {
+            System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] SaveUnitChangeToDatabase: No ingredient loaded, skipping");
+            return;
+        }
+
+        try
+        {
+            // Update the ingredient entity directly
+            _ingredient.Unit = newUnit;
+            
+            // Immediately persist to database
+            await _service.UpdateIngredientAsync(_ingredient);
+            
+            System.Diagnostics.Debug.WriteLine($"[IngredientFormViewModel] ? Unit change saved to database: {_ingredient.Name} -> {newUnit}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientFormViewModel] ? Failed to save unit change: {ex.Message}");
+            // Optionally show user feedback
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                await Shell.Current.DisplayAlert("B³¹d", $"Nie uda³o siê zapisaæ zmiany jednostki: {ex.Message}", "OK");
+            });
+        }
+    }
 
     // Nutritional information fields
     public string Calories { get => _calories; set { _calories = value; OnPropertyChanged(); ValidateInput(); } }
@@ -111,7 +165,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
 
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
-    public ICommand VerifyNutritionCommand { get; } // Nowa komenda
+    public ICommand VerifyNutritionCommand { get; }
 
     public IngredientFormViewModel(IIngredientService service)
     {
@@ -226,7 +280,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            ValidationMessage = $"B??d podczas ?adowania sk?adnika: {ex.Message}";
+            ValidationMessage = $"B³¹d podczas ³adowania sk³adnika: {ex.Message}";
             System.Diagnostics.Debug.WriteLine($"Error in LoadAsync: {ex.Message}");
         }
     }
@@ -288,7 +342,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
             }
             else
             {
-                VerificationStatus = $"? Nie znaleziono produktu '{Name}' w OpenFoodFacts";
+                VerificationStatus = $"?? Nie znaleziono produktu '{Name}' w OpenFoodFacts";
                 
                 await Shell.Current.DisplayAlert(
                     "Weryfikacja sk³adnika", 
