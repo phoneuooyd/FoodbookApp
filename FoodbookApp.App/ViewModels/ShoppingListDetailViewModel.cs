@@ -58,6 +58,9 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     private const bool AUTO_SAVE_ENABLED = false;
     public event Action<Ingredient>? ItemEditingCompleted;
 
+    // ? NEW: Event raised when save completes successfully so page can navigate back
+    public event Func<Task>? SaveCompletedAsync;
+
     public ShoppingListDetailViewModel(IShoppingListService shoppingListService, IPlanService planService)
     {
         _shoppingListService = shoppingListService;
@@ -141,6 +144,13 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
             MarkDirty();
         }
 
+        // ? CRITICAL: Immediately save Unit changes to database (same as IngredientFormViewModel)
+        if (e.PropertyName == nameof(Ingredient.Unit) && item.Id > 0)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Unit changed for '{item.Name}' - saving to DB immediately");
+            _ = SaveUnitChangeToDatabase(item); // Fire and forget
+        }
+
         if (AUTO_SAVE_ENABLED && (e.PropertyName == nameof(Ingredient.IsChecked) ||
                                   e.PropertyName == nameof(Ingredient.Unit) ||
                                   e.PropertyName == nameof(Ingredient.Name) ||
@@ -150,17 +160,87 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// ? NEW: Immediately save unit change to database to prevent reverting on reload
+    /// </summary>
+    private async Task SaveUnitChangeToDatabase(Ingredient item)
+    {
+        if (item == null || item.Id <= 0)
+        {
+            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] SaveUnitChangeToDatabase: Item not saved yet, skipping immediate save");
+            return;
+        }
+
+        try
+        {
+            // Immediately persist to database
+            await _shoppingListService.SaveShoppingListItemStateAsync(
+                _currentPlanId, 
+                item.Id, 
+                item.Order, 
+                item.Name, 
+                item.Unit, 
+                item.IsChecked, 
+                item.Quantity);
+            
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ? Unit change saved to database: '{item.Name}' -> {item.Unit}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ? Failed to save unit change: {ex.Message}");
+            // Optionally show user feedback
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                try
+                {
+                    await Microsoft.Maui.Controls.Shell.Current.DisplayAlert("B³¹d", $"Nie uda³o siê zapisaæ zmiany jednostki: {ex.Message}", "OK");
+                }
+                catch { }
+            });
+        }
+    }
+
     private async Task ManualSaveAllAsync()
     {
         try
         {
+            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] ManualSaveAllAsync started");
+            
             PrepareForSave();
             await SaveAllStatesAsync();
             HasUnsavedChanges = false;
+            
+            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] Save completed successfully");
+            
+            // ? CRITICAL: Raise event to notify page that save completed successfully
+            if (SaveCompletedAsync != null)
+            {
+                try
+                {
+                    var handlers = SaveCompletedAsync.GetInvocationList().Cast<Func<Task>>();
+                    var tasks = handlers.Select(h => h());
+                    await Task.WhenAll(tasks);
+                    System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] SaveCompletedAsync event handlers completed");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Error raising SaveCompletedAsync: {ex.Message}");
+                }
+            }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Manual save error: {ex.Message}");
+            
+            // Show error to user
+            try
+            {
+                await Microsoft.Maui.Controls.Shell.Current.DisplayAlert(
+                    "B³¹d", 
+                    $"Nie uda³o siê zapisaæ listy zakupów: {ex.Message}", 
+                    "OK");
+            }
+            catch { }
         }
     }
 
@@ -311,16 +391,20 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     public void DiscardChanges() => HasUnsavedChanges = false;
 
     /// <summary>
-    /// Change unit for a given ingredient in a controlled, testable way.
-    /// Encapsulates logic instead of handling it in the page code-behind.
+    /// ? UPDATED: Change unit for a given ingredient and immediately save to database.
+    /// This method is called by ShoppingListDetailPage.OnUnitPickerSelectionChanged.
     /// </summary>
     public void ChangeUnit(Ingredient? item, Unit newUnit)
     {
         if (item == null) return;
         if (item.Unit == newUnit) return; // no change
+        
         var old = item.Unit;
-        item.Unit = newUnit; // triggers PropertyChanged + MarkDirty via OnItemPropertyChanged
-        System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Unit changed: {old} -> {newUnit}");
+        item.Unit = newUnit; // triggers PropertyChanged + MarkDirty + immediate DB save via OnItemPropertyChanged
+        
+        System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ChangeUnit called: {old} -> {newUnit}");
+        
+        // PropertyChanged event will trigger OnItemPropertyChanged which handles immediate save
         // If PropertyChanged did not mark (e.g., event unsubscribed), ensure dirty state
         if (!HasUnsavedChanges) MarkDirty();
     }

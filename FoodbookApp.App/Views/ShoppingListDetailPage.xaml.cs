@@ -52,6 +52,49 @@ public partial class ShoppingListDetailPage : ContentPage
         {
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Failed to subscribe GlobalPopupStateChanged: {ex.Message}");
         }
+
+        // ? CRITICAL: Subscribe to SaveCompletedAsync event to navigate back after save
+        try
+        {
+            _viewModel.SaveCompletedAsync += OnSaveCompletedAsync;
+            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Subscribed to SaveCompletedAsync event");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Failed to subscribe SaveCompletedAsync: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// ? NEW: Handler for SaveCompletedAsync event - navigates back to ShoppingListPage
+    /// </summary>
+    private async Task OnSaveCompletedAsync()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] OnSaveCompletedAsync - navigating back");
+            
+            // Small delay to ensure UI updates before navigation
+            await Task.Delay(100);
+            
+            // Suppress shell navigating handler during this navigation
+            _suppressShellNavigating = true;
+            
+            try
+            {
+                await Shell.Current.GoToAsync("..");
+                System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Successfully navigated back after save");
+            }
+            finally
+            {
+                await Task.Delay(200);
+                _suppressShellNavigating = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Navigation error after save: {ex.Message}");
+        }
     }
 
     private void OnGlobalPickerPopupStateChanged(object? sender, bool isOpen)
@@ -149,6 +192,14 @@ public partial class ShoppingListDetailPage : ContentPage
                 SimplePicker.GlobalPopupStateChanged -= OnGlobalPickerPopupStateChanged;
                 _popupSubscribed = false;
             }
+        }
+        catch { }
+
+        // ? CRITICAL: Unsubscribe SaveCompletedAsync to avoid memory leaks
+        try
+        {
+            _viewModel.SaveCompletedAsync -= OnSaveCompletedAsync;
+            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Unsubscribed from SaveCompletedAsync event");
         }
         catch { }
         

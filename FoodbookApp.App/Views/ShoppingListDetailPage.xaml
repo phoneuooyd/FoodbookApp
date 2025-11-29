@@ -54,6 +54,19 @@
                 <Button.ImageSource>
                     <FileImageSource File="save.png" />
                 </Button.ImageSource>
+                <!-- Triggers zmieniające wygląd przycisku zależnie od HasUnsavedChanges -->
+                <Button.Triggers>
+                    <!-- Gdy są zmiany: wyraźny, primary -->
+                    <DataTrigger TargetType="Button" Binding="{Binding HasUnsavedChanges}" Value="True">
+                        <Setter Property="BackgroundColor" Value="{DynamicResource Primary}" />
+                        <Setter Property="Opacity" Value="1" />
+                    </DataTrigger>
+                    <!-- Gdy brak zmian: bladą wersja -->
+                    <DataTrigger TargetType="Button" Binding="{Binding HasUnsavedChanges}" Value="False">
+                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#E0E0E0, Dark=#303030}" />
+                        <Setter Property="Opacity" Value="0.55" />
+                    </DataTrigger>
+                </Button.Triggers>
             </Button>
 
             <Button Grid.Column="2"
