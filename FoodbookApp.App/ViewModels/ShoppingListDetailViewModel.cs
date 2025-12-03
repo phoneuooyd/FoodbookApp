@@ -23,6 +23,11 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     private IngredientGroup? _uncheckedGroup;
     private IngredientGroup? _checkedGroup;
     
+    // NEW: For CollectionView grouping in ShoppingListDetailPage
+    public ObservableCollection<ShoppingItemGroup> AllItemsGrouped { get; } = new();
+    private ShoppingItemGroup? _uncheckedItemsGroup;
+    private ShoppingItemGroup? _checkedItemsGroup;
+    
     public bool HasCheckedItems => CheckedItems.Count > 0;
     public IEnumerable<Unit> Units => Enum.GetValues(typeof(Unit)).Cast<Unit>();
 
@@ -51,6 +56,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     public ICommand ItemDragLeaveCommand { get; }
     public ICommand ItemDroppedCommand { get; }
     public ICommand SaveAllCommand { get; }
+    public ICommand ChangeUnitCommand { get; }
 
     public ICommand ItemDroppedBeforeCommand { get; private set; }
     public ICommand ItemDroppedAfterCommand { get; private set; }
@@ -71,6 +77,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         MoveUpCommand = new Command<Ingredient>(async (item) => await MoveItemUpAsync(item));
         MoveDownCommand = new Command<Ingredient>(async (item) => await MoveItemDownAsync(item));
         SaveAllCommand = new Command(async () => await ManualSaveAllAsync());
+        ChangeUnitCommand = new Command<(Ingredient, Unit)>((tuple) => ChangeUnit(tuple.Item1, tuple.Item2));
 
         ItemDraggedCommand = new Command<Ingredient>(OnItemDragged);
         ItemDraggedOverCommand = new Command<Ingredient>(OnItemDraggedOver);
@@ -98,7 +105,25 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
             _checkedGroup = new IngredientGroup("Collected", CheckedItems, isUnchecked: false);
             Groups.Add(_checkedGroup);
         }
+        
+        // NEW: Initialize groups for CollectionView with localized names
+        if (_uncheckedItemsGroup == null)
+        {
+            // Use localized string for "To Buy" - defaults to "To Buy" if resource missing
+            var toBuyTitle = FoodbookApp.Localization.ShoppingListDetailPageResources.ToBuy ?? "To Buy";
+            _uncheckedItemsGroup = new ShoppingItemGroup(toBuyTitle, false, UncheckedItems);
+            AllItemsGrouped.Add(_uncheckedItemsGroup);
+        }
+        if (_checkedItemsGroup == null)
+        {
+            // Use localized string for "Collected" - defaults to "Collected" if resource missing
+            var collectedTitle = FoodbookApp.Localization.ShoppingListDetailPageResources.Collected ?? "Collected";
+            _checkedItemsGroup = new ShoppingItemGroup(collectedTitle, true, CheckedItems);
+            AllItemsGrouped.Add(_checkedItemsGroup);
+        }
+        
         OnPropertyChanged(nameof(Groups));
+        OnPropertyChanged(nameof(AllItemsGrouped));
         OnPropertyChanged(nameof(HasCheckedItems));
     }
 
@@ -116,7 +141,9 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
             item.PropertyChanged += OnItemPropertyChanged;
             if (item.IsChecked) CheckedItems.Add(item); else UncheckedItems.Add(item);
         }
-        Groups.Clear(); _uncheckedGroup = null; _checkedGroup = null; EnsureGroups();
+        Groups.Clear(); _uncheckedGroup = null; _checkedGroup = null;
+        AllItemsGrouped.Clear(); _uncheckedItemsGroup = null; _checkedItemsGroup = null;
+        EnsureGroups();
         HasUnsavedChanges = false;
     }
 
@@ -349,20 +376,45 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     private void OnItemDragged(Ingredient item)
     {
         if (item == null) return;
-        item.IsBeingDragged = true; _itemBeingDragged = item;
+        
+        // ? Clear all previous drag states
+        foreach (var ing in UncheckedItems.Concat(CheckedItems))
+        {
+            ing.IsBeingDragged = false;
+            ing.IsBeingDraggedOver = false;
+        }
+        
+        item.IsBeingDragged = true; 
+        _itemBeingDragged = item;
+        System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Item dragged: {item.Name}");
     }
 
     private void OnItemDraggedOver(Ingredient item)
     {
         if (item == null) return;
-        if (item == _itemBeingDragged) item.IsBeingDragged = false;
-        item.IsBeingDraggedOver = item != _itemBeingDragged;
+        
+        // ? Clear drag-over state from all items first
+        foreach (var ing in UncheckedItems.Concat(CheckedItems))
+        {
+            if (ing != item)
+                ing.IsBeingDraggedOver = false;
+        }
+        
+        // ? Don't highlight the item being dragged
+        if (item == _itemBeingDragged)
+        {
+            item.IsBeingDraggedOver = false;
+        }
+        else
+        {
+            item.IsBeingDraggedOver = true;
+        }
     }
 
     private void OnItemDragLeave(Ingredient item)
     {
         if (item == null) return;
-        item.IsBeingDraggedOver = false; item.ShowInsertBefore = false; item.ShowInsertAfter = false;
+        item.IsBeingDraggedOver = false;
     }
 
     private async Task OnItemDroppedAsync(Ingredient item)
@@ -370,21 +422,44 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         if (item == null || _itemBeingDragged == null) return;
         try
         {
-            var move = _itemBeingDragged; var before = item;
+            var move = _itemBeingDragged; 
+            var before = item;
             if (move == before) return;
+            
             var draggedInUnchecked = UncheckedItems.Contains(move);
             var targetInUnchecked = UncheckedItems.Contains(before);
             if (draggedInUnchecked != targetInUnchecked) return;
+            
             var collection = draggedInUnchecked ? UncheckedItems : CheckedItems;
             int idx = collection.IndexOf(before);
             if (idx >= 0 && idx < collection.Count)
             {
-                collection.Remove(move); collection.Insert(idx, move); MarkDirty();
-                move.IsBeingDragged = false; before.IsBeingDraggedOver = false; before.ShowInsertBefore = false; before.ShowInsertAfter = false;
+                collection.Remove(move); 
+                collection.Insert(idx, move); 
+                MarkDirty();
+                
+                // ? Clear all drag states after drop
+                move.IsBeingDragged = false; 
+                before.IsBeingDraggedOver = false;
+                
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Item dropped: {move.Name} before {before.Name}");
             }
         }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error in OnItemDroppedAsync: {ex.Message}"); }
-        finally { _itemBeingDragged = null; }
+        catch (Exception ex) 
+        { 
+            System.Diagnostics.Debug.WriteLine($"Error in OnItemDroppedAsync: {ex.Message}"); 
+        }
+        finally 
+        { 
+            _itemBeingDragged = null;
+            
+            // ? Ensure all drag states are cleared
+            foreach (var ing in UncheckedItems.Concat(CheckedItems))
+            {
+                ing.IsBeingDragged = false;
+                ing.IsBeingDraggedOver = false;
+            }
+        }
     }
 
     public void OnItemEditingCompleted(Ingredient item) => ItemEditingCompleted?.Invoke(item);

@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Foodbook.Services"
+             xmlns:converters="clr-namespace:Foodbook.Converters"
+             xmlns:components="clr-namespace:Foodbook.Views.Components"
+             x:Class="Foodbook.Views.Components.ShoppingListItemComponent"
+             x:Name="ItemComponent">
+    
+    <ContentView.Resources>
+        <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        <converters:DragStateToColorConverter x:Key="DragStateToColorConverter" />
+        <converters:DropZoneToColorConverter x:Key="DropZoneToColorConverter" />
+        <converters:DropZoneBorderColorConverter x:Key="DropZoneBorderColorConverter" />
+        <converters:UnitToLocalizedStringConverter x:Key="UnitToLocalizedStringConverter" />
+        <converters:BoolToGrayConverter x:Key="BoolToGrayConverter" />
+    </ContentView.Resources>
+    
+    <!-- Wrapper grid with top/bottom drop zones -->
+    <Grid RowDefinitions="Auto,Auto,Auto">
+        <!-- Top insert indicator -->
+        <BoxView x:Name="TopInsertZone"
+                 Grid.Row="0" 
+                 HeightRequest="6" 
+                 BackgroundColor="{DynamicResource Primary}" 
+                 Opacity="0"
+                 IsVisible="{Binding ShowDragAndDrop, Source={x:Reference ItemComponent}}">
+            <BoxView.GestureRecognizers>
+                <DropGestureRecognizer AllowDrop="True" 
+                                        DragOver="OnTopInsertDragOver" 
+                                        DragLeave="OnTopInsertDragLeave" 
+                                        Drop="OnTopInsertDrop" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+        
+        <Frame Grid.Row="1" 
+               Padding="8,8" 
+               Margin="10,4" 
+               CornerRadius="10" 
+               HasShadow="False" 
+               BorderColor="{Binding IsBeingDraggedOver, Converter={StaticResource DropZoneBorderColorConverter}}" 
+               BackgroundColor="{Binding IsBeingDraggedOver, Converter={StaticResource DropZoneToColorConverter}}">
+            <Frame.Triggers>
+                <DataTrigger TargetType="Frame" Binding="{Binding IsBeingDragged}" Value="True">
+                    <Setter Property="Scale" Value="1.04" />
+                    <Setter Property="TranslationY" Value="-2" />
+                </DataTrigger>
+                <DataTrigger TargetType="Frame" Binding="{Binding IsBeingDraggedOver}" Value="True">
+                    <Setter Property="Scale" Value="1.02" />
+                </DataTrigger>
+            </Frame.Triggers>
+            
+            <Frame.GestureRecognizers>
+                <!-- Enable drag & drop on entire frame -->
+                <DragGestureRecognizer CanDrag="True" DragStarting="OnDragStarting" />
+                <DropGestureRecognizer AllowDrop="True" 
+                                        DragOver="OnDragOver" 
+                                        DragLeave="OnDragLeave" 
+                                        Drop="OnDrop" />
+            </Frame.GestureRecognizers>
+            
+            <Grid RowDefinitions="Auto,Auto" 
+                  ColumnSpacing="8" 
+                  BackgroundColor="{Binding IsBeingDragged, Converter={StaticResource DragStateToColorConverter}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                
+                <!-- Checkbox -->
+                <CheckBox Grid.Row="0" 
+                          Grid.Column="0" 
+                          IsChecked="{Binding IsChecked}" 
+                          Color="{DynamicResource Primary}" 
+                          BackgroundColor="Transparent" 
+                          VerticalOptions="Center" 
+                          HorizontalOptions="Center" />
+                
+                <!-- Name: Editor when unchecked, Label when checked -->
+                <Editor Grid.Row="0" 
+                        Grid.Column="1" 
+                        Text="{Binding Name}" 
+                        Placeholder="{loc:Translate Resource=ShoppingListDetailPageResources, Key=NameHeader}" 
+                        AutoSize="TextChanges" 
+                        MinimumHeightRequest="36" 
+                        BackgroundColor="Transparent" 
+                        Focused="OnEntryFocused" 
+                        Unfocused="OnEntryUnfocused"
+                        IsVisible="{Binding IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
+                
+                <Label Grid.Row="0" 
+                       Grid.Column="1" 
+                       Text="{Binding Name}" 
+                       LineBreakMode="WordWrap" 
+                       MaxLines="3" 
+                       TextDecorations="Strikethrough" 
+                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
+                       VerticalTextAlignment="Center"
+                       IsVisible="{Binding IsChecked}" />
+                
+                <!-- Remove button -->
+                <Button Grid.Row="0" 
+                        Grid.Column="2" 
+                        Text="?" 
+                        Command="{Binding RemoveItemCommand, Source={x:Reference ItemComponent}}" 
+                        CommandParameter="{Binding .}" 
+                        WidthRequest="32" 
+                        HeightRequest="32" 
+                        Padding="0" 
+                        BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}" 
+                        TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}" 
+                        FontSize="14" 
+                        CornerRadius="16" 
+                        BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}" 
+                        BorderWidth="1" />
+                
+                <!-- Drag handle (visual indicator) -->
+                <Grid Grid.Row="1" 
+                      Grid.Column="0" 
+                      WidthRequest="44" 
+                      HeightRequest="44" 
+                      VerticalOptions="Center" 
+                      HorizontalOptions="Center">
+                    <VerticalStackLayout Spacing="5" 
+                                          HorizontalOptions="Center" 
+                                          VerticalOptions="Center">
+                        <BoxView BackgroundColor="{Binding IsChecked, Converter={StaticResource BoolToGrayConverter}}" 
+                                 HeightRequest="3" 
+                                 WidthRequest="24" 
+                                 CornerRadius="1.5" />
+                        <BoxView BackgroundColor="{Binding IsChecked, Converter={StaticResource BoolToGrayConverter}}" 
+                                 HeightRequest="3" 
+                                 WidthRequest="24" 
+                                 CornerRadius="1.5" />
+                        <BoxView BackgroundColor="{Binding IsChecked, Converter={StaticResource BoolToGrayConverter}}" 
+                                 HeightRequest="3" 
+                                 WidthRequest="24" 
+                                 CornerRadius="1.5" />
+                    </VerticalStackLayout>
+                </Grid>
+                
+                <!-- Quantity + Unit row -->
+                <Grid Grid.Row="1" 
+                      Grid.Column="1" 
+                      ColumnDefinitions="Auto,Auto,*" 
+                      ColumnSpacing="8" 
+                      Margin="0,6,0,0">
+                    <!-- Unchecked: Entry + Picker -->
+                    <Entry Grid.Column="0" 
+                           Text="{Binding Quantity}" 
+                           Placeholder="{loc:Translate Resource=ShoppingListDetailPageResources, Key=QuantityHeader}" 
+                           Keyboard="Numeric" 
+                           WidthRequest="72" 
+                           HorizontalTextAlignment="Center" 
+                           FontSize="13" 
+                           Focused="OnEntryFocused" 
+                           Unfocused="OnEntryUnfocused"
+                           IsVisible="{Binding IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
+                    
+                    <components:SimplePicker Grid.Column="1" 
+                                            WidthRequest="100" 
+                                            Scale="0.95" 
+                                            ItemsSource="{Binding UnitsSource, Source={x:Reference ItemComponent}}" 
+                                            SelectedItem="{Binding Unit}" 
+                                            ItemDisplayBinding="{Binding ., Converter={StaticResource UnitToLocalizedStringConverter}}" 
+                                            PlaceholderText="{loc:Translate Resource=ShoppingListDetailPageResources, Key=UnitHeader}" 
+                                            SelectionChanged="OnUnitPickerSelectionChanged"
+                                            IsVisible="{Binding IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
+                    
+                    <!-- Checked: Labels with strikethrough -->
+                    <Label Grid.Column="0" 
+                           Text="{Binding Quantity}" 
+                           FontSize="13" 
+                           TextDecorations="Strikethrough" 
+                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
+                           VerticalTextAlignment="Center" 
+                           HorizontalTextAlignment="Center"
+                           IsVisible="{Binding IsChecked}" />
+                    
+                    <Label Grid.Column="1" 
+                           Text="{Binding Unit, Converter={StaticResource UnitToLocalizedStringConverter}}" 
+                           FontSize="13" 
+                           TextDecorations="Strikethrough" 
+                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
+                           VerticalTextAlignment="Center" 
+                           HorizontalTextAlignment="Center"
+                           IsVisible="{Binding IsChecked}" />
+                </Grid>
+            </Grid>
+        </Frame>
+        
+        <!-- Bottom insert indicator -->
+        <BoxView x:Name="BottomInsertZone"
+                 Grid.Row="2" 
+                 HeightRequest="6" 
+                 BackgroundColor="{DynamicResource Primary}" 
+                 Opacity="0"
+                 IsVisible="{Binding ShowDragAndDrop, Source={x:Reference ItemComponent}}">
+            <BoxView.GestureRecognizers>
+                <DropGestureRecognizer AllowDrop="True" 
+                                        DragOver="OnBottomInsertDragOver" 
+                                        DragLeave="OnBottomInsertDragLeave" 
+                                        Drop="OnBottomInsertDrop" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+    </Grid>
+</ContentView>

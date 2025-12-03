@@ -5,7 +5,7 @@ using Microsoft.Maui.Controls;
 using Foodbook.Models;
 using Foodbook.ViewModels;
 using Foodbook.Views.Base;
-using Foodbook.Views.Components; // for SimplePicker
+using Foodbook.Views.Components;
 
 namespace Foodbook.Views;
 
@@ -38,20 +38,6 @@ public partial class ShoppingListDetailPage : ContentPage
         _viewModel = viewModel;
         BindingContext = _viewModel;
         _themeHelper = new PageThemeHelper();
-
-        // Subscribe to SimplePicker popup open/close to suppress reload after close
-        try
-        {
-            if (!_popupSubscribed)
-            {
-                SimplePicker.GlobalPopupStateChanged += OnGlobalPickerPopupStateChanged;
-                _popupSubscribed = true;
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Failed to subscribe GlobalPopupStateChanged: {ex.Message}");
-        }
 
         // ? CRITICAL: Subscribe to SaveCompletedAsync event to navigate back after save
         try
@@ -157,6 +143,21 @@ public partial class ShoppingListDetailPage : ContentPage
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Load error: {ex.Message}");
             await DisplayAlert("B³¹d", "Nie mo¿na za³adowaæ listy zakupów", "OK");
         }
+
+        // Subscribe to global popup state changes to avoid reload when unit picker closes
+        try
+        {
+            if (!_popupSubscribed)
+            {
+                SimplePicker.GlobalPopupStateChanged += OnGlobalPickerPopupStateChanged;
+                _popupSubscribed = true;
+                System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Subscribed to GlobalPopupStateChanged");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Failed to subscribe GlobalPopupStateChanged: {ex.Message}");
+        }
     }
 
     protected override async void OnDisappearing()
@@ -170,7 +171,7 @@ public partial class ShoppingListDetailPage : ContentPage
         _pageCts?.Cancel();
         _pageCts?.Dispose();
         _pageCts = null;
-        
+
         _themeHelper.Cleanup();
 
         // Unsubscribe Shell navigating
@@ -202,25 +203,6 @@ public partial class ShoppingListDetailPage : ContentPage
             System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Unsubscribed from SaveCompletedAsync event");
         }
         catch { }
-        
-        // Auto-save disabled intentionally – manual save button only
-        // if (!_viewModel.IsEditing) { await SaveAllStatesSafelyAsync(); }
-    }
-
-    private async Task SaveAllStatesSafelyAsync()
-    {
-        try
-        {
-            await _viewModel.SaveAllStatesAsync();
-        }
-        catch (OperationCanceledException)
-        {
-            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Save cancelled");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Save error: {ex.Message}");
-        }
     }
 
     protected override bool OnBackButtonPressed()
@@ -240,7 +222,7 @@ public partial class ShoppingListDetailPage : ContentPage
                         finally { await Task.Delay(200); _suppressShellNavigating = false; }
                     }
                 });
-                return true; // blokujemy domyœlne zachowanie
+                return true; // block default behavior
             }
 
             SafeNavigateBack();
@@ -268,13 +250,13 @@ public partial class ShoppingListDetailPage : ContentPage
         });
     }
 
-    // Shell navigation handler – similar logic to AddRecipePage
+    // Shell navigation handler
     private void OnShellNavigating(object? sender, ShellNavigatingEventArgs e)
     {
         try
         {
             if (_suppressShellNavigating) return;
-            if (e.Source == ShellNavigationSource.Push) return; // wchodzimy na now¹ stronê
+            if (e.Source == ShellNavigationSource.Push) return;
 
             if (_viewModel.HasUnsavedChanges)
             {
@@ -313,114 +295,24 @@ public partial class ShoppingListDetailPage : ContentPage
         }
     }
 
-    private void OnEntryFocused(object sender, FocusEventArgs e)
+    private void OnEntryFocused(object sender, EventArgs e)
     {
         _viewModel.IsEditing = true;
     }
 
-    private void OnEntryUnfocused(object sender, FocusEventArgs e)
+    private void OnEntryUnfocused(object sender, EventArgs e)
     {
         _viewModel.IsEditing = false;
-        // Auto-save disabled intentionally
-    }
-
-    private void OnEntryTextChanged(object sender, TextChangedEventArgs e)
-    {
-        // Auto-save disabled intentionally
-    }
-
-    private void SaveItemWithDebounceAsync(Ingredient ingredient)
-    {
-        // Auto-save disabled deliberately – method retained for future use
-    }
-
-    private void OnDragStarting(object? sender, DragStartingEventArgs e)
-    {
-        if (sender is VisualElement el && el.BindingContext is Ingredient ing)
-        {
-            e.Data.Properties["SourceItem"] = ing;
-        }
-    }
-
-    private void OnTopInsertDragOver(object? sender, DragEventArgs e)
-    {
-        if (!e.Data.Properties.TryGetValue("SourceItem", out var src)) return;
-        if (sender is VisualElement el && el.BindingContext is Ingredient ing)
-        {
-            ing.ShowInsertBefore = true;
-        }
-    }
-
-    private void OnTopInsertDragLeave(object? sender, DragEventArgs e)
-    {
-        if (sender is VisualElement el && el.BindingContext is Ingredient ing)
-        {
-            ing.ShowInsertBefore = false;
-        }
-    }
-
-    private async void OnTopInsertDrop(object? sender, DropEventArgs e)
-    {
-        await HandleDropAsync(sender, e, insertAfter: false);
-    }
-
-    private void OnBottomInsertDragOver(object? sender, DragEventArgs e)
-    {
-        if (!e.Data.Properties.TryGetValue("SourceItem", out var src)) return;
-        if (sender is VisualElement el && el.BindingContext is Ingredient ing)
-        {
-            ing.ShowInsertAfter = true;
-        }
-    }
-
-    private void OnBottomInsertDragLeave(object? sender, DragEventArgs e)
-    {
-        if (sender is VisualElement el && el.BindingContext is Ingredient ing)
-        {
-            ing.ShowInsertAfter = false;
-        }
-    }
-
-    private async void OnBottomInsertDrop(object? sender, DropEventArgs e)
-    {
-        await HandleDropAsync(sender, e, insertAfter: true);
-    }
-
-    private async Task HandleDropAsync(object? sender, DropEventArgs e, bool insertAfter)
-    {
-        try
-        {
-            if (!e.Data.Properties.TryGetValue("SourceItem", out var src)) return;
-            if (src is not Ingredient dragged) return;
-            if (sender is not VisualElement el || el.BindingContext is not Ingredient target) return;
-
-            await MainThread.InvokeOnMainThreadAsync(async () =>
-            {
-                target.ShowInsertBefore = false;
-                target.ShowInsertAfter = false;
-                await _viewModel.ReorderItemsAsync(dragged, target, insertAfter);
-            });
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Drop error: {ex.Message}");
-            await MainThread.InvokeOnMainThreadAsync(async () =>
-            {
-                await DisplayAlert("B³¹d", "Nie mo¿na zmieniæ kolejnoœci elementu", "OK");
-            });
-        }
     }
 
     private void OnUnitPickerSelectionChanged(object? sender, EventArgs e)
     {
         try
         {
-            if (sender is Foodbook.Views.Components.SimplePicker picker && picker.BindingContext is Foodbook.Models.Ingredient ing)
+            // Extract ingredient from component's BindingContext
+            if (sender is ShoppingListItemComponent component && component.BindingContext is Ingredient ing)
             {
-                if (picker.SelectedItem is Foodbook.Models.Unit unit)
-                {
-                    _viewModel.ChangeUnit(ing, unit);
-                }
+                _viewModel.ChangeUnit(ing, ing.Unit);
             }
         }
         catch (Exception ex)
