@@ -18,12 +18,11 @@
     
     <!-- Wrapper grid with top/bottom drop zones -->
     <Grid RowDefinitions="Auto,Auto,Auto">
-        <!-- Top insert indicator -->
+        <!-- Top insert spacer - expands when dragging over -->
         <BoxView x:Name="TopInsertZone"
                  Grid.Row="0" 
-                 HeightRequest="6" 
-                 BackgroundColor="{DynamicResource Primary}" 
-                 Opacity="0"
+                 HeightRequest="0" 
+                 BackgroundColor="Transparent"
                  IsVisible="{Binding ShowDragAndDrop, Source={x:Reference ItemComponent}}">
             <BoxView.GestureRecognizers>
                 <DropGestureRecognizer AllowDrop="True" 
@@ -34,19 +33,18 @@
         </BoxView>
         
         <Frame Grid.Row="1" 
+               x:Name="ItemFrame"
                Padding="8,8" 
                Margin="10,4" 
                CornerRadius="10" 
                HasShadow="False" 
-               BorderColor="{Binding IsBeingDraggedOver, Converter={StaticResource DropZoneBorderColorConverter}}" 
-               BackgroundColor="{Binding IsBeingDraggedOver, Converter={StaticResource DropZoneToColorConverter}}">
+               BorderColor="{AppThemeBinding Light=#E0E0E0, Dark=#3A3A3A}"
+               BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#2D2D30}">
+            <!-- Restored borders for visual clarity -->
             <Frame.Triggers>
                 <DataTrigger TargetType="Frame" Binding="{Binding IsBeingDragged}" Value="True">
-                    <Setter Property="Scale" Value="1.04" />
-                    <Setter Property="TranslationY" Value="-2" />
-                </DataTrigger>
-                <DataTrigger TargetType="Frame" Binding="{Binding IsBeingDraggedOver}" Value="True">
-                    <Setter Property="Scale" Value="1.02" />
+                    <Setter Property="Opacity" Value="0.4" />
+                    <Setter Property="BorderColor" Value="{DynamicResource Primary}" />
                 </DataTrigger>
             </Frame.Triggers>
             
@@ -61,7 +59,7 @@
             
             <Grid RowDefinitions="Auto,Auto" 
                   ColumnSpacing="8" 
-                  BackgroundColor="{Binding IsBeingDragged, Converter={StaticResource DragStateToColorConverter}}">
+                  BackgroundColor="Transparent">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -190,12 +188,11 @@
             </Grid>
         </Frame>
         
-        <!-- Bottom insert indicator -->
+        <!-- Bottom insert spacer - expands when dragging over -->
         <BoxView x:Name="BottomInsertZone"
                  Grid.Row="2" 
-                 HeightRequest="6" 
-                 BackgroundColor="{DynamicResource Primary}" 
-                 Opacity="0"
+                 HeightRequest="0" 
+                 BackgroundColor="Transparent"
                  IsVisible="{Binding ShowDragAndDrop, Source={x:Reference ItemComponent}}">
             <BoxView.GestureRecognizers>
                 <DropGestureRecognizer AllowDrop="True" 

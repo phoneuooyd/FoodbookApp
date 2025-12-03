@@ -156,6 +156,14 @@ public partial class ShoppingListItemComponent : ContentView
     private void OnDragOver(object? sender, DragEventArgs e)
     {
         if (!ShowDragAndDrop) return;
+        
+        // NEW: Show drop space below this item when dragging over the item itself
+        if (BottomInsertZone != null && sender != BottomInsertZone)
+        {
+            BottomInsertZone.HeightRequest = 60; // Size of dragged item
+            BottomInsertZone.BackgroundColor = Color.FromArgb("#15000000"); // Subtle hint
+        }
+        
         if (DragOverCommand?.CanExecute(BindingContext) == true)
         {
             DragOverCommand.Execute(BindingContext);
@@ -165,6 +173,14 @@ public partial class ShoppingListItemComponent : ContentView
     private void OnDragLeave(object? sender, DragEventArgs e)
     {
         if (!ShowDragAndDrop) return;
+        
+        // NEW: Collapse drop space when leaving
+        if (BottomInsertZone != null)
+        {
+            BottomInsertZone.HeightRequest = 0;
+            BottomInsertZone.BackgroundColor = Colors.Transparent;
+        }
+        
         if (DragLeaveCommand?.CanExecute(BindingContext) == true)
         {
             DragLeaveCommand.Execute(BindingContext);
@@ -174,6 +190,13 @@ public partial class ShoppingListItemComponent : ContentView
     private void OnDrop(object? sender, DropEventArgs e)
     {
         if (!ShowDragAndDrop) return;
+
+        // Collapse space after drop
+        if (BottomInsertZone != null)
+        {
+            BottomInsertZone.HeightRequest = 0;
+            BottomInsertZone.BackgroundColor = Colors.Transparent;
+        }
 
         e.Data.Properties.TryGetValue("SourceItem", out var source);
         
@@ -187,18 +210,40 @@ public partial class ShoppingListItemComponent : ContentView
     private void OnTopInsertDragOver(object? sender, DragEventArgs e)
     {
         if (!ShowDragAndDrop) return;
-        if (TopInsertZone != null) TopInsertZone.Opacity = 0.6;
+        // Expand space ABOVE this item to 60px
+        if (TopInsertZone != null)
+        {
+            TopInsertZone.HeightRequest = 60;
+            TopInsertZone.BackgroundColor = Color.FromArgb("#15000000");
+        }
+        
+        // Hide bottom space to avoid double indicators
+        if (BottomInsertZone != null)
+        {
+            BottomInsertZone.HeightRequest = 0;
+            BottomInsertZone.BackgroundColor = Colors.Transparent;
+        }
     }
 
     private void OnTopInsertDragLeave(object? sender, DragEventArgs e)
     {
-        if (TopInsertZone != null) TopInsertZone.Opacity = 0;
+        // Collapse space back to 0
+        if (TopInsertZone != null)
+        {
+            TopInsertZone.HeightRequest = 0;
+            TopInsertZone.BackgroundColor = Colors.Transparent;
+        }
     }
 
     private void OnTopInsertDrop(object? sender, DropEventArgs e)
     {
         if (!ShowDragAndDrop) return;
-        if (TopInsertZone != null) TopInsertZone.Opacity = 0;
+        // Collapse space after drop
+        if (TopInsertZone != null)
+        {
+            TopInsertZone.HeightRequest = 0;
+            TopInsertZone.BackgroundColor = Colors.Transparent;
+        }
 
         e.Data.Properties.TryGetValue("SourceItem", out var source);
         
@@ -212,18 +257,40 @@ public partial class ShoppingListItemComponent : ContentView
     private void OnBottomInsertDragOver(object? sender, DragEventArgs e)
     {
         if (!ShowDragAndDrop) return;
-        if (BottomInsertZone != null) BottomInsertZone.Opacity = 0.6;
+        // Expand space BELOW this item to 60px
+        if (BottomInsertZone != null)
+        {
+            BottomInsertZone.HeightRequest = 60;
+            BottomInsertZone.BackgroundColor = Color.FromArgb("#15000000");
+        }
+        
+        // Hide top space to avoid double indicators
+        if (TopInsertZone != null)
+        {
+            TopInsertZone.HeightRequest = 0;
+            TopInsertZone.BackgroundColor = Colors.Transparent;
+        }
     }
 
     private void OnBottomInsertDragLeave(object? sender, DragEventArgs e)
     {
-        if (BottomInsertZone != null) BottomInsertZone.Opacity = 0;
+        // Collapse space back to 0
+        if (BottomInsertZone != null)
+        {
+            BottomInsertZone.HeightRequest = 0;
+            BottomInsertZone.BackgroundColor = Colors.Transparent;
+        }
     }
 
     private void OnBottomInsertDrop(object? sender, DropEventArgs e)
     {
         if (!ShowDragAndDrop) return;
-        if (BottomInsertZone != null) BottomInsertZone.Opacity = 0;
+        // Collapse space after drop
+        if (BottomInsertZone != null)
+        {
+            BottomInsertZone.HeightRequest = 0;
+            BottomInsertZone.BackgroundColor = Colors.Transparent;
+        }
 
         e.Data.Properties.TryGetValue("SourceItem", out var source);
         

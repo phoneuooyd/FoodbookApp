@@ -1,5 +1,6 @@
 using Microsoft.Maui.Graphics;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using Foodbook.Models;
 
 namespace Foodbook.ViewModels
@@ -12,6 +13,9 @@ namespace Foodbook.ViewModels
         public string GroupName { get; }
         public bool IsCheckedGroup { get; }
         public Color GroupHeaderColor { get; }
+        
+        // ? NEW: Property to hide group header when empty
+        public bool IsVisible => Count > 0;
 
         public ShoppingItemGroup(string groupName, bool isCheckedGroup, ObservableCollection<Ingredient> source)
         {
@@ -45,6 +49,7 @@ namespace Foodbook.ViewModels
                                     Add(item);
                             }
                         }
+                        OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs(nameof(IsVisible)));
                         break;
 
                     case System.Collections.Specialized.NotifyCollectionChangedAction.Remove:
@@ -53,6 +58,7 @@ namespace Foodbook.ViewModels
                             foreach (Ingredient item in e.OldItems)
                                 Remove(item);
                         }
+                        OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs(nameof(IsVisible)));
                         break;
 
                     case System.Collections.Specialized.NotifyCollectionChangedAction.Replace:
@@ -63,6 +69,7 @@ namespace Foodbook.ViewModels
                             foreach (Ingredient item in e.NewItems)
                                 Insert(e.NewStartingIndex, item);
                         }
+                        OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs(nameof(IsVisible)));
                         break;
 
                     case System.Collections.Specialized.NotifyCollectionChangedAction.Move:
@@ -78,6 +85,7 @@ namespace Foodbook.ViewModels
                         Clear();
                         foreach (var item in source)
                             Add(item);
+                        OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs(nameof(IsVisible)));
                         break;
                 }
             };
