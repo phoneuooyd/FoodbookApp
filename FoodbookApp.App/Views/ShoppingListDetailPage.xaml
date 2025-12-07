@@ -15,6 +15,24 @@
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         
+        <!-- Section header template -->
+        <DataTemplate x:Key="SectionHeaderTemplate" x:DataType="vm:ShoppingListSectionHeader">
+            <sho:DraggableViewCell IsDraggable="False">
+                <StackLayout Padding="14,12,14,6">
+                    <!-- Separator line above "Collected" section -->
+                    <BoxView HeightRequest="1" 
+                             BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" 
+                             Margin="0,0,0,10"
+                             IsVisible="{Binding IsCollectedSection}" />
+                    
+                    <Label FontSize="18" 
+                           FontAttributes="Bold" 
+                           TextColor="{Binding HeaderColor}" 
+                           Text="{Binding Title}" />
+                </StackLayout>
+            </sho:DraggableViewCell>
+        </DataTemplate>
+        
         <!-- Item template wrapped in DraggableViewCell for drag-and-drop -->
         <DataTemplate x:Key="ShoppingItemTemplate" x:DataType="models:Ingredient">
             <sho:DraggableViewCell x:Name="DraggableViewCell">
@@ -25,7 +43,6 @@
                         RemoveItemCommand="{Binding BindingContext.RemoveItemCommand, Source={x:Reference ThisPage}}"
                         ChangeUnitCommand="{Binding BindingContext.ChangeUnitCommand, Source={x:Reference ThisPage}}"
                         UnitsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}"
-                        ShowDragAndDrop="True"
                         EntryFocused="OnEntryFocused"
                         EntryUnfocused="OnEntryUnfocused"
                         UnitSelectionChanged="OnUnitPickerSelectionChanged" />
@@ -33,21 +50,10 @@
             </sho:DraggableViewCell>
         </DataTemplate>
         
-        <!-- Group header template -->
-        <DataTemplate x:Key="ShoppingGroupHeaderTemplate" x:DataType="vm:ShoppingItemGroup">
-            <StackLayout Padding="10,14,10,4" IsVisible="{Binding IsVisible}">
-                <!-- Separator line above "Collected" section -->
-                <BoxView HeightRequest="1" 
-                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" 
-                         Margin="0,0,0,10"
-                         IsVisible="{Binding IsCheckedGroup}" />
-                
-                <Label FontSize="18" 
-                       FontAttributes="Bold" 
-                       TextColor="{Binding GroupHeaderColor}" 
-                       Text="{Binding GroupName}" />
-            </StackLayout>
-        </DataTemplate>
+        <!-- DataTemplateSelector for headers vs items -->
+        <components:ShoppingListTemplateSelector x:Key="ShoppingListTemplateSelector"
+            HeaderTemplate="{StaticResource SectionHeaderTemplate}"
+            ItemTemplate="{StaticResource ShoppingItemTemplate}" />
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*" Padding="0">
@@ -99,8 +105,8 @@
             x:Name="ShoppingCollectionView"
             CollectionLayout="Vertical"
             ItemsSource="{Binding FlatItems}"
-            ItemTemplate="{StaticResource ShoppingItemTemplate}"
-            ItemHeight="140"
+            ItemTemplate="{StaticResource ShoppingListTemplateSelector}"
+            ItemHeight="120"
             CollectionPadding="0,8,0,80"
             ItemSpacing="4"
             EnableDragAndDrop="True"

@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Foodbook.Models;
 using FoodbookApp.Interfaces;
-using Sharpnado.CollectionView.ViewModels; // ? Sharpnado DragAndDropInfo
+using Sharpnado.CollectionView.ViewModels;
 
 namespace Foodbook.ViewModels;
 
@@ -20,8 +20,12 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     public ObservableCollection<Ingredient> UncheckedItems { get; } = new();
     public ObservableCollection<Ingredient> CheckedItems { get; } = new();
     
-    // ? Flat list for Sharpnado CollectionView
-    public ObservableCollection<Ingredient> FlatItems { get; } = new();
+    // ? Flat list for Sharpnado CollectionView - contains section headers and items
+    public ObservableCollection<IShoppingListItem> FlatItems { get; } = new();
+    
+    // ? Section headers for group titles
+    private ShoppingListSectionHeader? _toBuyHeader;
+    private ShoppingListSectionHeader? _collectedHeader;
 
     public ObservableCollection<IngredientGroup> Groups { get; } = new();
     private IngredientGroup? _uncheckedGroup;
@@ -84,13 +88,24 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         // ? Sharpnado drag-and-drop commands with DragAndDropInfo parameter
         DragStartedCommand = new Command<DragAndDropInfo>(OnDragStarted);
         DragEndedCommand = new Command<DragAndDropInfo>(OnDragEnded);
-        ItemTappedCommand = new Command<Ingredient>(OnItemTapped);
+        ItemTappedCommand = new Command<object>(OnItemTapped);
 
         if (AUTO_SAVE_ENABLED)
             ItemEditingCompleted += async (item) => await SaveItemStateAsync(item);
 
-        UncheckedItems.CollectionChanged += (s, e) => OnPropertyChanged(nameof(HasCheckedItems));
-        CheckedItems.CollectionChanged += (s, e) => OnPropertyChanged(nameof(HasCheckedItems));
+        UncheckedItems.CollectionChanged += (s, e) => { OnPropertyChanged(nameof(HasCheckedItems)); UpdateHeaderCounts(); };
+        CheckedItems.CollectionChanged += (s, e) => { OnPropertyChanged(nameof(HasCheckedItems)); UpdateHeaderCounts(); };
+    }
+
+    /// <summary>
+    /// ? Updates header item counts for visibility
+    /// </summary>
+    private void UpdateHeaderCounts()
+    {
+        if (_toBuyHeader != null)
+            _toBuyHeader.ItemCount = UncheckedItems.Count;
+        if (_collectedHeader != null)
+            _collectedHeader.ItemCount = CheckedItems.Count;
     }
 
     #region Sharpnado Drag-and-Drop Handlers
@@ -156,9 +171,10 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     {
         try
         {
-            // Extract items by their IsChecked status while preserving FlatItems order
-            var newUncheckedItems = FlatItems.Where(i => !i.IsChecked).ToList();
-            var newCheckedItems = FlatItems.Where(i => i.IsChecked).ToList();
+            // Extract only Ingredient items (skip headers) by their IsChecked status
+            var allIngredients = FlatItems.OfType<Ingredient>().ToList();
+            var newUncheckedItems = allIngredients.Where(i => !i.IsChecked).ToList();
+            var newCheckedItems = allIngredients.Where(i => i.IsChecked).ToList();
 
             // Update source collections
             UncheckedItems.Clear();
@@ -178,19 +194,21 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// ? Called when an item is tapped (optional, for future use)
+    /// ? Called when an item is tapped
     /// </summary>
-    private void OnItemTapped(Ingredient? item)
+    private void OnItemTapped(object? item)
     {
-        if (item == null) return;
-        System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Item tapped: {item.Name}");
-        // Could toggle IsChecked or open edit mode
+        if (item is Ingredient ing)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Item tapped: {ing.Name}");
+        }
+        // Ignore header taps
     }
 
     #endregion
 
     /// <summary>
-    /// ? Rebuilds the flat list from UncheckedItems + CheckedItems
+    /// ? Rebuilds the flat list from headers + UncheckedItems + CheckedItems
     /// </summary>
     private void RebuildFlatItems()
     {
@@ -198,14 +216,40 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         {
             FlatItems.Clear();
             
-            foreach (var item in UncheckedItems)
-                FlatItems.Add(item);
-                
-            foreach (var item in CheckedItems)
-                FlatItems.Add(item);
+            // Initialize section headers if needed
+            if (_toBuyHeader == null)
+            {
+                var toBuyTitle = FoodbookApp.Localization.ShoppingListDetailPageResources.ToBuy ?? "Do zebrania";
+                _toBuyHeader = new ShoppingListSectionHeader(toBuyTitle, false);
+            }
+            if (_collectedHeader == null)
+            {
+                var collectedTitle = FoodbookApp.Localization.ShoppingListDetailPageResources.Collected ?? "Zebrane";
+                _collectedHeader = new ShoppingListSectionHeader(collectedTitle, true);
+            }
+            
+            // Update counts
+            _toBuyHeader.ItemCount = UncheckedItems.Count;
+            _collectedHeader.ItemCount = CheckedItems.Count;
+            
+            // Add "To Buy" section header (always visible if there are items)
+            if (UncheckedItems.Count > 0)
+            {
+                FlatItems.Add(_toBuyHeader);
+                foreach (var item in UncheckedItems)
+                    FlatItems.Add(item);
+            }
+            
+            // Add "Collected" section header (only if there are checked items)
+            if (CheckedItems.Count > 0)
+            {
+                FlatItems.Add(_collectedHeader);
+                foreach (var item in CheckedItems)
+                    FlatItems.Add(item);
+            }
                 
             OnPropertyChanged(nameof(FlatItems));
-            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] RebuildFlatItems: {FlatItems.Count} items ({UncheckedItems.Count} unchecked, {CheckedItems.Count} checked)");
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] RebuildFlatItems: {FlatItems.Count} total ({UncheckedItems.Count} unchecked, {CheckedItems.Count} checked)");
         }
         catch (Exception ex)
         {
@@ -262,6 +306,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         }
         Groups.Clear(); _uncheckedGroup = null; _checkedGroup = null;
         AllItemsGrouped.Clear(); _uncheckedItemsGroup = null; _checkedItemsGroup = null;
+        _toBuyHeader = null; _collectedHeader = null; // Reset headers
         EnsureGroups();
         HasUnsavedChanges = false;
     }
