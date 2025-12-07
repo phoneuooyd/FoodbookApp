@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Foodbook.Models;
 using FoodbookApp.Interfaces;
+using Sharpnado.CollectionView.ViewModels; // ? Sharpnado DragAndDropInfo
 
 namespace Foodbook.ViewModels;
 
@@ -18,12 +19,15 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
 
     public ObservableCollection<Ingredient> UncheckedItems { get; } = new();
     public ObservableCollection<Ingredient> CheckedItems { get; } = new();
+    
+    // ? Flat list for Sharpnado CollectionView
+    public ObservableCollection<Ingredient> FlatItems { get; } = new();
 
     public ObservableCollection<IngredientGroup> Groups { get; } = new();
     private IngredientGroup? _uncheckedGroup;
     private IngredientGroup? _checkedGroup;
     
-    // NEW: For CollectionView grouping in ShoppingListDetailPage
+    // For CollectionView grouping
     public ObservableCollection<ShoppingItemGroup> AllItemsGrouped { get; } = new();
     private ShoppingItemGroup? _uncheckedItemsGroup;
     private ShoppingItemGroup? _checkedItemsGroup;
@@ -51,20 +55,18 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     public ICommand RemoveItemCommand { get; }
     public ICommand MoveUpCommand { get; }
     public ICommand MoveDownCommand { get; }
-    public ICommand ItemDraggedCommand { get; }
-    public ICommand ItemDraggedOverCommand { get; }
-    public ICommand ItemDragLeaveCommand { get; }
-    public ICommand ItemDroppedCommand { get; }
     public ICommand SaveAllCommand { get; }
     public ICommand ChangeUnitCommand { get; }
 
-    public ICommand ItemDroppedBeforeCommand { get; private set; }
-    public ICommand ItemDroppedAfterCommand { get; private set; }
+    // ? Sharpnado CollectionView drag-and-drop commands
+    public ICommand DragStartedCommand { get; }
+    public ICommand DragEndedCommand { get; }
+    public ICommand ItemTappedCommand { get; }
 
     private const bool AUTO_SAVE_ENABLED = false;
     public event Action<Ingredient>? ItemEditingCompleted;
 
-    // ? NEW: Event raised when save completes successfully so page can navigate back
+    // Event raised when save completes successfully so page can navigate back
     public event Func<Task>? SaveCompletedAsync;
 
     public ShoppingListDetailViewModel(IShoppingListService shoppingListService, IPlanService planService)
@@ -79,18 +81,136 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         SaveAllCommand = new Command(async () => await ManualSaveAllAsync());
         ChangeUnitCommand = new Command<(Ingredient, Unit)>((tuple) => ChangeUnit(tuple.Item1, tuple.Item2));
 
-        ItemDraggedCommand = new Command<Ingredient>(OnItemDragged);
-        ItemDraggedOverCommand = new Command<Ingredient>(OnItemDraggedOver);
-        ItemDragLeaveCommand = new Command<Ingredient>(OnItemDragLeave);
-        ItemDroppedCommand = new Command<Ingredient>(async (item) => await OnItemDroppedAsync(item));
-        ItemDroppedBeforeCommand = new Command<Ingredient>(async (item) => await ReorderItemsAsync(_itemBeingDragged ?? null, item, insertAfter: false));
-        ItemDroppedAfterCommand = new Command<Ingredient>(async (item) => await ReorderItemsAsync(_itemBeingDragged ?? null, item, insertAfter: true));
+        // ? Sharpnado drag-and-drop commands with DragAndDropInfo parameter
+        DragStartedCommand = new Command<DragAndDropInfo>(OnDragStarted);
+        DragEndedCommand = new Command<DragAndDropInfo>(OnDragEnded);
+        ItemTappedCommand = new Command<Ingredient>(OnItemTapped);
 
         if (AUTO_SAVE_ENABLED)
             ItemEditingCompleted += async (item) => await SaveItemStateAsync(item);
 
         UncheckedItems.CollectionChanged += (s, e) => OnPropertyChanged(nameof(HasCheckedItems));
         CheckedItems.CollectionChanged += (s, e) => OnPropertyChanged(nameof(HasCheckedItems));
+    }
+
+    #region Sharpnado Drag-and-Drop Handlers
+
+    /// <summary>
+    /// ? Called when drag starts - receives DragAndDropInfo with From index and Content
+    /// </summary>
+    private void OnDragStarted(DragAndDropInfo? info)
+    {
+        try
+        {
+            if (info == null) return;
+
+            if (info.Content is Ingredient ing)
+            {
+                _itemBeingDragged = ing;
+                ing.IsBeingDragged = true;
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ? Drag started: '{ing.Name}' at index {info.From}");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] OnDragStarted error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// ? Called when drag ends - receives DragAndDropInfo with From and To indices
+    /// Sharpnado automatically reorders the FlatItems collection, we sync back to source collections
+    /// </summary>
+    private void OnDragEnded(DragAndDropInfo? info)
+    {
+        try
+        {
+            if (info == null)
+            {
+                ClearDragStates();
+                return;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ? Drag ended: from {info.From} to {info.To}");
+
+            // Sharpnado has already reordered FlatItems, sync back to source collections
+            SyncFlatItemsToSourceCollections();
+            
+            MarkDirty();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] OnDragEnded error: {ex.Message}");
+        }
+        finally
+        {
+            _itemBeingDragged = null;
+            ClearDragStates();
+        }
+    }
+
+    /// <summary>
+    /// ? Syncs the reordered FlatItems back to UncheckedItems and CheckedItems
+    /// </summary>
+    private void SyncFlatItemsToSourceCollections()
+    {
+        try
+        {
+            // Extract items by their IsChecked status while preserving FlatItems order
+            var newUncheckedItems = FlatItems.Where(i => !i.IsChecked).ToList();
+            var newCheckedItems = FlatItems.Where(i => i.IsChecked).ToList();
+
+            // Update source collections
+            UncheckedItems.Clear();
+            foreach (var item in newUncheckedItems)
+                UncheckedItems.Add(item);
+
+            CheckedItems.Clear();
+            foreach (var item in newCheckedItems)
+                CheckedItems.Add(item);
+
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ? Synced: {UncheckedItems.Count} unchecked, {CheckedItems.Count} checked");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] SyncFlatItemsToSourceCollections error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// ? Called when an item is tapped (optional, for future use)
+    /// </summary>
+    private void OnItemTapped(Ingredient? item)
+    {
+        if (item == null) return;
+        System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Item tapped: {item.Name}");
+        // Could toggle IsChecked or open edit mode
+    }
+
+    #endregion
+
+    /// <summary>
+    /// ? Rebuilds the flat list from UncheckedItems + CheckedItems
+    /// </summary>
+    private void RebuildFlatItems()
+    {
+        try
+        {
+            FlatItems.Clear();
+            
+            foreach (var item in UncheckedItems)
+                FlatItems.Add(item);
+                
+            foreach (var item in CheckedItems)
+                FlatItems.Add(item);
+                
+            OnPropertyChanged(nameof(FlatItems));
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] RebuildFlatItems: {FlatItems.Count} items ({UncheckedItems.Count} unchecked, {CheckedItems.Count} checked)");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] RebuildFlatItems error: {ex.Message}");
+        }
     }
 
     private void EnsureGroups()
@@ -106,17 +226,14 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
             Groups.Add(_checkedGroup);
         }
         
-        // NEW: Initialize groups for CollectionView with localized names
         if (_uncheckedItemsGroup == null)
         {
-            // Use localized string for "To Buy" - defaults to "To Buy" if resource missing
             var toBuyTitle = FoodbookApp.Localization.ShoppingListDetailPageResources.ToBuy ?? "To Buy";
             _uncheckedItemsGroup = new ShoppingItemGroup(toBuyTitle, false, UncheckedItems);
             AllItemsGrouped.Add(_uncheckedItemsGroup);
         }
         if (_checkedItemsGroup == null)
         {
-            // Use localized string for "Collected" - defaults to "Collected" if resource missing
             var collectedTitle = FoodbookApp.Localization.ShoppingListDetailPageResources.Collected ?? "Collected";
             _checkedItemsGroup = new ShoppingItemGroup(collectedTitle, true, CheckedItems);
             AllItemsGrouped.Add(_checkedItemsGroup);
@@ -125,6 +242,8 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(Groups));
         OnPropertyChanged(nameof(AllItemsGrouped));
         OnPropertyChanged(nameof(HasCheckedItems));
+        
+        RebuildFlatItems();
     }
 
     public async Task LoadAsync(int planId)
@@ -161,6 +280,8 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
             {
                 if (CheckedItems.Contains(item)) { CheckedItems.Remove(item); UncheckedItems.Add(item); }
             }
+            
+            RebuildFlatItems();
         }
 
         if (e.PropertyName == nameof(Ingredient.IsChecked) ||
@@ -171,11 +292,10 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
             MarkDirty();
         }
 
-        // ? CRITICAL: Immediately save Unit changes to database (same as IngredientFormViewModel)
         if (e.PropertyName == nameof(Ingredient.Unit) && item.Id > 0)
         {
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Unit changed for '{item.Name}' - saving to DB immediately");
-            _ = SaveUnitChangeToDatabase(item); // Fire and forget
+            _ = SaveUnitChangeToDatabase(item);
         }
 
         if (AUTO_SAVE_ENABLED && (e.PropertyName == nameof(Ingredient.IsChecked) ||
@@ -187,43 +307,20 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         }
     }
 
-    /// <summary>
-    /// ? NEW: Immediately save unit change to database to prevent reverting on reload
-    /// </summary>
     private async Task SaveUnitChangeToDatabase(Ingredient item)
     {
-        if (item == null || item.Id <= 0)
-        {
-            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] SaveUnitChangeToDatabase: Item not saved yet, skipping immediate save");
-            return;
-        }
+        if (item == null || item.Id <= 0) return;
 
         try
         {
-            // Immediately persist to database
             await _shoppingListService.SaveShoppingListItemStateAsync(
-                _currentPlanId, 
-                item.Id, 
-                item.Order, 
-                item.Name, 
-                item.Unit, 
-                item.IsChecked, 
-                item.Quantity);
+                _currentPlanId, item.Id, item.Order, item.Name, item.Unit, item.IsChecked, item.Quantity);
             
-            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ? Unit change saved to database: '{item.Name}' -> {item.Unit}");
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ? Unit change saved: '{item.Name}' -> {item.Unit}");
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ? Failed to save unit change: {ex.Message}");
-            // Optionally show user feedback
-            await MainThread.InvokeOnMainThreadAsync(async () =>
-            {
-                try
-                {
-                    await Microsoft.Maui.Controls.Shell.Current.DisplayAlert("B³¹d", $"Nie uda³o siê zapisaæ zmiany jednostki: {ex.Message}", "OK");
-                }
-                catch { }
-            });
         }
     }
 
@@ -239,33 +336,21 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
             
             System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] Save completed successfully");
             
-            // ? CRITICAL: Raise event to notify page that save completed successfully
             if (SaveCompletedAsync != null)
             {
-                try
-                {
-                    var handlers = SaveCompletedAsync.GetInvocationList().Cast<Func<Task>>();
-                    var tasks = handlers.Select(h => h());
-                    await Task.WhenAll(tasks);
-                    System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] SaveCompletedAsync event handlers completed");
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Error raising SaveCompletedAsync: {ex.Message}");
-                }
+                var handlers = SaveCompletedAsync.GetInvocationList().Cast<Func<Task>>();
+                var tasks = handlers.Select(h => h());
+                await Task.WhenAll(tasks);
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Manual save error: {ex.Message}");
             
-            // Show error to user
             try
             {
                 await Microsoft.Maui.Controls.Shell.Current.DisplayAlert(
-                    "B³¹d", 
-                    $"Nie uda³o siê zapisaæ listy zakupów: {ex.Message}", 
-                    "OK");
+                    "B³¹d", $"Nie uda³o siê zapisaæ listy zakupów: {ex.Message}", "OK");
             }
             catch { }
         }
@@ -282,7 +367,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         try
         {
             var savedId = await _shoppingListService.SaveShoppingListItemStateAsync(_currentPlanId, item.Id, item.Order, item.Name, item.Unit, item.IsChecked, item.Quantity);
-            if (item.Id != savedId) { item.Id = savedId; System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Updated item '{item.Name}' Id: {savedId}"); }
+            if (item.Id != savedId) { item.Id = savedId; }
         }
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error saving shopping list item state: {ex.Message}"); }
     }
@@ -302,6 +387,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         var newItem = new Ingredient { Name = string.Empty, Quantity = 1, Unit = Unit.Piece, Order = UncheckedItems.Count };
         newItem.PropertyChanged += OnItemPropertyChanged;
         UncheckedItems.Add(newItem);
+        RebuildFlatItems();
         MarkDirty();
     }
 
@@ -312,35 +398,15 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         var removed = UncheckedItems.Remove(item) || CheckedItems.Remove(item);
         if (removed)
         {
+            RebuildFlatItems();
             MarkDirty();
             if (item.Id > 0)
             {
-                try { await _shoppingListService.RemoveShoppingListItemByIdAsync(item.Id); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error removing item by Id: {ex.Message}"); }
-                item.Id = 0; // ensure not matched later
+                try { await _shoppingListService.RemoveShoppingListItemByIdAsync(item.Id); } 
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error removing item by Id: {ex.Message}"); }
+                item.Id = 0;
             }
         }
-    }
-
-    public async Task ReorderItemsAsync(Ingredient draggedItem, Ingredient targetItem, bool insertAfter = false)
-    {
-        try
-        {
-            if (draggedItem == null || targetItem == null) return;
-            var draggedInUnchecked = UncheckedItems.Contains(draggedItem);
-            var targetInUnchecked = UncheckedItems.Contains(targetItem);
-            if (draggedInUnchecked != targetInUnchecked) return;
-            var collection = draggedInUnchecked ? UncheckedItems : CheckedItems;
-            var from = collection.IndexOf(draggedItem); var to = collection.IndexOf(targetItem);
-            if (from == -1 || to == -1) return;
-            int insertIndex = to + (insertAfter ? 1 : 0);
-            if (from == insertIndex || from == insertIndex - 1) return;
-            collection.RemoveAt(from);
-            if (from < insertIndex) insertIndex--;
-            insertIndex = Math.Clamp(insertIndex, 0, collection.Count);
-            collection.Insert(insertIndex, draggedItem);
-            MarkDirty();
-        }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error reordering items: {ex.Message}"); }
     }
 
     public async Task MoveItemUpAsync(Ingredient? item)
@@ -352,7 +418,10 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
             var idx = collection.IndexOf(item);
             if (idx > 0)
             {
-                collection.RemoveAt(idx); collection.Insert(idx - 1, item); MarkDirty();
+                collection.RemoveAt(idx); 
+                collection.Insert(idx - 1, item);
+                RebuildFlatItems();
+                MarkDirty();
             }
         }
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error moving item up: {ex.Message}"); }
@@ -367,120 +436,36 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
             var idx = collection.IndexOf(item);
             if (idx >= 0 && idx < collection.Count - 1)
             {
-                collection.RemoveAt(idx); collection.Insert(idx + 1, item); MarkDirty();
+                collection.RemoveAt(idx); 
+                collection.Insert(idx + 1, item);
+                RebuildFlatItems();
+                MarkDirty();
             }
         }
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error moving item down: {ex.Message}"); }
     }
 
-    private void OnItemDragged(Ingredient item)
+    private void ClearDragStates()
     {
-        if (item == null) return;
-        
-        // ? Clear all previous drag states
         foreach (var ing in UncheckedItems.Concat(CheckedItems))
         {
             ing.IsBeingDragged = false;
             ing.IsBeingDraggedOver = false;
         }
-        
-        item.IsBeingDragged = true; 
-        _itemBeingDragged = item;
-        System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Item dragged: {item.Name}");
     }
 
-    private void OnItemDraggedOver(Ingredient item)
-    {
-        if (item == null) return;
-        
-        // ? Clear drag-over state from all items first
-        foreach (var ing in UncheckedItems.Concat(CheckedItems))
-        {
-            if (ing != item)
-                ing.IsBeingDraggedOver = false;
-        }
-        
-        // ? Don't highlight the item being dragged
-        if (item == _itemBeingDragged)
-        {
-            item.IsBeingDraggedOver = false;
-        }
-        else
-        {
-            item.IsBeingDraggedOver = true;
-        }
-    }
-
-    private void OnItemDragLeave(Ingredient item)
-    {
-        if (item == null) return;
-        item.IsBeingDraggedOver = false;
-    }
-
-    private async Task OnItemDroppedAsync(Ingredient item)
-    {
-        if (item == null || _itemBeingDragged == null) return;
-        try
-        {
-            var move = _itemBeingDragged; 
-            var before = item;
-            if (move == before) return;
-            
-            var draggedInUnchecked = UncheckedItems.Contains(move);
-            var targetInUnchecked = UncheckedItems.Contains(before);
-            if (draggedInUnchecked != targetInUnchecked) return;
-            
-            var collection = draggedInUnchecked ? UncheckedItems : CheckedItems;
-            int idx = collection.IndexOf(before);
-            if (idx >= 0 && idx < collection.Count)
-            {
-                collection.Remove(move); 
-                collection.Insert(idx, move); 
-                MarkDirty();
-                
-                // ? Clear all drag states after drop
-                move.IsBeingDragged = false; 
-                before.IsBeingDraggedOver = false;
-                
-                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Item dropped: {move.Name} before {before.Name}");
-            }
-        }
-        catch (Exception ex) 
-        { 
-            System.Diagnostics.Debug.WriteLine($"Error in OnItemDroppedAsync: {ex.Message}"); 
-        }
-        finally 
-        { 
-            _itemBeingDragged = null;
-            
-            // ? Ensure all drag states are cleared
-            foreach (var ing in UncheckedItems.Concat(CheckedItems))
-            {
-                ing.IsBeingDragged = false;
-                ing.IsBeingDraggedOver = false;
-            }
-        }
-    }
-
-    public void OnItemEditingCompleted(Ingredient item) => ItemEditingCompleted?.Invoke(item);
     public void DiscardChanges() => HasUnsavedChanges = false;
 
-    /// <summary>
-    /// ? UPDATED: Change unit for a given ingredient and immediately save to database.
-    /// This method is called by ShoppingListDetailPage.OnUnitPickerSelectionChanged.
-    /// </summary>
     public void ChangeUnit(Ingredient? item, Unit newUnit)
     {
         if (item == null) return;
-        if (item.Unit == newUnit) return; // no change
+        if (item.Unit == newUnit) return;
         
         var old = item.Unit;
-        item.Unit = newUnit; // triggers PropertyChanged + MarkDirty + immediate DB save via OnItemPropertyChanged
+        item.Unit = newUnit;
         
         System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ChangeUnit called: {old} -> {newUnit}");
         
-        // PropertyChanged event will trigger OnItemPropertyChanged which handles immediate save
-        // If PropertyChanged did not mark (e.g., event unsubscribed), ensure dirty state
         if (!HasUnsavedChanges) MarkDirty();
     }
 

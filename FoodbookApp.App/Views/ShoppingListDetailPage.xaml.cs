@@ -15,11 +15,7 @@ public partial class ShoppingListDetailPage : ContentPage
     private readonly ShoppingListDetailViewModel _viewModel;
     private readonly PageThemeHelper _themeHelper;
 
-    // ? Debouncing support for text changes (disabled for auto-save)
-    private CancellationTokenSource? _debounceCts;
-    private const int DebounceDelayMs = 300;
-
-    // ? Page lifecycle cancellation token
+    // Page lifecycle cancellation token
     private CancellationTokenSource? _pageCts;
 
     public int PlanId { get; set; }
@@ -39,7 +35,7 @@ public partial class ShoppingListDetailPage : ContentPage
         BindingContext = _viewModel;
         _themeHelper = new PageThemeHelper();
 
-        // ? CRITICAL: Subscribe to SaveCompletedAsync event to navigate back after save
+        // Subscribe to SaveCompletedAsync event to navigate back after save
         try
         {
             _viewModel.SaveCompletedAsync += OnSaveCompletedAsync;
@@ -52,20 +48,17 @@ public partial class ShoppingListDetailPage : ContentPage
     }
 
     /// <summary>
-    /// ? NEW: Handler for SaveCompletedAsync event - navigates back to ShoppingListPage
+    /// Handler for SaveCompletedAsync event - navigates back to ShoppingListPage
     /// </summary>
     private async Task OnSaveCompletedAsync()
     {
         try
         {
             System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] OnSaveCompletedAsync - navigating back");
-            
-            // Small delay to ensure UI updates before navigation
+
             await Task.Delay(100);
-            
-            // Suppress shell navigating handler during this navigation
             _suppressShellNavigating = true;
-            
+
             try
             {
                 await Shell.Current.GoToAsync("..");
@@ -87,7 +80,6 @@ public partial class ShoppingListDetailPage : ContentPage
     {
         try
         {
-            // When popup closes, skip the next OnAppearing-triggered reload
             if (!isOpen)
             {
                 _skipNextAppearReload = true;
@@ -103,7 +95,7 @@ public partial class ShoppingListDetailPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        
+
         _pageCts = new CancellationTokenSource();
         _themeHelper.Initialize();
 
@@ -120,12 +112,11 @@ public partial class ShoppingListDetailPage : ContentPage
         {
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Failed to subscribe Shell.Navigating: {ex.Message}");
         }
-        
+
         try
         {
             if (_skipNextAppearReload)
             {
-                // Clear the flag and do not reload data (preserve in-memory edits like Unit changes)
                 System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Skipping reload on appearing (popup just closed)");
                 _skipNextAppearReload = false;
             }
@@ -144,14 +135,13 @@ public partial class ShoppingListDetailPage : ContentPage
             await DisplayAlert("B³¹d", "Nie mo¿na za³adowaæ listy zakupów", "OK");
         }
 
-        // Subscribe to global popup state changes to avoid reload when unit picker closes
+        // Subscribe to global popup state changes
         try
         {
             if (!_popupSubscribed)
             {
                 SimplePicker.GlobalPopupStateChanged += OnGlobalPickerPopupStateChanged;
                 _popupSubscribed = true;
-                System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Subscribed to GlobalPopupStateChanged");
             }
         }
         catch (Exception ex)
@@ -160,13 +150,9 @@ public partial class ShoppingListDetailPage : ContentPage
         }
     }
 
-    protected override async void OnDisappearing()
+    protected override void OnDisappearing()
     {
         base.OnDisappearing();
-        
-        _debounceCts?.Cancel();
-        _debounceCts?.Dispose();
-        _debounceCts = null;
 
         _pageCts?.Cancel();
         _pageCts?.Dispose();
@@ -185,7 +171,7 @@ public partial class ShoppingListDetailPage : ContentPage
         }
         catch { }
 
-        // Unsubscribe popup event to avoid leaks
+        // Unsubscribe popup event
         try
         {
             if (_popupSubscribed)
@@ -196,11 +182,10 @@ public partial class ShoppingListDetailPage : ContentPage
         }
         catch { }
 
-        // ? CRITICAL: Unsubscribe SaveCompletedAsync to avoid memory leaks
+        // Unsubscribe SaveCompletedAsync
         try
         {
             _viewModel.SaveCompletedAsync -= OnSaveCompletedAsync;
-            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Unsubscribed from SaveCompletedAsync event");
         }
         catch { }
     }
@@ -222,7 +207,7 @@ public partial class ShoppingListDetailPage : ContentPage
                         finally { await Task.Delay(200); _suppressShellNavigating = false; }
                     }
                 });
-                return true; // block default behavior
+                return true;
             }
 
             SafeNavigateBack();
@@ -250,7 +235,6 @@ public partial class ShoppingListDetailPage : ContentPage
         });
     }
 
-    // Shell navigation handler
     private void OnShellNavigating(object? sender, ShellNavigatingEventArgs e)
     {
         try
@@ -276,10 +260,7 @@ public partial class ShoppingListDetailPage : ContentPage
                             else
                                 await Shell.Current.GoToAsync("..", false);
                         }
-                        catch (Exception navEx)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Navigation after discard failed: {navEx.Message}");
-                        }
+                        catch { }
                         finally
                         {
                             await Task.Delay(200);
@@ -295,6 +276,8 @@ public partial class ShoppingListDetailPage : ContentPage
         }
     }
 
+    #region Component Event Handlers
+
     private void OnEntryFocused(object sender, EventArgs e)
     {
         _viewModel.IsEditing = true;
@@ -309,7 +292,6 @@ public partial class ShoppingListDetailPage : ContentPage
     {
         try
         {
-            // Extract ingredient from component's BindingContext
             if (sender is ShoppingListItemComponent component && component.BindingContext is Ingredient ing)
             {
                 _viewModel.ChangeUnit(ing, ing.Unit);
@@ -320,4 +302,6 @@ public partial class ShoppingListDetailPage : ContentPage
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] OnUnitPickerSelectionChanged error: {ex.Message}");
         }
     }
+
+    #endregion
 }

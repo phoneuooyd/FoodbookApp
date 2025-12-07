@@ -16,23 +16,9 @@
         <converters:BoolToGrayConverter x:Key="BoolToGrayConverter" />
     </ContentView.Resources>
     
-    <!-- Wrapper grid with top/bottom drop zones -->
-    <Grid RowDefinitions="Auto,Auto,Auto">
-        <!-- Top insert spacer - expands when dragging over -->
-        <BoxView x:Name="TopInsertZone"
-                 Grid.Row="0" 
-                 HeightRequest="0" 
-                 BackgroundColor="Transparent"
-                 IsVisible="{Binding ShowDragAndDrop, Source={x:Reference ItemComponent}}">
-            <BoxView.GestureRecognizers>
-                <DropGestureRecognizer AllowDrop="True" 
-                                        DragOver="OnTopInsertDragOver" 
-                                        DragLeave="OnTopInsertDragLeave" 
-                                        Drop="OnTopInsertDrop" />
-            </BoxView.GestureRecognizers>
-        </BoxView>
-        
-        <Frame Grid.Row="1" 
+    <!-- Wrapper grid - usuń drop zones, Sharpnado to obsługuje -->
+    <Grid RowDefinitions="Auto">
+        <Frame Grid.Row="0" 
                x:Name="ItemFrame"
                Padding="8,8" 
                Margin="10,4" 
@@ -48,18 +34,10 @@
                 </DataTrigger>
             </Frame.Triggers>
             
-            <Frame.GestureRecognizers>
-                <!-- Enable drag & drop on entire frame -->
-                <DragGestureRecognizer CanDrag="True" DragStarting="OnDragStarting" />
-                <DropGestureRecognizer AllowDrop="True" 
-                                        DragOver="OnDragOver" 
-                                        DragLeave="OnDragLeave" 
-                                        Drop="OnDrop" />
-            </Frame.GestureRecognizers>
-            
             <Grid RowDefinitions="Auto,Auto" 
                   ColumnSpacing="8" 
                   BackgroundColor="Transparent">
+                
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -187,19 +165,5 @@
                 </Grid>
             </Grid>
         </Frame>
-        
-        <!-- Bottom insert spacer - expands when dragging over -->
-        <BoxView x:Name="BottomInsertZone"
-                 Grid.Row="2" 
-                 HeightRequest="0" 
-                 BackgroundColor="Transparent"
-                 IsVisible="{Binding ShowDragAndDrop, Source={x:Reference ItemComponent}}">
-            <BoxView.GestureRecognizers>
-                <DropGestureRecognizer AllowDrop="True" 
-                                        DragOver="OnBottomInsertDragOver" 
-                                        DragLeave="OnBottomInsertDragLeave" 
-                                        Drop="OnBottomInsertDrop" />
-            </BoxView.GestureRecognizers>
-        </BoxView>
     </Grid>
 </ContentView>

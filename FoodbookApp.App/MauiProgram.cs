@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http;
 using CommunityToolkit.Maui;
 using FoodbookApp.Interfaces;
+using Sharpnado.CollectionView; // ? Sharpnado CollectionView namespace
 
 namespace FoodbookApp
 {
@@ -22,6 +23,7 @@ namespace FoodbookApp
             builder
                 .UseMauiApp<App>()
                 .UseMauiCommunityToolkit()
+                .UseSharpnadoCollectionView(loggerEnable: false) // ? Initialize Sharpnado CollectionView with drag-and-drop support
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");

@@ -6,6 +6,7 @@
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:converters="clr-namespace:Foodbook.Converters"
              xmlns:components="clr-namespace:Foodbook.Views.Components"
+             xmlns:sho="http://sharpnado.com"
              x:Class="Foodbook.Views.ShoppingListDetailPage"
              x:Name="ThisPage"
              x:DataType="vm:ShoppingListDetailViewModel"
@@ -14,22 +15,22 @@
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         
-        <!-- Item template for shopping list items using ShoppingListItemComponent -->
+        <!-- Item template wrapped in DraggableViewCell for drag-and-drop -->
         <DataTemplate x:Key="ShoppingItemTemplate" x:DataType="models:Ingredient">
-            <components:ShoppingListItemComponent 
-                RemoveItemCommand="{Binding BindingContext.RemoveItemCommand, Source={x:Reference ThisPage}}"
-                ChangeUnitCommand="{Binding BindingContext.ChangeUnitCommand, Source={x:Reference ThisPage}}"
-                UnitsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}"
-                ShowDragAndDrop="True"
-                DragStartingCommand="{Binding BindingContext.ItemDraggedCommand, Source={x:Reference ThisPage}}"
-                DragOverCommand="{Binding BindingContext.ItemDraggedOverCommand, Source={x:Reference ThisPage}}"
-                DragLeaveCommand="{Binding BindingContext.ItemDragLeaveCommand, Source={x:Reference ThisPage}}"
-                DropCommand="{Binding BindingContext.ItemDroppedCommand, Source={x:Reference ThisPage}}"
-                ItemDroppedBeforeCommand="{Binding BindingContext.ItemDroppedBeforeCommand, Source={x:Reference ThisPage}}"
-                ItemDroppedAfterCommand="{Binding BindingContext.ItemDroppedAfterCommand, Source={x:Reference ThisPage}}"
-                EntryFocused="OnEntryFocused"
-                EntryUnfocused="OnEntryUnfocused"
-                UnitSelectionChanged="OnUnitPickerSelectionChanged" />
+            <sho:DraggableViewCell x:Name="DraggableViewCell">
+                <ContentView>
+                    <!-- Reset x:DataType to allow binding to page's BindingContext -->
+                    <components:ShoppingListItemComponent 
+                        x:DataType="x:Null"
+                        RemoveItemCommand="{Binding BindingContext.RemoveItemCommand, Source={x:Reference ThisPage}}"
+                        ChangeUnitCommand="{Binding BindingContext.ChangeUnitCommand, Source={x:Reference ThisPage}}"
+                        UnitsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}"
+                        ShowDragAndDrop="True"
+                        EntryFocused="OnEntryFocused"
+                        EntryUnfocused="OnEntryUnfocused"
+                        UnitSelectionChanged="OnUnitPickerSelectionChanged" />
+                </ContentView>
+            </sho:DraggableViewCell>
         </DataTemplate>
         
         <!-- Group header template -->
@@ -52,8 +53,6 @@
     <Grid RowDefinitions="Auto,*" Padding="0">
         <!-- Header with save and add buttons only -->
         <Grid Row="0" Padding="10" ColumnDefinitions="*,Auto,Auto" BackgroundColor="Transparent">
-            <!-- Removed duplicate "To Buy" label - it's now shown in group header -->
-            
             <Button Grid.Column="1" 
                     x:Name="SaveButton" 
                     Command="{Binding SaveAllCommand}" 
@@ -95,33 +94,20 @@
                     VisualElement.ZIndex="10" />
         </Grid>
 
-        <!-- Use CollectionView directly - it has native scrolling + grouping support -->
-        <CollectionView Grid.Row="1"
+        <!-- Sharpnado CollectionView with drag-and-drop and vertical layout -->
+        <sho:CollectionView Grid.Row="1"
             x:Name="ShoppingCollectionView"
-            ItemsSource="{Binding AllItemsGrouped}"
+            CollectionLayout="Vertical"
+            ItemsSource="{Binding FlatItems}"
             ItemTemplate="{StaticResource ShoppingItemTemplate}"
-            IsGrouped="True"
-            SelectionMode="None"
-            ItemSizingStrategy="MeasureAllItems">
-            
-            <CollectionView.GroupHeaderTemplate>
-                <DataTemplate x:DataType="vm:ShoppingItemGroup">
-                    <StackLayout Padding="10,14,10,4" IsVisible="{Binding IsVisible}">
-                        <!-- Separator line above "Collected" section -->
-                        <BoxView HeightRequest="1" 
-                                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" 
-                                 Margin="0,0,0,10"
-                                 IsVisible="{Binding IsCheckedGroup}" />
-                        
-                        <Label FontSize="18" 
-                               FontAttributes="Bold" 
-                               TextColor="{Binding GroupHeaderColor}" 
-                               Text="{Binding GroupName}" />
-                    </StackLayout>
-                </DataTemplate>
-            </CollectionView.GroupHeaderTemplate>
-            
-            <!-- Remove Footer - empty message handled by hiding group header -->
-        </CollectionView>
+            ItemHeight="140"
+            CollectionPadding="0,8,0,80"
+            ItemSpacing="4"
+            EnableDragAndDrop="True"
+            DragAndDropTrigger="LongTap"
+            DragAndDropDirection="VerticalOnly"
+            DragAndDropStartedCommand="{Binding DragStartedCommand}"
+            DragAndDropEndedCommand="{Binding DragEndedCommand}"
+            TapCommand="{Binding ItemTappedCommand}" />
     </Grid>
 </ContentPage>

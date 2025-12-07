@@ -15,7 +15,12 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.110" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="MR.Gestures" Version="5.0.0" />
+    <PackageReference Include="Sharpnado.CollectionView.Maui" Version="3.1.2" />
+    <PackageReference Include="Sharpnado.Maui.DragDropGridView" Version="1.0.1" />
+    <PackageReference Include="Sharpnado.TaskMonitor" Version="1.1.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4">
       <PrivateAssets>all</PrivateAssets>
