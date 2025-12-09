@@ -16,6 +16,9 @@ public partial class ShoppingListItemComponent : ContentView
     public static readonly BindableProperty UnitsSourceProperty =
         BindableProperty.Create(nameof(UnitsSource), typeof(IEnumerable), typeof(ShoppingListItemComponent));
 
+    public static readonly BindableProperty ShowDragAndDropProperty =
+        BindableProperty.Create(nameof(ShowDragAndDrop), typeof(bool), typeof(ShoppingListItemComponent), true);
+
     private readonly PageThemeHelper _themeHelper;
 
     public ICommand? RemoveItemCommand
@@ -34,6 +37,12 @@ public partial class ShoppingListItemComponent : ContentView
     {
         get => (IEnumerable?)GetValue(UnitsSourceProperty);
         set => SetValue(UnitsSourceProperty, value);
+    }
+
+    public bool ShowDragAndDrop
+    {
+        get => (bool)GetValue(ShowDragAndDropProperty);
+        set => SetValue(ShowDragAndDropProperty, value);
     }
 
     // Events for focus handling

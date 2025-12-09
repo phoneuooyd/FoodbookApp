@@ -17,6 +17,11 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     private readonly IIngredientService _service;
     private Ingredient? _ingredient;
 
+    // Dirty tracking
+    private bool _isDirty = false;
+    private bool _suppressDirtyTracking = false;
+    public bool HasUnsavedChanges => _isDirty;
+
     // Event raised after a successful save; subscribers can await it
     public event Func<Task>? SavedAsync;
 
@@ -46,10 +51,10 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     
     public ICommand SelectTabCommand { get; }
 
-    public string Name { get => _name; set { _name = value; OnPropertyChanged(); ValidateInput(); } }
+    public string Name { get => _name; set { _name = value; OnPropertyChanged(); ValidateInput(); MarkDirty(); } }
     private string _name = string.Empty;
 
-    public string Quantity { get => _quantity; set { _quantity = value; OnPropertyChanged(); ValidateInput(); } }
+    public string Quantity { get => _quantity; set { _quantity = value; OnPropertyChanged(); ValidateInput(); MarkDirty(); } }
     private string _quantity = "100";  // Default value
 
     public string UnitWeight
@@ -60,6 +65,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
             _unitWeight = value;
             OnPropertyChanged();
             ValidateInput();
+            MarkDirty();
         }
     }
     private string _unitWeight = "1.0";
@@ -79,6 +85,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 OnPropertyChanged(); 
                 OnPropertyChanged(nameof(IsUnitWeightVisible)); 
                 ValidateInput();
+                MarkDirty();
                 
                 // ? CRITICAL: In edit mode, immediately persist to database to prevent reverting
                 if (_ingredient != null && _ingredient.Id > 0)
@@ -124,16 +131,16 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     }
 
     // Nutritional information fields
-    public string Calories { get => _calories; set { _calories = value; OnPropertyChanged(); ValidateInput(); } }
+    public string Calories { get => _calories; set { _calories = value; OnPropertyChanged(); ValidateInput(); MarkDirty(); } }
     private string _calories = "0";
 
-    public string Protein { get => _protein; set { _protein = value; OnPropertyChanged(); ValidateInput(); } }
+    public string Protein { get => _protein; set { _protein = value; OnPropertyChanged(); ValidateInput(); MarkDirty(); } }
     private string _protein = "0";
 
-    public string Fat { get => _fat; set { _fat = value; OnPropertyChanged(); ValidateInput(); } }
+    public string Fat { get => _fat; set { _fat = value; OnPropertyChanged(); ValidateInput(); MarkDirty(); } }
     private string _fat = "0";
 
-    public string Carbs { get => _carbs; set { _carbs = value; OnPropertyChanged(); ValidateInput(); } }
+    public string Carbs { get => _carbs; set { _carbs = value; OnPropertyChanged(); ValidateInput(); MarkDirty(); } }
     private string _carbs = "0";
 
     public string Title => _ingredient == null 
@@ -220,6 +227,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     {
         try
         {
+            _suppressDirtyTracking = true;
             _ingredient = null;
             Name = string.Empty;
             Quantity = "100";
@@ -242,11 +250,15 @@ public class IngredientFormViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(IsUnitWeightVisible));
             
             ValidateInput();
+
+            _isDirty = false;
+            _suppressDirtyTracking = false;
             
             System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Form reset to defaults");
         }
         catch (Exception ex)
         {
+            _suppressDirtyTracking = false;
             System.Diagnostics.Debug.WriteLine($"Error in Reset: {ex.Message}");
         }
     }
@@ -255,6 +267,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     {
         try
         {
+            _suppressDirtyTracking = true;
             var ing = await _service.GetIngredientAsync(id);
             if (ing != null)
             {
@@ -277,10 +290,13 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 OnPropertyChanged(nameof(IsUnitWeightVisible));
                 ValidateInput();
             }
+            _isDirty = false;
+            _suppressDirtyTracking = false;
         }
         catch (Exception ex)
         {
-            ValidationMessage = $"B³¹d podczas ³adowania sk³adnika: {ex.Message}";
+            _suppressDirtyTracking = false;
+            ValidationMessage = $"B??d podczas ?adowania sk?adnika: {ex.Message}";
             System.Diagnostics.Debug.WriteLine($"Error in LoadAsync: {ex.Message}");
         }
     }
@@ -683,5 +699,34 @@ public class IngredientFormViewModel : INotifyPropertyChanged
         {
             return 0;
         }
+    }
+
+    /// <summary>
+    /// Discards any unsaved changes and resets dirty flag
+    /// </summary>
+    public void DiscardChanges()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Discarding changes");
+            _suppressDirtyTracking = true;
+            Reset();
+            _isDirty = false;
+            _suppressDirtyTracking = false;
+        }
+        catch (Exception ex)
+        {
+            _suppressDirtyTracking = false;
+            System.Diagnostics.Debug.WriteLine($"[IngredientFormViewModel] Error in DiscardChanges: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Marks the form as having unsaved changes
+    /// </summary>
+    private void MarkDirty()
+    {
+        if (_suppressDirtyTracking) return;
+        _isDirty = true;
     }
 }

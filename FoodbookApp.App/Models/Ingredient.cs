@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.CompilerServices;
 using FoodbookApp.Localization;
-using Foodbook.ViewModels; // ? Added for IShoppingListItem
 
 namespace Foodbook.Models
 {
@@ -17,7 +16,7 @@ namespace Foodbook.Models
         Piece
     }
 
-    public class Ingredient : IShoppingListItem, INotifyPropertyChanged
+    public class Ingredient : INotifyPropertyChanged
     {
         public int Id { get; set; }
 

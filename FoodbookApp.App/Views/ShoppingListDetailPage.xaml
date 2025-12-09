@@ -15,17 +15,17 @@
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         
-        <!-- Section header template -->
-        <DataTemplate x:Key="SectionHeaderTemplate" x:DataType="vm:ShoppingListSectionHeader">
+        <!-- Header template for group sections (To Buy / Collected) -->
+        <DataTemplate x:Key="ShoppingHeaderTemplate" x:DataType="vm:ShoppingListHeader">
             <sho:DraggableViewCell IsDraggable="False">
-                <StackLayout Padding="14,12,14,6">
+                <StackLayout Padding="3,3,3,3" IsVisible="{Binding IsVisible}">
                     <!-- Separator line above "Collected" section -->
                     <BoxView HeightRequest="1" 
                              BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" 
-                             Margin="0,0,0,10"
-                             IsVisible="{Binding IsCollectedSection}" />
+                             Margin="0,0,0,8"
+                             IsVisible="{Binding IsCheckedSection}" />
                     
-                    <Label FontSize="18" 
+                    <Label FontSize="15" 
                            FontAttributes="Bold" 
                            TextColor="{Binding HeaderColor}" 
                            Text="{Binding Title}" />
@@ -37,12 +37,11 @@
         <DataTemplate x:Key="ShoppingItemTemplate" x:DataType="models:Ingredient">
             <sho:DraggableViewCell x:Name="DraggableViewCell">
                 <ContentView>
-                    <!-- Reset x:DataType to allow binding to page's BindingContext -->
                     <components:ShoppingListItemComponent 
-                        x:DataType="x:Null"
                         RemoveItemCommand="{Binding BindingContext.RemoveItemCommand, Source={x:Reference ThisPage}}"
                         ChangeUnitCommand="{Binding BindingContext.ChangeUnitCommand, Source={x:Reference ThisPage}}"
                         UnitsSource="{Binding BindingContext.Units, Source={x:Reference ThisPage}}"
+                        ShowDragAndDrop="True"
                         EntryFocused="OnEntryFocused"
                         EntryUnfocused="OnEntryUnfocused"
                         UnitSelectionChanged="OnUnitPickerSelectionChanged" />
@@ -50,9 +49,9 @@
             </sho:DraggableViewCell>
         </DataTemplate>
         
-        <!-- DataTemplateSelector for headers vs items -->
-        <components:ShoppingListTemplateSelector x:Key="ShoppingListTemplateSelector"
-            HeaderTemplate="{StaticResource SectionHeaderTemplate}"
+        <!-- Template selector for mixed headers and items -->
+        <converters:ShoppingListTemplateSelector x:Key="ShoppingListTemplateSelector"
+            HeaderTemplate="{sho:SizedDataTemplate Template={StaticResource ShoppingHeaderTemplate}, Size=51}"
             ItemTemplate="{StaticResource ShoppingItemTemplate}" />
     </ContentPage.Resources>
 
@@ -106,9 +105,9 @@
             CollectionLayout="Vertical"
             ItemsSource="{Binding FlatItems}"
             ItemTemplate="{StaticResource ShoppingListTemplateSelector}"
-            ItemHeight="120"
-            CollectionPadding="0,8,0,80"
-            ItemSpacing="4"
+            ItemHeight="115"
+            CollectionPadding="0,4,0,80"
+            ItemSpacing="2"
             EnableDragAndDrop="True"
             DragAndDropTrigger="LongTap"
             DragAndDropDirection="VerticalOnly"

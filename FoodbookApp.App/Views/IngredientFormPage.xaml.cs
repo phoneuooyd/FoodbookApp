@@ -24,22 +24,17 @@ public partial class IngredientFormPage : ContentPage
     private object? _originalPageBackgroundColorResource;
     private object? _originalPageBackgroundBrushResource;
     private bool _appliedOpaqueBackground = false;
-    
-    // NEW: Track if we applied local overrides (different from global override)
     private bool _appliedLocalOverride = false;
+
+    // ? SIMPLIFIED: Shell navigation handling for unsaved changes (based on ShoppingListDetailPage)
+    private bool _isSubscribedToShellNavigating = false;
+    private bool _suppressShellNavigating = false;
 
     public IngredientFormPage(IngredientFormViewModel vm)
     {
         InitializeComponent();
         BindingContext = vm;
         _themeHelper = new PageThemeHelper();
-
-        // Subscribe to ViewModel events (if we expose Saved event)
-        try
-        {
-            vm.PropertyChanged += OnVmPropertyChanged;
-        }
-        catch { }
     }
 
     // Returns a task that completes when ViewModel raises SavedAsync or the page disappears
@@ -60,7 +55,6 @@ public partial class IngredientFormPage : ContentPage
 
         if (ViewModel != null)
         {
-            // Subscribe to SavedAsync by adding an async handler that sets the TCS
             ViewModel.SavedAsync += async () => { OnSavedHandler(); await Task.CompletedTask; };
         }
 
@@ -73,14 +67,6 @@ public partial class IngredientFormPage : ContentPage
         return tcs.Task;
     }
 
-    private async void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(IngredientFormViewModel.ValidationMessage))
-        {
-            // ignore
-        }
-    }
-
     protected override void OnAppearing()
     {
         base.OnAppearing();
@@ -89,6 +75,21 @@ public partial class IngredientFormPage : ContentPage
         _themeHelper.ThemeChanged += OnThemeChanged;
         _themeHelper.CultureChanged += OnCultureChanged;
 
+        // ? SIMPLIFIED: Subscribe Shell.Navigating for unsaved changes prompt
+        try
+        {
+            if (!_isSubscribedToShellNavigating && Shell.Current != null)
+            {
+                Shell.Current.Navigating += OnShellNavigating;
+                _isSubscribedToShellNavigating = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] Failed to subscribe Shell.Navigating: {ex.Message}");
+        }
+
+        // Handle modal presentation background
         try
         {
             var currentPage = Shell.Current?.CurrentPage;
@@ -97,22 +98,21 @@ public partial class IngredientFormPage : ContentPage
 
             var themeService = MauiProgram.ServiceProvider?.GetService<IThemeService>();
             bool wallpaperEnabled = themeService?.IsWallpaperBackgroundEnabled() == true;
-            bool colorfulEnabled = themeService?.GetIsColorfulBackgroundEnabled() == true; // NEW
+            bool colorfulEnabled = themeService?.GetIsColorfulBackgroundEnabled() == true;
 
             if (openedFromAddRecipePage && isModal)
             {
                 System.Diagnostics.Debug.WriteLine("[IngredientFormPage] Modal open from AddRecipePage context");
                 HideUnderlyingContent();
 
-                // Always force opaque when coming from popup + modal if wallpaper OR colorful background is enabled
                 if (wallpaperEnabled || colorfulEnabled)
                 {
                     ApplyOpaqueLocalBackground();
-                    return; // skip old branch
+                    return;
                 }
             }
 
-            // Legacy path: modal but not from AddRecipePage. Extend to colorful backgrounds too.
+            // Legacy path: modal but not from AddRecipePage
             if (isModal && (wallpaperEnabled || colorfulEnabled))
             {
                 ApplyOpaqueLocalBackground(storeOriginals: true);
@@ -124,7 +124,6 @@ public partial class IngredientFormPage : ContentPage
         }
     }
 
-    // NEW: unified opaque application
     private void ApplyOpaqueLocalBackground(bool storeOriginals = false)
     {
         try
@@ -142,7 +141,7 @@ public partial class IngredientFormPage : ContentPage
 
             Color pageBg = Colors.White;
             if (app.Resources.TryGetValue("PageBackgroundColor", out var pb) && pb is Color c)
-                pageBg = c; // may be translucent; we reuse RGB only
+                pageBg = c;
 
             var overlay = Color.FromRgb(pageBg.Red, pageBg.Green, pageBg.Blue); // force alpha 1
 
@@ -164,20 +163,30 @@ public partial class IngredientFormPage : ContentPage
     {
         base.OnDisappearing();
 
-        // ? NEW: Restore visibility of underlying content before cleanup
+        // Restore visibility of underlying content
         RestoreUnderlyingContent();
 
-        // Cleanup theme and font handling
+        // Cleanup theme handling
         _themeHelper.ThemeChanged -= OnThemeChanged;
         _themeHelper.CultureChanged -= OnCultureChanged;
         _themeHelper.Cleanup();
 
-        // ? NEW: Clean up local overrides if applied
+        // ? SIMPLIFIED: Unsubscribe Shell.Navigating
+        try
+        {
+            if (_isSubscribedToShellNavigating && Shell.Current != null)
+            {
+                Shell.Current.Navigating -= OnShellNavigating;
+                _isSubscribedToShellNavigating = false;
+            }
+        }
+        catch { }
+
+        // Clean up local overrides
         try
         {
             if (_appliedLocalOverride)
             {
-                // Remove local overrides on this page
                 try { this.Resources.Remove("PageBackgroundColor"); } catch { }
                 try { this.Resources.Remove("PageBackgroundBrush"); } catch { }
                 _appliedLocalOverride = false;
@@ -189,7 +198,7 @@ public partial class IngredientFormPage : ContentPage
             System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] Failed to cleanup local override: {ex.Message}");
         }
 
-        // restore original page background resources if we applied override
+        // Restore original page background resources if we applied override
         try
         {
             if (_appliedOpaqueBackground)
@@ -209,7 +218,6 @@ public partial class IngredientFormPage : ContentPage
                     }
                 }
 
-                // remove local overrides on this page
                 try { this.Resources.Remove("PageBackgroundColor"); } catch { }
                 try { this.Resources.Remove("PageBackgroundBrush"); } catch { }
                 _appliedOpaqueBackground = false;
@@ -229,8 +237,7 @@ public partial class IngredientFormPage : ContentPage
             if (ViewModel == null) return;
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                // Re-raise properties so BoolToColorConverter bindings recompute with new palette
-                ViewModel.SelectedTabIndex = ViewModel.SelectedTabIndex; // updates Is*TabSelected
+                ViewModel.SelectedTabIndex = ViewModel.SelectedTabIndex;
             });
         }
         catch (Exception ex)
@@ -247,8 +254,6 @@ public partial class IngredientFormPage : ContentPage
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 System.Diagnostics.Debug.WriteLine("[IngredientFormPage] Culture changed - refreshing unit pickers");
-                
-                // Force refresh of all SimplePicker controls by triggering property changes
                 RefreshUnitPickers();
             });
         }
@@ -258,20 +263,15 @@ public partial class IngredientFormPage : ContentPage
         }
     }
 
-    /// <summary>
-    /// Refresh all unit pickers by finding SimplePicker controls in the visual tree
-    /// </summary>
     private void RefreshUnitPickers()
     {
         try
         {
-            // Find all SimplePicker controls and trigger their DisplayText refresh
             var pickers = FindVisualChildren<SimplePicker>(this);
             foreach (var picker in pickers)
             {
                 picker.RefreshDisplayText();
             }
-            
             System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] Refreshed {pickers.Count()} unit pickers");
         }
         catch (Exception ex)
@@ -280,15 +280,11 @@ public partial class IngredientFormPage : ContentPage
         }
     }
 
-    /// <summary>
-    /// Helper method to find all visual children of a specific type
-    /// </summary>
     private static IEnumerable<T> FindVisualChildren<T>(Element element) where T : Element
     {
         if (element is T match)
             yield return match;
 
-        // Special handling for TabComponent - search all tabs, not just the visible one
         if (element is TabComponent tabComponent)
         {
             foreach (var tab in tabComponent.Tabs)
@@ -346,17 +342,112 @@ public partial class IngredientFormPage : ContentPage
         }
     }
 
+    /// <summary>
+    /// ? SIMPLIFIED: Handle Shell navigation for unsaved changes (based on ShoppingListDetailPage)
+    /// </summary>
+    private void OnShellNavigating(object? sender, ShellNavigatingEventArgs e)
+    {
+        try
+        {
+            // If suppressed, allow navigation
+            if (_suppressShellNavigating) return;
+            
+            // If pushing a new page, allow
+            if (e.Source == ShellNavigationSource.Push) return;
+
+            // Check for unsaved changes
+            if (ViewModel?.HasUnsavedChanges == true)
+            {
+                e.Cancel();
+                MainThread.BeginInvokeOnMainThread(async () =>
+                {
+                    bool leave = await DisplayAlert(
+                        FoodbookApp.Localization.AddRecipePageResources.ConfirmTitle, 
+                        FoodbookApp.Localization.AddRecipePageResources.UnsavedChangesMessage, 
+                        FoodbookApp.Localization.AddRecipePageResources.YesButton, 
+                        FoodbookApp.Localization.AddRecipePageResources.NoButton);
+                    
+                    if (leave)
+                    {
+                        try { ViewModel?.DiscardChanges(); } catch { }
+                        _suppressShellNavigating = true;
+                        try
+                        {
+                            var targetLoc = e.Target?.Location?.OriginalString ?? string.Empty;
+                            var nav = Shell.Current?.Navigation;
+                            
+                            // If modal, pop modal first
+                            if (nav?.ModalStack?.Count > 0)
+                                await nav.PopModalAsync(false);
+                            else if (!string.IsNullOrEmpty(targetLoc))
+                                await Shell.Current.GoToAsync(targetLoc);
+                            else
+                                await Shell.Current.GoToAsync("..", false);
+                        }
+                        catch { }
+                        finally
+                        {
+                            await Task.Delay(200);
+                            _suppressShellNavigating = false;
+                        }
+                    }
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] OnShellNavigating error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// ? SIMPLIFIED: Handle hardware back button (based on ShoppingListDetailPage)
+    /// </summary>
     protected override bool OnBackButtonPressed()
     {
         try
         {
+            if (ViewModel?.HasUnsavedChanges == true)
+            {
+                MainThread.BeginInvokeOnMainThread(async () =>
+                {
+                    bool leave = await DisplayAlert(
+                        FoodbookApp.Localization.AddRecipePageResources.ConfirmTitle, 
+                        FoodbookApp.Localization.AddRecipePageResources.UnsavedChangesMessage, 
+                        FoodbookApp.Localization.AddRecipePageResources.YesButton, 
+                        FoodbookApp.Localization.AddRecipePageResources.NoButton);
+                    
+                    if (leave)
+                    {
+                        try { ViewModel?.DiscardChanges(); } catch { }
+                        _suppressShellNavigating = true;
+                        try
+                        {
+                            var nav = Shell.Current?.Navigation;
+                            if (nav?.ModalStack?.Count > 0)
+                                await nav.PopModalAsync(false);
+                            else
+                                await Shell.Current.GoToAsync("..", false);
+                        }
+                        catch { }
+                        finally
+                        {
+                            await Task.Delay(200);
+                            _suppressShellNavigating = false;
+                        }
+                    }
+                });
+                return true; // Cancel default back, we handle it
+            }
+
+            // No unsaved changes - use CancelCommand if available
             if (ViewModel?.CancelCommand?.CanExecute(null) == true)
                 ViewModel.CancelCommand.Execute(null);
             return true;
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error in OnBackButtonPressed: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] OnBackButtonPressed error: {ex.Message}");
             return base.OnBackButtonPressed();
         }
     }
@@ -373,9 +464,6 @@ public partial class IngredientFormPage : ContentPage
         catch { return false; }
     }
 
-    /// <summary>
-    /// ? NEW: Hides all underlying content (AddRecipePage and any popups) by setting Opacity to 0
-    /// </summary>
     private void HideUnderlyingContent()
     {
         try
@@ -396,9 +484,6 @@ public partial class IngredientFormPage : ContentPage
         }
     }
 
-    /// <summary>
-    /// ? NEW: Restores visibility of underlying content by setting Opacity back to 1
-    /// </summary>
     private void RestoreUnderlyingContent()
     {
         try

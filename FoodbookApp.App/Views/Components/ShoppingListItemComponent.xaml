@@ -16,132 +16,133 @@
         <converters:BoolToGrayConverter x:Key="BoolToGrayConverter" />
     </ContentView.Resources>
     
-    <!-- Simplified layout without drag handle -->
-    <Frame x:Name="ItemFrame"
-           Padding="12,10" 
-           Margin="10,4" 
-           CornerRadius="10" 
-           HasShadow="False" 
-           BorderColor="{AppThemeBinding Light=#E0E0E0, Dark=#3A3A3A}"
-           BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#2D2D30}">
-        <Frame.Triggers>
-            <DataTrigger TargetType="Frame" Binding="{Binding IsBeingDragged}" Value="True">
-                <Setter Property="Opacity" Value="0.4" />
-                <Setter Property="BorderColor" Value="{DynamicResource Primary}" />
-            </DataTrigger>
-        </Frame.Triggers>
-        
-        <Grid ColumnSpacing="10" 
-              RowSpacing="8"
-              BackgroundColor="Transparent">
+    <!-- Wrapper grid - usuń drop zones, Sharpnado to obsługuje -->
+    <Grid RowDefinitions="Auto" Padding="0" Margin="0">
+        <Frame Grid.Row="0" 
+               x:Name="ItemFrame"
+               Padding="5,5" 
+               Margin="7,2" 
+               CornerRadius="8" 
+               HasShadow="False" 
+               BorderColor="{AppThemeBinding Light=#E0E0E0, Dark=#3A3A3A}"
+               BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#2D2D30}"
+               MinimumHeightRequest="115">
+            <!-- Restored borders for visual clarity -->
+            <Frame.Triggers>
+                <DataTrigger TargetType="Frame" Binding="{Binding IsBeingDragged}" Value="True">
+                    <Setter Property="Opacity" Value="0.4" />
+                    <Setter Property="BorderColor" Value="{DynamicResource Primary}" />
+                </DataTrigger>
+            </Frame.Triggers>
             
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-            
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            
-            <!-- Checkbox -->
-            <CheckBox Grid.Row="0" 
-                      Grid.RowSpan="2"
-                      Grid.Column="0" 
-                      IsChecked="{Binding IsChecked}" 
-                      Color="{DynamicResource Primary}" 
-                      BackgroundColor="Transparent" 
-                      VerticalOptions="Center" 
-                      HorizontalOptions="Center" />
-            
-            <!-- Name: Editor when unchecked, Label when checked -->
-            <Editor Grid.Row="0" 
-                    Grid.Column="1" 
-                    Text="{Binding Name}" 
-                    Placeholder="{loc:Translate Resource=ShoppingListDetailPageResources, Key=NameHeader}" 
-                    AutoSize="TextChanges" 
-                    MinimumHeightRequest="36" 
-                    BackgroundColor="Transparent" 
-                    Focused="OnEntryFocused" 
-                    Unfocused="OnEntryUnfocused"
-                    IsVisible="{Binding IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
-            
-            <Label Grid.Row="0" 
-                   Grid.Column="1" 
-                   Text="{Binding Name}" 
-                   LineBreakMode="WordWrap" 
-                   MaxLines="3" 
-                   TextDecorations="Strikethrough" 
-                   TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
-                   VerticalTextAlignment="Center"
-                   IsVisible="{Binding IsChecked}" />
-            
-            <!-- Remove button -->
-            <Button Grid.Row="0" 
-                    Grid.RowSpan="2"
-                    Grid.Column="2" 
-                    Text="🗑" 
-                    Command="{Binding RemoveItemCommand, Source={x:Reference ItemComponent}}" 
-                    CommandParameter="{Binding .}" 
-                    WidthRequest="36" 
-                    HeightRequest="36" 
-                    Padding="0" 
-                    BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}" 
-                    TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}" 
-                    FontSize="14" 
-                    CornerRadius="18" 
-                    BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}" 
-                    BorderWidth="1"
-                    VerticalOptions="Center" />
-            
-            <!-- Quantity + Unit row -->
-            <Grid Grid.Row="1" 
-                  Grid.Column="1" 
-                  ColumnDefinitions="Auto,Auto,*" 
-                  ColumnSpacing="8">
-                <!-- Unchecked: Entry + Picker -->
-                <Entry Grid.Column="0" 
-                       Text="{Binding Quantity}" 
-                       Placeholder="{loc:Translate Resource=ShoppingListDetailPageResources, Key=QuantityHeader}" 
-                       Keyboard="Numeric" 
-                       WidthRequest="72" 
-                       HorizontalTextAlignment="Center" 
-                       FontSize="13" 
-                       Focused="OnEntryFocused" 
-                       Unfocused="OnEntryUnfocused"
-                       IsVisible="{Binding IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
+            <Grid RowDefinitions="Auto,Auto" 
+                  ColumnSpacing="7" 
+                  BackgroundColor="Transparent">
                 
-                <components:SimplePicker Grid.Column="1" 
-                                        WidthRequest="100" 
-                                        Scale="0.95" 
-                                        ItemsSource="{Binding UnitsSource, Source={x:Reference ItemComponent}}" 
-                                        SelectedItem="{Binding Unit}" 
-                                        ItemDisplayBinding="{Binding ., Converter={StaticResource UnitToLocalizedStringConverter}}" 
-                                        PlaceholderText="{loc:Translate Resource=ShoppingListDetailPageResources, Key=UnitHeader}" 
-                                        SelectionChanged="OnUnitPickerSelectionChanged"
-                                        IsVisible="{Binding IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
                 
-                <!-- Checked: Labels with strikethrough -->
-                <Label Grid.Column="0" 
-                       Text="{Binding Quantity}" 
-                       FontSize="13" 
+                <!-- Checkbox -->
+                <CheckBox Grid.Row="0" 
+                          Grid.Column="0" 
+                          IsChecked="{Binding IsChecked}" 
+                          Color="{DynamicResource Primary}" 
+                          BackgroundColor="Transparent" 
+                          VerticalOptions="Center" 
+                          HorizontalOptions="Center"
+                          Scale="0.85" />
+                
+                <!-- Name: Editor when unchecked, Label when checked -->
+                <Editor Grid.Row="0" 
+                        Grid.Column="1" 
+                        Text="{Binding Name}" 
+                        Placeholder="{loc:Translate Resource=ShoppingListDetailPageResources, Key=NameHeader}" 
+                        AutoSize="TextChanges" 
+                        MinimumHeightRequest="30" 
+                        BackgroundColor="Transparent"
+                        FontSize="13"
+                        Focused="OnEntryFocused" 
+                        Unfocused="OnEntryUnfocused"
+                        IsVisible="{Binding IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
+                
+                <Label Grid.Row="0" 
+                       Grid.Column="1" 
+                       Text="{Binding Name}" 
+                       LineBreakMode="WordWrap" 
+                       MaxLines="3"
+                       FontSize="13"
                        TextDecorations="Strikethrough" 
                        TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
-                       VerticalTextAlignment="Center" 
-                       HorizontalTextAlignment="Center"
+                       VerticalTextAlignment="Center"
                        IsVisible="{Binding IsChecked}" />
                 
-                <Label Grid.Column="1" 
-                       Text="{Binding Unit, Converter={StaticResource UnitToLocalizedStringConverter}}" 
-                       FontSize="13" 
-                       TextDecorations="Strikethrough" 
-                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
-                       VerticalTextAlignment="Center" 
-                       HorizontalTextAlignment="Center"
-                       IsVisible="{Binding IsChecked}" />
+                <!-- Remove button -->
+                <Button Grid.Row="0" 
+                        Grid.Column="2" 
+                        Style="{StaticResource DeleteButton}"
+                        Command="{Binding RemoveItemCommand, Source={x:Reference ItemComponent}}" 
+                        CommandParameter="{Binding .}" 
+                        WidthRequest="27" 
+                        HeightRequest="27" 
+                        Padding="0" 
+                        BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}" 
+                        TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}" 
+                        FontSize="12" 
+                        CornerRadius="14" 
+                        BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}" 
+                        BorderWidth="1" />
+                
+                <!-- Quantity + Unit row -->
+                <Grid Grid.Row="1" 
+                      Grid.Column="1" 
+                      ColumnDefinitions="Auto,Auto,*" 
+                      ColumnSpacing="7" 
+                      Margin="0,3,0,0">
+                    <!-- Unchecked: Entry + Picker -->
+                    <Entry Grid.Column="0" 
+                           Text="{Binding Quantity}" 
+                           Placeholder="{loc:Translate Resource=ShoppingListDetailPageResources, Key=QuantityHeader}" 
+                           Keyboard="Numeric" 
+                           WidthRequest="72" 
+                           HorizontalTextAlignment="Center" 
+                           FontSize="11" 
+                           Focused="OnEntryFocused" 
+                           Unfocused="OnEntryUnfocused"
+                           IsVisible="{Binding IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
+                    
+                    <components:SimplePicker Grid.Column="1" 
+                                            WidthRequest="100" 
+                                            Scale="0.81" 
+                                            ItemsSource="{Binding UnitsSource, Source={x:Reference ItemComponent}}" 
+                                            SelectedItem="{Binding Unit}" 
+                                            ItemDisplayBinding="{Binding ., Converter={StaticResource UnitToLocalizedStringConverter}}" 
+                                            PlaceholderText="{loc:Translate Resource=ShoppingListDetailPageResources, Key=UnitHeader}" 
+                                            SelectionChanged="OnUnitPickerSelectionChanged"
+                                            IsVisible="{Binding IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
+                    
+                    <!-- Checked: Labels with strikethrough -->
+                    <Label Grid.Column="0" 
+                           Text="{Binding Quantity}" 
+                           FontSize="11" 
+                           TextDecorations="Strikethrough" 
+                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
+                           VerticalTextAlignment="Center" 
+                           HorizontalTextAlignment="Center"
+                           IsVisible="{Binding IsChecked}" />
+                    
+                    <Label Grid.Column="1" 
+                           Text="{Binding Unit, Converter={StaticResource UnitToLocalizedStringConverter}}" 
+                           FontSize="11" 
+                           TextDecorations="Strikethrough" 
+                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
+                           VerticalTextAlignment="Center" 
+                           HorizontalTextAlignment="Center"
+                           IsVisible="{Binding IsChecked}" />
+                </Grid>
             </Grid>
-        </Grid>
-    </Frame>
+        </Frame>
+    </Grid>
 </ContentView>

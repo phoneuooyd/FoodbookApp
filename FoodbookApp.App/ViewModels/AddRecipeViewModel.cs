@@ -461,6 +461,9 @@ namespace Foodbook.ViewModels
                 // Ważne: Powiadom interfejs o zmianach w tytule i przycisku
                 OnPropertyChanged(nameof(Title));
                 OnPropertyChanged(nameof(SaveButtonText));
+                
+                // Reset dirty flag after loading
+                _isDirty = false;
             }
             catch (Exception ex)
             {

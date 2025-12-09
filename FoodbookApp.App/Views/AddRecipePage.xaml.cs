@@ -31,9 +31,9 @@ namespace Foodbook.Views
         // drag state for reordering ingredients
         private Ingredient? _draggingIngredient;
 
-        private int _popupDepth = 0;
-        private bool _suppressShellNavigating = false;
+        // ✅ SIMPLIFIED: Shell navigation handling for unsaved changes (based on ShoppingListDetailPage)
         private bool _isSubscribedToShellNavigating = false;
+        private bool _suppressShellNavigating = false;
 
         // ✅ OPTYMALIZACJA: Task cache dla asynchronicznych operacji
         private Task? _pendingLoadTask;
@@ -83,7 +83,7 @@ namespace Foodbook.Views
                 }
                 catch { }
 
-                // Subscribe to Shell.Navigating to intercept top-back navigation
+                // ✅ SIMPLIFIED: Subscribe to Shell.Navigating for unsaved changes prompt
                 try
                 {
                     if (!_isSubscribedToShellNavigating && Shell.Current != null)
@@ -94,7 +94,7 @@ namespace Foodbook.Views
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Warning: failed to subscribe to Shell.Navigating: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[AddRecipePage] Failed to subscribe Shell.Navigating: {ex.Message}");
                 }
 
                 // Subscribe to global popup state events so we can adjust popup overlay when page is modal
@@ -223,7 +223,7 @@ namespace Foodbook.Views
             _themeHelper.CultureChanged -= OnCultureChanged;
             _themeHelper.Cleanup();
 
-            // Unsubscribe Shell.Navigating
+            // ✅ SIMPLIFIED: Unsubscribe Shell.Navigating
             try
             {
                 if (_isSubscribedToShellNavigating && Shell.Current != null)
@@ -408,78 +408,51 @@ namespace Foodbook.Views
             catch { return false; }
         }
 
-        // Handle Shell navigation (top-back / shell routing). We cancel navigation when unsaved changes.
+        /// <summary>
+        /// ✅ SIMPLIFIED: Handle Shell navigation for unsaved changes (based on ShoppingListDetailPage)
+        /// </summary>
         private void OnShellNavigating(object? sender, ShellNavigatingEventArgs e)
         {
             try
             {
-                // If we're intentionally suppressing shell navigation handling (e.g., when performing programmatic navigation
-                // after user confirmed), ignore this event.
-                if (_suppressShellNavigating)
-                    return;
+                // If suppressed, allow navigation
+                if (_suppressShellNavigating) return;
+                
+                // If pushing a new page, allow
+                if (e.Source == ShellNavigationSource.Push) return;
 
-                // If a popup is open (or popup depth > 0), don't treat Shell navigations as user intent to leave.
-                if (_popupDepth > 0)
-                {
-                    System.Diagnostics.Debug.WriteLine($"OnShellNavigating: popup open (depth={_popupDepth}) - ignoring shell navigation");
-                    return;
-                }
-
-                // If this is a push/navigation into a new page, we don't need to block it.
-                if (e.Source == ShellNavigationSource.Push)
-                    return;
-
-                // Treat any non-push navigation (Pop/PopToRoot/Unknown/Route change) as potential 'back' action
+                // Check for unsaved changes
                 if (ViewModel?.HasUnsavedChanges == true)
                 {
-                    System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Detected shell navigation while dirty - cancelling and prompting");
-
-                    // Cancel the navigation and prompt the user
                     e.Cancel();
-
                     MainThread.BeginInvokeOnMainThread(async () =>
                     {
-                        bool leave = await DisplayAlert(FoodbookApp.Localization.AddRecipePageResources.ConfirmTitle, FoodbookApp.Localization.AddRecipePageResources.UnsavedChangesMessage, FoodbookApp.Localization.AddRecipePageResources.YesButton, FoodbookApp.Localization.AddRecipePageResources.NoButton);
+                        bool leave = await DisplayAlert(
+                            FoodbookApp.Localization.AddRecipePageResources.ConfirmTitle, 
+                            FoodbookApp.Localization.AddRecipePageResources.UnsavedChangesMessage, 
+                            FoodbookApp.Localization.AddRecipePageResources.YesButton, 
+                            FoodbookApp.Localization.AddRecipePageResources.NoButton);
+                        
                         if (leave)
                         {
-                            try
-                            {
-                                ViewModel?.DiscardChanges();
-                            }
-                            catch { }
-
+                            try { ViewModel?.DiscardChanges(); } catch { }
                             _suppressShellNavigating = true;
                             try
                             {
-                                // Perform the originally intended navigation silently.
-                                // If the event provides a target location, use it; otherwise do a simple pop.
                                 var targetLoc = e.Target?.Location?.OriginalString ?? string.Empty;
-
-                                // If there was a modal on stack, pop it first (silent)
                                 var nav = Shell.Current?.Navigation;
+                                
+                                // If modal, pop modal first
                                 if (nav?.ModalStack?.Count > 0)
                                     await nav.PopModalAsync(false);
-
-                                if (!string.IsNullOrEmpty(targetLoc))
-                                {
+                                else if (!string.IsNullOrEmpty(targetLoc))
                                     await Shell.Current.GoToAsync(targetLoc);
-                                }
                                 else
-                                {
-                                    // Default to popping the navigation stack
-                                    if (Shell.Current?.Navigation?.NavigationStack?.Count > 1)
-                                        await Shell.Current.Navigation.PopAsync(false);
-                                    else
-                                        await Shell.Current.GoToAsync("..", false);
-                                }
+                                    await Shell.Current.GoToAsync("..", false);
                             }
-                            catch (Exception exNav)
-                            {
-                                System.Diagnostics.Debug.WriteLine($"Navigation after discard failed: {exNav.Message}");
-                            }
+                            catch { }
                             finally
                             {
-                                // Short delay to avoid immediately re-entering the navigation handler
                                 await Task.Delay(200);
                                 _suppressShellNavigating = false;
                             }
@@ -489,7 +462,59 @@ namespace Foodbook.Views
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"OnShellNavigating error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] OnShellNavigating error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// ✅ SIMPLIFIED: Handle hardware back button (based on ShoppingListDetailPage)
+        /// </summary>
+        protected override bool OnBackButtonPressed()
+        {
+            try
+            {
+                if (ViewModel?.HasUnsavedChanges == true)
+                {
+                    MainThread.BeginInvokeOnMainThread(async () =>
+                    {
+                        bool leave = await DisplayAlert(
+                            FoodbookApp.Localization.AddRecipePageResources.ConfirmTitle, 
+                            FoodbookApp.Localization.AddRecipePageResources.UnsavedChangesMessage, 
+                            FoodbookApp.Localization.AddRecipePageResources.YesButton, 
+                            FoodbookApp.Localization.AddRecipePageResources.NoButton);
+                        
+                        if (leave)
+                        {
+                            try { ViewModel?.DiscardChanges(); } catch { }
+                            _suppressShellNavigating = true;
+                            try
+                            {
+                                var nav = Shell.Current?.Navigation;
+                                if (nav?.ModalStack?.Count > 0)
+                                    await nav.PopModalAsync(false);
+                                else
+                                    await Shell.Current.GoToAsync("..", false);
+                            }
+                            catch { }
+                            finally
+                            {
+                                await Task.Delay(200);
+                                _suppressShellNavigating = false;
+                            }
+                        }
+                    });
+                    return true; // Cancel default back, we handle it
+                }
+
+                // No unsaved changes - use CancelCommand if available
+                if (ViewModel?.CancelCommand?.CanExecute(null) == true)
+                    ViewModel.CancelCommand.Execute(null);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] OnBackButtonPressed error: {ex.Message}");
+                return base.OnBackButtonPressed();
             }
         }
 
@@ -602,54 +627,6 @@ namespace Foodbook.Views
 
         private int _folderId;
         public int FolderId { get => _folderId; set => _folderId = value; }
-
-        protected override bool OnBackButtonPressed()
-        {
-            try
-            {
-                // Intercept hardware back button
-                if (ViewModel?.HasUnsavedChanges == true)
-                {
-                    // Show confirmation dialog synchronously on UI thread
-                    MainThread.BeginInvokeOnMainThread(async () =>
-                    {
-                        bool leave = await DisplayAlert(FoodbookApp.Localization.AddRecipePageResources.ConfirmTitle, FoodbookApp.Localization.AddRecipePageResources.UnsavedChangesMessage, FoodbookApp.Localization.AddRecipePageResources.YesButton, FoodbookApp.Localization.AddRecipePageResources.NoButton);
-                        if (leave)
-                        {
-                            // Discard changes and navigate back without re-triggering prompt
-                            try
-                            {
-                                ViewModel?.DiscardChanges();
-                            }
-                            catch { }
-
-                            try
-                            {
-                                var nav = Shell.Current?.Navigation;
-                                if (nav?.ModalStack?.Count > 0)
-                                    await nav.PopModalAsync(false);
-                                else
-                                    await Shell.Current.GoToAsync("..");
-                            }
-                            catch (Exception navEx)
-                            {
-                                System.Diagnostics.Debug.WriteLine($"Navigation after discard failed: {navEx.Message}");
-                            }
-                        }
-                    });
-                    return true; // cancel default back (we'll navigate if user confirms)
-                }
-
-                if (ViewModel?.CancelCommand?.CanExecute(null) == true)
-                    ViewModel.CancelCommand.Execute(null);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error in OnBackButtonPressed: {ex.Message}");
-                return base.OnBackButtonPressed();
-            }
-        }
 
         private void OnAutoModeClicked(object sender, EventArgs e)
         {
