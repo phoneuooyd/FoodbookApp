@@ -104,6 +104,9 @@ namespace FoodbookApp
             builder.Services.AddScoped<SettingsPage>();
             builder.Services.AddScoped<SetupWizardPage>();
             builder.Services.AddScoped<DataArchivizationPage>();
+            
+            // NEW: MainPage with custom TabBarComponent
+            builder.Services.AddScoped<MainPage>();
 
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering routes");
             Routing.RegisterRoute(nameof(HomePage), typeof(HomePage));

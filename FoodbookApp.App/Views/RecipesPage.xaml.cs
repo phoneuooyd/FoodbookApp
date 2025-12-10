@@ -119,6 +119,12 @@ public partial class RecipesPage : ContentPage
         WeakReferenceMessenger.Default.Unregister<FabCollapseMessage>(this);
     }
 
+    // Public method for TabBarComponent to cleanup when switching tabs
+    public void CleanupForTabBar()
+    {
+        WeakReferenceMessenger.Default.Unregister<FabCollapseMessage>(this);
+    }
+
     private void OnBackClicked(object? sender, System.EventArgs e)
     {
         if (_viewModel.GoBackCommand?.CanExecute(null) == true)

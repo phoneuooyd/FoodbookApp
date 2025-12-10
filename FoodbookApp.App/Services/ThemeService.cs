@@ -393,7 +393,12 @@ namespace Foodbook.Services
                 var shellTitleBg = primary;
                 var shellTitleColor = ChooseReadableEnhanced(shellTitleBg, Colors.White, Color.FromArgb("#000000"));
                 shellTitleColor = EnsureContrastEnhanced(shellTitleColor, shellTitleBg, RelativeLuminance(shellTitleBg) > 0.45 ? Colors.Black : Colors.White);
+                
+                // Darken TabBarBackground for pressed state
+                var tabBarBackgroundDarken = Darken(tabBarBg, 0.05);
+                
                 app.Resources["TabBarBackground"] = tabBarBg;
+                app.Resources["TabBarBackgroundDarken"] = tabBarBackgroundDarken;
                 app.Resources["TabBarForeground"] = activeColor;
                 app.Resources["TabBarTitle"] = activeColor;
                 app.Resources["TabBarUnselected"] = unselectedColor;
@@ -456,7 +461,7 @@ namespace Foodbook.Services
                     Name = "Nature",
                     PrimaryLight = Color.FromArgb("#2E7D32"), SecondaryLight = Color.FromArgb("#C8E6C9"), TertiaryLight = Color.FromArgb("#1B5E20"), AccentLight = Color.FromArgb("#4CAF50"),
                     PrimaryDark = Color.FromArgb("#81C784"), SecondaryDark = Color.FromArgb("#4CAF50"), TertiaryDark = Color.FromArgb("#66BB6A"), AccentDark = Color.FromArgb("#81C784"),
-                    PrimaryTextLight = Color.FromArgb("#1B5E20"), SecondaryTextLight = Color.FromArgb("#2E7D32"), PrimaryTextDark = Color.FromArgb("#E8F5E8"), SecondaryTextDark = Color.FromArgb("#C8E6C9")
+                    PrimaryTextLight = Color.FromArgb("#1B5E20"), SecondaryTextLight = Color.FromArgb("#2E7D32"), PrimaryTextDark = Color.FromRgb(232, 245, 232), SecondaryTextDark = Color.FromArgb("#C8E6C9")
                 },
                 [AppColorTheme.Forest] = new ThemeColors
                 {

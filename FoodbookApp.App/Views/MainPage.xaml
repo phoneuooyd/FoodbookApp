@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:components="clr-namespace:Foodbook.Views.Components"
+             xmlns:views="clr-namespace:Foodbook.Views"
+             xmlns:loc="clr-namespace:Foodbook.Services"
+             x:Class="Foodbook.Views.MainPage"
+             NavigationPage.HasNavigationBar="False"
+             Shell.NavBarIsVisible="False">
+    
+    <components:TabBarComponent x:Name="MainTabBar" DefaultTabIndex="2">
+        <components:TabBarComponent.TabItems>
+            <!-- Ingredients Tab (Index 0) -->
+            <components:TabItemModel 
+                Title="{loc:Translate Resource=TabBarResources, Key=Ingredients}"
+                Icon="grocery.png"
+                Route="IngredientsTab"
+                PageType="{x:Type views:IngredientsPage}" />
+            
+            <!-- Recipes Tab (Index 1) -->
+            <components:TabItemModel 
+                Title="{loc:Translate Resource=TabBarResources, Key=Recipes}"
+                Icon="chef_hat.png"
+                Route="RecipesTab"
+                PageType="{x:Type views:RecipesPage}" />
+            
+            <!-- Home Tab (Index 2) - Default -->
+            <components:TabItemModel 
+                Title="{loc:Translate Resource=TabBarResources, Key=Home}"
+                Icon="home.png"
+                Route="HomeTab"
+                PageType="{x:Type views:HomePage}" />
+            
+            <!-- Planner Tab (Index 3) -->
+            <components:TabItemModel 
+                Title="{loc:Translate Resource=TabBarResources, Key=Planner}"
+                Icon="event_upcoming.png"
+                Route="PlannerTab"
+                PageType="{x:Type views:PlannerListsPage}" />
+            
+            <!-- Shopping Lists Tab (Index 4) -->
+            <components:TabItemModel 
+                Title="{loc:Translate Resource=TabBarResources, Key=ShoppingLists}"
+                Icon="event_list.png"
+                Route="ShoppingListTab"
+                PageType="{x:Type views:ShoppingListPage}" />
+        </components:TabBarComponent.TabItems>
+    </components:TabBarComponent>
+    
+</ContentPage>

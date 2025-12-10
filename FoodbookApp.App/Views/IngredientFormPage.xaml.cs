@@ -30,6 +30,9 @@ public partial class IngredientFormPage : ContentPage
     private bool _isSubscribedToShellNavigating = false;
     private bool _suppressShellNavigating = false;
 
+    // Track if the page has ever loaded data (similar to AddRecipePage)
+    private bool _hasEverLoaded = false;
+
     public IngredientFormPage(IngredientFormViewModel vm)
     {
         InitializeComponent();
@@ -121,6 +124,16 @@ public partial class IngredientFormPage : ContentPage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] OnAppearing modal handling error: {ex.Message}");
+        }
+
+        // Reset or load data if this is the first appearance
+        if (!_hasEverLoaded)
+        {
+            if (ItemId == 0)
+            {
+                ViewModel?.Reset();
+            }
+            _hasEverLoaded = true;
         }
     }
 

@@ -4,7 +4,6 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:views="clr-namespace:Foodbook.Views"
-    xmlns:tabbar="clr-namespace:FoodbookApp.Localization"
     xmlns:loc="clr-namespace:Foodbook.Services"
     Title="FoodbookApp"
     BackgroundColor="{DynamicResource ShellBackgroundColor}"
@@ -14,39 +13,17 @@
     TabBarTitleColor="{DynamicResource TabBarTitle}"
     TabBarDisabledColor="{StaticResource Gray300}"
     TabBarUnselectedColor="{DynamicResource TabBarUnselected}"
-    TitleColor="{DynamicResource ShellTitleColor}">
+    TitleColor="{DynamicResource ShellTitleColor}"
+    Shell.TabBarIsVisible="False"
+    Shell.NavBarIsVisible="False"
+    FlyoutBehavior="Disabled">
 
-    <!-- Upewnij się, że czcionka w jasnym motywie jest zawsze czarna (ThemeService wymusza) -->
-    <TabBar>
-        
-        <ShellContent
-            Title="{loc:Translate Resource=TabBarResources, Key=Ingredients}"
-            Icon="grocery.png"
-            Route="IngredientsTab"
-            
-            ContentTemplate="{DataTemplate views:IngredientsPage}" />
-        <ShellContent
-            Title="{loc:Translate Resource=TabBarResources, Key=Recipes}"
-            Icon="chef_hat.png"
-            Route="RecipesTab"
-            ContentTemplate="{DataTemplate views:RecipesPage}" />
-        <ShellContent
-            Title="{loc:Translate Resource=TabBarResources, Key=Home}"
-            Icon="home.png"
-            Route="HomeTab"
-            ContentTemplate="{DataTemplate views:HomePage}" />
-        <ShellContent
-            Title="{loc:Translate Resource=TabBarResources, Key=Planner}"
-            Icon="event_upcoming.png"
-            Route="PlannerTab"
-            ContentTemplate="{DataTemplate views:PlannerListsPage}" />
-        <ShellContent
-            Title="{loc:Translate Resource=TabBarResources, Key=ShoppingLists}"
-            Icon="event_list.png"
-            Route="ShoppingListTab"
-            ContentTemplate="{DataTemplate views:ShoppingListPage}" />
-    </TabBar>
+    <!-- Main content is now MainPage with custom TabBarComponent -->
+    <ShellContent
+        Route="Main"
+        ContentTemplate="{DataTemplate views:MainPage}" />
 
+    <!-- Additional routes for navigation (no TabBar items) -->
     <ShellContent
         Route="AddRecipePage"
         ContentTemplate="{DataTemplate views:AddRecipePage}" />
@@ -62,4 +39,13 @@
     <ShellContent
         Route="SettingsPage"
         ContentTemplate="{DataTemplate views:SettingsPage}" />
+    <ShellContent
+        Route="PlannerPage"
+        ContentTemplate="{DataTemplate views:PlannerPage}" />
+    <ShellContent
+        Route="ArchivePage"
+        ContentTemplate="{DataTemplate views:ArchivePage}" />
+    <ShellContent
+        Route="DataArchivizationPage"
+        ContentTemplate="{DataTemplate views:DataArchivizationPage}" />
 </Shell>

@@ -89,6 +89,15 @@ public partial class IngredientsPage : ContentPage
             Current = null;
     }
 
+    // Public method for TabBarComponent to initialize subscriptions
+    public void InitializeSubscriptionsForTabBar()
+    {
+        // Subscribe to global ingredients-changed event
+        AppEvents.IngredientsChangedAsync += OnIngredientsChangedAsync;
+        // Subscribe to single-ingredient saved event to force reload immediately
+        AppEvents.IngredientSaved += OnIngredientSaved;
+    }
+
     // Direct refresh API used by other components
     public async Task ForceReloadAsync()
     {

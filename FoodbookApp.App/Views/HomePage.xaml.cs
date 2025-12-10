@@ -187,5 +187,39 @@ public partial class HomePage : ContentPage
             System.Diagnostics.Debug.WriteLine("?? HomePage: Meals popup protection released");
         }
     }
+
+    protected override bool OnBackButtonPressed()
+    {
+        try
+        {
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                bool exit = await DisplayAlert("Potwierdzenie", "Czy na pewno chcesz wyjœæ z aplikacji?", "Tak", "Nie");
+                if (exit)
+                {
+                    try
+                    {
+                        Application.Current?.Quit();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[HomePage] Quit failed: {ex.Message}");
+                        // Fallback for platforms without Quit support
+#if ANDROID
+                        // On Android, simulate back to close
+                        await Task.Delay(50);
+                        System.Diagnostics.Process.GetCurrentProcess().CloseMainWindow();
+#endif
+                    }
+                }
+            });
+            return true; // consume back press
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HomePage] OnBackButtonPressed error: {ex.Message}");
+            return base.OnBackButtonPressed();
+        }
+    }
 }
 

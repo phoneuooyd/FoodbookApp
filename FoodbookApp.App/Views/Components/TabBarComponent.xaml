@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Foodbook.Views.Components.TabBarComponent"
+			 xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Name="Root">
+    
+    <Grid RowDefinitions="*,Auto"
+          BackgroundColor="{DynamicResource PageBackgroundColor}">
+        
+        <!-- Main content area -->
+        <ContentView x:Name="ContentContainer" 
+                     Grid.Row="0"
+                     BackgroundColor="Transparent" />
+        
+        <!-- TabBar at bottom - matches Shell.TabBar styling -->
+        <Grid Grid.Row="1"
+              x:Name="TabBarGrid"
+              BackgroundColor="{DynamicResource TabBarBackground}"
+              ColumnSpacing="0"
+              RowSpacing="0"
+              HeightRequest="{OnPlatform Android=56, iOS=49, WinUI=48}"
+              Padding="{OnPlatform iOS='0,0,0,0', Default='0'}">
+            
+            <!-- Use SafeAreaView behavior on iOS -->
+            <Grid.Margin>
+                <OnPlatform x:TypeArguments="Thickness">
+                    <On Platform="iOS" Value="0,0,0,0" />
+                    <On Platform="Android" Value="0" />
+                </OnPlatform>
+            </Grid.Margin>
+            
+            <!-- Tab buttons via BindableLayout -->
+            <FlexLayout x:Name="TabBarContainer"
+                       BindableLayout.ItemsSource="{Binding TabItems, Source={x:Reference Root}}"
+                       Direction="Row"
+                       JustifyContent="SpaceEvenly"
+                       AlignItems="Center"
+                       BackgroundColor="{DynamicResource TabBarBackground}">
+                
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate>
+                        <!-- Wrap each tab item in a Border to apply shadow, pressed effect, and background change when active -->
+                        <Border Padding="0"
+                                StrokeThickness="0"
+                                BackgroundColor="Transparent"
+                                VerticalOptions="Fill"
+                                HorizontalOptions="Fill">
+                            <Border.Triggers>
+                                <!-- Selected state: stronger primary-colored shadow -->
+                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                    <Setter Property="Shadow">
+                                        <Setter.Value>
+                                            <Shadow Brush="{DynamicResource Primary}" Radius="12" Opacity="0.4" Offset="0,2" />
+                                        </Setter.Value>
+                                    </Setter>
+                                </DataTrigger>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
+                                    <Setter Property="Shadow">
+                                        <Setter.Value>
+                                            <Shadow Brush="Transparent" Radius="0" Opacity="0" />
+                                        </Setter.Value>
+                                    </Setter>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            
+                            <!-- Content grid for icon and text -->
+                            <Grid RowDefinitions="24,Auto"
+                                  RowSpacing="2"
+                                  Padding="0,0,0,0"
+                                  MinimumWidthRequest="82"
+                                  HeightRequest="{OnPlatform Android=56, iOS=49, WinUI=48}">
+                                
+                                <!-- Pressed darker rectangle behind icon and title when selected - uses Darken on Secondary -->
+                                <Border x:Name="PressedBackground"
+                                        Grid.RowSpan="2"
+                                        WidthRequest="80"
+                                        HeightRequest="{OnPlatform Android=60, iOS=49, WinUI=48}"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Fill"
+                                        BackgroundColor="{DynamicResource TabBarBackgroundDarken}"
+                                        StrokeThickness="0"
+                                        IsVisible="False">
+                                    <Border.Shadow>
+                                        <Shadow Brush="{DynamicResource Primary}" Radius="6" Opacity="0.9" Offset="0,1" />
+                                    </Border.Shadow>
+                                </Border>
+                                
+                                <Grid.Triggers>
+                                    <DataTrigger TargetType="Grid" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter TargetName="PressedBackground" Property="IsVisible" Value="True" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Grid" Binding="{Binding IsSelected}" Value="False">
+                                        <Setter TargetName="PressedBackground" Property="IsVisible" Value="False" />
+                                    </DataTrigger>
+                                </Grid.Triggers>
+                                
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer 
+                                        Command="{Binding SelectTabCommand, Source={x:Reference Root}}"
+                                        CommandParameter="{Binding .}" />
+                                </Grid.GestureRecognizers>
+                                
+                                <!-- Icon - 4px lower, subtle pressed translation when selected -->
+                                <Image Grid.Row="0"
+                                       Source="{Binding Icon}"
+                                       HeightRequest="24"
+                                       WidthRequest="24"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"
+                                       Aspect="AspectFit"
+                                       TranslationY="4"
+                                       ZIndex="1">
+                                    <Image.Triggers>
+                                        <DataTrigger TargetType="Image" 
+                                                    Binding="{Binding IsSelected}" 
+                                                    Value="True">
+                                            <Setter Property="Opacity" Value="1.0" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Image" 
+                                                    Binding="{Binding IsSelected}" 
+                                                    Value="False">
+                                            <Setter Property="Opacity" Value="0.7" />
+                                        </DataTrigger>
+                                    </Image.Triggers>
+                                    <Image.Behaviors>
+                                        <toolkit:IconTintColorBehavior x:Name="IconTint" TintColor="{DynamicResource TabBarUnselected}" />
+                                    </Image.Behaviors>
+                                </Image>
+                                
+                                <!-- Title - pressed translation when selected -->
+                                <Label Grid.Row="1"
+                                       Text="{Binding Title}"
+                                       FontSize="{OnPlatform Android=12, iOS=10, WinUI=11}"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"
+                                       HorizontalTextAlignment="Center"
+                                       LineBreakMode="TailTruncation"
+                                       MaxLines="1"
+                                       ZIndex="1">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" 
+                                                    Binding="{Binding IsSelected}" 
+                                                    Value="True">
+                                            <Setter Property="TextColor" Value="{DynamicResource TabBarForeground}" />
+                                            <Setter Property="FontAttributes" Value="None" />
+                                            <Setter Property="TranslationY" Value="0.5" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" 
+                                                    Binding="{Binding IsSelected}" 
+                                                    Value="False">
+                                            <Setter Property="TextColor" Value="{DynamicResource TabBarUnselected}" />
+                                            <Setter Property="FontAttributes" Value="None" />
+                                            <Setter Property="TranslationY" Value="0" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </FlexLayout>
+            
+            <!-- Top border separator - subtle like Shell TabBar -->
+            <BoxView HeightRequest="0.5"
+                    VerticalOptions="Start"
+                    HorizontalOptions="Fill"
+                    BackgroundColor="{AppThemeBinding Light=#D0D0D0, Dark=#3A3A3A}" />
+        </Grid>
+    </Grid>
+</ContentView>
