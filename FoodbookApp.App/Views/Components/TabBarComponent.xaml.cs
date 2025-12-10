@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using FoodbookApp;
 using FoodbookApp.Interfaces;
+using CommunityToolkit.Mvvm.Messaging;
 
 namespace Foodbook.Views.Components
 {
@@ -50,6 +51,49 @@ namespace Foodbook.Views.Components
         public static readonly BindableProperty DefaultTabIndexProperty =
             BindableProperty.Create(nameof(DefaultTabIndex), typeof(int), typeof(TabBarComponent), 2);
 
+        public static readonly BindableProperty IconTintColorProperty =
+            BindableProperty.Create(nameof(IconTintColor), typeof(Color), typeof(TabBarComponent), Colors.Black,
+                propertyChanged: OnIconTintColorChanged);
+
+        private static void OnIconTintColorChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (bindable is TabBarComponent component && newValue is Color newColor)
+            {
+                component.ApplyTintColorToImages(newColor);
+            }
+        }
+
+        private void ApplyTintColorToImages(Color color)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                try
+                {
+                    // Force refresh TintColor on all Image behaviors in TabBar
+                    foreach (var child in TabBarContainer.Children)
+                    {
+                        if (child is Border border && border.Content is Grid grid)
+                        {
+                            var image = grid.Children.OfType<Image>().FirstOrDefault();
+                            if (image != null)
+                            {
+                                var behavior = image.Behaviors.OfType<CommunityToolkit.Maui.Behaviors.IconTintColorBehavior>().FirstOrDefault();
+                                if (behavior != null)
+                                {
+                                    // Directly set TintColor on behavior to force refresh
+                                    behavior.TintColor = color;
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[TabBarComponent] ApplyTintColorToImages failed: {ex.Message}");
+                }
+            });
+        }
+
         public ObservableCollection<TabItemModel> TabItems
         {
             get => (ObservableCollection<TabItemModel>)GetValue(TabItemsProperty);
@@ -68,6 +112,12 @@ namespace Foodbook.Views.Components
             set => SetValue(DefaultTabIndexProperty, value);
         }
 
+        public Color IconTintColor
+        {
+            get => (Color)GetValue(IconTintColorProperty);
+            set => SetValue(IconTintColorProperty, value);
+        }
+
         public ICommand SelectTabCommand { get; }
 
         public TabBarComponent()
@@ -75,6 +125,15 @@ namespace Foodbook.Views.Components
             InitializeComponent();
             SelectTabCommand = new Command<TabItemModel>(async tab => await OnTabSelectedAsync(tab));
             _localizationService = MauiProgram.ServiceProvider?.GetService<ILocalizationService>();
+
+            // Set IconTintColor from resources
+            RefreshIconTintColorInternal();
+
+            // Subscribe to theme changes via ThemeService event
+            if (MauiProgram.ServiceProvider?.GetService<IThemeService>() is IThemeService themeService)
+            {
+                themeService.ThemeChanged += OnThemeChanged;
+            }
 
             Loaded += (_, __) =>
             {
@@ -503,6 +562,50 @@ namespace Foodbook.Views.Components
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[TabBarComponent] TriggerInitialLoadAsync error: {ex.Message}");
+            }
+        }
+
+        private void OnThemeChanged(object? sender, EventArgs e)
+        {
+            MainThread.BeginInvokeOnMainThread(RefreshIconTintColorInternal);
+        }
+
+        // Only refresh the IconTintColor from static resources; no full TabBar reload
+        private void RefreshIconTintColorInternal()
+        {
+            try
+            {
+                var app = Application.Current;
+                if (app?.Resources == null) return;
+
+                // Use dedicated TabBarIconTint resource (adjusts for dark/light mode automatically)
+                if (app.Resources.TryGetValue("TabBarIconTint", out var iconTintObj))
+                {
+                    if (iconTintObj is Color c)
+                    {
+                        IconTintColor = c;
+                    }
+                    else if (iconTintObj is SolidColorBrush b)
+                    {
+                        IconTintColor = b.Color;
+                    }
+                }
+                else if (app.Resources.TryGetValue("Primary", out var primaryObj))
+                {
+                    // Fallback to Primary if TabBarIconTint not found
+                    if (primaryObj is Color c)
+                    {
+                        IconTintColor = c;
+                    }
+                    else if (primaryObj is SolidColorBrush b)
+                    {
+                        IconTintColor = b.Color;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[TabBarComponent] RefreshIconTintColorInternal failed: {ex.Message}");
             }
         }
 

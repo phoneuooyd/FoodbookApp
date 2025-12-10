@@ -124,7 +124,7 @@
                                         </DataTrigger>
                                     </Image.Triggers>
                                     <Image.Behaviors>
-                                        <toolkit:IconTintColorBehavior x:Name="IconTint" TintColor="{DynamicResource TabBarUnselected}" />
+                                        <toolkit:IconTintColorBehavior TintColor="{Binding IconTintColor, Source={x:Reference Root}}" />
                                     </Image.Behaviors>
                                 </Image>
                                 

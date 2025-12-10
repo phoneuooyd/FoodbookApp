@@ -397,8 +397,26 @@ namespace Foodbook.Services
                 // Darken TabBarBackground for pressed state
                 var tabBarBackgroundDarken = Darken(tabBarBg, 0.05);
                 
+                // TabBar icon tint and pressed background adjustments for dark mode
+                Color tabBarIconTint;
+                Color tabBarPressedBackground;
+                
+                if (isDark)
+                {
+                    // Dark mode: Lighten pressed background, Darken icon tint
+                    tabBarPressedBackground = Lighten(tabBarBg, 0.05);
+                    tabBarIconTint = Darken(primary, 0.05);
+                }
+                else
+                {
+                    // Light mode: use existing behavior
+                    tabBarPressedBackground = tabBarBackgroundDarken;
+                    tabBarIconTint = primary;
+                }
+                
                 app.Resources["TabBarBackground"] = tabBarBg;
-                app.Resources["TabBarBackgroundDarken"] = tabBarBackgroundDarken;
+                app.Resources["TabBarBackgroundDarken"] = tabBarPressedBackground;
+                app.Resources["TabBarIconTint"] = tabBarIconTint;
                 app.Resources["TabBarForeground"] = activeColor;
                 app.Resources["TabBarTitle"] = activeColor;
                 app.Resources["TabBarUnselected"] = unselectedColor;
@@ -502,7 +520,7 @@ namespace Foodbook.Services
                 {
                     Name = "Monochrome",
                     PrimaryLight = Color.FromArgb("#424242"), SecondaryLight = Color.FromArgb("#F5F5F5"), TertiaryLight = Color.FromArgb("#212121"), AccentLight = Color.FromArgb("#757575"),
-                    PrimaryDark = Color.FromArgb("#E0E0E0"), SecondaryDark = Color.FromArgb("#616161"), TertiaryDark = Color.FromArgb("#9E9E0E").ClampFix(), AccentDark = Color.FromArgb("#BDBDBD"),
+                    PrimaryDark = Color.FromArgb("#E0E0E0"), SecondaryDark = Color.FromArgb("#616161"), TertiaryDark = Color.FromArgb("#9E9E9E"), AccentDark = Color.FromArgb("#BDBDBD"),
                     PrimaryTextLight = Color.FromArgb("#212121"), SecondaryTextLight = Color.FromArgb("#616161"), PrimaryTextDark = Color.FromArgb("#FFFFFF"), SecondaryTextDark = Color.FromArgb("#E0E0E0")
                 },
                 [AppColorTheme.Navy] = new ThemeColors
