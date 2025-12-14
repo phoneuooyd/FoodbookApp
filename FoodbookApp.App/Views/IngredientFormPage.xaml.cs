@@ -72,68 +72,78 @@ public partial class IngredientFormPage : ContentPage
 
     protected override void OnAppearing()
     {
-        base.OnAppearing();
-
-        _themeHelper.Initialize();
-        _themeHelper.ThemeChanged += OnThemeChanged;
-        _themeHelper.CultureChanged += OnCultureChanged;
-
-        // ? SIMPLIFIED: Subscribe Shell.Navigating for unsaved changes prompt
         try
         {
-            if (!_isSubscribedToShellNavigating && Shell.Current != null)
+            base.OnAppearing();
+
+            _themeHelper.Initialize();
+            _themeHelper.ThemeChanged += OnThemeChanged;
+            _themeHelper.CultureChanged += OnCultureChanged;
+
+            // ? SIMPLIFIED: Subscribe Shell.Navigating for unsaved changes prompt
+            try
             {
-                Shell.Current.Navigating += OnShellNavigating;
-                _isSubscribedToShellNavigating = true;
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] Failed to subscribe Shell.Navigating: {ex.Message}");
-        }
-
-        // Handle modal presentation background
-        try
-        {
-            var currentPage = Shell.Current?.CurrentPage;
-            bool openedFromAddRecipePage = currentPage is Foodbook.Views.AddRecipePage;
-            bool isModal = IsModalPage();
-
-            var themeService = MauiProgram.ServiceProvider?.GetService<IThemeService>();
-            bool wallpaperEnabled = themeService?.IsWallpaperBackgroundEnabled() == true;
-            bool colorfulEnabled = themeService?.GetIsColorfulBackgroundEnabled() == true;
-
-            if (openedFromAddRecipePage && isModal)
-            {
-                System.Diagnostics.Debug.WriteLine("[IngredientFormPage] Modal open from AddRecipePage context");
-                HideUnderlyingContent();
-
-                if (wallpaperEnabled || colorfulEnabled)
+                if (!_isSubscribedToShellNavigating && Shell.Current != null)
                 {
-                    ApplyOpaqueLocalBackground();
-                    return;
+                    Shell.Current.Navigating += OnShellNavigating;
+                    _isSubscribedToShellNavigating = true;
                 }
             }
-
-            // Legacy path: modal but not from AddRecipePage
-            if (isModal && (wallpaperEnabled || colorfulEnabled))
+            catch (Exception ex)
             {
-                ApplyOpaqueLocalBackground(storeOriginals: true);
+                System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] Failed to subscribe Shell.Navigating: {ex.Message}");
+            }
+
+            // Handle modal presentation background
+            try
+            {
+                if (IsModalPage())
+                {
+                    HideUnderlyingContent();
+
+                    var themeService = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IThemeService>();
+                    bool wallpaperEnabled = themeService?.IsWallpaperBackgroundEnabled() == true;
+                    bool colorfulEnabled = themeService?.GetIsColorfulBackgroundEnabled() == true;
+
+                    if (wallpaperEnabled || colorfulEnabled)
+                    {
+                        ApplyOpaqueLocalBackground();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] OnAppearing modal handling error: {ex.Message}");
+            }
+
+            // Reset or load data if this is the first appearance
+            if (!_hasEverLoaded)
+            {
+                System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] First load - ItemId: {ItemId}");
+                
+                if (ItemId == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine("[IngredientFormPage] First load - resetting form for new ingredient");
+                    ViewModel?.Reset();
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] First load - loading ingredient {ItemId}");
+                }
+                _hasEverLoaded = true;
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[IngredientFormPage] Subsequent appearance - skipping reset");
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] OnAppearing modal handling error: {ex.Message}");
-        }
-
-        // Reset or load data if this is the first appearance
-        if (!_hasEverLoaded)
-        {
-            if (ItemId == 0)
+            System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] OnAppearing error: {ex.Message}");
+            if (ViewModel != null)
             {
-                ViewModel?.Reset();
+                ViewModel.ValidationMessage = $"B³¹d ³adowania strony: {ex.Message}";
             }
-            _hasEverLoaded = true;
         }
     }
 
@@ -362,15 +372,29 @@ public partial class IngredientFormPage : ContentPage
     {
         try
         {
+            System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] OnShellNavigating - Source: {e.Source}, Target: {e.Target?.Location}");
+            
             // If suppressed, allow navigation
-            if (_suppressShellNavigating) return;
+            if (_suppressShellNavigating)
+            {
+                System.Diagnostics.Debug.WriteLine("[IngredientFormPage] Navigation suppressed flag is set, allowing navigation");
+                return;
+            }
             
             // If pushing a new page, allow
-            if (e.Source == ShellNavigationSource.Push) return;
+            if (e.Source == ShellNavigationSource.Push)
+            {
+                System.Diagnostics.Debug.WriteLine("[IngredientFormPage] Push navigation detected, allowing");
+                return;
+            }
 
             // Check for unsaved changes
-            if (ViewModel?.HasUnsavedChanges == true)
+            bool hasChanges = ViewModel?.HasUnsavedChanges == true;
+            System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] HasUnsavedChanges: {hasChanges}");
+            
+            if (hasChanges)
             {
+                System.Diagnostics.Debug.WriteLine("[IngredientFormPage] Unsaved changes detected, canceling navigation and showing prompt");
                 e.Cancel();
                 MainThread.BeginInvokeOnMainThread(async () =>
                 {
@@ -379,6 +403,8 @@ public partial class IngredientFormPage : ContentPage
                         FoodbookApp.Localization.AddRecipePageResources.UnsavedChangesMessage, 
                         FoodbookApp.Localization.AddRecipePageResources.YesButton, 
                         FoodbookApp.Localization.AddRecipePageResources.NoButton);
+                    
+                    System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] User chose to leave: {leave}");
                     
                     if (leave)
                     {
@@ -389,19 +415,34 @@ public partial class IngredientFormPage : ContentPage
                             var targetLoc = e.Target?.Location?.OriginalString ?? string.Empty;
                             var nav = Shell.Current?.Navigation;
                             
+                            System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] Navigating away - Modal stack count: {nav?.ModalStack?.Count ?? 0}");
+                            
                             // If modal, pop modal first
                             if (nav?.ModalStack?.Count > 0)
+                            {
+                                System.Diagnostics.Debug.WriteLine("[IngredientFormPage] Popping modal");
                                 await nav.PopModalAsync(false);
+                            }
                             else if (!string.IsNullOrEmpty(targetLoc))
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] Navigating to: {targetLoc}");
                                 await Shell.Current.GoToAsync(targetLoc);
+                            }
                             else
+                            {
+                                System.Diagnostics.Debug.WriteLine("[IngredientFormPage] Navigating back");
                                 await Shell.Current.GoToAsync("..", false);
+                            }
                         }
-                        catch { }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] Navigation error: {ex.Message}");
+                        }
                         finally
                         {
                             await Task.Delay(200);
                             _suppressShellNavigating = false;
+                            System.Diagnostics.Debug.WriteLine("[IngredientFormPage] Navigation suppression flag cleared");
                         }
                     }
                 });
@@ -420,6 +461,8 @@ public partial class IngredientFormPage : ContentPage
     {
         try
         {
+            System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] OnBackButtonPressed - HasUnsavedChanges: {ViewModel?.HasUnsavedChanges == true}");
+            
             if (ViewModel?.HasUnsavedChanges == true)
             {
                 MainThread.BeginInvokeOnMainThread(async () =>
@@ -430,6 +473,8 @@ public partial class IngredientFormPage : ContentPage
                         FoodbookApp.Localization.AddRecipePageResources.YesButton, 
                         FoodbookApp.Localization.AddRecipePageResources.NoButton);
                     
+                    System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] Back button - User chose to leave: {leave}");
+                    
                     if (leave)
                     {
                         try { ViewModel?.DiscardChanges(); } catch { }
@@ -438,11 +483,20 @@ public partial class IngredientFormPage : ContentPage
                         {
                             var nav = Shell.Current?.Navigation;
                             if (nav?.ModalStack?.Count > 0)
+                            {
+                                System.Diagnostics.Debug.WriteLine("[IngredientFormPage] Back button - Popping modal");
                                 await nav.PopModalAsync(false);
+                            }
                             else
+                            {
+                                System.Diagnostics.Debug.WriteLine("[IngredientFormPage] Back button - Navigating back");
                                 await Shell.Current.GoToAsync("..", false);
+                            }
                         }
-                        catch { }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] Back button navigation error: {ex.Message}");
+                        }
                         finally
                         {
                             await Task.Delay(200);
@@ -454,6 +508,7 @@ public partial class IngredientFormPage : ContentPage
             }
 
             // No unsaved changes - use CancelCommand if available
+            System.Diagnostics.Debug.WriteLine("[IngredientFormPage] No unsaved changes, executing CancelCommand");
             if (ViewModel?.CancelCommand?.CanExecute(null) == true)
                 ViewModel.CancelCommand.Execute(null);
             return true;

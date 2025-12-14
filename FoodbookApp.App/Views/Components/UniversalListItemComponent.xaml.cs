@@ -1,6 +1,7 @@
 using System.Windows.Input;
 using Foodbook.Views.Base;
 using Microsoft.Maui.Controls;
+using CommunityToolkit.Maui.Behaviors;
 
 namespace Foodbook.Views.Components
 {
@@ -180,11 +181,69 @@ namespace Foodbook.Views.Components
         private void OnComponentLoaded(object? sender, EventArgs e)
         {
             _themeHelper.Initialize();
+            _themeHelper.ThemeChanged += OnThemeChanged;
+            
+            // Apply initial tint color
+            RefreshIconTintColors();
         }
 
         private void OnComponentUnloaded(object? sender, EventArgs e)
         {
+            _themeHelper.ThemeChanged -= OnThemeChanged;
             _themeHelper.Cleanup();
+        }
+
+        private void OnThemeChanged(object? sender, EventArgs e)
+        {
+            MainThread.BeginInvokeOnMainThread(RefreshIconTintColors);
+        }
+
+        private void RefreshIconTintColors()
+        {
+            try
+            {
+                var app = Application.Current;
+                if (app?.Resources == null) return;
+
+                Color? tintColor = null;
+                if (app.Resources.TryGetValue("TabBarIconTint", out var iconTintObj))
+                {
+                    if (iconTintObj is Color c)
+                        tintColor = c;
+                    else if (iconTintObj is SolidColorBrush b)
+                        tintColor = b.Color;
+                }
+
+                if (tintColor == null) return;
+
+                // Apply tint to Archive button
+                ApplyTintToImageButton(ArchiveImageButton, tintColor);
+                
+                // Apply tint to Restore button
+                ApplyTintToImageButton(RestoreImageButton, tintColor);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[UniversalListItemComponent] RefreshIconTintColors failed: {ex.Message}");
+            }
+        }
+
+        private static void ApplyTintToImageButton(ImageButton? imageButton, Color tintColor)
+        {
+            if (imageButton == null) return;
+
+            try
+            {
+                var behavior = imageButton.Behaviors.OfType<IconTintColorBehavior>().FirstOrDefault();
+                if (behavior != null)
+                {
+                    behavior.TintColor = tintColor;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[UniversalListItemComponent] ApplyTintToImageButton failed: {ex.Message}");
+            }
         }
 
         // Handlers to forward gestures to bound commands

@@ -195,11 +195,12 @@ namespace Foodbook.Views
                     await ViewModel.LoadRecipeAsync(RecipeId);
                 }
 
-                // If navigation passed FolderId, preselect it
+                // ✅ FIX: Use SetInitialFolderId to preselect folder without marking dirty
+                // This is not a user change, so it shouldn't mark the form as dirty
                 if (FolderId > 0 && ViewModel != null)
                 {
                     System.Diagnostics.Debug.WriteLine($"📁 AddRecipePage: Preselecting folder {FolderId}");
-                    ViewModel.SelectedFolderId = FolderId;
+                    ViewModel.SetInitialFolderId(FolderId);
                 }
             }
             catch (Exception ex)

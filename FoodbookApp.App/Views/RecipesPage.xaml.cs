@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using System.Threading.Tasks;
 using Foodbook.Models; // added for Recipe type
 using CommunityToolkit.Maui.Extensions;
+using CommunityToolkit.Maui.Behaviors;
 using Foodbook.Views.Components;
 using Microsoft.Extensions.DependencyInjection;
 using FoodbookApp.Interfaces;
@@ -97,6 +98,10 @@ public partial class RecipesPage : ContentPage
         
         // Initialize theme and font handling
         _themeHelper.Initialize();
+        _themeHelper.ThemeChanged += OnThemeChanged;
+        
+        // Apply initial tint color
+        RefreshFilterButtonTintColor();
         
         // Only load once or if explicitly needed
         if (!_isInitialized)
@@ -115,8 +120,44 @@ public partial class RecipesPage : ContentPage
         base.OnDisappearing();
         
         // Cleanup theme and font handling
+        _themeHelper.ThemeChanged -= OnThemeChanged;
         _themeHelper.Cleanup();
         WeakReferenceMessenger.Default.Unregister<FabCollapseMessage>(this);
+    }
+
+    private void OnThemeChanged(object? sender, EventArgs e)
+    {
+        MainThread.BeginInvokeOnMainThread(RefreshFilterButtonTintColor);
+    }
+
+    private void RefreshFilterButtonTintColor()
+    {
+        try
+        {
+            var app = Application.Current;
+            if (app?.Resources == null) return;
+
+            Color? tintColor = null;
+            if (app.Resources.TryGetValue("TabBarIconTint", out var iconTintObj))
+            {
+                if (iconTintObj is Color c)
+                    tintColor = c;
+                else if (iconTintObj is SolidColorBrush b)
+                    tintColor = b.Color;
+            }
+
+            if (tintColor == null || FilterButton == null) return;
+
+            var behavior = FilterButton.Behaviors.OfType<IconTintColorBehavior>().FirstOrDefault();
+            if (behavior != null)
+            {
+                behavior.TintColor = tintColor;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[RecipesPage] RefreshFilterButtonTintColor failed: {ex.Message}");
+        }
     }
 
     // Public method for TabBarComponent to cleanup when switching tabs

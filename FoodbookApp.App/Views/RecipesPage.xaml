@@ -5,6 +5,7 @@
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:converters="clr-namespace:Foodbook.Converters"
              xmlns:components="clr-namespace:Foodbook.Views.Components"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:resources="clr-namespace:FoodbookApp.Localization"
              x:Class="Foodbook.Views.RecipesPage"
              x:Name="ThisPage"
@@ -46,6 +47,7 @@
                                                ClearCommand="{Binding ClearSearchCommand}"
                                                IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
             <ImageButton Grid.Column="1"
+                         x:Name="FilterButton"
                          WidthRequest="28"
                          HeightRequest="28"
                          BackgroundColor="Transparent"
@@ -53,7 +55,11 @@
                          Source="Resources/Images/filter.png"
                          Opacity="0.4"
                          Clicked="OnFilterSortClicked"
-                         AutomationId="RecipesFilterButton"/>
+                         AutomationId="RecipesFilterButton">
+                <ImageButton.Behaviors>
+                    <toolkit:IconTintColorBehavior TintColor="{DynamicResource TabBarIconTint}" />
+                </ImageButton.Behaviors>
+            </ImageButton>
         </Grid>
 
         <!-- Breadcrumb with Back button under search bar -->

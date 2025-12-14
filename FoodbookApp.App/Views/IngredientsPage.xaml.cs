@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using FoodbookApp;
 using Foodbook.Views.Components;
 using CommunityToolkit.Maui.Extensions;
+using CommunityToolkit.Maui.Behaviors;
 using Foodbook.Models;
 using Foodbook.Services;
 
@@ -48,6 +49,10 @@ public partial class IngredientsPage : ContentPage
         
         // Initialize theme and font handling
         _themeHelper.Initialize();
+        _themeHelper.ThemeChanged += OnThemeChanged;
+        
+        // Apply initial tint color
+        RefreshFilterButtonTintColor();
         
         // Subscribe to global ingredients-changed event
         AppEvents.IngredientsChangedAsync += OnIngredientsChangedAsync;
@@ -79,6 +84,7 @@ public partial class IngredientsPage : ContentPage
         base.OnDisappearing();
         
         // Cleanup theme and font handling
+        _themeHelper.ThemeChanged -= OnThemeChanged;
         _themeHelper.Cleanup();
 
         // Unsubscribe to avoid leaks
@@ -87,6 +93,41 @@ public partial class IngredientsPage : ContentPage
 
         if (Current == this)
             Current = null;
+    }
+
+    private void OnThemeChanged(object? sender, EventArgs e)
+    {
+        MainThread.BeginInvokeOnMainThread(RefreshFilterButtonTintColor);
+    }
+
+    private void RefreshFilterButtonTintColor()
+    {
+        try
+        {
+            var app = Application.Current;
+            if (app?.Resources == null) return;
+
+            Color? tintColor = null;
+            if (app.Resources.TryGetValue("TabBarIconTint", out var iconTintObj))
+            {
+                if (iconTintObj is Color c)
+                    tintColor = c;
+                else if (iconTintObj is SolidColorBrush b)
+                    tintColor = b.Color;
+            }
+
+            if (tintColor == null || FilterButton == null) return;
+
+            var behavior = FilterButton.Behaviors.OfType<IconTintColorBehavior>().FirstOrDefault();
+            if (behavior != null)
+            {
+                behavior.TintColor = tintColor;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientsPage] RefreshFilterButtonTintColor failed: {ex.Message}");
+        }
     }
 
     // Public method for TabBarComponent to initialize subscriptions

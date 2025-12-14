@@ -415,6 +415,9 @@ namespace Foodbook.ViewModels
         {
             try
             {
+                // ✅ CRITICAL: Suppress dirty tracking during load
+                _suppressDirtyTracking = true;
+                
                 var recipe = await _recipeService.GetRecipeAsync(id);
                 if (recipe == null)
                     return;
@@ -445,6 +448,7 @@ namespace Foodbook.ViewModels
                         Carbs = ing.Carbs
                     };
                     
+                    // Subscribe to property changes AFTER adding to collection to avoid triggering dirty flag
                     Ingredients.Add(ingredient);
                 }
 
@@ -462,11 +466,15 @@ namespace Foodbook.ViewModels
                 OnPropertyChanged(nameof(Title));
                 OnPropertyChanged(nameof(SaveButtonText));
                 
-                // Reset dirty flag after loading
+                // ✅ CRITICAL: Reset dirty flag after loading and re-enable tracking
                 _isDirty = false;
+                _suppressDirtyTracking = false;
+                
+                System.Diagnostics.Debug.WriteLine("[AddRecipeViewModel] Recipe loaded, dirty tracking reset");
             }
             catch (Exception ex)
             {
+                _suppressDirtyTracking = false;
                 System.Diagnostics.Debug.WriteLine($"Error in LoadRecipeAsync: {ex.Message}");
                 ValidationMessage = $"Błąd ładowania przepisu: {ex.Message}";
             }
@@ -941,8 +949,9 @@ namespace Foodbook.ViewModels
                     System.Diagnostics.Debug.WriteLine("✅ Recipe updated successfully");
                 }
 
-                // After successful save reset dirty flag
+                // ✅ CRITICAL: After successful save reset dirty flag
                 _isDirty = false;
+                System.Diagnostics.Debug.WriteLine("🔄 Dirty flag reset after successful save");
 
                 // Reset form po udanym zapisie tylko w trybie dodawania
                 if (_editingRecipe == null)
@@ -1138,6 +1147,23 @@ namespace Foodbook.ViewModels
         {
             if (_suppressDirtyTracking) return;
             _isDirty = true;
+        }
+
+        // ✅ NEW: Public method to set folder ID without marking as dirty (for navigation preselection)
+        public void SetInitialFolderId(int? folderId)
+        {
+            try
+            {
+                _suppressDirtyTracking = true;
+                SelectedFolderId = folderId;
+                _suppressDirtyTracking = false;
+                System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Initial folder ID set to {folderId} without marking dirty");
+            }
+            catch (Exception ex)
+            {
+                _suppressDirtyTracking = false;
+                System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Error in SetInitialFolderId: {ex.Message}");
+            }
         }
     }
 }
