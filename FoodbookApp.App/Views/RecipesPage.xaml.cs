@@ -134,22 +134,25 @@ public partial class RecipesPage : ContentPage
     {
         try
         {
+            // Read Primary from resources updated by ThemeService
             var app = Application.Current;
-            if (app?.Resources == null) return;
+            if (app?.Resources == null || FilterButton == null) return;
 
             Color? tintColor = null;
-            if (app.Resources.TryGetValue("TabBarIconTint", out var iconTintObj))
+            if (app.Resources.TryGetValue("Primary", out var primaryObj))
             {
-                if (iconTintObj is Color c)
-                    tintColor = c;
-                else if (iconTintObj is SolidColorBrush b)
-                    tintColor = b.Color;
+                if (primaryObj is Color c) tintColor = c;
+                else if (primaryObj is SolidColorBrush b) tintColor = b.Color;
             }
 
-            if (tintColor == null || FilterButton == null) return;
+            // Fallback
+            if (tintColor == null && app.Resources.TryGetValue("TabBarIconTint", out var iconTintObj))
+            {
+                if (iconTintObj is Color c2) tintColor = c2; else if (iconTintObj is SolidColorBrush b2) tintColor = b2.Color;
+            }
 
             var behavior = FilterButton.Behaviors.OfType<IconTintColorBehavior>().FirstOrDefault();
-            if (behavior != null)
+            if (behavior != null && tintColor != null)
             {
                 behavior.TintColor = tintColor;
             }
@@ -172,23 +175,7 @@ public partial class RecipesPage : ContentPage
             _viewModel.GoBackCommand.Execute(null);
     }
 
-    // Handle dropping a recipe onto the back button: move up one level
-    private async void OnBackDrop(object? sender, DropEventArgs e)
-    {
-        try
-        {
-            if (e?.Data?.Properties?.TryGetValue("SourceItem", out var source) == true && source is Recipe recipe)
-            {
-                await _viewModel.MoveRecipeUpAsync(recipe);
-            }
-        }
-        catch
-        {
-            // ignore errors
-        }
-    }
-
-    // Drop anywhere on breadcrumb area moves up one level
+    // Breadcrumb drop
     private async void OnBreadcrumbDrop(object? sender, DropEventArgs e)
     {
         try
@@ -201,7 +188,6 @@ public partial class RecipesPage : ContentPage
         catch { }
     }
 
-    // Open filter/sort popup from breadcrumb image button
     private async void OnFilterSortClicked(object? sender, EventArgs e)
     {
         if (_isFilterPopupOpening || !FilterSortPopup.TryAcquireOpen())
@@ -210,11 +196,9 @@ public partial class RecipesPage : ContentPage
 
         try
         {
-            // Labels available for filtering are managed in SettingsViewModel
             var settingsVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<SettingsViewModel>();
             var allLabels = settingsVm?.Labels?.ToList() ?? new List<RecipeLabel>();
 
-            // Ingredients from DB (not from recipe list)
             var ingredientService = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IIngredientService>();
             var allIngredients = ingredientService != null ? await ingredientService.GetIngredientsAsync() : new List<Ingredient>();
 
@@ -234,7 +218,6 @@ public partial class RecipesPage : ContentPage
             var result = await popup.ResultTask;
             if (result != null)
             {
-                // Prefer SortBy (macros/name) when provided
                 _viewModel.ApplySortingLabelAndIngredientFilter(result.SortBy, result.SelectedLabelIds, result.SelectedIngredientNames);
             }
         }

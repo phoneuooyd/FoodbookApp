@@ -53,11 +53,12 @@
                          BackgroundColor="Transparent"
                          HorizontalOptions="End"
                          Source="Resources/Images/filter.png"
-                         Opacity="0.4"
+                         
                          Clicked="OnFilterSortClicked"
                          AutomationId="RecipesFilterButton">
                 <ImageButton.Behaviors>
-                    <toolkit:IconTintColorBehavior TintColor="{DynamicResource TabBarIconTint}" />
+                    <!-- Use Primary color directly so it always matches current theme -->
+                    <toolkit:IconTintColorBehavior TintColor="{DynamicResource Primary}" />
                 </ImageButton.Behaviors>
             </ImageButton>
         </Grid>

@@ -104,16 +104,27 @@ public partial class IngredientsPage : ContentPage
     {
         try
         {
-            var app = Application.Current;
-            if (app?.Resources == null) return;
-
+            // Resolve Primary color from application resources (ThemeService updates these)
             Color? tintColor = null;
-            if (app.Resources.TryGetValue("TabBarIconTint", out var iconTintObj))
+            var app = Application.Current;
+            if (app?.Resources != null)
             {
-                if (iconTintObj is Color c)
-                    tintColor = c;
-                else if (iconTintObj is SolidColorBrush b)
-                    tintColor = b.Color;
+                if (app.Resources.TryGetValue("Primary", out var primaryObj))
+                {
+                    if (primaryObj is Color c)
+                        tintColor = c;
+                    else if (primaryObj is SolidColorBrush b)
+                        tintColor = b.Color;
+                }
+            }
+
+            // Fallback to TabBarIconTint if Primary not found
+            if (tintColor == null && app?.Resources != null && app.Resources.TryGetValue("TabBarIconTint", out var iconTintObj))
+            {
+                if (iconTintObj is Color c2)
+                    tintColor = c2;
+                else if (iconTintObj is SolidColorBrush b2)
+                    tintColor = b2.Color;
             }
 
             if (tintColor == null || FilterButton == null) return;

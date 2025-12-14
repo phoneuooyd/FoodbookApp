@@ -295,27 +295,58 @@ public class FilterSortPopup : Popup
             await SubmitAndCloseAsync();
         };
 
+        // Replace text clear button with icon-only ImageButton
+        var clearIcon = new ImageButton
+        {
+            Source = "filter_clear.png",
+            BackgroundColor = Colors.Transparent,
+            Padding = 0,
+            WidthRequest = 28,
+            HeightRequest = 28,
+            HorizontalOptions = LayoutOptions.End,
+            VerticalOptions = LayoutOptions.Center
+        };
+        clearIcon.Clicked += async (_, __) =>
+        {
+            _sortPicker.SelectedIndex = 0;
+            _selected.Clear();
+            _selectedIngredientNames.Clear();
+            _ingredientSearchEntry.Text = string.Empty;
+
+            foreach (var chip in _labelsHost.Children.OfType<Border>())
+                chip.Stroke = Colors.Transparent;
+            foreach (var chip in _ingredientsHost.Children.OfType<Border>())
+                chip.Stroke = Colors.Transparent;
+            await SubmitAndCloseAsync(); //wy³¹czenie okna
+        };
+
         var header = new Grid
         {
             ColumnDefinitions = new ColumnDefinitionCollection
             {
                 new ColumnDefinition{ Width = GridLength.Star },
+                new ColumnDefinition{ Width = GridLength.Auto },
                 new ColumnDefinition{ Width = GridLength.Auto }
             },
             Padding = new Thickness(0,0,0,6)
         };
         header.Add(title, 0, 0);
-        header.Add(closeBtn, 1, 0);
+        header.Add(clearIcon, 1, 0);
+        header.Add(closeBtn, 2, 0);
 
         var sortRow = new Grid
         {
             ColumnDefinitions = new ColumnDefinitionCollection
             {
+                //new ColumnDefinition{ Width = GridLength.Star }, //koncepcja 4 kolumn w wierszu sortowania
+               // new ColumnDefinition{ Width = GridLength.Auto }, //aby by³ przycisk do czyszczenia filtrow 
                 new ColumnDefinition{ Width = GridLength.Star },
                 new ColumnDefinition{ Width = GridLength.Auto }
             },
             Margin = new Thickness(0,8)
         };
+       // sortRow.Add(new Label { Text = FoodbookApp.Localization.FilterSortPopupResources.ClearButton, VerticalOptions = LayoutOptions.Center }, 0, 0);
+       // sortRow.Add(_clearButton);
         sortRow.Add(new Label { Text = FoodbookApp.Localization.FilterSortPopupResources.SortLabel, VerticalOptions = LayoutOptions.Center }, 0, 0);
         sortRow.Add(_sortPicker,1,0);
 
@@ -354,32 +385,10 @@ public class FilterSortPopup : Popup
         };
         _okButton = ok;
 
-        var clear = new Button { Text = FoodbookApp.Localization.FilterSortPopupResources.ClearButton };
-        clear.StyleClass = new List<string> { "Secondary" };
-        clear.Clicked += (_, __) =>
-        {
-            _sortPicker.SelectedIndex = 0;
-            _selected.Clear();
-            _selectedIngredientNames.Clear();
-            _ingredientSearchEntry.Text = string.Empty;
-
-            // update visuals
-            foreach (var chip in _labelsHost.Children.OfType<Border>())
-            {
-                chip.Stroke = Colors.Transparent;
-            }
-            foreach (var chip in _ingredientsHost.Children.OfType<Border>())
-            {
-                chip.Stroke = Colors.Transparent;
-            }
-        };
-        _clearButton = clear;
-
         var buttons = new HorizontalStackLayout
         {
             Spacing = 12,
-            HorizontalOptions = LayoutOptions.End,
-            Children = { clear }
+            HorizontalOptions = LayoutOptions.End
         };
 
         if (_showApplyButton)
@@ -394,12 +403,13 @@ public class FilterSortPopup : Popup
             {
                 header,
                 sortRow,
+                buttons,
                 labelsHeader,
                 labelsScroll,
                 ingredientsHeader,
                 _ingredientSearchEntry,
-                ingredientsScroll,
-                buttons
+                ingredientsScroll
+
             }
         };
 
