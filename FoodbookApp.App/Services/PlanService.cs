@@ -19,6 +19,14 @@ public class PlanService : IPlanService
         return await _context.Plans.ToListAsync();
     }
 
+    public async Task<List<Plan>> GetArchivedPlansAsync()
+    {
+        return await _context.Plans
+            .Where(p => p.IsArchived)
+            .OrderByDescending(p => p.StartDate)
+            .ToListAsync();
+    }
+
     public async Task<Plan?> GetPlanAsync(int id)
     {
         return await _context.Plans.FindAsync(id);

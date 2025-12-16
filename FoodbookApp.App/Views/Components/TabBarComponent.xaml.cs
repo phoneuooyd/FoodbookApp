@@ -576,7 +576,11 @@ namespace Foodbook.Views.Components
 
         private void OnThemeChanged(object? sender, EventArgs e)
         {
-            MainThread.BeginInvokeOnMainThread(RefreshIconTintColorInternal);
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                RefreshIconTintColorInternal();
+                RefreshTabBarVisualsInternal();
+            });
         }
 
         // Only refresh the IconTintColor from static resources; no full TabBar reload
@@ -615,6 +619,85 @@ namespace Foodbook.Views.Components
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[TabBarComponent] RefreshIconTintColorInternal failed: {ex.Message}");
+            }
+        }
+
+        // Ensure tab item shadow and pressed backgrounds immediately reflect current theme
+        private void RefreshTabBarVisualsInternal()
+        {
+            try
+            {
+                if (TabBarContainer == null) return;
+                var app = Application.Current;
+                if (app?.Resources == null) return;
+
+                static Color? TryGetColor(object? obj)
+                {
+                    if (obj is Color c) return c;
+                    if (obj is SolidColorBrush b) return b.Color;
+                    return null;
+                }
+
+                app.Resources.TryGetValue("Primary", out var primaryObj);
+                app.Resources.TryGetValue("TabBarBackgroundDarken", out var darkenObj);
+
+                var primaryColor = TryGetColor(primaryObj);
+                var darkenColor = TryGetColor(darkenObj);
+
+                foreach (var child in TabBarContainer.Children)
+                {
+                    if (child is not Border containerBorder || containerBorder.Content is not Grid grid)
+                        continue;
+
+                    var tabVm = containerBorder.BindingContext as TabItemModel;
+                    var isSelected = tabVm?.IsSelected ?? false;
+
+                    // Update outer container shadow
+                    if (isSelected && primaryColor != null)
+                    {
+                        containerBorder.Shadow = new Shadow
+                        {
+                            Brush = new SolidColorBrush(primaryColor),
+                            Radius = 12,
+                            Opacity = 0.4f,
+                            Offset = new Point(0, 2)
+                        };
+                    }
+                    else
+                    {
+                        containerBorder.Shadow = new Shadow
+                        {
+                            Brush = new SolidColorBrush(Colors.Transparent),
+                            Radius = 0,
+                            Opacity = 0f,
+                            Offset = new Point(0, 0)
+                        };
+                    }
+
+                    // Update inner pressed background (if present)
+                    var innerBorder = grid.Children.OfType<Border>().FirstOrDefault();
+                    if (innerBorder != null)
+                    {
+                        if (darkenColor != null)
+                        {
+                            innerBorder.BackgroundColor = darkenColor;
+                        }
+                        if (primaryColor != null)
+                        {
+                            innerBorder.Shadow = new Shadow
+                            {
+                                Brush = new SolidColorBrush(primaryColor),
+                                Radius = 6,
+                                Opacity = 0.9f,
+                                Offset = new Point(0, 1)
+                            };
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[TabBarComponent] RefreshTabBarVisualsInternal failed: {ex.Message}");
             }
         }
 

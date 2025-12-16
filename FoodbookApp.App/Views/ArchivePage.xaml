@@ -34,29 +34,12 @@
                        FontAttributes="Bold"
                        TextColor="{DynamicResource Primary}"
                        Margin="10,0,0,5" />
-                
+
                 <components:GenericListComponent 
                     ItemsSource="{Binding ArchivedPlanners}"
                     ItemTemplate="{StaticResource ArchivedPlanItemTemplate}"
                     IsRefreshing="False"
                     EmptyTitle="Brak zarchiwizowanych plannerów"
-                    EmptyHint=""
-                    IsVisible="True" />
-            </VerticalStackLayout>
-
-            <!-- Shopping Lists Section -->
-            <VerticalStackLayout Spacing="10">
-                <Label Text="Zarchiwizowane listy zakupów"
-                       FontSize="20"
-                       FontAttributes="Bold"
-                       TextColor="{DynamicResource Primary}"
-                       Margin="10,0,0,5" />
-                
-                <components:GenericListComponent 
-                    ItemsSource="{Binding ArchivedShoppingLists}"
-                    ItemTemplate="{StaticResource ArchivedPlanItemTemplate}"
-                    IsRefreshing="False"
-                    EmptyTitle="Brak zarchiwizowanych list zakupów"
                     EmptyHint=""
                     IsVisible="True" />
             </VerticalStackLayout>

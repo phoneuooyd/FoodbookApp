@@ -17,11 +17,11 @@
         <DataTemplate x:Key="PlanItemTemplate" x:DataType="models:Plan">
             <components:UniversalListItemComponent 
                 EditCommand="{Binding BindingContext.OpenPlanCommand, Source={x:Reference ThisPage}}"
-                ArchiveCommand="{Binding BindingContext.ArchivePlanCommand, Source={x:Reference ThisPage}}"
+                DeleteCommand="{Binding BindingContext.DeletePlanCommand, Source={x:Reference ThisPage}}"
                 ShowNutritionLayout="False"
                 ShowPlanLayout="True"
-                ShowDeleteButton="False"
-                ShowArchiveButton="True"
+                ShowDeleteButton="True"
+                ShowArchiveButton="False"
                 ShowSubtitle="False" />
         </DataTemplate>
     </ContentPage.Resources>

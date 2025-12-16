@@ -16,7 +16,7 @@ public class ShoppingListViewModel
     public ObservableCollection<Plan> Plans { get; } = new();
 
     public ICommand OpenPlanCommand { get; }
-    public ICommand ArchivePlanCommand { get; }
+    public ICommand DeletePlanCommand { get; }
     public ICommand CreateShoppingListCommand { get; }
 
     // Handler stored so we can unsubscribe later
@@ -28,7 +28,7 @@ public class ShoppingListViewModel
         _planService = planService;
         _plannerService = plannerService;
         OpenPlanCommand = new Command<Plan>(async p => await OpenPlanAsync(p));
-        ArchivePlanCommand = new Command<Plan>(async p => await ArchivePlanAsync(p));
+        DeletePlanCommand = new Command<Plan>(async p => await DeletePlanAsync(p));
         CreateShoppingListCommand = new Command(async () => await CreateShoppingListAsync());
 
         _planChangedHandler = async () => await LoadPlansAsync();
@@ -65,23 +65,23 @@ public class ShoppingListViewModel
         await Shell.Current.GoToAsync($"{nameof(ShoppingListDetailPage)}?id={plan.Id}");
     }
 
-    private async Task ArchivePlanAsync(Plan? plan)
+    private async Task DeletePlanAsync(Plan? plan)
     {
         if (plan == null) return;
         
         bool confirm = await Shell.Current.DisplayAlert(
-            "Archiwizacja", 
-            "Czy na pewno chcesz zarchiwizowaæ tê listê zakupów?", 
+            "Usuwanie", 
+            "Czy na pewno chcesz trwale usun¹æ tê listê zakupów?", 
             "Tak", 
             "Nie");
             
         if (confirm)
         {
-            plan.IsArchived = true;
-            await _planService.UpdatePlanAsync(plan);
+            // Remove the plan entity; related items will be handled by DB constraints if configured
+            await _planService.RemovePlanAsync(plan.Id);
             await LoadPlansAsync();
             
-            // Notify archive page
+            // Notify archive and other pages
             AppEvents.RaisePlanChanged();
         }
     }

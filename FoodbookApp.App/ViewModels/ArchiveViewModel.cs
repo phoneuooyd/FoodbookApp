@@ -34,10 +34,11 @@ public class ArchiveViewModel
         ArchivedPlanners.Clear();
         ArchivedShoppingLists.Clear();
         
-        var plans = await _planService.GetPlansAsync();
+        // Pobierz tylko zarchiwizowane plany bezpoœrednio z us³ugi
+        var plans = await _planService.GetArchivedPlansAsync();
         
         // Rozdziel zarchiwizowane elementy wed³ug typu planu
-        foreach (var p in plans.Where(pl => pl.IsArchived).OrderByDescending(pl => pl.StartDate))
+        foreach (var p in plans)
         {
             if (p.Type == PlanType.Planner)
                 ArchivedPlanners.Add(p);
