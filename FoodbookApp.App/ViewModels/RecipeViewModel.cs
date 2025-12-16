@@ -650,5 +650,26 @@ namespace Foodbook.ViewModels
             await _recipeService.UpdateRecipeAsync(recipe);
             FilterItems();
         }
+
+        // Public API used by TabBar to reset folder navigation to root when switching tabs
+        public void ResetFolderNavigation()
+        {
+            try
+            {
+                if (Breadcrumb.Count > 0 || _currentFolder != null)
+                {
+                    Breadcrumb.Clear();
+                    _currentFolder = null;
+                    FilterItems();
+                    OnPropertyChanged(nameof(CanGoBack));
+                    (GoBackCommand as Command)?.ChangeCanExecute();
+                    System.Diagnostics.Debug.WriteLine("[RecipeViewModel] Folder navigation reset to root");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[RecipeViewModel] ResetFolderNavigation error: {ex.Message}");
+            }
+        }
     }
 }

@@ -520,6 +520,15 @@ namespace Foodbook.Views.Components
                         initSubsMethod.Invoke(page, null);
                     }
                 }
+                else if (pageType.Name == "RecipesPage")
+                {
+                    // Reset folder breadcrumb to root on the Recipes tab by calling VM method
+                    var resetMethod = vm.GetType().GetMethod("ResetFolderNavigation", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                    if (resetMethod != null)
+                    {
+                        resetMethod.Invoke(vm, null);
+                    }
+                }
                 else if (pageType.Name == "ShoppingListPage")
                 {
                     var startListeningMethod = pageType.GetMethod("StartListening", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
