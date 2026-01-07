@@ -10,6 +10,9 @@ using System.Net.Http;
 using CommunityToolkit.Maui;
 using FoodbookApp.Interfaces;
 using Sharpnado.CollectionView; // ? Sharpnado CollectionView namespace
+using Supabase;
+using Microsoft.IdentityModel.Tokens;
+using FoodbookApp.Services.Auth;
 
 namespace FoodbookApp
 {
@@ -69,10 +72,35 @@ namespace FoodbookApp
             builder.Services.AddSingleton<IThemeService, ThemeService>();
             builder.Services.AddSingleton<IFontService, FontService>();
             builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
+
+            // MAUI client-side JWT handling:
+            // - store token in SecureStorage
+            // - attach token to outgoing HttpClient requests
+            // - optionally validate token locally via JwtValidator (no AspNetCore middleware)
+            builder.Services.AddSingleton<IAuthTokenStore, SecureStorageAuthTokenStore>();
+            builder.Services.AddTransient<BearerTokenHandler>();
+            builder.Services.AddSingleton<IJwtValidator>(_ => new JwtValidator(new JwtValidationOptions
+            {
+                SigningKey = builder.Configuration["Authentication:JwtSecret"] ?? string.Empty,
+                Audience = builder.Configuration["Authentication:ValidAudience"] ?? string.Empty,
+                Issuer = builder.Configuration["Authentication:ValidIssuer"] ?? string.Empty
+            }));
+            builder.Services.AddScoped<ISupabaseAuthService, SupabaseAuthService>();
+
+            builder.Services.AddScoped<Supabase.Client>(_ => 
+            new Supabase.Client(
+                builder.Configuration["Supabase:Url"]!,
+                builder.Configuration["Supabase:Key"]!,
+                new SupabaseOptions 
+                { 
+                    AutoRefreshToken = true,
+                    AutoConnectRealtime = true
+                }
+            ));
             builder.Services.AddScoped<RecipeViewModel>();
             builder.Services.AddTransient<AddRecipeViewModel>();
             builder.Services.AddScoped<PlannerViewModel>();
-            builder.Services.AddScoped<PlannerEditViewModel>(); // NEW: Dedicated edit VM
+            builder.Services.AddScoped<PlannerEditViewModel>(); 
             builder.Services.AddScoped<HomeViewModel>();
             builder.Services.AddScoped<ShoppingListViewModel>();
             builder.Services.AddScoped<ShoppingListDetailViewModel>();
@@ -86,7 +114,19 @@ namespace FoodbookApp
             builder.Services.AddTransient<PlannerListsViewModel>();
 
             // Http / import
-            builder.Services.AddScoped<HttpClient>();
+            builder.Services.AddScoped(sp =>
+            {
+                var handler = sp.GetRequiredService<BearerTokenHandler>();
+                var client = new HttpClient(handler, disposeHandler: true);
+
+                var baseUrl = builder.Configuration["Supabase:Url"];
+                if (!string.IsNullOrWhiteSpace(baseUrl))
+                {
+                    client.BaseAddress = new Uri(baseUrl);
+                }
+
+                return client;
+            });
             builder.Services.AddScoped<RecipeImporter>();
 
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering pages");

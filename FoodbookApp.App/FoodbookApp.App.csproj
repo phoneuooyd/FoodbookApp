@@ -58,6 +58,7 @@
 
 		<!-- Disable trimming globally across all TFMs -->
 		<PublishTrimmed>false</PublishTrimmed>
+		<UserSecretsId>d3d908e1-91b7-49cb-8e14-bde23c49e8f4</UserSecretsId>
 	</PropertyGroup>
 
 	<!-- Disable Android AOT in Release to avoid EF Core GUID mismatch on device -->
@@ -146,6 +147,7 @@
 		<PackageReference Include="HtmlAgilityPack" Version="1.12.2" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.9" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
 		<PackageReference Include="Microsoft.Maui.Controls" Version="9.0.110" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.9" />
 		<PackageReference Include="MR.Gestures" Version="5.0.0" />
