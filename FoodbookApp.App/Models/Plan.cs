@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Foodbook.Models
@@ -24,18 +25,26 @@ namespace Foodbook.Models
         // This creates a one-to-one relationship between meal planner and its shopping list
         public int? LinkedShoppingListPlanId { get; set; }
 
-        // Custom name for the planner (optional, user-defined)
-        [NotMapped]
-        public string? PlannerName { get; set; }
+        // Persisted title/name for the plan (user-defined)
+        [MaxLength(200)]
+        public string? Title { get; set; }
 
-        // Display name for UI - shows custom name or default based on type
+        // Backward compatible alias used across the UI/viewmodels
         [NotMapped]
-        public string Name => !string.IsNullOrWhiteSpace(PlannerName)
-            ? PlannerName
-            : (Type == PlanType.Planner ? "Planer" : "Lista zakupów");
+        public string? PlannerName
+        {
+            get => Title;
+            set => Title = value;
+        }
 
-        // Label used for display - reflect the current type instead of a constant
+        // Display name for UI - shows custom title or default based on type
         [NotMapped]
-        public string Label => Type == PlanType.Planner ? "Planer" : "Lista zakupów";
+        public string Name => !string.IsNullOrWhiteSpace(Title)
+            ? Title!
+            : (Type == PlanType.Planner ? "Planner" : "Lista zakupów");
+
+        // Label used for display - reflect the current type
+        [NotMapped]
+        public string Label => Type == PlanType.Planner ? "Planner" : "Lista zakupów";
     }
 }

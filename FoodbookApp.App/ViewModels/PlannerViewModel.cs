@@ -162,7 +162,7 @@ public class PlannerViewModel : INotifyPropertyChanged
                 {
                     await Shell.Current.DisplayAlert(
                         "Zapisano",
-                        $"Zapisano listę zakupów ({plan.StartDate:dd.MM.yyyy} - {plan.EndDate:dd.MM.yyyy})",
+                        $"Zapisano planer: {plan.Name} ({plan.StartDate:dd.MM.yyyy} - {plan.EndDate:dd.MM.yyyy})",
                         "OK");
                     
                     // Notify shopping lists/plans
@@ -617,12 +617,47 @@ public class PlannerViewModel : INotifyPropertyChanged
         await InitializeEmptyPlannerAsync();
     }
 
+    private async Task<string?> PromptForPlannerNameAsync(string? currentName)
+    {
+        try
+        {
+            return await Shell.Current.DisplayPromptAsync(
+                "Nazwa planu",
+                "Podaj nazwę planu (opcjonalnie)",
+                accept: "Zapisz",
+                cancel: "Anuluj",
+                placeholder: "Planner",
+                initialValue: currentName ?? string.Empty,
+                maxLength: 50,
+                keyboard: Microsoft.Maui.Keyboard.Text);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] PromptForPlannerNameAsync error: {ex.Message}");
+            return null;
+        }
+    }
+
     private async Task<Plan?> SaveAsync()
     {
         try
         {
             System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] SaveAsync started - IsEditing={IsEditing}, PlanId={_editingPlanId}");
-            
+
+            // Ask for planner name first. Cancel => abort save.
+            string? existingName = null;
+            if (_editingPlanId.HasValue)
+            {
+                var existingPlan = await _planService.GetPlanAsync(_editingPlanId.Value);
+                existingName = existingPlan?.PlannerName;
+            }
+
+            var enteredName = await PromptForPlannerNameAsync(existingName);
+            if (enteredName == null)
+                return null;
+
+            var finalName = string.IsNullOrWhiteSpace(enteredName) ? "Planner" : enteredName.Trim();
+
             // Check for exact existing plan in the same period (ignore archived and the plan being edited)
             var allPlans = await _planService.GetPlansAsync();
             var conflictingPlan = allPlans.FirstOrDefault(p =>
@@ -727,6 +762,7 @@ public class PlannerViewModel : INotifyPropertyChanged
                 plan = await _planService.GetPlanAsync(_editingPlanId.Value) ?? new Plan { Type = PlanType.Planner };
                 plan.StartDate = StartDate;
                 plan.EndDate = EndDate;
+                plan.PlannerName = finalName;
                 if (plan.Id == 0)
                     await _planService.AddPlanAsync(plan);
                 else
@@ -740,7 +776,8 @@ public class PlannerViewModel : INotifyPropertyChanged
                 { 
                     StartDate = StartDate, 
                     EndDate = EndDate,
-                    Type = PlanType.Planner
+                    Type = PlanType.Planner,
+                    PlannerName = finalName
                 };
                 await _planService.AddPlanAsync(plan);
                 _editingPlanId = plan.Id; // assign after create to save meals under this plan

@@ -267,7 +267,7 @@ namespace Foodbook.ViewModels
 
         private async Task CreateFolderAsync()
         {
-            string result = await Shell.Current.DisplayPromptAsync("Nowy folder", "Podaj nazwê folderu", "Utwórz", "Anuluj", maxLength: 200, keyboard: Keyboard.Text);
+            string result = await Shell.Current.DisplayPromptAsync("Nowy folder", "Podaj nazwê folderu", "Utwórz", "Anuluj", maxLength: 200, keyboard: Microsoft.Maui.Keyboard.Text);
             if (string.IsNullOrWhiteSpace(result)) return;
 
             var folder = new Folder { Name = result.Trim(), ParentFolderId = _currentFolder?.Id };

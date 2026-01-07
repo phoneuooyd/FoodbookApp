@@ -58,9 +58,9 @@
                             <!-- Title for Recipe/Ingredient, Label for Plan -->
                             <Label x:Name="TitleLabel" Text="{Binding Name}" Style="{StaticResource ItemTitleLabel}">
                                 <Label.Triggers>
-                                    <!-- Plan: show Label instead of Name -->
+                                    <!-- Plan: show Name (custom title) instead of generic Label -->
                                     <DataTrigger TargetType="Label" Binding="{Binding ., Converter={StaticResource IsPlanConverter}}" Value="True">
-                                        <Setter Property="Text" Value="{Binding Label}" />
+                                        <Setter Property="Text" Value="{Binding Name}" />
                                     </DataTrigger>
                                     <!-- Folder: increase font size and use themed text color -->
                                     <DataTrigger TargetType="Label" Binding="{Binding ., Converter={StaticResource IsFolderConverter}}" Value="True">

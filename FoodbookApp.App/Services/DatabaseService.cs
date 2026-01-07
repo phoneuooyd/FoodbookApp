@@ -16,8 +16,9 @@ namespace Foodbook.Services
         {
             services.AddDbContext<AppDbContext>(options =>
             {
-                var dbPath = Path.Combine(FileSystem.AppDataDirectory, "foodbookapp_dev.db");
-                options.UseSqlite($"Data Source={dbPath}");
+                // USE CENTRALIZED DATABASE PATH - single source of truth
+                var connectionString = DatabaseConfiguration.GetConnectionString();
+                options.UseSqlite(connectionString);
             });
             return services;
         }

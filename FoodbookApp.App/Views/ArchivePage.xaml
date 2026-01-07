@@ -29,7 +29,7 @@
         <VerticalStackLayout Spacing="20" Padding="10">
             <!-- Planners Section -->
             <VerticalStackLayout Spacing="10">
-                <Label Text="Zarchiwizowane plannery"
+                <Label Text="{loc:Translate Resource=ArchivePageResources, Key=Title}"
                        FontSize="20"
                        FontAttributes="Bold"
                        TextColor="{DynamicResource Primary}"

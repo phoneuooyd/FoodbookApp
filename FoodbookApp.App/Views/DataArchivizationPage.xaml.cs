@@ -325,19 +325,68 @@ namespace Foodbook.Views
 
         private async Task FlushSqliteWalAsync(string dbPath)
         {
-            try
+            const int MaxRetries = 3;
+            const int RetryDelayMs = 200;
+
+            for (int attempt = 1; attempt <= MaxRetries; attempt++)
             {
-                // Run checkpoint to flush WAL into main DB to avoid losing recent changes
-                var cs = new SqliteConnectionStringBuilder { DataSource = dbPath, Mode = SqliteOpenMode.ReadWrite, Cache = SqliteCacheMode.Shared }.ToString();
-                using var conn = new SqliteConnection(cs);
-                await conn.OpenAsync();
-                using var cmd = conn.CreateCommand();
-                cmd.CommandText = "PRAGMA wal_checkpoint(TRUNCATE); PRAGMA optimize;";
-                await cmd.ExecuteNonQueryAsync();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"SQLite checkpoint failed: {ex.Message}");
+                try
+                {
+                    System.Diagnostics.Debug.WriteLine($"[Archive] WAL checkpoint attempt {attempt}/{MaxRetries}");
+                    
+                    // First: Dispose all EF Core contexts to release database connections
+                    // This is critical - EF Core may hold connections that prevent WAL flush
+                    using var scope = FoodbookApp.MauiProgram.ServiceProvider!.CreateScope();
+                    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    
+                    // Force EF Core to save any pending changes
+                    await context.SaveChangesAsync();
+                    System.Diagnostics.Debug.WriteLine("[Archive] EF Core changes saved");
+                    
+                    // Dispose the context to release connection
+                    await context.DisposeAsync();
+                    System.Diagnostics.Debug.WriteLine("[Archive] EF Core context disposed");
+                    
+                    // Small delay to ensure connection is fully released
+                    await Task.Delay(100);
+
+                    // Second: Direct WAL checkpoint via new connection
+                    var cs = new SqliteConnectionStringBuilder 
+                    { 
+                        DataSource = dbPath, 
+                        Mode = SqliteOpenMode.ReadWrite, 
+                        Cache = SqliteCacheMode.Shared 
+                    }.ToString();
+                    
+                    using var conn = new SqliteConnection(cs);
+                    await conn.OpenAsync();
+                    System.Diagnostics.Debug.WriteLine("[Archive] Direct SQLite connection opened");
+                    
+                    using var cmd = conn.CreateCommand();
+                    // TRUNCATE mode: checkpoint and truncate WAL file
+                    cmd.CommandText = "PRAGMA wal_checkpoint(TRUNCATE);";
+                    var result = await cmd.ExecuteScalarAsync();
+                    System.Diagnostics.Debug.WriteLine($"[Archive] WAL checkpoint result: {result}");
+                    
+                    // Optimize database
+                    cmd.CommandText = "PRAGMA optimize;";
+                    await cmd.ExecuteNonQueryAsync();
+                    System.Diagnostics.Debug.WriteLine("[Archive] Database optimized");
+                    
+                    return; // Success
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[Archive] WAL checkpoint attempt {attempt} failed: {ex.Message}");
+                    if (attempt < MaxRetries)
+                    {
+                        await Task.Delay(RetryDelayMs);
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[Archive] WAL checkpoint failed after {MaxRetries} attempts: {ex.Message}");
+                    }
+                }
             }
         }
 
@@ -350,13 +399,32 @@ namespace Foodbook.Views
                 _isExporting = true;
                 if (createBtn != null) createBtn.IsEnabled = false;
 
+                System.Diagnostics.Debug.WriteLine("[Archive] === EXPORT STARTED ===");
+
                 await _dbService.EnsureDatabaseSchemaAsync();
 
-                // Prepare paths
-                var dbPath = Path.Combine(FileSystem.AppDataDirectory, "foodbookapp.db");
+                // USE CENTRALIZED DATABASE PATH - critical fix!
+                var dbPath = DatabaseConfiguration.GetDatabasePath();
+                System.Diagnostics.Debug.WriteLine($"[Archive] Database path: {dbPath}");
+                System.Diagnostics.Debug.WriteLine($"[Archive] Database exists: {File.Exists(dbPath)}");
+                
+                if (File.Exists(dbPath))
+                {
+                    var dbInfo = new FileInfo(dbPath);
+                    System.Diagnostics.Debug.WriteLine($"[Archive] Database size: {dbInfo.Length} bytes, Last modified: {dbInfo.LastWriteTime}");
+                }
 
-                // Ensure WAL is flushed before reading DB
+                // Flush WAL to ensure all recent changes are in the main DB file
+                System.Diagnostics.Debug.WriteLine("[Archive] Flushing WAL...");
                 await FlushSqliteWalAsync(dbPath);
+                System.Diagnostics.Debug.WriteLine("[Archive] WAL flush completed");
+
+                // Verify database state after WAL flush
+                if (File.Exists(dbPath))
+                {
+                    var dbInfo = new FileInfo(dbPath);
+                    System.Diagnostics.Debug.WriteLine($"[Archive] Database size after WAL flush: {dbInfo.Length} bytes");
+                }
 
                 var prefsExport = Path.Combine(FileSystem.CacheDirectory, "prefs_export.json");
                 var json = System.Text.Json.JsonSerializer.Serialize(new
@@ -370,6 +438,7 @@ namespace Foodbook.Views
                     FontSize = _prefs.GetSavedFontSize()
                 });
                 await File.WriteAllTextAsync(prefsExport, json);
+                System.Diagnostics.Debug.WriteLine("[Archive] Preferences exported");
 
                 // Target name
                 var targetDir = GetDefaultArchiveFolder();
@@ -382,22 +451,49 @@ namespace Foodbook.Views
                 // Create ZIP in a temporary file on background thread to avoid blocking UI
                 var tempZip = Path.Combine(FileSystem.CacheDirectory, $"{Guid.NewGuid():N}.fbk");
 
+                System.Diagnostics.Debug.WriteLine("[Archive] Creating ZIP archive...");
                 await Task.Run(() =>
                 {
                     try
                     {
                         using var zip = ZipFile.Open(tempZip, ZipArchiveMode.Create);
-                        zip.CreateEntryFromFile(dbPath, "database/foodbookapp.db");
-                        if (File.Exists(dbPath + "-shm")) zip.CreateEntryFromFile(dbPath + "-shm", "database/foodbookapp.db-shm");
-                        if (File.Exists(dbPath + "-wal")) zip.CreateEntryFromFile(dbPath + "-wal", "database/foodbookapp.db-wal");
+                        
+                        // Add main database file
+                        if (File.Exists(dbPath))
+                        {
+                            zip.CreateEntryFromFile(dbPath, "database/foodbookapp.db");
+                            System.Diagnostics.Debug.WriteLine($"[Archive] Added database: {new FileInfo(dbPath).Length} bytes");
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine("[Archive] WARNING: Database file not found!");
+                        }
+                        
+                        // Add WAL/SHM files if they exist (for safety, though they should be flushed)
+                        var (walPath, shmPath) = DatabaseConfiguration.GetWalFiles();
+                        if (File.Exists(shmPath))
+                        {
+                            zip.CreateEntryFromFile(shmPath, "database/foodbookapp.db-shm");
+                            System.Diagnostics.Debug.WriteLine($"[Archive] Added SHM file: {new FileInfo(shmPath).Length} bytes");
+                        }
+                        if (File.Exists(walPath))
+                        {
+                            zip.CreateEntryFromFile(walPath, "database/foodbookapp.db-wal");
+                            System.Diagnostics.Debug.WriteLine($"[Archive] Added WAL file: {new FileInfo(walPath).Length} bytes");
+                        }
+                        
+                        // Add preferences
                         zip.CreateEntryFromFile(prefsExport, "prefs.json");
+                        System.Diagnostics.Debug.WriteLine("[Archive] Added preferences");
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Error creating zip in background: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"[Archive] Error creating zip in background: {ex.Message}");
                         throw;
                     }
                 });
+
+                System.Diagnostics.Debug.WriteLine($"[Archive] ZIP created: {new FileInfo(tempZip).Length} bytes");
 
                 bool saved = false;
                 string? outPath = null;
@@ -419,10 +515,11 @@ namespace Foodbook.Views
                     // Do file copy on background thread
                     await Task.Run(() => File.Copy(tempZip, outPath, overwrite: false));
                     saved = true;
+                    System.Diagnostics.Debug.WriteLine($"[Archive] Saved to: {outPath}");
                 }
                 catch (Exception directEx)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Direct save failed, will use picker: {directEx.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[Archive] Direct save failed, will use picker: {directEx.Message}");
                     saved = false;
                 }
 
@@ -437,12 +534,15 @@ namespace Foodbook.Views
                     }
                     outPath = result.FilePath;
                     saved = true;
+                    System.Diagnostics.Debug.WriteLine($"[Archive] Saved via picker to: {outPath}");
                 }
 
                 // Cleanup temp
                 try { File.Delete(tempZip); } catch { }
 
                 StatusLabel.Text = string.Format(GetLocalizedText("DataArchivizationPageResources", "SavedMessage", "Saved: {0}"), outName);
+
+                System.Diagnostics.Debug.WriteLine("[Archive] === EXPORT COMPLETED SUCCESSFULLY ===");
 
                 // Refresh list now that export is complete
                 LoadArchivesList();
@@ -460,6 +560,10 @@ namespace Foodbook.Views
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[Archive] === EXPORT FAILED ===");
+                System.Diagnostics.Debug.WriteLine($"[Archive] Error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[Archive] Stack trace: {ex.StackTrace}");
+                
                 var errorTitle = GetLocalizedText("DataArchivizationPageResources", "ErrorTitle", "Error") ?? "Error";
                 var ok = GetLocalizedText("ButtonResources", "OK", "OK") ?? "OK";
                 var msg = string.Format(GetLocalizedText("DataArchivizationPageResources", "ExportFailed", "Export failed: {0}"), ex.Message);

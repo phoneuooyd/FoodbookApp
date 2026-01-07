@@ -158,6 +158,7 @@
 		<PackageReference Include="Sharpnado.CollectionView.Maui" Version="3.1.2" />
 		<PackageReference Include="Sharpnado.Maui.DragDropGridView" Version="1.0.1" />
 		<PackageReference Include="Sharpnado.TaskMonitor" Version="1.1.0" />
+		<PackageReference Include="Supabase" Version="1.1.1" />
 	</ItemGroup>
 
         <ItemGroup>
@@ -424,6 +425,7 @@
 
 	<ItemGroup>
 	  <Folder Include=".github\workflows\" />
+	  <Folder Include="FoodbookApp.DbMigrations\" />
 	</ItemGroup>
 
 </Project>

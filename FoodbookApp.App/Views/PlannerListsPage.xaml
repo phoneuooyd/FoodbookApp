@@ -29,6 +29,13 @@
     </ContentPage.Resources>
 
     <Grid>
+        <Label
+            Text="{loc:Translate Resource=PlannerListsPageResources, Key=PlannerTitle}"
+            FontSize="20"
+            FontAttributes="Bold"
+            TextColor="{DynamicResource Primary}"
+            Margin="10,5,5,5" />
+
         <components:GenericListComponent
             x:Name="PlannerList"
             ItemsSource="{Binding Plans}"
