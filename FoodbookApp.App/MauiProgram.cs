@@ -13,6 +13,7 @@ using Sharpnado.CollectionView; // ? Sharpnado CollectionView namespace
 using Supabase;
 using Microsoft.IdentityModel.Tokens;
 using FoodbookApp.Services.Auth;
+using Foodbook.Views.Components;
 
 namespace FoodbookApp
 {
@@ -148,6 +149,9 @@ namespace FoodbookApp
             
             // NEW: MainPage with custom TabBarComponent
             builder.Services.AddScoped<MainPage>();
+
+            // NEW: Popups
+            builder.Services.AddTransient<RegisterPopup>();
 
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering routes");
             Routing.RegisterRoute(nameof(HomePage), typeof(HomePage));

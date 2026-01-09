@@ -2,6 +2,9 @@ using FoodbookApp.Interfaces;
 using Microsoft.Maui.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using FoodbookApp.Services.Auth;
+using CommunityToolkit.Maui.Views;
+using CommunityToolkit.Maui.Extensions;
+using Foodbook.Views.Components;
 
 namespace Foodbook.Views;
 
@@ -90,7 +93,38 @@ public partial class ProfilePage : ContentPage
 
     private async void OnRegisterClicked(object sender, EventArgs e)
     {
-        await DisplayAlert("Rejestracja", "Funkcja rejestracji bêdzie dodana póŸniej.", "OK");
+        try
+        {
+            var popup = FoodbookApp.MauiProgram.ServiceProvider?.GetService<RegisterPopup>() ?? new RegisterPopup();
+
+            var hostPage = Application.Current?.Windows.FirstOrDefault()?.Page
+                           ?? Application.Current?.MainPage
+                           ?? this;
+
+            var showTask = hostPage.ShowPopupAsync(popup);
+            var resultTask = popup.ResultTask;
+
+            await Task.WhenAny(showTask, resultTask);
+
+            var registered = resultTask.IsCompleted && await resultTask;
+            if (!registered)
+                return;
+
+            var auth = GetSupabaseAuth();
+            var session = auth?.CurrentSession;
+            if (session != null && !string.IsNullOrWhiteSpace(session.AccessToken))
+            {
+                _isLoggedIn = true;
+                LoggedInUserLabel.Text = session.User?.Email ?? string.Empty;
+                UpdateUiState();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Register popup error: {ex}");
+            var msg = ex.InnerException?.Message is { Length: > 0 } inner ? inner : ex.Message;
+            await DisplayAlert("B³¹d", msg, "OK");
+        }
     }
 
     private async void OnLogoutClicked(object sender, EventArgs e)

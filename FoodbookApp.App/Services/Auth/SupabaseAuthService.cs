@@ -46,11 +46,12 @@ public sealed class SupabaseAuthService : ISupabaseAuthService
     {
         await EnsureInitializedAsync();
         System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] SignUp start: {email}");
-        
+
         var session = await _client.Auth.SignUp(email, password);
-        
+
         System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] SignUp complete; session: {session != null}");
         await PersistTokenAsync(session);
+
         return session;
     }
 
@@ -58,11 +59,12 @@ public sealed class SupabaseAuthService : ISupabaseAuthService
     {
         await EnsureInitializedAsync();
         System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] SignIn start: {email}");
-        
+
         var session = await _client.Auth.SignIn(email, password);
-        
+
         System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] SignIn complete; token present: {!string.IsNullOrWhiteSpace(session?.AccessToken)}");
         await PersistTokenAsync(session);
+
         return session;
     }
 
@@ -85,11 +87,10 @@ public sealed class SupabaseAuthService : ISupabaseAuthService
         }
     }
 
-    private async Task PersistTokenAsync(Session session)
+    private async Task PersistTokenAsync(Session? session)
     {
-        // Supabase access token is what you send as Authorization Bearer
         var accessToken = session?.AccessToken;
         System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] Persisting token: {!string.IsNullOrWhiteSpace(accessToken)}");
         await _tokenStore.SetAccessTokenAsync(accessToken);
-     }
+    }
 }

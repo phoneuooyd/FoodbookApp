@@ -357,6 +357,9 @@
 	  <MauiXaml Update="Views\Components\RecipeListItemComponent.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="Views\Components\RegisterPopup.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Views\Components\SafeButtonComponent.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
