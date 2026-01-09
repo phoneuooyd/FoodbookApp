@@ -1,19 +1,102 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:loc="clr-namespace:Foodbook.Services"
              x:Class="Foodbook.Views.ProfilePage"
-             Title="Profile"
+             Title="Profil"
              BackgroundColor="{DynamicResource PageBackgroundColor}">
+
     <ScrollView>
         <VerticalStackLayout Padding="16" Spacing="16">
-            <Frame CornerRadius="12" Padding="16" BackgroundColor="{DynamicResource Primary}">
-                <Label Text="Profile (diagnostic)" TextColor="White" HorizontalOptions="Center" />
-            </Frame>
 
-            <Button Text="Pobierz JWT (diagnostic)" BackgroundColor="Red" TextColor="White" Clicked="OnProfileFetchJwtClicked" />
+            <!-- Header card -->
+            <Border Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                    Padding="16">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="?? Profil"
+                           FontSize="22"
+                           FontAttributes="Bold"
+                           TextColor="{DynamicResource Primary}"
+                           HorizontalOptions="Center" />
+                    <Label Text="Logowanie do Supabase"
+                           FontSize="12"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}"
+                           HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </Border>
 
-            <Label x:Name="StatusLabel" Text="" />
+            <!-- LOGIN PANEL -->
+            <Border x:Name="LoginPanel"
+                    Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                    Padding="16">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Zaloguj si " FontAttributes="Bold" FontSize="18" TextColor="{DynamicResource Primary}" />
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Email" FontSize="12" FontAttributes="Bold" />
+                        <Border Style="{StaticResource ModernBorder}">
+                            <Entry x:Name="EmailEntry"
+                                   Style="{StaticResource ModernEntry}"
+                                   Placeholder="name@example.com"
+                                   Keyboard="Email" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Has o" FontSize="12" FontAttributes="Bold" />
+                        <Border Style="{StaticResource ModernBorder}">
+                            <Entry x:Name="PasswordEntry"
+                                   Style="{StaticResource ModernEntry}"
+                                   Placeholder="        "
+                                   IsPassword="True" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <Label x:Name="StatusLabel"
+                           FontSize="12"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+
+                    <Button Text="Zaloguj"
+                            StyleClass="Primary"
+                            Clicked="OnProfileFetchJwtClicked" />
+
+                    <Button Text="Zarejestruj si"
+                            StyleClass="Secondary"
+                            Clicked="OnRegisterClicked" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- LOGGED-IN PANEL -->
+            <Border x:Name="LoggedInPanel"
+                    IsVisible="False"
+                    Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                    Padding="16">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Jeste  zalogowany"
+                           FontAttributes="Bold"
+                           FontSize="18"
+                           TextColor="{DynamicResource Primary}"
+                           HorizontalOptions="Center" />
+
+                    <Label x:Name="LoggedInUserLabel"
+                           FontSize="12"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}"
+                           HorizontalOptions="Center" />
+
+                    <Button Text="Wyloguj"
+                            StyleClass="Secondary"
+                            Clicked="OnLogoutClicked" />
+                </VerticalStackLayout>
+            </Border>
+
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

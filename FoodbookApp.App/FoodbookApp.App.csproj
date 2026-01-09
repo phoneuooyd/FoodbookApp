@@ -431,6 +431,7 @@
 	<ItemGroup>
 	  <Folder Include=".github\workflows\" />
 	  <Folder Include="FoodbookApp.DbMigrations\" />
+	  <Folder Include="Scripts\" />
 	</ItemGroup>
 
 </Project>
