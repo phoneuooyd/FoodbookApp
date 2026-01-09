@@ -89,8 +89,8 @@ namespace FoodbookApp
 
             builder.Services.AddScoped<Supabase.Client>(_ => 
             new Supabase.Client(
-                builder.Configuration["Supabase:Url"]!,
-                builder.Configuration["Supabase:Key"]!,
+                "https://gscbdvezastxpyndkauh.supabase.co",
+                "sb_publishable_gwkJSRidW1DP28CCEeQUDA_ELLTHT92",
                 new SupabaseOptions 
                 { 
                     AutoRefreshToken = true,
@@ -144,12 +144,14 @@ namespace FoodbookApp
             builder.Services.AddScoped<SettingsPage>();
             builder.Services.AddScoped<SetupWizardPage>();
             builder.Services.AddScoped<DataArchivizationPage>();
+            builder.Services.AddScoped<ProfilePage>();
             
             // NEW: MainPage with custom TabBarComponent
             builder.Services.AddScoped<MainPage>();
 
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering routes");
             Routing.RegisterRoute(nameof(HomePage), typeof(HomePage));
+            Routing.RegisterRoute(nameof(ProfilePage), typeof(ProfilePage));
             Routing.RegisterRoute(nameof(RecipesPage), typeof(RecipesPage));
             Routing.RegisterRoute(nameof(AddRecipePage), typeof(AddRecipePage));
             Routing.RegisterRoute(nameof(IngredientFormPage), typeof(IngredientFormPage));

@@ -5,6 +5,7 @@ using Foodbook.Views.Components;
 using CommunityToolkit.Maui.Views;
 using CommunityToolkit.Maui.Extensions;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Services.Auth;
 
 namespace Foodbook.Views;
 
@@ -15,12 +16,16 @@ public partial class HomePage : ContentPage
     private IFontService? _fontService;
     private ILocalizationService? _localizationService;
     private bool _isMealsPopupOpen = false; // Protection against multiple opens
+    private ISupabaseAuthService? _supabaseAuth;
 
     public HomePage(HomeViewModel vm)
     {
         InitializeComponent();
         BindingContext = vm;
     }
+
+    private ISupabaseAuthService? GetSupabaseAuth()
+        => _supabaseAuth ??= FoodbookApp.MauiProgram.ServiceProvider?.GetService<ISupabaseAuthService>();
 
     protected override async void OnAppearing()
     {
@@ -31,6 +36,32 @@ public partial class HomePage : ContentPage
         
         if (ViewModel != null)
             await ViewModel.LoadAsync();
+    }
+
+    private async void OnProfileFetchJwtClicked(object sender, EventArgs e)
+    {
+        await DisplayAlert("dupa", "ok", "ok");
+        System.Diagnostics.Debug.WriteLine("[HomePage] ===== BUTTON CLICKED - SYNC TEST =====");
+        
+        // Najtuplejszy mo¿liwy test - bez DisplayAlert, bez async
+        int testValue = 42;
+        System.Diagnostics.Debug.WriteLine($"[HomePage] Test sync code executed: {testValue}");
+        
+        // Teraz spróbuj DisplayAlert
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[HomePage] Before DisplayAlert");
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                System.Diagnostics.Debug.WriteLine("[HomePage] Inside MainThread");
+                await DisplayAlert("TEST", "Button works!", "OK");
+                System.Diagnostics.Debug.WriteLine("[HomePage] After DisplayAlert");
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HomePage] Exception in click handler: {ex.Message}");
+        }
     }
 
     protected override void OnDisappearing()
@@ -185,6 +216,19 @@ public partial class HomePage : ContentPage
         {
             _isMealsPopupOpen = false;
             System.Diagnostics.Debug.WriteLine("?? HomePage: Meals popup protection released");
+        }
+    }
+
+    private async void OnOpenProfileClicked(object sender, EventArgs e)
+    {
+        try
+        {
+            await Shell.Current.GoToAsync(nameof(ProfilePage));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HomePage] Failed to open ProfilePage: {ex.Message}");
+            await DisplayAlert("B³¹d", "Nie mo¿na otworzyæ strony profilu.", "OK");
         }
     }
 

@@ -402,6 +402,9 @@
           <MauiXaml Update="Views\PlannerPage.xaml">
             <Generator>MSBuild:Compile</Generator>
           </MauiXaml>
+          <MauiXaml Update="Views\ProfilePage.xaml">
+            <Generator>MSBuild:Compile</Generator>
+          </MauiXaml>
           <MauiXaml Update="Views\RecipesPage.xaml">
             <Generator>MSBuild:Compile</Generator>
           </MauiXaml>

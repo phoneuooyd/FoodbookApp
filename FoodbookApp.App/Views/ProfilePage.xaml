@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Foodbook.Services"
+             x:Class="Foodbook.Views.ProfilePage"
+             Title="Profile"
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="16">
+            <Frame CornerRadius="12" Padding="16" BackgroundColor="{DynamicResource Primary}">
+                <Label Text="Profile (diagnostic)" TextColor="White" HorizontalOptions="Center" />
+            </Frame>
+
+            <Button Text="Pobierz JWT (diagnostic)" BackgroundColor="Red" TextColor="White" Clicked="OnProfileFetchJwtClicked" />
+
+            <Label x:Name="StatusLabel" Text="" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

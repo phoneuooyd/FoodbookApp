@@ -117,7 +117,7 @@
     <ScrollView BackgroundColor="Transparent">
         <StackLayout Padding="16" Spacing="0" 
                      BackgroundColor="{DynamicResource PageBackgroundColor}">
-            
+
             <!-- Header with gradient-like effect -->
             <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}" 
                    CornerRadius="20" 
@@ -151,7 +151,7 @@
             <!-- Dashboard Grid -->
             <Grid IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
                   ColumnDefinitions="*,*" 
-                  RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
                   ColumnSpacing="0"
                   RowSpacing="8">
 
@@ -275,7 +275,7 @@
                             <Label Text="📊" FontSize="24" />
                             <Label Text="{loc:Translate Resource=HomePageResources, Key=NutritionStatsHeader}" Style="{StaticResource CardTitleStyle}" Margin="0" />
                         </StackLayout>
-                        
+
                         <!-- BACK TO SIMPLE: Single Period Selection Button -->
                         <Button Text="{Binding NutritionPeriodDisplay, StringFormat='📅 {0}'}"
                                 Command="{Binding ChangeNutritionPeriodCommand}"
@@ -287,7 +287,7 @@
                                 CornerRadius="8"
                                 Margin="0,0,0,16"
                                 HorizontalOptions="Center" />
-                        
+
                         <!-- Top row - Kalorie (full width) -->
                         <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
                                CornerRadius="12" 
@@ -310,7 +310,7 @@
                                        TextColor="{DynamicResource Primary}" />
                             </StackLayout>
                         </Frame>
-                        
+
                         <!-- Bottom row - Białko, Węglowodany, Tłuszcze (3 columns) -->
                         <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
                             <!-- Białko -->
@@ -331,7 +331,7 @@
                                     <Label Text="{Binding ProteinDisplay}" Style="{StaticResource MicroStatStyle}" />
                                 </StackLayout>
                             </Frame>
-                            
+
                             <!-- Węglowodany -->
                             <Frame Grid.Column="1" 
                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
@@ -350,7 +350,7 @@
                                     <Label Text="{Binding CarbsDisplay}" Style="{StaticResource MicroStatStyle}" />
                                 </StackLayout>
                             </Frame>
-                            
+
                             <!-- Tłuszcze -->
                             <Frame Grid.Column="2" 
                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
@@ -370,7 +370,7 @@
                                 </StackLayout>
                             </Frame>
                         </Grid>
-                        
+
                         <Label IsVisible="{Binding HasNutritionData, Converter={StaticResource InvertedBoolConverter}}"
                                FontSize="12"
                                HorizontalTextAlignment="Center"
@@ -380,8 +380,25 @@
                     </StackLayout>
                 </Frame>
 
+                <!-- Profile Card (navigates to ProfilePage) -->
+                <Frame Grid.Row="3" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}" BorderColor="{DynamicResource Primary}">
+                    <StackLayout Orientation="Horizontal" Spacing="12" VerticalOptions="Center" Padding="8">
+                        <Label Text="👤" FontSize="28" VerticalOptions="Center" />
+                        <StackLayout HorizontalOptions="FillAndExpand">
+                            <Label Text="Profil" Style="{StaticResource CardTitleStyle}" Margin="0" />
+                            <Label Text="Zarządzaj swoim kontem" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                        </StackLayout>
+                        <Button Text="Otwórz"
+                                BackgroundColor="{DynamicResource Primary}"
+                                TextColor="White"
+                                CornerRadius="8"
+                                HeightRequest="40"
+                                Clicked="OnOpenProfileClicked" />
+                    </StackLayout>
+                </Frame>
+
                 <!-- Archive Card -->
-                <Frame Grid.Row="3" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
+                <Frame Grid.Row="4" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="📁" Style="{StaticResource EmojiStyle}" />
                         <Label Text="{loc:Translate Resource=HomePageResources, Key=Archive}" Style="{StaticResource CardTitleStyle}" />
@@ -394,7 +411,7 @@
                 </Frame>
 
                 <!-- Settings Card -->
-                <Frame Grid.Row="3" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
+                <Frame Grid.Row="4" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <Label Text="⚙️" Style="{StaticResource EmojiStyle}" />
                         <Label Text="{loc:Translate Resource=HomePageResources, Key=Settings}" Style="{StaticResource CardTitleStyle}" />
