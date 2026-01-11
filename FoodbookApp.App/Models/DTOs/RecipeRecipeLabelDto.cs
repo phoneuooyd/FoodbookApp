@@ -1,13 +1,14 @@
 using System;
 using System.Text.Json.Serialization;
+using Supabase.Postgrest.Models;
 
 namespace Foodbook.Models.DTOs
 {
-    public class RecipeRecipeLabelDto
+    public class RecipeRecipeLabelDto : BaseModel
     {
-        [JsonPropertyName("id")] public string? Id { get; set; }
-        [JsonPropertyName("recipe_id")] public string? RecipeId { get; set; }
-        [JsonPropertyName("label_id")] public string? LabelId { get; set; }
+        [JsonPropertyName("id")] public Guid? Id { get; set; }
+        [JsonPropertyName("recipe_id")] public Guid? RecipeId { get; set; }
+        [JsonPropertyName("label_id")] public Guid? LabelId { get; set; }
         [JsonPropertyName("created_at")] public DateTime? CreatedAt { get; set; }
         [JsonPropertyName("updated_at")] public DateTime? UpdatedAt { get; set; }
         [JsonPropertyName("is_deleted")] public bool? IsDeleted { get; set; }

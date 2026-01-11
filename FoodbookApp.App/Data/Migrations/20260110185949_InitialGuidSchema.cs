@@ -6,20 +6,36 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FoodbookApp.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialGuidSchema : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "AuthAccounts",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    SupabaseUserId = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Email = table.Column<string>(type: "TEXT", maxLength: 320, nullable: true),
+                    DisplayName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    IsAutoLoginEnabled = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreatedUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    LastSignInUtc = table.Column<DateTime>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AuthAccounts", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Folders",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
-                    ParentFolderId = table.Column<int>(type: "INTEGER", nullable: true),
+                    ParentFolderId = table.Column<Guid>(type: "TEXT", nullable: true),
                     Order = table.Column<int>(type: "INTEGER", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
@@ -38,12 +54,13 @@ namespace FoodbookApp.Data.Migrations
                 name: "Plans",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     StartDate = table.Column<DateTime>(type: "TEXT", nullable: false),
                     EndDate = table.Column<DateTime>(type: "TEXT", nullable: false),
                     IsArchived = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Type = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 0)
+                    Type = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 0),
+                    LinkedShoppingListPlanId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -54,8 +71,7 @@ namespace FoodbookApp.Data.Migrations
                 name: "RecipeLabels",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     ColorHex = table.Column<string>(type: "TEXT", maxLength: 9, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
@@ -69,8 +85,7 @@ namespace FoodbookApp.Data.Migrations
                 name: "Recipes",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
                     Description = table.Column<string>(type: "TEXT", nullable: true),
                     Calories = table.Column<double>(type: "REAL", nullable: false),
@@ -78,7 +93,7 @@ namespace FoodbookApp.Data.Migrations
                     Fat = table.Column<double>(type: "REAL", nullable: false),
                     Carbs = table.Column<double>(type: "REAL", nullable: false),
                     IloscPorcji = table.Column<int>(type: "INTEGER", nullable: false),
-                    FolderId = table.Column<int>(type: "INTEGER", nullable: true)
+                    FolderId = table.Column<Guid>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -95,9 +110,8 @@ namespace FoodbookApp.Data.Migrations
                 name: "ShoppingListItems",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    PlanId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    PlanId = table.Column<Guid>(type: "TEXT", nullable: false),
                     IngredientName = table.Column<string>(type: "TEXT", nullable: false),
                     Unit = table.Column<int>(type: "INTEGER", nullable: false),
                     IsChecked = table.Column<bool>(type: "INTEGER", nullable: false),
@@ -119,8 +133,7 @@ namespace FoodbookApp.Data.Migrations
                 name: "Ingredients",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
                     Quantity = table.Column<double>(type: "REAL", nullable: false),
                     Unit = table.Column<int>(type: "INTEGER", nullable: false),
@@ -129,7 +142,7 @@ namespace FoodbookApp.Data.Migrations
                     Protein = table.Column<double>(type: "REAL", nullable: false),
                     Fat = table.Column<double>(type: "REAL", nullable: false),
                     Carbs = table.Column<double>(type: "REAL", nullable: false),
-                    RecipeId = table.Column<int>(type: "INTEGER", nullable: true)
+                    RecipeId = table.Column<Guid>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -146,10 +159,9 @@ namespace FoodbookApp.Data.Migrations
                 name: "PlannedMeals",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    RecipeId = table.Column<int>(type: "INTEGER", nullable: false),
-                    PlanId = table.Column<int>(type: "INTEGER", nullable: true),
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    RecipeId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    PlanId = table.Column<Guid>(type: "TEXT", nullable: true),
                     Date = table.Column<DateTime>(type: "TEXT", nullable: false),
                     Portions = table.Column<int>(type: "INTEGER", nullable: false)
                 },
@@ -174,25 +186,31 @@ namespace FoodbookApp.Data.Migrations
                 name: "RecipeRecipeLabel",
                 columns: table => new
                 {
-                    LabelsId = table.Column<int>(type: "INTEGER", nullable: false),
-                    RecipesId = table.Column<int>(type: "INTEGER", nullable: false)
+                    LabelId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    RecipeId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_RecipeRecipeLabel", x => new { x.LabelsId, x.RecipesId });
+                    table.PrimaryKey("PK_RecipeRecipeLabel", x => new { x.LabelId, x.RecipeId });
                     table.ForeignKey(
-                        name: "FK_RecipeRecipeLabel_RecipeLabels_LabelsId",
-                        column: x => x.LabelsId,
+                        name: "FK_RecipeRecipeLabel_RecipeLabels_LabelId",
+                        column: x => x.LabelId,
                         principalTable: "RecipeLabels",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_RecipeRecipeLabel_Recipes_RecipesId",
-                        column: x => x.RecipesId,
+                        name: "FK_RecipeRecipeLabel_Recipes_RecipeId",
+                        column: x => x.RecipeId,
                         principalTable: "Recipes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AuthAccounts_SupabaseUserId",
+                table: "AuthAccounts",
+                column: "SupabaseUserId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Folders_Name",
@@ -230,9 +248,9 @@ namespace FoodbookApp.Data.Migrations
                 column: "Name");
 
             migrationBuilder.CreateIndex(
-                name: "IX_RecipeRecipeLabel_RecipesId",
+                name: "IX_RecipeRecipeLabel_RecipeId",
                 table: "RecipeRecipeLabel",
-                column: "RecipesId");
+                column: "RecipeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Recipes_FolderId",
@@ -254,6 +272,9 @@ namespace FoodbookApp.Data.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "AuthAccounts");
+
             migrationBuilder.DropTable(
                 name: "Ingredients");
 

@@ -1,11 +1,12 @@
 using System;
 using System.Text.Json.Serialization;
+using Supabase.Postgrest.Models;
 
 namespace Foodbook.Models.DTOs
 {
-    public class RecipeLabelDto
+    public class RecipeLabelDto : BaseModel
     {
-        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("id")] public Guid? Id { get; set; }
         [JsonPropertyName("owner_id")] public string? OwnerId { get; set; }
         [JsonPropertyName("name")] public string Name { get; set; } = string.Empty;
         [JsonPropertyName("color_hex")] public string? ColorHex { get; set; }

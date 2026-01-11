@@ -16,8 +16,9 @@ using FoodbookApp.Interfaces;
 
 namespace Foodbook.Views
 {
-    [QueryProperty(nameof(RecipeId), "id")]
-    [QueryProperty(nameof(FolderId), "folderId")]
+    // ✅ FIX: Changed property names to accept strings (Shell passes query params as strings)
+    [QueryProperty(nameof(RecipeIdString), "id")]
+    [QueryProperty(nameof(FolderIdString), "folderId")]
     public partial class AddRecipePage : ContentPage
     {
         private AddRecipeViewModel? ViewModel => BindingContext as AddRecipeViewModel;
@@ -189,7 +190,7 @@ namespace Foodbook.Views
                 System.Diagnostics.Debug.WriteLine("✅ AddRecipePage: Background data loaded successfully");
 
                 // Jeśli edytujemy przepis, załaduj jego dane
-                if (RecipeId > 0 && ViewModel != null)
+                if (RecipeId != Guid.Empty && ViewModel != null)
                 {
                     System.Diagnostics.Debug.WriteLine($"📖 AddRecipePage: Loading recipe {RecipeId}...");
                     await ViewModel.LoadRecipeAsync(RecipeId);
@@ -197,7 +198,7 @@ namespace Foodbook.Views
 
                 // ✅ FIX: Use SetInitialFolderId to preselect folder without marking dirty
                 // This is not a user change, so it shouldn't mark the form as dirty
-                if (FolderId > 0 && ViewModel != null)
+                if (FolderId.HasValue && FolderId.Value != Guid.Empty && ViewModel != null)
                 {
                     System.Diagnostics.Debug.WriteLine($"📁 AddRecipePage: Preselecting folder {FolderId}");
                     ViewModel.SetInitialFolderId(FolderId);
@@ -623,11 +624,55 @@ namespace Foodbook.Views
             }
         }
 
-        private int _recipeId;
-        public int RecipeId { get => _recipeId; set => _recipeId = value; }
+        private Guid _recipeId;
+        public Guid RecipeId
+        {
+            get => _recipeId;
+            set { _recipeId = value; }
+        }
 
-        private int _folderId;
-        public int FolderId { get => _folderId; set => _folderId = value; }
+        // ✅ FIX: String property that Shell can set, then parse to Guid
+        public string? RecipeIdString
+        {
+            set
+            {
+                if (Guid.TryParse(value, out var parsed))
+                {
+                    _recipeId = parsed;
+                    System.Diagnostics.Debug.WriteLine($"✅ RecipeIdString parsed: {_recipeId}");
+                }
+                else
+                {
+                    _recipeId = Guid.Empty;
+                    System.Diagnostics.Debug.WriteLine($"⚠️ RecipeIdString could not parse: '{value}'");
+                }
+            }
+        }
+
+        private Guid? _folderId;
+        public Guid? FolderId
+        {
+            get => _folderId;
+            set { _folderId = value; }
+        }
+
+        // ✅ FIX: String property that Shell can set, then parse to Guid
+        public string? FolderIdString
+        {
+            set
+            {
+                if (Guid.TryParse(value, out var parsed))
+                {
+                    _folderId = parsed;
+                    System.Diagnostics.Debug.WriteLine($"✅ FolderIdString parsed: {_folderId}");
+                }
+                else
+                {
+                    _folderId = null;
+                    System.Diagnostics.Debug.WriteLine($"⚠️ FolderIdString could not parse: '{value}'");
+                }
+            }
+        }
 
         private void OnAutoModeClicked(object sender, EventArgs e)
         {
@@ -849,7 +894,7 @@ namespace Foodbook.Views
                     return;
                 }
 
-                var initiallySelected = ViewModel?.SelectedLabels.Select(l => l.Id).ToList() ?? new List<int>();
+                var initiallySelected = ViewModel?.SelectedLabels.Select(l => l.Id).ToList() ?? new List<Guid>();
                 var popup = new CRUDComponentPopup(settingsVm, initiallySelected);
 
                 // If this page is modal, override popup resources to use semi-transparent overlay (or opaque when wallpaper enabled)
@@ -891,7 +936,7 @@ namespace Foodbook.Views
                 var result = resultTask.IsCompleted ? await resultTask : null;
 
                 // Handle result
-                if (result is IEnumerable<int> selectedIds && ViewModel != null)
+                if (result is IEnumerable<Guid> selectedIds && ViewModel != null)
                 {
                     await ViewModel.LoadAvailableLabelsAsync();
                     var idSet = selectedIds.ToHashSet();

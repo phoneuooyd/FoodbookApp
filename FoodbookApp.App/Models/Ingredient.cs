@@ -18,7 +18,7 @@ namespace Foodbook.Models
 
     public class Ingredient : INotifyPropertyChanged
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         private string _name = string.Empty;
         public string Name
@@ -195,7 +195,7 @@ namespace Foodbook.Models
             }
         }
 
-        public int? RecipeId { get; set; }
+        public Guid? RecipeId { get; set; }
         public Recipe? Recipe { get; set; }
 
         // Computed nutrition for the specified Quantity and Unit

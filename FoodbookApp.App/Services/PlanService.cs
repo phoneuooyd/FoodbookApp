@@ -27,13 +27,16 @@ public class PlanService : IPlanService
             .ToListAsync();
     }
 
-    public async Task<Plan?> GetPlanAsync(int id)
+    public async Task<Plan?> GetPlanAsync(Guid id)
     {
         return await _context.Plans.FindAsync(id);
     }
 
     public async Task AddPlanAsync(Plan plan)
     {
+        if (plan.Id == Guid.Empty)
+            plan.Id = Guid.NewGuid();
+
         _context.Plans.Add(plan);
         await _context.SaveChangesAsync();
     }
@@ -44,7 +47,7 @@ public class PlanService : IPlanService
         await _context.SaveChangesAsync();
     }
 
-    public async Task RemovePlanAsync(int id)
+    public async Task RemovePlanAsync(Guid id)
     {
         var plan = await _context.Plans.FindAsync(id);
         if (plan != null)
@@ -54,13 +57,12 @@ public class PlanService : IPlanService
         }
     }
 
-    public async Task<bool> HasOverlapAsync(DateTime from, DateTime to, int? ignoreId = null)
+    public async Task<bool> HasOverlapAsync(DateTime from, DateTime to, Guid? ignoreId = null)
     {
-        // Walidacja ignoruje zarchiwizowane plany - sprawdza tylko aktywne plany
-        return await _context.Plans.AnyAsync(p => 
-            (ignoreId == null || p.Id != ignoreId) && 
-            !p.IsArchived && // Ignoruj zarchiwizowane plany
-            p.StartDate <= to && 
+        return await _context.Plans.AnyAsync(p =>
+            (ignoreId == null || p.Id != ignoreId) &&
+            !p.IsArchived &&
+            p.StartDate <= to &&
             p.EndDate >= from);
     }
 }

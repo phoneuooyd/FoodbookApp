@@ -23,7 +23,7 @@ public class PlannerEditViewModel : INotifyPropertyChanged
     public ObservableCollection<PlannerDay> Days { get; } = new();
 
     // Plan being edited
-    private int _planId;
+    private Guid _planId;
     private Plan? _currentPlan;
     
     // Track user's MealsPerDay changes independently from database value
@@ -120,7 +120,7 @@ public class PlannerEditViewModel : INotifyPropertyChanged
     /// Load plan data for editing. This is called ONCE when entering edit mode.
     /// After this, NO automatic reloads occur.
     /// </summary>
-    public async Task LoadPlanForEditAsync(int planId)
+    public async Task LoadPlanForEditAsync(Guid planId)
     {
         if (IsLoading)
         {
@@ -382,21 +382,15 @@ public class PlannerEditViewModel : INotifyPropertyChanged
             // Remove excess slots if needed (only remove empty slots without recipes)
             while (day.Meals.Count > MealsPerDay)
             {
-                // Try to remove from the end, but only if it's an empty slot
                 var lastMeal = day.Meals[day.Meals.Count - 1];
-                
-                // Only remove if meal has no recipe selected
-                if (lastMeal.Recipe == null && lastMeal.RecipeId == 0)
+
+                if (lastMeal.Recipe == null && lastMeal.RecipeId == Guid.Empty)
                 {
                     lastMeal.PropertyChanged -= OnMealRecipeChanged;
                     day.Meals.RemoveAt(day.Meals.Count - 1);
-                    System.Diagnostics.Debug.WriteLine($"[PlannerEditVM]   Removed empty meal slot");
                 }
                 else
                 {
-                    // If last meal has a recipe, we can't remove it automatically
-                    // User will need to manually remove meals or increase MealsPerDay
-                    System.Diagnostics.Debug.WriteLine($"[PlannerEditVM]   WARNING: Cannot auto-remove meal with recipe '{lastMeal.Recipe?.Name}' - user must manually adjust");
                     break;
                 }
             }
@@ -507,7 +501,7 @@ public class PlannerEditViewModel : INotifyPropertyChanged
                     }
 
                     // Only save meals that have a recipe selected
-                    if (meal.RecipeId > 0)
+                    if (meal.RecipeId != Guid.Empty)
                     {
                         await _plannerService.AddPlannedMealAsync(new PlannedMeal
                         {
@@ -575,7 +569,7 @@ public class PlannerEditViewModel : INotifyPropertyChanged
                 p.Type == PlanType.ShoppingList &&
                 p.StartDate.Date == StartDate.Date &&
                 p.EndDate.Date == EndDate.Date &&
-                (!p.LinkedShoppingListPlanId.HasValue || p.LinkedShoppingListPlanId == 0)
+                (!p.LinkedShoppingListPlanId.HasValue || p.LinkedShoppingListPlanId == Guid.Empty)
             );
             if (manualShoppingList != null)
             {

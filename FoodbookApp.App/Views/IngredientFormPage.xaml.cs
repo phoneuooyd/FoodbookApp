@@ -121,7 +121,7 @@ public partial class IngredientFormPage : ContentPage
             {
                 System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] First load - ItemId: {ItemId}");
                 
-                if (ItemId == 0)
+                if (ItemId == Guid.Empty)
                 {
                     System.Diagnostics.Debug.WriteLine("[IngredientFormPage] First load - resetting form for new ingredient");
                     ViewModel?.Reset();
@@ -342,26 +342,16 @@ public partial class IngredientFormPage : ContentPage
         }
     }
 
-    private int _itemId;
-    public int ItemId
+    private Guid _itemId;
+
+    public Guid ItemId
     {
         get => _itemId;
         set
         {
-            try
-            {
-                _itemId = value;
-                if (value > 0)
-                    Task.Run(async () => await ViewModel.LoadAsync(value));
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error setting ItemId: {ex.Message}");
-                if (ViewModel != null)
-                {
-                    ViewModel.ValidationMessage = $"B³¹d ³adowania sk³adnika: {ex.Message}";
-                }
-            }
+            _itemId = value;
+            if (!_hasEverLoaded && value != Guid.Empty)
+                Task.Run(async () => await ViewModel.LoadAsync(value));
         }
     }
 
@@ -415,6 +405,7 @@ public partial class IngredientFormPage : ContentPage
                             var targetLoc = e.Target?.Location?.OriginalString ?? string.Empty;
                             var nav = Shell.Current?.Navigation;
                             
+
                             System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] Navigating away - Modal stack count: {nav?.ModalStack?.Count ?? 0}");
                             
                             // If modal, pop modal first

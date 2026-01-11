@@ -14,7 +14,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
 {
     private readonly IShoppingListService _shoppingListService;
     private readonly IPlanService _planService;
-    private int _currentPlanId;
+    private Guid _currentPlanId;
     private Ingredient? _itemBeingDragged;
     
     // Header items for the flat list
@@ -464,7 +464,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         RebuildFlatItems();
     }
 
-    public async Task LoadAsync(int planId)
+    public async Task LoadAsync(Guid planId)
     {
         _currentPlanId = planId;
         var plan = await _planService.GetPlanAsync(planId);
@@ -526,7 +526,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
             MarkDirty();
         }
 
-        if (e.PropertyName == nameof(Ingredient.Unit) && item.Id > 0)
+        if (e.PropertyName == nameof(Ingredient.Unit) && item.Id != Guid.Empty)
         {
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Unit changed for '{item.Name}' - saving to DB immediately");
             _ = SaveUnitChangeToDatabase(item);
@@ -543,19 +543,10 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
 
     private async Task SaveUnitChangeToDatabase(Ingredient item)
     {
-        if (item == null || item.Id <= 0) return;
+        if (item == null || item.Id == Guid.Empty) return;
 
-        try
-        {
-            await _shoppingListService.SaveShoppingListItemStateAsync(
-                _currentPlanId, item.Id, item.Order, item.Name, item.Unit, item.IsChecked, item.Quantity);
-            
-            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Unit change saved: '{item.Name}' -> {item.Unit}");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Failed to save unit change: {ex.Message}");
-        }
+        await _shoppingListService.SaveShoppingListItemStateAsync(
+            _currentPlanId, item.Id, item.Order, item.Name, item.Unit, item.IsChecked, item.Quantity);
     }
 
     private async Task ManualSaveAllAsync()
@@ -695,11 +686,11 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
                 FlatItems.Remove(_collectedHeader);
             
             MarkDirty();
-            if (item.Id > 0)
+            if (item.Id != Guid.Empty)
             {
-                try { await _shoppingListService.RemoveShoppingListItemByIdAsync(item.Id); } 
+                try { await _shoppingListService.RemoveShoppingListItemByIdAsync(item.Id); }
                 catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error removing item by Id: {ex.Message}"); }
-                item.Id = 0;
+                item.Id = Guid.Empty;
             }
         }
     }

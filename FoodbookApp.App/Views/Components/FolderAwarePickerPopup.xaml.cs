@@ -24,7 +24,7 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
 
     // NEW: sorting and label filtering state
     private SortOrder _sortOrder = SortOrder.Asc;
-    private readonly HashSet<int> _selectedLabelIds = new();
+    private readonly HashSet<Guid> _selectedLabelIds = new();
 
     // NEW: ingredient names filter state
     private readonly HashSet<string> _selectedIngredientNames = new(System.StringComparer.OrdinalIgnoreCase);
@@ -367,7 +367,7 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
 
             // If user typed a folder name, show recipes from that folder too
             var matchingFolders = _allFolders.Where(f => (f.Name?.ToLower().Contains(query) ?? false)).ToList();
-            var folderIds = matchingFolders.Select(f => (int?)f.Id).ToHashSet();
+            var folderIds = matchingFolders.Select(f => (Guid?)f.Id).ToHashSet();
 
             // Search recipes by name/description OR located in matched folders
             var matchedRecipes = _allRecipes.Where(r =>

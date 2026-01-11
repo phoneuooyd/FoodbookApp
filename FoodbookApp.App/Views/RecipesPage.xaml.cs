@@ -3,12 +3,14 @@ using Foodbook.ViewModels;
 using Foodbook.Views.Base;
 using CommunityToolkit.Mvvm.Messaging;
 using System.Threading.Tasks;
-using Foodbook.Models; // added for Recipe type
+using Foodbook.Models;
 using CommunityToolkit.Maui.Extensions;
 using CommunityToolkit.Maui.Behaviors;
 using Foodbook.Views.Components;
 using Microsoft.Extensions.DependencyInjection;
 using FoodbookApp.Interfaces;
+using Foodbook.Services;
+using Foodbook.Messages;
 
 namespace Foodbook.Views;
 
@@ -27,6 +29,27 @@ public partial class RecipesPage : ContentPage
         _viewModel = viewModel;
         BindingContext = _viewModel;
         _themeHelper = new PageThemeHelper();
+
+        // Reload when a recipe is saved from AddRecipePage (page may not re-appear if pushed modally)
+        WeakReferenceMessenger.Default.Register<RecipesReloadMessage>(this, async (_, msg) =>
+        {
+            try
+            {
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    try
+                    {
+                        _viewModel.ResetFolderNavigation();
+                        await _viewModel.LoadRecipesAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[RecipesPage] Reload via RecipesReloadMessage failed: {ex.Message}");
+                    }
+                });
+            }
+            catch { }
+        });
 
         // Stop pull-to-refresh spinner when VM signals all data loaded
         _viewModel.DataLoaded += (_, __) =>
@@ -95,34 +118,87 @@ public partial class RecipesPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        
+
         // Initialize theme and font handling
         _themeHelper.Initialize();
         _themeHelper.ThemeChanged += OnThemeChanged;
-        
+
         // Apply initial tint color
         RefreshFilterButtonTintColor();
-        
-        // Only load once or if explicitly needed
-        if (!_isInitialized)
+
+        // ? CRITICAL: Subscribe EARLY to events
+        AppEvents.RecipesChangedAsync += OnRecipesChangedAsync;
+        AppEvents.RecipeSaved += OnRecipeSaved;
+
+        // ? NEW: Drain any pending RecipeSaved events that may have queued before subscription
+        AppEvents.DrainPendingRecipeSavedEvents(OnRecipeSaved);
+
+        // Always attempt a fresh reload when appearing to ensure UI reflects latest DB state
+        try
         {
             await _viewModel.LoadRecipesAsync();
             _isInitialized = true;
         }
-        else
+        catch (Exception ex)
         {
-            await _viewModel.LoadRecipesAsync();
+            System.Diagnostics.Debug.WriteLine($"[RecipesPage] Initial reload failed: {ex.Message}");
+            try { await _viewModel.LoadRecipesAsync(); } catch { }
         }
     }
 
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
-        
-        // Cleanup theme and font handling
+
         _themeHelper.ThemeChanged -= OnThemeChanged;
         _themeHelper.Cleanup();
         WeakReferenceMessenger.Default.Unregister<FabCollapseMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<RecipesReloadMessage>(this);
+
+        AppEvents.RecipesChangedAsync -= OnRecipesChangedAsync;
+        AppEvents.RecipeSaved -= OnRecipeSaved;
+    }
+
+    private async Task OnRecipesChangedAsync()
+    {
+        try
+        {
+            await MainThread.InvokeOnMainThreadAsync(async () => await _viewModel.ReloadAsync());
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[RecipesPage] Reload on RecipesChanged failed: {ex.Message}");
+        }
+    }
+
+    private void OnRecipeSaved(Guid id)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"[RecipesPage] OnRecipeSaved - Recipe ID: {id}, forcing FULL reload");
+            
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                try
+                {
+                    // Reset folder navigation to root
+                    _viewModel.ResetFolderNavigation();
+                    
+                    // Force fresh load from database (same as app startup)
+                    await _viewModel.LoadRecipesAsync();
+                    
+                    System.Diagnostics.Debug.WriteLine($"[RecipesPage] FULL reload completed after recipe save");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[RecipesPage] FULL reload failed: {ex.Message}");
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[RecipesPage] OnRecipeSaved handler error: {ex.Message}");
+        }
     }
 
     private void OnThemeChanged(object? sender, EventArgs e)

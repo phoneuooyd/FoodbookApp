@@ -87,8 +87,8 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 ValidateInput();
                 if (!_suppressDirtyTracking) MarkDirty();
                 
-                // ? CRITICAL: In edit mode, immediately persist to database to prevent reverting
-                if (_ingredient != null && _ingredient.Id > 0)
+                // ? CRITICAL: In edit mode, persist to database to prevent reverting
+                if (_ingredient != null && _ingredient.Id != Guid.Empty)
                 {
                     System.Diagnostics.Debug.WriteLine($"[IngredientFormViewModel] SelectedUnit changed in EDIT mode: {oldUnit} -> {value} - saving to DB immediately");
                     _ = SaveUnitChangeToDatabase(value); // Fire and forget
@@ -103,7 +103,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     /// </summary>
     private async Task SaveUnitChangeToDatabase(Unit newUnit)
     {
-        if (_ingredient == null || _ingredient.Id <= 0)
+        if (_ingredient == null || _ingredient.Id == Guid.Empty)
         {
             System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] SaveUnitChangeToDatabase: No ingredient loaded, skipping");
             return;
@@ -263,7 +263,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
         }
     }
 
-    public async Task LoadAsync(int id)
+    public async Task LoadAsync(Guid id)
     {
         try
         {
@@ -472,13 +472,14 @@ public class IngredientFormViewModel : INotifyPropertyChanged
             if (unitWeight <= 0) unitWeight = 1.0;
             
             bool isNewIngredient = _ingredient == null;
-            int savedId = 0;
+            Guid savedId = Guid.Empty;
             
             if (_ingredient == null)
             {
                 // Creating new ingredient
                 var newIng = new Ingredient 
                 { 
+                    Id = Guid.NewGuid(),
                     Name = Name.Trim(), 
                     Quantity = qty, 
                     Unit = SelectedUnit,

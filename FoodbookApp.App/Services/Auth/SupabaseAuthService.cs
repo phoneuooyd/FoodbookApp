@@ -1,18 +1,23 @@
 using Supabase.Gotrue;
+using Foodbook.Data;
+using Foodbook.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace FoodbookApp.Services.Auth;
 
 public sealed class SupabaseAuthService : ISupabaseAuthService
 {
-    private readonly Supabase.Client _client;
+    private readonly global::Supabase.Client _client;
     private readonly IAuthTokenStore _tokenStore;
+    private readonly AppDbContext _db;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
-    public SupabaseAuthService(Supabase.Client client, IAuthTokenStore tokenStore)
+    public SupabaseAuthService(global::Supabase.Client client, IAuthTokenStore tokenStore, AppDbContext db)
     {
         _client = client;
         _tokenStore = tokenStore;
+        _db = db;
     }
 
     public Session? CurrentSession => _client.Auth.CurrentSession;
@@ -50,7 +55,7 @@ public sealed class SupabaseAuthService : ISupabaseAuthService
         var session = await _client.Auth.SignUp(email, password);
 
         System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] SignUp complete; session: {session != null}");
-        await PersistTokenAsync(session);
+        await PersistSessionAsync(session, email);
 
         return session;
     }
@@ -63,7 +68,7 @@ public sealed class SupabaseAuthService : ISupabaseAuthService
         var session = await _client.Auth.SignIn(email, password);
 
         System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] SignIn complete; token present: {!string.IsNullOrWhiteSpace(session?.AccessToken)}");
-        await PersistTokenAsync(session);
+        await PersistSessionAsync(session, email);
 
         return session;
     }
@@ -71,6 +76,9 @@ public sealed class SupabaseAuthService : ISupabaseAuthService
     public async Task SignOutAsync()
     {
         await EnsureInitializedAsync();
+
+        var active = await _tokenStore.GetActiveAccountIdAsync();
+
         try
         {
             System.Diagnostics.Debug.WriteLine("[SupabaseAuthService] SignOut start");
@@ -83,14 +91,46 @@ public sealed class SupabaseAuthService : ISupabaseAuthService
         }
         finally
         {
-            await _tokenStore.ClearAsync();
+            if (active.HasValue)
+                await _tokenStore.ClearTokensAsync(active.Value);
+
+            await _tokenStore.SetActiveAccountIdAsync(null);
         }
     }
 
-    private async Task PersistTokenAsync(Session? session)
+    private async Task PersistSessionAsync(Session? session, string? email)
     {
-        var accessToken = session?.AccessToken;
-        System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] Persisting token: {!string.IsNullOrWhiteSpace(accessToken)}");
-        await _tokenStore.SetAccessTokenAsync(accessToken);
+        if (session == null) return;
+
+        var sbUserId = session.User?.Id ?? _client.Auth.CurrentUser?.Id;
+        if (string.IsNullOrWhiteSpace(sbUserId))
+            return;
+
+        var account = await _db.AuthAccounts.FirstOrDefaultAsync(a => a.SupabaseUserId == sbUserId);
+        if (account == null)
+        {
+            account = new AuthAccount
+            {
+                Id = Guid.NewGuid(),
+                SupabaseUserId = sbUserId,
+                Email = email,
+                CreatedUtc = DateTime.UtcNow,
+                LastSignInUtc = DateTime.UtcNow
+            };
+            _db.AuthAccounts.Add(account);
+        }
+        else
+        {
+            account.Email ??= email;
+            account.LastSignInUtc = DateTime.UtcNow;
+        }
+
+        await _db.SaveChangesAsync();
+
+        // ExpiresAt shape differs between Gotrue SDK versions; keep it optional.
+        DateTimeOffset? expiresAt = null;
+
+        await _tokenStore.SetTokensAsync(account.Id, session.AccessToken, session.RefreshToken, expiresAt);
+        await _tokenStore.SetActiveAccountIdAsync(account.Id);
     }
 }

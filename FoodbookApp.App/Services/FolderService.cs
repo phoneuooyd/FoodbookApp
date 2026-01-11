@@ -8,15 +8,14 @@ namespace Foodbook.Services
     {
         Task<List<Folder>> GetFoldersAsync(CancellationToken ct = default);
         Task<List<Folder>> GetFolderHierarchyAsync(CancellationToken ct = default);
-        Task<Folder?> GetFolderByIdAsync(int id, CancellationToken ct = default);
+        Task<Folder?> GetFolderByIdAsync(Guid id, CancellationToken ct = default);
         Task<Folder> AddFolderAsync(Folder folder, CancellationToken ct = default);
         Task UpdateFolderAsync(Folder folder, CancellationToken ct = default);
-        Task DeleteFolderAsync(int id, CancellationToken ct = default);
-        Task<bool> MoveFolderAsync(int folderId, int? newParentFolderId, CancellationToken ct = default);
-        Task<bool> MoveRecipeToFolderAsync(int recipeId, int? targetFolderId, CancellationToken ct = default);
-        Task<bool> IsValidFolderMoveAsync(int folderId, int? newParentFolderId, CancellationToken ct = default);
-        // New: reorder folder among siblings
-        Task<bool> ReorderFolderAsync(int folderId, int? parentFolderId, int newIndex, CancellationToken ct = default);
+        Task DeleteFolderAsync(Guid id, CancellationToken ct = default);
+        Task<bool> MoveFolderAsync(Guid folderId, Guid? newParentFolderId, CancellationToken ct = default);
+        Task<bool> MoveRecipeToFolderAsync(Guid recipeId, Guid? targetFolderId, CancellationToken ct = default);
+        Task<bool> IsValidFolderMoveAsync(Guid folderId, Guid? newParentFolderId, CancellationToken ct = default);
+        Task<bool> ReorderFolderAsync(Guid folderId, Guid? parentFolderId, int newIndex, CancellationToken ct = default);
     }
 
     public class FolderService : IFolderService
@@ -64,7 +63,7 @@ namespace Foodbook.Services
             }
         }
 
-        public async Task<Folder?> GetFolderByIdAsync(int id, CancellationToken ct = default)
+        public async Task<Folder?> GetFolderByIdAsync(Guid id, CancellationToken ct = default)
         {
             try
             {
@@ -123,7 +122,7 @@ namespace Foodbook.Services
             }
         }
 
-        public async Task DeleteFolderAsync(int id, CancellationToken ct = default)
+        public async Task DeleteFolderAsync(Guid id, CancellationToken ct = default)
         {
             try
             {
@@ -159,7 +158,7 @@ namespace Foodbook.Services
             }
         }
 
-        public async Task<bool> MoveFolderAsync(int folderId, int? newParentFolderId, CancellationToken ct = default)
+        public async Task<bool> MoveFolderAsync(Guid folderId, Guid? newParentFolderId, CancellationToken ct = default)
         {
             try
             {
@@ -188,7 +187,7 @@ namespace Foodbook.Services
             }
         }
 
-        public async Task<bool> MoveRecipeToFolderAsync(int recipeId, int? targetFolderId, CancellationToken ct = default)
+        public async Task<bool> MoveRecipeToFolderAsync(Guid recipeId, Guid? targetFolderId, CancellationToken ct = default)
         {
             try
             {
@@ -212,18 +211,18 @@ namespace Foodbook.Services
             }
         }
 
-        public async Task<bool> IsValidFolderMoveAsync(int folderId, int? newParentFolderId, CancellationToken ct = default)
+        public async Task<bool> IsValidFolderMoveAsync(Guid folderId, Guid? newParentFolderId, CancellationToken ct = default)
         {
             try
             {
-                if (folderId == newParentFolderId) return false; // cannot move under itself
+                if (newParentFolderId.HasValue && folderId == newParentFolderId.Value) return false;
                 if (!newParentFolderId.HasValue) return true; // move to root allowed
 
                 // prevent cycles: new parent cannot be a descendant of folderId
                 var folders = await _db.Folders.AsNoTracking().ToListAsync(ct);
                 var map = folders.ToDictionary(f => f.Id, f => f.ParentFolderId);
 
-                int? current = newParentFolderId;
+                Guid? current = newParentFolderId;
                 while (current.HasValue)
                 {
                     if (current.Value == folderId) return false; // cycle detected
@@ -238,7 +237,7 @@ namespace Foodbook.Services
             }
         }
 
-        public async Task<bool> ReorderFolderAsync(int folderId, int? parentFolderId, int newIndex, CancellationToken ct = default)
+        public async Task<bool> ReorderFolderAsync(Guid folderId, Guid? parentFolderId, int newIndex, CancellationToken ct = default)
         {
             try
             {

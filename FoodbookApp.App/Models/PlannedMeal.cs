@@ -6,11 +6,11 @@ namespace Foodbook.Models
 {
     public class PlannedMeal : INotifyPropertyChanged
     {
-        public int Id { get; set; }
-        public int RecipeId { get; set; }
-        
+        public Guid Id { get; set; }
+        public Guid RecipeId { get; set; }
+
         // Optional relation to a specific plan (enables multiple planners)
-        public int? PlanId { get; set; }
+        public Guid? PlanId { get; set; }
         
         private Recipe? _recipe;
         public Recipe? Recipe 

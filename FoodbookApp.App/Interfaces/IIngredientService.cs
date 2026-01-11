@@ -9,10 +9,10 @@ public interface IIngredientService
     /// </summary>
     Task<List<string>> GetIngredientNamesAsync();
     
-    Task<Ingredient?> GetIngredientAsync(int id);
+    Task<Ingredient?> GetIngredientAsync(Guid id);
     Task AddIngredientAsync(Ingredient ingredient);
     Task UpdateIngredientAsync(Ingredient ingredient);
-    Task DeleteIngredientAsync(int id);
+    Task DeleteIngredientAsync(Guid id);
     
     /// <summary>
     /// Invalidates the ingredients cache to force refresh on next access

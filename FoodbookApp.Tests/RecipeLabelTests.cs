@@ -13,7 +13,7 @@ namespace FoodbookApp.Tests
         {
             var label = new RecipeLabel();
 
-            Assert.Equal(0, label.Id);
+            Assert.Equal(Guid.Empty, label.Id);
             Assert.Equal(string.Empty, label.Name);
             Assert.Null(label.ColorHex);
             Assert.False(label.IsSelected);
@@ -23,16 +23,17 @@ namespace FoodbookApp.Tests
         [Fact]
         public void RecipeLabel_SetProperties_ShouldUpdateCorrectly()
         {
+            var id = Guid.NewGuid();
             var label = new RecipeLabel
             {
-                Id = 5,
+                Id = id,
                 Name = "Obiad",
                 ColorHex = "#FFAA00",
                 CreatedAt = new DateTime(2024, 12, 24, 12, 0, 0, DateTimeKind.Utc),
                 IsSelected = true
             };
 
-            Assert.Equal(5, label.Id);
+            Assert.Equal(id, label.Id);
             Assert.Equal("Obiad", label.Name);
             Assert.Equal("#FFAA00", label.ColorHex);
             Assert.Equal(new DateTime(2024, 12, 24, 12, 0, 0, DateTimeKind.Utc), label.CreatedAt);

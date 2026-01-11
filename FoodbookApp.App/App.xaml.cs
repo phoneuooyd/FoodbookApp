@@ -45,12 +45,34 @@ namespace FoodbookApp
                 _themeService.SetColorfulBackground(isColorfulBackgroundEnabled);
                 System.Diagnostics.Debug.WriteLine($"[App][Ctor] Colorful background: {isColorfulBackgroundEnabled}");
 
-                // NEW: Apply saved wallpaper setting
                 var isWallpaperEnabled = LoadSavedWallpaperSetting();
                 _themeService.EnableWallpaperBackground(isWallpaperEnabled);
                 System.Diagnostics.Debug.WriteLine($"[App][Ctor] Wallpaper background: {isWallpaperEnabled}");
 
                 LoadSavedFontSettings();
+
+                // Best-effort autologin (no UI blocking)
+                try
+                {
+                    var accountService = MauiProgram.ServiceProvider?.GetService<IAccountService>();
+                    if (accountService != null)
+                    {
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                var ok = await accountService.TryAutoLoginAsync();
+                                System.Diagnostics.Debug.WriteLine($"[App] Auto-login attempted: {ok}");
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[App] Auto-login failed: {ex.Message}");
+                            }
+                        });
+                    }
+                }
+                catch { }
+
                 System.Diagnostics.Debug.WriteLine("[App] Application initialization completed successfully");
             }
             catch (Exception ex)

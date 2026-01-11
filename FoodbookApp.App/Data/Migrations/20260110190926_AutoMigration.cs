@@ -5,24 +5,18 @@
 namespace FoodbookApp.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class AddLinkedShoppingListPlanId : Migration
+    public partial class AutoMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<int>(
-                name: "LinkedShoppingListPlanId",
-                table: "Plans",
-                type: "INTEGER",
-                nullable: true);
+
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "LinkedShoppingListPlanId",
-                table: "Plans");
+
         }
     }
 }

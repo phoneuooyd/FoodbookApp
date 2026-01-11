@@ -22,7 +22,7 @@ namespace Foodbook.Services
                 .ToListAsync();
         }
 
-        public async Task<List<PlannedMeal>> GetPlannedMealsAsync(int planId)
+        public async Task<List<PlannedMeal>> GetPlannedMealsAsync(Guid planId)
         {
             return await _context.PlannedMeals
                 .Include(pm => pm.Recipe)
@@ -30,13 +30,16 @@ namespace Foodbook.Services
                 .ToListAsync();
         }
 
-        public async Task<PlannedMeal?> GetPlannedMealAsync(int id)
+        public async Task<PlannedMeal?> GetPlannedMealAsync(Guid id)
         {
             return await _context.PlannedMeals.Include(pm => pm.Recipe).FirstOrDefaultAsync(pm => pm.Id == id);
         }
 
         public async Task AddPlannedMealAsync(PlannedMeal meal)
         {
+            if (meal.Id == Guid.Empty)
+                meal.Id = Guid.NewGuid();
+
             _context.PlannedMeals.Add(meal);
             await _context.SaveChangesAsync();
         }
@@ -47,7 +50,7 @@ namespace Foodbook.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task RemovePlannedMealAsync(int id)
+        public async Task RemovePlannedMealAsync(Guid id)
         {
             var meal = await _context.PlannedMeals.FindAsync(id);
             if (meal != null)

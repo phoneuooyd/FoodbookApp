@@ -16,6 +16,7 @@ namespace Foodbook.Data
         public DbSet<ShoppingListItem> ShoppingListItems => Set<ShoppingListItem>();
         public DbSet<Folder> Folders => Set<Folder>();
         public DbSet<RecipeLabel> RecipeLabels => Set<RecipeLabel>();
+        public DbSet<AuthAccount> AuthAccounts => Set<AuthAccount>();
 
         // Used by DI at runtime
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
@@ -117,13 +118,17 @@ namespace Foodbook.Data
                 .WithMany()
                 .UsingEntity<Dictionary<string, object>>(
                     "RecipeRecipeLabel",
-                    j => j.HasOne<RecipeLabel>().WithMany().HasForeignKey("LabelsId").OnDelete(DeleteBehavior.Cascade),
-                    j => j.HasOne<Recipe>().WithMany().HasForeignKey("RecipesId").OnDelete(DeleteBehavior.Cascade)
+                    j => j.HasOne<RecipeLabel>().WithMany().HasForeignKey("LabelId").OnDelete(DeleteBehavior.Cascade),
+                    j => j.HasOne<Recipe>().WithMany().HasForeignKey("RecipeId").OnDelete(DeleteBehavior.Cascade)
                 );
 
             modelBuilder.Entity<RecipeLabel>()
                 .HasIndex(l => l.Name)
                 .HasDatabaseName("IX_RecipeLabels_Name");
+
+            modelBuilder.Entity<AuthAccount>()
+                .HasIndex(a => a.SupabaseUserId)
+                .IsUnique();
 
             base.OnModelCreating(modelBuilder);
         }

@@ -31,7 +31,7 @@ public class FilterSortResult
     // Back-compat: keep SortOrder, but prefer SortBy
     public SortOrder SortOrder { get; set; } = SortOrder.Asc;
     public SortBy SortBy { get; set; } = SortBy.NameAsc;
-    public List<int> SelectedLabelIds { get; set; } = new();
+    public List<Guid> SelectedLabelIds { get; set; } = new();
     public List<string> SelectedIngredientNames { get; set; } = new();
 }
 
@@ -44,7 +44,7 @@ public class FilterSortPopup : Popup
 
     private readonly bool _showLabels;
     private readonly ObservableCollection<RecipeLabel> _labels;
-    private readonly HashSet<int> _selected;
+    private readonly HashSet<Guid> _selected;
 
     // NEW: ingredients support
     private readonly bool _showIngredients;
@@ -74,7 +74,7 @@ public class FilterSortPopup : Popup
     public FilterSortPopup(
         bool showLabels,
         IEnumerable<RecipeLabel>? labels,
-        IEnumerable<int>? preselectedLabelIds,
+        IEnumerable<Guid>? preselectedLabelIds,
         SortOrder sortOrder,
         bool showIngredients = false,
         IEnumerable<Ingredient>? ingredients = null,
@@ -84,7 +84,7 @@ public class FilterSortPopup : Popup
     {
         _showLabels = showLabels;
         _labels = new ObservableCollection<RecipeLabel>(labels ?? Enumerable.Empty<RecipeLabel>());
-        _selected = new HashSet<int>(preselectedLabelIds ?? Enumerable.Empty<int>());
+        _selected = new HashSet<Guid>(preselectedLabelIds ?? Enumerable.Empty<Guid>());
 
         _showIngredients = showIngredients;
         _allIngredients = (ingredients ?? Enumerable.Empty<Ingredient>()).ToList();

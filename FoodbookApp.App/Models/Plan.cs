@@ -12,7 +12,7 @@ namespace Foodbook.Models
 
     public class Plan
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public bool IsArchived { get; set; } = false;
@@ -23,7 +23,7 @@ namespace Foodbook.Models
 
         // Link to associated shopping list plan (for Planner type)
         // This creates a one-to-one relationship between meal planner and its shopping list
-        public int? LinkedShoppingListPlanId { get; set; }
+        public Guid? LinkedShoppingListPlanId { get; set; }
 
         // Persisted title/name for the plan (user-defined)
         [MaxLength(200)]

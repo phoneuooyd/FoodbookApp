@@ -15,13 +15,16 @@ namespace Foodbook.Services
             return await _db.RecipeLabels.AsNoTracking().OrderBy(l => l.Name).ToListAsync(ct);
         }
 
-        public async Task<RecipeLabel?> GetByIdAsync(int id, CancellationToken ct = default)
+        public async Task<RecipeLabel?> GetByIdAsync(Guid id, CancellationToken ct = default)
         {
             return await _db.RecipeLabels.AsNoTracking().FirstOrDefaultAsync(l => l.Id == id, ct);
         }
 
         public async Task<RecipeLabel> AddAsync(RecipeLabel label, CancellationToken ct = default)
         {
+            if (label.Id == Guid.Empty)
+                label.Id = Guid.NewGuid();
+
             _db.RecipeLabels.Add(label);
             await _db.SaveChangesAsync(ct);
             return label;
@@ -37,7 +40,7 @@ namespace Foodbook.Services
             return existing;
         }
 
-        public async Task<bool> DeleteAsync(int id, CancellationToken ct = default)
+        public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
         {
             var existing = await _db.RecipeLabels.FirstOrDefaultAsync(l => l.Id == id, ct);
             if (existing == null) return false;

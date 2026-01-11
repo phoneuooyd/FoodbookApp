@@ -56,39 +56,39 @@ namespace Foodbook.ViewModels
             set { if (_currentSortBy == value) return; _currentSortBy = value; OnPropertyChanged(); FilterItems(); }
         }
 
-        private HashSet<int> _selectedLabelIds = new();
-        public IReadOnlyCollection<int> SelectedLabelIds => _selectedLabelIds;
+        private HashSet<Guid> _selectedLabelIds = new();
+        public IReadOnlyCollection<Guid> SelectedLabelIds => _selectedLabelIds;
 
         // NEW: ingredient names filter state
         private HashSet<string> _selectedIngredientNames = new(System.StringComparer.OrdinalIgnoreCase);
         public IReadOnlyCollection<string> SelectedIngredientNames => _selectedIngredientNames;
 
-        public void ApplySortingAndLabelFilter(SortOrder sortOrder, IEnumerable<int> labelIds)
+        public void ApplySortingAndLabelFilter(SortOrder sortOrder, IEnumerable<Guid> labelIds)
         {
             _currentSortBy = null;
             _sortOrder = sortOrder;
-            _selectedLabelIds = new HashSet<int>(labelIds ?? Enumerable.Empty<int>());
+            _selectedLabelIds = new HashSet<Guid>(labelIds ?? Enumerable.Empty<Guid>());
             OnPropertyChanged(nameof(SortOrder));
             FilterItems();
         }
 
         // NEW: overload that also accepts ingredient names
-        public void ApplySortingLabelAndIngredientFilter(SortOrder sortOrder, IEnumerable<int> labelIds, IEnumerable<string> ingredientNames)
+        public void ApplySortingLabelAndIngredientFilter(SortOrder sortOrder, IEnumerable<Guid> labelIds, IEnumerable<string> ingredientNames)
         {
             _currentSortBy = null;
             _sortOrder = sortOrder;
-            _selectedLabelIds = new HashSet<int>(labelIds ?? Enumerable.Empty<int>());
+            _selectedLabelIds = new HashSet<Guid>(labelIds ?? Enumerable.Empty<Guid>());
             _selectedIngredientNames = new HashSet<string>(ingredientNames ?? Enumerable.Empty<string>(), System.StringComparer.OrdinalIgnoreCase);
             OnPropertyChanged(nameof(SortOrder));
             FilterItems();
         }
 
         // NEW: Accept SortBy directly from popup
-        public void ApplySortingLabelAndIngredientFilter(SortBy sortBy, IEnumerable<int> labelIds, IEnumerable<string> ingredientNames)
+        public void ApplySortingLabelAndIngredientFilter(SortBy sortBy, IEnumerable<Guid> labelIds, IEnumerable<string> ingredientNames)
         {
             _currentSortBy = sortBy;
             _sortOrder = sortBy == SortBy.NameDesc ? SortOrder.Desc : SortOrder.Asc; // keep legacy field in sync for A-Z cases
-            _selectedLabelIds = new HashSet<int>(labelIds ?? Enumerable.Empty<int>());
+            _selectedLabelIds = new HashSet<Guid>(labelIds ?? Enumerable.Empty<Guid>());
             _selectedIngredientNames = new HashSet<string>(ingredientNames ?? Enumerable.Empty<string>(), System.StringComparer.OrdinalIgnoreCase);
             OnPropertyChanged(nameof(CurrentSortBy));
             FilterItems();
@@ -143,7 +143,7 @@ namespace Foodbook.ViewModels
 
             AddRecipeCommand = new Command(async () =>
             {
-                var param = _currentFolder?.Id > 0 ? $"?folderId={_currentFolder.Id}" : string.Empty;
+                var param = _currentFolder?.Id != null && _currentFolder.Id != Guid.Empty ? $"?folderId={_currentFolder.Id}" : string.Empty;
                 await Shell.Current.GoToAsync($"{nameof(AddRecipePage)}{param}");
                 WeakReferenceMessenger.Default.Send(FabCollapseMessage.Instance);
             });
@@ -156,8 +156,14 @@ namespace Foodbook.ViewModels
 
             EditRecipeCommand = new Command<Recipe>(async r =>
             {
-                if (r != null)
-                    await Shell.Current.GoToAsync($"{nameof(AddRecipePage)}?id={r.Id}");
+                // ? CRITICAL: Validate recipe and its ID before navigation
+                if (r == null || r.Id == Guid.Empty)
+                {
+                    System.Diagnostics.Debug.WriteLine($"?? EditRecipeCommand: Invalid recipe (null or Guid.Empty)");
+                    return;
+                }
+                System.Diagnostics.Debug.WriteLine($"?? EditRecipeCommand: Navigating to recipe {r.Id} ({r.Name})");
+                await Shell.Current.GoToAsync($"{nameof(AddRecipePage)}?id={r.Id}");
             });
             DeleteRecipeCommand = new Command<Recipe>(async r => await DeleteRecipeAsync(r));
 
@@ -166,9 +172,21 @@ namespace Foodbook.ViewModels
                 switch (o)
                 {
                     case Recipe r:
+                        // ? CRITICAL: Validate recipe ID before navigation
+                        if (r.Id == Guid.Empty)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"?? EditItemCommand: Recipe has Guid.Empty ID");
+                            return;
+                        }
+                        System.Diagnostics.Debug.WriteLine($"?? EditItemCommand: Navigating to recipe {r.Id} ({r.Name})");
                         await Shell.Current.GoToAsync($"{nameof(AddRecipePage)}?id={r.Id}");
                         break;
                     case Folder f:
+                        if (f.Id == Guid.Empty)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"?? EditItemCommand: Folder has Guid.Empty ID");
+                            return;
+                        }
                         await NavigateIntoFolderAsync(f);
                         break;
                 }
@@ -320,12 +338,23 @@ namespace Foodbook.ViewModels
             if (_currentFolder == null)
             {
                 folderQuery = _allFolders.Where(f => f.ParentFolderId == null);
-                recipeQuery = _allRecipes.Where(r => r.FolderId == null);
+                // Treat Guid.Empty as equivalent to null for legacy or mistaken values
+                recipeQuery = _allRecipes.Where(r => r.FolderId == null || r.FolderId == Guid.Empty);
             }
             else
             {
-                folderQuery = _allFolders.Where(f => f.ParentFolderId == _currentFolder.Id);
-                recipeQuery = _allRecipes.Where(r => r.FolderId == _currentFolder.Id);
+                // Ensure current folder still exists in the folder list; if not, reset to root
+                if (!_allFolders.Any(f => f.Id == _currentFolder.Id))
+                {
+                    _currentFolder = null;
+                    folderQuery = _allFolders.Where(f => f.ParentFolderId == null);
+                    recipeQuery = _allRecipes.Where(r => r.FolderId == null || r.FolderId == Guid.Empty);
+                }
+                else
+                {
+                    folderQuery = _allFolders.Where(f => f.ParentFolderId == _currentFolder.Id);
+                    recipeQuery = _allRecipes.Where(r => r.FolderId == _currentFolder.Id);
+                }
             }
 
             // Apply search
@@ -430,8 +459,12 @@ namespace Foodbook.ViewModels
                                 ingredient.Protein = dbIngredient.Protein;
                                 ingredient.Fat = dbIngredient.Fat;
                                 ingredient.Carbs = dbIngredient.Carbs;
+                                // ? CRITICAL FIX: Copy UnitWeight from database ingredient
+                                ingredient.UnitWeight = dbIngredient.UnitWeight;
                             }
-                            double factor = GetUnitConversionFactor(ingredient.Unit, ingredient.Quantity);
+                            
+                            // ? CRITICAL FIX: Pass UnitWeight to conversion factor calculation
+                            double factor = GetUnitConversionFactor(ingredient.Unit, ingredient.Quantity, ingredient.UnitWeight);
                             totalCalories += ingredient.Calories * factor;
                             totalProtein += ingredient.Protein * factor;
                             totalFat += ingredient.Fat * factor;
@@ -450,11 +483,12 @@ namespace Foodbook.ViewModels
             }
         }
 
-        private double GetUnitConversionFactor(Unit unit, double quantity) => unit switch
+        private double GetUnitConversionFactor(Unit unit, double quantity, double unitWeight) => unit switch
         {
             Unit.Gram => quantity / 100.0,
             Unit.Milliliter => quantity / 100.0,
-            Unit.Piece => quantity,
+            // ? CRITICAL FIX: Use unitWeight for Piece unit (matches Ingredient model logic)
+            Unit.Piece => unitWeight > 0 ? (quantity * unitWeight) / 100.0 : quantity,
             _ => quantity / 100.0
         };
 

@@ -12,6 +12,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using FoodbookApp.Interfaces;
+using CommunityToolkit.Mvvm.Messaging;
+using Foodbook.Messages;
 
 namespace Foodbook.ViewModels
 {
@@ -37,8 +39,8 @@ namespace Foodbook.ViewModels
         private readonly IFolderService _folderService;
         private readonly IDatabaseService _databaseService;
         public ObservableCollection<Folder> AvailableFolders { get; } = new();
-        public int? SelectedFolderId { get => _selectedFolderId; set { _selectedFolderId = value; OnPropertyChanged(); MarkDirty(); } }
-        private int? _selectedFolderId;
+        public Guid? SelectedFolderId { get => _selectedFolderId; set { _selectedFolderId = value; OnPropertyChanged(); MarkDirty(); } }
+        private Guid? _selectedFolderId;
 
         // ✅ Labels support
         private readonly IRecipeLabelService _labelService;
@@ -301,9 +303,9 @@ namespace Foodbook.ViewModels
         private sealed class NullLabelService : IRecipeLabelService
         {
             public Task<RecipeLabel> AddAsync(RecipeLabel label, CancellationToken ct = default) => Task.FromResult(label);
-            public Task<bool> DeleteAsync(int id, CancellationToken ct = default) => Task.FromResult(true);
+            public Task<bool> DeleteAsync(Guid id, CancellationToken ct = default) => Task.FromResult(true);
             public Task<List<RecipeLabel>> GetAllAsync(CancellationToken ct = default) => Task.FromResult(new List<RecipeLabel>());
-            public Task<RecipeLabel?> GetByIdAsync(int id, CancellationToken ct = default) => Task.FromResult<RecipeLabel?>(null);
+            public Task<RecipeLabel?> GetByIdAsync(Guid id, CancellationToken ct = default) => Task.FromResult<RecipeLabel?>(null);
             public Task<RecipeLabel> UpdateAsync(RecipeLabel label, CancellationToken ct = default) => Task.FromResult(label);
         }
 
@@ -411,45 +413,66 @@ namespace Foodbook.ViewModels
 
         public bool IsEditMode => _editingRecipe != null;
 
-        public async Task LoadRecipeAsync(int id)
+        public async Task LoadRecipeAsync(Guid id)
         {
             try
             {
+                // ✅ CRITICAL: Validate Guid before loading
+                if (id == Guid.Empty)
+                {
+                    System.Diagnostics.Debug.WriteLine("⚠️ LoadRecipeAsync called with Guid.Empty - skipping");
+                    return;
+                }
+
                 // ✅ CRITICAL: Suppress dirty tracking during load
                 _suppressDirtyTracking = true;
                 
+                System.Diagnostics.Debug.WriteLine($"📖 LoadRecipeAsync: Loading recipe {id}");
+                
                 var recipe = await _recipeService.GetRecipeAsync(id);
                 if (recipe == null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"⚠️ LoadRecipeAsync: Recipe {id} not found");
+                    _suppressDirtyTracking = false;
                     return;
+                }
 
                 _editingRecipe = recipe;
-                Name = recipe.Name;
+                Name = recipe.Name ?? string.Empty;
                 Description = recipe.Description ?? string.Empty;
                 IloscPorcji = recipe.IloscPorcji.ToString();
                 Calories = recipe.Calories.ToString("F1");
                 Protein = recipe.Protein.ToString("F1");
                 Fat = recipe.Fat.ToString("F1");
                 Carbs = recipe.Carbs.ToString("F1");
-                SelectedFolderId = recipe.FolderId;
+                
+                // ✅ CRITICAL: Normalize FolderId (Guid.Empty -> null)
+                SelectedFolderId = (recipe.FolderId.HasValue && recipe.FolderId.Value != Guid.Empty) 
+                    ? recipe.FolderId 
+                    : null;
                 
                 Ingredients.Clear();
-                foreach (var ing in recipe.Ingredients)
+                if (recipe.Ingredients != null)
                 {
-                    var ingredient = new Ingredient 
-                    { 
-                        Id = ing.Id, 
-                        Name = ing.Name, 
-                        Quantity = ing.Quantity, 
-                        Unit = ing.Unit, 
-                        RecipeId = ing.RecipeId,
-                        Calories = ing.Calories,
-                        Protein = ing.Protein,
-                        Fat = ing.Fat,
-                        Carbs = ing.Carbs
-                    };
-                    
-                    // Subscribe to property changes AFTER adding to collection to avoid triggering dirty flag
-                    Ingredients.Add(ingredient);
+                    foreach (var ing in recipe.Ingredients)
+                    {
+                        // Create fresh copy to avoid EF tracking issues
+                        var ingredient = new Ingredient 
+                        { 
+                            Id = ing.Id != Guid.Empty ? ing.Id : Guid.NewGuid(),
+                            Name = ing.Name ?? string.Empty, 
+                            Quantity = ing.Quantity, 
+                            Unit = ing.Unit,
+                            UnitWeight = ing.UnitWeight,
+                            Calories = ing.Calories,
+                            Protein = ing.Protein,
+                            Fat = ing.Fat,
+                            Carbs = ing.Carbs
+                            // Do NOT copy RecipeId - it will be set on save
+                        };
+                        
+                        Ingredients.Add(ingredient);
+                    }
                 }
 
                 // labels
@@ -457,25 +480,28 @@ namespace Foodbook.ViewModels
                 if (recipe.Labels != null)
                 {
                     foreach (var label in recipe.Labels)
-                        SelectedLabels.Add(label);
+                    {
+                        if (label.Id != Guid.Empty)
+                            SelectedLabels.Add(label);
+                    }
                 }
                 
                 await ScheduleNutritionalCalculationAsync();
                 
-                // Ważne: Powiadom interfejs o zmianach w tytule i przycisku
                 OnPropertyChanged(nameof(Title));
                 OnPropertyChanged(nameof(SaveButtonText));
+                OnPropertyChanged(nameof(IsEditMode));
                 
                 // ✅ CRITICAL: Reset dirty flag after loading and re-enable tracking
                 _isDirty = false;
                 _suppressDirtyTracking = false;
                 
-                System.Diagnostics.Debug.WriteLine("[AddRecipeViewModel] Recipe loaded, dirty tracking reset");
+                System.Diagnostics.Debug.WriteLine($"✅ LoadRecipeAsync: Recipe {recipe.Name} loaded successfully");
             }
             catch (Exception ex)
             {
                 _suppressDirtyTracking = false;
-                System.Diagnostics.Debug.WriteLine($"Error in LoadRecipeAsync: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"❌ LoadRecipeAsync error: {ex.Message}");
                 ValidationMessage = $"Błąd ładowania przepisu: {ex.Message}";
             }
         }
@@ -913,7 +939,7 @@ namespace Foodbook.ViewModels
             try
             {
                 System.Diagnostics.Debug.WriteLine("🔄 SaveRecipeAsync started");
-                
+
                 ValidateInput();
                 if (HasValidationError)
                 {
@@ -925,13 +951,12 @@ namespace Foodbook.ViewModels
                 recipe.Name = Name;
                 recipe.Description = Description;
                 recipe.IloscPorcji = int.TryParse(IloscPorcji, out var porcje) ? porcje : 2;
-                
-                // Parse nutritional values with proper decimal separator handling
+
                 recipe.Calories = ParseDoubleValue(Calories);
                 recipe.Protein = ParseDoubleValue(Protein);
                 recipe.Fat = ParseDoubleValue(Fat);
                 recipe.Carbs = ParseDoubleValue(Carbs);
-                
+
                 recipe.FolderId = SelectedFolderId;
                 recipe.Ingredients = Ingredients.ToList();
                 recipe.Labels = SelectedLabels.ToList();
@@ -949,6 +974,16 @@ namespace Foodbook.ViewModels
                     System.Diagnostics.Debug.WriteLine("✅ Recipe updated successfully");
                 }
 
+                // ✅ Notify RecipesPage to reload immediately (even if it's still on screen under this page)
+                try
+                {
+                    WeakReferenceMessenger.Default.Send(new RecipesReloadMessage(forceFullReload: true));
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Failed to send RecipesReloadMessage: {ex.Message}");
+                }
+
                 // ✅ CRITICAL: After successful save reset dirty flag
                 _isDirty = false;
                 System.Diagnostics.Debug.WriteLine("🔄 Dirty flag reset after successful save");
@@ -963,7 +998,7 @@ namespace Foodbook.ViewModels
 
                 // Zawsze wróć do grida po zapisie
                 System.Diagnostics.Debug.WriteLine("🔙 Navigating back");
-                await Shell.Current.GoToAsync("..");
+                await Shell.Current.GoToAsync("..", false);
             }
             catch (Exception ex)
             {
@@ -1150,7 +1185,7 @@ namespace Foodbook.ViewModels
         }
 
         // ✅ NEW: Public method to set folder ID without marking as dirty (for navigation preselection)
-        public void SetInitialFolderId(int? folderId)
+        public void SetInitialFolderId(Guid? folderId)
         {
             try
             {

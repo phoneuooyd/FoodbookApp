@@ -152,7 +152,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
         }
     }
 
-    private async void OnIngredientSaved(int id)
+    private async void OnIngredientSaved(Guid id)
     {
         System.Diagnostics.Debug.WriteLine($"[IngredientsViewModel] OnIngredientSaved triggered for ID: {id}");
         // Ensure next fetch hits DB, then refresh

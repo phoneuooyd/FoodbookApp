@@ -14,18 +14,18 @@ public partial class PlannerPage : ContentPage
     private bool _hasEverLoaded;
 
     // Accept plan id for editing existing plan
-    public int PlanId
+    public Guid PlanId
     {
         get => _planId;
         set
         {
             _planId = value;
-            _pendingPlanId = value > 0 ? value : null;
+            _pendingPlanId = value != Guid.Empty ? value : null;
             System.Diagnostics.Debug.WriteLine($"[PlannerPage] PlanId property set to: {value}");
         }
     }
-    private int _planId;
-    private int? _pendingPlanId;
+    private Guid _planId;
+    private Guid? _pendingPlanId;
 
     // Constructor for NEW planner (PlannerViewModel)
     public PlannerPage(PlannerViewModel viewModel)
@@ -66,23 +66,23 @@ public partial class PlannerPage : ContentPage
         {
             System.Diagnostics.Debug.WriteLine("[PlannerPage] ?? EDIT MODE detected");
             
-            int planIdToLoad = 0;
+            Guid planIdToLoad = Guid.Empty;
             
             // Try to get planId from QueryProperty first
-            if (_pendingPlanId.HasValue && _pendingPlanId.Value > 0)
+            if (_pendingPlanId.HasValue && _pendingPlanId.Value != Guid.Empty)
             {
                 planIdToLoad = _pendingPlanId.Value;
                 System.Diagnostics.Debug.WriteLine($"[PlannerPage] Using _pendingPlanId: {planIdToLoad}");
                 _pendingPlanId = null;
             }
-            else if (_planId > 0)
+            else if (_planId != Guid.Empty)
             {
                 planIdToLoad = _planId;
                 System.Diagnostics.Debug.WriteLine($"[PlannerPage] Using _planId: {planIdToLoad}");
             }
             
             // Load the plan data
-            if (planIdToLoad > 0 && !_hasEverLoaded)
+            if (planIdToLoad != Guid.Empty && !_hasEverLoaded)
             {
                 System.Diagnostics.Debug.WriteLine($"[PlannerPage] Loading plan {planIdToLoad} for editing...");
                 try

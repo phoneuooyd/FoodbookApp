@@ -66,8 +66,8 @@ public partial class RegisterPopup : Popup
             if (session == null || string.IsNullOrWhiteSpace(session.AccessToken))
             {
                 StatusLabel.Text = string.Empty;
-                await Shell.Current.DisplayAlert("Rejestracja", "Nie uda³o siê utworzyæ konta (mo¿liwa wymagana weryfikacja email).", "OK");
-                return;
+                await Shell.Current.DisplayAlert("Rejestracja", "SprawdŸ skrzynkê e-mail w celu potwierdzenia rejestracji", "OK");
+                await CloseWithResultAsync(true);
             }
 
             StatusLabel.Text = string.Empty;

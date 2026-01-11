@@ -26,8 +26,9 @@ namespace FoodbookApp.Tests
         {
             // Arrange
             var date = new DateTime(2024, 12, 25);
+            var r1 = Guid.NewGuid();
             var plannerDay = new PlannerDay(date);
-            var meal = new PlannedMeal { RecipeId = 1, Date = date, Portions = 2 };
+            var meal = new PlannedMeal { RecipeId = r1, Date = date, Portions = 2 };
 
             // Act
             plannerDay.Meals.Add(meal);
@@ -44,8 +45,8 @@ namespace FoodbookApp.Tests
             var plannedMeal = new PlannedMeal();
 
             // Assert
-            Assert.Equal(0, plannedMeal.Id);
-            Assert.Equal(0, plannedMeal.RecipeId);
+            Assert.Equal(Guid.Empty, plannedMeal.Id);
+            Assert.Equal(Guid.Empty, plannedMeal.RecipeId);
             Assert.Null(plannedMeal.Recipe);
             Assert.Equal(DateTime.MinValue, plannedMeal.Date);
             Assert.Equal(1, plannedMeal.Portions); // Default value is 1
@@ -57,18 +58,20 @@ namespace FoodbookApp.Tests
             // Arrange
             var plannedMeal = new PlannedMeal();
             var date = new DateTime(2024, 12, 25);
-            var recipe = new Recipe { Id = 1, Name = "Kotlet schabowy" };
+            var mealId = Guid.NewGuid();
+            var recipeId = Guid.NewGuid();
+            var recipe = new Recipe { Id = recipeId, Name = "Kotlet schabowy" };
 
             // Act
-            plannedMeal.Id = 1;
-            plannedMeal.RecipeId = 1;
+            plannedMeal.Id = mealId;
+            plannedMeal.RecipeId = recipeId;
             plannedMeal.Recipe = recipe;
             plannedMeal.Date = date;
             plannedMeal.Portions = 4;
 
             // Assert
-            Assert.Equal(1, plannedMeal.Id);
-            Assert.Equal(1, plannedMeal.RecipeId);
+            Assert.Equal(mealId, plannedMeal.Id);
+            Assert.Equal(recipeId, plannedMeal.RecipeId);
             Assert.Same(recipe, plannedMeal.Recipe);
             Assert.Equal(date, plannedMeal.Date);
             Assert.Equal(4, plannedMeal.Portions);
@@ -112,7 +115,7 @@ namespace FoodbookApp.Tests
         {
             // Arrange
             var plannedMeal = new PlannedMeal();
-            var recipe = new Recipe { Id = 1, Name = "Pierogi" };
+            var recipe = new Recipe { Id = Guid.NewGuid(), Name = "Pierogi" };
             var eventRaised = false;
             string? propertyName = null;
 
@@ -155,7 +158,7 @@ namespace FoodbookApp.Tests
             var plan = new Plan();
 
             // Assert
-            Assert.Equal(0, plan.Id);
+            Assert.Equal(Guid.Empty, plan.Id);
             Assert.Equal(DateTime.MinValue, plan.StartDate);
             Assert.Equal(DateTime.MinValue, plan.EndDate);
             Assert.False(plan.IsArchived); // Default value is false
@@ -169,15 +172,16 @@ namespace FoodbookApp.Tests
             var plan = new Plan();
             var startDate = new DateTime(2024, 12, 1);
             var endDate = new DateTime(2024, 12, 7);
+            var planId = Guid.NewGuid();
 
             // Act
-            plan.Id = 1;
+            plan.Id = planId;
             plan.StartDate = startDate;
             plan.EndDate = endDate;
             plan.IsArchived = true;
 
             // Assert
-            Assert.Equal(1, plan.Id);
+            Assert.Equal(planId, plan.Id);
             Assert.Equal(startDate, plan.StartDate);
             Assert.Equal(endDate, plan.EndDate);
             Assert.True(plan.IsArchived);
@@ -189,9 +193,11 @@ namespace FoodbookApp.Tests
         {
             // Arrange
             var date = new DateTime(2024, 12, 25);
+            var r1 = Guid.NewGuid();
+            var r2 = Guid.NewGuid();
             var plannerDay = new PlannerDay(date);
-            var meal1 = new PlannedMeal { RecipeId = 1, Date = date };
-            var meal2 = new PlannedMeal { RecipeId = 2, Date = date };
+            var meal1 = new PlannedMeal { RecipeId = r1, Date = date };
+            var meal2 = new PlannedMeal { RecipeId = r2, Date = date };
             plannerDay.Meals.Add(meal1);
             plannerDay.Meals.Add(meal2);
 
@@ -210,8 +216,8 @@ namespace FoodbookApp.Tests
             // Arrange
             var date = new DateTime(2024, 12, 25);
             var plannerDay = new PlannerDay(date);
-            plannerDay.Meals.Add(new PlannedMeal { RecipeId = 1 });
-            plannerDay.Meals.Add(new PlannedMeal { RecipeId = 2 });
+            plannerDay.Meals.Add(new PlannedMeal { RecipeId = Guid.NewGuid() });
+            plannerDay.Meals.Add(new PlannedMeal { RecipeId = Guid.NewGuid() });
 
             // Act
             plannerDay.Meals.Clear();
@@ -226,11 +232,14 @@ namespace FoodbookApp.Tests
             // Arrange
             var date = new DateTime(2024, 12, 25);
             var plannerDay = new PlannerDay(date);
+            var r1 = Guid.NewGuid();
+            var r2 = Guid.NewGuid();
+            var r3 = Guid.NewGuid();
             var meals = new List<PlannedMeal>
             {
-                new PlannedMeal { RecipeId = 1, Date = date, Portions = 2 },
-                new PlannedMeal { RecipeId = 2, Date = date, Portions = 1 },
-                new PlannedMeal { RecipeId = 3, Date = date, Portions = 3 }
+                new PlannedMeal { RecipeId = r1, Date = date, Portions = 2 },
+                new PlannedMeal { RecipeId = r2, Date = date, Portions = 1 },
+                new PlannedMeal { RecipeId = r3, Date = date, Portions = 3 }
             };
 
             // Act

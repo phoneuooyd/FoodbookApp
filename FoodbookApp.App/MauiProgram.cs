@@ -14,6 +14,7 @@ using Supabase;
 using Microsoft.IdentityModel.Tokens;
 using FoodbookApp.Services.Auth;
 using Foodbook.Views.Components;
+using FoodbookApp.Services.Supabase;
 
 namespace FoodbookApp
 {
@@ -87,6 +88,8 @@ namespace FoodbookApp
                 Issuer = builder.Configuration["Authentication:ValidIssuer"] ?? string.Empty
             }));
             builder.Services.AddScoped<ISupabaseAuthService, SupabaseAuthService>();
+            builder.Services.AddScoped<IAccountService, AccountService>();
+            builder.Services.AddScoped<ISupabaseCrudService, SupabaseCrudService>();
 
             builder.Services.AddScoped<Supabase.Client>(_ => 
             new Supabase.Client(

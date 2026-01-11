@@ -1,14 +1,15 @@
 using System;
 using System.Text.Json.Serialization;
+using Supabase.Postgrest.Models;
 
 namespace Foodbook.Models.DTOs
 {
-    public class PlannedMealDto
+    public class PlannedMealDto : BaseModel
     {
-        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("id")] public Guid? Id { get; set; }
         [JsonPropertyName("owner_id")] public string? OwnerId { get; set; }
-        [JsonPropertyName("recipe_id")] public string? RecipeId { get; set; }
-        [JsonPropertyName("plan_id")] public string? PlanId { get; set; }
+        [JsonPropertyName("recipe_id")] public Guid? RecipeId { get; set; }
+        [JsonPropertyName("plan_id")] public Guid? PlanId { get; set; }
         [JsonPropertyName("date")] public DateTime? Date { get; set; }
         [JsonPropertyName("portions")] public int? Portions { get; set; }
         [JsonPropertyName("created_at")] public DateTime? CreatedAt { get; set; }

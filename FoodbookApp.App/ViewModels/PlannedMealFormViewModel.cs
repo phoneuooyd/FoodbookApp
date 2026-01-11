@@ -43,7 +43,7 @@ public class PlannedMealFormViewModel : INotifyPropertyChanged
         ValidateInput();
     }
 
-    public async Task LoadAsync(int id)
+    public async Task LoadAsync(Guid id)
     {
         await LoadRecipesAsync();
         var meal = await _plannerService.GetPlannedMealAsync(id);
@@ -97,19 +97,21 @@ public class PlannedMealFormViewModel : INotifyPropertyChanged
         ValidateInput();
         if (HasValidationError)
             return;
+
+        var selectedId = SelectedRecipe?.Id ?? Guid.Empty;
+
         if (_meal == null)
         {
-            var selectedId = SelectedRecipe?.Id ?? 0;
-            var m = new PlannedMeal { RecipeId = selectedId, Date = Date, PlanId = _meal?.PlanId };
+            var m = new PlannedMeal { RecipeId = selectedId, Date = Date, PlanId = null, Portions = 1 };
             await _plannerService.AddPlannedMealAsync(m);
         }
         else
         {
-            var selectedId = SelectedRecipe?.Id ?? 0;
             _meal.RecipeId = selectedId;
             _meal.Date = Date;
             await _plannerService.UpdatePlannedMealAsync(_meal);
         }
+
         var shell = Shell.Current;
         if (shell != null)
             await shell.GoToAsync("..");

@@ -34,14 +34,14 @@ public partial class MealFormPage : ContentPage
         _themeHelper.Cleanup();
     }
 
-    private int _itemId;
-    public int ItemId
+    private Guid _itemId;
+    public Guid ItemId
     {
         get => _itemId;
         set
         {
             _itemId = value;
-            if (value > 0)
+            if (value != Guid.Empty)
                 Task.Run(async () => await ViewModel.LoadAsync(value));
             else
                 Task.Run(async () => await ViewModel.LoadRecipesAsync());

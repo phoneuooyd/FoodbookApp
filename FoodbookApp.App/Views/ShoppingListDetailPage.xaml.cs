@@ -18,7 +18,7 @@ public partial class ShoppingListDetailPage : ContentPage
     // Page lifecycle cancellation token
     private CancellationTokenSource? _pageCts;
 
-    public int PlanId { get; set; }
+    public Guid PlanId { get; set; }
 
     // Shell navigation handling
     private bool _isSubscribedToShellNavigating = false;

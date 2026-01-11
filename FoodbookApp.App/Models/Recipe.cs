@@ -5,7 +5,7 @@ namespace Foodbook.Models
 {
     public class Recipe
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public double Calories { get; set; }
@@ -15,7 +15,7 @@ namespace Foodbook.Models
         public int IloscPorcji { get; set; } = 2; 
 
         // Folder relation
-        public int? FolderId { get; set; }
+        public Guid? FolderId { get; set; }
         public Folder? Folder { get; set; }
 
         // Drag & Drop helpers (UI state)

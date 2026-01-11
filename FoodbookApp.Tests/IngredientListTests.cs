@@ -158,20 +158,23 @@ namespace FoodbookApp.Tests
         public void IngredientCollection_FindIngredientById_ShouldReturnCorrectItem()
         {
             // Arrange
+            var id1 = Guid.NewGuid();
+            var id2 = Guid.NewGuid();
+            var id3 = Guid.NewGuid();
             var ingredients = new List<Ingredient>
             {
-                new Ingredient { Id = 1, Name = "Pomidor" },
-                new Ingredient { Id = 2, Name = "Cebula" },
-                new Ingredient { Id = 3, Name = "Czosnek" }
+                new Ingredient { Id = id1, Name = "Pomidor" },
+                new Ingredient { Id = id2, Name = "Cebula" },
+                new Ingredient { Id = id3, Name = "Czosnek" }
             };
 
             // Act
-            var foundIngredient = ingredients.FirstOrDefault(i => i.Id == 2);
+            var foundIngredient = ingredients.FirstOrDefault(i => i.Id == id2);
 
             // Assert
             Assert.NotNull(foundIngredient);
-            Assert.Equal("Cebula", foundIngredient.Name);
-            Assert.Equal(2, foundIngredient.Id);
+            Assert.Equal("Cebula", foundIngredient!.Name);
+            Assert.Equal(id2, foundIngredient.Id);
         }
 
         [Fact]

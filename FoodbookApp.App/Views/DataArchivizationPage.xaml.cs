@@ -893,15 +893,15 @@ namespace Foodbook.Views
                 using var cmd = srcConnection.CreateCommand();
                 cmd.CommandText = "SELECT * FROM Folders";
                 using var reader = await cmd.ExecuteReaderAsync();
-                
+
                 while (await reader.ReadAsync())
                 {
                     var folder = new Folder
                     {
-                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                        Id = Guid.NewGuid(),
                         Name = reader.GetString(reader.GetOrdinal("Name")),
                         Description = !reader.IsDBNull(reader.GetOrdinal("Description")) ? reader.GetString(reader.GetOrdinal("Description")) : null,
-                        ParentFolderId = !reader.IsDBNull(reader.GetOrdinal("ParentFolderId")) ? reader.GetInt32(reader.GetOrdinal("ParentFolderId")) : null,
+                        ParentFolderId = null,
                         Order = HasColumn(reader, "Order") && !reader.IsDBNull(reader.GetOrdinal("Order")) ? reader.GetInt32(reader.GetOrdinal("Order")) : 0,
                         CreatedAt = HasColumn(reader, "CreatedAt") && !reader.IsDBNull(reader.GetOrdinal("CreatedAt")) ? reader.GetDateTime(reader.GetOrdinal("CreatedAt")) : DateTime.Now
                     };
@@ -913,7 +913,7 @@ namespace Foodbook.Views
                     context.Folders.Add(folder);
                 }
                 await context.SaveChangesAsync();
-                log($"Imported {folders.Count} folders");
+                log($"Imported {folders.Count} folders (legacy ids remapped)");
             }
             catch (Exception ex)
             {
@@ -935,12 +935,12 @@ namespace Foodbook.Views
                 using var cmd = srcConnection.CreateCommand();
                 cmd.CommandText = "SELECT * FROM RecipeLabels";
                 using var reader = await cmd.ExecuteReaderAsync();
-                
+
                 while (await reader.ReadAsync())
                 {
                     var label = new RecipeLabel
                     {
-                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                        Id = Guid.NewGuid(),
                         Name = reader.GetString(reader.GetOrdinal("Name")),
                         ColorHex = HasColumn(reader, "ColorHex") && !reader.IsDBNull(reader.GetOrdinal("ColorHex")) ? reader.GetString(reader.GetOrdinal("ColorHex")) : null,
                         CreatedAt = HasColumn(reader, "CreatedAt") && !reader.IsDBNull(reader.GetOrdinal("CreatedAt")) ? reader.GetDateTime(reader.GetOrdinal("CreatedAt")) : DateTime.Now
@@ -953,7 +953,7 @@ namespace Foodbook.Views
                     context.RecipeLabels.Add(label);
                 }
                 await context.SaveChangesAsync();
-                log($"Imported {labels.Count} recipe labels");
+                log($"Imported {labels.Count} recipe labels (legacy ids remapped)");
             }
             catch (Exception ex)
             {
@@ -973,14 +973,14 @@ namespace Foodbook.Views
             {
                 var ingredients = new List<Ingredient>();
                 using var cmd = srcConnection.CreateCommand();
-                cmd.CommandText = "SELECT * FROM Ingredients WHERE RecipeId IS NULL"; // Import standalone ingredients first
+                cmd.CommandText = "SELECT * FROM Ingredients WHERE RecipeId IS NULL";
                 using var reader = await cmd.ExecuteReaderAsync();
-                
+
                 while (await reader.ReadAsync())
                 {
                     var ingredient = new Ingredient
                     {
-                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                        Id = Guid.NewGuid(),
                         Name = reader.GetString(reader.GetOrdinal("Name")),
                         Quantity = reader.GetDouble(reader.GetOrdinal("Quantity")),
                         Unit = (Unit)reader.GetInt32(reader.GetOrdinal("Unit")),
@@ -999,7 +999,7 @@ namespace Foodbook.Views
                     context.Ingredients.Add(ingredient);
                 }
                 await context.SaveChangesAsync();
-                log($"Imported {ingredients.Count} standalone ingredients");
+                log($"Imported {ingredients.Count} standalone ingredients (legacy ids remapped)");
             }
             catch (Exception ex)
             {
@@ -1021,12 +1021,12 @@ namespace Foodbook.Views
                 using var cmd = srcConnection.CreateCommand();
                 cmd.CommandText = "SELECT * FROM Recipes";
                 using var reader = await cmd.ExecuteReaderAsync();
-                
+
                 while (await reader.ReadAsync())
                 {
                     var recipe = new Recipe
                     {
-                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                        Id = Guid.NewGuid(),
                         Name = reader.GetString(reader.GetOrdinal("Name")),
                         Description = !reader.IsDBNull(reader.GetOrdinal("Description")) ? reader.GetString(reader.GetOrdinal("Description")) : null,
                         Calories = reader.GetDouble(reader.GetOrdinal("Calories")),
@@ -1034,20 +1034,18 @@ namespace Foodbook.Views
                         Fat = reader.GetDouble(reader.GetOrdinal("Fat")),
                         Carbs = reader.GetDouble(reader.GetOrdinal("Carbs")),
                         IloscPorcji = reader.GetInt32(reader.GetOrdinal("IloscPorcji")),
-                        FolderId = HasColumn(reader, "FolderId") && !reader.IsDBNull(reader.GetOrdinal("FolderId")) ? reader.GetInt32(reader.GetOrdinal("FolderId")) : null
+                        FolderId = null
                     };
                     recipes.Add(recipe);
                 }
 
-                // Import recipes first
                 foreach (var recipe in recipes)
                 {
                     context.Recipes.Add(recipe);
                 }
                 await context.SaveChangesAsync();
-                log($"Imported {recipes.Count} recipes");
+                log($"Imported {recipes.Count} recipes (legacy ids remapped)");
 
-                // Now import recipe ingredients
                 await ImportRecipeIngredientsAsync(srcConnection, context, log);
             }
             catch (Exception ex)
@@ -1064,12 +1062,12 @@ namespace Foodbook.Views
                 using var cmd = srcConnection.CreateCommand();
                 cmd.CommandText = "SELECT * FROM Ingredients WHERE RecipeId IS NOT NULL";
                 using var reader = await cmd.ExecuteReaderAsync();
-                
+
                 while (await reader.ReadAsync())
                 {
                     var ingredient = new Ingredient
                     {
-                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                        Id = Guid.NewGuid(),
                         Name = reader.GetString(reader.GetOrdinal("Name")),
                         Quantity = reader.GetDouble(reader.GetOrdinal("Quantity")),
                         Unit = (Unit)reader.GetInt32(reader.GetOrdinal("Unit")),
@@ -1078,7 +1076,7 @@ namespace Foodbook.Views
                         Protein = reader.GetDouble(reader.GetOrdinal("Protein")),
                         Fat = reader.GetDouble(reader.GetOrdinal("Fat")),
                         Carbs = reader.GetDouble(reader.GetOrdinal("Carbs")),
-                        RecipeId = reader.GetInt32(reader.GetOrdinal("RecipeId"))
+                        RecipeId = null
                     };
                     ingredients.Add(ingredient);
                 }
@@ -1088,7 +1086,7 @@ namespace Foodbook.Views
                     context.Ingredients.Add(ingredient);
                 }
                 await context.SaveChangesAsync();
-                log($"Imported {ingredients.Count} recipe ingredients");
+                log($"Imported {ingredients.Count} recipe ingredients (not linked; legacy ids remapped)");
             }
             catch (Exception ex)
             {
@@ -1179,13 +1177,12 @@ namespace Foodbook.Views
                 {
                     var plan = new Plan
                     {
-                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                        Id = Guid.NewGuid(),
                         StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
                         EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
                         IsArchived = HasColumn(reader, "IsArchived") && !reader.IsDBNull(reader.GetOrdinal("IsArchived")) ? reader.GetBoolean(reader.GetOrdinal("IsArchived")) : false,
-                        // Handle new fields with defaults
                         Type = HasColumn(reader, "Type") && !reader.IsDBNull(reader.GetOrdinal("Type")) ? (PlanType)reader.GetInt32(reader.GetOrdinal("Type")) : PlanType.ShoppingList,
-                        LinkedShoppingListPlanId = HasColumn(reader, "LinkedShoppingListPlanId") && !reader.IsDBNull(reader.GetOrdinal("LinkedShoppingListPlanId")) ? reader.GetInt32(reader.GetOrdinal("LinkedShoppingListPlanId")) : null
+                        LinkedShoppingListPlanId = null
                     };
                     plans.Add(plan);
                 }
@@ -1195,7 +1192,7 @@ namespace Foodbook.Views
                     context.Plans.Add(plan);
                 }
                 await context.SaveChangesAsync();
-                log($"Imported {plans.Count} plans");
+                log($"Imported {plans.Count} plans (legacy ids remapped)");
             }
             catch (Exception ex)
             {
@@ -1222,11 +1219,11 @@ namespace Foodbook.Views
                 {
                     var meal = new PlannedMeal
                     {
-                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                        RecipeId = reader.GetInt32(reader.GetOrdinal("RecipeId")),
+                        Id = Guid.NewGuid(),
+                        RecipeId = Guid.Empty,
                         Date = reader.GetDateTime(reader.GetOrdinal("Date")),
                         Portions = reader.GetInt32(reader.GetOrdinal("Portions")),
-                        PlanId = HasColumn(reader, "PlanId") && !reader.IsDBNull(reader.GetOrdinal("PlanId")) ? reader.GetInt32(reader.GetOrdinal("PlanId")) : null
+                        PlanId = null
                     };
                     meals.Add(meal);
                 }
@@ -1236,7 +1233,7 @@ namespace Foodbook.Views
                     context.PlannedMeals.Add(meal);
                 }
                 await context.SaveChangesAsync();
-                log($"Imported {meals.Count} planned meals");
+                log($"Imported {meals.Count} planned meals (not linked; legacy ids remapped)");
             }
             catch (Exception ex)
             {
@@ -1263,8 +1260,8 @@ namespace Foodbook.Views
                 {
                     var item = new ShoppingListItem
                     {
-                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                        PlanId = reader.GetInt32(reader.GetOrdinal("PlanId")),
+                        Id = Guid.NewGuid(),
+                        PlanId = Guid.Empty,
                         IngredientName = reader.GetString(reader.GetOrdinal("IngredientName")),
                         Unit = (Unit)reader.GetInt32(reader.GetOrdinal("Unit")),
                         Quantity = reader.GetDouble(reader.GetOrdinal("Quantity")),
@@ -1279,7 +1276,7 @@ namespace Foodbook.Views
                     context.ShoppingListItems.Add(item);
                 }
                 await context.SaveChangesAsync();
-                log($"Imported {items.Count} shopping list items");
+                log($"Imported {items.Count} shopping list items (not linked; legacy ids remapped)");
             }
             catch (Exception ex)
             {

@@ -107,13 +107,16 @@ public class IngredientService : IIngredientService
         }
     }
 
-    public async Task<Ingredient?> GetIngredientAsync(int id) => 
+    public async Task<Ingredient?> GetIngredientAsync(Guid id) => 
         await _context.Ingredients
             .AsNoTracking()
             .FirstOrDefaultAsync(i => i.Id == id);
 
     public async Task AddIngredientAsync(Ingredient ingredient)
     {
+        if (ingredient.Id == Guid.Empty)
+            ingredient.Id = Guid.NewGuid();
+
         // Ensure RecipeId is null for standalone ingredients
         if (ingredient.Recipe == null)
             ingredient.RecipeId = null;
@@ -183,7 +186,7 @@ public class IngredientService : IIngredientService
         }
     }
 
-    public async Task DeleteIngredientAsync(int id)
+    public async Task DeleteIngredientAsync(Guid id)
     {
         try
         {

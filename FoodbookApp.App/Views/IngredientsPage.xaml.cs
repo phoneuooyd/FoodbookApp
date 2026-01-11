@@ -176,7 +176,7 @@ public partial class IngredientsPage : ContentPage
     }
 
     // Handler for AppEvents.IngredientSaved
-    private void OnIngredientSaved(int id)
+    private void OnIngredientSaved(Guid id)
     {
         try
         {
