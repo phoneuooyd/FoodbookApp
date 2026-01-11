@@ -18,7 +18,24 @@ public partial class ShoppingListDetailPage : ContentPage
     // Page lifecycle cancellation token
     private CancellationTokenSource? _pageCts;
 
-    public Guid PlanId { get; set; }
+    private Guid _planIdGuid;
+
+    public string? PlanId
+    {
+        get => _planIdGuid == Guid.Empty ? null : _planIdGuid.ToString();
+        set
+        {
+            if (Guid.TryParse(value, out var parsed))
+            {
+                _planIdGuid = parsed;
+            }
+            else
+            {
+                _planIdGuid = Guid.Empty;
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Invalid plan id query parameter: '{value}'");
+            }
+        }
+    }
 
     // Shell navigation handling
     private bool _isSubscribedToShellNavigating = false;
@@ -122,7 +139,14 @@ public partial class ShoppingListDetailPage : ContentPage
             }
             else
             {
-                await _viewModel.LoadAsync(PlanId);
+                if (_planIdGuid == Guid.Empty)
+                {
+                    System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] PlanId is empty/invalid - skipping load");
+                }
+                else
+                {
+                    await _viewModel.LoadAsync(_planIdGuid);
+                }
             }
         }
         catch (OperationCanceledException)
