@@ -70,8 +70,6 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     }
     private string _unitWeight = "1.0";
 
-    public bool IsUnitWeightVisible => SelectedUnit == Unit.Piece;
-
     // ? CRITICAL: Immediately save to database on unit change in EDIT mode
     public Unit SelectedUnit 
     { 
@@ -83,7 +81,6 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 var oldUnit = _unit;
                 _unit = value; 
                 OnPropertyChanged(); 
-                OnPropertyChanged(nameof(IsUnitWeightVisible)); 
                 ValidateInput();
                 if (!_suppressDirtyTracking) MarkDirty();
                 
@@ -247,7 +244,6 @@ public class IngredientFormViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(SaveButtonText));
             OnPropertyChanged(nameof(IsPartOfRecipe));
             OnPropertyChanged(nameof(RecipeInfo));
-            OnPropertyChanged(nameof(IsUnitWeightVisible));
             
             ValidateInput();
 
@@ -289,7 +285,6 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 OnPropertyChanged(nameof(SaveButtonText));
                 OnPropertyChanged(nameof(IsPartOfRecipe));
                 OnPropertyChanged(nameof(RecipeInfo));
-                OnPropertyChanged(nameof(IsUnitWeightVisible));
                 ValidateInput();
             }
             
@@ -616,25 +611,35 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 }
             }
 
-            // ? Reset form after saving a new ingredient (before closing)
-            if (isNewIngredient)
-            {
-                Reset();
-                System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Form reset after adding new ingredient");
-            }
-
-            // ? Small delay to ensure UI has time to update before modal closes
-            await Task.Delay(100);
-            System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Closing form...");
+            // ? FIXED: Only reset form AFTER navigation has closed for NEW ingredients
+            // For EDIT mode, DON'T reset - let the page close with current data intact
+            // The Reset() will be called when opening a NEW ingredient form instead
+            
+            System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Preparing to close form...");
 
             // ? Close appropriately depending on how the page was opened
             var nav = Shell.Current?.Navigation;
             if (nav?.ModalStack?.Count > 0)
+            {
+                System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Closing modal...");
                 await nav.PopModalAsync();
+            }
             else
+            {
+                System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Navigating back...");
                 await Shell.Current.GoToAsync("..");
+            }
                 
             System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Form closed successfully");
+            
+            // ? CRITICAL FIX: Reset form AFTER navigation completes to prevent showing empty form on edit
+            if (isNewIngredient)
+            {
+                // Small delay to ensure navigation completes
+                await Task.Delay(100);
+                Reset();
+                System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Form reset after adding new ingredient and navigation complete");
+            }
         }
         catch (Exception ex)
         {

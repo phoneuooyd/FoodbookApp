@@ -963,15 +963,52 @@ namespace Foodbook.ViewModels
 
                 System.Diagnostics.Debug.WriteLine($"💾 Saving recipe: {recipe.Name} (Edit mode: {_editingRecipe != null})");
 
-                if (_editingRecipe == null)
+                try
                 {
-                    await _recipeService.AddRecipeAsync(recipe);
-                    System.Diagnostics.Debug.WriteLine("✅ Recipe added successfully");
+                    // Log prepared recipe DTO for diagnostics
+                    try
+                    {
+                        var recipeJson = Newtonsoft.Json.JsonConvert.SerializeObject(recipe, Newtonsoft.Json.Formatting.None,
+                            new Newtonsoft.Json.JsonSerializerSettings { ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore });
+                        System.Diagnostics.Debug.WriteLine($"? Prepared recipe JSON: {recipeJson}");
+                    }
+                    catch (Exception sx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"? Failed serializing prepared recipe: {sx.Message}");
+                    }
+
+                    if (_editingRecipe == null)
+                    {
+                        await _recipeService.AddRecipeAsync(recipe);
+                        System.Diagnostics.Debug.WriteLine("✅ Recipe added successfully");
+                    }
+                    else
+                    {
+                        await _recipeService.UpdateRecipeAsync(recipe);
+                        System.Diagnostics.Debug.WriteLine("✅ Recipe updated successfully");
+                    }
                 }
-                else
+                catch (Exception svcEx)
                 {
-                    await _recipeService.UpdateRecipeAsync(recipe);
-                    System.Diagnostics.Debug.WriteLine("✅ Recipe updated successfully");
+                    // Log full details including inner exceptions and stack trace
+                    try
+                    {
+                        System.Diagnostics.Debug.WriteLine($"? Service exception during save: {svcEx.ToString()}");
+                        var inner = svcEx.InnerException;
+                        int depth = 0;
+                        while (inner != null && depth < 10)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"? Inner[{depth}]: {inner.ToString()}");
+                            inner = inner.InnerException;
+                            depth++;
+                        }
+                    }
+                    catch { }
+
+                    // Surface a concise message to the user but keep diagnostics in logs
+                    ValidationMessage = "Błąd zapisu przepisu. Sprawdź logi aplikacji dla szczegółów.";
+                    System.Diagnostics.Debug.WriteLine($"❌ Service error in SaveRecipeAsync: {svcEx.Message}");
+                    throw; // rethrow so outer catch can also handle cleanup/navigation decisions
                 }
 
                 // ✅ Notify RecipesPage to reload immediately (even if it's still on screen under this page)
@@ -1002,8 +1039,22 @@ namespace Foodbook.ViewModels
             }
             catch (Exception ex)
             {
+                // Log detailed exception chain and stack trace
+                try
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ Error in SaveRecipeAsync: {ex.ToString()}");
+                    var inner = ex.InnerException;
+                    int depth = 0;
+                    while (inner != null && depth < 10)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"❌ Inner[{depth}]: {inner.ToString()}");
+                        inner = inner.InnerException;
+                        depth++;
+                    }
+                }
+                catch { }
+
                 ValidationMessage = $"Błąd zapisywania: {ex.Message}";
-                System.Diagnostics.Debug.WriteLine($"❌ Error in SaveRecipeAsync: {ex.Message}");
             }
         }
         

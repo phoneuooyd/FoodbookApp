@@ -216,7 +216,7 @@ namespace Foodbook.Models
                 {
                     Unit.Gram => quantity / 100.0,
                     Unit.Milliliter => quantity / 100.0,
-                    Unit.Piece => unitWeight > 0 ? (quantity * unitWeight) / 100.0 : quantity,
+                    Unit.Piece => unitWeight > 0 ? (quantity * unitWeight) / 100.0 : quantity / 100.0,
                     _ => quantity / 100.0
                 };
             }

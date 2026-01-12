@@ -68,7 +68,7 @@ public class PlannerListsViewModel
                     var page = new PlannerPage(editVM);
                     
                     // Set the PlanId property for QueryProperty
-                    page.PlanId = p.Id;
+                    page.PlanId = p.Id.ToString();
                     
                     await Shell.Current.Navigation.PushAsync(page);
                 }

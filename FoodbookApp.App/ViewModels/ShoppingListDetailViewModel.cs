@@ -466,27 +466,88 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
 
     public async Task LoadAsync(Guid planId)
     {
-        _currentPlanId = planId;
-        var plan = await _planService.GetPlanAsync(planId);
-        if (plan == null) return;
-
-        var items = await _shoppingListService.GetShoppingListWithCheckedStateAsync(planId);
-        UncheckedItems.Clear();
-        CheckedItems.Clear();
-        
-        // Reset headers
-        _toBuyHeader = null;
-        _collectedHeader = null;
-        
-        foreach (var item in items)
+        try
         {
-            item.PropertyChanged += OnItemPropertyChanged;
-            if (item.IsChecked) CheckedItems.Add(item); else UncheckedItems.Add(item);
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ========== LoadAsync STARTED ==========");
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Loading plan: {planId}");
+            
+            _currentPlanId = planId;
+            var plan = await _planService.GetPlanAsync(planId);
+            
+            if (plan == null) 
+            {
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ? Plan {planId} not found");
+                return;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Plan loaded: {plan.Name} ({plan.Type})");
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Plan dates: {plan.StartDate:yyyy-MM-dd} to {plan.EndDate:yyyy-MM-dd}");
+
+            var items = await _shoppingListService.GetShoppingListWithCheckedStateAsync(planId);
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Retrieved {items.Count} items from service");
+            
+            UncheckedItems.Clear();
+            CheckedItems.Clear();
+            
+            // Reset headers
+            _toBuyHeader = null;
+            _collectedHeader = null;
+            
+            int uncheckedCount = 0;
+            int checkedCount = 0;
+            int manuallyAddedCount = 0;
+            
+            foreach (var item in items)
+            {
+                // Log item details for diagnostics
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Loading item: [{item.Order}] {item.Name} | {item.Quantity} {item.Unit} | Checked: {item.IsChecked} | Id: {item.Id}");
+                
+                // Track manually added items (those with empty GUID before save would have been assigned new IDs)
+                if (item.Id == Guid.Empty)
+                {
+                    manuallyAddedCount++;
+                }
+                
+                item.PropertyChanged += OnItemPropertyChanged;
+                
+                if (item.IsChecked) 
+                {
+                    CheckedItems.Add(item);
+                    checkedCount++;
+                }
+                else 
+                {
+                    UncheckedItems.Add(item);
+                    uncheckedCount++;
+                }
+            }
+            
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Load summary:");
+            System.Diagnostics.Debug.WriteLine($"  - Total items: {items.Count}");
+            System.Diagnostics.Debug.WriteLine($"  - Unchecked: {uncheckedCount}");
+            System.Diagnostics.Debug.WriteLine($"  - Checked: {checkedCount}");
+            System.Diagnostics.Debug.WriteLine($"  - Items without ID: {manuallyAddedCount}");
+            
+            Groups.Clear(); 
+            _uncheckedGroup = null; 
+            _checkedGroup = null;
+            AllItemsGrouped.Clear(); 
+            _uncheckedItemsGroup = null; 
+            _checkedItemsGroup = null;
+            
+            EnsureGroups();
+            
+            HasUnsavedChanges = false;
+            
+            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] ========== LoadAsync COMPLETED ==========");
         }
-        Groups.Clear(); _uncheckedGroup = null; _checkedGroup = null;
-        AllItemsGrouped.Clear(); _uncheckedItemsGroup = null; _checkedItemsGroup = null;
-        EnsureGroups();
-        HasUnsavedChanges = false;
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ? ERROR in LoadAsync: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Exception type: {ex.GetType().Name}");
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Stack trace: {ex.StackTrace}");
+            throw;
+        }
     }
 
     private async void OnItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -553,120 +614,257 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] ManualSaveAllAsync started");
+            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] ========== SAVE OPERATION STARTED ==========");
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] PlanId: {_currentPlanId}");
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Total items to save: {FlatItems.OfType<Ingredient>().Count()}");
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Unchecked items: {UncheckedItems.Count}, Checked items: {CheckedItems.Count}");
             
+            // ? VALIDATION: Check if plan ID is valid
+            if (_currentPlanId == Guid.Empty)
+            {
+                var errorMsg = "Nieprawid³owy identyfikator planu. Nie mo¿na zapisaæ listy zakupów.";
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ? VALIDATION ERROR: {errorMsg}");
+                await Microsoft.Maui.Controls.Shell.Current.DisplayAlert("B³¹d walidacji", errorMsg, "OK");
+                return;
+            }
+
+            // ? VALIDATION: Validate all items before saving
+            var allItems = FlatItems.OfType<Ingredient>().ToList();
+            var invalidItems = new List<string>();
+            
+            for (int i = 0; i < allItems.Count; i++)
+            {
+                var item = allItems[i];
+                if (string.IsNullOrWhiteSpace(item.Name))
+                {
+                    invalidItems.Add($"Pozycja {i + 1}: brak nazwy");
+                }
+                if (item.Quantity <= 0)
+                {
+                    invalidItems.Add($"Pozycja {i + 1} ({item.Name}): nieprawid³owa iloœæ ({item.Quantity})");
+                }
+            }
+
+            if (invalidItems.Any())
+            {
+                var errorMsg = $"Znaleziono nieprawid³owe elementy:\n{string.Join("\n", invalidItems.Take(5))}";
+                if (invalidItems.Count > 5)
+                    errorMsg += $"\n...i {invalidItems.Count - 5} wiêcej";
+                
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ? VALIDATION ERROR: {invalidItems.Count} invalid items");
+                foreach (var err in invalidItems)
+                    System.Diagnostics.Debug.WriteLine($"  - {err}");
+                
+                await Microsoft.Maui.Controls.Shell.Current.DisplayAlert(
+                    "B³¹d walidacji", 
+                    errorMsg + "\n\nUsuñ lub popraw nieprawid³owe pozycje przed zapisaniem.", 
+                    "OK");
+                return;
+            }
+
+            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] ? Validation passed");
+            
+            // ? PREPARE: Assign order to all items
             PrepareForSave();
-            await SaveAllStatesAsync();
+            
+            // Log items being saved for diagnostics
+            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] Items to save:");
+            foreach (var item in allItems)
+            {
+                System.Diagnostics.Debug.WriteLine($"  - [{item.Order}] {item.Name} | {item.Quantity} {item.Unit} | Checked: {item.IsChecked} | Id: {item.Id}");
+            }
+            
+            // ? SAVE: Attempt to save with detailed error handling
+            try
+            {
+                await SaveAllStatesAsync();
+                System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] ? SaveAllStatesAsync completed successfully");
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbEx)
+            {
+                // Database-specific error (e.g., constraint violation, connection issue)
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ? DATABASE ERROR during save: {dbEx.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Inner exception: {dbEx.InnerException?.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Stack trace: {dbEx.StackTrace}");
+                
+                await Microsoft.Maui.Controls.Shell.Current.DisplayAlert(
+                    "B³¹d bazy danych",
+                    $"Nie uda³o siê zapisaæ listy zakupów do bazy danych.\n\n" +
+                    $"Szczegó³y: {dbEx.InnerException?.Message ?? dbEx.Message}\n\n" +
+                    $"Spróbuj ponownie lub skontaktuj siê z obs³ug¹.",
+                    "OK");
+                return;
+            }
+            catch (InvalidOperationException invEx)
+            {
+                // Invalid operation (e.g., context disposed, concurrent access)
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ? INVALID OPERATION ERROR during save: {invEx.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Stack trace: {invEx.StackTrace}");
+                
+                await Microsoft.Maui.Controls.Shell.Current.DisplayAlert(
+                    "B³¹d operacji",
+                    $"Wyst¹pi³ problem z zapisem listy zakupów.\n\n" +
+                    $"Szczegó³y: {invEx.Message}\n\n" +
+                    $"Spróbuj ponownie.",
+                    "OK");
+                return;
+            }
+            catch (Exception saveEx)
+            {
+                // Generic save error
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ? UNEXPECTED ERROR during SaveAllStatesAsync: {saveEx.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Exception type: {saveEx.GetType().Name}");
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Stack trace: {saveEx.StackTrace}");
+                
+                await Microsoft.Maui.Controls.Shell.Current.DisplayAlert(
+                    "B³¹d zapisu",
+                    $"Nie uda³o siê zapisaæ listy zakupów.\n\n" +
+                    $"Szczegó³y: {saveEx.Message}\n\n" +
+                    $"Typ b³êdu: {saveEx.GetType().Name}",
+                    "OK");
+                return;
+            }
+            
+            // ? SUCCESS: Clear dirty flag and notify
             HasUnsavedChanges = false;
+            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] ? HasUnsavedChanges cleared");
             
-            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] Save completed successfully");
-            
+            // ? NOTIFY: Raise SaveCompletedAsync event to trigger navigation
+            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] Raising SaveCompletedAsync event");
             if (SaveCompletedAsync != null)
             {
-                var handlers = SaveCompletedAsync.GetInvocationList().Cast<Func<Task>>();
-                var tasks = handlers.Select(h => h());
-                await Task.WhenAll(tasks);
+                try
+                {
+                    var handlers = SaveCompletedAsync.GetInvocationList().Cast<Func<Task>>();
+                    var tasks = handlers.Select(h => h());
+                    await Task.WhenAll(tasks);
+                    System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] ? SaveCompletedAsync event handlers executed");
+                }
+                catch (Exception eventEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ?? Error in SaveCompletedAsync event handler: {eventEx.Message}");
+                    // Don't block the save operation if event handler fails
+                }
             }
+            
+            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] ========== SAVE OPERATION COMPLETED SUCCESSFULLY ==========");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Manual save error: {ex.Message}");
+            // ? CATCH-ALL: Handle any unexpected errors not caught by inner try-catch
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ? CRITICAL ERROR in ManualSaveAllAsync: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Exception type: {ex.GetType().Name}");
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Stack trace: {ex.StackTrace}");
+            
+            if (ex.InnerException != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Inner exception: {ex.InnerException.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Inner stack trace: {ex.InnerException.StackTrace}");
+            }
             
             try
             {
                 await Microsoft.Maui.Controls.Shell.Current.DisplayAlert(
-                    "B³¹d", $"Nie uda³o siê zapisaæ listy zakupów: {ex.Message}", "OK");
+                    "B³¹d krytyczny", 
+                    $"Wyst¹pi³ nieoczekiwany b³¹d podczas zapisywania listy zakupów.\n\n" +
+                    $"Szczegó³y: {ex.Message}\n\n" +
+                    $"Jeœli problem siê powtarza, spróbuj:\n" +
+                    $"1. Usun¹æ puste lub nieprawid³owe pozycje\n" +
+                    $"2. Zrestartowaæ aplikacjê\n" +
+                    $"3. Skontaktowaæ siê z obs³ug¹ techniczn¹",
+                    "OK");
             }
-            catch { }
+            catch (Exception displayEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ? Failed to display error alert: {displayEx.Message}");
+            }
         }
-    }
-
-    private void PrepareForSave()
-    {
-        // Use the FlatItems order as the source of truth for global ordering
-        var ingredients = FlatItems.OfType<Ingredient>().ToList();
-        for (int i = 0; i < ingredients.Count; i++)
-        {
-            ingredients[i].Order = i;
-        }
-        
-        System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] PrepareForSave: assigned global order to {ingredients.Count} items");
-    }
-
-    private async Task SaveItemStateAsync(Ingredient item)
-    {
-        try
-        {
-            var savedId = await _shoppingListService.SaveShoppingListItemStateAsync(_currentPlanId, item.Id, item.Order, item.Name, item.Unit, item.IsChecked, item.Quantity);
-            if (item.Id != savedId) { item.Id = savedId; }
-        }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error saving shopping list item state: {ex.Message}"); }
-    }
-
-    public async Task SaveAllStatesAsync()
-    {
-        try
-        {
-            // Use FlatItems order to ensure correct order is preserved
-            var allItems = FlatItems.OfType<Ingredient>().ToList();
-            await _shoppingListService.SaveAllShoppingListStatesAsync(_currentPlanId, allItems);
-            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] SaveAllStatesAsync: saved {allItems.Count} items in FlatItems order");
-        }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error saving all shopping list states: {ex.Message}"); }
     }
 
     private void AddItem()
     {
-        // Calculate the new item's order based on current FlatItems
-        var currentIngredientCount = FlatItems.OfType<Ingredient>().Count();
-        var newItem = new Ingredient { Name = string.Empty, Quantity = 1, Unit = Unit.Piece, Order = currentIngredientCount };
-        newItem.PropertyChanged += OnItemPropertyChanged;
-        UncheckedItems.Add(newItem);
-        
-        // Add item to FlatItems incrementally
-        if (_toBuyHeader == null)
+        try
         {
-            var toBuyTitle = FoodbookApp.Localization.ShoppingListDetailPageResources.ToBuy ?? "To Buy";
-            _toBuyHeader = new ShoppingListHeader 
+            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] AddItem called");
+            
+            // Calculate the new item's order based on current FlatItems
+            var currentIngredientCount = FlatItems.OfType<Ingredient>().Count();
+            
+            // ? IMPROVEMENT: Create new item with valid default values
+            var newItem = new Ingredient 
             { 
-                Title = toBuyTitle, 
-                IsCheckedSection = false,
-                IsVisible = true
+                Id = Guid.Empty, // Will be assigned by service on save
+                Name = string.Empty, 
+                Quantity = 1, 
+                Unit = Unit.Piece, 
+                Order = currentIngredientCount,
+                IsChecked = false,
+                Calories = 0,
+                Protein = 0,
+                Fat = 0,
+                Carbs = 0,
+                UnitWeight = 1.0
             };
-        }
-
-        // Find ToBuy header or add it
-        int toBuyHeaderIndex = -1;
-        for (int i = 0; i < FlatItems.Count; i++)
-        {
-            if (FlatItems[i] is ShoppingListHeader h && !h.IsCheckedSection)
+            
+            newItem.PropertyChanged += OnItemPropertyChanged;
+            UncheckedItems.Add(newItem);
+            
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] New item added with Order={currentIngredientCount}");
+            
+            // Add item to FlatItems incrementally
+            if (_toBuyHeader == null)
             {
-                toBuyHeaderIndex = i;
-                break;
+                var toBuyTitle = FoodbookApp.Localization.ShoppingListDetailPageResources.ToBuy ?? "To Buy";
+                _toBuyHeader = new ShoppingListHeader 
+                { 
+                    Title = toBuyTitle, 
+                    IsCheckedSection = false,
+                    IsVisible = true
+                };
+                System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] Created ToBuy header");
             }
-        }
 
-        if (toBuyHeaderIndex < 0)
+            // Find ToBuy header or add it
+            int toBuyHeaderIndex = -1;
+            for (int i = 0; i < FlatItems.Count; i++)
+            {
+                if (FlatItems[i] is ShoppingListHeader h && !h.IsCheckedSection)
+                {
+                    toBuyHeaderIndex = i;
+                    break;
+                }
+            }
+
+            if (toBuyHeaderIndex < 0)
+            {
+                FlatItems.Insert(0, _toBuyHeader);
+                toBuyHeaderIndex = 0;
+                System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] Added ToBuy header to FlatItems");
+            }
+
+            // Find end of unchecked section
+            int insertIndex = toBuyHeaderIndex + 1;
+            for (int i = toBuyHeaderIndex + 1; i < FlatItems.Count; i++)
+            {
+                if (FlatItems[i] is ShoppingListHeader h && h.IsCheckedSection)
+                    break;
+                insertIndex = i + 1;
+            }
+
+            FlatItems.Insert(insertIndex, newItem);
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] New item inserted into FlatItems at index {insertIndex}");
+            
+            // Update Order for this new item based on its position in FlatItems
+            UpdateAllItemOrders();
+            
+            MarkDirty();
+            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] ? AddItem completed - marked dirty");
+        }
+        catch (Exception ex)
         {
-            FlatItems.Insert(0, _toBuyHeader);
-            toBuyHeaderIndex = 0;
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ? ERROR in AddItem: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Stack trace: {ex.StackTrace}");
         }
-
-        // Find end of unchecked section
-        int insertIndex = toBuyHeaderIndex + 1;
-        for (int i = toBuyHeaderIndex + 1; i < FlatItems.Count; i++)
-        {
-            if (FlatItems[i] is ShoppingListHeader h && h.IsCheckedSection)
-                break;
-            insertIndex = i + 1;
-        }
-
-        FlatItems.Insert(insertIndex, newItem);
-        
-        // Update Order for this new item based on its position in FlatItems
-        UpdateAllItemOrders();
-        
-        MarkDirty();
     }
 
     private async void RemoveItem(Ingredient? item)
@@ -740,6 +938,40 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
             ing.IsBeingDragged = false;
             ing.IsBeingDraggedOver = false;
         }
+    }
+
+    private void PrepareForSave()
+    {
+        // Use the FlatItems order as the source of truth for global ordering
+        var ingredients = FlatItems.OfType<Ingredient>().ToList();
+        for (int i = 0; i < ingredients.Count; i++)
+        {
+            ingredients[i].Order = i;
+        }
+        
+        System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] PrepareForSave: assigned global order to {ingredients.Count} items");
+    }
+
+    private async Task SaveItemStateAsync(Ingredient item)
+    {
+        try
+        {
+            var savedId = await _shoppingListService.SaveShoppingListItemStateAsync(_currentPlanId, item.Id, item.Order, item.Name, item.Unit, item.IsChecked, item.Quantity);
+            if (item.Id != savedId) { item.Id = savedId; }
+        }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error saving shopping list item state: {ex.Message}"); }
+    }
+
+    public async Task SaveAllStatesAsync()
+    {
+        try
+        {
+            // Use FlatItems order to ensure correct order is preserved
+            var allItems = FlatItems.OfType<Ingredient>().ToList();
+            await _shoppingListService.SaveAllShoppingListStatesAsync(_currentPlanId, allItems);
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] SaveAllStatesAsync: saved {allItems.Count} items in FlatItems order");
+        }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error saving all shopping list states: {ex.Message}"); }
     }
 
     public void DiscardChanges() => HasUnsavedChanges = false;

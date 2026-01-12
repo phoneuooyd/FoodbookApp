@@ -94,6 +94,11 @@
 	  <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
 	</PropertyGroup>
 
+	<!-- Ensure Debug.WriteLine calls are preserved in Release builds by defining DEBUG for Release -->
+	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
+	  <DefineConstants>TRACE;DEBUG</DefineConstants>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<!-- App Icon -->
 		<MauiIcon Include="Resources\AppIcon\appicon.png" BaseSize="790,790" ForegroundScale="0.8" />

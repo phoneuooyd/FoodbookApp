@@ -356,10 +356,17 @@ public partial class SimpleListPopup : Popup
                 host.Children.Add(addRow);
             }
 
+            // Detect if any MealPreviewBlock exists to avoid duplicating MacroRow entries
+            bool hasMealPreview = data.OfType<MealPreviewBlock>().Any();
+
             foreach (var obj in data)
             {
                 // Skip duplicating the header (day + date) inside the item list
                 if (IsDuplicateHeaderItem(obj))
+                    continue;
+
+                // If there is a MealPreviewBlock present, prefer it and skip standalone MacroRow items to avoid duplicate macro rows
+                if (hasMealPreview && obj is MacroRow)
                     continue;
 
                 var view = CreateViewForItem(obj, contentPrimary, contentSecondary);
@@ -579,18 +586,35 @@ public partial class SimpleListPopup : Popup
 
         wrapper.Children.Add(row);
 
+        // Macro row (show per 1 portion - always from DB)
+        var macroLayout = new HorizontalStackLayout
+        {
+            Spacing = 20,
+            Margin = new Thickness(0, 2, 0, 6)
+        };
+        // Add placeholder labels; will be updated when recipe is fetched
+        var kcalLabel = new Label { Text = "K: - kcal", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText };
+        var pLabel = new Label { Text = "B: - g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText };
+        var fLabel = new Label { Text = "T: - g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText };
+        var cLabel = new Label { Text = "W: - g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText };
+        macroLayout.Children.Add(kcalLabel);
+        macroLayout.Children.Add(pLabel);
+        macroLayout.Children.Add(fLabel);
+        macroLayout.Children.Add(cLabel);
+
+        wrapper.Children.Add(macroLayout);
+
         // Ingredients list recalculated by local displayPortions
         var list = new VerticalStackLayout { Spacing = 4 };
 
-        void rebuild()
+        void rebuildIngredients(Recipe recipe)
         {
             list.Children.Clear();
-            // FIXED: Ingredients are always defined per 1 portion, so multiply by displayPortions directly
-            // No need to divide by recipe.IloscPorcji
-            var multiplier = (double)displayPortions; // Simply use the display portions
-            if (mpb.Recipe.Ingredients != null)
+            // Ingredients are defined per 1 portion; multiply by displayPortions for preview
+            var multiplier = (double)displayPortions;
+            if (recipe.Ingredients != null)
             {
-                foreach (var ing in mpb.Recipe.Ingredients)
+                foreach (var ing in recipe.Ingredients)
                 {
                     var adjusted = ing.Quantity * multiplier;
                     list.Children.Add(new Label
@@ -603,7 +627,21 @@ public partial class SimpleListPopup : Popup
             }
         }
 
-        rebuild();
+        // Initial build using provided recipe object (may be stale)
+        if (mpb.Recipe != null)
+        {
+            // Update macro labels from provided Recipe (treat as per 1 portion)
+            kcalLabel.Text = $"K: {mpb.Recipe.Calories:F0} kcal";
+            pLabel.Text = $"B: {mpb.Recipe.Protein:F1}g";
+            fLabel.Text = $"T: {mpb.Recipe.Fat:F1}g";
+            cLabel.Text = $"W: {mpb.Recipe.Carbs:F1}g";
+
+            // DO NOT call rebuildIngredients here to avoid duplicate ingredient rows when RefreshRecipeDisplayAsync runs
+            // rebuildIngredients(mpb.Recipe);
+        }
+
+        // Fire-and-forget: fetch fresh recipe from DB and update UI when ready
+        _ = RefreshRecipeDisplayAsync(mpb, titleLabel, kcalLabel, pLabel, fLabel, cLabel, list, secondaryText);
 
         // Wire events after variables are defined
         minus.Clicked += (s, e) =>
@@ -611,7 +649,8 @@ public partial class SimpleListPopup : Popup
             if (displayPortions <= 1) return;
             displayPortions--;
             titleLabel.Text = $"{mpb.Recipe.Name} ({displayPortions} porcji)";
-            rebuild();
+            // Rebuild ingredients using current recipe instance
+            rebuildIngredients(mpb.Recipe);
             minus.IsEnabled = displayPortions > 1;
             plus.IsEnabled = displayPortions < 20;
         };
@@ -621,13 +660,76 @@ public partial class SimpleListPopup : Popup
             if (displayPortions >= 20) return;
             displayPortions++;
             titleLabel.Text = $"{mpb.Recipe.Name} ({displayPortions} porcji)";
-            rebuild();
+            rebuildIngredients(mpb.Recipe);
             minus.IsEnabled = displayPortions > 1;
             plus.IsEnabled = displayPortions < 20;
         };
 
         wrapper.Children.Add(list);
         return wrapper;
+    }
+
+    private async Task RefreshRecipeDisplayAsync(MealPreviewBlock mpb, Label titleLabel, Label kcalLabel, Label pLabel, Label fLabel, Label cLabel, VerticalStackLayout list, Color ingredientTextColor)
+    {
+        try
+        {
+            var recipeService = MauiProgram.ServiceProvider?.GetService<IRecipeService>();
+            if (recipeService == null) return;
+
+            var id = mpb.Recipe?.Id ?? Guid.Empty;
+            if (id == Guid.Empty) return;
+
+            var fresh = await recipeService.GetRecipeAsync(id);
+            if (fresh == null) return;
+
+            // Update the MealPreviewBlock recipe reference
+            mpb.Recipe = fresh;
+
+            // Update UI on main thread
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                try
+                {
+                    // Title keep current portions text
+                    var text = titleLabel.Text ?? string.Empty;
+                    // Replace name part with fresh name while preserving parentheses
+                    var idx = text.IndexOf('(');
+                    var portionsPart = idx >= 0 ? text.Substring(idx) : string.Empty;
+                    titleLabel.Text = $"{fresh.Name} {portionsPart}".Trim();
+
+                    kcalLabel.Text = $"K: {fresh.Calories:F0} kcal";
+                    pLabel.Text = $"B: {fresh.Protein:F1}g";
+                    fLabel.Text = $"T: {fresh.Fat:F1}g";
+                    cLabel.Text = $"W: {fresh.Carbs:F1}g";
+
+                    // Rebuild ingredients list using fresh recipe (ingredients per 1 portion)
+                    list.Children.Clear();
+                    int currentPortions = mpb.Meal.Portions > 0 ? mpb.Meal.Portions : Math.Max(fresh.IloscPorcji, 1);
+                    var multiplier = (double)currentPortions;
+                    if (fresh.Ingredients != null)
+                    {
+                        foreach (var ing in fresh.Ingredients)
+                        {
+                            var adjusted = ing.Quantity * multiplier;
+                            list.Children.Add(new Label
+                            {
+                                Text = $"• {ing.Name}: {adjusted:F1} {GetUnitText(ing.Unit)}",
+                                FontSize = 14,
+                                TextColor = ingredientTextColor
+                            });
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SimpleListPopup] RefreshRecipeDisplayAsync UI update failed: {ex.Message}");
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SimpleListPopup] Failed to refresh recipe from DB: {ex.Message}");
+        }
     }
 
     private static string GetUnitText(Unit unit)

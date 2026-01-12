@@ -3,6 +3,8 @@ using Foodbook.Data;
 using Microsoft.EntityFrameworkCore;
 using FoodbookApp.Interfaces;
 using Foodbook.Services;
+using Newtonsoft.Json;
+using System.Data.Common;
 
 namespace Foodbook.Services
 {
@@ -71,6 +73,62 @@ namespace Foodbook.Services
 
             try
             {
+                // Diagnostic: log current Recipes table schema to help diagnose datatype mismatch errors
+                try
+                {
+                    var conn = _context.Database.GetDbConnection();
+                    try
+                    {
+                        if (conn.State != System.Data.ConnectionState.Open)
+                            await conn.OpenAsync();
+
+                        using var cmd = conn.CreateCommand();
+                        cmd.CommandText = "PRAGMA table_info('Recipes');";
+                        using var reader = await cmd.ExecuteReaderAsync();
+                        System.Diagnostics.Debug.WriteLine("? PRAGMA table_info('Recipes') ->");
+                        while (await reader.ReadAsync())
+                        {
+                            try
+                            {
+                                var cid = reader.GetInt32(0);
+                                var name = reader.IsDBNull(1) ? "" : reader.GetString(1);
+                                var type = reader.IsDBNull(2) ? "" : reader.GetString(2);
+                                var notnull = reader.GetInt32(3);
+                                var dflt = reader.IsDBNull(4) ? "" : reader.GetValue(4)?.ToString();
+                                var pk = reader.GetInt32(5);
+                                System.Diagnostics.Debug.WriteLine($"? Column: cid={cid}, name={name}, type={type}, notnull={notnull}, dflt={dflt}, pk={pk}");
+                            }
+                            catch (Exception innerEx)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"? Error reading PRAGMA row: {innerEx.Message}");
+                            }
+                        }
+
+                        // Also log Recipes indexes
+                        cmd.CommandText = "PRAGMA index_list('Recipes');";
+                        using var idxReader = await cmd.ExecuteReaderAsync();
+                        System.Diagnostics.Debug.WriteLine("? PRAGMA index_list('Recipes') ->");
+                        while (await idxReader.ReadAsync())
+                        {
+                            try
+                            {
+                                var name = idxReader.IsDBNull(1) ? "" : idxReader.GetString(1);
+                                var unique = idxReader.IsDBNull(2) ? 0 : idxReader.GetInt32(2);
+                                System.Diagnostics.Debug.WriteLine($"? Index: name={name}, unique={unique}");
+                            }
+                            catch { }
+                        }
+                    }
+                    finally
+                    {
+                        try { await conn.CloseAsync(); } catch { }
+                    }
+                }
+                catch (Exception exSchema)
+                {
+                    System.Diagnostics.Debug.WriteLine($"? Failed to read PRAGMA schema: {exSchema.Message}");
+                }
+
                 // Ensure recipe has valid ID
                 if (recipe.Id == Guid.Empty)
                     recipe.Id = Guid.NewGuid();
@@ -128,7 +186,42 @@ namespace Foodbook.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"? AddRecipeAsync error: {ex.Message}");
+                // Try to gather as much diagnostic information as possible
+                try
+                {
+                    var conn = string.Empty;
+                    try { conn = _context.Database.GetDbConnection()?.ConnectionString ?? string.Empty; } catch { }
+
+                    System.Diagnostics.Debug.WriteLine("? AddRecipeAsync error: " + ex.ToString());
+                    if (!string.IsNullOrEmpty(conn))
+                        System.Diagnostics.Debug.WriteLine($"? ConnectionString: {conn}");
+
+                    try
+                    {
+                        var recipeJson = JsonConvert.SerializeObject(recipe, Formatting.None,
+                            new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
+                        System.Diagnostics.Debug.WriteLine($"? Recipe JSON: {recipeJson}");
+                    }
+                    catch (Exception sx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"? Failed to serialize recipe for diagnostics: {sx.Message}");
+                    }
+
+                    if (ex is DbUpdateException dbEx)
+                    {
+                        try
+                        {
+                            System.Diagnostics.Debug.WriteLine($"? DbUpdateException detected: {dbEx.ToString()}");
+                            foreach (var entry in dbEx.Entries)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"? Entry EntityType: {entry.Entity?.GetType().FullName}, State: {entry.State}");
+                            }
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+
                 _context.ChangeTracker.Clear();
                 throw;
             }
@@ -222,7 +315,17 @@ namespace Foodbook.Services
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                System.Diagnostics.Debug.WriteLine($"? UpdateRecipeAsync error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine("? UpdateRecipeAsync error: " + ex.ToString());
+
+                try
+                {
+                    var conn = string.Empty;
+                    try { conn = _context.Database.GetDbConnection()?.ConnectionString ?? string.Empty; } catch { }
+                    if (!string.IsNullOrEmpty(conn))
+                        System.Diagnostics.Debug.WriteLine($"? ConnectionString: {conn}");
+                }
+                catch { }
+
                 _context.ChangeTracker.Clear();
                 throw;
             }

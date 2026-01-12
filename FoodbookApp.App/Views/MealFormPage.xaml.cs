@@ -35,16 +35,22 @@ public partial class MealFormPage : ContentPage
     }
 
     private Guid _itemId;
-    public Guid ItemId
+
+    public string? ItemId
     {
-        get => _itemId;
+        get => _itemId == Guid.Empty ? null : _itemId.ToString();
         set
         {
-            _itemId = value;
-            if (value != Guid.Empty)
-                Task.Run(async () => await ViewModel.LoadAsync(value));
+            if (Guid.TryParse(value, out var parsed))
+            {
+                _itemId = parsed;
+                Task.Run(async () => await ViewModel.LoadAsync(parsed));
+            }
             else
+            {
+                _itemId = Guid.Empty;
                 Task.Run(async () => await ViewModel.LoadRecipesAsync());
+            }
         }
     }
 

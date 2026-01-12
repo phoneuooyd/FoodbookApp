@@ -36,6 +36,84 @@ namespace Foodbook.Views
                                 bool ColorfulBackground, bool WallpaperBackground,
                                 Foodbook.Models.AppFontFamily FontFamily, Foodbook.Models.AppFontSize FontSize);
 
+        /// <summary>
+        /// Context for tracking ID mappings and folder hierarchy during restore from legacy archives
+        /// </summary>
+        private class RestoreContext
+        {
+            /// <summary>
+            /// Maps old integer folder IDs to new GUIDs
+            /// Key: old integer ID from legacy archive, Value: new GUID in current database
+            /// </summary>
+            public Dictionary<int, Guid> FolderIdMapping { get; } = new();
+
+            /// <summary>
+            /// Maps old integer recipe IDs to new GUIDs
+            /// </summary>
+            public Dictionary<int, Guid> RecipeIdMapping { get; } = new();
+
+            /// <summary>
+            /// Maps old integer label IDs to new GUIDs
+            /// </summary>
+            public Dictionary<int, Guid> LabelIdMapping { get; } = new();
+
+            /// <summary>
+            /// Maps old integer ingredient IDs to new GUIDs
+            /// </summary>
+            public Dictionary<int, Guid> IngredientIdMapping { get; } = new();
+
+            /// <summary>
+            /// Maps old integer plan IDs to new GUIDs
+            /// </summary>
+            public Dictionary<int, Guid> PlanIdMapping { get; } = new();
+
+            /// <summary>
+            /// Folder parent-child relationships from legacy archive
+            /// Key: old folder ID, Value: old parent folder ID (null if root)
+            /// </summary>
+            public Dictionary<int, int?> FolderParentMap { get; } = new();
+
+            /// <summary>
+            /// Recipe to folder assignments from legacy archive
+            /// Key: old recipe ID, Value: old folder ID (null if not in folder)
+            /// </summary>
+            public Dictionary<int, int?> RecipeFolderMap { get; } = new();
+
+            /// <summary>
+            /// Ingredient to recipe assignments from legacy archive
+            /// Key: old ingredient ID, Value: old recipe ID (null if standalone)
+            /// </summary>
+            public Dictionary<int, int?> IngredientRecipeMap { get; } = new();
+
+            /// <summary>
+            /// PlannedMeal to recipe and plan assignments
+            /// Key: old planned meal ID, Value: (old recipe ID, old plan ID)
+            /// </summary>
+            public Dictionary<int, (int RecipeId, int? PlanId)> PlannedMealMap { get; } = new();
+
+            /// <summary>
+            /// Recipe-Label relationships
+            /// List of (old recipe ID, old label ID) pairs
+            /// </summary>
+            public List<(int RecipeId, int LabelId)> RecipeLabelLinks { get; } = new();
+
+            /// <summary>
+            /// ShoppingListItem to plan assignments
+            /// Key: old item ID, Value: old plan ID
+            /// </summary>
+            public Dictionary<int, int?> ShoppingItemPlanMap { get; } = new();
+
+            public void LogMappings(Action<string> log)
+            {
+                log($"Restore context summary:");
+                log($"  - Folders: {FolderIdMapping.Count} mapped, {FolderParentMap.Count} parent relationships");
+                log($"  - Recipes: {RecipeIdMapping.Count} mapped, {RecipeFolderMap.Count} folder assignments");
+                log($"  - Labels: {LabelIdMapping.Count} mapped, {RecipeLabelLinks.Count} recipe-label links");
+                log($"  - Ingredients: {IngredientIdMapping.Count} mapped");
+                log($"  - Plans: {PlanIdMapping.Count} mapped");
+            }
+        }
+
         public DataArchivizationPage(IDatabaseService dbService, IPreferencesService prefs)
         {
             InitializeComponent();
@@ -806,6 +884,9 @@ namespace Foodbook.Views
         {
             log("Starting data import with schema mapping...");
 
+            // Create restore context for tracking ID mappings and relationships
+            var restoreCtx = new RestoreContext();
+
             try
             {
                 // Create scope and get DbContext
@@ -827,17 +908,25 @@ namespace Foodbook.Views
                 var existingTables = await GetExistingTablesAsync(srcConnection, log);
                 log($"Found {existingTables.Count} tables in source database");
 
-                // Import in correct order (respecting foreign keys)
-                await ImportFoldersAsync(srcConnection, context, existingTables, log);
-                await ImportRecipeLabelsAsync(srcConnection, context, existingTables, log);
-                await ImportIngredientsAsync(srcConnection, context, existingTables, log);
-                await ImportRecipesAsync(srcConnection, context, existingTables, log);
-                await ImportRecipeRecipeLabelAsync(srcConnection, context, existingTables, log);
-                await ImportPlansAsync(srcConnection, context, existingTables, log);
-                await ImportPlannedMealsAsync(srcConnection, context, existingTables, log);
-                await ImportShoppingListItemsAsync(srcConnection, context, existingTables, log);
+                // Phase 1: Import all entities and capture ID mappings
+                log("=== Phase 1: Importing entities ===");
+                await ImportFoldersAsync(srcConnection, context, existingTables, log, restoreCtx);
+                await ImportRecipeLabelsAsync(srcConnection, context, existingTables, log, restoreCtx);
+                await ImportIngredientsAsync(srcConnection, context, existingTables, log, restoreCtx);
+                await ImportRecipesAsync(srcConnection, context, existingTables, log, restoreCtx);
+                await ImportRecipeRecipeLabelAsync(srcConnection, context, existingTables, log, restoreCtx);
+                await ImportPlansAsync(srcConnection, context, existingTables, log, restoreCtx);
+                await ImportPlannedMealsAsync(srcConnection, context, existingTables, log, restoreCtx);
+                await ImportShoppingListItemsAsync(srcConnection, context, existingTables, log, restoreCtx);
 
-                log("All data imported successfully");
+                // Phase 2: Rebuild relationships using captured mappings
+                log("=== Phase 2: Rebuilding relationships ===");
+                restoreCtx.LogMappings(log);
+                
+                await RebuildFolderHierarchyAsync(context, restoreCtx, log);
+                await AssignRecipesToFoldersAsync(context, restoreCtx, log);
+
+                log("All data imported successfully with folder structure preserved");
             }
             catch (Exception ex)
             {
@@ -879,7 +968,7 @@ namespace Foodbook.Views
             return columns;
         }
 
-        private async Task ImportFoldersAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log)
+        private async Task ImportFoldersAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log, RestoreContext restoreCtx)
         {
             if (!existingTables.Contains("Folders"))
             {
@@ -894,18 +983,67 @@ namespace Foodbook.Views
                 cmd.CommandText = "SELECT * FROM Folders";
                 using var reader = await cmd.ExecuteReaderAsync();
 
+                // Check if Id column exists and its type
+                var hasIdColumn = HasColumn(reader, "Id");
+                var hasParentFolderIdColumn = HasColumn(reader, "ParentFolderId");
+
                 while (await reader.ReadAsync())
                 {
+                    var newId = Guid.NewGuid();
+                    
+                    // Capture old integer ID for mapping
+                    int? oldId = null;
+                    if (hasIdColumn && !reader.IsDBNull(reader.GetOrdinal("Id")))
+                    {
+                        try
+                        {
+                            // Try to read as integer (legacy format)
+                            oldId = reader.GetInt32(reader.GetOrdinal("Id"));
+                        }
+                        catch
+                        {
+                            // If it's a GUID string, we don't need mapping
+                            try
+                            {
+                                var guidStr = reader.GetString(reader.GetOrdinal("Id"));
+                                if (Guid.TryParse(guidStr, out var existingGuid))
+                                {
+                                    newId = existingGuid;
+                                }
+                            }
+                            catch { }
+                        }
+                    }
+
+                    // Capture parent folder relationship
+                    int? oldParentId = null;
+                    if (hasParentFolderIdColumn && !reader.IsDBNull(reader.GetOrdinal("ParentFolderId")))
+                    {
+                        try
+                        {
+                            oldParentId = reader.GetInt32(reader.GetOrdinal("ParentFolderId"));
+                        }
+                        catch { }
+                    }
+
                     var folder = new Folder
                     {
-                        Id = Guid.NewGuid(),
+                        Id = newId,
                         Name = reader.GetString(reader.GetOrdinal("Name")),
                         Description = !reader.IsDBNull(reader.GetOrdinal("Description")) ? reader.GetString(reader.GetOrdinal("Description")) : null,
-                        ParentFolderId = null,
+                        ParentFolderId = null, // Will be set later after all folders are imported
                         Order = HasColumn(reader, "Order") && !reader.IsDBNull(reader.GetOrdinal("Order")) ? reader.GetInt32(reader.GetOrdinal("Order")) : 0,
                         CreatedAt = HasColumn(reader, "CreatedAt") && !reader.IsDBNull(reader.GetOrdinal("CreatedAt")) ? reader.GetDateTime(reader.GetOrdinal("CreatedAt")) : DateTime.Now
                     };
                     folders.Add(folder);
+
+                    // Store mappings
+                    if (oldId.HasValue)
+                    {
+                        restoreCtx.FolderIdMapping[oldId.Value] = newId;
+                        restoreCtx.FolderParentMap[oldId.Value] = oldParentId;
+                        log($"  Folder '{folder.Name}': old ID {oldId.Value} -> new ID {newId}");
+                    }
                 }
 
                 foreach (var folder in folders)
@@ -914,6 +1052,9 @@ namespace Foodbook.Views
                 }
                 await context.SaveChangesAsync();
                 log($"Imported {folders.Count} folders (legacy ids remapped)");
+
+                // Rebuild folder hierarchy after all folders are imported
+                await RebuildFolderHierarchyAsync(context, restoreCtx, log);
             }
             catch (Exception ex)
             {
@@ -921,7 +1062,7 @@ namespace Foodbook.Views
             }
         }
 
-        private async Task ImportRecipeLabelsAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log)
+        private async Task ImportRecipeLabelsAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log, RestoreContext restoreCtx)
         {
             if (!existingTables.Contains("RecipeLabels"))
             {
@@ -936,16 +1077,32 @@ namespace Foodbook.Views
                 cmd.CommandText = "SELECT * FROM RecipeLabels";
                 using var reader = await cmd.ExecuteReaderAsync();
 
+                var hasIdColumn = HasColumn(reader, "Id");
+
                 while (await reader.ReadAsync())
                 {
+                    var newId = Guid.NewGuid();
+                    
+                    // Capture old integer ID
+                    int? oldId = null;
+                    if (hasIdColumn && !reader.IsDBNull(reader.GetOrdinal("Id")))
+                    {
+                        try { oldId = reader.GetInt32(reader.GetOrdinal("Id")); } catch { }
+                    }
+
                     var label = new RecipeLabel
                     {
-                        Id = Guid.NewGuid(),
+                        Id = newId,
                         Name = reader.GetString(reader.GetOrdinal("Name")),
                         ColorHex = HasColumn(reader, "ColorHex") && !reader.IsDBNull(reader.GetOrdinal("ColorHex")) ? reader.GetString(reader.GetOrdinal("ColorHex")) : null,
                         CreatedAt = HasColumn(reader, "CreatedAt") && !reader.IsDBNull(reader.GetOrdinal("CreatedAt")) ? reader.GetDateTime(reader.GetOrdinal("CreatedAt")) : DateTime.Now
                     };
                     labels.Add(label);
+
+                    if (oldId.HasValue)
+                    {
+                        restoreCtx.LabelIdMapping[oldId.Value] = newId;
+                    }
                 }
 
                 foreach (var label in labels)
@@ -961,7 +1118,7 @@ namespace Foodbook.Views
             }
         }
 
-        private async Task ImportIngredientsAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log)
+        private async Task ImportIngredientsAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log, RestoreContext restoreCtx)
         {
             if (!existingTables.Contains("Ingredients"))
             {
@@ -976,11 +1133,22 @@ namespace Foodbook.Views
                 cmd.CommandText = "SELECT * FROM Ingredients WHERE RecipeId IS NULL";
                 using var reader = await cmd.ExecuteReaderAsync();
 
+                var hasIdColumn = HasColumn(reader, "Id");
+
                 while (await reader.ReadAsync())
                 {
+                    var newId = Guid.NewGuid();
+                    
+                    // Capture old integer ID
+                    int? oldId = null;
+                    if (hasIdColumn && !reader.IsDBNull(reader.GetOrdinal("Id")))
+                    {
+                        try { oldId = reader.GetInt32(reader.GetOrdinal("Id")); } catch { }
+                    }
+
                     var ingredient = new Ingredient
                     {
-                        Id = Guid.NewGuid(),
+                        Id = newId,
                         Name = reader.GetString(reader.GetOrdinal("Name")),
                         Quantity = reader.GetDouble(reader.GetOrdinal("Quantity")),
                         Unit = (Unit)reader.GetInt32(reader.GetOrdinal("Unit")),
@@ -992,6 +1160,11 @@ namespace Foodbook.Views
                         RecipeId = null
                     };
                     ingredients.Add(ingredient);
+
+                    if (oldId.HasValue)
+                    {
+                        restoreCtx.IngredientIdMapping[oldId.Value] = newId;
+                    }
                 }
 
                 foreach (var ingredient in ingredients)
@@ -1007,7 +1180,7 @@ namespace Foodbook.Views
             }
         }
 
-        private async Task ImportRecipesAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log)
+        private async Task ImportRecipesAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log, RestoreContext restoreCtx)
         {
             if (!existingTables.Contains("Recipes"))
             {
@@ -1022,11 +1195,49 @@ namespace Foodbook.Views
                 cmd.CommandText = "SELECT * FROM Recipes";
                 using var reader = await cmd.ExecuteReaderAsync();
 
+                var hasIdColumn = HasColumn(reader, "Id");
+                var hasFolderIdColumn = HasColumn(reader, "FolderId");
+
                 while (await reader.ReadAsync())
                 {
+                    var newId = Guid.NewGuid();
+                    
+                    // Capture old integer ID for mapping
+                    int? oldId = null;
+                    if (hasIdColumn && !reader.IsDBNull(reader.GetOrdinal("Id")))
+                    {
+                        try
+                        {
+                            oldId = reader.GetInt32(reader.GetOrdinal("Id"));
+                        }
+                        catch
+                        {
+                            try
+                            {
+                                var guidStr = reader.GetString(reader.GetOrdinal("Id"));
+                                if (Guid.TryParse(guidStr, out var existingGuid))
+                                {
+                                    newId = existingGuid;
+                                }
+                            }
+                            catch { }
+                        }
+                    }
+
+                    // Capture folder assignment
+                    int? oldFolderId = null;
+                    if (hasFolderIdColumn && !reader.IsDBNull(reader.GetOrdinal("FolderId")))
+                    {
+                        try
+                        {
+                            oldFolderId = reader.GetInt32(reader.GetOrdinal("FolderId"));
+                        }
+                        catch { }
+                    }
+
                     var recipe = new Recipe
                     {
-                        Id = Guid.NewGuid(),
+                        Id = newId,
                         Name = reader.GetString(reader.GetOrdinal("Name")),
                         Description = !reader.IsDBNull(reader.GetOrdinal("Description")) ? reader.GetString(reader.GetOrdinal("Description")) : null,
                         Calories = reader.GetDouble(reader.GetOrdinal("Calories")),
@@ -1034,9 +1245,20 @@ namespace Foodbook.Views
                         Fat = reader.GetDouble(reader.GetOrdinal("Fat")),
                         Carbs = reader.GetDouble(reader.GetOrdinal("Carbs")),
                         IloscPorcji = reader.GetInt32(reader.GetOrdinal("IloscPorcji")),
-                        FolderId = null
+                        FolderId = null // Will be set later after folder relationships are rebuilt
                     };
                     recipes.Add(recipe);
+
+                    // Store mappings
+                    if (oldId.HasValue)
+                    {
+                        restoreCtx.RecipeIdMapping[oldId.Value] = newId;
+                        restoreCtx.RecipeFolderMap[oldId.Value] = oldFolderId;
+                        if (oldFolderId.HasValue)
+                        {
+                            log($"  Recipe '{recipe.Name}': old ID {oldId.Value} -> new ID {newId}, folder: {oldFolderId.Value}");
+                        }
+                    }
                 }
 
                 foreach (var recipe in recipes)
@@ -1046,7 +1268,7 @@ namespace Foodbook.Views
                 await context.SaveChangesAsync();
                 log($"Imported {recipes.Count} recipes (legacy ids remapped)");
 
-                await ImportRecipeIngredientsAsync(srcConnection, context, log);
+                await ImportRecipeIngredientsAsync(srcConnection, context, log, restoreCtx);
             }
             catch (Exception ex)
             {
@@ -1054,7 +1276,7 @@ namespace Foodbook.Views
             }
         }
 
-        private async Task ImportRecipeIngredientsAsync(SqliteConnection srcConnection, AppDbContext context, Action<string> log)
+        private async Task ImportRecipeIngredientsAsync(SqliteConnection srcConnection, AppDbContext context, Action<string> log, RestoreContext restoreCtx)
         {
             try
             {
@@ -1063,11 +1285,37 @@ namespace Foodbook.Views
                 cmd.CommandText = "SELECT * FROM Ingredients WHERE RecipeId IS NOT NULL";
                 using var reader = await cmd.ExecuteReaderAsync();
 
+                var hasIdColumn = HasColumn(reader, "Id");
+                var hasRecipeIdColumn = HasColumn(reader, "RecipeId");
+
                 while (await reader.ReadAsync())
                 {
+                    var newId = Guid.NewGuid();
+                    
+                    // Capture old integer ID
+                    int? oldId = null;
+                    if (hasIdColumn && !reader.IsDBNull(reader.GetOrdinal("Id")))
+                    {
+                        try { oldId = reader.GetInt32(reader.GetOrdinal("Id")); } catch { }
+                    }
+
+                    // Capture recipe assignment
+                    int? oldRecipeId = null;
+                    if (hasRecipeIdColumn && !reader.IsDBNull(reader.GetOrdinal("RecipeId")))
+                    {
+                        try { oldRecipeId = reader.GetInt32(reader.GetOrdinal("RecipeId")); } catch { }
+                    }
+
+                    // Map to new recipe ID if available
+                    Guid? newRecipeId = null;
+                    if (oldRecipeId.HasValue && restoreCtx.RecipeIdMapping.TryGetValue(oldRecipeId.Value, out var mappedRecipeId))
+                    {
+                        newRecipeId = mappedRecipeId;
+                    }
+
                     var ingredient = new Ingredient
                     {
-                        Id = Guid.NewGuid(),
+                        Id = newId,
                         Name = reader.GetString(reader.GetOrdinal("Name")),
                         Quantity = reader.GetDouble(reader.GetOrdinal("Quantity")),
                         Unit = (Unit)reader.GetInt32(reader.GetOrdinal("Unit")),
@@ -1076,9 +1324,14 @@ namespace Foodbook.Views
                         Protein = reader.GetDouble(reader.GetOrdinal("Protein")),
                         Fat = reader.GetDouble(reader.GetOrdinal("Fat")),
                         Carbs = reader.GetDouble(reader.GetOrdinal("Carbs")),
-                        RecipeId = null
+                        RecipeId = newRecipeId
                     };
                     ingredients.Add(ingredient);
+
+                    if (oldId.HasValue)
+                    {
+                        restoreCtx.IngredientIdMapping[oldId.Value] = newId;
+                    }
                 }
 
                 foreach (var ingredient in ingredients)
@@ -1086,7 +1339,7 @@ namespace Foodbook.Views
                     context.Ingredients.Add(ingredient);
                 }
                 await context.SaveChangesAsync();
-                log($"Imported {ingredients.Count} recipe ingredients (not linked; legacy ids remapped)");
+                log($"Imported {ingredients.Count} recipe ingredients (legacy ids remapped)");
             }
             catch (Exception ex)
             {
@@ -1094,7 +1347,7 @@ namespace Foodbook.Views
             }
         }
 
-        private async Task ImportRecipeRecipeLabelAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log)
+        private async Task ImportRecipeRecipeLabelAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log, RestoreContext restoreCtx)
         {
             if (!existingTables.Contains("RecipeRecipeLabel"))
             {
@@ -1121,36 +1374,56 @@ namespace Foodbook.Views
                 {
                     while (await reader.ReadAsync())
                     {
-                        links.Add((reader.GetInt32(recipeIdIndex), reader.GetInt32(labelIdIndex)));
+                        var oldRecipeId = reader.GetInt32(recipeIdIndex);
+                        var oldLabelId = reader.GetInt32(labelIdIndex);
+                        links.Add((oldRecipeId, oldLabelId));
+                        restoreCtx.RecipeLabelLinks.Add((oldRecipeId, oldLabelId));
                     }
                 }
 
-                // Add links using raw SQL to avoid EF navigation complexity
-                using var linkCmd = context.Database.GetDbConnection().CreateCommand();
-                linkCmd.CommandText = "INSERT OR IGNORE INTO RecipeRecipeLabel (RecipesId, LabelsId) VALUES (@recipeId, @labelId)";
-                var recipeParam = linkCmd.CreateParameter();
-                recipeParam.ParameterName = "@recipeId";
-                linkCmd.Parameters.Add(recipeParam);
-                var labelParam = linkCmd.CreateParameter();
-                labelParam.ParameterName = "@labelId";
-                linkCmd.Parameters.Add(labelParam);
-
+                // Now insert with mapped GUIDs
+                int insertedCount = 0;
                 await context.Database.OpenConnectionAsync();
-                foreach (var (recipeId, labelId) in links)
+                try
                 {
-                    recipeParam.Value = recipeId;
-                    labelParam.Value = labelId;
-                    try
+                    using var linkCmd = context.Database.GetDbConnection().CreateCommand();
+                    linkCmd.CommandText = "INSERT OR IGNORE INTO RecipeRecipeLabel (RecipesId, LabelsId) VALUES (@recipeId, @labelId)";
+                    var recipeParam = linkCmd.CreateParameter();
+                    recipeParam.ParameterName = "@recipeId";
+                    linkCmd.Parameters.Add(recipeParam);
+                    var labelParam = linkCmd.CreateParameter();
+                    labelParam.ParameterName = "@labelId";
+                    linkCmd.Parameters.Add(labelParam);
+
+                    foreach (var (oldRecipeId, oldLabelId) in links)
                     {
-                        await linkCmd.ExecuteNonQueryAsync();
-                    }
-                    catch (Exception ex)
-                    {
-                        log($"WARNING: Failed to link recipe {recipeId} to label {labelId}: {ex.Message}");
+                        // Map old IDs to new GUIDs
+                        if (restoreCtx.RecipeIdMapping.TryGetValue(oldRecipeId, out var newRecipeId) &&
+                            restoreCtx.LabelIdMapping.TryGetValue(oldLabelId, out var newLabelId))
+                        {
+                            recipeParam.Value = newRecipeId.ToString();
+                            labelParam.Value = newLabelId.ToString();
+                            try
+                            {
+                                await linkCmd.ExecuteNonQueryAsync();
+                                insertedCount++;
+                            }
+                            catch (Exception ex)
+                            {
+                                log($"WARNING: Failed to link recipe {oldRecipeId}->{newRecipeId} to label {oldLabelId}->{newLabelId}: {ex.Message}");
+                            }
+                        }
+                        else
+                        {
+                            log($"WARNING: Could not map recipe {oldRecipeId} or label {oldLabelId} - skipping link");
+                        }
                     }
                 }
-                await context.Database.CloseConnectionAsync();
-                log($"Imported {links.Count} recipe-label links");
+                finally
+                {
+                    await context.Database.CloseConnectionAsync();
+                }
+                log($"Imported {insertedCount}/{links.Count} recipe-label links (properly remapped)");
             }
             catch (Exception ex)
             {
@@ -1158,7 +1431,7 @@ namespace Foodbook.Views
             }
         }
 
-        private async Task ImportPlansAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log)
+        private async Task ImportPlansAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log, RestoreContext restoreCtx)
         {
             if (!existingTables.Contains("Plans"))
             {
@@ -1172,19 +1445,48 @@ namespace Foodbook.Views
                 using var cmd = srcConnection.CreateCommand();
                 cmd.CommandText = "SELECT * FROM Plans";
                 using var reader = await cmd.ExecuteReaderAsync();
-                
+
+                var hasIdColumn = HasColumn(reader, "Id");
+
                 while (await reader.ReadAsync())
                 {
+                    var newId = Guid.NewGuid();
+                    
+                    // Capture old integer ID
+                    int? oldId = null;
+                    if (hasIdColumn && !reader.IsDBNull(reader.GetOrdinal("Id")))
+                    {
+                        try { oldId = reader.GetInt32(reader.GetOrdinal("Id")); } catch { }
+                    }
+
                     var plan = new Plan
                     {
-                        Id = Guid.NewGuid(),
-                        StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
-                        EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
-                        IsArchived = HasColumn(reader, "IsArchived") && !reader.IsDBNull(reader.GetOrdinal("IsArchived")) ? reader.GetBoolean(reader.GetOrdinal("IsArchived")) : false,
-                        Type = HasColumn(reader, "Type") && !reader.IsDBNull(reader.GetOrdinal("Type")) ? (PlanType)reader.GetInt32(reader.GetOrdinal("Type")) : PlanType.ShoppingList,
+                        Id = newId,
+                        StartDate = HasColumn(reader, "StartDate") && !reader.IsDBNull(reader.GetOrdinal("StartDate")) 
+                            ? reader.GetDateTime(reader.GetOrdinal("StartDate")) 
+                            : DateTime.Now,
+                        EndDate = HasColumn(reader, "EndDate") && !reader.IsDBNull(reader.GetOrdinal("EndDate")) 
+                            ? reader.GetDateTime(reader.GetOrdinal("EndDate")) 
+                            : DateTime.Now.AddDays(7),
+                        IsArchived = HasColumn(reader, "IsArchived") && !reader.IsDBNull(reader.GetOrdinal("IsArchived")) 
+                            ? reader.GetBoolean(reader.GetOrdinal("IsArchived")) 
+                            : false,
+                        Type = HasColumn(reader, "Type") && !reader.IsDBNull(reader.GetOrdinal("Type")) 
+                            ? (PlanType)reader.GetInt32(reader.GetOrdinal("Type")) 
+                            : PlanType.ShoppingList,
+                        Title = HasColumn(reader, "Title") && !reader.IsDBNull(reader.GetOrdinal("Title"))
+                            ? reader.GetString(reader.GetOrdinal("Title"))
+                            : (HasColumn(reader, "Name") && !reader.IsDBNull(reader.GetOrdinal("Name"))
+                                ? reader.GetString(reader.GetOrdinal("Name"))
+                                : null),
                         LinkedShoppingListPlanId = null
                     };
                     plans.Add(plan);
+
+                    if (oldId.HasValue)
+                    {
+                        restoreCtx.PlanIdMapping[oldId.Value] = newId;
+                    }
                 }
 
                 foreach (var plan in plans)
@@ -1200,7 +1502,7 @@ namespace Foodbook.Views
             }
         }
 
-        private async Task ImportPlannedMealsAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log)
+        private async Task ImportPlannedMealsAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log, RestoreContext restoreCtx)
         {
             if (!existingTables.Contains("PlannedMeals"))
             {
@@ -1214,18 +1516,64 @@ namespace Foodbook.Views
                 using var cmd = srcConnection.CreateCommand();
                 cmd.CommandText = "SELECT * FROM PlannedMeals";
                 using var reader = await cmd.ExecuteReaderAsync();
-                
+
+                var hasIdColumn = HasColumn(reader, "Id");
+                var hasRecipeIdColumn = HasColumn(reader, "RecipeId");
+                var hasPlanIdColumn = HasColumn(reader, "PlanId");
+
                 while (await reader.ReadAsync())
                 {
+                    var newId = Guid.NewGuid();
+                    
+                    // Capture old integer IDs
+                    int? oldId = null;
+                    int? oldRecipeId = null;
+                    int? oldPlanId = null;
+                    
+                    if (hasIdColumn && !reader.IsDBNull(reader.GetOrdinal("Id")))
+                    {
+                        try { oldId = reader.GetInt32(reader.GetOrdinal("Id")); } catch { }
+                    }
+                    if (hasRecipeIdColumn && !reader.IsDBNull(reader.GetOrdinal("RecipeId")))
+                    {
+                        try { oldRecipeId = reader.GetInt32(reader.GetOrdinal("RecipeId")); } catch { }
+                    }
+                    if (hasPlanIdColumn && !reader.IsDBNull(reader.GetOrdinal("PlanId")))
+                    {
+                        try { oldPlanId = reader.GetInt32(reader.GetOrdinal("PlanId")); } catch { }
+                    }
+
+                    // Map to new recipe and plan IDs
+                    Guid newRecipeId = Guid.Empty;
+                    if (oldRecipeId.HasValue && restoreCtx.RecipeIdMapping.TryGetValue(oldRecipeId.Value, out var mappedRecipeId))
+                    {
+                        newRecipeId = mappedRecipeId;
+                    }
+
+                    Guid? newPlanId = null;
+                    if (oldPlanId.HasValue && restoreCtx.PlanIdMapping.TryGetValue(oldPlanId.Value, out var mappedPlanId))
+                    {
+                        newPlanId = mappedPlanId;
+                    }
+
                     var meal = new PlannedMeal
                     {
-                        Id = Guid.NewGuid(),
-                        RecipeId = Guid.Empty,
-                        Date = reader.GetDateTime(reader.GetOrdinal("Date")),
-                        Portions = reader.GetInt32(reader.GetOrdinal("Portions")),
-                        PlanId = null
+                        Id = newId,
+                        RecipeId = newRecipeId,
+                        PlanId = newPlanId,
+                        Date = HasColumn(reader, "Date") && !reader.IsDBNull(reader.GetOrdinal("Date"))
+                            ? reader.GetDateTime(reader.GetOrdinal("Date"))
+                            : DateTime.Now,
+                        Portions = HasColumn(reader, "Portions") && !reader.IsDBNull(reader.GetOrdinal("Portions"))
+                            ? reader.GetInt32(reader.GetOrdinal("Portions"))
+                            : 1
                     };
                     meals.Add(meal);
+
+                    if (oldId.HasValue && oldRecipeId.HasValue)
+                    {
+                        restoreCtx.PlannedMealMap[oldId.Value] = (oldRecipeId.Value, oldPlanId);
+                    }
                 }
 
                 foreach (var meal in meals)
@@ -1233,7 +1581,7 @@ namespace Foodbook.Views
                     context.PlannedMeals.Add(meal);
                 }
                 await context.SaveChangesAsync();
-                log($"Imported {meals.Count} planned meals (not linked; legacy ids remapped)");
+                log($"Imported {meals.Count} planned meals (properly linked)");
             }
             catch (Exception ex)
             {
@@ -1241,7 +1589,7 @@ namespace Foodbook.Views
             }
         }
 
-        private async Task ImportShoppingListItemsAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log)
+        private async Task ImportShoppingListItemsAsync(SqliteConnection srcConnection, AppDbContext context, HashSet<string> existingTables, Action<string> log, RestoreContext restoreCtx)
         {
             if (!existingTables.Contains("ShoppingListItems"))
             {
@@ -1256,12 +1604,37 @@ namespace Foodbook.Views
                 cmd.CommandText = "SELECT * FROM ShoppingListItems";
                 using var reader = await cmd.ExecuteReaderAsync();
                 
+                var hasIdColumn = HasColumn(reader, "Id");
+                var hasPlanIdColumn = HasColumn(reader, "PlanId");
+
                 while (await reader.ReadAsync())
                 {
+                    var newId = Guid.NewGuid();
+                    
+                    // Capture old IDs
+                    int? oldId = null;
+                    int? oldPlanId = null;
+                    
+                    if (hasIdColumn && !reader.IsDBNull(reader.GetOrdinal("Id")))
+                    {
+                        try { oldId = reader.GetInt32(reader.GetOrdinal("Id")); } catch { }
+                    }
+                    if (hasPlanIdColumn && !reader.IsDBNull(reader.GetOrdinal("PlanId")))
+                    {
+                        try { oldPlanId = reader.GetInt32(reader.GetOrdinal("PlanId")); } catch { }
+                    }
+
+                    // Map to new plan ID
+                    Guid newPlanId = Guid.Empty;
+                    if (oldPlanId.HasValue && restoreCtx.PlanIdMapping.TryGetValue(oldPlanId.Value, out var mappedPlanId))
+                    {
+                        newPlanId = mappedPlanId;
+                    }
+
                     var item = new ShoppingListItem
                     {
-                        Id = Guid.NewGuid(),
-                        PlanId = Guid.Empty,
+                        Id = newId,
+                        PlanId = newPlanId,
                         IngredientName = reader.GetString(reader.GetOrdinal("IngredientName")),
                         Unit = (Unit)reader.GetInt32(reader.GetOrdinal("Unit")),
                         Quantity = reader.GetDouble(reader.GetOrdinal("Quantity")),
@@ -1269,6 +1642,11 @@ namespace Foodbook.Views
                         Order = HasColumn(reader, "Order") && !reader.IsDBNull(reader.GetOrdinal("Order")) ? reader.GetInt32(reader.GetOrdinal("Order")) : 0
                     };
                     items.Add(item);
+
+                    if (oldId.HasValue)
+                    {
+                        restoreCtx.ShoppingItemPlanMap[oldId.Value] = oldPlanId;
+                    }
                 }
 
                 foreach (var item in items)
@@ -1276,7 +1654,7 @@ namespace Foodbook.Views
                     context.ShoppingListItems.Add(item);
                 }
                 await context.SaveChangesAsync();
-                log($"Imported {items.Count} shopping list items (not linked; legacy ids remapped)");
+                log($"Imported {items.Count} shopping list items (properly linked)");
             }
             catch (Exception ex)
             {
@@ -1288,14 +1666,96 @@ namespace Foodbook.Views
         {
             try
             {
-                reader.GetOrdinal(columnName);
-                return true;
+                for (int i = 0; i < reader.FieldCount; i++)
+                {
+                    if (string.Equals(reader.GetName(i), columnName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
             }
-            catch
-            {
-                return false;
-            }
+            catch { }
+            return false;
         }
 
+        /// <summary>
+        /// Rebuilds folder parent-child relationships after all folders have been imported
+        /// </summary>
+        private async Task RebuildFolderHierarchyAsync(AppDbContext context, RestoreContext restoreCtx, Action<string> log)
+        {
+            log("Rebuilding folder hierarchy...");
+            
+            int updatedCount = 0;
+            foreach (var (oldFolderId, oldParentId) in restoreCtx.FolderParentMap)
+            {
+                if (!oldParentId.HasValue)
+                    continue; // Root folder, no parent to set
+
+                // Get new folder GUID
+                if (!restoreCtx.FolderIdMapping.TryGetValue(oldFolderId, out var newFolderId))
+                {
+                    log($"WARNING: Could not find mapping for folder with old ID {oldFolderId}");
+                    continue;
+                }
+
+                // Get new parent GUID
+                if (!restoreCtx.FolderIdMapping.TryGetValue(oldParentId.Value, out var newParentId))
+                {
+                    log($"WARNING: Could not find mapping for parent folder with old ID {oldParentId.Value}");
+                    continue;
+                }
+
+                // Update folder's parent
+                var folder = await context.Folders.FindAsync(newFolderId);
+                if (folder != null)
+                {
+                    folder.ParentFolderId = newParentId;
+                    updatedCount++;
+                }
+            }
+
+            await context.SaveChangesAsync();
+            log($"Rebuilt folder hierarchy: {updatedCount} parent-child relationships restored");
+        }
+
+        /// <summary>
+        /// Assigns recipes to their folders based on the legacy mapping
+        /// </summary>
+        private async Task AssignRecipesToFoldersAsync(AppDbContext context, RestoreContext restoreCtx, Action<string> log)
+        {
+            log("Assigning recipes to folders...");
+            
+            int assignedCount = 0;
+            foreach (var (oldRecipeId, oldFolderId) in restoreCtx.RecipeFolderMap)
+            {
+                if (!oldFolderId.HasValue)
+                    continue; // Recipe not in any folder
+
+                // Get new recipe GUID
+                if (!restoreCtx.RecipeIdMapping.TryGetValue(oldRecipeId, out var newRecipeId))
+                {
+                    log($"WARNING: Could not find mapping for recipe with old ID {oldRecipeId}");
+                    continue;
+                }
+
+                // Get new folder GUID
+                if (!restoreCtx.FolderIdMapping.TryGetValue(oldFolderId.Value, out var newFolderId))
+                {
+                    log($"WARNING: Could not find mapping for folder with old ID {oldFolderId.Value}");
+                    continue;
+                }
+
+                // Update recipe's folder
+                var recipe = await context.Recipes.FindAsync(newRecipeId);
+                if (recipe != null)
+                {
+                    recipe.FolderId = newFolderId;
+                    assignedCount++;
+                }
+            }
+
+            await context.SaveChangesAsync();
+            log($"Assigned {assignedCount} recipes to folders");
+        }
     }
 }
