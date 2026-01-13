@@ -90,6 +90,9 @@ namespace FoodbookApp
             builder.Services.AddScoped<ISupabaseAuthService, SupabaseAuthService>();
             builder.Services.AddScoped<IAccountService, AccountService>();
             builder.Services.AddScoped<ISupabaseCrudService, SupabaseCrudService>();
+            
+            // Supabase Sync Service - singleton to maintain sync timer across app lifecycle
+            builder.Services.AddSingleton<ISupabaseSyncService, SupabaseSyncService>();
 
             builder.Services.AddScoped<Supabase.Client>(_ => 
             new Supabase.Client(

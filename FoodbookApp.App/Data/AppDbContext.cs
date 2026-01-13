@@ -17,6 +17,10 @@ namespace Foodbook.Data
         public DbSet<Folder> Folders => Set<Folder>();
         public DbSet<RecipeLabel> RecipeLabels => Set<RecipeLabel>();
         public DbSet<AuthAccount> AuthAccounts => Set<AuthAccount>();
+        
+        // Sync tables
+        public DbSet<SyncQueueEntry> SyncQueue => Set<SyncQueueEntry>();
+        public DbSet<SyncState> SyncStates => Set<SyncState>();
 
         // Used by DI at runtime
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
@@ -129,6 +133,47 @@ namespace Foodbook.Data
             modelBuilder.Entity<AuthAccount>()
                 .HasIndex(a => a.SupabaseUserId)
                 .IsUnique();
+
+            // Sync Queue Entry configuration
+            modelBuilder.Entity<SyncQueueEntry>(entity =>
+            {
+                entity.HasIndex(e => e.AccountId)
+                    .HasDatabaseName("IX_SyncQueue_AccountId");
+
+                entity.HasIndex(e => new { e.AccountId, e.Status })
+                    .HasDatabaseName("IX_SyncQueue_AccountId_Status");
+
+                entity.HasIndex(e => new { e.AccountId, e.EntityType, e.EntityId })
+                    .HasDatabaseName("IX_SyncQueue_AccountId_Entity");
+
+                entity.HasIndex(e => e.BatchId)
+                    .HasDatabaseName("IX_SyncQueue_BatchId");
+
+                entity.HasIndex(e => new { e.Status, e.Priority, e.CreatedUtc })
+                    .HasDatabaseName("IX_SyncQueue_Processing");
+
+                entity.Property(e => e.OperationType)
+                    .HasConversion<int>();
+
+                entity.Property(e => e.Status)
+                    .HasConversion<int>();
+            });
+
+            // Sync State configuration
+            modelBuilder.Entity<SyncState>(entity =>
+            {
+                entity.HasIndex(e => e.AccountId)
+                    .IsUnique()
+                    .HasDatabaseName("IX_SyncStates_AccountId");
+
+                entity.HasOne(e => e.Account)
+                    .WithMany()
+                    .HasForeignKey(e => e.AccountId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.Property(e => e.Status)
+                    .HasConversion<int>();
+            });
 
             base.OnModelCreating(modelBuilder);
         }
