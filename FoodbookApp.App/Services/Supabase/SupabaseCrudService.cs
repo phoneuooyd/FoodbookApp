@@ -3,18 +3,24 @@ using System.Text.Json.Serialization;
 using Foodbook.Models;
 using Foodbook.Models.DTOs;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Services.Auth;
 
 namespace FoodbookApp.Services.Supabase;
 
 public sealed class SupabaseCrudService : ISupabaseCrudService
 {
     private readonly global::Supabase.Client _client;
+    private readonly SupabaseRestClient _restClient;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
-    public SupabaseCrudService(global::Supabase.Client client)
+    private const string SupabaseUrl = "https://gscbdvezastxpyndkauh.supabase.co";
+    private const string SupabaseAnonKey = "sb_publishable_gwkJSRidW1DP28CCEeQUDA_ELLTHT92";
+
+    public SupabaseCrudService(global::Supabase.Client client, HttpClient httpClient, IAuthTokenStore tokenStore)
     {
         _client = client;
+        _restClient = new SupabaseRestClient(httpClient, tokenStore, SupabaseUrl, SupabaseAnonKey);
     }
 
     private async Task EnsureInitializedAsync()
@@ -439,6 +445,82 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         };
 
         await _client.From<RecipeLabelDto>().Where(x => x.Id == id).Update(patch);
+    }
+
+    #endregion
+
+    #region Batch Operations (REST API)
+
+    public async Task<List<Recipe>> AddRecipesBatchAsync(IEnumerable<Recipe> recipes, CancellationToken ct = default)
+    {
+        var dtos = recipes.Select(r =>
+        {
+            if (r.Id == Guid.Empty) r.Id = Guid.NewGuid();
+            return ToDto(r);
+        }).ToList();
+
+        var results = await _restClient.InsertBatchAsync("recipes", dtos, ct);
+        return results.Select(ToDomain).ToList();
+    }
+
+    public async Task<List<Ingredient>> AddIngredientsBatchAsync(IEnumerable<Ingredient> ingredients, CancellationToken ct = default)
+    {
+        var dtos = ingredients.Select(i =>
+        {
+            if (i.Id == Guid.Empty) i.Id = Guid.NewGuid();
+            return ToDto(i);
+        }).ToList();
+
+        var results = await _restClient.InsertBatchAsync("ingredients", dtos, ct);
+        return results.Select(ToDomain).ToList();
+    }
+
+    public async Task<List<PlannedMeal>> AddPlannedMealsBatchAsync(IEnumerable<PlannedMeal> meals, CancellationToken ct = default)
+    {
+        var dtos = meals.Select(pm =>
+        {
+            if (pm.Id == Guid.Empty) pm.Id = Guid.NewGuid();
+            return ToDto(pm);
+        }).ToList();
+
+        var results = await _restClient.InsertBatchAsync("planned_meals", dtos, ct);
+        return results.Select(ToDomain).ToList();
+    }
+
+    public async Task<List<ShoppingListItem>> AddShoppingListItemsBatchAsync(IEnumerable<ShoppingListItem> items, CancellationToken ct = default)
+    {
+        var dtos = items.Select(s =>
+        {
+            if (s.Id == Guid.Empty) s.Id = Guid.NewGuid();
+            return ToDto(s);
+        }).ToList();
+
+        var results = await _restClient.InsertBatchAsync("shopping_list_items", dtos, ct);
+        return results.Select(ToDomain).ToList();
+    }
+
+    public async Task<List<Recipe>> UpsertRecipesAsync(IEnumerable<Recipe> recipes, CancellationToken ct = default)
+    {
+        var dtos = recipes.Select(r =>
+        {
+            if (r.Id == Guid.Empty) r.Id = Guid.NewGuid();
+            return ToDto(r);
+        }).ToList();
+
+        var results = await _restClient.UpsertAsync("recipes", dtos, ct);
+        return results.Select(ToDomain).ToList();
+    }
+
+    public async Task<List<Ingredient>> UpsertIngredientsAsync(IEnumerable<Ingredient> ingredients, CancellationToken ct = default)
+    {
+        var dtos = ingredients.Select(i =>
+        {
+            if (i.Id == Guid.Empty) i.Id = Guid.NewGuid();
+            return ToDto(i);
+        }).ToList();
+
+        var results = await _restClient.UpsertAsync("ingredients", dtos, ct);
+        return results.Select(ToDomain).ToList();
     }
 
     #endregion
