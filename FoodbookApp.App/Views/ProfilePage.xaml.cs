@@ -2,6 +2,7 @@ using FoodbookApp.Interfaces;
 using Microsoft.Maui.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using FoodbookApp.Services.Auth;
+using System.Text;
 using CommunityToolkit.Maui.Views;
 using CommunityToolkit.Maui.Extensions;
 using Foodbook.Views.Components;
@@ -11,6 +12,7 @@ namespace Foodbook.Views;
 public partial class ProfilePage : ContentPage
 {
     private ISupabaseAuthService? _supabaseAuth;
+    private ISupabaseSyncService? _syncService;
     private bool _isLoggedIn;
 
     public ProfilePage()
@@ -19,8 +21,49 @@ public partial class ProfilePage : ContentPage
         UpdateUiState();
     }
 
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        
+        if (_isLoggedIn)
+        {
+            await LoadSyncStatusAsync();
+        }
+    }
+
     private ISupabaseAuthService? GetSupabaseAuth()
         => _supabaseAuth ??= FoodbookApp.MauiProgram.ServiceProvider?.GetService<ISupabaseAuthService>();
+
+    private ISupabaseSyncService? GetSyncService()
+        => _syncService ??= FoodbookApp.MauiProgram.ServiceProvider?.GetService<ISupabaseSyncService>();
+
+    private async Task LoadSyncStatusAsync()
+    {
+        try
+        {
+            var syncService = GetSyncService();
+            if (syncService == null)
+                return;
+
+            var isEnabled = await syncService.IsCloudSyncEnabledAsync();
+            CloudSyncCheckBox.IsChecked = isEnabled;
+
+            if (isEnabled)
+            {
+                var state = await syncService.GetSyncStateAsync();
+                if (state != null)
+                {
+                    var pendingCount = await syncService.GetPendingCountAsync();
+                    SyncStatusLabel.Text = $"Status: {state.Status}, Pending: {pendingCount}";
+                    SyncStatusLabel.IsVisible = true;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Failed to load sync status: {ex.Message}");
+        }
+    }
 
     private void UpdateUiState()
     {
@@ -51,13 +94,13 @@ public partial class ProfilePage : ContentPage
 
             if (string.IsNullOrWhiteSpace(email))
             {
-                await DisplayAlert("Logowanie", "Email nie mo¿e byæ pusty.", "OK");
+                await DisplayAlert("Logowanie", "Email nie moze byc pusty.", "OK");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(password))
             {
-                await DisplayAlert("Logowanie", "Has³o nie mo¿e byæ puste.", "OK");
+                await DisplayAlert("Logowanie", "Haslo nie moze byc puste.", "OK");
                 return;
             }
 
@@ -68,7 +111,7 @@ public partial class ProfilePage : ContentPage
             if (session == null || string.IsNullOrWhiteSpace(session.AccessToken))
             {
                 StatusLabel.Text = string.Empty;
-                await DisplayAlert("B³¹d logowania", "Nie uda³o siê zalogowaæ. SprawdŸ dane logowania.", "OK");
+                await DisplayAlert("Blad logowania", "Nie udalo sie zalogowac. Sprawdz dane logowania.", "OK");
                 return;
             }
 
@@ -80,6 +123,7 @@ public partial class ProfilePage : ContentPage
             PasswordEntry.Text = string.Empty;
 
             UpdateUiState();
+            await LoadSyncStatusAsync();
         }
         catch (Exception ex)
         {
@@ -87,7 +131,7 @@ public partial class ProfilePage : ContentPage
             StatusLabel.Text = string.Empty;
 
             var msg = ex.InnerException?.Message is { Length: > 0 } inner ? inner : ex.Message;
-            await DisplayAlert("B³¹d", msg, "OK");
+            await DisplayAlert("Blad", msg, "OK");
         }
     }
 
@@ -117,18 +161,120 @@ public partial class ProfilePage : ContentPage
                 _isLoggedIn = true;
                 LoggedInUserLabel.Text = session.User?.Email ?? string.Empty;
                 UpdateUiState();
+                await LoadSyncStatusAsync();
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ProfilePage] Register popup error: {ex}");
             var msg = ex.InnerException?.Message is { Length: > 0 } inner ? inner : ex.Message;
-            await DisplayAlert("B³¹d", msg, "OK");
+            await DisplayAlert("Blad", msg, "OK");
+        }
+    }
+
+    private async void OnCloudSyncToggled(object sender, CheckedChangedEventArgs e)
+    {
+        try
+        {
+            var syncService = GetSyncService();
+            if (syncService == null)
+            {
+                await DisplayAlert("Sync Error", "Sync service not available", "OK");
+                CloudSyncCheckBox.IsChecked = !e.Value;
+                return;
+            }
+
+            SyncStatusLabel.IsVisible = true;
+            SyncStatusLabel.Text = e.Value ? "Enabling sync..." : "Disabling sync...";
+
+            if (e.Value)
+            {
+                await syncService.EnableCloudSyncAsync();
+                SyncStatusLabel.Text = "Cloud sync enabled. Syncing data...";
+            }
+            else
+            {
+                await syncService.DisableCloudSyncAsync();
+                SyncStatusLabel.Text = "Cloud sync disabled";
+            }
+
+            await Task.Delay(2000);
+            await LoadSyncStatusAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Sync toggle error: {ex.Message}");
+            await DisplayAlert("Sync Error", ex.Message, "OK");
+            CloudSyncCheckBox.IsChecked = !e.Value;
+            SyncStatusLabel.IsVisible = false;
+        }
+    }
+
+    private async void OnForceSyncClicked(object sender, EventArgs e)
+    {
+        var sync = GetSyncService();
+        if (sync == null)
+        {
+            await DisplayAlert("Sync Error", "Sync service not available", "OK");
+            return;
+        }
+
+        SyncStatusLabel.IsVisible = true;
+        SyncStatusLabel.Text = "Forcing sync of ALL items...";
+
+        try
+        {
+            // Use ForceSyncAllAsync to sync all items without delay
+            var result = await sync.ForceSyncAllAsync();
+            var sb = new StringBuilder();
+            sb.AppendLine($"Success: {result.Success}");
+            sb.AppendLine($"Processed: {result.ItemsProcessed}");
+            sb.AppendLine($"Remaining: {result.ItemsRemaining}");
+            sb.AppendLine($"Duration: {result.Duration.TotalSeconds:F1}s");
+            if (!string.IsNullOrEmpty(result.ErrorMessage)) 
+                sb.AppendLine($"Error: {result.ErrorMessage}");
+
+            await DisplayAlert("Force sync completed", sb.ToString(), "OK");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProfilePage] ForceSync error: {ex}");
+            await DisplayAlert("Force sync error", ex.Message, "OK");
+        }
+        finally
+        {
+            await LoadSyncStatusAsync();
         }
     }
 
     private async void OnLogoutClicked(object sender, EventArgs e)
     {
-        await DisplayAlert("Wyloguj", "Funkcja wylogowania bêdzie dodana póŸniej.", "OK");
+        try
+        {
+            var auth = GetSupabaseAuth();
+            if (auth != null)
+            {
+                await auth.SignOutAsync();
+            }
+
+            var syncService = GetSyncService();
+            if (syncService != null)
+            {
+                await syncService.DisableCloudSyncAsync();
+            }
+
+            _isLoggedIn = false;
+            UpdateUiState();
+            
+            EmailEntry.Text = string.Empty;
+            PasswordEntry.Text = string.Empty;
+            StatusLabel.Text = string.Empty;
+            SyncStatusLabel.IsVisible = false;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Logout error: {ex.Message}");
+            await DisplayAlert("Logout Error", ex.Message, "OK");
+        }
     }
 }

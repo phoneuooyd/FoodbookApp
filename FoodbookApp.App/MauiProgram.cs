@@ -93,6 +93,9 @@ namespace FoodbookApp
             
             // Supabase Sync Service - singleton to maintain sync timer across app lifecycle
             builder.Services.AddSingleton<ISupabaseSyncService, SupabaseSyncService>();
+            
+            // Deduplication Service - singleton to maintain cache across login sessions
+            builder.Services.AddSingleton<IDeduplicationService, DeduplicationService>();
 
             builder.Services.AddScoped<Supabase.Client>(_ => 
             new Supabase.Client(
@@ -101,7 +104,7 @@ namespace FoodbookApp
                 new SupabaseOptions 
                 { 
                     AutoRefreshToken = true,
-                    AutoConnectRealtime = true
+                    AutoConnectRealtime = false // disable default realtime to avoid 403 storms; connect explicitly when needed
                 }
             ));
             builder.Services.AddScoped<RecipeViewModel>();

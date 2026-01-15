@@ -11,16 +11,24 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 {
     private readonly global::Supabase.Client _client;
     private readonly SupabaseRestClient _restClient;
+    private readonly IPreferencesService _preferencesService;
+    private readonly IAuthTokenStore _tokenStore;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
     private const string SupabaseUrl = "https://gscbdvezastxpyndkauh.supabase.co";
     private const string SupabaseAnonKey = "sb_publishable_gwkJSRidW1DP28CCEeQUDA_ELLTHT92";
 
-    public SupabaseCrudService(global::Supabase.Client client, HttpClient httpClient, IAuthTokenStore tokenStore)
+    public SupabaseCrudService(
+        global::Supabase.Client client, 
+        HttpClient httpClient, 
+        IAuthTokenStore tokenStore,
+        IPreferencesService preferencesService)
     {
         _client = client;
+        _tokenStore = tokenStore;
         _restClient = new SupabaseRestClient(httpClient, tokenStore, SupabaseUrl, SupabaseAnonKey);
+        _preferencesService = preferencesService;
     }
 
     private async Task EnsureInitializedAsync()
@@ -31,7 +39,15 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         try
         {
             if (_initialized) return;
-            await _client.InitializeAsync();
+            try
+            {
+                // Initialize Supabase client (may attempt Realtime). Swallow Realtime errors and continue for PostgREST-only paths.
+                await _client.InitializeAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SupabaseCrudService] InitializeAsync failed (proceeding HTTP-only): {ex.Message}");
+            }
             _initialized = true;
         }
         finally
@@ -40,11 +56,80 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         }
     }
 
+    /// <summary>
+    /// Ensures the Supabase client has the current user's access token set for RLS.
+    /// Call this before any CRUD operation.
+    /// </summary>
+    private async Task EnsureAuthenticatedAsync()
+    {
+        await EnsureInitializedAsync();
+        
+        var accountId = await _tokenStore.GetActiveAccountIdAsync();
+        if (!accountId.HasValue) return;
+        
+        var accessToken = await _tokenStore.GetAccessTokenAsync(accountId.Value);
+        if (!string.IsNullOrWhiteSpace(accessToken))
+        {
+            try
+            {
+                // Set the access token on Supabase client so RLS sees auth.uid()
+                await _client.Auth.SetSession(accessToken, await _tokenStore.GetRefreshTokenAsync(accountId.Value) ?? string.Empty);
+                System.Diagnostics.Debug.WriteLine("[SupabaseCrudService] Set auth session for CRUD operations");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SupabaseCrudService] SetSession failed: {ex.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the current Supabase user ID (auth.uid()) for setting owner_id on entities.
+    /// </summary>
+    private async Task<string?> GetCurrentUserIdAsync()
+    {
+        var user = _client.Auth.CurrentUser;
+        if (user != null) return user.Id;
+        
+        // Fallback: try to get from token store
+        var accountId = await _tokenStore.GetActiveAccountIdAsync();
+        if (!accountId.HasValue) return null;
+        
+        var accessToken = await _tokenStore.GetAccessTokenAsync(accountId.Value);
+        if (string.IsNullOrWhiteSpace(accessToken)) return null;
+        
+        // Parse user ID from JWT (sub claim)
+        try
+        {
+            var parts = accessToken.Split('.');
+            if (parts.Length >= 2)
+            {
+                var payload = parts[1];
+                // Pad base64 if needed
+                switch (payload.Length % 4)
+                {
+                    case 2: payload += "=="; break;
+                    case 3: payload += "="; break;
+                }
+                var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
+                var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("sub", out var sub))
+                    return sub.GetString();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SupabaseCrudService] Failed to parse JWT: {ex.Message}");
+        }
+        
+        return null;
+    }
+
     #region Folders
 
     public async Task<List<Folder>> GetFoldersAsync(CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
         var resp = await _client.From<FolderDto>().Get();
         return resp.Models
             .Where(r => r.IsDeleted != true)
@@ -54,7 +139,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<Folder?> GetFolderAsync(Guid id, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
         var resp = await _client.From<FolderDto>().Where(x => x.Id == id).Get();
         var row = resp.Models.FirstOrDefault(r => r.IsDeleted != true);
         return row == null ? null : ToDomain(row);
@@ -62,12 +147,12 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<Folder> AddFolderAsync(Folder folder, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
 
         if (folder.Id == Guid.Empty)
             folder.Id = Guid.NewGuid();
 
-        var dto = ToDto(folder);
+        var dto = await ToDtoWithOwnerAsync(folder);
         var resp = await _client.From<FolderDto>().Insert(new[] { dto });
         var created = resp.Models.FirstOrDefault() ?? dto;
         return ToDomain(created);
@@ -75,14 +160,15 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task UpdateFolderAsync(Folder folder, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
-        var dto = ToDto(folder);
+        await EnsureAuthenticatedAsync();
+        var dto = await ToDtoWithOwnerAsync(folder);
+        dto.UpdatedAt = DateTime.UtcNow;
         await _client.From<FolderDto>().Where(x => x.Id == folder.Id).Update(dto);
     }
 
     public async Task DeleteFolderAsync(Guid id, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
 
         var patch = new FolderDto
         {
@@ -101,7 +187,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<List<Recipe>> GetRecipesAsync(CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
         var resp = await _client.From<RecipeDto>().Get();
         return resp.Models
             .Where(r => r.IsDeleted != true)
@@ -111,7 +197,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<Recipe?> GetRecipeAsync(Guid id, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
         var resp = await _client.From<RecipeDto>().Where(x => x.Id == id).Get();
         var row = resp.Models.FirstOrDefault(r => r.IsDeleted != true);
         return row == null ? null : ToDomain(row);
@@ -119,12 +205,12 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<Recipe> AddRecipeAsync(Recipe recipe, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
 
         if (recipe.Id == Guid.Empty)
             recipe.Id = Guid.NewGuid();
 
-        var dto = ToDto(recipe);
+        var dto = await ToDtoWithOwnerAsync(recipe);
         var resp = await _client.From<RecipeDto>().Insert(new[] { dto });
         var created = resp.Models.FirstOrDefault() ?? dto;
         return ToDomain(created);
@@ -132,14 +218,15 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task UpdateRecipeAsync(Recipe recipe, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
-        var dto = ToDto(recipe);
+        await EnsureAuthenticatedAsync();
+        var dto = await ToDtoWithOwnerAsync(recipe);
+        dto.UpdatedAt = DateTime.UtcNow;
         await _client.From<RecipeDto>().Where(x => x.Id == recipe.Id).Update(dto);
     }
 
     public async Task DeleteRecipeAsync(Guid id, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
 
         var patch = new RecipeDto
         {
@@ -158,7 +245,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<List<Ingredient>> GetIngredientsAsync(CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
         var resp = await _client.From<IngredientDto>().Get();
         return resp.Models
             .Where(r => r.IsDeleted != true)
@@ -166,9 +253,9 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
             .ToList();
     }
 
-    public async Task<Ingredient?> GetIngredientAsync(Guid id, CancellationToken ct = default)
+    public async Task<Ingredient? > GetIngredientAsync(Guid id, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
         var resp = await _client.From<IngredientDto>().Where(x => x.Id == id).Get();
         var row = resp.Models.FirstOrDefault(r => r.IsDeleted != true);
         return row == null ? null : ToDomain(row);
@@ -176,12 +263,14 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<Ingredient> AddIngredientAsync(Ingredient ingredient, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
 
         if (ingredient.Id == Guid.Empty)
             ingredient.Id = Guid.NewGuid();
 
-        var dto = ToDto(ingredient);
+        var dto = await ToDtoWithOwnerAsync(ingredient);
+        System.Diagnostics.Debug.WriteLine($"[SupabaseCrudService] AddIngredient: id={dto.Id}, owner_id={dto.OwnerId}, name={dto.Name}");
+        
         var resp = await _client.From<IngredientDto>().Insert(new[] { dto });
         var created = resp.Models.FirstOrDefault() ?? dto;
         return ToDomain(created);
@@ -189,14 +278,15 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task UpdateIngredientAsync(Ingredient ingredient, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
-        var dto = ToDto(ingredient);
+        await EnsureAuthenticatedAsync();
+        var dto = await ToDtoWithOwnerAsync(ingredient);
+        dto.UpdatedAt = DateTime.UtcNow;
         await _client.From<IngredientDto>().Where(x => x.Id == ingredient.Id).Update(dto);
     }
 
     public async Task DeleteIngredientAsync(Guid id, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
 
         var patch = new IngredientDto
         {
@@ -215,7 +305,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<List<Plan>> GetPlansAsync(CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
         var resp = await _client.From<PlanDto>().Get();
         return resp.Models
             .Where(r => r.IsDeleted != true)
@@ -223,9 +313,9 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
             .ToList();
     }
 
-    public async Task<Plan?> GetPlanAsync(Guid id, CancellationToken ct = default)
+    public async Task<Plan? > GetPlanAsync(Guid id, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
         var resp = await _client.From<PlanDto>().Where(x => x.Id == id).Get();
         var row = resp.Models.FirstOrDefault(r => r.IsDeleted != true);
         return row == null ? null : ToDomain(row);
@@ -233,12 +323,12 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<Plan> AddPlanAsync(Plan plan, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
 
         if (plan.Id == Guid.Empty)
             plan.Id = Guid.NewGuid();
 
-        var dto = ToDto(plan);
+        var dto = await ToDtoWithOwnerAsync(plan);
         var resp = await _client.From<PlanDto>().Insert(new[] { dto });
         var created = resp.Models.FirstOrDefault() ?? dto;
         return ToDomain(created);
@@ -246,14 +336,15 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task UpdatePlanAsync(Plan plan, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
-        var dto = ToDto(plan);
+        await EnsureAuthenticatedAsync();
+        var dto = await ToDtoWithOwnerAsync(plan);
+        dto.UpdatedAt = DateTime.UtcNow;
         await _client.From<PlanDto>().Where(x => x.Id == plan.Id).Update(dto);
     }
 
     public async Task DeletePlanAsync(Guid id, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
 
         var patch = new PlanDto
         {
@@ -272,7 +363,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<List<PlannedMeal>> GetPlannedMealsAsync(CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
         var resp = await _client.From<PlannedMealDto>().Get();
         return resp.Models
             .Where(r => r.IsDeleted != true)
@@ -282,7 +373,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<List<PlannedMeal>> GetPlannedMealsByPlanAsync(Guid planId, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
         var resp = await _client.From<PlannedMealDto>().Where(x => x.PlanId == planId).Get();
         return resp.Models
             .Where(r => r.IsDeleted != true)
@@ -290,9 +381,9 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
             .ToList();
     }
 
-    public async Task<PlannedMeal?> GetPlannedMealAsync(Guid id, CancellationToken ct = default)
+    public async Task<PlannedMeal? > GetPlannedMealAsync(Guid id, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
         var resp = await _client.From<PlannedMealDto>().Where(x => x.Id == id).Get();
         var row = resp.Models.FirstOrDefault(r => r.IsDeleted != true);
         return row == null ? null : ToDomain(row);
@@ -300,12 +391,12 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<PlannedMeal> AddPlannedMealAsync(PlannedMeal plannedMeal, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
 
         if (plannedMeal.Id == Guid.Empty)
             plannedMeal.Id = Guid.NewGuid();
 
-        var dto = ToDto(plannedMeal);
+        var dto = await ToDtoWithOwnerAsync(plannedMeal);
         var resp = await _client.From<PlannedMealDto>().Insert(new[] { dto });
         var created = resp.Models.FirstOrDefault() ?? dto;
         return ToDomain(created);
@@ -313,14 +404,15 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task UpdatePlannedMealAsync(PlannedMeal plannedMeal, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
-        var dto = ToDto(plannedMeal);
+        await EnsureAuthenticatedAsync();
+        var dto = await ToDtoWithOwnerAsync(plannedMeal);
+        dto.UpdatedAt = DateTime.UtcNow;
         await _client.From<PlannedMealDto>().Where(x => x.Id == plannedMeal.Id).Update(dto);
     }
 
     public async Task DeletePlannedMealAsync(Guid id, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
 
         var patch = new PlannedMealDto
         {
@@ -339,7 +431,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<List<ShoppingListItem>> GetShoppingListItemsAsync(Guid planId, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
         var resp = await _client.From<ShoppingListItemDto>().Where(x => x.PlanId == planId).Get();
         return resp.Models
             .Where(r => r.IsDeleted != true)
@@ -347,9 +439,9 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
             .ToList();
     }
 
-    public async Task<ShoppingListItem?> GetShoppingListItemAsync(Guid id, CancellationToken ct = default)
+    public async Task<ShoppingListItem? > GetShoppingListItemAsync(Guid id, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
         var resp = await _client.From<ShoppingListItemDto>().Where(x => x.Id == id).Get();
         var row = resp.Models.FirstOrDefault(r => r.IsDeleted != true);
         return row == null ? null : ToDomain(row);
@@ -357,12 +449,12 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<ShoppingListItem> AddShoppingListItemAsync(ShoppingListItem item, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
 
         if (item.Id == Guid.Empty)
             item.Id = Guid.NewGuid();
 
-        var dto = ToDto(item);
+        var dto = await ToDtoWithOwnerAsync(item);
         var resp = await _client.From<ShoppingListItemDto>().Insert(new[] { dto });
         var created = resp.Models.FirstOrDefault() ?? dto;
         return ToDomain(created);
@@ -370,14 +462,15 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task UpdateShoppingListItemAsync(ShoppingListItem item, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
-        var dto = ToDto(item);
+        await EnsureAuthenticatedAsync();
+        var dto = await ToDtoWithOwnerAsync(item);
+        dto.UpdatedAt = DateTime.UtcNow;
         await _client.From<ShoppingListItemDto>().Where(x => x.Id == item.Id).Update(dto);
     }
 
     public async Task DeleteShoppingListItemAsync(Guid id, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
 
         var patch = new ShoppingListItemDto
         {
@@ -396,7 +489,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<List<RecipeLabel>> GetRecipeLabelsAsync(CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
         var resp = await _client.From<RecipeLabelDto>().Get();
         return resp.Models
             .Where(r => r.IsDeleted != true)
@@ -404,9 +497,9 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
             .ToList();
     }
 
-    public async Task<RecipeLabel?> GetRecipeLabelAsync(Guid id, CancellationToken ct = default)
+    public async Task<RecipeLabel? > GetRecipeLabelAsync(Guid id, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
         var resp = await _client.From<RecipeLabelDto>().Where(x => x.Id == id).Get();
         var row = resp.Models.FirstOrDefault(r => r.IsDeleted != true);
         return row == null ? null : ToDomain(row);
@@ -414,12 +507,12 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<RecipeLabel> AddRecipeLabelAsync(RecipeLabel label, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
 
         if (label.Id == Guid.Empty)
             label.Id = Guid.NewGuid();
 
-        var dto = ToDto(label);
+        var dto = await ToDtoWithOwnerAsync(label);
         var resp = await _client.From<RecipeLabelDto>().Insert(new[] { dto });
         var created = resp.Models.FirstOrDefault() ?? dto;
         return ToDomain(created);
@@ -427,14 +520,15 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task UpdateRecipeLabelAsync(RecipeLabel label, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
-        var dto = ToDto(label);
+        await EnsureAuthenticatedAsync();
+        var dto = await ToDtoWithOwnerAsync(label);
+        dto.UpdatedAt = DateTime.UtcNow;
         await _client.From<RecipeLabelDto>().Where(x => x.Id == label.Id).Update(dto);
     }
 
     public async Task DeleteRecipeLabelAsync(Guid id, CancellationToken ct = default)
     {
-        await EnsureInitializedAsync();
+        await EnsureAuthenticatedAsync();
 
         var patch = new RecipeLabelDto
         {
@@ -453,10 +547,14 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<List<Recipe>> AddRecipesBatchAsync(IEnumerable<Recipe> recipes, CancellationToken ct = default)
     {
+        var ownerId = await GetCurrentUserIdAsync();
         var dtos = recipes.Select(r =>
         {
             if (r.Id == Guid.Empty) r.Id = Guid.NewGuid();
-            return ToDto(r);
+            var dto = ToDto(r);
+            dto.OwnerId = ownerId;
+            dto.CreatedAt = DateTime.UtcNow;
+            return dto;
         }).ToList();
 
         var results = await _restClient.InsertBatchAsync("recipes", dtos, ct);
@@ -465,10 +563,14 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<List<Ingredient>> AddIngredientsBatchAsync(IEnumerable<Ingredient> ingredients, CancellationToken ct = default)
     {
+        var ownerId = await GetCurrentUserIdAsync();
         var dtos = ingredients.Select(i =>
         {
             if (i.Id == Guid.Empty) i.Id = Guid.NewGuid();
-            return ToDto(i);
+            var dto = ToDto(i);
+            dto.OwnerId = ownerId;
+            dto.CreatedAt = DateTime.UtcNow;
+            return dto;
         }).ToList();
 
         var results = await _restClient.InsertBatchAsync("ingredients", dtos, ct);
@@ -477,10 +579,14 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<List<PlannedMeal>> AddPlannedMealsBatchAsync(IEnumerable<PlannedMeal> meals, CancellationToken ct = default)
     {
+        var ownerId = await GetCurrentUserIdAsync();
         var dtos = meals.Select(pm =>
         {
             if (pm.Id == Guid.Empty) pm.Id = Guid.NewGuid();
-            return ToDto(pm);
+            var dto = ToDto(pm);
+            dto.OwnerId = ownerId;
+            dto.CreatedAt = DateTime.UtcNow;
+            return dto;
         }).ToList();
 
         var results = await _restClient.InsertBatchAsync("planned_meals", dtos, ct);
@@ -489,10 +595,14 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<List<ShoppingListItem>> AddShoppingListItemsBatchAsync(IEnumerable<ShoppingListItem> items, CancellationToken ct = default)
     {
+        var ownerId = await GetCurrentUserIdAsync();
         var dtos = items.Select(s =>
         {
             if (s.Id == Guid.Empty) s.Id = Guid.NewGuid();
-            return ToDto(s);
+            var dto = ToDto(s);
+            dto.OwnerId = ownerId;
+            dto.CreatedAt = DateTime.UtcNow;
+            return dto;
         }).ToList();
 
         var results = await _restClient.InsertBatchAsync("shopping_list_items", dtos, ct);
@@ -501,10 +611,13 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<List<Recipe>> UpsertRecipesAsync(IEnumerable<Recipe> recipes, CancellationToken ct = default)
     {
+        var ownerId = await GetCurrentUserIdAsync();
         var dtos = recipes.Select(r =>
         {
             if (r.Id == Guid.Empty) r.Id = Guid.NewGuid();
-            return ToDto(r);
+            var dto = ToDto(r);
+            dto.OwnerId = ownerId;
+            return dto;
         }).ToList();
 
         var results = await _restClient.UpsertAsync("recipes", dtos, ct);
@@ -513,14 +626,49 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<List<Ingredient>> UpsertIngredientsAsync(IEnumerable<Ingredient> ingredients, CancellationToken ct = default)
     {
+        var ownerId = await GetCurrentUserIdAsync();
         var dtos = ingredients.Select(i =>
         {
             if (i.Id == Guid.Empty) i.Id = Guid.NewGuid();
-            return ToDto(i);
+            var dto = ToDto(i);
+            dto.OwnerId = ownerId;
+            return dto;
         }).ToList();
 
         var results = await _restClient.UpsertAsync("ingredients", dtos, ct);
         return results.Select(ToDomain).ToList();
+    }
+
+    #endregion
+
+    #region UserPreferences
+
+    public async Task<UserPreferencesDto?> GetUserPreferencesFromCloudAsync(Guid userId, CancellationToken ct = default)
+    {
+        await EnsureAuthenticatedAsync();
+        var resp = await _client.From<UserPreferencesDto>().Where(x => x.Id == userId).Get();
+        return resp.Models.FirstOrDefault();
+    }
+
+    public async Task SyncUserPreferencesToCloudAsync(Guid userId, CancellationToken ct = default)
+    {
+        await EnsureAuthenticatedAsync();
+        
+        var dto = new UserPreferencesDto
+        {
+            Id = userId,
+            Theme = _preferencesService.GetSavedTheme().ToString(),
+            ColorTheme = _preferencesService.GetSavedColorTheme().ToString(),
+            IsColorfulBackground = _preferencesService.GetIsColorfulBackgroundEnabled(),
+            IsWallpaperEnabled = _preferencesService.GetIsWallpaperEnabled(),
+            FontFamily = _preferencesService.GetSavedFontFamily().ToString(),
+            FontSize = _preferencesService.GetSavedFontSize().ToString(),
+            Language = _preferencesService.GetSavedLanguage(),
+            UpdatedAt = DateTime.UtcNow
+        };
+        
+        await _restClient.UpsertAsync("user_preferences", new[] { dto }, ct);
+        System.Diagnostics.Debug.WriteLine($"[SupabaseCrudService] Synced preferences to cloud for user {userId}");
     }
 
     #endregion
@@ -545,6 +693,14 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         ParentFolderId = f.ParentFolderId,
         Order = f.Order
     };
+
+    private async Task<FolderDto> ToDtoWithOwnerAsync(Folder f)
+    {
+        var dto = ToDto(f);
+        dto.OwnerId = await GetCurrentUserIdAsync();
+        dto.CreatedAt ??= DateTime.UtcNow;
+        return dto;
+    }
 
     private static Recipe ToDomain(RecipeDto r) => new()
     {
@@ -571,6 +727,14 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         Portions = r.IloscPorcji,
         FolderId = r.FolderId
     };
+
+    private async Task<RecipeDto> ToDtoWithOwnerAsync(Recipe r)
+    {
+        var dto = ToDto(r);
+        dto.OwnerId = await GetCurrentUserIdAsync();
+        dto.CreatedAt ??= DateTime.UtcNow;
+        return dto;
+    }
 
     private static Ingredient ToDomain(IngredientDto r) => new()
     {
@@ -600,6 +764,14 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         RecipeId = i.RecipeId
     };
 
+    private async Task<IngredientDto> ToDtoWithOwnerAsync(Ingredient i)
+    {
+        var dto = ToDto(i);
+        dto.OwnerId = await GetCurrentUserIdAsync();
+        dto.CreatedAt ??= DateTime.UtcNow;
+        return dto;
+    }
+
     private static Plan ToDomain(PlanDto r) => new()
     {
         Id = r.Id ?? Guid.Empty,
@@ -622,6 +794,14 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         LinkedShoppingListPlanId = p.LinkedShoppingListPlanId
     };
 
+    private async Task<PlanDto> ToDtoWithOwnerAsync(Plan p)
+    {
+        var dto = ToDto(p);
+        dto.OwnerId = await GetCurrentUserIdAsync();
+        dto.CreatedAt ??= DateTime.UtcNow;
+        return dto;
+    }
+
     private static PlannedMeal ToDomain(PlannedMealDto r) => new()
     {
         Id = r.Id ?? Guid.Empty,
@@ -639,6 +819,14 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         Date = pm.Date,
         Portions = pm.Portions
     };
+
+    private async Task<PlannedMealDto> ToDtoWithOwnerAsync(PlannedMeal pm)
+    {
+        var dto = ToDto(pm);
+        dto.OwnerId = await GetCurrentUserIdAsync();
+        dto.CreatedAt ??= DateTime.UtcNow;
+        return dto;
+    }
 
     private static ShoppingListItem ToDomain(ShoppingListItemDto r) => new()
     {
@@ -662,6 +850,14 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         Order = s.Order
     };
 
+    private async Task<ShoppingListItemDto> ToDtoWithOwnerAsync(ShoppingListItem s)
+    {
+        var dto = ToDto(s);
+        dto.OwnerId = await GetCurrentUserIdAsync();
+        dto.CreatedAt ??= DateTime.UtcNow;
+        return dto;
+    }
+
     private static RecipeLabel ToDomain(RecipeLabelDto r) => new()
     {
         Id = r.Id ?? Guid.Empty,
@@ -676,6 +872,14 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         Name = l.Name,
         ColorHex = l.ColorHex
     };
+
+    private async Task<RecipeLabelDto> ToDtoWithOwnerAsync(RecipeLabel l)
+    {
+        var dto = ToDto(l);
+        dto.OwnerId = await GetCurrentUserIdAsync();
+        dto.CreatedAt ??= DateTime.UtcNow;
+        return dto;
+    }
 
     #endregion
 }

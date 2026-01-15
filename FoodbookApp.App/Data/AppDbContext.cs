@@ -21,7 +21,7 @@ namespace Foodbook.Data
         // Sync tables
         public DbSet<SyncQueueEntry> SyncQueue => Set<SyncQueueEntry>();
         public DbSet<SyncState> SyncStates => Set<SyncState>();
-
+        
         // Used by DI at runtime
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 

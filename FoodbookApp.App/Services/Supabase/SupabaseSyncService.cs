@@ -17,7 +17,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
     private readonly IServiceProvider _serviceProvider;
     private readonly IAuthTokenStore _tokenStore;
     private readonly ISupabaseCrudService _crudService;
-    
+
     private Timer? _syncTimer;
     private readonly SemaphoreSlim _syncLock = new(1, 1);
     private readonly SemaphoreSlim _queueLock = new(1, 1);
@@ -26,6 +26,14 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
     private const int MaxRetryCount = 3;
     private const int BatchSize = 50;
     private static readonly TimeSpan DefaultSyncInterval = TimeSpan.FromMinutes(5);
+    
+    // Random delay between sync attempts (30 seconds - 4 minutes) to avoid rate limiting
+    private static readonly Random _random = new();
+    private const int MinDelaySeconds = 30;
+    private const int MaxDelaySeconds = 240; // 4 minutes
+
+    // Error codes that should stop sync immediately (RLS violations, auth errors)
+    private static readonly string[] FatalErrorCodes = ["42501", "403", "401", "PGRST301"];
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -47,8 +55,6 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         _crudService = crudService;
     }
 
-    #region Public API
-
     public async Task<SyncState?> GetSyncStateAsync(CancellationToken ct = default)
     {
         var accountId = await _tokenStore.GetActiveAccountIdAsync();
@@ -57,9 +63,8 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
 
         using var scope = _serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        
-        return await db.SyncStates
-            .FirstOrDefaultAsync(s => s.AccountId == accountId.Value, ct);
+
+        return await db.SyncStates.FirstOrDefaultAsync(s => s.AccountId == accountId.Value, ct);
     }
 
     public async Task<bool> IsCloudSyncEnabledAsync(CancellationToken ct = default)
@@ -80,8 +85,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         using var scope = _serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var state = await db.SyncStates
-            .FirstOrDefaultAsync(s => s.AccountId == accountId.Value, ct);
+        var state = await db.SyncStates.FirstOrDefaultAsync(s => s.AccountId == accountId.Value, ct);
 
         if (state == null)
         {
@@ -105,13 +109,48 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         await db.SaveChangesAsync(ct);
         Debug.WriteLine($"[SyncService] Cloud sync enabled for account {accountId.Value}");
 
-        // Start initial sync if not completed
+        // Run deduplication before initial sync to avoid sending duplicates
+        await RunDeduplicationBeforeSyncAsync(ct);
+
         if (!state.InitialSyncCompleted)
         {
             _ = StartInitialSyncAsync(ct);
         }
 
         StartSyncTimer();
+    }
+
+    /// <summary>
+    /// Runs deduplication service to remove duplicates from sync queue before processing.
+    /// </summary>
+    private async Task RunDeduplicationBeforeSyncAsync(CancellationToken ct)
+    {
+        try
+        {
+            var deduplicationService = _serviceProvider.GetService(typeof(IDeduplicationService)) as IDeduplicationService;
+            if (deduplicationService == null)
+            {
+                Debug.WriteLine("[SyncService] DeduplicationService not available");
+                return;
+            }
+
+            Debug.WriteLine("[SyncService] Running deduplication before sync...");
+            
+            // Fetch cloud data if not already cached
+            if (!deduplicationService.IsCachePopulated)
+            {
+                await deduplicationService.FetchCloudDataAsync(ct);
+            }
+            
+            // Deduplicate sync queue
+            var removed = await deduplicationService.DeduplicateSyncQueueAsync(ct);
+            Debug.WriteLine($"[SyncService] Deduplication complete: {removed} duplicates removed from queue");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[SyncService] Deduplication error (non-fatal): {ex.Message}");
+            // Don't throw - deduplication is optional optimization
+        }
     }
 
     public async Task DisableCloudSyncAsync(CancellationToken ct = default)
@@ -125,8 +164,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         using var scope = _serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var state = await db.SyncStates
-            .FirstOrDefaultAsync(s => s.AccountId == accountId.Value, ct);
+        var state = await db.SyncStates.FirstOrDefaultAsync(s => s.AccountId == accountId.Value, ct);
 
         if (state != null)
         {
@@ -140,8 +178,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         RaiseSyncStatusChanged(SyncStatus.Idle, SyncStatus.Disabled, "Sync disabled by user");
     }
 
-    public async Task QueueForSyncAsync<T>(T entity, SyncOperationType operation, CancellationToken ct = default) 
-        where T : class
+    public async Task QueueForSyncAsync<T>(T entity, SyncOperationType operation, CancellationToken ct = default) where T : class
     {
         if (!await IsCloudSyncEnabledAsync(ct))
             return;
@@ -157,19 +194,14 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
             var entityId = GetEntityId(entity);
-            var entityType = GetEntityTypeName<T>();
+            var entityType = typeof(T).Name;
 
-            // Check for existing pending entry for same entity - consolidate updates
             var existingEntry = await db.SyncQueue
-                .Where(e => e.AccountId == accountId.Value 
-                         && e.EntityType == entityType 
-                         && e.EntityId == entityId
-                         && e.Status == SyncEntryStatus.Pending)
+                .Where(e => e.AccountId == accountId.Value && e.EntityType == entityType && e.EntityId == entityId && e.Status == SyncEntryStatus.Pending)
                 .FirstOrDefaultAsync(ct);
 
             if (existingEntry != null)
             {
-                // Consolidate: if new is Delete, change to Delete; otherwise update payload
                 if (operation == SyncOperationType.Delete)
                 {
                     existingEntry.OperationType = SyncOperationType.Delete;
@@ -180,7 +212,6 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                     existingEntry.Payload = SerializeEntity(entity);
                 }
                 existingEntry.CreatedUtc = DateTime.UtcNow;
-                Debug.WriteLine($"[SyncService] Consolidated {entityType} {entityId} in queue");
             }
             else
             {
@@ -194,7 +225,6 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                     Priority = 10
                 };
                 db.SyncQueue.Add(entry);
-                Debug.WriteLine($"[SyncService] Queued {operation} for {entityType} {entityId}");
             }
 
             await db.SaveChangesAsync(ct);
@@ -205,8 +235,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         }
     }
 
-    public async Task QueueBatchForSyncAsync<T>(IEnumerable<T> entities, SyncOperationType operation, CancellationToken ct = default) 
-        where T : class
+    public async Task QueueBatchForSyncAsync<T>(IEnumerable<T> entities, SyncOperationType operation, CancellationToken ct = default) where T : class
     {
         if (!await IsCloudSyncEnabledAsync(ct))
             return;
@@ -215,9 +244,8 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         if (!accountId.HasValue)
             return;
 
-        var entityList = entities.ToList();
-        if (entityList.Count == 0)
-            return;
+        var list = entities.ToList();
+        if (list.Count == 0) return;
 
         await _queueLock.WaitAsync(ct);
         try
@@ -226,9 +254,9 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
             var batchId = Guid.NewGuid();
-            var entityType = GetEntityTypeName<T>();
+            var entityType = typeof(T).Name;
 
-            foreach (var entity in entityList)
+            foreach (var entity in list)
             {
                 var entry = new SyncQueueEntry
                 {
@@ -244,7 +272,6 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             }
 
             await db.SaveChangesAsync(ct);
-            Debug.WriteLine($"[SyncService] Queued batch of {entityList.Count} {entityType} items");
         }
         finally
         {
@@ -258,19 +285,12 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         if (!accountId.HasValue)
             return false;
 
-        Debug.WriteLine("[SyncService] Starting initial synchronization...");
-
         using var scope = _serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var state = await db.SyncStates
-            .FirstOrDefaultAsync(s => s.AccountId == accountId.Value, ct);
-
+        var state = await db.SyncStates.FirstOrDefaultAsync(s => s.AccountId == accountId.Value, ct);
         if (state == null || state.InitialSyncCompleted)
-        {
-            Debug.WriteLine("[SyncService] Initial sync already completed or state not found");
             return true;
-        }
 
         state.Status = SyncStatus.InitialSync;
         state.InitialSyncStartedUtc = DateTime.UtcNow;
@@ -283,7 +303,6 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         {
             var batchId = Guid.NewGuid();
 
-            // Queue all entities for initial sync
             await QueueAllEntitiesForInitialSyncAsync(db, accountId.Value, batchId, ct);
 
             state.InitialSyncCompleted = true;
@@ -292,38 +311,41 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             state.UpdatedUtc = DateTime.UtcNow;
             await db.SaveChangesAsync(ct);
 
-            Debug.WriteLine("[SyncService] Initial sync queued successfully");
             RaiseSyncStatusChanged(SyncStatus.InitialSync, SyncStatus.Idle, "Initial sync completed");
 
-            // Process queue immediately after initial sync
             _ = ProcessQueueAsync(ct);
-
             return true;
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[SyncService] Initial sync failed: {ex.Message}");
             state.Status = SyncStatus.Error;
             state.LastSyncError = ex.Message;
             state.UpdatedUtc = DateTime.UtcNow;
             await db.SaveChangesAsync(ct);
-
             RaiseSyncStatusChanged(SyncStatus.InitialSync, SyncStatus.Error, ex.Message);
             return false;
         }
+    }
+
+    /// <summary>
+    /// Checks if an error message contains a fatal error code that should stop sync immediately.
+    /// </summary>
+    private static bool IsFatalError(string errorMessage)
+    {
+        return FatalErrorCodes.Any(code => errorMessage.Contains(code, StringComparison.OrdinalIgnoreCase));
     }
 
     public async Task<SyncResult> ProcessQueueAsync(CancellationToken ct = default)
     {
         if (!await _syncLock.WaitAsync(TimeSpan.FromSeconds(5), ct))
         {
-            Debug.WriteLine("[SyncService] Sync already in progress, skipping");
             return SyncResult.Ok(0, await GetPendingCountAsync(ct), TimeSpan.Zero);
         }
 
         var sw = Stopwatch.StartNew();
         var processed = 0;
         var failed = 0;
+        string? fatalError = null;
 
         try
         {
@@ -337,9 +359,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             using var scope = _serviceProvider.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            var state = await db.SyncStates
-                .FirstOrDefaultAsync(s => s.AccountId == accountId.Value, ct);
-
+            var state = await db.SyncStates.FirstOrDefaultAsync(s => s.AccountId == accountId.Value, ct);
             if (state == null)
                 return SyncResult.Error("Sync state not found");
 
@@ -348,33 +368,28 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             state.UpdatedUtc = DateTime.UtcNow;
             await db.SaveChangesAsync(ct);
 
-            RaiseSyncStatusChanged(SyncStatus.Idle, SyncStatus.Syncing, "Processing queue");
-
-            // Get pending entries ordered by priority and creation time
-            var pendingEntries = await db.SyncQueue
+            var pending = await db.SyncQueue
                 .Where(e => e.AccountId == accountId.Value && e.Status == SyncEntryStatus.Pending)
                 .OrderBy(e => e.Priority)
                 .ThenBy(e => e.CreatedUtc)
                 .Take(BatchSize)
                 .ToListAsync(ct);
 
-            var totalPending = await db.SyncQueue
-                .CountAsync(e => e.AccountId == accountId.Value && e.Status == SyncEntryStatus.Pending, ct);
+            var totalPending = await db.SyncQueue.CountAsync(e => e.AccountId == accountId.Value && e.Status == SyncEntryStatus.Pending, ct);
 
-            if (pendingEntries.Count == 0)
+            Log($"Processing queue: {totalPending} items pending");
+
+            if (pending.Count == 0)
             {
                 state.Status = SyncStatus.Idle;
                 state.UpdatedUtc = DateTime.UtcNow;
                 await db.SaveChangesAsync(ct);
-                
                 sw.Stop();
                 RaiseSyncStatusChanged(SyncStatus.Syncing, SyncStatus.Idle, "Queue empty");
                 return SyncResult.Ok(0, 0, sw.Elapsed);
             }
 
-            Debug.WriteLine($"[SyncService] Processing {pendingEntries.Count} entries...");
-
-            foreach (var entry in pendingEntries)
+            foreach (var entry in pending)
             {
                 ct.ThrowIfCancellationRequested();
 
@@ -394,28 +409,55 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"[SyncService] Failed to sync {entry.EntityType} {entry.EntityId}: {ex.Message}");
-                    
                     entry.RetryCount++;
                     entry.LastError = ex.Message;
-                    
-                    if (entry.RetryCount >= MaxRetryCount)
-                    {
-                        entry.Status = SyncEntryStatus.Abandoned;
-                        Debug.WriteLine($"[SyncService] Entry {entry.Id} abandoned after {MaxRetryCount} retries");
-                    }
-                    else
-                    {
-                        entry.Status = SyncEntryStatus.Failed;
-                    }
-                    
+                    entry.Status = entry.RetryCount >= MaxRetryCount ? SyncEntryStatus.Abandoned : SyncEntryStatus.Failed;
                     failed++;
+                    Log($"Error processing entry {entry.EntityId}: {ex.Message}");
+
+                    // FAIL-FAST: Check if this is a fatal error (RLS violation, auth error)
+                    if (IsFatalError(ex.Message))
+                    {
+                        fatalError = ex.Message;
+                        Log($"FATAL ERROR detected - stopping sync immediately: {ex.Message}");
+                        
+                        // Mark entry as abandoned so we don't retry it
+                        entry.Status = SyncEntryStatus.Abandoned;
+                        await db.SaveChangesAsync(ct);
+                        
+                        // Break out of the loop - don't process more entries
+                        break;
+                    }
                 }
 
                 await db.SaveChangesAsync(ct);
             }
 
-            // Update sync state
+            // Update state based on whether we hit a fatal error
+            if (fatalError != null)
+            {
+                state.Status = SyncStatus.Error;
+                state.LastSyncError = $"Sync stopped: {fatalError}";
+                state.UpdatedUtc = DateTime.UtcNow;
+                await db.SaveChangesAsync(ct);
+                
+                sw.Stop();
+                RaiseSyncStatusChanged(SyncStatus.Syncing, SyncStatus.Error, $"Sync stopped due to fatal error: {fatalError}");
+                
+                // Stop the sync timer to prevent continuous retries
+                StopSyncTimer();
+                
+                return SyncResult.Error($"Sync stopped: {fatalError}", failed);
+            }
+
+            // After processing the batch, wait a randomized interval before next batch
+            if (processed > 0 && (await GetPendingCountAsync(ct)) > 0)
+            {
+                var delayMs = _random.Next(MinDelaySeconds * 1000, (MaxDelaySeconds + 1) * 1000);
+                Log($"Batch processed ({processed}) - waiting {delayMs / 1000}s before next batch...");
+                await Task.Delay(delayMs, ct);
+            }
+
             state.LastSyncUtc = DateTime.UtcNow;
             state.TotalItemsSynced += processed;
             state.PendingItemsCount = totalPending - processed;
@@ -425,16 +467,11 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             await db.SaveChangesAsync(ct);
 
             sw.Stop();
-            Debug.WriteLine($"[SyncService] Processed {processed} items, {failed} failed, {state.PendingItemsCount} remaining in {sw.Elapsed.TotalSeconds:F2}s");
-            
-            RaiseSyncStatusChanged(SyncStatus.Syncing, SyncStatus.Idle, 
-                $"Synced {processed} items" + (failed > 0 ? $", {failed} failed" : ""));
-
+            RaiseSyncStatusChanged(SyncStatus.Syncing, SyncStatus.Idle, $"Synced {processed} items" + (failed > 0 ? $", {failed} failed" : ""));
             return SyncResult.Ok(processed, state.PendingItemsCount, sw.Elapsed);
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[SyncService] Queue processing error: {ex.Message}");
             return SyncResult.Error(ex.Message, failed);
         }
         finally
@@ -443,10 +480,144 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         }
     }
 
-    public async Task<SyncResult> ForceSyncAsync(CancellationToken ct = default)
+    public Task<SyncResult> ForceSyncAsync(CancellationToken ct = default)
     {
-        Debug.WriteLine("[SyncService] Force sync requested");
-        return await ProcessQueueAsync(ct);
+        return ProcessQueueAsync(ct);
+    }
+
+    /// <summary>
+    /// Forces synchronization of all pending items without delays.
+    /// Used for manual "Sync Now" button clicks.
+    /// </summary>
+    public async Task<SyncResult> ForceSyncAllAsync(CancellationToken ct = default)
+    {
+        if (!await _syncLock.WaitAsync(TimeSpan.FromSeconds(5), ct))
+        {
+            return SyncResult.Ok(0, await GetPendingCountAsync(ct), TimeSpan.Zero);
+        }
+
+        var sw = Stopwatch.StartNew();
+        var processed = 0;
+        var failed = 0;
+        string? fatalError = null;
+
+        try
+        {
+            var accountId = await _tokenStore.GetActiveAccountIdAsync();
+            if (!accountId.HasValue)
+                return SyncResult.Error("No active account");
+
+            if (!await IsCloudSyncEnabledAsync(ct))
+                return SyncResult.Error("Sync not enabled");
+
+            using var scope = _serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            var state = await db.SyncStates.FirstOrDefaultAsync(s => s.AccountId == accountId.Value, ct);
+            if (state == null)
+                return SyncResult.Error("Sync state not found");
+
+            state.Status = SyncStatus.Syncing;
+            state.LastSyncAttemptUtc = DateTime.UtcNow;
+            state.UpdatedUtc = DateTime.UtcNow;
+            await db.SaveChangesAsync(ct);
+
+            // Force sync: get ALL pending items (no BatchSize limit)
+            var allPending = await db.SyncQueue
+                .Where(e => e.AccountId == accountId.Value && e.Status == SyncEntryStatus.Pending)
+                .OrderBy(e => e.Priority)
+                .ThenBy(e => e.CreatedUtc)
+                .ToListAsync(ct);
+
+            Log($"Force sync: processing {allPending.Count} items (no limit)");
+
+            if (allPending.Count == 0)
+            {
+                state.Status = SyncStatus.Idle;
+                state.UpdatedUtc = DateTime.UtcNow;
+                await db.SaveChangesAsync(ct);
+                sw.Stop();
+                RaiseSyncStatusChanged(SyncStatus.Syncing, SyncStatus.Idle, "Queue empty");
+                return SyncResult.Ok(0, 0, sw.Elapsed);
+            }
+
+            foreach (var entry in allPending)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                try
+                {
+                    entry.Status = SyncEntryStatus.InProgress;
+                    entry.LastAttemptUtc = DateTime.UtcNow;
+                    await db.SaveChangesAsync(ct);
+
+                    await ProcessSingleEntryAsync(entry, ct);
+
+                    entry.Status = SyncEntryStatus.Completed;
+                    entry.SyncedUtc = DateTime.UtcNow;
+                    processed++;
+
+                    RaiseSyncProgress(allPending.Count, processed, failed, entry.EntityType);
+                    
+                    // No delay for force sync - send all items as fast as possible
+                }
+                catch (Exception ex)
+                {
+                    entry.RetryCount++;
+                    entry.LastError = ex.Message;
+                    entry.Status = entry.RetryCount >= MaxRetryCount ? SyncEntryStatus.Abandoned : SyncEntryStatus.Failed;
+                    failed++;
+                    Log($"Error processing entry {entry.EntityId}: {ex.Message}");
+
+                    // FAIL-FAST: Check if this is a fatal error
+                    if (IsFatalError(ex.Message))
+                    {
+                        fatalError = ex.Message;
+                        Log($"FATAL ERROR detected - stopping force sync: {ex.Message}");
+                        
+                        entry.Status = SyncEntryStatus.Abandoned;
+                        await db.SaveChangesAsync(ct);
+                        break;
+                    }
+                }
+
+                await db.SaveChangesAsync(ct);
+            }
+
+            if (fatalError != null)
+            {
+                state.Status = SyncStatus.Error;
+                state.LastSyncError = $"Force sync stopped: {fatalError}";
+                state.UpdatedUtc = DateTime.UtcNow;
+                await db.SaveChangesAsync(ct);
+                
+                sw.Stop();
+                RaiseSyncStatusChanged(SyncStatus.Syncing, SyncStatus.Error, $"Force sync stopped: {fatalError}");
+                StopSyncTimer();
+                
+                return SyncResult.Error($"Force sync stopped: {fatalError}", failed);
+            }
+
+            state.LastSyncUtc = DateTime.UtcNow;
+            state.TotalItemsSynced += processed;
+            state.PendingItemsCount = 0;
+            state.Status = SyncStatus.Idle;
+            state.LastSyncError = failed > 0 ? $"{failed} items failed" : null;
+            state.UpdatedUtc = DateTime.UtcNow;
+            await db.SaveChangesAsync(ct);
+
+            sw.Stop();
+            RaiseSyncStatusChanged(SyncStatus.Syncing, SyncStatus.Idle, $"Force synced {processed} items" + (failed > 0 ? $", {failed} failed" : ""));
+            return SyncResult.Ok(processed, 0, sw.Elapsed);
+        }
+        catch (Exception ex)
+        {
+            return SyncResult.Error(ex.Message, failed);
+        }
+        finally
+        {
+            _syncLock.Release();
+        }
     }
 
     public async Task<int> GetPendingCountAsync(CancellationToken ct = default)
@@ -458,8 +629,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         using var scope = _serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        return await db.SyncQueue
-            .CountAsync(e => e.AccountId == accountId.Value && e.Status == SyncEntryStatus.Pending, ct);
+        return await db.SyncQueue.CountAsync(e => e.AccountId == accountId.Value && e.Status == SyncEntryStatus.Pending, ct);
     }
 
     public async Task ClearFailedEntriesAsync(CancellationToken ct = default)
@@ -472,14 +642,11 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         var failedEntries = await db.SyncQueue
-            .Where(e => e.AccountId == accountId.Value 
-                     && (e.Status == SyncEntryStatus.Failed || e.Status == SyncEntryStatus.Abandoned))
+            .Where(e => e.AccountId == accountId.Value && (e.Status == SyncEntryStatus.Failed || e.Status == SyncEntryStatus.Abandoned))
             .ToListAsync(ct);
 
         db.SyncQueue.RemoveRange(failedEntries);
         await db.SaveChangesAsync(ct);
-
-        Debug.WriteLine($"[SyncService] Cleared {failedEntries.Count} failed entries");
     }
 
     public async Task RetryFailedEntriesAsync(CancellationToken ct = default)
@@ -491,10 +658,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         using var scope = _serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var failedEntries = await db.SyncQueue
-            .Where(e => e.AccountId == accountId.Value && e.Status == SyncEntryStatus.Failed)
-            .ToListAsync(ct);
-
+        var failedEntries = await db.SyncQueue.Where(e => e.AccountId == accountId.Value && e.Status == SyncEntryStatus.Failed).ToListAsync(ct);
         foreach (var entry in failedEntries)
         {
             entry.Status = SyncEntryStatus.Pending;
@@ -503,92 +667,63 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         }
 
         await db.SaveChangesAsync(ct);
-        Debug.WriteLine($"[SyncService] Reset {failedEntries.Count} entries for retry");
     }
 
     public void StartSyncTimer()
     {
         StopSyncTimer();
-        _syncTimer = new Timer(
-            async _ => await ProcessQueueAsync(),
-            null,
-            DefaultSyncInterval,
-            DefaultSyncInterval);
-        Debug.WriteLine($"[SyncService] Sync timer started with interval {DefaultSyncInterval.TotalMinutes} minutes");
+        _syncTimer = new Timer(async _ => await ProcessQueueAsync(), null, DefaultSyncInterval, DefaultSyncInterval);
     }
 
     public void StopSyncTimer()
     {
         _syncTimer?.Dispose();
         _syncTimer = null;
-        Debug.WriteLine("[SyncService] Sync timer stopped");
     }
 
-    #endregion
-
-    #region Private Methods
-
-    private async Task QueueAllEntitiesForInitialSyncAsync(
-        AppDbContext db, 
-        Guid accountId, 
-        Guid batchId, 
-        CancellationToken ct)
+    private async Task QueueAllEntitiesForInitialSyncAsync(AppDbContext db, Guid accountId, Guid batchId, CancellationToken ct)
     {
-        // Queue Folders first (needed for recipe references)
         var folders = await db.Folders.ToListAsync(ct);
         foreach (var folder in folders)
         {
             db.SyncQueue.Add(CreateInitialSyncEntry(accountId, folder, batchId, priority: 1));
         }
-        Debug.WriteLine($"[SyncService] Queued {folders.Count} folders for initial sync");
 
-        // Queue RecipeLabels
         var labels = await db.RecipeLabels.ToListAsync(ct);
         foreach (var label in labels)
         {
             db.SyncQueue.Add(CreateInitialSyncEntry(accountId, label, batchId, priority: 2));
         }
-        Debug.WriteLine($"[SyncService] Queued {labels.Count} recipe labels for initial sync");
 
-        // Queue Recipes
         var recipes = await db.Recipes.ToListAsync(ct);
         foreach (var recipe in recipes)
         {
             db.SyncQueue.Add(CreateInitialSyncEntry(accountId, recipe, batchId, priority: 3));
         }
-        Debug.WriteLine($"[SyncService] Queued {recipes.Count} recipes for initial sync");
 
-        // Queue Ingredients
         var ingredients = await db.Ingredients.ToListAsync(ct);
         foreach (var ingredient in ingredients)
         {
             db.SyncQueue.Add(CreateInitialSyncEntry(accountId, ingredient, batchId, priority: 4));
         }
-        Debug.WriteLine($"[SyncService] Queued {ingredients.Count} ingredients for initial sync");
 
-        // Queue Plans
         var plans = await db.Plans.ToListAsync(ct);
         foreach (var plan in plans)
         {
             db.SyncQueue.Add(CreateInitialSyncEntry(accountId, plan, batchId, priority: 5));
         }
-        Debug.WriteLine($"[SyncService] Queued {plans.Count} plans for initial sync");
 
-        // Queue PlannedMeals
         var plannedMeals = await db.PlannedMeals.ToListAsync(ct);
         foreach (var meal in plannedMeals)
         {
             db.SyncQueue.Add(CreateInitialSyncEntry(accountId, meal, batchId, priority: 6));
         }
-        Debug.WriteLine($"[SyncService] Queued {plannedMeals.Count} planned meals for initial sync");
 
-        // Queue ShoppingListItems
         var shoppingItems = await db.ShoppingListItems.ToListAsync(ct);
         foreach (var item in shoppingItems)
         {
             db.SyncQueue.Add(CreateInitialSyncEntry(accountId, item, batchId, priority: 7));
         }
-        Debug.WriteLine($"[SyncService] Queued {shoppingItems.Count} shopping list items for initial sync");
 
         await db.SaveChangesAsync(ct);
     }
@@ -598,7 +733,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         return new SyncQueueEntry
         {
             AccountId = accountId,
-            EntityType = GetEntityTypeName<T>(),
+            EntityType = typeof(T).Name,
             EntityId = GetEntityId(entity),
             OperationType = SyncOperationType.Insert,
             Payload = SerializeEntity(entity),
@@ -609,33 +744,39 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
 
     private async Task ProcessSingleEntryAsync(SyncQueueEntry entry, CancellationToken ct)
     {
-        Debug.WriteLine($"[SyncService] Processing {entry.OperationType} for {entry.EntityType} {entry.EntityId}");
-
-        switch (entry.EntityType)
+        try
         {
-            case "Folder":
-                await ProcessFolderAsync(entry, ct);
-                break;
-            case "Recipe":
-                await ProcessRecipeAsync(entry, ct);
-                break;
-            case "Ingredient":
-                await ProcessIngredientAsync(entry, ct);
-                break;
-            case "RecipeLabel":
-                await ProcessRecipeLabelAsync(entry, ct);
-                break;
-            case "Plan":
-                await ProcessPlanAsync(entry, ct);
-                break;
-            case "PlannedMeal":
-                await ProcessPlannedMealAsync(entry, ct);
-                break;
-            case "ShoppingListItem":
-                await ProcessShoppingListItemAsync(entry, ct);
-                break;
-            default:
-                throw new NotSupportedException($"Entity type {entry.EntityType} not supported for sync");
+            switch (entry.EntityType)
+            {
+                case "Folder":
+                    await ProcessFolderAsync(entry, ct);
+                    break;
+                case "Recipe":
+                    await ProcessRecipeAsync(entry, ct);
+                    break;
+                case "Ingredient":
+                    await ProcessIngredientAsync(entry, ct);
+                    break;
+                case "RecipeLabel":
+                    await ProcessRecipeLabelAsync(entry, ct);
+                    break;
+                case "Plan":
+                    await ProcessPlanAsync(entry, ct);
+                    break;
+                case "PlannedMeal":
+                    await ProcessPlannedMealAsync(entry, ct);
+                    break;
+                case "ShoppingListItem":
+                    await ProcessShoppingListItemAsync(entry, ct);
+                    break;
+                default:
+                    throw new NotSupportedException($"Entity type {entry.EntityType} not supported for sync");
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"Error processing entry {entry.EntityId}: {ex.Message}\n{ex.StackTrace}");
+            throw;
         }
     }
 
@@ -765,63 +906,34 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         }
     }
 
-    private static string GetEntityTypeName<T>() => typeof(T).Name;
-
     private static Guid GetEntityId<T>(T entity) where T : class
     {
-        var idProperty = typeof(T).GetProperty("Id");
-        if (idProperty == null)
-            throw new InvalidOperationException($"Entity {typeof(T).Name} does not have an Id property");
-
-        var value = idProperty.GetValue(entity);
-        return value switch
-        {
-            Guid guid => guid,
-            _ => throw new InvalidOperationException($"Entity {typeof(T).Name} Id is not a Guid")
-        };
+        var idProp = typeof(T).GetProperty("Id") ?? throw new InvalidOperationException($"{typeof(T).Name} has no Id");
+        var value = idProp.GetValue(entity);
+        return value is Guid g ? g : throw new InvalidOperationException($"{typeof(T).Name}.Id is not Guid");
     }
 
     private static string SerializeEntity<T>(T entity) => JsonSerializer.Serialize(entity, JsonOptions);
-
-    private static T DeserializeEntity<T>(string json) => 
-        JsonSerializer.Deserialize<T>(json, JsonOptions) 
-        ?? throw new InvalidOperationException($"Failed to deserialize {typeof(T).Name}");
+    private static T DeserializeEntity<T>(string json) => JsonSerializer.Deserialize<T>(json, JsonOptions) ?? throw new InvalidOperationException($"Failed to deserialize {typeof(T).Name}");
 
     private void RaiseSyncStatusChanged(SyncStatus oldStatus, SyncStatus newStatus, string? message = null)
     {
-        SyncStatusChanged?.Invoke(this, new SyncStatusChangedEventArgs
-        {
-            OldStatus = oldStatus,
-            NewStatus = newStatus,
-            Message = message
-        });
+        SyncStatusChanged?.Invoke(this, new SyncStatusChangedEventArgs { OldStatus = oldStatus, NewStatus = newStatus, Message = message });
     }
 
     private void RaiseSyncProgress(int total, int processed, int failed, string? entityType = null)
     {
-        SyncProgressChanged?.Invoke(this, new SyncProgressEventArgs
-        {
-            TotalItems = total,
-            ProcessedItems = processed,
-            FailedItems = failed,
-            CurrentEntityType = entityType
-        });
+        SyncProgressChanged?.Invoke(this, new SyncProgressEventArgs { TotalItems = total, ProcessedItems = processed, FailedItems = failed, CurrentEntityType = entityType });
     }
 
-    #endregion
-
-    #region IDisposable
+    private static void Log(string message) => System.Diagnostics.Debug.WriteLine($"[SupabaseSyncService] {message}");
 
     public void Dispose()
     {
-        if (_disposed)
-            return;
-
+        if (_disposed) return;
         _syncTimer?.Dispose();
         _syncLock.Dispose();
         _queueLock.Dispose();
         _disposed = true;
     }
-
-    #endregion
 }

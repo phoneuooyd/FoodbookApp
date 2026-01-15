@@ -149,9 +149,6 @@ public sealed class AccountService : IAccountService
 
         await _client.InitializeAsync();
 
-        // Supabase SDK session recovery API differs by version; keep conservative.
-        // We treat having a stored access token as autologin success for REST-based calls.
-        // For SDK-based calls, UI should prompt re-login if CurrentSession is missing.
         return _client.Auth.CurrentSession != null || !string.IsNullOrWhiteSpace(access);
     }
 }

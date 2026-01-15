@@ -1,4 +1,5 @@
 using Foodbook.Models;
+using Foodbook.Models.DTOs;
 
 namespace FoodbookApp.Interfaces;
 
@@ -53,6 +54,10 @@ public interface ISupabaseCrudService
     Task<RecipeLabel> AddRecipeLabelAsync(RecipeLabel label, CancellationToken ct = default);
     Task UpdateRecipeLabelAsync(RecipeLabel label, CancellationToken ct = default);
     Task DeleteRecipeLabelAsync(Guid id, CancellationToken ct = default);
+
+    // UserPreferences - sync with Supabase
+    Task<UserPreferencesDto?> GetUserPreferencesFromCloudAsync(Guid userId, CancellationToken ct = default);
+    Task SyncUserPreferencesToCloudAsync(Guid userId, CancellationToken ct = default);
 
     // === BATCH OPERATIONS (REST API) ===
     

@@ -63,7 +63,7 @@ public sealed class SupabaseRestClient
         await EnsureSuccessAsync(response);
 
         var json = await response.Content.ReadAsStringAsync(ct);
-        return JsonSerializer.Deserialize<List<T>>(json, JsonOptions) ?? [];
+        return JsonSerializer.Deserialize<List<T>>(json, JsonOptions) ?? new List<T>();
     }
 
     /// <summary>
@@ -125,7 +125,7 @@ public sealed class SupabaseRestClient
         await EnsureSuccessAsync(response);
 
         var responseJson = await response.Content.ReadAsStringAsync(ct);
-        return JsonSerializer.Deserialize<List<T>>(responseJson, JsonOptions) ?? [];
+        return JsonSerializer.Deserialize<List<T>>(responseJson, JsonOptions) ?? new List<T>();
     }
 
     /// <summary>
@@ -174,7 +174,7 @@ public sealed class SupabaseRestClient
         await EnsureSuccessAsync(response);
 
         var responseJson = await response.Content.ReadAsStringAsync(ct);
-        return JsonSerializer.Deserialize<List<T>>(responseJson, JsonOptions) ?? [];
+        return JsonSerializer.Deserialize<List<T>>(responseJson, JsonOptions) ?? new List<T>();
     }
 
     /// <summary>
