@@ -439,7 +439,6 @@
 
 	<ItemGroup>
 	  <Folder Include=".github\workflows\" />
-	  <Folder Include="Data\Migrations\" />
 	  <Folder Include="FoodbookApp.App\Interfaces\" />
 	  <Folder Include="FoodbookApp.App\Models\DTOs\" />
 	  <Folder Include="FoodbookApp.App\Services\Auth\" />
