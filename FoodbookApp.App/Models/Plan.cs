@@ -29,6 +29,10 @@ namespace Foodbook.Models
         [MaxLength(200)]
         public string? Title { get; set; }
 
+        // Timestamps
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
+
         // Backward compatible alias used across the UI/viewmodels
         [NotMapped]
         public string? PlannerName

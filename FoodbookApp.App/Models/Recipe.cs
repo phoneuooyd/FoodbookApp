@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -13,6 +14,10 @@ namespace Foodbook.Models
         public double Fat { get; set; }
         public double Carbs { get; set; }
         public int IloscPorcji { get; set; } = 2; 
+
+        // Timestamps
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
 
         // Folder relation
         public Guid? FolderId { get; set; }

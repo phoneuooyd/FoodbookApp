@@ -24,6 +24,7 @@ namespace Foodbook.Models
         public int Order { get; set; } = 0;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
 
         public ICollection<Folder> SubFolders { get; set; } = new Collection<Folder>();
         public ICollection<Recipe> Recipes { get; set; } = new Collection<Recipe>();

@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Foodbook.Models
@@ -19,5 +20,9 @@ namespace Foodbook.Models
 
         // Order for reordering functionality
         public int Order { get; set; } = 0;
+
+        // Timestamps
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
     }
 }

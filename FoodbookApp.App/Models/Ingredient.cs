@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -197,6 +198,10 @@ namespace Foodbook.Models
 
         public Guid? RecipeId { get; set; }
         public Recipe? Recipe { get; set; }
+
+        // Timestamps
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
 
         // Computed nutrition for the specified Quantity and Unit
         [NotMapped]
