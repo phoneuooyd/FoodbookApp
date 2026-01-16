@@ -1,6 +1,7 @@
 using Foodbook.Data;
 using Foodbook.Models;
 using Microsoft.EntityFrameworkCore;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.Services
 {
@@ -21,10 +22,20 @@ namespace Foodbook.Services
     public class FolderService : IFolderService
     {
         private readonly AppDbContext _db;
+        private readonly ISupabaseSyncService? _syncService;
 
-        public FolderService(AppDbContext db)
+        public FolderService(AppDbContext db, IServiceProvider serviceProvider)
         {
             _db = db;
+            
+            try
+            {
+                _syncService = serviceProvider.GetService(typeof(ISupabaseSyncService)) as ISupabaseSyncService;
+            }
+            catch
+            {
+                _syncService = null;
+            }
         }
 
         public async Task<List<Folder>> GetFoldersAsync(CancellationToken ct = default)
@@ -114,6 +125,20 @@ namespace Foodbook.Services
                 folder.Name = folder.Name?.Trim() ?? string.Empty;
                 _db.Folders.Update(folder);
                 await _db.SaveChangesAsync(ct);
+                
+                // Queue for sync (Update)
+                if (_syncService != null)
+                {
+                    try
+                    {
+                        await _syncService.QueueForSyncAsync(folder, SyncOperationType.Update, ct);
+                        System.Diagnostics.Debug.WriteLine($"[FolderService] Queued folder {folder.Id} for Update sync");
+                    }
+                    catch (Exception syncEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[FolderService] Failed to queue sync: {syncEx.Message}");
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -150,6 +175,21 @@ namespace Foodbook.Services
 
                 _db.Folders.Remove(folder);
                 await _db.SaveChangesAsync(ct);
+                
+                // Queue for sync (Delete)
+                if (_syncService != null)
+                {
+                    try
+                    {
+                        var deleteEntity = new Folder { Id = id, Name = folder.Name };
+                        await _syncService.QueueForSyncAsync(deleteEntity, SyncOperationType.Delete, ct);
+                        System.Diagnostics.Debug.WriteLine($"[FolderService] Queued folder {id} for Delete sync");
+                    }
+                    catch (Exception syncEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[FolderService] Failed to queue sync: {syncEx.Message}");
+                    }
+                }
             }
             catch (Exception ex)
             {

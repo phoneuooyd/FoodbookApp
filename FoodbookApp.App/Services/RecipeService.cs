@@ -11,10 +11,21 @@ namespace Foodbook.Services
     public class RecipeService : IRecipeService
     {
         private readonly AppDbContext _context;
+        private readonly ISupabaseSyncService? _syncService;
 
-        public RecipeService(AppDbContext context)
+        public RecipeService(AppDbContext context, IServiceProvider serviceProvider)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
+            
+            // Try to resolve sync service (may be null if not registered)
+            try
+            {
+                _syncService = serviceProvider.GetService(typeof(ISupabaseSyncService)) as ISupabaseSyncService;
+            }
+            catch
+            {
+                _syncService = null;
+            }
         }
 
         public async Task<List<Recipe>> GetRecipesAsync()
@@ -308,6 +319,20 @@ namespace Foodbook.Services
 
                 System.Diagnostics.Debug.WriteLine($"? Updated recipe: {recipe.Name} (Id: {recipe.Id})");
 
+                // Queue for cloud sync (Update operation)
+                if (_syncService != null)
+                {
+                    try
+                    {
+                        await _syncService.QueueForSyncAsync(recipe, SyncOperationType.Update);
+                        System.Diagnostics.Debug.WriteLine($"[RecipeService] Queued recipe {recipe.Id} for Update sync");
+                    }
+                    catch (Exception syncEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[RecipeService] Failed to queue sync: {syncEx.Message}");
+                    }
+                }
+
                 // Raise events after successful save
                 AppEvents.RaiseRecipeSaved(recipe.Id);
                 AppEvents.RaiseRecipesChanged();
@@ -335,7 +360,7 @@ namespace Foodbook.Services
         {
             if (id == Guid.Empty)
             {
-                System.Diagnostics.Debug.WriteLine("?? DeleteRecipeAsync called with Guid.Empty");
+                System.Diagnostics.Debug.WriteLine("? DeleteRecipeAsync called with Guid.Empty");
                 return;
             }
 
@@ -355,6 +380,22 @@ namespace Foodbook.Services
                     await _context.SaveChangesAsync();
 
                     System.Diagnostics.Debug.WriteLine($"? Deleted recipe: {recipe.Name}");
+
+                    // Queue for cloud sync (Delete operation)
+                    if (_syncService != null)
+                    {
+                        try
+                        {
+                            // Create minimal entity for delete operation
+                            var deleteEntity = new Recipe { Id = id, Name = recipe.Name };
+                            await _syncService.QueueForSyncAsync(deleteEntity, SyncOperationType.Delete);
+                            System.Diagnostics.Debug.WriteLine($"[RecipeService] Queued recipe {id} for Delete sync");
+                        }
+                        catch (Exception syncEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[RecipeService] Failed to queue sync: {syncEx.Message}");
+                        }
+                    }
 
                     AppEvents.RaiseRecipesChanged();
                 }

@@ -8,10 +8,20 @@ namespace Foodbook.Services;
 public class PlanService : IPlanService
 {
     private readonly AppDbContext _context;
+    private readonly ISupabaseSyncService? _syncService;
 
-    public PlanService(AppDbContext context)
+    public PlanService(AppDbContext context, IServiceProvider serviceProvider)
     {
         _context = context;
+        
+        try
+        {
+            _syncService = serviceProvider.GetService(typeof(ISupabaseSyncService)) as ISupabaseSyncService;
+        }
+        catch
+        {
+            _syncService = null;
+        }
     }
 
     public async Task<List<Plan>> GetPlansAsync()
@@ -45,6 +55,20 @@ public class PlanService : IPlanService
     {
         _context.Plans.Update(plan);
         await _context.SaveChangesAsync();
+        
+        // Queue for sync (Update)
+        if (_syncService != null)
+        {
+            try
+            {
+                await _syncService.QueueForSyncAsync(plan, SyncOperationType.Update);
+                System.Diagnostics.Debug.WriteLine($"[PlanService] Queued plan {plan.Id} for Update sync");
+            }
+            catch (Exception syncEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PlanService] Failed to queue sync: {syncEx.Message}");
+            }
+        }
     }
 
     public async Task RemovePlanAsync(Guid id)
@@ -54,6 +78,21 @@ public class PlanService : IPlanService
         {
             _context.Plans.Remove(plan);
             await _context.SaveChangesAsync();
+            
+            // Queue for sync (Delete)
+            if (_syncService != null)
+            {
+                try
+                {
+                    var deleteEntity = new Plan { Id = id, Title = plan.Title };
+                    await _syncService.QueueForSyncAsync(deleteEntity, SyncOperationType.Delete);
+                    System.Diagnostics.Debug.WriteLine($"[PlanService] Queued plan {id} for Delete sync");
+                }
+                catch (Exception syncEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[PlanService] Failed to queue sync: {syncEx.Message}");
+                }
+            }
         }
     }
 

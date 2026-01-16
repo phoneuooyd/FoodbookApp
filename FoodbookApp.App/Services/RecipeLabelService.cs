@@ -8,7 +8,21 @@ namespace Foodbook.Services
     public class RecipeLabelService : IRecipeLabelService
     {
         private readonly AppDbContext _db;
-        public RecipeLabelService(AppDbContext db) => _db = db;
+        private readonly ISupabaseSyncService? _syncService;
+        
+        public RecipeLabelService(AppDbContext db, IServiceProvider serviceProvider)
+        {
+            _db = db;
+            
+            try
+            {
+                _syncService = serviceProvider.GetService(typeof(ISupabaseSyncService)) as ISupabaseSyncService;
+            }
+            catch
+            {
+                _syncService = null;
+            }
+        }
 
         public async Task<List<RecipeLabel>> GetAllAsync(CancellationToken ct = default)
         {
@@ -37,6 +51,21 @@ namespace Foodbook.Services
             existing.Name = label.Name;
             existing.ColorHex = label.ColorHex;
             await _db.SaveChangesAsync(ct);
+            
+            // Queue for sync (Update)
+            if (_syncService != null)
+            {
+                try
+                {
+                    await _syncService.QueueForSyncAsync(existing, SyncOperationType.Update, ct);
+                    System.Diagnostics.Debug.WriteLine($"[RecipeLabelService] Queued label {existing.Id} for Update sync");
+                }
+                catch (Exception syncEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[RecipeLabelService] Failed to queue sync: {syncEx.Message}");
+                }
+            }
+            
             return existing;
         }
 
@@ -46,6 +75,22 @@ namespace Foodbook.Services
             if (existing == null) return false;
             _db.RecipeLabels.Remove(existing);
             await _db.SaveChangesAsync(ct);
+            
+            // Queue for sync (Delete)
+            if (_syncService != null)
+            {
+                try
+                {
+                    var deleteEntity = new RecipeLabel { Id = id, Name = existing.Name };
+                    await _syncService.QueueForSyncAsync(deleteEntity, SyncOperationType.Delete, ct);
+                    System.Diagnostics.Debug.WriteLine($"[RecipeLabelService] Queued label {id} for Delete sync");
+                }
+                catch (Exception syncEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[RecipeLabelService] Failed to queue sync: {syncEx.Message}");
+                }
+            }
+            
             return true;
         }
     }

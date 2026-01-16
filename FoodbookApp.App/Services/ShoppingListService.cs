@@ -8,10 +8,20 @@ namespace Foodbook.Services;
 public class ShoppingListService : IShoppingListService
 {
     private readonly AppDbContext _context;
+    private readonly ISupabaseSyncService? _syncService;
 
-    public ShoppingListService(AppDbContext context)
+    public ShoppingListService(AppDbContext context, IServiceProvider serviceProvider)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
+        
+        try
+        {
+            _syncService = serviceProvider.GetService(typeof(ISupabaseSyncService)) as ISupabaseSyncService;
+        }
+        catch
+        {
+            _syncService = null;
+        }
     }
 
     public async Task<List<Ingredient>> GetShoppingListAsync(DateTime from, DateTime to)
@@ -131,6 +141,21 @@ public class ShoppingListService : IShoppingListService
             existingItem.Quantity = quantity;
             existingItem.Order = order;
             await _context.SaveChangesAsync();
+            
+            // Queue for sync (Update)
+            if (_syncService != null)
+            {
+                try
+                {
+                    await _syncService.QueueForSyncAsync(existingItem, SyncOperationType.Update);
+                    System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Queued ShoppingListItem {existingItem.Id} for Update sync");
+                }
+                catch (Exception syncEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Failed to queue sync: {syncEx.Message}");
+                }
+            }
+            
             return existingItem.Id;
         }
 
@@ -157,6 +182,21 @@ public class ShoppingListService : IShoppingListService
         {
             _context.ShoppingListItems.Remove(existingItem);
             await _context.SaveChangesAsync();
+            
+            // Queue for sync (Delete)
+            if (_syncService != null)
+            {
+                try
+                {
+                    var deleteEntity = new ShoppingListItem { Id = existingItem.Id, IngredientName = existingItem.IngredientName };
+                    await _syncService.QueueForSyncAsync(deleteEntity, SyncOperationType.Delete);
+                    System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Queued ShoppingListItem {existingItem.Id} for Delete sync");
+                }
+                catch (Exception syncEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Failed to queue sync: {syncEx.Message}");
+                }
+            }
         }
     }
 
@@ -167,6 +207,21 @@ public class ShoppingListService : IShoppingListService
         {
             _context.ShoppingListItems.Remove(existingItem);
             await _context.SaveChangesAsync();
+            
+            // Queue for sync (Delete)
+            if (_syncService != null)
+            {
+                try
+                {
+                    var deleteEntity = new ShoppingListItem { Id = id, IngredientName = existingItem.IngredientName };
+                    await _syncService.QueueForSyncAsync(deleteEntity, SyncOperationType.Delete);
+                    System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Queued ShoppingListItem {id} for Delete sync");
+                }
+                catch (Exception syncEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Failed to queue sync: {syncEx.Message}");
+                }
+            }
         }
     }
 

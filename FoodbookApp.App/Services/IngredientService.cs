@@ -8,6 +8,7 @@ namespace Foodbook.Services;
 public class IngredientService : IIngredientService
 {
     private readonly AppDbContext _context;
+    private readonly ISupabaseSyncService? _syncService;
     
     // Shared (static) cache so different DI scopes see the same cached data
     private static List<Ingredient>? _cachedIngredientsStatic;
@@ -15,13 +16,22 @@ public class IngredientService : IIngredientService
     private static readonly TimeSpan _cacheValidityStatic = TimeSpan.FromMinutes(10);
     private static readonly object _cacheLock = new();
     
-    // ? NOWA OPTYMALIZACJA: Lightweight cache tylko z nazwami
     private static List<string>? _cachedIngredientNamesStatic;
     private static DateTime _lastNamesCacheTimeStatic = DateTime.MinValue;
     
-    public IngredientService(AppDbContext context)
+    public IngredientService(AppDbContext context, IServiceProvider serviceProvider)
     {
         _context = context;
+        
+        // Try to resolve sync service
+        try
+        {
+            _syncService = serviceProvider.GetService(typeof(ISupabaseSyncService)) as ISupabaseSyncService;
+        }
+        catch
+        {
+            _syncService = null;
+        }
     }
 
     // Getter uses shared static cache with lock for thread-safety
@@ -168,6 +178,20 @@ public class IngredientService : IIngredientService
                 {
                     InvalidateCache();
                     System.Diagnostics.Debug.WriteLine($"? Updated standalone ingredient: {ingredient.Name}, ID: {ingredient.Id}");
+                    
+                    // Queue for cloud sync (Update operation)
+                    if (_syncService != null)
+                    {
+                        try
+                        {
+                            await _syncService.QueueForSyncAsync(ingredient, SyncOperationType.Update);
+                            System.Diagnostics.Debug.WriteLine($"[IngredientService] Queued ingredient {ingredient.Id} for Update sync");
+                        }
+                        catch (Exception syncEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[IngredientService] Failed to queue sync: {syncEx.Message}");
+                        }
+                    }
                 }
                 else
                 {
@@ -176,7 +200,7 @@ public class IngredientService : IIngredientService
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"?? Ingredient with ID {ingredient.Id} not found for update");
+                System.Diagnostics.Debug.WriteLine($"? Ingredient with ID {ingredient.Id} not found for update");
             }
         }
         catch (Exception ex)
@@ -202,6 +226,21 @@ public class IngredientService : IIngredientService
                 {
                     InvalidateCache();
                     System.Diagnostics.Debug.WriteLine($"? Deleted standalone ingredient ID: {id}");
+                    
+                    // Queue for cloud sync (Delete operation)
+                    if (_syncService != null)
+                    {
+                        try
+                        {
+                            var deleteEntity = new Ingredient { Id = id, Name = ingredient.Name };
+                            await _syncService.QueueForSyncAsync(deleteEntity, SyncOperationType.Delete);
+                            System.Diagnostics.Debug.WriteLine($"[IngredientService] Queued ingredient {id} for Delete sync");
+                        }
+                        catch (Exception syncEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[IngredientService] Failed to queue sync: {syncEx.Message}");
+                        }
+                    }
                 }
                 else
                 {
@@ -225,6 +264,21 @@ public class IngredientService : IIngredientService
                     if (wasStandalone)
                     {
                         InvalidateCache();
+                        
+                        // Queue for cloud sync (Delete operation) in fallback
+                        if (_syncService != null)
+                        {
+                            try
+                            {
+                                var deleteEntity = new Ingredient { Id = id, Name = ing.Name };
+                                await _syncService.QueueForSyncAsync(deleteEntity, SyncOperationType.Delete);
+                                System.Diagnostics.Debug.WriteLine($"[IngredientService] Queued ingredient {id} for Delete sync (fallback)");
+                            }
+                            catch (Exception syncEx)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[IngredientService] Failed to queue sync (fallback): {syncEx.Message}");
+                            }
+                        }
                     }
                     System.Diagnostics.Debug.WriteLine($"? Deleted ingredient ID: {id} (fallback method)");
                 }
@@ -245,10 +299,9 @@ public class IngredientService : IIngredientService
             _cachedIngredientsStatic = null;
             _lastCacheTimeStatic = DateTime.MinValue;
             
-            // ? OPTYMALIZACJA: Inwaliduj te¿ cache nazw
             _cachedIngredientNamesStatic = null;
             _lastNamesCacheTimeStatic = DateTime.MinValue;
         }
-        System.Diagnostics.Debug.WriteLine("?? Ingredients cache invalidated (shared + names)");
+        System.Diagnostics.Debug.WriteLine("? Ingredients cache invalidated (shared + names)");
     }
 }
