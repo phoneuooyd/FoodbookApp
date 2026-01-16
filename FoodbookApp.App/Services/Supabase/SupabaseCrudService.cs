@@ -548,12 +548,14 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
     public async Task<List<Recipe>> AddRecipesBatchAsync(IEnumerable<Recipe> recipes, CancellationToken ct = default)
     {
         var ownerId = await GetCurrentUserIdAsync();
+        var now = DateTime.UtcNow;
         var dtos = recipes.Select(r =>
         {
             if (r.Id == Guid.Empty) r.Id = Guid.NewGuid();
             var dto = ToDto(r);
             dto.OwnerId = ownerId;
-            dto.CreatedAt = DateTime.UtcNow;
+            dto.CreatedAt ??= now;
+            dto.UpdatedAt ??= dto.CreatedAt;
             return dto;
         }).ToList();
 
@@ -564,12 +566,14 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
     public async Task<List<Ingredient>> AddIngredientsBatchAsync(IEnumerable<Ingredient> ingredients, CancellationToken ct = default)
     {
         var ownerId = await GetCurrentUserIdAsync();
+        var now = DateTime.UtcNow;
         var dtos = ingredients.Select(i =>
         {
             if (i.Id == Guid.Empty) i.Id = Guid.NewGuid();
             var dto = ToDto(i);
             dto.OwnerId = ownerId;
-            dto.CreatedAt = DateTime.UtcNow;
+            dto.CreatedAt ??= now;
+            dto.UpdatedAt ??= dto.CreatedAt;
             return dto;
         }).ToList();
 
@@ -580,12 +584,14 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
     public async Task<List<PlannedMeal>> AddPlannedMealsBatchAsync(IEnumerable<PlannedMeal> meals, CancellationToken ct = default)
     {
         var ownerId = await GetCurrentUserIdAsync();
+        var now = DateTime.UtcNow;
         var dtos = meals.Select(pm =>
         {
             if (pm.Id == Guid.Empty) pm.Id = Guid.NewGuid();
             var dto = ToDto(pm);
             dto.OwnerId = ownerId;
-            dto.CreatedAt = DateTime.UtcNow;
+            dto.CreatedAt ??= now;
+            dto.UpdatedAt ??= dto.CreatedAt;
             return dto;
         }).ToList();
 
@@ -596,12 +602,14 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
     public async Task<List<ShoppingListItem>> AddShoppingListItemsBatchAsync(IEnumerable<ShoppingListItem> items, CancellationToken ct = default)
     {
         var ownerId = await GetCurrentUserIdAsync();
+        var now = DateTime.UtcNow;
         var dtos = items.Select(s =>
         {
             if (s.Id == Guid.Empty) s.Id = Guid.NewGuid();
             var dto = ToDto(s);
             dto.OwnerId = ownerId;
-            dto.CreatedAt = DateTime.UtcNow;
+            dto.CreatedAt ??= now;
+            dto.UpdatedAt ??= dto.CreatedAt;
             return dto;
         }).ToList();
 
@@ -612,11 +620,15 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
     public async Task<List<Recipe>> UpsertRecipesAsync(IEnumerable<Recipe> recipes, CancellationToken ct = default)
     {
         var ownerId = await GetCurrentUserIdAsync();
+        var now = DateTime.UtcNow;
         var dtos = recipes.Select(r =>
         {
             if (r.Id == Guid.Empty) r.Id = Guid.NewGuid();
             var dto = ToDto(r);
             dto.OwnerId = ownerId;
+            // Upsert is used for inserts and updates; ensure timestamps are present.
+            dto.CreatedAt ??= now;
+            dto.UpdatedAt ??= now;
             return dto;
         }).ToList();
 
@@ -627,11 +639,14 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
     public async Task<List<Ingredient>> UpsertIngredientsAsync(IEnumerable<Ingredient> ingredients, CancellationToken ct = default)
     {
         var ownerId = await GetCurrentUserIdAsync();
+        var now = DateTime.UtcNow;
         var dtos = ingredients.Select(i =>
         {
             if (i.Id == Guid.Empty) i.Id = Guid.NewGuid();
             var dto = ToDto(i);
             dto.OwnerId = ownerId;
+            dto.CreatedAt ??= now;
+            dto.UpdatedAt ??= now;
             return dto;
         }).ToList();
 
@@ -682,7 +697,8 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         Description = r.Description,
         ParentFolderId = r.ParentFolderId,
         Order = r.Order,
-        CreatedAt = r.CreatedAt ?? DateTime.UtcNow
+        CreatedAt = r.CreatedAt ?? DateTime.UtcNow,
+        UpdatedAt = r.UpdatedAt
     };
 
     private static FolderDto ToDto(Folder f) => new()
@@ -691,7 +707,9 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         Name = f.Name,
         Description = f.Description,
         ParentFolderId = f.ParentFolderId,
-        Order = f.Order
+        Order = f.Order,
+        CreatedAt = f.CreatedAt,
+        UpdatedAt = f.UpdatedAt
     };
 
     private async Task<FolderDto> ToDtoWithOwnerAsync(Folder f)
@@ -699,6 +717,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         var dto = ToDto(f);
         dto.OwnerId = await GetCurrentUserIdAsync();
         dto.CreatedAt ??= DateTime.UtcNow;
+        dto.UpdatedAt ??= dto.CreatedAt;
         return dto;
     }
 
@@ -712,7 +731,9 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         Fat = r.Fat ?? 0,
         Carbs = r.Carbs ?? 0,
         IloscPorcji = r.Portions ?? 2,
-        FolderId = r.FolderId
+        FolderId = r.FolderId,
+        CreatedAt = r.CreatedAt ?? DateTime.UtcNow,
+        UpdatedAt = r.UpdatedAt
     };
 
     private static RecipeDto ToDto(Recipe r) => new()
@@ -725,7 +746,9 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         Fat = r.Fat,
         Carbs = r.Carbs,
         Portions = r.IloscPorcji,
-        FolderId = r.FolderId
+        FolderId = r.FolderId,
+        CreatedAt = r.CreatedAt,
+        UpdatedAt = r.UpdatedAt
     };
 
     private async Task<RecipeDto> ToDtoWithOwnerAsync(Recipe r)
@@ -733,6 +756,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         var dto = ToDto(r);
         dto.OwnerId = await GetCurrentUserIdAsync();
         dto.CreatedAt ??= DateTime.UtcNow;
+        dto.UpdatedAt ??= dto.CreatedAt;
         return dto;
     }
 
@@ -747,7 +771,9 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         Protein = r.Protein ?? 0,
         Fat = r.Fat ?? 0,
         Carbs = r.Carbs ?? 0,
-        RecipeId = r.RecipeId
+        RecipeId = r.RecipeId,
+        CreatedAt = r.CreatedAt ?? DateTime.UtcNow,
+        UpdatedAt = r.UpdatedAt
     };
 
     private static IngredientDto ToDto(Ingredient i) => new()
@@ -761,7 +787,9 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         Protein = i.Protein,
         Fat = i.Fat,
         Carbs = i.Carbs,
-        RecipeId = i.RecipeId
+        RecipeId = i.RecipeId,
+        CreatedAt = i.CreatedAt,
+        UpdatedAt = i.UpdatedAt
     };
 
     private async Task<IngredientDto> ToDtoWithOwnerAsync(Ingredient i)
@@ -769,6 +797,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         var dto = ToDto(i);
         dto.OwnerId = await GetCurrentUserIdAsync();
         dto.CreatedAt ??= DateTime.UtcNow;
+        dto.UpdatedAt ??= dto.CreatedAt;
         return dto;
     }
 
@@ -780,7 +809,9 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         IsArchived = r.IsArchived ?? false,
         Type = (PlanType)(r.Type ?? 0),
         LinkedShoppingListPlanId = r.LinkedShoppingListPlanId,
-        Title = r.PlannerName
+        Title = r.PlannerName,
+        CreatedAt = r.CreatedAt ?? DateTime.UtcNow,
+        UpdatedAt = r.UpdatedAt
     };
 
     private static PlanDto ToDto(Plan p) => new()
@@ -791,7 +822,9 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         IsArchived = p.IsArchived,
         Type = (int)p.Type,
         PlannerName = p.Title,
-        LinkedShoppingListPlanId = p.LinkedShoppingListPlanId
+        LinkedShoppingListPlanId = p.LinkedShoppingListPlanId,
+        CreatedAt = p.CreatedAt,
+        UpdatedAt = p.UpdatedAt
     };
 
     private async Task<PlanDto> ToDtoWithOwnerAsync(Plan p)
@@ -799,6 +832,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         var dto = ToDto(p);
         dto.OwnerId = await GetCurrentUserIdAsync();
         dto.CreatedAt ??= DateTime.UtcNow;
+        dto.UpdatedAt ??= dto.CreatedAt;
         return dto;
     }
 
@@ -808,7 +842,9 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         RecipeId = r.RecipeId ?? Guid.Empty,
         PlanId = r.PlanId,
         Date = r.Date ?? DateTime.MinValue,
-        Portions = r.Portions ?? 1
+        Portions = r.Portions ?? 1,
+        CreatedAt = r.CreatedAt ?? DateTime.UtcNow,
+        UpdatedAt = r.UpdatedAt
     };
 
     private static PlannedMealDto ToDto(PlannedMeal pm) => new()
@@ -817,7 +853,9 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         RecipeId = pm.RecipeId,
         PlanId = pm.PlanId,
         Date = pm.Date,
-        Portions = pm.Portions
+        Portions = pm.Portions,
+        CreatedAt = pm.CreatedAt,
+        UpdatedAt = pm.UpdatedAt
     };
 
     private async Task<PlannedMealDto> ToDtoWithOwnerAsync(PlannedMeal pm)
@@ -825,6 +863,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         var dto = ToDto(pm);
         dto.OwnerId = await GetCurrentUserIdAsync();
         dto.CreatedAt ??= DateTime.UtcNow;
+        dto.UpdatedAt ??= dto.CreatedAt;
         return dto;
     }
 
@@ -836,7 +875,9 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         Unit = (Unit)(r.Unit ?? 0),
         IsChecked = r.IsChecked ?? false,
         Quantity = r.Quantity ?? 0,
-        Order = r.Order ?? 0
+        Order = r.Order ?? 0,
+        CreatedAt = r.CreatedAt ?? DateTime.UtcNow,
+        UpdatedAt = r.UpdatedAt
     };
 
     private static ShoppingListItemDto ToDto(ShoppingListItem s) => new()
@@ -847,7 +888,9 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         Unit = (int)s.Unit,
         IsChecked = s.IsChecked,
         Quantity = s.Quantity,
-        Order = s.Order
+        Order = s.Order,
+        CreatedAt = s.CreatedAt,
+        UpdatedAt = s.UpdatedAt
     };
 
     private async Task<ShoppingListItemDto> ToDtoWithOwnerAsync(ShoppingListItem s)
@@ -855,6 +898,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         var dto = ToDto(s);
         dto.OwnerId = await GetCurrentUserIdAsync();
         dto.CreatedAt ??= DateTime.UtcNow;
+        dto.UpdatedAt ??= dto.CreatedAt;
         return dto;
     }
 
@@ -863,14 +907,17 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         Id = r.Id ?? Guid.Empty,
         Name = (r.Name ?? string.Empty).Trim(),
         ColorHex = r.ColorHex,
-        CreatedAt = r.CreatedAt ?? DateTime.UtcNow
+        CreatedAt = r.CreatedAt ?? DateTime.UtcNow,
+        UpdatedAt = r.UpdatedAt
     };
 
     private static RecipeLabelDto ToDto(RecipeLabel l) => new()
     {
         Id = l.Id,
         Name = l.Name,
-        ColorHex = l.ColorHex
+        ColorHex = l.ColorHex,
+        CreatedAt = l.CreatedAt,
+        UpdatedAt = l.UpdatedAt
     };
 
     private async Task<RecipeLabelDto> ToDtoWithOwnerAsync(RecipeLabel l)
@@ -878,6 +925,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         var dto = ToDto(l);
         dto.OwnerId = await GetCurrentUserIdAsync();
         dto.CreatedAt ??= DateTime.UtcNow;
+        dto.UpdatedAt ??= dto.CreatedAt;
         return dto;
     }
 
