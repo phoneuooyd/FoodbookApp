@@ -15,6 +15,7 @@ using Foodbook.Data;
 using Foodbook.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
+using Foodbook.Services.Archive;
 
 namespace Foodbook.Views
 {
@@ -834,6 +835,18 @@ namespace Foodbook.Views
                     throw new FileNotFoundException("Brak pliku bazy w archiwum", srcDb);
                 }
                 Log($"Source database found: {srcDb}");
+
+                // Ensure compatibility: add missing timestamp columns and defaults for older archives
+                try
+                {
+                    Log("Ensuring timestamp columns exist in source DB for backward compatibility...");
+                    ArchiveCompatibilityHelper.EnsureTimestampColumnsExist(srcDb, Log);
+                    Log("Timestamp compatibility fixes applied (if needed)");
+                }
+                catch (Exception exCompat)
+                {
+                    Log($"WARNING: Compatibility helper failed: {exCompat.Message}");
+                }
 
                 // 3. Backup current database
                 var destDb = Path.Combine(FileSystem.AppDataDirectory, "foodbookapp.db");
