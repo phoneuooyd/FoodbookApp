@@ -5,6 +5,9 @@ using Foodbook.Models;
 using FoodbookApp.Interfaces;
 using FoodbookApp.Services.Auth;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace FoodbookApp.Services.Supabase;
 
@@ -333,6 +336,62 @@ public sealed class DeduplicationService : IDeduplicationService
             && Math.Abs(localProt - cloudProt) < tolerance
             && Math.Abs(localFat - cloudFat) < tolerance
             && Math.Abs(localCarbs - cloudCarbs) < tolerance;
+    }
+
+    /// ------------------------------------------------------------------
+    /// Timestamp comparison helpers for deduplication logic
+    /// Use these helpers inside ProcessIngredientEntriesAsync / ProcessRecipeEntriesAsync
+    /// to decide whether to push local -> cloud or pull cloud -> local.
+    /// Priority: compare UpdatedAt first; if missing, fall back to CreatedAt.
+    /// If local timestamp is later -> push local to Supabase.
+    /// If cloud timestamp is later -> fetch from Supabase and replace local.
+    /// ------------------------------------------------------------------
+
+    /// <summary>
+    /// Compare timestamps and decide which side is newer.
+    /// Returns: 1 if local is newer, -1 if cloud is newer, 0 if equal/unknown.
+    /// </summary>
+    private static int CompareByTimestamps(DateTime? localUpdated, DateTime? localCreated, DateTime? cloudUpdated, DateTime? cloudCreated)
+    {
+        // Prefer UpdatedAt when available, otherwise CreatedAt
+        DateTime? localKey = localUpdated ?? localCreated;
+        DateTime? cloudKey = cloudUpdated ?? cloudCreated;
+
+        if (localKey == null && cloudKey == null) return 0;
+        if (localKey == null) return -1; // cloud wins
+        if (cloudKey == null) return 1;  // local wins
+
+        // Normalize to UTC for comparison
+        var localUtc = DateTime.SpecifyKind(localKey.Value, DateTimeKind.Utc).ToUniversalTime();
+        var cloudUtc = DateTime.SpecifyKind(cloudKey.Value, DateTimeKind.Utc).ToUniversalTime();
+
+        var cmp = DateTime.Compare(localUtc, cloudUtc);
+        if (cmp > 0) return 1;
+        if (cmp < 0) return -1;
+        return 0;
+    }
+
+    /// <summary>
+    /// Small helper to decide action for a single sync entry.
+    /// Call with the entity timestamps and two actions: pushLocalAsync and pullCloudAsync.
+    /// </summary>
+    private static async Task ResolveByTimestampsAsync(DateTime? localUpdated, DateTime? localCreated, DateTime? cloudUpdated, DateTime? cloudCreated, Func<Task> pushLocalAsync, Func<Task> pullCloudAsync)
+    {
+        var cmp = CompareByTimestamps(localUpdated, localCreated, cloudUpdated, cloudCreated);
+        if (cmp > 0)
+        {
+            // Local is newer -> push local to cloud
+            if (pushLocalAsync != null) await pushLocalAsync().ConfigureAwait(false);
+        }
+        else if (cmp < 0)
+        {
+            // Cloud is newer -> pull cloud and replace local
+            if (pullCloudAsync != null) await pullCloudAsync().ConfigureAwait(false);
+        }
+        else
+        {
+            // equal or unknown -> no action (or fall back to other heuristics)
+        }
     }
 
     public void ClearCache()
