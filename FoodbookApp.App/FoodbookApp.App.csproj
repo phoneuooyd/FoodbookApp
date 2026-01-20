@@ -170,6 +170,11 @@
 	</ItemGroup>
 
         <ItemGroup>
+          <Compile Update="Localization\ProfilePageResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>ProfilePageResources.resx</DependentUpon>
+          </Compile>
           <Compile Update="Localization\\ButtonResources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
@@ -204,6 +209,10 @@
         </ItemGroup>
 
         <ItemGroup>
+          <EmbeddedResource Update="Localization\ProfilePageResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>ProfilePageResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
           <EmbeddedResource Update="Localization\\DataArchivizationPageResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>DataArchivizationPageResources.Designer.cs</LastGenOutput>

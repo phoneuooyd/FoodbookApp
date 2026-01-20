@@ -76,6 +76,16 @@ public partial class ProfilePage : ContentPage
         }
     }
 
+    private string GetLocalizedText(string resource, string key, string defaultText)
+    {
+        try
+        {
+            var loc = FoodbookApp.MauiProgram.ServiceProvider?.GetService(typeof(ILocalizationService)) as ILocalizationService;
+            return loc?.GetString(resource, key) ?? defaultText;
+        }
+        catch { return defaultText; }
+    }
+
     private async void OnProfileFetchJwtClicked(object sender, EventArgs e)
     {
         System.Diagnostics.Debug.WriteLine("[ProfilePage] Login button clicked");
@@ -85,7 +95,11 @@ public partial class ProfilePage : ContentPage
             var auth = GetSupabaseAuth();
             if (auth == null)
             {
-                await DisplayAlert("Profil", "Brak ISupabaseAuthService w DI.", "OK");
+                await DisplayAlert(
+                    GetLocalizedText("ProfilePageResources", "ServiceMissingTitle", "Service unavailable"),
+                    GetLocalizedText("ProfilePageResources", "ServiceMissingMessage", "Authentication service not found."),
+                    GetLocalizedText("ProfilePageResources", "OK", "OK")
+                );
                 return;
             }
 
@@ -94,24 +108,36 @@ public partial class ProfilePage : ContentPage
 
             if (string.IsNullOrWhiteSpace(email))
             {
-                await DisplayAlert("Logowanie", "Email nie moze byc pusty.", "OK");
+                await DisplayAlert(
+                    GetLocalizedText("ProfilePageResources", "LoginTitle", "Login"),
+                    GetLocalizedText("ProfilePageResources", "EmailRequired", "Email cannot be empty."),
+                    GetLocalizedText("ProfilePageResources", "OK", "OK")
+                );
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(password))
             {
-                await DisplayAlert("Logowanie", "Haslo nie moze byc puste.", "OK");
+                await DisplayAlert(
+                    GetLocalizedText("ProfilePageResources", "LoginTitle", "Login"),
+                    GetLocalizedText("ProfilePageResources", "PasswordRequired", "Password cannot be empty."),
+                    GetLocalizedText("ProfilePageResources", "OK", "OK")
+                );
                 return;
             }
 
-            StatusLabel.Text = "Trwa logowanie...";
+            StatusLabel.Text = GetLocalizedText("ProfilePageResources", "LoggingIn", "Signing in...");
 
             var session = await auth.SignInAsync(email, password);
 
             if (session == null || string.IsNullOrWhiteSpace(session.AccessToken))
             {
                 StatusLabel.Text = string.Empty;
-                await DisplayAlert("Blad logowania", "Nie udalo sie zalogowac. Sprawdz dane logowania.", "OK");
+                await DisplayAlert(
+                    GetLocalizedText("ProfilePageResources", "LoginErrorTitle", "Login Error"),
+                    GetLocalizedText("ProfilePageResources", "LoginErrorMessage", "Login failed. Please check your credentials."),
+                    GetLocalizedText("ProfilePageResources", "OK", "OK")
+                );
                 return;
             }
 
@@ -131,7 +157,11 @@ public partial class ProfilePage : ContentPage
             StatusLabel.Text = string.Empty;
 
             var msg = ex.InnerException?.Message is { Length: > 0 } inner ? inner : ex.Message;
-            await DisplayAlert("Blad", msg, "OK");
+            await DisplayAlert(
+                GetLocalizedText("ProfilePageResources", "GenericErrorTitle", "Error"),
+                msg,
+                GetLocalizedText("ProfilePageResources", "OK", "OK")
+            );
         }
     }
 
@@ -168,7 +198,11 @@ public partial class ProfilePage : ContentPage
         {
             System.Diagnostics.Debug.WriteLine($"[ProfilePage] Register popup error: {ex}");
             var msg = ex.InnerException?.Message is { Length: > 0 } inner ? inner : ex.Message;
-            await DisplayAlert("Blad", msg, "OK");
+            await DisplayAlert(
+                GetLocalizedText("ProfilePageResources", "GenericErrorTitle", "Error"),
+                msg,
+                GetLocalizedText("ProfilePageResources", "OK", "OK")
+            );
         }
     }
 
@@ -179,23 +213,27 @@ public partial class ProfilePage : ContentPage
             var syncService = GetSyncService();
             if (syncService == null)
             {
-                await DisplayAlert("Sync Error", "Sync service not available", "OK");
+                await DisplayAlert(
+                    GetLocalizedText("ProfilePageResources", "SyncErrorTitle", "Sync Error"),
+                    GetLocalizedText("ProfilePageResources", "SyncServiceUnavailable", "Sync service not available"),
+                    GetLocalizedText("ProfilePageResources", "OK", "OK")
+                );
                 CloudSyncCheckBox.IsChecked = !e.Value;
                 return;
             }
 
             SyncStatusLabel.IsVisible = true;
-            SyncStatusLabel.Text = e.Value ? "Enabling sync..." : "Disabling sync...";
+            SyncStatusLabel.Text = e.Value ? GetLocalizedText("ProfilePageResources", "EnablingSync", "Enabling sync...") : GetLocalizedText("ProfilePageResources", "DisablingSync", "Disabling sync...");
 
             if (e.Value)
             {
                 await syncService.EnableCloudSyncAsync();
-                SyncStatusLabel.Text = "Cloud sync enabled. Syncing data...";
+                SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncEnabled", "Cloud sync enabled. Syncing data...");
             }
             else
             {
                 await syncService.DisableCloudSyncAsync();
-                SyncStatusLabel.Text = "Cloud sync disabled";
+                SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncDisabled", "Cloud sync disabled");
             }
 
             await Task.Delay(2000);
@@ -204,7 +242,11 @@ public partial class ProfilePage : ContentPage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ProfilePage] Sync toggle error: {ex.Message}");
-            await DisplayAlert("Sync Error", ex.Message, "OK");
+            await DisplayAlert(
+                GetLocalizedText("ProfilePageResources", "SyncErrorTitle", "Sync Error"),
+                ex.Message,
+                GetLocalizedText("ProfilePageResources", "OK", "OK")
+            );
             CloudSyncCheckBox.IsChecked = !e.Value;
             SyncStatusLabel.IsVisible = false;
         }
@@ -215,12 +257,16 @@ public partial class ProfilePage : ContentPage
         var sync = GetSyncService();
         if (sync == null)
         {
-            await DisplayAlert("Sync Error", "Sync service not available", "OK");
+            await DisplayAlert(
+                GetLocalizedText("ProfilePageResources", "SyncErrorTitle", "Sync Error"),
+                GetLocalizedText("ProfilePageResources", "SyncServiceUnavailable", "Sync service not available"),
+                GetLocalizedText("ProfilePageResources", "OK", "OK")
+            );
             return;
         }
 
         SyncStatusLabel.IsVisible = true;
-        SyncStatusLabel.Text = "Forcing sync of ALL items...";
+        SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "ForcingSync", "Forcing sync of ALL items...");
 
         try
         {
@@ -234,12 +280,20 @@ public partial class ProfilePage : ContentPage
             if (!string.IsNullOrEmpty(result.ErrorMessage)) 
                 sb.AppendLine($"Error: {result.ErrorMessage}");
 
-            await DisplayAlert("Force sync completed", sb.ToString(), "OK");
+            await DisplayAlert(
+                GetLocalizedText("ProfilePageResources", "ForceSyncCompletedTitle", "Force sync completed"),
+                sb.ToString(),
+                GetLocalizedText("ProfilePageResources", "OK", "OK")
+            );
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ProfilePage] ForceSync error: {ex}");
-            await DisplayAlert("Force sync error", ex.Message, "OK");
+            await DisplayAlert(
+                GetLocalizedText("ProfilePageResources", "ForceSyncErrorTitle", "Force sync error"),
+                ex.Message,
+                GetLocalizedText("ProfilePageResources", "OK", "OK")
+            );
         }
         finally
         {
@@ -274,7 +328,11 @@ public partial class ProfilePage : ContentPage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ProfilePage] Logout error: {ex.Message}");
-            await DisplayAlert("Logout Error", ex.Message, "OK");
+            await DisplayAlert(
+                GetLocalizedText("ProfilePageResources", "LogoutErrorTitle", "Logout Error"),
+                ex.Message,
+                GetLocalizedText("ProfilePageResources", "OK", "OK")
+            );
         }
     }
 }

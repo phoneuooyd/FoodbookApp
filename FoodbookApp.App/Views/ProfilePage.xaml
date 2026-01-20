@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:FoodbookApp.Localization"
              x:Class="Foodbook.Views.ProfilePage"
-             Title="Profil"
+             Title="{x:Static loc:ProfilePageResources.Title}"
              BackgroundColor="{DynamicResource PageBackgroundColor}">
 
     <ScrollView>
@@ -15,12 +16,12 @@
                     BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
                     Padding="16">
                 <VerticalStackLayout Spacing="6">
-                    <Label Text="?? Profil"
+                    <Label Text="{x:Static loc:ProfilePageResources.HeaderTitle}"
                            FontSize="22"
                            FontAttributes="Bold"
                            TextColor="{DynamicResource Primary}"
                            HorizontalOptions="Center" />
-                    <Label Text="Logowanie do Supabase"
+                    <Label Text="{x:Static loc:ProfilePageResources.HeaderSubtitle}"
                            FontSize="12"
                            TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}"
                            HorizontalOptions="Center" />
@@ -35,24 +36,24 @@
                     BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
                     Padding="16">
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="Zaloguj si " FontAttributes="Bold" FontSize="18" TextColor="{DynamicResource Primary}" />
+                    <Label Text="{x:Static loc:ProfilePageResources.LoginPanelTitle}" FontAttributes="Bold" FontSize="18" TextColor="{DynamicResource Primary}" />
 
                     <VerticalStackLayout Spacing="6">
-                        <Label Text="Email" FontSize="12" FontAttributes="Bold" />
+                        <Label Text="{x:Static loc:ProfilePageResources.EmailLabel}" FontSize="12" FontAttributes="Bold" />
                         <Border Style="{StaticResource ModernBorder}">
                             <Entry x:Name="EmailEntry"
                                    Style="{StaticResource ModernEntry}"
-                                   Placeholder="name@example.com"
+                                   Placeholder="{x:Static loc:ProfilePageResources.EmailPlaceholder}"
                                    Keyboard="Email" />
                         </Border>
                     </VerticalStackLayout>
 
                     <VerticalStackLayout Spacing="6">
-                        <Label Text="Has o" FontSize="12" FontAttributes="Bold" />
+                        <Label Text="{x:Static loc:ProfilePageResources.PasswordLabel}" FontSize="12" FontAttributes="Bold" />
                         <Border Style="{StaticResource ModernBorder}">
                             <Entry x:Name="PasswordEntry"
                                    Style="{StaticResource ModernEntry}"
-                                   Placeholder="        "
+                                   Placeholder="{x:Static loc:ProfilePageResources.PasswordPlaceholder}"
                                    IsPassword="True" />
                         </Border>
                     </VerticalStackLayout>
@@ -61,11 +62,11 @@
                            FontSize="12"
                            TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
 
-                    <Button Text="Zaloguj"
+                    <Button Text="{x:Static loc:ProfilePageResources.LoginButton}"
                             StyleClass="Primary"
                             Clicked="OnProfileFetchJwtClicked" />
 
-                    <Button Text="Zarejestruj si"
+                    <Button Text="{x:Static loc:ProfilePageResources.RegisterButton}"
                             StyleClass="Secondary"
                             Clicked="OnRegisterClicked" />
                 </VerticalStackLayout>
@@ -80,7 +81,7 @@
                     BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
                     Padding="16">
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="Jestes zalogowany"
+                    <Label Text="{x:Static loc:ProfilePageResources.LoggedInTitle}"
                            FontAttributes="Bold"
                            FontSize="18"
                            TextColor="{DynamicResource Primary}"
@@ -99,7 +100,7 @@
                             Padding="12"
                             Margin="0,8,0,0">
                         <VerticalStackLayout Spacing="8">
-                            <Label Text="Cloud Synchronization"
+                            <Label Text="{x:Static loc:ProfilePageResources.CloudSyncHeader}"
                                    FontSize="14"
                                    FontAttributes="Bold"
                                    TextColor="{DynamicResource Primary}" />
@@ -109,7 +110,7 @@
                                           IsChecked="False"
                                           Color="{DynamicResource Primary}"
                                           CheckedChanged="OnCloudSyncToggled" />
-                                <Label Text="Enable cloud data sync"
+                                <Label Text="{x:Static loc:ProfilePageResources.EnableCloudSync}"
                                        FontSize="14"
                                        VerticalOptions="Center"
                                        TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray200}}" />
@@ -122,14 +123,14 @@
 
                             <!-- Force Sync button -->
                             <Button x:Name="ForceSyncButton"
-                                    Text="Force sync now"
+                                    Text="{x:Static loc:ProfilePageResources.ForceSyncButton}"
                                     StyleClass="Primary"
                                     Clicked="OnForceSyncClicked" />
 
                         </VerticalStackLayout>
                     </Border>
 
-                    <Button Text="Wyloguj"
+                    <Button Text="{x:Static loc:ProfilePageResources.LogoutButton}"
                             StyleClass="Secondary"
                             Clicked="OnLogoutClicked" />
                 </VerticalStackLayout>

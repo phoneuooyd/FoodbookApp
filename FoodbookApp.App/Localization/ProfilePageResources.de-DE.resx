@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="Title" xml:space="preserve"><value>Profil</value></data>
+  <data name="HeaderTitle" xml:space="preserve"><value>Profil</value></data>
+  <data name="HeaderSubtitle" xml:space="preserve"><value>Melden Sie sich bei Supabase an</value></data>
+
+  <data name="LoginPanelTitle" xml:space="preserve"><value>Anmelden</value></data>
+  <data name="EmailLabel" xml:space="preserve"><value>E-Mail</value></data>
+  <data name="EmailPlaceholder" xml:space="preserve"><value>name@beispiel.com</value></data>
+  <data name="PasswordLabel" xml:space="preserve"><value>Passwort</value></data>
+  <data name="PasswordPlaceholder" xml:space="preserve"><value>Passwort eingeben</value></data>
+  <data name="LoginButton" xml:space="preserve"><value>Anmelden</value></data>
+  <data name="RegisterButton" xml:space="preserve"><value>Registrieren</value></data>
+
+  <data name="LoggedInTitle" xml:space="preserve"><value>Sie sind angemeldet</value></data>
+  <data name="CloudSyncHeader" xml:space="preserve"><value>Cloud-Synchronisierung</value></data>
+  <data name="EnableCloudSync" xml:space="preserve"><value>Cloud-Datensynchronisierung aktivieren</value></data>
+  <data name="ForceSyncButton" xml:space="preserve"><value>Synchronisierung erzwingen</value></data>
+  <data name="LogoutButton" xml:space="preserve"><value>Abmelden</value></data>
+
+  <data name="ServiceMissingTitle" xml:space="preserve"><value>Dienst nicht verfügbar</value></data>
+  <data name="ServiceMissingMessage" xml:space="preserve"><value>Authentifizierungsdienst nicht gefunden.</value></data>
+  <data name="OK" xml:space="preserve"><value>OK</value></data>
+
+  <data name="EmailRequired" xml:space="preserve"><value>E-Mail darf nicht leer sein.</value></data>
+  <data name="PasswordRequired" xml:space="preserve"><value>Passwort darf nicht leer sein.</value></data>
+  <data name="LoggingIn" xml:space="preserve"><value>Anmeldung läuft...</value></data>
+  <data name="LoginErrorTitle" xml:space="preserve"><value>Anmeldefehler</value></data>
+  <data name="LoginErrorMessage" xml:space="preserve"><value>Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Zugangsdaten.</value></data>
+
+  <data name="SyncErrorTitle" xml:space="preserve"><value>Synchronisierungsfehler</value></data>
+  <data name="SyncServiceUnavailable" xml:space="preserve"><value>Synchronisierungsdienst nicht verfügbar</value></data>
+  <data name="EnablingSync" xml:space="preserve"><value>Synchronisierung wird aktiviert...</value></data>
+  <data name="DisablingSync" xml:space="preserve"><value>Synchronisierung wird deaktiviert...</value></data>
+  <data name="SyncEnabled" xml:space="preserve"><value>Cloud-Synchronisierung aktiviert. Daten werden synchronisiert...</value></data>
+  <data name="SyncDisabled" xml:space="preserve"><value>Cloud-Synchronisierung deaktiviert</value></data>
+  <data name="ForcingSync" xml:space="preserve"><value>Synchronisierung aller Elemente wird erzwungen...</value></data>
+  <data name="ForceSyncCompletedTitle" xml:space="preserve"><value>Erzwungene Synchronisierung abgeschlossen</value></data>
+  <data name="ForceSyncErrorTitle" xml:space="preserve"><value>Fehler bei erzwungener Synchronisierung</value></data>
+
+  <data name="LogoutErrorTitle" xml:space="preserve"><value>Fehler beim Abmelden</value></data>
+  <data name="GenericErrorTitle" xml:space="preserve"><value>Fehler</value></data>
+
+  <data name="SyncStatusFormat" xml:space="preserve"><value>Status: {0}, Ausstehend: {1}</value></data>
+</root>
