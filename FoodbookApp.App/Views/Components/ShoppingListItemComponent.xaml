@@ -85,7 +85,7 @@
                 <Button Grid.Row="0" 
                         Grid.Column="2" 
                         Style="{StaticResource DeleteButton}"
-                        Command="{Binding RemoveItemCommand, Source={x:Reference ItemComponent}}" 
+                       Command="{Binding RemoveItemCommand, Source={x:Reference ItemComponent}}" 
                         CommandParameter="{Binding .}" 
                         WidthRequest="27" 
                         HeightRequest="27" 

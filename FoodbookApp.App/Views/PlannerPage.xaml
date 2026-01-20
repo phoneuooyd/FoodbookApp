@@ -105,7 +105,7 @@
                                     <!-- Row 1: Meals list -->
                                     <StackLayout Grid.Row="1" BindableLayout.ItemsSource="{Binding Meals}">
                                         <BindableLayout.ItemTemplate>
-                                            <DataTemplate x:DataType="models:PlannedMeal">
+                                            <DataTemplate>
                                                 <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="4" Margin="0,1">
                                                     <!-- Recipe Picker wrapped in Border -->
                                                     <Border Grid.Column="0" 
