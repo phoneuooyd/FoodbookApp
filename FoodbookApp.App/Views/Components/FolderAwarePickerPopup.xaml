@@ -148,7 +148,7 @@
                                         </Style>
                                     </Border.Style>
                                     
-                                    <!-- TouchBehavior handles BOTH tap and long press with visual feedback -->
+                                    <!-- TouchBehavior handles tap and long press -->
                                     <Border.Behaviors>
                                         <behaviors:TouchBehavior
                                             LongPressDuration="600"
@@ -160,8 +160,6 @@
                                             DefaultAnimationEasing="{x:Static Easing.CubicInOut}"
                                             PressedOpacity="0.75"
                                             PressedScale="0.97"
-                                            HoveredOpacity="0.9"
-                                            HoveredScale="1.02"
                                             ShouldMakeChildrenInputTransparent="True" />
                                     </Border.Behaviors>
                                     
