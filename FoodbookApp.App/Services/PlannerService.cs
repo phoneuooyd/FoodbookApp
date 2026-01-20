@@ -52,6 +52,20 @@ namespace Foodbook.Services
 
             _context.PlannedMeals.Add(meal);
             await _context.SaveChangesAsync();
+            
+            // Queue for sync (Insert)
+            if (_syncService != null)
+            {
+                try
+                {
+                    await _syncService.QueueForSyncAsync(meal, SyncOperationType.Insert);
+                    System.Diagnostics.Debug.WriteLine($"[PlannerService] Queued PlannedMeal {meal.Id} for Insert sync");
+                }
+                catch (Exception syncEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[PlannerService] Failed to queue sync: {syncEx.Message}");
+                }
+            }
         }
 
         public async Task UpdatePlannedMealAsync(PlannedMeal meal)

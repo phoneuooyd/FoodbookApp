@@ -77,51 +77,69 @@ public sealed class SupabaseAuthService : ISupabaseAuthService
         System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] SignIn complete; token present: {!string.IsNullOrWhiteSpace(session?.AccessToken)}");
         await PersistSessionAsync(session, email);
 
-        // Run deduplication in background after successful login
-        _ = RunDeduplicationAsync();
+        // Run deduplication in background after successful login - fire and forget
+        // This is purely an optimization, login should not wait for it
+        _ = Task.Run(async () => await RunDeduplicationSafeAsync());
 
         return session;
     }
 
     /// <summary>
     /// Runs deduplication service in background after login.
-    /// Fetches cloud data and removes duplicates from sync queue.
+    /// This method NEVER throws - all errors are logged and swallowed.
     /// </summary>
-    private async Task RunDeduplicationAsync()
+    private async Task RunDeduplicationSafeAsync()
     {
         try
         {
             System.Diagnostics.Debug.WriteLine("[SupabaseAuthService] Starting background deduplication...");
             
-            var deduplicationService = _serviceProvider.GetService(typeof(IDeduplicationService)) as IDeduplicationService;
-            if (deduplicationService == null)
+            IDeduplicationService? deduplicationService = null;
+            try
             {
-                System.Diagnostics.Debug.WriteLine("[SupabaseAuthService] DeduplicationService not available");
+                deduplicationService = _serviceProvider.GetService(typeof(IDeduplicationService)) as IDeduplicationService;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] Failed to get DeduplicationService: {ex.Message}");
                 return;
             }
 
-            // Run on background thread to not block login flow
-            await Task.Run(async () =>
+            if (deduplicationService == null)
             {
-                try
-                {
-                    // Fetch cloud data first
-                    await deduplicationService.FetchCloudDataAsync();
-                    
-                    // Then deduplicate sync queue
-                    var removed = await deduplicationService.DeduplicateSyncQueueAsync();
-                    
-                    System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] Deduplication complete: {removed} duplicates removed");
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] Deduplication error: {ex.Message}");
-                }
-            });
+                System.Diagnostics.Debug.WriteLine("[SupabaseAuthService] DeduplicationService not available (this is OK for new installations)");
+                return;
+            }
+
+            // Fetch cloud data - handle empty cloud (new user) gracefully
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("[SupabaseAuthService] Fetching cloud data for deduplication...");
+                await deduplicationService.FetchCloudDataAsync();
+                System.Diagnostics.Debug.WriteLine("[SupabaseAuthService] Cloud data fetched successfully");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] Cloud data fetch failed (non-fatal): {ex.Message}");
+                // Continue - empty cache is valid for new users
+            }
+            
+            // Deduplicate sync queue
+            try
+            {
+                var removed = await deduplicationService.DeduplicateSyncQueueAsync();
+                System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] Deduplication complete: {removed} duplicates removed");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] Deduplication failed (non-fatal): {ex.Message}");
+                // This is fine - sync will proceed without deduplication
+            }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] RunDeduplicationAsync error: {ex.Message}");
+            // Catch-all for any unexpected errors
+            System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] RunDeduplicationSafeAsync unexpected error: {ex.Message}");
         }
     }
 

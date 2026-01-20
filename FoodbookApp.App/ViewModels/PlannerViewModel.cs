@@ -573,7 +573,7 @@ public class PlannerViewModel : INotifyPropertyChanged
         {
             meal.PropertyChanged -= OnMealRecipeChanged;
             day.Meals.Remove(meal);
-            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Meal removed from {day.Date:yyyy-MM-dd}");
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] RemoveMeal called: Removed meal from {day.Date:yyyy-MM-dd}");
         }
     }
 
@@ -1037,6 +1037,7 @@ public class PlannerViewModel : INotifyPropertyChanged
         if (meal != null && meal.Portions < 20)
         {
             meal.Portions++;
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] IncreasePortions called: Portions = {meal.Portions}");
         }
     }
 
@@ -1045,6 +1046,7 @@ public class PlannerViewModel : INotifyPropertyChanged
         if (meal != null && meal.Portions > 1)
         {
             meal.Portions--;
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] DecreasePortions called: Portions = {meal.Portions}");
         }
     }
 

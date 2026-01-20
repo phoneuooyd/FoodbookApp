@@ -297,6 +297,79 @@ namespace Foodbook.Views
             }
         }
 
+        // Event handlers for meal portion buttons
+        private void OnDecreasePortionsClicked(object? sender, EventArgs e)
+        {
+            try
+            {
+                var button = sender as Button;
+                if (button?.BindingContext is PlannedMeal meal)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[PlannerPage] OnDecreasePortionsClicked: Current portions = {meal.Portions}");
+                    
+                    if (meal.Portions > 1)
+                    {
+                        meal.Portions--;
+                        System.Diagnostics.Debug.WriteLine($"[PlannerPage] Portions decreased to {meal.Portions}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PlannerPage] OnDecreasePortionsClicked error: {ex.Message}");
+            }
+        }
+
+        private void OnIncreasePortionsClicked(object? sender, EventArgs e)
+        {
+            try
+            {
+                var button = sender as Button;
+                if (button?.BindingContext is PlannedMeal meal)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[PlannerPage] OnIncreasePortionsClicked: Current portions = {meal.Portions}");
+                    
+                    if (meal.Portions < 20)
+                    {
+                        meal.Portions++;
+                        System.Diagnostics.Debug.WriteLine($"[PlannerPage] Portions increased to {meal.Portions}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PlannerPage] OnIncreasePortionsClicked error: {ex.Message}");
+            }
+        }
+
+        private void OnRemoveMealClicked(object? sender, EventArgs e)
+        {
+            try
+            {
+                var button = sender as Button;
+                if (button?.BindingContext is PlannedMeal meal)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[PlannerPage] OnRemoveMealClicked: Removing meal from {meal.Date:yyyy-MM-dd}");
+                    
+                    // Get the ViewModel and call RemoveMealCommand
+                    if (_viewModel is PlannerViewModel newVM)
+                    {
+                        newVM.RemoveMealCommand.Execute(meal);
+                        System.Diagnostics.Debug.WriteLine($"[PlannerPage] Meal removed successfully");
+                    }
+                    else if (_viewModel is PlannerEditViewModel editVM)
+                    {
+                        editVM.RemoveMealCommand.Execute(meal);
+                        System.Diagnostics.Debug.WriteLine($"[PlannerPage] Meal removed successfully (edit mode)");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PlannerPage] OnRemoveMealClicked error: {ex.Message}");
+            }
+        }
+
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
