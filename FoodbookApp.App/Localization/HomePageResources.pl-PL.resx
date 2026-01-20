@@ -84,4 +84,8 @@
   <data name="ExitAppTitle" xml:space="preserve">
     <value>Wyjście</value>
   </data>
+	<!-- Profile tile (Polish) -->
+	<data name="Profile" xml:space="preserve"><value>Profil</value></data>
+	<data name="ProfileSubtitle" xml:space="preserve"><value>Zarządzaj kontem i synchronizacją w chmurze</value></data>
+	<data name="GoToProfile" xml:space="preserve"><value>Otwórz</value></data>
 </root>

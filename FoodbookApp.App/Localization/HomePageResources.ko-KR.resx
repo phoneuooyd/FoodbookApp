@@ -32,4 +32,8 @@
   <data name="ExitAppTitle" xml:space="preserve">
     <value>종료</value>
   </data>
+	<!-- Profile tile (Korean) -->
+	<data name="Profile" xml:space="preserve"><value>프로필</value></data>
+	<data name="ProfileSubtitle" xml:space="preserve"><value>계정 및 클라우드 동기화 관리</value></data>
+	<data name="GoToProfile" xml:space="preserve"><value>열기</value></data>
 </root>

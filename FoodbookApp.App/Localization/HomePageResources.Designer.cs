@@ -124,6 +124,24 @@ namespace FoodbookApp.Localization {
         }
         
         /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Do you want to close the application?.
+        /// </summary>
+        internal static string ExitAppConfirmation {
+            get {
+                return ResourceManager.GetString("ExitAppConfirmation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Exit.
+        /// </summary>
+        internal static string ExitAppTitle {
+            get {
+                return ResourceManager.GetString("ExitAppTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         /// Wyszukuje zlokalizowany ciąg podobny do ciągu Fats.
         /// </summary>
         internal static string Fats {
@@ -138,6 +156,15 @@ namespace FoodbookApp.Localization {
         internal static string GoToArchive {
             get {
                 return ResourceManager.GetString("GoToArchive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Open.
+        /// </summary>
+        internal static string GoToProfile {
+            get {
+                return ResourceManager.GetString("GoToProfile", resourceCulture);
             }
         }
         
@@ -192,6 +219,24 @@ namespace FoodbookApp.Localization {
         internal static string Plans {
             get {
                 return ResourceManager.GetString("Plans", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Profile.
+        /// </summary>
+        internal static string Profile {
+            get {
+                return ResourceManager.GetString("Profile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Manage account and cloud sync.
+        /// </summary>
+        internal static string ProfileSubtitle {
+            get {
+                return ResourceManager.GetString("ProfileSubtitle", resourceCulture);
             }
         }
         

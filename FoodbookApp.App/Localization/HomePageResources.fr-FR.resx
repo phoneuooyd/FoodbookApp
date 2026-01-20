@@ -32,4 +32,9 @@
   <data name="ExitAppTitle" xml:space="preserve">
     <value>Quitter</value>
   </data>
+
+	<!-- Profile tile (French) -->
+	<data name="Profile" xml:space="preserve"><value>Profil</value></data>
+	<data name="ProfileSubtitle" xml:space="preserve"><value>Gérer le compte et la synchronisation cloud</value></data>
+	<data name="GoToProfile" xml:space="preserve"><value>Ouvrir</value></data>
 </root>
