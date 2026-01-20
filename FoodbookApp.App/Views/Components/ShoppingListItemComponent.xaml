@@ -4,8 +4,10 @@
              xmlns:loc="clr-namespace:Foodbook.Services"
              xmlns:converters="clr-namespace:Foodbook.Converters"
              xmlns:components="clr-namespace:Foodbook.Views.Components"
+             xmlns:models="clr-namespace:Foodbook.Models"
              x:Class="Foodbook.Views.Components.ShoppingListItemComponent"
-             x:Name="ItemComponent">
+             x:Name="ItemComponent"
+             x:DataType="models:Ingredient">
     
     <ContentView.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
@@ -18,23 +20,23 @@
     
     <!-- Wrapper grid - usuń drop zones, Sharpnado to obsługuje -->
     <Grid RowDefinitions="Auto" Padding="0" Margin="0">
-        <Frame Grid.Row="0" 
-               x:Name="ItemFrame"
-               Padding="5,5" 
-               Margin="7,2" 
-               CornerRadius="8" 
-               HasShadow="False" 
-               BorderColor="{AppThemeBinding Light=#E0E0E0, Dark=#3A3A3A}"
-               BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#2D2D30}"
-               MinimumHeightRequest="115">
-            <!-- Restored borders for visual clarity -->
-            <Frame.Triggers>
-                <DataTrigger TargetType="Frame" Binding="{Binding IsBeingDragged}" Value="True">
+        <Border Grid.Row="0"
+                x:Name="ItemFrame"
+                Padding="5,5"
+                Margin="7,2"
+                Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#3A3A3A}"
+                StrokeThickness="1"
+                StrokeShape="RoundRectangle 8"
+                BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#2D2D30}"
+                MinimumHeightRequest="115">
+            <Border.Triggers>
+                <DataTrigger TargetType="Border" Binding="{Binding IsBeingDragged}" Value="True">
                     <Setter Property="Opacity" Value="0.4" />
-                    <Setter Property="BorderColor" Value="{DynamicResource Primary}" />
+                    <Setter Property="Stroke" Value="{DynamicResource Primary}" />
                 </DataTrigger>
-            </Frame.Triggers>
-            
+            </Border.Triggers>
+
+            <!-- Restored borders for visual clarity -->
             <Grid RowDefinitions="Auto,Auto" 
                   ColumnSpacing="7" 
                   BackgroundColor="Transparent">
@@ -143,6 +145,6 @@
                            IsVisible="{Binding IsChecked}" />
                 </Grid>
             </Grid>
-        </Frame>
+        </Border>
     </Grid>
 </ContentView>
