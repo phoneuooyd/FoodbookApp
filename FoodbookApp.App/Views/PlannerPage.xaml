@@ -56,33 +56,35 @@
         </StackLayout>
         <!-- Content -->
         <ScrollView Grid.Row="0" IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
-            <VerticalStackLayout Padding="10" Spacing="15">
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="15" Margin="0,5">
-                    <VerticalStackLayout Grid.Column="0" HorizontalOptions="Start">
-                        <Label Text="{loc:Translate Resource=PlannerPageResources, Key=DateFrom}" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource Primary}" Margin="0,0,0,5" />
+            <Grid Padding="10" RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="15">
+                <!-- Row 0: Date pickers -->
+                <Grid Grid.Row="0" ColumnDefinitions="*,*" ColumnSpacing="15" Margin="0,5">
+                    <Grid Grid.Column="0" RowDefinitions="Auto,Auto" HorizontalOptions="Start">
+                        <Label Grid.Row="0" Text="{loc:Translate Resource=PlannerPageResources, Key=DateFrom}" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource Primary}" Margin="0,0,0,5" />
                         <!-- Date From card -->
-                        <Border Style="{StaticResource PlannerCardBorder}">
+                        <Border Grid.Row="1" Style="{StaticResource PlannerCardBorder}">
                             <DatePicker x:Name="StartDatePicker" Date="{Binding StartDate}" Format="dd.MM.yyyy" Style="{StaticResource PlannerDatePicker}" />
                         </Border>
-                    </VerticalStackLayout>
-                    <VerticalStackLayout Grid.Column="1" HorizontalOptions="End">
-                        <Label Text="{loc:Translate Resource=PlannerPageResources, Key=DateTo}" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource Primary}" Margin="0,0,0,5" />
+                    </Grid>
+                    <Grid Grid.Column="1" RowDefinitions="Auto,Auto" HorizontalOptions="End">
+                        <Label Grid.Row="0" Text="{loc:Translate Resource=PlannerPageResources, Key=DateTo}" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource Primary}" Margin="0,0,0,5" />
                         <!-- Date To card -->
-                        <Border Style="{StaticResource PlannerCardBorder}">
+                        <Border Grid.Row="1" Style="{StaticResource PlannerCardBorder}">
                             <DatePicker x:Name="EndDatePicker" Date="{Binding EndDate}" Format="dd.MM.yyyy" Style="{StaticResource PlannerDatePicker}" />
                         </Border>
-                    </VerticalStackLayout>
+                    </Grid>
                 </Grid>
 
-                <!-- Meals per day card -->
-                <Border Style="{StaticResource PlannerCardBorder}" Margin="0,0,0,0">
+                <!-- Row 1: Meals per day card -->
+                <Border Grid.Row="1" Style="{StaticResource PlannerCardBorder}" Margin="0,0,0,0">
                     <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
                         <Label Text="{loc:Translate Resource=PlannerPageResources, Key=MealsPerDay}" VerticalOptions="Center" FontSize="14" FontAttributes="Bold" TextColor="{DynamicResource Primary}" />
                         <Entry Text="{Binding MealsPerDay}" Keyboard="Numeric" WidthRequest="50" FontSize="14" HorizontalTextAlignment="Center" />
                     </HorizontalStackLayout>
                 </Border>
 
-                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Days}">
+                <!-- Row 2: Days list -->
+                <VerticalStackLayout Grid.Row="3" BindableLayout.ItemsSource="{Binding Days}">
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="models:PlannerDay">
                             <Border Stroke="LightGray"
@@ -91,12 +93,16 @@
                                     Padding="8"
                                     Margin="0,3"
                                     BackgroundColor="{DynamicResource FrameBackgroundColor}">
-                                <VerticalStackLayout>
-                                    <Label Text="{Binding DateLabel}" 
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="0">
+                                    <!-- Row 0: Date label -->
+                                    <Label Grid.Row="0" 
+                                           Text="{Binding DateLabel}" 
                                            FontAttributes="Bold" 
                                            FontSize="14" 
                                            TextColor="{DynamicResource FrameTextColor}" />
-                                    <StackLayout BindableLayout.ItemsSource="{Binding Meals}">
+
+                                    <!-- Row 1: Meals list -->
+                                    <StackLayout Grid.Row="1" BindableLayout.ItemsSource="{Binding Meals}">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate x:DataType="models:PlannedMeal">
                                                 <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="4" Margin="0,1">
@@ -146,35 +152,37 @@
                                             </DataTemplate>
                                         </BindableLayout.ItemTemplate>
                                     </StackLayout>
-                                    
-                                    <!-- Nutritional summary for the day - single horizontal line like AddRecipePage -->
-                                    <StackLayout Orientation="Horizontal" Spacing="15" Margin="0,8,0,4">
+
+                                    <!-- Row 2: Nutritional summary for the day - single horizontal line like AddRecipePage -->
+                                    <HorizontalStackLayout Grid.Row="2" Spacing="15" Margin="0,8,0,4">
                                         <Label Text="{Binding TotalCalories, StringFormat='⚡ {0:F1} kcal'}" FontSize="11" TextColor="Gray" />
                                         <Label Text="{Binding TotalProtein, StringFormat='🥩 {0:F1}g'}" FontSize="11" TextColor="Gray" />
                                         <Label Text="{Binding TotalFat, StringFormat='🧈 {0:F1}g'}" FontSize="11" TextColor="Gray" />
                                         <Label Text="{Binding TotalCarbs, StringFormat='🌾 {0:F1}g'}" FontSize="11" TextColor="Gray" />
-                                    </StackLayout>
-                                    
-                                    <StackLayout HorizontalOptions="Center" Margin="0,4,0,0">
-                                        <Button Command="{Binding BindingContext.AddMealCommand, Source={x:Reference ThisPage}}" 
-                                                CommandParameter="{Binding .}" 
-                                                StyleClass="Secondary"
-                                                FontSize="12" 
-                                                FontAttributes="Bold" 
-                                                CornerRadius="6" 
-                                                Padding="12,6" 
-                                                WidthRequest="120" 
-                                                HeightRequest="32" 
-                                                Text="{loc:Translate Resource=PlannerPageResources, Key=AddMeal}" />
-                                    </StackLayout>
-                                </VerticalStackLayout>
+                                    </HorizontalStackLayout>
+
+                                    <!-- Row 3: Add meal button -->
+                                    <Button Grid.Row="3" 
+                                            Command="{Binding BindingContext.AddMealCommand, Source={x:Reference ThisPage}}" 
+                                            CommandParameter="{Binding .}" 
+                                            StyleClass="Secondary"
+                                            FontSize="12" 
+                                            FontAttributes="Bold" 
+                                            CornerRadius="6" 
+                                            Padding="12,6" 
+                                            WidthRequest="120" 
+                                            HeightRequest="32"
+                                            HorizontalOptions="Center"
+                                            Margin="0,4,0,0"
+                                            Text="{loc:Translate Resource=PlannerPageResources, Key=AddMeal}" />
+                                </Grid>
                             </Border>
                         </DataTemplate>
                     </BindableLayout.ItemTemplate>
                 </VerticalStackLayout>
 
-                <!-- Save button: match style and layout used in IngredientFormPage -->
-                <VerticalStackLayout Padding="20,10" Spacing="10" BackgroundColor="{DynamicResource PageBackgroundColor}">
+                <!-- Row 3: Save button -->
+                <Grid Grid.Row="4" Padding="20,10" BackgroundColor="{DynamicResource PageBackgroundColor}">
                     <Button Command="{Binding SaveCommand}" 
                             StyleClass="Primary"
                             HeightRequest="50" 
@@ -183,8 +191,8 @@
                             <FileImageSource File="save.png" />
                         </Button.ImageSource>
                     </Button>
-                </VerticalStackLayout>
-            </VerticalStackLayout>
+                </Grid>
+            </Grid>
         </ScrollView>
     </Grid>
 </ContentPage>
