@@ -88,4 +88,11 @@
 	<data name="Profile" xml:space="preserve"><value>Profil</value></data>
 	<data name="ProfileSubtitle" xml:space="preserve"><value>Zarządzaj kontem i synchronizacją w chmurze</value></data>
 	<data name="GoToProfile" xml:space="preserve"><value>Otwórz</value></data>
+
+	<data name="NoPlannedMealsMessage" xml:space="preserve">
+  <value>Brak zaplanowanych posiłków dla wybranego okresu</value>
+</data>
+	<data name="PortionsFormat" xml:space="preserve">
+  <value>({0} porcji)</value>
+</data>
 </root>

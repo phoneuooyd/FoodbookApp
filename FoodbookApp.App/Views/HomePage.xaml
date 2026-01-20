@@ -15,6 +15,7 @@
              Shell.NavBarIsVisible="false">
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        <converters:FormatWithResourceConverter x:Key="FormatWithResourceConverter" />
         
         <!-- Enhanced Card Style with better separation -->
         <Style x:Key="DashboardCardStyle" TargetType="Frame">
@@ -155,10 +156,10 @@
                   ColumnSpacing="0"
                   RowSpacing="8">
 
-                <!-- Main Stats Card: Przepisy i Plany -->
+                <!-- Main Stats Card: Recipes and Plans -->
                 <Frame Grid.Row="0" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
                     <Grid ColumnDefinitions="*,1,*" ColumnSpacing="20">
-                        <!-- Przepisy -->
+                        <!-- Recipes -->
                         <StackLayout Grid.Column="0">
                             <Label Text="📖" Style="{StaticResource EmojiStyle}" />
                             <Label Text="{loc:Translate Resource=HomePageResources, Key=Recipes}" Style="{StaticResource CardTitleStyle}" />
@@ -172,7 +173,7 @@
                                  WidthRequest="1" 
                                  HorizontalOptions="Center" />
                         
-                        <!-- Plany -->
+                        <!-- Plans -->
                         <StackLayout Grid.Column="2">
                             <Label Text="📋" Style="{StaticResource EmojiStyle}" />
                             <Label Text="{loc:Translate Resource=HomePageResources, Key=Plans}" Style="{StaticResource CardTitleStyle}" />
@@ -215,7 +216,7 @@
                                HorizontalTextAlignment="Center"
                                TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
                                Margin="0,0,0,8"
-                               Text="Brak zaplanowanych posiłków dla wybranego okresu" />
+                               Text="{loc:Translate Resource=HomePageResources, Key=NoPlannedMealsMessage}" />
                         
                         <!-- Scrollable CollectionView with limited height (expands on Today) -->
                         <ScrollView MaximumHeightRequest="{Binding PlannedMealsMaxHeight}"
@@ -250,7 +251,7 @@
                                                                        VerticalOptions="Center"
                                                                        LineBreakMode="TailTruncation"
                                                                        HorizontalOptions="FillAndExpand" />
-                                                                <Label Text="{Binding Portions, StringFormat='({0} porcji)'}" 
+                                                                <Label Text="{Binding Portions, Converter={StaticResource FormatWithResourceConverter}, ConverterParameter=PortionsFormat}"
                                                                        FontSize="12"
                                                                        TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
                                                                        VerticalOptions="Center"
@@ -268,7 +269,7 @@
                     </StackLayout>
                 </Frame>
 
-                <!-- FIXED: Nutrition Stats Card - removed ugly custom date picker, back to simple single button -->
+                <!-- Nutrition Stats Card -->
                 <Frame Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource DashboardCardStyle}">
                     <StackLayout>
                         <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="8" Margin="0,0,0,16">
@@ -276,7 +277,7 @@
                             <Label Text="{loc:Translate Resource=HomePageResources, Key=NutritionStatsHeader}" Style="{StaticResource CardTitleStyle}" Margin="0" />
                         </StackLayout>
 
-                        <!-- BACK TO SIMPLE: Single Period Selection Button -->
+                        <!-- Period Selection Button -->
                         <Button Text="{Binding NutritionPeriodDisplay, StringFormat='📅 {0}'}"
                                 Command="{Binding ChangeNutritionPeriodCommand}"
                                 BackgroundColor="{DynamicResource Primary}"
@@ -288,7 +289,7 @@
                                 Margin="0,0,0,16"
                                 HorizontalOptions="Center" />
 
-                        <!-- Top row - Kalorie (full width) -->
+                        <!-- Top row - Calories (full width) -->
                         <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
                                CornerRadius="12" 
                                Padding="16,20" 
@@ -311,9 +312,8 @@
                             </StackLayout>
                         </Frame>
 
-                        <!-- Bottom row - Białko, Węglowodany, Tłuszcze (3 columns) -->
+                        <!-- Bottom row - Protein, Carbs, Fats -->
                         <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
-                            <!-- Białko -->
                             <Frame Grid.Column="0" 
                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
                                    CornerRadius="12" 
@@ -332,7 +332,6 @@
                                 </StackLayout>
                             </Frame>
 
-                            <!-- Węglowodany -->
                             <Frame Grid.Column="1" 
                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
                                    CornerRadius="12" 
@@ -351,7 +350,6 @@
                                 </StackLayout>
                             </Frame>
 
-                            <!-- Tłuszcze -->
                             <Frame Grid.Column="2" 
                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
                                    CornerRadius="12" 
@@ -385,10 +383,10 @@
                     <StackLayout Orientation="Horizontal" Spacing="12" VerticalOptions="Center" Padding="8">
                         <Label Text="👤" FontSize="28" VerticalOptions="Center" />
                         <StackLayout HorizontalOptions="FillAndExpand">
-                            <Label Text="Profil" Style="{StaticResource CardTitleStyle}" Margin="0" />
-                            <Label Text="Zarządzaj swoim kontem" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                            <Label Text="{loc:Translate Resource=HomePageResources, Key=Profile}" Style="{StaticResource CardTitleStyle}" Margin="0" />
+                            <Label Text="{loc:Translate Resource=HomePageResources, Key=ProfileSubtitle}" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
                         </StackLayout>
-                        <Button Text="Otwórz"
+                        <Button Text="{loc:Translate Resource=HomePageResources, Key=GoToProfile}"
                                 BackgroundColor="{DynamicResource Primary}"
                                 TextColor="White"
                                 CornerRadius="8"

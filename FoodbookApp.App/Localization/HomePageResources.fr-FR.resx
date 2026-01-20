@@ -37,4 +37,11 @@
 	<data name="Profile" xml:space="preserve"><value>Profil</value></data>
 	<data name="ProfileSubtitle" xml:space="preserve"><value>Gérer le compte et la synchronisation cloud</value></data>
 	<data name="GoToProfile" xml:space="preserve"><value>Ouvrir</value></data>
+
+	<data name="NoPlannedMealsMessage" xml:space="preserve">
+  <value>Aucun repas planifié pour la période sélectionnée</value>
+</data>
+	<data name="PortionsFormat" xml:space="preserve">
+  <value>({0} portions)</value>
+</data>
 </root>

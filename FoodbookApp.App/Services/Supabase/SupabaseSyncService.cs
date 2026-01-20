@@ -33,7 +33,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
     private const int MaxDelaySeconds = 240; // 4 minutes
 
     // Error codes that should stop sync immediately (RLS violations, auth errors)
-    private static readonly string[] FatalErrorCodes = ["42501", "403", "401", "PGRST301"];
+    private static readonly string[] FatalErrorCodes = new[] { "42501", "403", "401", "PGRST301" };
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {

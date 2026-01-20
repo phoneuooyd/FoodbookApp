@@ -196,6 +196,15 @@ namespace FoodbookApp.Localization {
         }
         
         /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu No planned meals for the selected period.
+        /// </summary>
+        internal static string NoPlannedMealsMessage {
+            get {
+                return ResourceManager.GetString("NoPlannedMealsMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         /// Wyszukuje zlokalizowany ciąg podobny do ciągu Diet Stats.
         /// </summary>
         internal static string NutritionStatsHeader {
@@ -219,6 +228,15 @@ namespace FoodbookApp.Localization {
         internal static string Plans {
             get {
                 return ResourceManager.GetString("Plans", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu ({0} portions).
+        /// </summary>
+        internal static string PortionsFormat {
+            get {
+                return ResourceManager.GetString("PortionsFormat", resourceCulture);
             }
         }
         

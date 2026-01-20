@@ -42,4 +42,11 @@
 	<data name="Profile" xml:space="preserve"><value>Perfil</value></data>
 	<data name="ProfileSubtitle" xml:space="preserve"><value>Gestionar cuenta y sincronización en la nube</value></data>
 	<data name="GoToProfile" xml:space="preserve"><value>Abrir</value></data>
+
+	<data name="NoPlannedMealsMessage" xml:space="preserve">
+  <value>No hay comidas planificadas para el período seleccionado</value>
+</data>
+	<data name="PortionsFormat" xml:space="preserve">
+  <value>({0} porciones)</value>
+</data>
 </root>
