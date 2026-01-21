@@ -3,6 +3,19 @@ using Foodbook.Models.DTOs;
 
 namespace FoodbookApp.Interfaces;
 
+/// <summary>
+/// Snapshot of all cloud data for sync operations
+/// </summary>
+public record CloudDataSnapshot(
+    List<Folder> Folders,
+    List<Recipe> Recipes,
+    List<Ingredient> Ingredients,
+    List<RecipeLabel> RecipeLabels,
+    List<Plan> Plans,
+    List<PlannedMeal> PlannedMeals,
+    List<ShoppingListItem> ShoppingListItems
+);
+
 public interface ISupabaseCrudService
 {
     // Folders
@@ -58,4 +71,7 @@ public interface ISupabaseCrudService
     // UserPreferences (ORM-based via sync queue)
     Task<UserPreferencesDto?> GetUserPreferencesAsync(Guid userId, CancellationToken ct = default);
     Task<UserPreferencesDto> UpsertUserPreferencesAsync(UserPreferencesDto preferences, CancellationToken ct = default);
+    
+    // Bulk fetch all cloud data for sync operations
+    Task<CloudDataSnapshot> FetchAllCloudDataAsync(CancellationToken ct = default);
 }

@@ -9,7 +9,7 @@ namespace FoodbookApp.Interfaces;
 public interface ISupabaseSyncService
 {
     Task<SyncState?> GetSyncStateAsync(CancellationToken ct = default);
-    Task EnableCloudSyncAsync(CancellationToken ct = default);
+    Task EnableCloudSyncAsync(SyncPriority priority = SyncPriority.Local, CancellationToken ct = default);
     Task DisableCloudSyncAsync(CancellationToken ct = default);
     Task<bool> IsCloudSyncEnabledAsync(CancellationToken ct = default);
     Task QueueForSyncAsync<T>(T entity, SyncOperationType operation, CancellationToken ct = default) where T : class;

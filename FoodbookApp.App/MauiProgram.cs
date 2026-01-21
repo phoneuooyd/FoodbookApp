@@ -118,7 +118,14 @@ namespace FoodbookApp
 
                 return client;
             });
-            
+
+            // Dedicated HttpClient for `RecipeImporter` (plain HTTP, no auth handler)
+            builder.Services.AddScoped<RecipeImporter>(sp =>
+            {
+                var ingredientService = sp.GetRequiredService<IIngredientService>();
+                return new RecipeImporter(new HttpClient(), ingredientService);
+            });
+
             // Register SupabaseRestClient BEFORE SupabaseCrudService - must have HttpClient available
             builder.Services.AddScoped(sp =>
             {

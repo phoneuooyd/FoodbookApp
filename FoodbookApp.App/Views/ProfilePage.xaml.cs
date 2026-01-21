@@ -86,6 +86,90 @@ public partial class ProfilePage : ContentPage
         catch { return defaultText; }
     }
 
+    private string GetLocalizedTextSafe(string resource, string key, string defaultText)
+    {
+        var text = GetLocalizedText(resource, key, defaultText);
+        return string.IsNullOrWhiteSpace(text) ? defaultText : text;
+    }
+
+    private async Task<Guid?> GetCurrentSupabaseUserIdAsync()
+    {
+        try
+        {
+            var serviceProvider = FoodbookApp.MauiProgram.ServiceProvider;
+            if (serviceProvider == null) return null;
+
+            var tokenStore = serviceProvider.GetService<IAuthTokenStore>();
+            if (tokenStore == null) return null;
+
+            var accountId = await tokenStore.GetActiveAccountIdAsync();
+            if (!accountId.HasValue) return null;
+
+            var db = serviceProvider.GetService<Foodbook.Data.AppDbContext>();
+            if (db == null) return null;
+
+            var acc = await db.AuthAccounts.FindAsync(accountId.Value);
+            if (acc == null || string.IsNullOrWhiteSpace(acc.SupabaseUserId)) return null;
+
+            return Guid.TryParse(acc.SupabaseUserId, out var userGuid) ? userGuid : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private async Task<bool> PromptAndEnableSyncAfterLoginAsync()
+    {
+        var syncService = GetSyncService();
+        if (syncService == null)
+            return false;
+
+        var title = GetLocalizedTextSafe("ProfilePageResources", "CloudSyncHeader", "Cloud sync");
+        var cancel = GetLocalizedTextSafe("ButtonResources", "Cancel", "Cancel");
+        var cloud = GetLocalizedTextSafe("ProfilePageResources", "CloudFirstOption", "Cloud first (download from cloud first)");
+        var local = GetLocalizedTextSafe("ProfilePageResources", "LocalFirstOption", "Local first (upload local data first)");
+
+        var action = await DisplayActionSheet(title, cancel, null, cloud, local);
+
+        if (action == cancel || action == null)
+            return false;
+
+        var priority = action == cloud ? Foodbook.Models.SyncPriority.Cloud : Foodbook.Models.SyncPriority.Local;
+
+        SyncStatusLabel.IsVisible = true;
+        SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "EnablingSync", "Enabling sync...");
+
+        await syncService.EnableCloudSyncAsync(priority);
+
+        // Only AFTER enabling sync, handle cloud preferences/theme depending on priority
+        var userId = await GetCurrentSupabaseUserIdAsync();
+        if (userId.HasValue)
+        {
+            try
+            {
+                if (priority == Foodbook.Models.SyncPriority.Cloud)
+                {
+                    // Cloud-first: pull prefs/theme from cloud and apply locally
+                    await syncService.LoadUserPreferencesFromCloudAsync(userId.Value);
+                }
+                else
+                {
+                    // Local-first: push current local prefs/theme to cloud
+                    await syncService.SaveUserPreferencesToCloudAsync(userId.Value);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ProfilePage] Post-login preferences sync failed (non-fatal): {ex.Message}");
+            }
+        }
+
+        CloudSyncCheckBox.IsChecked = true;
+        SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncEnabled", "Cloud sync enabled. Syncing data...");
+        return true;
+    }
+
     private async void OnProfileFetchJwtClicked(object sender, EventArgs e)
     {
         System.Diagnostics.Debug.WriteLine("[ProfilePage] Login button clicked");
@@ -149,6 +233,7 @@ public partial class ProfilePage : ContentPage
             PasswordEntry.Text = string.Empty;
 
             UpdateUiState();
+
             await LoadSyncStatusAsync();
         }
         catch (Exception ex)
@@ -223,15 +308,32 @@ public partial class ProfilePage : ContentPage
             }
 
             SyncStatusLabel.IsVisible = true;
-            SyncStatusLabel.Text = e.Value ? GetLocalizedText("ProfilePageResources", "EnablingSync", "Enabling sync...") : GetLocalizedText("ProfilePageResources", "DisablingSync", "Disabling sync...");
 
             if (e.Value)
             {
-                await syncService.EnableCloudSyncAsync();
+                var title = GetLocalizedTextSafe("ProfilePageResources", "CloudSyncHeader", "Cloud sync");
+                var cancel = GetLocalizedTextSafe("ButtonResources", "Cancel", "Cancel");
+                var cloud = GetLocalizedTextSafe("ProfilePageResources", "CloudFirstOption", "Cloud first (download from cloud first)");
+                var local = GetLocalizedTextSafe("ProfilePageResources", "LocalFirstOption", "Local first (upload local data first)");
+
+                var action = await DisplayActionSheet(title, cancel, null, cloud, local);
+
+                if (action == cancel || action == null)
+                {
+                    CloudSyncCheckBox.IsChecked = false;
+                    SyncStatusLabel.IsVisible = false;
+                    return;
+                }
+
+                var priority = action == cloud ? Foodbook.Models.SyncPriority.Cloud : Foodbook.Models.SyncPriority.Local;
+
+                SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "EnablingSync", "Enabling sync...");
+                await syncService.EnableCloudSyncAsync(priority);
                 SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncEnabled", "Cloud sync enabled. Syncing data...");
             }
             else
             {
+                SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "DisablingSync", "Disabling sync...");
                 await syncService.DisableCloudSyncAsync();
                 SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncDisabled", "Cloud sync disabled");
             }

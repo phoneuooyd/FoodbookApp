@@ -460,7 +460,7 @@ public class PreferencesService : IPreferencesService
                 System.Diagnostics.Debug.WriteLine("[PreferencesService] Cloud sync suppressed (loading from cloud)");
                 return;
             }
-            
+
             // Check if user is logged in
             var accountId = await _tokenStore.GetActiveAccountIdAsync();
             if (!accountId.HasValue)
@@ -469,11 +469,26 @@ public class PreferencesService : IPreferencesService
                 return;
             }
 
-            // Get Supabase user ID from account
             using var scope = FoodbookApp.MauiProgram.ServiceProvider!.CreateScope();
+
+            // Respect user choice: only sync preferences when cloud sync is enabled from ProfilePage checkbox
+            var syncService = scope.ServiceProvider.GetService<ISupabaseSyncService>();
+            if (syncService == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[PreferencesService] Sync service not available - skipping cloud sync");
+                return;
+            }
+
+            if (!await syncService.IsCloudSyncEnabledAsync())
+            {
+                System.Diagnostics.Debug.WriteLine("[PreferencesService] Cloud sync disabled - skipping user_preferences sync");
+                return;
+            }
+
+            // Get Supabase user ID from account
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var account = await db.AuthAccounts.FindAsync(accountId.Value);
-            
+
             if (account == null || string.IsNullOrWhiteSpace(account.SupabaseUserId))
             {
                 System.Diagnostics.Debug.WriteLine("[PreferencesService] Account not found or missing Supabase ID - skipping cloud sync");
@@ -501,12 +516,8 @@ public class PreferencesService : IPreferencesService
             };
 
             // Queue for sync through normal sync queue
-            var syncService = scope.ServiceProvider.GetService<ISupabaseSyncService>();
-            if (syncService != null)
-            {
-                await syncService.QueueForSyncAsync(dto, SyncOperationType.Insert);
-                System.Diagnostics.Debug.WriteLine("[PreferencesService] ? Auto-synced preferences to cloud (queued for sync)");
-            }
+            await syncService.QueueForSyncAsync(dto, SyncOperationType.Insert);
+            System.Diagnostics.Debug.WriteLine("[PreferencesService] ? Auto-synced preferences to cloud (queued for sync)");
         }
         catch (Exception ex)
         {

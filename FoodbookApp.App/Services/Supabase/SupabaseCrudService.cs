@@ -970,6 +970,61 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
     }
 
     #endregion
+
+    #region Bulk Operations for Sync
+    
+    public async Task<CloudDataSnapshot> FetchAllCloudDataAsync(CancellationToken ct = default)
+    {
+        await EnsureAuthenticatedAsync();
+        
+        try
+        {
+            // Fetch all data in parallel for efficiency
+            var foldersTask = GetFoldersAsync(ct);
+            var recipesTask = GetRecipesAsync(ct);
+            var ingredientsTask = GetIngredientsAsync(ct);
+            var labelsTask = GetRecipeLabelsAsync(ct);
+            var plansTask = GetPlansAsync(ct);
+            var plannedMealsTask = GetPlannedMealsAsync(ct);
+            
+            await Task.WhenAll(foldersTask, recipesTask, ingredientsTask, labelsTask, plansTask, plannedMealsTask);
+            
+            // Shopping list items require plan IDs, so fetch after plans
+            var plans = await plansTask;
+            var shoppingItems = new List<ShoppingListItem>();
+            foreach (var plan in plans)
+            {
+                var items = await GetShoppingListItemsAsync(plan.Id, ct);
+                shoppingItems.AddRange(items);
+            }
+            
+            return new CloudDataSnapshot(
+                await foldersTask,
+                await recipesTask,
+                await ingredientsTask,
+                await labelsTask,
+                plans,
+                await plannedMealsTask,
+                shoppingItems
+            );
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SupabaseCrudService] FetchAllCloudDataAsync failed: {ex.Message}");
+            // Return empty snapshot on error to allow sync to continue
+            return new CloudDataSnapshot(
+                new List<Folder>(),
+                new List<Recipe>(),
+                new List<Ingredient>(),
+                new List<RecipeLabel>(),
+                new List<Plan>(),
+                new List<PlannedMeal>(),
+                new List<ShoppingListItem>()
+            );
+        }
+    }
+    
+    #endregion
 }
 
 // Plain payload type for REST upsert to avoid BaseModel inheritance

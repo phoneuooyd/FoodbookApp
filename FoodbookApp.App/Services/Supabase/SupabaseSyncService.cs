@@ -98,7 +98,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         return state?.IsCloudSyncEnabled ?? false;
     }
 
-    public async Task EnableCloudSyncAsync(CancellationToken ct = default)
+    public async Task EnableCloudSyncAsync(SyncPriority priority = SyncPriority.Local, CancellationToken ct = default)
     {
         var accountId = await _tokenStore.GetActiveAccountIdAsync();
         if (!accountId.HasValue)
@@ -107,7 +107,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             return;
         }
 
-        Log($"Enabling cloud sync for account {accountId.Value}...");
+        Log($"Enabling cloud sync for account {accountId.Value} with priority: {priority}...");
 
         using var scope = _serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -121,6 +121,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 AccountId = accountId.Value,
                 IsCloudSyncEnabled = true,
                 Status = SyncStatus.Idle,
+                Priority = priority,
                 CreatedUtc = DateTime.UtcNow,
                 UpdatedUtc = DateTime.UtcNow
             };
@@ -130,11 +131,12 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         {
             state.IsCloudSyncEnabled = true;
             state.Status = SyncStatus.Idle;
+            state.Priority = priority;
             state.UpdatedUtc = DateTime.UtcNow;
         }
 
         await db.SaveChangesAsync(ct);
-        Log($"Cloud sync enabled for account {accountId.Value}");
+        Log($"Cloud sync enabled for account {accountId.Value} with priority: {priority}");
 
         // Run deduplication OPTIONALLY - don't block initial sync if it fails
         var deduplicationResult = await TryRunDeduplicationAsync(ct);
@@ -143,7 +145,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         // Always proceed with initial sync regardless of deduplication result
         if (!state.InitialSyncCompleted)
         {
-            Log("Starting initial sync (deduplication complete or skipped)...");
+            Log($"Starting initial sync with {priority} priority (deduplication complete or skipped)...");
             _ = StartInitialSyncAsync(ct);
         }
         else
@@ -152,6 +154,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         }
 
         StartSyncTimer();
+        StartCloudPollingTimer();
     }
 
     /// <summary>
@@ -217,6 +220,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
     public async Task DisableCloudSyncAsync(CancellationToken ct = default)
     {
         StopSyncTimer();
+        StopCloudPollingTimer();
 
         var accountId = await _tokenStore.GetActiveAccountIdAsync();
         if (!accountId.HasValue)
@@ -363,6 +367,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 AccountId = accountId.Value,
                 IsCloudSyncEnabled = true,
                 Status = SyncStatus.InitialSync,
+                Priority = SyncPriority.Local, // Default to local priority
                 CreatedUtc = DateTime.UtcNow,
                 UpdatedUtc = DateTime.UtcNow,
                 InitialSyncStartedUtc = DateTime.UtcNow
@@ -388,10 +393,33 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         try
         {
             var batchId = Guid.NewGuid();
+            int queuedCount = 0;
+            
+            // Determine sync priority
+            var priority = state.Priority;
+            Log($"Initial sync priority: {priority}");
 
-            // Queue all local entities for sync
-            var queuedCount = await QueueAllEntitiesForInitialSyncAsync(db, accountId.Value, batchId, ct);
-            Log($"StartInitialSyncAsync: Queued {queuedCount} entities for initial sync");
+            if (priority == SyncPriority.Cloud)
+            {
+                // CLOUD-FIRST: Download cloud data to local database first
+                Log("Cloud-first sync: Fetching data from cloud...");
+                
+                var cloudData = await _crudService.FetchAllCloudDataAsync(ct);
+                var importedCount = await ImportCloudDataToLocalAsync(db, cloudData, ct);
+                
+                Log($"Cloud-first sync: Imported {importedCount} entities from cloud");
+                
+                // Then queue any local-only entities for upload
+                queuedCount = await QueueLocalOnlyEntitiesForSyncAsync(db, accountId.Value, batchId, cloudData, ct);
+                Log($"Cloud-first sync: Queued {queuedCount} local-only entities for upload");
+            }
+            else
+            {
+                // LOCAL-FIRST: Queue all local entities for upload
+                Log("Local-first sync: Queuing local entities for upload...");
+                queuedCount = await QueueAllEntitiesForInitialSyncAsync(db, accountId.Value, batchId, ct);
+                Log($"Local-first sync: Queued {queuedCount} entities for upload");
+            }
 
             state.InitialSyncCompleted = true;
             state.InitialSyncCompletedUtc = DateTime.UtcNow;
@@ -866,7 +894,341 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             Log($"Error in RetryFailedBatchesAsync: {ex.Message}");
         }
     }
+    
+    private Timer? _cloudPollingTimer;
+    private static readonly TimeSpan CloudPollingInterval = TimeSpan.FromMinutes(10);
+    
+    private void StartCloudPollingTimer()
+    {
+        StopCloudPollingTimer();
+        _cloudPollingTimer = new Timer(async _ => await PollCloudForChangesAsync(), null, CloudPollingInterval, CloudPollingInterval);
+        Log("Cloud polling timer started");
+    }
+    
+    private void StopCloudPollingTimer()
+    {
+        _cloudPollingTimer?.Dispose();
+        _cloudPollingTimer = null;
+        Log("Cloud polling timer stopped");
+    }
+    
+    /// <summary>
+    /// Polls cloud for changes and imports them to local database.
+    /// Creates sync queue entries to track imported changes.
+    /// </summary>
+    private async Task PollCloudForChangesAsync()
+    {
+        try
+        {
+            var accountId = await _tokenStore.GetActiveAccountIdAsync();
+            if (!accountId.HasValue)
+            {
+                Log("PollCloudForChangesAsync: No active account");
+                return;
+            }
 
+            if (!await IsCloudSyncEnabledAsync())
+            {
+                Log("PollCloudForChangesAsync: Sync not enabled");
+                return;
+            }
+
+            Log("PollCloudForChangesAsync: Starting cloud poll...");
+
+            using var scope = _serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            var state = await db.SyncStates.FirstOrDefaultAsync(s => s.AccountId == accountId.Value);
+            if (state == null)
+            {
+                Log("PollCloudForChangesAsync: Sync state not found");
+                return;
+            }
+
+            // Fetch current cloud data
+            var cloudData = await _crudService.FetchAllCloudDataAsync();
+            
+            // Import changes to local DB (only newer/missing items)
+            var importedCount = await ImportCloudDataToLocalAsync(db, cloudData, default);
+            
+            // Update last poll time
+            state.LastCloudPollUtc = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+
+            Log($"PollCloudForChangesAsync: Completed. Imported {importedCount} changes from cloud");
+        }
+        catch (Exception ex)
+        {
+            Log($"ERROR in PollCloudForChangesAsync: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Imports cloud data to local database. Returns count of imported entities.
+    /// </summary>
+    private async Task<int> ImportCloudDataToLocalAsync(AppDbContext db, CloudDataSnapshot cloudData, CancellationToken ct)
+    {
+        int imported = 0;
+        
+        try
+        {
+            // Import in order respecting FK constraints: Folders ? Labels ? Recipes ? Ingredients ? Plans ? PlannedMeals ? ShoppingItems
+            
+            // Folders
+            foreach (var folder in cloudData.Folders)
+            {
+                var existing = await db.Folders.FindAsync(new object[] { folder.Id }, ct);
+                if (existing == null)
+                {
+                    db.Folders.Add(folder);
+                    imported++;
+                }
+                else if (folder.UpdatedAt > existing.UpdatedAt)
+                {
+                    existing.Name = folder.Name;
+                    existing.Description = folder.Description;
+                    existing.ParentFolderId = folder.ParentFolderId;
+                    existing.Order = folder.Order;
+                    existing.UpdatedAt = folder.UpdatedAt;
+                    imported++;
+                }
+            }
+            await db.SaveChangesAsync(ct);
+            
+            // Recipe Labels
+            foreach (var label in cloudData.RecipeLabels)
+            {
+                var existing = await db.RecipeLabels.FindAsync(new object[] { label.Id }, ct);
+                if (existing == null)
+                {
+                    db.RecipeLabels.Add(label);
+                    imported++;
+                }
+                else if (label.UpdatedAt > existing.UpdatedAt)
+                {
+                    existing.Name = label.Name;
+                    existing.ColorHex = label.ColorHex;
+                    existing.UpdatedAt = label.UpdatedAt;
+                    imported++;
+                }
+            }
+            await db.SaveChangesAsync(ct);
+            
+            // Recipes
+            foreach (var recipe in cloudData.Recipes)
+            {
+                var existing = await db.Recipes.FindAsync(new object[] { recipe.Id }, ct);
+                if (existing == null)
+                {
+                    db.Recipes.Add(recipe);
+                    imported++;
+                }
+                else if (recipe.UpdatedAt > existing.UpdatedAt)
+                {
+                    existing.Name = recipe.Name;
+                    existing.Description = recipe.Description;
+                    existing.Calories = recipe.Calories;
+                    existing.Protein = recipe.Protein;
+                    existing.Fat = recipe.Fat;
+                    existing.Carbs = recipe.Carbs;
+                    existing.IloscPorcji = recipe.IloscPorcji;
+                    existing.FolderId = recipe.FolderId;
+                    existing.UpdatedAt = recipe.UpdatedAt;
+                    imported++;
+                }
+            }
+            await db.SaveChangesAsync(ct);
+            
+            // Ingredients
+            foreach (var ingredient in cloudData.Ingredients)
+            {
+                var existing = await db.Ingredients.FindAsync(new object[] { ingredient.Id }, ct);
+                if (existing == null)
+                {
+                    db.Ingredients.Add(ingredient);
+                    imported++;
+                }
+                else if (ingredient.UpdatedAt > existing.UpdatedAt)
+                {
+                    existing.Name = ingredient.Name;
+                    existing.Quantity = ingredient.Quantity;
+                    existing.Unit = ingredient.Unit;
+                    existing.UnitWeight = ingredient.UnitWeight;
+                    existing.Calories = ingredient.Calories;
+                    existing.Protein = ingredient.Protein;
+                    existing.Fat = ingredient.Fat;
+                    existing.Carbs = ingredient.Carbs;
+                    existing.RecipeId = ingredient.RecipeId;
+                    existing.UpdatedAt = ingredient.UpdatedAt;
+                    imported++;
+                }
+            }
+            await db.SaveChangesAsync(ct);
+            
+            // Plans
+            foreach (var plan in cloudData.Plans)
+            {
+                var existing = await db.Plans.FindAsync(new object[] { plan.Id }, ct);
+                if (existing == null)
+                {
+                    db.Plans.Add(plan);
+                    imported++;
+                }
+                else if (plan.UpdatedAt > existing.UpdatedAt)
+                {
+                    existing.StartDate = plan.StartDate;
+                    existing.EndDate = plan.EndDate;
+                    existing.IsArchived = plan.IsArchived;
+                    existing.Type = plan.Type;
+                    existing.Title = plan.Title;
+                    existing.LinkedShoppingListPlanId = plan.LinkedShoppingListPlanId;
+                    existing.UpdatedAt = plan.UpdatedAt;
+                    imported++;
+                }
+            }
+            await db.SaveChangesAsync(ct);
+            
+            // Planned Meals
+            foreach (var meal in cloudData.PlannedMeals)
+            {
+                var existing = await db.PlannedMeals.FindAsync(new object[] { meal.Id }, ct);
+                if (existing == null)
+                {
+                    db.PlannedMeals.Add(meal);
+                    imported++;
+                }
+                else if (meal.UpdatedAt > existing.UpdatedAt)
+                {
+                    existing.RecipeId = meal.RecipeId;
+                    existing.PlanId = meal.PlanId;
+                    existing.Date = meal.Date;
+                    existing.Portions = meal.Portions;
+                    existing.UpdatedAt = meal.UpdatedAt;
+                    imported++;
+                }
+            }
+            await db.SaveChangesAsync(ct);
+            
+            // Shopping List Items
+            foreach (var item in cloudData.ShoppingListItems)
+            {
+                var existing = await db.ShoppingListItems.FindAsync(new object[] { item.Id }, ct);
+                if (existing == null)
+                {
+                    db.ShoppingListItems.Add(item);
+                    imported++;
+                }
+                else if (item.UpdatedAt > existing.UpdatedAt)
+                {
+                    existing.PlanId = item.PlanId;
+                    existing.IngredientName = item.IngredientName;
+                    existing.Quantity = item.Quantity;
+                    existing.Unit = item.Unit;
+                    existing.IsChecked = item.IsChecked;
+                    existing.Order = item.Order;
+                    existing.UpdatedAt = item.UpdatedAt;
+                    imported++;
+                }
+            }
+            await db.SaveChangesAsync(ct);
+            
+            Log($"ImportCloudDataToLocalAsync: Successfully imported {imported} entities");
+        }
+        catch (Exception ex)
+        {
+            Log($"ERROR in ImportCloudDataToLocalAsync: {ex.Message}");
+            throw;
+        }
+        
+        return imported;
+    }
+    
+    /// <summary>
+    /// Queues only local entities that don't exist in cloud for upload (used in cloud-first sync).
+    /// </summary>
+    private async Task<int> QueueLocalOnlyEntitiesForSyncAsync(AppDbContext db, Guid accountId, Guid batchId, CloudDataSnapshot cloudData, CancellationToken ct)
+    {
+        int totalQueued = 0;
+        
+        try
+        {
+            // Build sets of cloud IDs for quick lookup
+            var cloudFolderIds = new HashSet<Guid>(cloudData.Folders.Select(f => f.Id));
+            var cloudLabelIds = new HashSet<Guid>(cloudData.RecipeLabels.Select(l => l.Id));
+            var cloudRecipeIds = new HashSet<Guid>(cloudData.Recipes.Select(r => r.Id));
+            var cloudIngredientIds = new HashSet<Guid>(cloudData.Ingredients.Select(i => i.Id));
+            var cloudPlanIds = new HashSet<Guid>(cloudData.Plans.Select(p => p.Id));
+            var cloudMealIds = new HashSet<Guid>(cloudData.PlannedMeals.Select(m => m.Id));
+            var cloudShoppingIds = new HashSet<Guid>(cloudData.ShoppingListItems.Select(s => s.Id));
+            
+            // Queue local-only folders
+            var localFolders = await db.Folders.ToListAsync(ct);
+            foreach (var folder in localFolders.Where(f => !cloudFolderIds.Contains(f.Id)))
+            {
+                db.SyncQueue.Add(CreateInitialSyncEntry(accountId, folder, batchId, priority: 1));
+                totalQueued++;
+            }
+            
+            // Queue local-only labels
+            var localLabels = await db.RecipeLabels.ToListAsync(ct);
+            foreach (var label in localLabels.Where(l => !cloudLabelIds.Contains(l.Id)))
+            {
+                db.SyncQueue.Add(CreateInitialSyncEntry(accountId, label, batchId, priority: 2));
+                totalQueued++;
+            }
+            
+            // Queue local-only recipes
+            var localRecipes = await db.Recipes.ToListAsync(ct);
+            foreach (var recipe in localRecipes.Where(r => !cloudRecipeIds.Contains(r.Id)))
+            {
+                db.SyncQueue.Add(CreateInitialSyncEntry(accountId, recipe, batchId, priority: 3));
+                totalQueued++;
+            }
+            
+            // Queue local-only ingredients
+            var localIngredients = await db.Ingredients.ToListAsync(ct);
+            foreach (var ingredient in localIngredients.Where(i => !cloudIngredientIds.Contains(i.Id)))
+            {
+                db.SyncQueue.Add(CreateInitialSyncEntry(accountId, ingredient, batchId, priority: 4));
+                totalQueued++;
+            }
+            
+            // Queue local-only plans
+            var localPlans = await db.Plans.ToListAsync(ct);
+            foreach (var plan in localPlans.Where(p => !cloudPlanIds.Contains(p.Id)))
+            {
+                db.SyncQueue.Add(CreateInitialSyncEntry(accountId, plan, batchId, priority: 5));
+                totalQueued++;
+            }
+            
+            // Queue local-only planned meals
+            var localMeals = await db.PlannedMeals.ToListAsync(ct);
+            foreach (var meal in localMeals.Where(m => !cloudMealIds.Contains(m.Id)))
+            {
+                db.SyncQueue.Add(CreateInitialSyncEntry(accountId, meal, batchId, priority: 6));
+                totalQueued++;
+            }
+            
+            // Queue local-only shopping items
+            var localShoppingItems = await db.ShoppingListItems.ToListAsync(ct);
+            foreach (var item in localShoppingItems.Where(s => !cloudShoppingIds.Contains(s.Id)))
+            {
+                db.SyncQueue.Add(CreateInitialSyncEntry(accountId, item, batchId, priority: 7));
+                totalQueued++;
+            }
+            
+            await db.SaveChangesAsync(ct);
+            Log($"QueueLocalOnlyEntitiesForSyncAsync: Queued {totalQueued} local-only entities");
+        }
+        catch (Exception ex)
+        {
+            Log($"ERROR in QueueLocalOnlyEntitiesForSyncAsync: {ex.Message}");
+            throw;
+        }
+        
+        return totalQueued;
+    }
+    
     private async Task<int> QueueAllEntitiesForInitialSyncAsync(AppDbContext db, Guid accountId, Guid batchId, CancellationToken ct)
     {
         int totalQueued = 0;
@@ -1280,16 +1642,39 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 _preferencesService.SaveColorfulBackground(cloudPrefs.IsColorfulBackground);
                 _preferencesService.SaveWallpaperEnabled(cloudPrefs.IsWallpaperEnabled);
 
+                // FIX: Apply font settings using IFontService (not just save to preferences)
                 if (Enum.TryParse<AppFontFamily>(cloudPrefs.FontFamily, out var fontFamily))
                 {
                     _preferencesService.SaveFontFamily(fontFamily);
-                    Log($"Applied font family: {fontFamily}");
+                    
+                    // Get FontService from service provider and apply font
+                    var fontService = _serviceProvider.GetService(typeof(IFontService)) as IFontService;
+                    if (fontService != null)
+                    {
+                        fontService.SetFontFamily(fontFamily);
+                        Log($"Applied font family: {fontFamily}");
+                    }
+                    else
+                    {
+                        Log($"WARNING: FontService not available - font family saved but not applied");
+                    }
                 }
 
                 if (Enum.TryParse<AppFontSize>(cloudPrefs.FontSize, out var fontSize))
                 {
                     _preferencesService.SaveFontSize(fontSize);
-                    Log($"Applied font size: {fontSize}");
+                    
+                    // Get FontService from service provider and apply font size
+                    var fontService = _serviceProvider.GetService(typeof(IFontService)) as IFontService;
+                    if (fontService != null)
+                    {
+                        fontService.SetFontSize(fontSize);
+                        Log($"Applied font size: {fontSize}");
+                    }
+                    else
+                    {
+                        Log($"WARNING: FontService not available - font size saved but not applied");
+                    }
                 }
 
                 Log("? Successfully loaded and applied preferences from cloud");
@@ -1375,6 +1760,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
     {
         if (_disposed) return;
         _syncTimer?.Dispose();
+        _cloudPollingTimer?.Dispose();
         _syncLock.Dispose();
         _queueLock.Dispose();
         _disposed = true;
