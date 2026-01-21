@@ -51,6 +51,71 @@ public sealed class SupabaseRestClient
         return request;
     }
 
+    private static string RemoveMetadataFromJson(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return json;
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            using var ms = new System.IO.MemoryStream();
+            using (var writer = new Utf8JsonWriter(ms))
+            {
+                if (doc.RootElement.ValueKind == JsonValueKind.Object)
+                {
+                    writer.WriteStartObject();
+                    foreach (var prop in doc.RootElement.EnumerateObject())
+                    {
+                        var name = prop.Name;
+                        string normalized = name.Replace("_", string.Empty).ToLowerInvariant();
+                        if (normalized == "primarykey" || normalized == "tablename")
+                            continue;
+
+                        prop.WriteTo(writer);
+                    }
+                    writer.WriteEndObject();
+                }
+                else if (doc.RootElement.ValueKind == JsonValueKind.Array)
+                {
+                    writer.WriteStartArray();
+                    foreach (var item in doc.RootElement.EnumerateArray())
+                    {
+                        if (item.ValueKind == JsonValueKind.Object)
+                        {
+                            writer.WriteStartObject();
+                            foreach (var prop in item.EnumerateObject())
+                            {
+                                var name = prop.Name;
+                                string normalized = name.Replace("_", string.Empty).ToLowerInvariant();
+                                if (normalized == "primarykey" || normalized == "tablename")
+                                    continue;
+
+                                prop.WriteTo(writer);
+                            }
+                            writer.WriteEndObject();
+                        }
+                        else
+                        {
+                            item.WriteTo(writer);
+                        }
+                    }
+                    writer.WriteEndArray();
+                }
+                else
+                {
+                    // Not object/array - return original
+                    return json;
+                }
+                writer.Flush();
+            }
+
+            return System.Text.Encoding.UTF8.GetString(ms.ToArray());
+        }
+        catch
+        {
+            return json;
+        }
+    }
+
     /// <summary>
     /// GET records from a table with optional filters
     /// </summary>
@@ -96,6 +161,7 @@ public sealed class SupabaseRestClient
         request.Headers.TryAddWithoutValidation("Prefer", "return=representation");
         
         var json = JsonSerializer.Serialize(data, JsonOptions);
+        json = RemoveMetadataFromJson(json);
         request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
         var response = await _httpClient.SendAsync(request, ct);
@@ -119,6 +185,7 @@ public sealed class SupabaseRestClient
         request.Headers.TryAddWithoutValidation("Prefer", "return=representation");
         
         var json = JsonSerializer.Serialize(data, JsonOptions);
+        json = RemoveMetadataFromJson(json);
         request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
         var response = await _httpClient.SendAsync(request, ct);
@@ -137,6 +204,7 @@ public sealed class SupabaseRestClient
         request.Headers.TryAddWithoutValidation("Prefer", "return=representation");
         
         var json = JsonSerializer.Serialize(data, JsonOptions);
+        json = RemoveMetadataFromJson(json);
         request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
         var response = await _httpClient.SendAsync(request, ct);
@@ -168,6 +236,7 @@ public sealed class SupabaseRestClient
         request.Headers.TryAddWithoutValidation("Prefer", "resolution=merge-duplicates,return=representation");
         
         var json = JsonSerializer.Serialize(data, JsonOptions);
+        json = RemoveMetadataFromJson(json);
         request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
         var response = await _httpClient.SendAsync(request, ct);
@@ -188,6 +257,7 @@ public sealed class SupabaseRestClient
         request.Headers.TryAddWithoutValidation("Prefer", "return=representation");
         
         var json = JsonSerializer.Serialize(patchData, JsonOptions);
+        json = RemoveMetadataFromJson(json);
         request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
         var response = await _httpClient.SendAsync(request, ct);

@@ -14,6 +14,8 @@ namespace Foodbook.Services
 {
     public class ThemeService : IThemeService
     {
+        private readonly IPreferencesService _preferencesService;
+        
         public event EventHandler? ThemeChanged;
 
         private Foodbook.Models.AppTheme _currentTheme = Foodbook.Models.AppTheme.System;
@@ -49,6 +51,12 @@ namespace Foodbook.Services
 
         public ThemeService()
         {
+            _availableColorThemes = InitializeThemes();
+        }
+
+        public ThemeService(IPreferencesService preferencesService)
+        {
+            _preferencesService = preferencesService ?? throw new ArgumentNullException(nameof(preferencesService));
             _availableColorThemes = InitializeThemes();
         }
 
@@ -108,6 +116,8 @@ namespace Foodbook.Services
             };
 
             ApplyColorTheme(_currentColorTheme);
+            
+            // Don't auto-save from SetTheme - caller (SettingsViewModel/LoadFromCloud) handles persistence
         }
 
         public void SetColorTheme(AppColorTheme colorTheme)
@@ -119,6 +129,8 @@ namespace Foodbook.Services
                 _isWallpaperEnabled = false;
 
             ApplyColorTheme(colorTheme);
+            
+            // Don't auto-save from SetColorTheme - caller handles persistence
         }
 
         public void UpdateSystemBars()

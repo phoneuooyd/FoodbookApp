@@ -1,5 +1,8 @@
 using Foodbook.Models;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Services.Auth;
+using Foodbook.Data;
+using Foodbook.Models.DTOs;
 
 namespace Foodbook.Services;
 
@@ -8,6 +11,9 @@ namespace Foodbook.Services;
 /// </summary>
 public class PreferencesService : IPreferencesService
 {
+    private readonly IAuthTokenStore _tokenStore;
+    private bool _suppressCloudSync; // Flag to prevent sync during cloud load
+    
     private const string SelectedCultureKey = "SelectedCulture";
     private const string SelectedThemeKey = "SelectedTheme";
     private const string SelectedColorThemeKey = "SelectedColorTheme";
@@ -19,6 +25,11 @@ public class PreferencesService : IPreferencesService
     private const string InstallBasicIngredientsKey = "InstallBasicIngredients";
     
     private static readonly string[] SupportedCultures = { "en", "pl-PL", "de-DE", "es-ES", "fr-FR", "ko-KR" };
+
+    public PreferencesService(IAuthTokenStore tokenStore)
+    {
+        _tokenStore = tokenStore ?? throw new ArgumentNullException(nameof(tokenStore));
+    }
 
     /// <inheritdoc/>
     public string GetSavedLanguage()
@@ -56,6 +67,9 @@ public class PreferencesService : IPreferencesService
             
             Preferences.Set(SelectedCultureKey, cultureCode);
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved culture preference: {cultureCode}");
+            
+            // Auto-sync to cloud
+            _ = SyncToCloudAsync();
         }
         catch (Exception ex)
         {
@@ -99,6 +113,9 @@ public class PreferencesService : IPreferencesService
         {
             Preferences.Set(SelectedThemeKey, theme.ToString());
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved theme preference: {theme}");
+            
+            // Auto-sync to cloud
+            _ = SyncToCloudAsync();
         }
         catch (Exception ex)
         {
@@ -136,6 +153,9 @@ public class PreferencesService : IPreferencesService
         {
             Preferences.Set(SelectedColorThemeKey, colorTheme.ToString());
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved color theme preference: {colorTheme}");
+            
+            // Auto-sync to cloud
+            _ = SyncToCloudAsync();
         }
         catch (Exception ex)
         {
@@ -166,6 +186,9 @@ public class PreferencesService : IPreferencesService
         {
             Preferences.Set(ColorfulBackgroundEnabledKey, isEnabled);
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved colorful background preference: {isEnabled}");
+            
+            // Auto-sync to cloud
+            _ = SyncToCloudAsync();
         }
         catch (Exception ex)
         {
@@ -196,6 +219,9 @@ public class PreferencesService : IPreferencesService
         {
             Preferences.Set(WallpaperEnabledKey, isEnabled);
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved wallpaper enabled: {isEnabled}");
+            
+            // Auto-sync to cloud
+            _ = SyncToCloudAsync();
         }
         catch (Exception ex)
         {
@@ -233,6 +259,9 @@ public class PreferencesService : IPreferencesService
         {
             Preferences.Set(SelectedFontFamilyKey, fontFamily.ToString());
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved font family preference: {fontFamily}");
+            
+            // Auto-sync to cloud
+            _ = SyncToCloudAsync();
         }
         catch (Exception ex)
         {
@@ -270,6 +299,9 @@ public class PreferencesService : IPreferencesService
         {
             Preferences.Set(SelectedFontSizeKey, fontSize.ToString());
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved font size preference: {fontSize}");
+            
+            // Auto-sync to cloud
+            _ = SyncToCloudAsync();
         }
         catch (Exception ex)
         {
@@ -411,6 +443,75 @@ public class PreferencesService : IPreferencesService
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to reset all preferences to defaults: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Automatically syncs current preferences to Supabase cloud if user is logged in.
+    /// Fire-and-forget - errors are logged but not thrown.
+    /// </summary>
+    private async Task SyncToCloudAsync()
+    {
+        try
+        {
+            // Skip if sync is suppressed (loading from cloud)
+            if (_suppressCloudSync)
+            {
+                System.Diagnostics.Debug.WriteLine("[PreferencesService] Cloud sync suppressed (loading from cloud)");
+                return;
+            }
+            
+            // Check if user is logged in
+            var accountId = await _tokenStore.GetActiveAccountIdAsync();
+            if (!accountId.HasValue)
+            {
+                System.Diagnostics.Debug.WriteLine("[PreferencesService] No active account - skipping cloud sync");
+                return;
+            }
+
+            // Get Supabase user ID from account
+            using var scope = FoodbookApp.MauiProgram.ServiceProvider!.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var account = await db.AuthAccounts.FindAsync(accountId.Value);
+            
+            if (account == null || string.IsNullOrWhiteSpace(account.SupabaseUserId))
+            {
+                System.Diagnostics.Debug.WriteLine("[PreferencesService] Account not found or missing Supabase ID - skipping cloud sync");
+                return;
+            }
+
+            if (!Guid.TryParse(account.SupabaseUserId, out var supabaseUserId))
+            {
+                System.Diagnostics.Debug.WriteLine($"[PreferencesService] Invalid Supabase user ID format: {account.SupabaseUserId}");
+                return;
+            }
+
+            // Create DTO and queue for sync instead of direct API call
+            var dto = new UserPreferencesDto
+            {
+                Id = supabaseUserId,
+                Theme = GetSavedTheme().ToString(),
+                ColorTheme = GetSavedColorTheme().ToString(),
+                IsColorfulBackground = GetIsColorfulBackgroundEnabled(),
+                IsWallpaperEnabled = GetIsWallpaperEnabled(),
+                FontFamily = GetSavedFontFamily().ToString(),
+                FontSize = GetSavedFontSize().ToString(),
+                Language = GetSavedLanguage(),
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            // Queue for sync through normal sync queue
+            var syncService = scope.ServiceProvider.GetService<ISupabaseSyncService>();
+            if (syncService != null)
+            {
+                await syncService.QueueForSyncAsync(dto, SyncOperationType.Insert);
+                System.Diagnostics.Debug.WriteLine("[PreferencesService] ? Auto-synced preferences to cloud (queued for sync)");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Cloud sync failed (non-fatal): {ex.Message}");
+            // Don't throw - local preferences are already saved
         }
     }
 }

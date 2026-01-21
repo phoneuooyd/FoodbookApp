@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using Foodbook.Data;
 using Foodbook.Models;
+using Foodbook.Models.DTOs;
 using FoodbookApp.Interfaces;
 using FoodbookApp.Services.Auth;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +23,8 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
     private readonly IServiceProvider _serviceProvider;
     private readonly IAuthTokenStore _tokenStore;
     private readonly ISupabaseCrudService _crudService;
+    private readonly IPreferencesService _preferencesService;
+    private readonly IThemeService _themeService;
 
     private Timer? _syncTimer;
     private readonly SemaphoreSlim _syncLock = new(1, 1);
@@ -61,6 +64,20 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         _serviceProvider = serviceProvider;
         _tokenStore = tokenStore;
         _crudService = crudService;
+        
+        // Resolve preferences and theme services (optional - may be null during startup)
+        try
+        {
+            _preferencesService = serviceProvider.GetService(typeof(IPreferencesService)) as IPreferencesService 
+                ?? throw new InvalidOperationException("IPreferencesService not registered");
+            _themeService = serviceProvider.GetService(typeof(IThemeService)) as IThemeService 
+                ?? throw new InvalidOperationException("IThemeService not registered");
+        }
+        catch (Exception ex)
+        {
+            Log($"WARNING: Failed to resolve preferences/theme services: {ex.Message}");
+            throw;
+        }
     }
 
     public async Task<SyncState?> GetSyncStateAsync(CancellationToken ct = default)
@@ -965,6 +982,9 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 case "ShoppingListItem":
                     await ProcessShoppingListItemAsync(entry, ct);
                     break;
+                case "UserPreferencesDto":
+                    await ProcessUserPreferencesAsync(entry, ct);
+                    break;
                 default:
                     throw new NotSupportedException($"Entity type {entry.EntityType} not supported for sync");
             }
@@ -1102,6 +1122,23 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         }
     }
 
+    private async Task ProcessUserPreferencesAsync(SyncQueueEntry entry, CancellationToken ct)
+    {
+        switch (entry.OperationType)
+        {
+            case SyncOperationType.Insert:
+            case SyncOperationType.Update:
+                var prefs = DeserializeEntity<UserPreferencesDto>(entry.Payload!);
+                await _crudService.UpsertUserPreferencesAsync(prefs, ct);
+                break;
+            case SyncOperationType.Delete:
+                // Preferences are user-specific; soft delete by clearing data
+                var emptyPrefs = new UserPreferencesDto { Id = entry.EntityId };
+                await _crudService.UpsertUserPreferencesAsync(emptyPrefs, ct);
+                break;
+        }
+    }
+
     private static Guid GetEntityId<T>(T entity) where T : class
     {
         var idProp = typeof(T).GetProperty("Id") ?? throw new InvalidOperationException($"{typeof(T).Name} has no Id");
@@ -1109,8 +1146,78 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         return value is Guid g ? g : throw new InvalidOperationException($"{typeof(T).Name}.Id is not Guid");
     }
 
-    private static string SerializeEntity<T>(T entity) => JsonSerializer.Serialize(entity, JsonOptions);
-    private static T DeserializeEntity<T>(string json) => JsonSerializer.Deserialize<T>(json, JsonOptions) ?? throw new InvalidOperationException($"Failed to deserialize {typeof(T).Name}");
+    private static string SerializeEntity<T>(T entity)
+    {
+        // Special-case UserPreferencesDto to avoid BaseModel internals (PrimaryKey dictionary) being serialized
+        if (entity is Foodbook.Models.DTOs.UserPreferencesDto prefs)
+        {
+            var payload = new
+            {
+                id = prefs.Id,
+                theme = prefs.Theme,
+                color_theme = prefs.ColorTheme,
+                is_colorful_background = prefs.IsColorfulBackground,
+                is_wallpaper_enabled = prefs.IsWallpaperEnabled,
+                font_family = prefs.FontFamily,
+                font_size = prefs.FontSize,
+                language = prefs.Language,
+                created_at = prefs.CreatedAt,
+                updated_at = prefs.UpdatedAt
+            };
+
+            return JsonSerializer.Serialize(payload, JsonOptions);
+        }
+
+        return JsonSerializer.Serialize(entity, JsonOptions);
+    }
+
+    private static string StripMetadataFromJson(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.ValueKind != JsonValueKind.Object)
+                return json;
+
+            using var ms = new System.IO.MemoryStream();
+            using (var writer = new Utf8JsonWriter(ms))
+            {
+                writer.WriteStartObject();
+                foreach (var prop in doc.RootElement.EnumerateObject())
+                {
+                    var name = prop.Name;
+                    if (string.Equals(name, "PrimaryKey", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(name, "TableName", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // skip metadata fields entirely
+                        continue;
+                    }
+
+                    prop.WriteTo(writer);
+                }
+                writer.WriteEndObject();
+                writer.Flush();
+            }
+
+            return System.Text.Encoding.UTF8.GetString(ms.ToArray());
+        }
+        catch
+        {
+            // If anything fails while cleaning, fall back to original JSON to avoid data loss
+            return json;
+        }
+    }
+
+    private static T DeserializeEntity<T>(string json)
+    {
+        // Clean known problematic metadata that may have been serialized from Supabase BaseModel
+        if (!string.IsNullOrEmpty(json) && (json.IndexOf("\"PrimaryKey\"", StringComparison.OrdinalIgnoreCase) >= 0 || json.IndexOf("\"TableName\"", StringComparison.OrdinalIgnoreCase) >= 0))
+        {
+            json = StripMetadataFromJson(json);
+        }
+
+        return JsonSerializer.Deserialize<T>(json, JsonOptions) ?? throw new InvalidOperationException($"Failed to deserialize {typeof(T).Name}");
+    }
 
     private void RaiseSyncStatusChanged(SyncStatus oldStatus, SyncStatus newStatus, string? message = null)
     {
@@ -1123,6 +1230,146 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
     }
 
     private static void Log(string message) => System.Diagnostics.Debug.WriteLine($"[SupabaseSyncService] {message}");
+
+    #region User Preferences Sync
+
+    public async Task<bool> LoadUserPreferencesFromCloudAsync(Guid userId, CancellationToken ct = default)
+    {
+        try
+        {
+            Log($"Loading preferences from cloud for user {userId}");
+
+            var cloudPrefs = await _crudService.GetUserPreferencesAsync(userId, ct);
+            
+            if (cloudPrefs == null)
+            {
+                Log("No cloud preferences found - first login");
+                return false;
+            }
+
+            // CRITICAL: Suppress cloud sync during load to prevent circular calls
+            // This is done via reflection since PreferencesService doesn't expose this flag
+            var suppressField = _preferencesService.GetType().GetField("_suppressCloudSync", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            suppressField?.SetValue(_preferencesService, true);
+
+            try
+            {
+                // Apply cloud preferences to local storage
+                
+                if (!string.IsNullOrWhiteSpace(cloudPrefs.Language))
+                {
+                    _preferencesService.SaveLanguage(cloudPrefs.Language);
+                    Log($"Applied language: {cloudPrefs.Language}");
+                }
+
+                if (Enum.TryParse<Foodbook.Models.AppTheme>(cloudPrefs.Theme, out var theme))
+                {
+                    _preferencesService.SaveTheme(theme);
+                    _themeService.SetTheme(theme);
+                    Log($"Applied theme: {theme}");
+                }
+
+                if (Enum.TryParse<AppColorTheme>(cloudPrefs.ColorTheme, out var colorTheme))
+                {
+                    _preferencesService.SaveColorTheme(colorTheme);
+                    _themeService.SetColorTheme(colorTheme);
+                    Log($"Applied color theme: {colorTheme}");
+                }
+
+                _preferencesService.SaveColorfulBackground(cloudPrefs.IsColorfulBackground);
+                _preferencesService.SaveWallpaperEnabled(cloudPrefs.IsWallpaperEnabled);
+
+                if (Enum.TryParse<AppFontFamily>(cloudPrefs.FontFamily, out var fontFamily))
+                {
+                    _preferencesService.SaveFontFamily(fontFamily);
+                    Log($"Applied font family: {fontFamily}");
+                }
+
+                if (Enum.TryParse<AppFontSize>(cloudPrefs.FontSize, out var fontSize))
+                {
+                    _preferencesService.SaveFontSize(fontSize);
+                    Log($"Applied font size: {fontSize}");
+                }
+
+                Log("? Successfully loaded and applied preferences from cloud");
+                return true;
+            }
+            finally
+            {
+                // Re-enable cloud sync
+                suppressField?.SetValue(_preferencesService, false);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"? Error loading preferences from cloud: {ex.Message}");
+            return false;
+        }
+    }
+
+    public async Task SaveUserPreferencesToCloudAsync(Guid userId, CancellationToken ct = default)
+    {
+        try
+        {
+            Log($"Saving preferences to cloud for user {userId}");
+            await _crudService.UpsertUserPreferencesAsync(new UserPreferencesDto
+            {
+                Id = userId,
+                Theme = _preferencesService.GetSavedTheme().ToString(),
+                ColorTheme = _preferencesService.GetSavedColorTheme().ToString(),
+                IsColorfulBackground = _preferencesService.GetIsColorfulBackgroundEnabled(),
+                IsWallpaperEnabled = _preferencesService.GetIsWallpaperEnabled(),
+                FontFamily = _preferencesService.GetSavedFontFamily().ToString(),
+                FontSize = _preferencesService.GetSavedFontSize().ToString(),
+                Language = _preferencesService.GetSavedLanguage(),
+                UpdatedAt = DateTime.UtcNow
+            }, ct);
+            Log("? Successfully saved preferences to cloud");
+        }
+        catch (Exception ex)
+        {
+            Log($"? Error saving preferences to cloud: {ex.Message}");
+        }
+    }
+
+    public async Task CreateInitialUserPreferencesAsync(Guid userId, CancellationToken ct = default)
+    {
+        try
+        {
+            Log($"Creating initial preferences for user {userId}");
+
+            var existing = await _crudService.GetUserPreferencesAsync(userId, ct);
+            if (existing != null)
+            {
+                Log("Preferences already exist - skipping creation");
+                return;
+            }
+
+            await SaveUserPreferencesToCloudAsync(userId, ct);
+            Log("? Successfully created initial preferences");
+        }
+        catch (Exception ex)
+        {
+            Log($"? Error creating initial preferences: {ex.Message}");
+        }
+    }
+
+    public async Task<bool> HasCloudPreferencesAsync(Guid userId, CancellationToken ct = default)
+    {
+        try
+        {
+            var prefs = await _crudService.GetUserPreferencesAsync(userId, ct);
+            return prefs != null;
+        }
+        catch (Exception ex)
+        {
+            Log($"? Error checking cloud preferences: {ex.Message}");
+            return false;
+        }
+    }
+
+    #endregion
 
     public void Dispose()
     {

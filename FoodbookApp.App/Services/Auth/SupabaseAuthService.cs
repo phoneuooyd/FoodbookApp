@@ -210,5 +210,36 @@ public sealed class SupabaseAuthService : ISupabaseAuthService
 
         await _tokenStore.SetTokensAsync(account.Id, session.AccessToken, session.RefreshToken, expiresAt);
         await _tokenStore.SetActiveAccountIdAsync(account.Id);
+
+        // Initialize user preferences in cloud on first login
+        try
+        {
+            var syncService = _serviceProvider.GetService(typeof(ISupabaseSyncService)) as ISupabaseSyncService;
+            if (syncService != null && Guid.TryParse(sbUserId, out var userGuid))
+            {
+                System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] Initializing preferences for user {userGuid}...");
+                
+                // Check if user already has cloud preferences
+                var hasPrefs = await syncService.HasCloudPreferencesAsync(userGuid);
+                
+                if (!hasPrefs)
+                {
+                    // First login - create initial preferences from local settings
+                    System.Diagnostics.Debug.WriteLine("[SupabaseAuthService] First login detected - creating initial preferences");
+                    await syncService.CreateInitialUserPreferencesAsync(userGuid);
+                }
+                else
+                {
+                    // Existing user - load preferences from cloud
+                    System.Diagnostics.Debug.WriteLine("[SupabaseAuthService] Existing user - loading preferences from cloud");
+                    await syncService.LoadUserPreferencesFromCloudAsync(userGuid);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] User preferences sync failed (non-fatal): {ex.Message}");
+            // Don't throw - app can function without cloud preferences
+        }
     }
 }

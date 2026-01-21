@@ -89,15 +89,8 @@ namespace FoodbookApp
             }));
             builder.Services.AddScoped<ISupabaseAuthService, SupabaseAuthService>();
             builder.Services.AddScoped<IAccountService, AccountService>();
-            builder.Services.AddScoped<ISupabaseCrudService, SupabaseCrudService>();
             
-            // Supabase Sync Service - singleton to maintain sync timer across app lifecycle
-            builder.Services.AddSingleton<ISupabaseSyncService, SupabaseSyncService>();
-            
-            // Deduplication Service - singleton to maintain cache across login sessions
-            builder.Services.AddSingleton<IDeduplicationService, DeduplicationService>();
-
-            builder.Services.AddScoped<Supabase.Client>(_ => 
+            builder.Services.AddScoped<Supabase.Client>(_ =>
             new Supabase.Client(
                 "https://gscbdvezastxpyndkauh.supabase.co",
                 "sb_publishable_gwkJSRidW1DP28CCEeQUDA_ELLTHT92",
@@ -107,6 +100,47 @@ namespace FoodbookApp
                     AutoConnectRealtime = false // disable default realtime to avoid 403 storms; connect explicitly when needed
                 }
             ));
+            
+            // Http / import - must register BEFORE SupabaseRestClient
+            builder.Services.AddScoped(sp =>
+            {
+                var handler = sp.GetRequiredService<BearerTokenHandler>();
+                // CRITICAL: DelegatingHandler requires InnerHandler to be set
+                handler.InnerHandler = new HttpClientHandler();
+                
+                var client = new HttpClient(handler, disposeHandler: true);
+
+                var baseUrl = builder.Configuration["Supabase:Url"];
+                if (!string.IsNullOrWhiteSpace(baseUrl))
+                {
+                    client.BaseAddress = new Uri(baseUrl);
+                }
+
+                return client;
+            });
+            
+            // Register SupabaseRestClient BEFORE SupabaseCrudService - must have HttpClient available
+            builder.Services.AddScoped(sp =>
+            {
+                var httpClient = sp.GetRequiredService<HttpClient>();
+                var tokenStore = sp.GetRequiredService<IAuthTokenStore>();
+                return new SupabaseRestClient(
+                    httpClient,
+                    tokenStore,
+                    "https://gscbdvezastxpyndkauh.supabase.co",
+                    "sb_publishable_gwkJSRidW1DP28CCEeQUDA_ELLTHT92"
+                );
+            });
+            
+            // Register SupabaseCrudService AFTER SupabaseRestClient
+            builder.Services.AddScoped<ISupabaseCrudService, SupabaseCrudService>();
+            
+            // Supabase Sync Service - singleton to maintain sync timer across app lifecycle
+            builder.Services.AddSingleton<ISupabaseSyncService, SupabaseSyncService>();
+            
+            // Deduplication Service - singleton to maintain cache across login sessions
+            builder.Services.AddSingleton<IDeduplicationService, DeduplicationService>();
+
             builder.Services.AddScoped<RecipeViewModel>();
             builder.Services.AddTransient<AddRecipeViewModel>();
             builder.Services.AddScoped<PlannerViewModel>();
@@ -122,22 +156,6 @@ namespace FoodbookApp
             builder.Services.AddTransient<SetupWizardViewModel>();
             // New: Planner lists VM
             builder.Services.AddTransient<PlannerListsViewModel>();
-
-            // Http / import
-            builder.Services.AddScoped(sp =>
-            {
-                var handler = sp.GetRequiredService<BearerTokenHandler>();
-                var client = new HttpClient(handler, disposeHandler: true);
-
-                var baseUrl = builder.Configuration["Supabase:Url"];
-                if (!string.IsNullOrWhiteSpace(baseUrl))
-                {
-                    client.BaseAddress = new Uri(baseUrl);
-                }
-
-                return client;
-            });
-            builder.Services.AddScoped<RecipeImporter>();
 
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering pages");
             builder.Services.AddScoped<HomePage>();

@@ -55,39 +55,7 @@ public interface ISupabaseCrudService
     Task UpdateRecipeLabelAsync(RecipeLabel label, CancellationToken ct = default);
     Task DeleteRecipeLabelAsync(Guid id, CancellationToken ct = default);
 
-    // UserPreferences - sync with Supabase
-    Task<UserPreferencesDto?> GetUserPreferencesFromCloudAsync(Guid userId, CancellationToken ct = default);
-    Task SyncUserPreferencesToCloudAsync(Guid userId, CancellationToken ct = default);
-
-    // === BATCH OPERATIONS (REST API) ===
-    
-    /// <summary>
-    /// Insert multiple recipes in a single batch request
-    /// </summary>
-    Task<List<Recipe>> AddRecipesBatchAsync(IEnumerable<Recipe> recipes, CancellationToken ct = default);
-    
-    /// <summary>
-    /// Insert multiple ingredients in a single batch request
-    /// </summary>
-    Task<List<Ingredient>> AddIngredientsBatchAsync(IEnumerable<Ingredient> ingredients, CancellationToken ct = default);
-    
-    /// <summary>
-    /// Insert multiple planned meals in a single batch request
-    /// </summary>
-    Task<List<PlannedMeal>> AddPlannedMealsBatchAsync(IEnumerable<PlannedMeal> meals, CancellationToken ct = default);
-    
-    /// <summary>
-    /// Insert multiple shopping list items in a single batch request
-    /// </summary>
-    Task<List<ShoppingListItem>> AddShoppingListItemsBatchAsync(IEnumerable<ShoppingListItem> items, CancellationToken ct = default);
-    
-    /// <summary>
-    /// Upsert (insert or update) multiple recipes
-    /// </summary>
-    Task<List<Recipe>> UpsertRecipesAsync(IEnumerable<Recipe> recipes, CancellationToken ct = default);
-    
-    /// <summary>
-    /// Upsert (insert or update) multiple ingredients
-    /// </summary>
-    Task<List<Ingredient>> UpsertIngredientsAsync(IEnumerable<Ingredient> ingredients, CancellationToken ct = default);
+    // UserPreferences (ORM-based via sync queue)
+    Task<UserPreferencesDto?> GetUserPreferencesAsync(Guid userId, CancellationToken ct = default);
+    Task<UserPreferencesDto> UpsertUserPreferencesAsync(UserPreferencesDto preferences, CancellationToken ct = default);
 }

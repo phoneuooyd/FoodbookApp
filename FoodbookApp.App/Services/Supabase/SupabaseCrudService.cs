@@ -20,14 +20,14 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
     private const string SupabaseAnonKey = "sb_publishable_gwkJSRidW1DP28CCEeQUDA_ELLTHT92";
 
     public SupabaseCrudService(
-        global::Supabase.Client client, 
-        HttpClient httpClient, 
+        global::Supabase.Client client,
+        SupabaseRestClient restClient,
         IAuthTokenStore tokenStore,
         IPreferencesService preferencesService)
     {
         _client = client;
         _tokenStore = tokenStore;
-        _restClient = new SupabaseRestClient(httpClient, tokenStore, SupabaseUrl, SupabaseAnonKey);
+        _restClient = restClient ?? throw new ArgumentNullException(nameof(restClient));
         _preferencesService = preferencesService;
     }
 
@@ -63,10 +63,10 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
     private async Task EnsureAuthenticatedAsync()
     {
         await EnsureInitializedAsync();
-        
+
         var accountId = await _tokenStore.GetActiveAccountIdAsync();
         if (!accountId.HasValue) return;
-        
+
         var accessToken = await _tokenStore.GetAccessTokenAsync(accountId.Value);
         if (!string.IsNullOrWhiteSpace(accessToken))
         {
@@ -90,14 +90,14 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
     {
         var user = _client.Auth.CurrentUser;
         if (user != null) return user.Id;
-        
+
         // Fallback: try to get from token store
         var accountId = await _tokenStore.GetActiveAccountIdAsync();
         if (!accountId.HasValue) return null;
-        
+
         var accessToken = await _tokenStore.GetAccessTokenAsync(accountId.Value);
         if (string.IsNullOrWhiteSpace(accessToken)) return null;
-        
+
         // Parse user ID from JWT (sub claim)
         try
         {
@@ -121,7 +121,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         {
             System.Diagnostics.Debug.WriteLine($"[SupabaseCrudService] Failed to parse JWT: {ex.Message}");
         }
-        
+
         return null;
     }
 
@@ -656,34 +656,74 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     #endregion
 
-    #region UserPreferences
+    #region UserPreferences (ORM)
 
-    public async Task<UserPreferencesDto?> GetUserPreferencesFromCloudAsync(Guid userId, CancellationToken ct = default)
+    public async Task<UserPreferencesDto?> GetUserPreferencesAsync(Guid userId, CancellationToken ct = default)
     {
         await EnsureAuthenticatedAsync();
-        var resp = await _client.From<UserPreferencesDto>().Where(x => x.Id == userId).Get();
-        return resp.Models.FirstOrDefault();
+        try
+        {
+            var results = await _restClient.GetAsync<UserPreferencesDto>("user_preferences", $"id=eq.{userId}", ct);
+            return results.FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SupabaseCrudService] GetUserPreferencesAsync failed: {ex.Message}");
+            return null;
+        }
     }
 
-    public async Task SyncUserPreferencesToCloudAsync(Guid userId, CancellationToken ct = default)
+    public async Task<UserPreferencesDto> UpsertUserPreferencesAsync(UserPreferencesDto preferences, CancellationToken ct = default)
     {
         await EnsureAuthenticatedAsync();
-        
-        var dto = new UserPreferencesDto
+        try
         {
-            Id = userId,
-            Theme = _preferencesService.GetSavedTheme().ToString(),
-            ColorTheme = _preferencesService.GetSavedColorTheme().ToString(),
-            IsColorfulBackground = _preferencesService.GetIsColorfulBackgroundEnabled(),
-            IsWallpaperEnabled = _preferencesService.GetIsWallpaperEnabled(),
-            FontFamily = _preferencesService.GetSavedFontFamily().ToString(),
-            FontSize = _preferencesService.GetSavedFontSize().ToString(),
-            Language = _preferencesService.GetSavedLanguage(),
-            UpdatedAt = DateTime.UtcNow
-        };
-        
-        await _restClient.UpsertAsync("user_preferences", new[] { dto }, ct);
-        System.Diagnostics.Debug.WriteLine($"[SupabaseCrudService] Synced preferences to cloud for user {userId}");
+            // Prepare plain payload to avoid BaseModel internals being serialized
+            var payload = new UserPreferencesPayload
+            {
+                id = preferences.Id ?? Guid.Empty,
+                theme = preferences.Theme,
+                color_theme = preferences.ColorTheme,
+                is_colorful_background = preferences.IsColorfulBackground,
+                is_wallpaper_enabled = preferences.IsWallpaperEnabled,
+                font_family = preferences.FontFamily,
+                font_size = preferences.FontSize,
+                language = preferences.Language,
+                created_at = preferences.CreatedAt ?? DateTime.UtcNow,
+                updated_at = DateTime.UtcNow
+            };
+
+            // Use REST upsert with plain payload to avoid sending BaseModel metadata
+            var results = await _restClient.UpsertAsync<UserPreferencesPayload>("user_preferences", new[] { payload }, ct);
+            var created = results.FirstOrDefault();
+            if (created == null)
+            {
+                preferences.UpdatedAt = DateTime.UtcNow;
+                return preferences;
+            }
+
+            // Map back to UserPreferencesDto
+            var dto = new UserPreferencesDto
+            {
+                Id = created.id,
+                Theme = created.theme ?? "System",
+                ColorTheme = created.color_theme ?? "Default",
+                IsColorfulBackground = created.is_colorful_background ?? false,
+                IsWallpaperEnabled = created.is_wallpaper_enabled ?? false,
+                FontFamily = created.font_family ?? "Default",
+                FontSize = created.font_size ?? "Default",
+                Language = created.language ?? "en",
+                CreatedAt = created.created_at,
+                UpdatedAt = created.updated_at
+            };
+
+            return dto;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SupabaseCrudService] UpsertUserPreferencesAsync failed: {ex.Message}");
+            throw;
+        }
     }
 
     #endregion
@@ -930,4 +970,19 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
     }
 
     #endregion
+}
+
+// Plain payload type for REST upsert to avoid BaseModel inheritance
+public class UserPreferencesPayload
+{
+    public Guid id { get; set; }
+    public string? theme { get; set; }
+    public string? color_theme { get; set; }
+    public bool? is_colorful_background { get; set; }
+    public bool? is_wallpaper_enabled { get; set; }
+    public string? font_family { get; set; }
+    public string? font_size { get; set; }
+    public string? language { get; set; }
+    public DateTime? created_at { get; set; }
+    public DateTime? updated_at { get; set; }
 }

@@ -25,6 +25,12 @@ public interface ISupabaseSyncService
     event EventHandler<SyncProgressEventArgs>? SyncProgressChanged;
     void StartSyncTimer();
     void StopSyncTimer();
+    
+    // User Preferences Sync
+    Task<bool> LoadUserPreferencesFromCloudAsync(Guid userId, CancellationToken ct = default);
+    Task SaveUserPreferencesToCloudAsync(Guid userId, CancellationToken ct = default);
+    Task CreateInitialUserPreferencesAsync(Guid userId, CancellationToken ct = default);
+    Task<bool> HasCloudPreferencesAsync(Guid userId, CancellationToken ct = default);
 }
 
 /// <summary>
