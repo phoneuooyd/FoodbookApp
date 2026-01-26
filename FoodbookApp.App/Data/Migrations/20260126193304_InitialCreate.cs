@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace FoodbookApp.Data.Migrations
+namespace FoodbookApp.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialGuidSchema : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -37,7 +37,8 @@ namespace FoodbookApp.Data.Migrations
                     Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
                     ParentFolderId = table.Column<Guid>(type: "TEXT", nullable: true),
                     Order = table.Column<int>(type: "INTEGER", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -60,7 +61,9 @@ namespace FoodbookApp.Data.Migrations
                     IsArchived = table.Column<bool>(type: "INTEGER", nullable: false),
                     Type = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 0),
                     LinkedShoppingListPlanId = table.Column<Guid>(type: "TEXT", nullable: true),
-                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true)
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -74,11 +77,70 @@ namespace FoodbookApp.Data.Migrations
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     ColorHex = table.Column<string>(type: "TEXT", maxLength: 9, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_RecipeLabels", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SyncQueue",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    AccountId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    EntityType = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    EntityId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    OperationType = table.Column<int>(type: "INTEGER", nullable: false),
+                    Payload = table.Column<string>(type: "TEXT", nullable: true),
+                    CreatedUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    RetryCount = table.Column<int>(type: "INTEGER", nullable: false),
+                    LastError = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false),
+                    LastAttemptUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    SyncedUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    Priority = table.Column<int>(type: "INTEGER", nullable: false),
+                    BatchId = table.Column<Guid>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SyncQueue", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SyncStates",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    AccountId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    IsCloudSyncEnabled = table.Column<bool>(type: "INTEGER", nullable: false),
+                    InitialSyncCompleted = table.Column<bool>(type: "INTEGER", nullable: false),
+                    InitialSyncStartedUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    InitialSyncCompletedUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    PendingItemsCount = table.Column<int>(type: "INTEGER", nullable: false),
+                    TotalItemsSynced = table.Column<int>(type: "INTEGER", nullable: false),
+                    LastKnownServerHash = table.Column<string>(type: "TEXT", nullable: true),
+                    LastSyncUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    LastSyncAttemptUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    LastCloudPollUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    LastSyncError = table.Column<string>(type: "TEXT", nullable: true),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false),
+                    Priority = table.Column<int>(type: "INTEGER", nullable: false),
+                    SyncIntervalMinutes = table.Column<int>(type: "INTEGER", nullable: false),
+                    CreatedUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedUtc = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SyncStates", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SyncStates_AuthAccounts_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "AuthAccounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -93,6 +155,8 @@ namespace FoodbookApp.Data.Migrations
                     Fat = table.Column<double>(type: "REAL", nullable: false),
                     Carbs = table.Column<double>(type: "REAL", nullable: false),
                     IloscPorcji = table.Column<int>(type: "INTEGER", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     FolderId = table.Column<Guid>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
@@ -116,7 +180,9 @@ namespace FoodbookApp.Data.Migrations
                     Unit = table.Column<int>(type: "INTEGER", nullable: false),
                     IsChecked = table.Column<bool>(type: "INTEGER", nullable: false),
                     Quantity = table.Column<double>(type: "REAL", nullable: false),
-                    Order = table.Column<int>(type: "INTEGER", nullable: false)
+                    Order = table.Column<int>(type: "INTEGER", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -142,7 +208,9 @@ namespace FoodbookApp.Data.Migrations
                     Protein = table.Column<double>(type: "REAL", nullable: false),
                     Fat = table.Column<double>(type: "REAL", nullable: false),
                     Carbs = table.Column<double>(type: "REAL", nullable: false),
-                    RecipeId = table.Column<Guid>(type: "TEXT", nullable: true)
+                    RecipeId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -163,7 +231,9 @@ namespace FoodbookApp.Data.Migrations
                     RecipeId = table.Column<Guid>(type: "TEXT", nullable: false),
                     PlanId = table.Column<Guid>(type: "TEXT", nullable: true),
                     Date = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    Portions = table.Column<int>(type: "INTEGER", nullable: false)
+                    Portions = table.Column<int>(type: "INTEGER", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -267,14 +337,42 @@ namespace FoodbookApp.Data.Migrations
                 table: "ShoppingListItems",
                 columns: new[] { "PlanId", "IngredientName", "Unit" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SyncQueue_AccountId",
+                table: "SyncQueue",
+                column: "AccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SyncQueue_AccountId_Entity",
+                table: "SyncQueue",
+                columns: new[] { "AccountId", "EntityType", "EntityId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SyncQueue_AccountId_Status",
+                table: "SyncQueue",
+                columns: new[] { "AccountId", "Status" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SyncQueue_BatchId",
+                table: "SyncQueue",
+                column: "BatchId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SyncQueue_Processing",
+                table: "SyncQueue",
+                columns: new[] { "Status", "Priority", "CreatedUtc" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SyncStates_AccountId",
+                table: "SyncStates",
+                column: "AccountId",
+                unique: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "AuthAccounts");
-
             migrationBuilder.DropTable(
                 name: "Ingredients");
 
@@ -288,6 +386,12 @@ namespace FoodbookApp.Data.Migrations
                 name: "ShoppingListItems");
 
             migrationBuilder.DropTable(
+                name: "SyncQueue");
+
+            migrationBuilder.DropTable(
+                name: "SyncStates");
+
+            migrationBuilder.DropTable(
                 name: "RecipeLabels");
 
             migrationBuilder.DropTable(
@@ -295,6 +399,9 @@ namespace FoodbookApp.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "Plans");
+
+            migrationBuilder.DropTable(
+                name: "AuthAccounts");
 
             migrationBuilder.DropTable(
                 name: "Folders");

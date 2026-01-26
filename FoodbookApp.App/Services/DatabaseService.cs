@@ -7,18 +7,18 @@ using System.IO;
 using System.IO.Compression;
 using Microsoft.Maui.Storage;
 using FoodbookApp.Interfaces;
+using Microsoft.Data.Sqlite;
 
 namespace Foodbook.Services
 {
     public static class ServiceCollectionDbExtensions
     {
-        // Registers AppDbContext with the default SQLite connection used by the app (minimal settings)
         public static IServiceCollection AddAppDbContext(this IServiceCollection services)
         {
             services.AddDbContext<AppDbContext>(options =>
             {
-                // USE CENTRALIZED DATABASE PATH - single source of truth
                 var connectionString = DatabaseConfiguration.GetConnectionString();
+                System.Diagnostics.Debug.WriteLine($"[AddAppDbContext] Connection string: {connectionString}");
                 options.UseSqlite(connectionString);
             });
             return services;
@@ -29,17 +29,18 @@ namespace Foodbook.Services
     {
         private readonly IServiceProvider _services;
 
-        // **DEVELOPER FLAG: Set to TRUE for clean deployment (wipes all data), FALSE to preserve data**
         private const bool FORCE_CLEAN_DEPLOYMENT = false;
-
-        // **SAFETY FLAG: Set to TRUE to automatically create archive backup before any deployment**
-        // This protects against Visual Studio cache issues that may overwrite user data
         private const bool ARCHIVE_BEFORE_DEPLOY = true;
-
-        // Safety archive naming
         private const string SafetyArchivePrefix = "Foodbook_Safety_Archive_Update";
 
-        // Preferences DTO for serialization
+        private static readonly string[] RequiredTables = 
+        {
+            "Recipes", "Ingredients", "Folders", "RecipeLabels", 
+            "Plans", "PlannedMeals", "ShoppingListItems", 
+            "AuthAccounts", "SyncQueue", "SyncStates",
+            "__EFMigrationsHistory"
+        };
+
         private record PrefsDto(string Culture, Foodbook.Models.AppTheme Theme, Foodbook.Models.AppColorTheme ColorTheme,
                                 bool ColorfulBackground, bool WallpaperBackground,
                                 Foodbook.Models.AppFontFamily FontFamily, Foodbook.Models.AppFontSize FontSize);
@@ -47,159 +48,393 @@ namespace Foodbook.Services
         public DatabaseService(IServiceProvider services)
         {
             _services = services;
+            LogInfo("DatabaseService created");
+            LogInfo($"Database path: {DatabaseConfiguration.GetDatabasePath()}");
         }
 
-        // Creates DB and applies migrations on app startup. No extra pragmas, no seeding.
         public async Task InitializeAsync()
         {
-            using var scope = _services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            await db.Database.MigrateAsync();
+            LogInfo("=== InitializeAsync START ===");
+            
+            try
+            {
+                var dbPath = DatabaseConfiguration.GetDatabasePath();
+                LogInfo($"Database path: {dbPath}");
+                LogInfo($"Database exists: {File.Exists(dbPath)}");
+
+                if (File.Exists(dbPath))
+                {
+                    var fi = new FileInfo(dbPath);
+                    LogInfo($"Database size: {fi.Length} bytes, LastWrite: {fi.LastWriteTime}");
+                }
+
+                using var scope = _services.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+                var appliedMigrations = await db.Database.GetAppliedMigrationsAsync();
+                var pendingMigrations = await db.Database.GetPendingMigrationsAsync();
+                
+                LogInfo($"Applied migrations: {string.Join(", ", appliedMigrations)}");
+                LogInfo($"Pending migrations: {string.Join(", ", pendingMigrations)}");
+
+                if (pendingMigrations.Any())
+                {
+                    LogInfo("Applying pending migrations...");
+                    await db.Database.MigrateAsync();
+                    LogInfo("Migrations applied successfully");
+                }
+                else
+                {
+                    LogInfo("No pending migrations - schema up to date");
+                }
+
+                var (isValid, missingTables) = await ValidateSchemaAsync();
+                if (!isValid)
+                {
+                    LogError($"Schema validation FAILED! Missing tables: {string.Join(", ", missingTables)}");
+                    LogWarning("Attempting schema repair...");
+                    await RepairSchemaAsync(db);
+                    
+                    var (isValidAfterRepair, stillMissing) = await ValidateSchemaAsync();
+                    if (!isValidAfterRepair)
+                    {
+                        LogError($"Schema repair FAILED! Still missing: {string.Join(", ", stillMissing)}");
+                        throw new InvalidOperationException($"Database schema is corrupted. Missing tables: {string.Join(", ", stillMissing)}");
+                    }
+                    LogInfo("Schema repair successful");
+                }
+                else
+                {
+                    LogInfo("Schema validation passed - all required tables exist");
+                }
+
+                LogInfo("=== InitializeAsync COMPLETE ===");
+            }
+            catch (Exception ex)
+            {
+                LogError($"InitializeAsync FAILED: {ex.Message}");
+                LogError($"Stack trace: {ex.StackTrace}");
+                throw;
+            }
         }
 
-        // Ensures schema is up-to-date
+        private async Task<(bool IsValid, List<string> MissingTables)> ValidateSchemaAsync()
+        {
+            var missingTables = new List<string>();
+            
+            try
+            {
+                var dbPath = DatabaseConfiguration.GetDatabasePath();
+                if (!File.Exists(dbPath))
+                {
+                    LogWarning("Database file does not exist yet");
+                    return (false, RequiredTables.ToList());
+                }
+
+                var existingTables = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                
+                await using var connection = new SqliteConnection(DatabaseConfiguration.GetConnectionString());
+                await connection.OpenAsync();
+                
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;";
+                
+                using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    var tableName = reader.GetString(0);
+                    existingTables.Add(tableName);
+                }
+
+                LogInfo($"Found tables in DB: {string.Join(", ", existingTables)}");
+
+                foreach (var required in RequiredTables)
+                {
+                    if (!existingTables.Contains(required))
+                    {
+                        missingTables.Add(required);
+                    }
+                }
+
+                return (missingTables.Count == 0, missingTables);
+            }
+            catch (Exception ex)
+            {
+                LogError($"Schema validation error: {ex.Message}");
+                return (false, RequiredTables.ToList());
+            }
+        }
+
+        private async Task RepairSchemaAsync(AppDbContext db)
+        {
+            LogWarning("=== SCHEMA REPAIR START ===");
+            
+            try
+            {
+                LogInfo("Attempting EnsureCreated + Migrate...");
+                await db.Database.EnsureCreatedAsync();
+                await db.Database.MigrateAsync();
+                LogInfo("Schema repair attempt completed");
+            }
+            catch (Exception ex)
+            {
+                LogError($"Schema repair failed: {ex.Message}");
+                LogWarning("Last resort: deleting and recreating database...");
+                try
+                {
+                    await db.Database.EnsureDeletedAsync();
+                    await db.Database.MigrateAsync();
+                    LogInfo("Database recreated from scratch");
+                }
+                catch (Exception ex2)
+                {
+                    LogError($"Database recreation failed: {ex2.Message}");
+                    throw;
+                }
+            }
+            
+            LogWarning("=== SCHEMA REPAIR END ===");
+        }
+
         public async Task<bool> EnsureDatabaseSchemaAsync()
         {
             try
             {
+                LogInfo("EnsureDatabaseSchemaAsync called");
                 using var scope = _services.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 await db.Database.MigrateAsync();
+                
+                var (isValid, missing) = await ValidateSchemaAsync();
+                if (!isValid)
+                {
+                    LogError($"Schema validation failed after migration. Missing: {string.Join(", ", missing)}");
+                    return false;
+                }
+                
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                LogError($"EnsureDatabaseSchemaAsync failed: {ex.Message}");
                 return false;
             }
         }
 
-        // Triggers migrations on demand (e.g., from SettingsPage)
-        public Task<bool> MigrateDatabaseAsync()
-        {
-            return EnsureDatabaseSchemaAsync();
-        }
+        public Task<bool> MigrateDatabaseAsync() => EnsureDatabaseSchemaAsync();
 
-        // Drops and recreates DB schema, no extra pragmas or seeding
         public async Task<bool> ResetDatabaseAsync()
         {
             try
             {
+                LogWarning("ResetDatabaseAsync called - this will DELETE all data!");
                 using var scope = _services.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                
+                LogInfo("Deleting database...");
                 await db.Database.EnsureDeletedAsync();
+                
+                LogInfo("Recreating database with migrations...");
                 await db.Database.MigrateAsync();
+                
+                var (isValid, missing) = await ValidateSchemaAsync();
+                if (!isValid)
+                {
+                    LogError($"Reset failed - missing tables: {string.Join(", ", missing)}");
+                    return false;
+                }
+                
+                LogInfo("Database reset completed successfully");
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                LogError($"ResetDatabaseAsync failed: {ex.Message}");
                 return false;
             }
         }
 
-        /// <summary>
-        /// Creates a safety archive of the current database before deployment.
-        /// This protects against Visual Studio cache issues that may overwrite user data during recompilation.
-        /// Archives are saved to Downloads/Foodbook folder as .fbk files.
-        /// 
-        /// Logic:
-        /// - If an archive from TODAY already exists, it will be overwritten (updated)
-        /// - If no archive from today exists, a new one is created
-        /// - Maximum 5 archives are kept; oldest are deleted when limit is exceeded
-        /// - Includes database files (db, wal, shm) and user preferences
-        /// </summary>
-        /// <returns>Path to created archive, or null if failed or database doesn't exist</returns>
+        public async Task<bool> ConditionalDeploymentAsync()
+        {
+            LogInfo("=== ConditionalDeploymentAsync START ===");
+            LogInfo($"FORCE_CLEAN_DEPLOYMENT = {FORCE_CLEAN_DEPLOYMENT}");
+            LogInfo($"ARCHIVE_BEFORE_DEPLOY = {ARCHIVE_BEFORE_DEPLOY}");
+            LogInfo($"Database path: {DatabaseConfiguration.GetDatabasePath()}");
+
+            try
+            {
+                if (ARCHIVE_BEFORE_DEPLOY)
+                {
+                    LogInfo("Creating safety archive before deployment...");
+                    try
+                    {
+                        var archivePath = await CreateSafetyArchiveAsync().ConfigureAwait(false);
+                        LogInfo(archivePath != null 
+                            ? $"Safety archive created: {archivePath}" 
+                            : "No archive created (database empty or missing)");
+                    }
+                    catch (Exception archiveEx)
+                    {
+                        LogWarning($"Safety archive failed (continuing): {archiveEx.Message}");
+                    }
+                }
+
+                using var scope = _services.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+                var dbPath = DatabaseConfiguration.GetDatabasePath();
+                var dbExists = File.Exists(dbPath);
+                LogInfo($"Database file exists: {dbExists}");
+
+                if (dbExists)
+                {
+                    var fi = new FileInfo(dbPath);
+                    LogInfo($"Database size: {fi.Length} bytes");
+                }
+
+                IEnumerable<string> pendingMigrations;
+                IEnumerable<string> appliedMigrations;
+                
+                try
+                {
+                    pendingMigrations = await db.Database.GetPendingMigrationsAsync().ConfigureAwait(false);
+                    appliedMigrations = await db.Database.GetAppliedMigrationsAsync().ConfigureAwait(false);
+                    
+                    LogInfo($"Applied migrations ({appliedMigrations.Count()}): {string.Join(", ", appliedMigrations)}");
+                    LogInfo($"Pending migrations ({pendingMigrations.Count()}): {string.Join(", ", pendingMigrations)}");
+                }
+                catch (Exception migEx)
+                {
+                    LogWarning($"Could not get migration status: {migEx.Message}");
+                    LogInfo("Database may be corrupted or not initialized - will attempt to create/repair");
+                    pendingMigrations = new[] { "Unknown" };
+                    appliedMigrations = Array.Empty<string>();
+                }
+
+                if (FORCE_CLEAN_DEPLOYMENT)
+                {
+                    LogWarning("CLEAN DEPLOYMENT MODE - Wiping all app data");
+                    
+                    await db.Database.EnsureDeletedAsync().ConfigureAwait(false);
+                    Preferences.Clear();
+                    SecureStorage.RemoveAll();
+                    await ClearAppDataDirectoryAsync().ConfigureAwait(false);
+                    await ClearCacheDirectoryAsync().ConfigureAwait(false);
+                    await db.Database.MigrateAsync().ConfigureAwait(false);
+                    
+                    LogInfo("Fresh database created");
+                    return true;
+                }
+
+                if (pendingMigrations.Any())
+                {
+                    LogInfo("Applying pending migrations...");
+                    try
+                    {
+                        await db.Database.MigrateAsync().ConfigureAwait(false);
+                        LogInfo("Migrations applied successfully");
+                    }
+                    catch (Exception migEx)
+                    {
+                        LogError($"Migration failed: {migEx.Message}");
+                        LogWarning("Attempting database repair after migration failure...");
+                        await RepairSchemaAsync(db);
+                    }
+                }
+                else
+                {
+                    LogInfo("No pending migrations");
+                }
+
+                var (isValid, missingTables) = await ValidateSchemaAsync();
+                if (!isValid)
+                {
+                    LogError($"Schema validation failed! Missing: {string.Join(", ", missingTables)}");
+                    LogWarning("Attempting schema repair...");
+                    await RepairSchemaAsync(db);
+                    
+                    var (isValidAfterRepair, stillMissing) = await ValidateSchemaAsync();
+                    if (!isValidAfterRepair)
+                    {
+                        LogError($"Schema repair failed! Still missing: {string.Join(", ", stillMissing)}");
+                        return false;
+                    }
+                }
+
+                LogInfo("=== ConditionalDeploymentAsync COMPLETE ===");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError($"ConditionalDeploymentAsync FAILED: {ex.Message}");
+                LogError($"Stack trace: {ex.StackTrace}");
+                return false;
+            }
+        }
+
         public async Task<string?> CreateSafetyArchiveAsync()
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("[DatabaseService] === SAFETY ARCHIVE START ===");
+                LogInfo("=== SAFETY ARCHIVE START ===");
 
                 var dbPath = DatabaseConfiguration.GetDatabasePath();
                 
-                // Check if database exists - if not, nothing to backup
                 if (!File.Exists(dbPath))
                 {
-                    System.Diagnostics.Debug.WriteLine("[DatabaseService] No database found - skipping safety archive");
+                    LogInfo("No database found - skipping safety archive");
                     return null;
                 }
 
                 var dbInfo = new FileInfo(dbPath);
-                System.Diagnostics.Debug.WriteLine($"[DatabaseService] Database found: {dbPath}");
-                System.Diagnostics.Debug.WriteLine($"[DatabaseService] Database size: {dbInfo.Length} bytes, Last modified: {dbInfo.LastWriteTime}");
+                LogInfo($"Database found: {dbPath}, size: {dbInfo.Length} bytes");
 
-                // Skip if database is empty or very small (likely just schema, no data)
-                if (dbInfo.Length < 1024) // Less than 1KB
+                if (dbInfo.Length < 1024)
                 {
-                    System.Diagnostics.Debug.WriteLine("[DatabaseService] Database too small (likely empty) - skipping safety archive");
+                    LogInfo("Database too small (likely empty) - skipping safety archive");
                     return null;
                 }
 
-                // Get target folder
                 var targetFolder = GetSafetyArchiveFolder();
                 if (string.IsNullOrEmpty(targetFolder))
                 {
-                    System.Diagnostics.Debug.WriteLine("[DatabaseService] Could not determine safety archive folder");
+                    LogWarning("Could not determine safety archive folder");
                     return null;
                 }
 
-                try
-                {
-                    Directory.CreateDirectory(targetFolder);
-                }
+                try { Directory.CreateDirectory(targetFolder); }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DatabaseService] Cannot create target folder: {ex.Message}");
-                    // Fallback to cache directory
+                    LogWarning($"Cannot create target folder: {ex.Message}");
                     targetFolder = Path.Combine(FileSystem.CacheDirectory, "SafetyArchives");
                     Directory.CreateDirectory(targetFolder);
                 }
-                
-                System.Diagnostics.Debug.WriteLine($"[DatabaseService] Target folder: {targetFolder}");
 
-                // Check for existing archives and determine if we should update or create new
                 var todayDatePrefix = DateTime.Now.ToString("yyyyMMdd");
                 var existingArchives = GetExistingSafetyArchives(targetFolder);
-                
-                // Find archive from today (if exists)
-                var todaysArchive = existingArchives
-                    .FirstOrDefault(f => f.Name.Contains($"{SafetyArchivePrefix}_{todayDatePrefix}"));
+                var todaysArchive = existingArchives.FirstOrDefault(f => f.Name.Contains($"{SafetyArchivePrefix}_{todayDatePrefix}"));
 
                 string archivePath;
                 bool isUpdate = false;
 
                 if (todaysArchive != null)
                 {
-                    // Update existing archive from today
                     archivePath = todaysArchive.FullName;
                     isUpdate = true;
-                    System.Diagnostics.Debug.WriteLine($"[DatabaseService] Found existing archive from today, will update: {todaysArchive.Name}");
+                    LogInfo($"Updating existing archive: {todaysArchive.Name}");
                 }
                 else
                 {
-                    // Create new archive with timestamp
                     var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
                     var archiveName = $"{SafetyArchivePrefix}_{timestamp}.fbk";
                     archivePath = Path.Combine(targetFolder, archiveName);
-                    System.Diagnostics.Debug.WriteLine($"[DatabaseService] No archive from today, creating new: {archiveName}");
-                    
-                    // Check if we need to clean up old archives BEFORE creating new one
-                    // (to maintain max 5 archives including the new one)
-                    CleanupOldSafetyArchivesSync(targetFolder, 4); // Keep 4, so after adding new = 5
+                    CleanupOldSafetyArchivesSync(targetFolder, 4);
+                    LogInfo($"Creating new archive: {archiveName}");
                 }
 
-                System.Diagnostics.Debug.WriteLine($"[DatabaseService] {(isUpdate ? "Updating" : "Creating")} archive: {archivePath}");
+                try { await FlushWalForBackupAsync(dbPath).ConfigureAwait(false); }
+                catch (Exception ex) { LogWarning($"WAL flush warning: {ex.Message}"); }
 
-                // Flush WAL before backup - but don't block if it fails
-                try
-                {
-                    await FlushWalForBackupAsync(dbPath).ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[DatabaseService] WAL flush warning (continuing): {ex.Message}");
-                }
-
-                // Export preferences to temp file
                 string? prefsExportPath = null;
                 try
                 {
@@ -218,188 +453,97 @@ namespace Foodbook.Services
                         );
                         var json = System.Text.Json.JsonSerializer.Serialize(prefsDto);
                         await File.WriteAllTextAsync(prefsExportPath, json).ConfigureAwait(false);
-                        System.Diagnostics.Debug.WriteLine("[DatabaseService] Preferences exported for archive");
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DatabaseService] Preferences export warning (continuing): {ex.Message}");
-                    // Continue without preferences if export fails
+                    LogWarning($"Preferences export warning: {ex.Message}");
                     prefsExportPath = null;
                 }
 
-                // Create archive directly at target location - USE TASK.RUN TO AVOID BLOCKING
                 bool success = false;
                 try
                 {
-                    // Delete existing file if updating
-                    if (File.Exists(archivePath))
-                    {
-                        File.Delete(archivePath);
-                    }
+                    if (File.Exists(archivePath)) File.Delete(archivePath);
 
-                    // Run ZIP creation on background thread to avoid UI blocking
                     await Task.Run(() =>
                     {
-                        using (var zip = ZipFile.Open(archivePath, ZipArchiveMode.Create))
+                        using var zip = ZipFile.Open(archivePath, ZipArchiveMode.Create);
+                        
+                        if (File.Exists(dbPath))
+                            zip.CreateEntryFromFile(dbPath, "database/foodbookapp.db");
+
+                        var (walPath, shmPath) = DatabaseConfiguration.GetWalFiles();
+                        if (File.Exists(shmPath))
+                            try { zip.CreateEntryFromFile(shmPath, "database/foodbookapp.db-shm"); } catch { }
+                        if (File.Exists(walPath))
+                            try { zip.CreateEntryFromFile(walPath, "database/foodbookapp.db-wal"); } catch { }
+
+                        if (!string.IsNullOrEmpty(prefsExportPath) && File.Exists(prefsExportPath))
+                            try { zip.CreateEntryFromFile(prefsExportPath, "prefs.json"); } catch { }
+
+                        var metadata = new
                         {
-                            // Add main database file
-                            if (File.Exists(dbPath))
-                            {
-                                zip.CreateEntryFromFile(dbPath, "database/foodbookapp.db");
-                                System.Diagnostics.Debug.WriteLine($"[DatabaseService] Added database to archive");
-                            }
-
-                            // Add WAL/SHM files if they exist
-                            var (walPath, shmPath) = DatabaseConfiguration.GetWalFiles();
-                            if (File.Exists(shmPath))
-                            {
-                                try
-                                {
-                                    zip.CreateEntryFromFile(shmPath, "database/foodbookapp.db-shm");
-                                    System.Diagnostics.Debug.WriteLine($"[DatabaseService] Added SHM file to archive");
-                                }
-                                catch { /* ignore if locked */ }
-                            }
-                            if (File.Exists(walPath))
-                            {
-                                try
-                                {
-                                    zip.CreateEntryFromFile(walPath, "database/foodbookapp.db-wal");
-                                    System.Diagnostics.Debug.WriteLine($"[DatabaseService] Added WAL file to archive");
-                                }
-                                catch { /* ignore if locked */ }
-                            }
-
-                            // Add preferences if exported successfully
-                            if (!string.IsNullOrEmpty(prefsExportPath) && File.Exists(prefsExportPath))
-                            {
-                                try
-                                {
-                                    zip.CreateEntryFromFile(prefsExportPath, "prefs.json");
-                                    System.Diagnostics.Debug.WriteLine($"[DatabaseService] Added preferences to archive");
-                                }
-                                catch (Exception ex)
-                                {
-                                    System.Diagnostics.Debug.WriteLine($"[DatabaseService] Failed to add preferences: {ex.Message}");
-                                }
-                            }
-
-                            // Add metadata
-                            var metadata = new
-                            {
-                                CreatedAt = DateTime.Now.ToString("O"),
-                                DatabaseSize = dbInfo.Length,
-                                DatabaseLastModified = dbInfo.LastWriteTime.ToString("O"),
-                                Type = "SafetyArchive",
-                                Version = "1.0",
-                                IsUpdate = isUpdate,
-                                IncludesPreferences = !string.IsNullOrEmpty(prefsExportPath)
-                            };
-                            var metadataJson = System.Text.Json.JsonSerializer.Serialize(metadata);
-                            var metadataEntry = zip.CreateEntry("metadata.json");
-                            using var writer = new StreamWriter(metadataEntry.Open());
-                            writer.Write(metadataJson);
-                        }
+                            CreatedAt = DateTime.Now.ToString("O"),
+                            DatabaseSize = dbInfo.Length,
+                            DatabaseLastModified = dbInfo.LastWriteTime.ToString("O"),
+                            Type = "SafetyArchive",
+                            Version = "1.0",
+                            IsUpdate = isUpdate
+                        };
+                        var metadataEntry = zip.CreateEntry("metadata.json");
+                        using var writer = new StreamWriter(metadataEntry.Open());
+                        writer.Write(System.Text.Json.JsonSerializer.Serialize(metadata));
                     }).ConfigureAwait(false);
 
                     success = true;
-
-                    // Cleanup temp preferences file
                     if (!string.IsNullOrEmpty(prefsExportPath) && File.Exists(prefsExportPath))
-                    {
                         try { File.Delete(prefsExportPath); } catch { }
-                    }
 
-                    var archiveInfo = new FileInfo(archivePath);
-                    System.Diagnostics.Debug.WriteLine($"[DatabaseService] Safety archive {(isUpdate ? "updated" : "created")}: {archivePath}");
-                    System.Diagnostics.Debug.WriteLine($"[DatabaseService] Archive size: {archiveInfo.Length} bytes");
-                    System.Diagnostics.Debug.WriteLine("[DatabaseService] === SAFETY ARCHIVE COMPLETE ===");
-
+                    LogInfo($"Safety archive {(isUpdate ? "updated" : "created")}: {archivePath}");
                     return archivePath;
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DatabaseService] Archive creation failed: {ex.Message}");
-                    System.Diagnostics.Debug.WriteLine($"[DatabaseService] Stack trace: {ex.StackTrace}");
-                    
-                    // Cleanup temp preferences file
+                    LogError($"Archive creation failed: {ex.Message}");
                     if (!string.IsNullOrEmpty(prefsExportPath) && File.Exists(prefsExportPath))
-                    {
                         try { File.Delete(prefsExportPath); } catch { }
-                    }
-                    
-                    // Try to cleanup partial archive (only if it was a new file, not update)
-                    if (!isUpdate && !success)
-                    {
-                        try { if (File.Exists(archivePath)) File.Delete(archivePath); } catch { }
-                    }
+                    if (!isUpdate && !success && File.Exists(archivePath))
+                        try { File.Delete(archivePath); } catch { }
                     return null;
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[DatabaseService] Safety archive FAILED: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"[DatabaseService] Stack trace: {ex.StackTrace}");
+                LogError($"Safety archive FAILED: {ex.Message}");
                 return null;
             }
         }
 
-        /// <summary>
-        /// Gets list of existing safety archives sorted by date (newest first)
-        /// </summary>
         private List<FileInfo> GetExistingSafetyArchives(string folder)
         {
             try
             {
-                if (!Directory.Exists(folder))
-                    return new List<FileInfo>();
-
+                if (!Directory.Exists(folder)) return new List<FileInfo>();
                 return Directory.GetFiles(folder, $"{SafetyArchivePrefix}*.fbk")
                     .Select(f => new FileInfo(f))
                     .OrderByDescending(f => f.LastWriteTimeUtc)
                     .ToList();
             }
-            catch
-            {
-                return new List<FileInfo>();
-            }
+            catch { return new List<FileInfo>(); }
         }
 
-        /// <summary>
-        /// Removes old safety archives, keeping only the most recent ones (synchronous version)
-        /// </summary>
         private void CleanupOldSafetyArchivesSync(string folder, int keepCount)
         {
             try
             {
-                var safetyArchives = GetExistingSafetyArchives(folder);
-                var toDelete = safetyArchives.Skip(keepCount).ToList();
-
-                System.Diagnostics.Debug.WriteLine($"[DatabaseService] Found {safetyArchives.Count} archives, keeping {keepCount}, deleting {toDelete.Count}");
-
+                var toDelete = GetExistingSafetyArchives(folder).Skip(keepCount).ToList();
                 foreach (var file in toDelete)
-                {
-                    try
-                    {
-                        file.Delete();
-                        System.Diagnostics.Debug.WriteLine($"[DatabaseService] Deleted old safety archive: {file.Name}");
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[DatabaseService] Failed to delete archive {file.Name}: {ex.Message}");
-                    }
-                }
+                    try { file.Delete(); } catch { }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[DatabaseService] Cleanup failed: {ex.Message}");
-            }
+            catch { }
         }
 
-        /// <summary>
-        /// Gets the folder path for safety archives (Downloads/Foodbook)
-        /// </summary>
         private static string? GetSafetyArchiveFolder()
         {
 #if ANDROID
@@ -408,290 +552,91 @@ namespace Foodbook.Services
                 var downloads = Android.OS.Environment.GetExternalStoragePublicDirectory(
                     Android.OS.Environment.DirectoryDownloads)?.AbsolutePath;
                 if (!string.IsNullOrWhiteSpace(downloads))
-                {
                     return Path.Combine(downloads, "Foodbook");
-                }
             }
             catch { }
-            // Fallback to app data directory
             return Path.Combine(FileSystem.AppDataDirectory, "FoodbookArchives");
 #elif WINDOWS
-            var docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            return Path.Combine(docs, "Foodbook");
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Foodbook");
 #else
             return Path.Combine(FileSystem.AppDataDirectory, "FoodbookArchives");
 #endif
         }
 
-        /// <summary>
-        /// Flushes SQLite WAL to ensure all data is in main database file before backup
-        /// </summary>
         private async Task FlushWalForBackupAsync(string dbPath)
         {
             try
             {
-                var cs = new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder
+                var cs = new SqliteConnectionStringBuilder
                 {
                     DataSource = dbPath,
-                    Mode = Microsoft.Data.Sqlite.SqliteOpenMode.ReadWrite,
-                    Cache = Microsoft.Data.Sqlite.SqliteCacheMode.Shared
+                    Mode = SqliteOpenMode.ReadWrite,
+                    Cache = SqliteCacheMode.Shared
                 }.ToString();
 
-                using var conn = new Microsoft.Data.Sqlite.SqliteConnection(cs);
+                using var conn = new SqliteConnection(cs);
                 await conn.OpenAsync().ConfigureAwait(false);
 
                 using var cmd = conn.CreateCommand();
                 cmd.CommandText = "PRAGMA wal_checkpoint(TRUNCATE);";
                 await cmd.ExecuteScalarAsync().ConfigureAwait(false);
-
-                System.Diagnostics.Debug.WriteLine("[DatabaseService] WAL flushed for backup");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[DatabaseService] WAL flush warning: {ex.Message}");
-                // Continue anyway - backup will include WAL file
+                LogWarning($"WAL flush warning: {ex.Message}");
             }
         }
 
-        /// <summary>
-        /// Removes old safety archives, keeping only the most recent ones
-        /// </summary>
-        private async Task CleanupOldSafetyArchivesAsync(string folder, int keepCount)
-        {
-            try
-            {
-                await Task.Run(() =>
-                {
-                    var safetyArchives = Directory.GetFiles(folder, $"{SafetyArchivePrefix}*.fbk")
-                        .Select(f => new FileInfo(f))
-                        .OrderByDescending(f => f.LastWriteTimeUtc)
-                        .Skip(keepCount)
-                        .ToList();
-
-                    foreach (var file in safetyArchives)
-                    {
-                        try
-                        {
-                            file.Delete();
-                            System.Diagnostics.Debug.WriteLine($"[DatabaseService] Deleted old safety archive: {file.Name}");
-                        }
-                        catch { }
-                    }
-                });
-            }
-            catch { }
-        }
-
-        /// <summary>
-        /// Conditional deployment method:
-        /// - Creates safety archive if ARCHIVE_BEFORE_DEPLOY is TRUE
-        /// - Detects if migrations are needed
-        /// - If FORCE_CLEAN_DEPLOYMENT is TRUE: wipes ALL app data, cache, preferences, and recreates database
-        /// - If FALSE: only applies pending migrations
-        /// Call this method at app startup BEFORE InitializeAsync
-        /// </summary>
-        public async Task<bool> ConditionalDeploymentAsync()
-        {
-            try
-            {
-                System.Diagnostics.Debug.WriteLine($"[DatabaseService] ConditionalDeployment: FORCE_CLEAN_DEPLOYMENT = {FORCE_CLEAN_DEPLOYMENT}");
-                System.Diagnostics.Debug.WriteLine($"[DatabaseService] ConditionalDeployment: ARCHIVE_BEFORE_DEPLOY = {ARCHIVE_BEFORE_DEPLOY}");
-
-                // FIRST: Create safety archive if enabled (before any destructive operations)
-                if (ARCHIVE_BEFORE_DEPLOY)
-                {
-                    System.Diagnostics.Debug.WriteLine("[DatabaseService] Creating safety archive before deployment...");
-                    var archivePath = await CreateSafetyArchiveAsync().ConfigureAwait(false);
-                    if (archivePath != null)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[DatabaseService] Safety archive created at: {archivePath}");
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine("[DatabaseService] No safety archive created (database empty or missing)");
-                    }
-                    System.Diagnostics.Debug.WriteLine("[DatabaseService] Safety archive step completed");
-                }
-
-                System.Diagnostics.Debug.WriteLine("[DatabaseService] Creating service scope...");
-                using var scope = _services.CreateScope();
-                System.Diagnostics.Debug.WriteLine("[DatabaseService] Service scope created");
-                
-                System.Diagnostics.Debug.WriteLine("[DatabaseService] Getting AppDbContext...");
-                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                System.Diagnostics.Debug.WriteLine("[DatabaseService] AppDbContext obtained");
-
-                // Check if migrations are pending
-                System.Diagnostics.Debug.WriteLine("[DatabaseService] Checking for pending migrations...");
-                var pendingMigrations = await db.Database.GetPendingMigrationsAsync().ConfigureAwait(false);
-                var hasPendingMigrations = pendingMigrations.Any();
-                System.Diagnostics.Debug.WriteLine($"[DatabaseService] Pending migrations detected: {hasPendingMigrations}");
-
-                if (FORCE_CLEAN_DEPLOYMENT)
-                {
-                    System.Diagnostics.Debug.WriteLine("[DatabaseService] CLEAN DEPLOYMENT MODE - Wiping all app data and cache");
-
-                    // 1. Delete database
-                    System.Diagnostics.Debug.WriteLine("[DatabaseService] Deleting database...");
-                    await db.Database.EnsureDeletedAsync().ConfigureAwait(false);
-                    System.Diagnostics.Debug.WriteLine("[DatabaseService] Database deleted");
-
-                    // 2. Clear all preferences (MAUI Preferences)
-                    System.Diagnostics.Debug.WriteLine("[DatabaseService] Clearing preferences...");
-                    Preferences.Clear();
-                    System.Diagnostics.Debug.WriteLine("[DatabaseService] Preferences cleared");
-
-                    // 3. Clear secure storage
-                    System.Diagnostics.Debug.WriteLine("[DatabaseService] Clearing secure storage...");
-                    SecureStorage.RemoveAll();
-                    System.Diagnostics.Debug.WriteLine("[DatabaseService] Secure storage cleared");
-
-                    // 4. Delete all files in AppDataDirectory (cache, temp files, etc.)
-                    System.Diagnostics.Debug.WriteLine("[DatabaseService] Clearing AppDataDirectory...");
-                    await ClearAppDataDirectoryAsync().ConfigureAwait(false);
-                    System.Diagnostics.Debug.WriteLine("[DatabaseService] AppDataDirectory cleared");
-
-                    // 5. Delete all files in CacheDirectory
-                    System.Diagnostics.Debug.WriteLine("[DatabaseService] Clearing CacheDirectory...");
-                    await ClearCacheDirectoryAsync().ConfigureAwait(false);
-                    System.Diagnostics.Debug.WriteLine("[DatabaseService] CacheDirectory cleared");
-
-                    // 6. Recreate database with migrations
-                    System.Diagnostics.Debug.WriteLine("[DatabaseService] Recreating database...");
-                    await db.Database.MigrateAsync().ConfigureAwait(false);
-                    System.Diagnostics.Debug.WriteLine("[DatabaseService] Database recreated with fresh schema");
-
-                    System.Diagnostics.Debug.WriteLine("[DatabaseService] CLEAN DEPLOYMENT COMPLETED - All data wiped");
-                    return true;
-                }
-                else
-                {
-                    // Normal mode: just apply pending migrations if any
-                    if (hasPendingMigrations)
-                    {
-                        System.Diagnostics.Debug.WriteLine("[DatabaseService] Applying pending migrations...");
-                        await db.Database.MigrateAsync().ConfigureAwait(false);
-                        System.Diagnostics.Debug.WriteLine("[DatabaseService] Migrations applied successfully");
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine("[DatabaseService] Database schema is up-to-date");
-                    }
-                    
-                    System.Diagnostics.Debug.WriteLine("[DatabaseService] ConditionalDeployment completed successfully");
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[DatabaseService] ConditionalDeployment failed: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"[DatabaseService] Stack trace: {ex.StackTrace}");
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Clears all files in AppDataDirectory except for the database file itself (to avoid access conflicts)
-        /// </summary>
         private async Task ClearAppDataDirectoryAsync()
         {
             try
             {
                 var appDataPath = FileSystem.AppDataDirectory;
-                if (Directory.Exists(appDataPath))
-                {
-                    var files = Directory.GetFiles(appDataPath, "*", SearchOption.AllDirectories);
-                    foreach (var file in files)
-                    {
-                        try
-                        {
-                            // Skip the database file as it's being handled by EF Core
-                            if (!file.EndsWith(".db") && !file.EndsWith(".db-shm") && !file.EndsWith(".db-wal"))
-                            {
-                                File.Delete(file);
-                                System.Diagnostics.Debug.WriteLine($"[DatabaseService] Deleted file: {file}");
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"[DatabaseService] Failed to delete file {file}: {ex.Message}");
-                        }
-                    }
+                if (!Directory.Exists(appDataPath)) return;
 
-                    // Delete empty directories
-                    var directories = Directory.GetDirectories(appDataPath, "*", SearchOption.AllDirectories);
-                    foreach (var dir in directories.OrderByDescending(d => d.Length)) // Delete deepest first
-                    {
-                        try
-                        {
-                            if (Directory.Exists(dir) && !Directory.EnumerateFileSystemEntries(dir).Any())
-                            {
-                                Directory.Delete(dir);
-                                System.Diagnostics.Debug.WriteLine($"[DatabaseService] Deleted directory: {dir}");
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"[DatabaseService] Failed to delete directory {dir}: {ex.Message}");
-                        }
-                    }
+                foreach (var file in Directory.GetFiles(appDataPath, "*", SearchOption.AllDirectories))
+                {
+                    if (!file.EndsWith(".db") && !file.EndsWith(".db-shm") && !file.EndsWith(".db-wal"))
+                        try { File.Delete(file); } catch { }
+                }
+
+                foreach (var dir in Directory.GetDirectories(appDataPath, "*", SearchOption.AllDirectories).OrderByDescending(d => d.Length))
+                {
+                    if (Directory.Exists(dir) && !Directory.EnumerateFileSystemEntries(dir).Any())
+                        try { Directory.Delete(dir); } catch { }
                 }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[DatabaseService] ClearAppDataDirectory failed: {ex.Message}");
-            }
+            catch { }
             await Task.CompletedTask;
         }
 
-        /// <summary>
-        /// Clears all files in CacheDirectory
-        /// </summary>
         private async Task ClearCacheDirectoryAsync()
         {
             try
             {
                 var cachePath = FileSystem.CacheDirectory;
-                if (Directory.Exists(cachePath))
-                {
-                    var files = Directory.GetFiles(cachePath, "*", SearchOption.AllDirectories);
-                    foreach (var file in files)
-                    {
-                        try
-                        {
-                            File.Delete(file);
-                            System.Diagnostics.Debug.WriteLine($"[DatabaseService] Deleted cache file: {file}");
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"[DatabaseService] Failed to delete cache file {file}: {ex.Message}");
-                        }
-                    }
+                if (!Directory.Exists(cachePath)) return;
 
-                    // Delete empty directories
-                    var directories = Directory.GetDirectories(cachePath, "*", SearchOption.AllDirectories);
-                    foreach (var dir in directories.OrderByDescending(d => d.Length))
-                    {
-                        try
-                        {
-                            if (Directory.Exists(dir) && !Directory.EnumerateFileSystemEntries(dir).Any())
-                            {
-                                Directory.Delete(dir);
-                                System.Diagnostics.Debug.WriteLine($"[DatabaseService] Deleted cache directory: {dir}");
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"[DatabaseService] Failed to delete cache directory {dir}: {ex.Message}");
-                        }
-                    }
+                foreach (var file in Directory.GetFiles(cachePath, "*", SearchOption.AllDirectories))
+                    try { File.Delete(file); } catch { }
+
+                foreach (var dir in Directory.GetDirectories(cachePath, "*", SearchOption.AllDirectories).OrderByDescending(d => d.Length))
+                {
+                    if (Directory.Exists(dir) && !Directory.EnumerateFileSystemEntries(dir).Any())
+                        try { Directory.Delete(dir); } catch { }
                 }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[DatabaseService] ClearCacheDirectory failed: {ex.Message}");
-            }
+            catch { }
             await Task.CompletedTask;
         }
+
+        private static void LogInfo(string message) => 
+            System.Diagnostics.Debug.WriteLine($"[DatabaseService] {message}");
+        
+        private static void LogWarning(string message) => 
+            System.Diagnostics.Debug.WriteLine($"[DatabaseService] WARNING: {message}");
+        
+        private static void LogError(string message) => 
+            System.Diagnostics.Debug.WriteLine($"[DatabaseService] ERROR: {message}");
     }
 }

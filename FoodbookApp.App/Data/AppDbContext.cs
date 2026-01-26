@@ -1,9 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Foodbook.Models;
 using System.IO;
-#if ANDROID
 using Microsoft.Maui.Storage;
-#endif
 
 namespace Foodbook.Data
 {
@@ -33,12 +31,11 @@ namespace Foodbook.Data
             // Configure only if not already configured by DI
             if (!optionsBuilder.IsConfigured)
             {
-#if ANDROID
-                var dbPath = Path.Combine(FileSystem.AppDataDirectory, "foodbookapp.db");
-#else
-                var dbPath = Path.Combine(Directory.GetCurrentDirectory(), "foodbook.dev.db");
-#endif
-                optionsBuilder.UseSqlite($"Data Source={dbPath}");
+                // CRITICAL FIX: Always use centralized DatabaseConfiguration
+                // This ensures consistency between runtime, design-time, and all platforms
+                var connectionString = DatabaseConfiguration.GetConnectionString();
+                System.Diagnostics.Debug.WriteLine($"[AppDbContext] OnConfiguring fallback using: {connectionString}");
+                optionsBuilder.UseSqlite(connectionString);
             }
         }
 
