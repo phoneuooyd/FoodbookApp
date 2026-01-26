@@ -141,6 +141,10 @@ public class IngredientService : IIngredientService
             {
                 InvalidateCache();
                 System.Diagnostics.Debug.WriteLine($"? Added standalone ingredient: {ingredient.Name}, ID: {ingredient.Id}");
+                
+                // ? KRYTYCZNE FIX: Wywo³aj event aby poinformowaæ subskrybentów (IngredientsPage, AddRecipePage)
+                AppEvents.RaiseIngredientSaved(ingredient.Id);
+                System.Diagnostics.Debug.WriteLine($"[IngredientService] Raised IngredientSaved event for ID: {ingredient.Id}");
             }
             else
             {
@@ -179,6 +183,10 @@ public class IngredientService : IIngredientService
                     InvalidateCache();
                     System.Diagnostics.Debug.WriteLine($"? Updated standalone ingredient: {ingredient.Name}, ID: {ingredient.Id}");
                     
+                    // ? KRYTYCZNE FIX: Wywo³aj event aby poinformowaæ subskrybentów
+                    AppEvents.RaiseIngredientSaved(ingredient.Id);
+                    System.Diagnostics.Debug.WriteLine($"[IngredientService] Raised IngredientSaved event for ID: {ingredient.Id}");
+                    
                     // Queue for cloud sync (Update operation)
                     if (_syncService != null)
                     {
@@ -200,7 +208,7 @@ public class IngredientService : IIngredientService
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"? Ingredient with ID {ingredient.Id} not found for update");
+                System.Diagnostics.Debug.WriteLine($"?? Ingredient with ID {ingredient.Id} not found for update");
             }
         }
         catch (Exception ex)

@@ -237,14 +237,11 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
                 return;
             }
 
-            // ✅ CRITICAL: Reset form to clear previous values
             vm.Reset();
             System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] IngredientFormViewModel reset before opening");
 
             var formPage = new IngredientFormPage(vm);
 
-            // ✅ NEW: Notify SearchablePickerComponent listeners that a modal is opening
-            // This allows AddRecipePage to adjust popup background overlay for wallpaper mode
             try
             {
                 SearchablePickerComponent.RaiseGlobalPopupStateChanged(this, true);
@@ -255,15 +252,12 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
                 System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] Failed to notify GlobalPopupStateChanged: {ex.Message}");
             }
 
-            // ✅ Show the page modally and await its dismissal
             var dismissedTcs = new TaskCompletionSource();
             formPage.Disappearing += (_, __) => 
             {
                 try
                 {
                     dismissedTcs.TrySetResult();
-                    
-                    // ✅ NEW: Notify that modal is closing
                     SearchablePickerComponent.RaiseGlobalPopupStateChanged(this, false);
                     System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] Notified GlobalPopupStateChanged: closing modal");
                 }
@@ -276,14 +270,12 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
             await currentPage.Navigation.PushModalAsync(formPage);
             System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] IngredientFormPage opened modally");
             
-            // ✅ Wait for form to be dismissed (user saved or cancelled)
             await dismissedTcs.Task;
             System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] IngredientFormPage dismissed");
 
-            // ✅ CRITICAL: Small delay to ensure all SaveAsync operations completed
             await Task.Delay(200);
 
-            // ✅ Now reload fresh data and update popup list
+            // ✅ CRITICAL FIX: Reload fresh ingredients and completely rebuild popup UI
             try
             {
                 var ingredientService = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IIngredientService>();
@@ -291,7 +283,6 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
                 {
                     System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] Fetching fresh ingredients from service...");
                     
-                    // Force cache invalidation
                     try { ingredientService.InvalidateCache(); } catch { }
                     
                     var fresh = await ingredientService.GetIngredientsAsync();
@@ -316,15 +307,35 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
                         }
                     }
 
-                    // ✅ Update local popup list (this popup's _allItems)
+                    // ✅ CRITICAL FIX: Completely rebuild local list and UI
+                    System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] Rebuilding popup list...");
+                    
+                    // Clear and rebuild _allItems
+                    _allItems.Clear();
+                    foreach (var ing in fresh)
+                        _allItems.Add(ing.Name);
+                    
+                    // Small delay before UI rebuild to ensure everything is ready
+                    await Task.Delay(100);
+                    
+                    // ✅ CRITICAL: Trigger full UI rebuild by clearing search and reapplying
                     await MainThread.InvokeOnMainThreadAsync(() =>
                     {
-                        System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] Updating popup list...");
-                        _allItems.Clear();
-                        foreach (var ing in fresh)
-                            _allItems.Add(ing.Name);
-                        ApplySearch();
-                        System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] Popup list updated with {_allItems.Count} items");
+                        var currentSearch = SearchText;
+                        SearchText = string.Empty; // This triggers PopulateAsync with cleared UI
+                        
+                        // Immediately restore search if there was one (will filter new data)
+                        if (!string.IsNullOrWhiteSpace(currentSearch))
+                        {
+                            SearchText = currentSearch;
+                        }
+                        else
+                        {
+                            // Force rebuild with all items
+                            ApplySearch();
+                        }
+                        
+                        System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] Popup UI rebuilt with {_allItems.Count} items");
                     });
 
                     // ✅ Force reload IngredientsPage if it's alive
