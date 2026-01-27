@@ -98,6 +98,18 @@
                 </VerticalStackLayout>
             </Frame>
 
+            <!-- Complete Setup Button -->
+            <Button Text="{loc:Translate Resource=SetupWizardPageResources, Key=CompleteSetupButton}"
+                Command="{Binding CompleteSetupCommand}"
+                IsEnabled="{Binding IsCompleting, Converter={StaticResource InvertedBoolConverter}}"
+                BackgroundColor="{DynamicResource Primary}"
+                TextColor="{DynamicResource ButtonPrimaryText}"
+                FontSize="18"
+                FontAttributes="Bold"
+                HeightRequest="50"
+                CornerRadius="25"
+                Margin="0,10,0,20" />
+
             <!-- Status Message -->
             <Label Text="{Binding StatusMessage}"
                    FontSize="14"
@@ -105,19 +117,7 @@
                    HorizontalTextAlignment="Center"
                    TextColor="{DynamicResource Primary}"
                    IsVisible="{Binding StatusMessage, Converter={StaticResource StringIsNotNullOrEmptyConverter}}"
-                   Margin="0,10,0,0" />
-
-            <!-- Complete Setup Button -->
-            <Button Text="{loc:Translate Resource=SetupWizardPageResources, Key=CompleteSetupButton}"
-                    Command="{Binding CompleteSetupCommand}"
-                    IsEnabled="{Binding IsCompleting, Converter={StaticResource InvertedBoolConverter}}"
-                    BackgroundColor="{DynamicResource Primary}"
-                    TextColor="{DynamicResource ButtonPrimaryText}"
-                    FontSize="18"
-                    FontAttributes="Bold"
-                    HeightRequest="50"
-                    CornerRadius="25"
-                    Margin="0,20,0,40" />
+                   Margin="0,5,0,0" />
 
         </VerticalStackLayout>
     </ScrollView>

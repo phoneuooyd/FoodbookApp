@@ -62,6 +62,18 @@ public partial class ShoppingListDetailPage : ContentPage
         {
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Failed to subscribe SaveCompletedAsync: {ex.Message}");
         }
+
+        // Subscribe to global popup state changes early (before any interaction)
+        try
+        {
+            SimplePicker.GlobalPopupStateChanged += OnGlobalPickerPopupStateChanged;
+            _popupSubscribed = true;
+            System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Subscribed to GlobalPopupStateChanged in constructor");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Failed to subscribe GlobalPopupStateChanged: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -97,10 +109,18 @@ public partial class ShoppingListDetailPage : ContentPage
     {
         try
         {
-            if (!isOpen)
+            // Set flag when popup OPENS (true) to prevent reload during popup interaction
+            // AND when popup CLOSES (false) to skip reload after popup closes
+            if (isOpen)
             {
                 _skipNextAppearReload = true;
-                System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Picker popup closed - will skip next reload on appearing");
+                System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Picker popup opened - setting skip reload flag");
+            }
+            else
+            {
+                // Keep the flag set when popup closes - it will be consumed in OnAppearing
+                _skipNextAppearReload = true;
+                System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Picker popup closed - keeping skip reload flag");
             }
         }
         catch (Exception ex)
@@ -130,23 +150,37 @@ public partial class ShoppingListDetailPage : ContentPage
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Failed to subscribe Shell.Navigating: {ex.Message}");
         }
 
+        // Re-subscribe to popup events if needed (may have been unsubscribed in OnDisappearing)
+        try
+        {
+            if (!_popupSubscribed)
+            {
+                SimplePicker.GlobalPopupStateChanged += OnGlobalPickerPopupStateChanged;
+                _popupSubscribed = true;
+                System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Re-subscribed to GlobalPopupStateChanged");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Failed to subscribe GlobalPopupStateChanged: {ex.Message}");
+        }
+
         try
         {
             if (_skipNextAppearReload)
             {
-                System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Skipping reload on appearing (popup just closed)");
+                System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Skipping reload on appearing (popup interaction)");
                 _skipNextAppearReload = false;
+                return; // Don't load - just skip
+            }
+            
+            if (_planIdGuid == Guid.Empty)
+            {
+                System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] PlanId is empty/invalid - skipping load");
             }
             else
             {
-                if (_planIdGuid == Guid.Empty)
-                {
-                    System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] PlanId is empty/invalid - skipping load");
-                }
-                else
-                {
-                    await _viewModel.LoadAsync(_planIdGuid);
-                }
+                await _viewModel.LoadAsync(_planIdGuid);
             }
         }
         catch (OperationCanceledException)
@@ -157,20 +191,6 @@ public partial class ShoppingListDetailPage : ContentPage
         {
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Load error: {ex.Message}");
             await DisplayAlert("B³¹d", "Nie mo¿na za³adowaæ listy zakupów", "OK");
-        }
-
-        // Subscribe to global popup state changes
-        try
-        {
-            if (!_popupSubscribed)
-            {
-                SimplePicker.GlobalPopupStateChanged += OnGlobalPickerPopupStateChanged;
-                _popupSubscribed = true;
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Failed to subscribe GlobalPopupStateChanged: {ex.Message}");
         }
     }
 
@@ -195,23 +215,11 @@ public partial class ShoppingListDetailPage : ContentPage
         }
         catch { }
 
-        // Unsubscribe popup event
-        try
-        {
-            if (_popupSubscribed)
-            {
-                SimplePicker.GlobalPopupStateChanged -= OnGlobalPickerPopupStateChanged;
-                _popupSubscribed = false;
-            }
-        }
-        catch { }
-
-        // Unsubscribe SaveCompletedAsync
-        try
-        {
-            _viewModel.SaveCompletedAsync -= OnSaveCompletedAsync;
-        }
-        catch { }
+        // NOTE: Do NOT unsubscribe popup event here - we need it to set skip flag
+        // when popup closes. The popup may cause OnDisappearing to fire.
+        // Unsubscription is done only on page destruction or explicit navigation away.
+        
+        // Don't unsubscribe SaveCompletedAsync - it's needed for save flow
     }
 
     protected override bool OnBackButtonPressed()

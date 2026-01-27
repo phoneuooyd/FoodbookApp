@@ -528,6 +528,18 @@ namespace Foodbook.Views.Components
                     {
                         resetMethod.Invoke(vm, null);
                     }
+
+                    // ? NEW: Call TriggerReloadAsync to ensure recipes are loaded even if page is cached
+                    var triggerReloadMethod = pageType.GetMethod("TriggerReloadAsync", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                    if (triggerReloadMethod != null)
+                    {
+                        var task = triggerReloadMethod.Invoke(page, null) as Task;
+                        if (task != null)
+                        {
+                            await task;
+                            return;
+                        }
+                    }
                 }
                 else if (pageType.Name == "ShoppingListPage")
                 {

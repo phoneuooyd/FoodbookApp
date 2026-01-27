@@ -398,19 +398,33 @@ public class HomeViewModel : INotifyPropertyChanged
     {
         try
         {
-            var plans = await _planService.GetPlansAsync();
-            var activePlans = plans?.Where(p => !p.IsArchived).OrderByDescending(p => p.StartDate).ToList() ?? new List<Plan>();
-            
-            AvailablePlans.Clear();
-            foreach (var plan in activePlans)
-            {
-                AvailablePlans.Add(plan);
-            }
+            if (_planService == null)
+                return;
+
+            // Load all plans from service and filter to Planner type only
+            var all = await _planService.GetPlansAsync();
+            var plannerOnly = all
+                .Where(p => p.Type == PlanType.Planner)
+                .OrderByDescending(p => p.StartDate)
+                .ToList();
+
+            // AvailablePlans should expose only planner-type plans
+            AvailablePlans = new ObservableCollection<Plan>(plannerOnly);
+
+            // PlanCount should represent active (non-archived) planner plans only
+            PlanCount = plannerOnly.Count(p => !p.IsArchived);
+
+            // ArchivedPlanCount should represent archived planner plans only
+            ArchivedPlanCount = plannerOnly.Count(p => p.IsArchived);
+
+            // Notify property changes if needed
+            OnPropertyChanged(nameof(AvailablePlans));
+            OnPropertyChanged(nameof(PlanCount));
+            OnPropertyChanged(nameof(ArchivedPlanCount));
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error loading available plans: {ex.Message}");
-            AvailablePlans.Clear();
+            System.Diagnostics.Debug.WriteLine($"[HomeViewModel] LoadAvailablePlansAsync failed: {ex.Message}");
         }
     }
 

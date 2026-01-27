@@ -185,10 +185,10 @@
                                                         
                                                         <!-- Nutrition values per ingredient -->
                                                         <StackLayout Grid.Row="1" Grid.ColumnSpan="4" Orientation="Horizontal" Spacing="12" Margin="0,8,0,0">
-                                                            <Label Text="{Binding DisplayCalories, StringFormat='🔥 {0:F1} kcal'}" FontSize="11" TextColor="{DynamicResource Secondary}" />
-                                                            <Label Text="{Binding DisplayProtein, StringFormat='💪 {0:F1}g'}" FontSize="11" TextColor="{DynamicResource Secondary}" />
-                                                            <Label Text="{Binding DisplayFat, StringFormat='🧈 {0:F1}g'}" FontSize="11" TextColor="{DynamicResource Secondary}" />
-                                                            <Label Text="{Binding DisplayCarbs, StringFormat='🍞 {0:F1}g'}" FontSize="11" TextColor="{DynamicResource Secondary}" />
+                                                            <Label Text="{Binding DisplayCalories, StringFormat='🔥 {0:F1} kcal'}" FontSize="11" TextColor="{DynamicResource PrimaryText}" />
+                                                            <Label Text="{Binding DisplayProtein, StringFormat='💪 {0:F1}g'}" FontSize="11" TextColor="{DynamicResource PrimaryText}" />
+                                                            <Label Text="{Binding DisplayFat, StringFormat='🧈 {0:F1}g'}" FontSize="11" TextColor="{DynamicResource PrimaryText}" />
+                                                            <Label Text="{Binding DisplayCarbs, StringFormat='🍞 {0:F1}g'}" FontSize="11" TextColor="{DynamicResource PrimaryText}" />
                                                         </StackLayout>
                                                     </Grid>
                                                 </Border>

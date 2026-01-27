@@ -30,6 +30,10 @@ public partial class RecipesPage : ContentPage
         BindingContext = _viewModel;
         _themeHelper = new PageThemeHelper();
 
+        // ? CRITICAL: Subscribe to AppEvents in constructor so they work even when page is cached
+        AppEvents.RecipesChangedAsync += OnRecipesChangedAsync;
+        AppEvents.RecipeSaved += OnRecipeSaved;
+
         // Reload when a recipe is saved from AddRecipePage (page may not re-appear if pushed modally)
         WeakReferenceMessenger.Default.Register<RecipesReloadMessage>(this, async (_, msg) =>
         {
@@ -126,11 +130,7 @@ public partial class RecipesPage : ContentPage
         // Apply initial tint color
         RefreshFilterButtonTintColor();
 
-        // ? CRITICAL: Subscribe EARLY to events
-        AppEvents.RecipesChangedAsync += OnRecipesChangedAsync;
-        AppEvents.RecipeSaved += OnRecipeSaved;
-
-        // ? NEW: Drain any pending RecipeSaved events that may have queued before subscription
+        // ? NEW: Drain any pending RecipeSaved events that may have queued before page was created
         AppEvents.DrainPendingRecipeSavedEvents(OnRecipeSaved);
 
         // Always attempt a fresh reload when appearing to ensure UI reflects latest DB state
@@ -155,8 +155,28 @@ public partial class RecipesPage : ContentPage
         WeakReferenceMessenger.Default.Unregister<FabCollapseMessage>(this);
         WeakReferenceMessenger.Default.Unregister<RecipesReloadMessage>(this);
 
-        AppEvents.RecipesChangedAsync -= OnRecipesChangedAsync;
-        AppEvents.RecipeSaved -= OnRecipeSaved;
+        // ? DO NOT unsubscribe from AppEvents here - keep them alive for cached page
+        // AppEvents.RecipesChangedAsync -= OnRecipesChangedAsync;
+        // AppEvents.RecipeSaved -= OnRecipeSaved;
+    }
+
+    // ? PUBLIC: Called by TabBarComponent when RecipesPage tab is selected (even when cached)
+    public async Task TriggerReloadAsync()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[RecipesPage] TriggerReloadAsync called by TabBar - forcing reload");
+            
+            // ? Drain any pending events BEFORE reload
+            AppEvents.DrainPendingRecipeSavedEvents(OnRecipeSaved);
+            
+            _viewModel.ResetFolderNavigation();
+            await _viewModel.LoadRecipesAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[RecipesPage] TriggerReloadAsync failed: {ex.Message}");
+        }
     }
 
     private async Task OnRecipesChangedAsync()
