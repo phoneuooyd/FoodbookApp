@@ -402,16 +402,62 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             if (priority == SyncPriority.Cloud)
             {
                 // CLOUD-FIRST: Download cloud data to local database first
-                Log("Cloud-first sync: Fetching data from cloud...");
+                Log("Cloud-first sync: Fetching ALL data from cloud...");
+                RaiseSyncStatusChanged(SyncStatus.InitialSync, SyncStatus.Syncing, "Downloading data from cloud...");
                 
-                var cloudData = await _crudService.FetchAllCloudDataAsync(ct);
-                var importedCount = await ImportCloudDataToLocalAsync(db, cloudData, ct);
-                
-                Log($"Cloud-first sync: Imported {importedCount} entities from cloud");
-                
-                // Then queue any local-only entities for upload
-                queuedCount = await QueueLocalOnlyEntitiesForSyncAsync(db, accountId.Value, batchId, cloudData, ct);
-                Log($"Cloud-first sync: Queued {queuedCount} local-only entities for upload");
+                try
+                {
+                    var cloudData = await _crudService.FetchAllCloudDataAsync(ct);
+                    
+                    Log($"Cloud data fetched: " +
+                        $"Folders={cloudData.Folders.Count}, " +
+                        $"Labels={cloudData.RecipeLabels.Count}, " +
+                        $"Recipes={cloudData.Recipes.Count}, " +
+                        $"Ingredients={cloudData.Ingredients.Count}, " +
+                        $"Plans={cloudData.Plans.Count}, " +
+                        $"Meals={cloudData.PlannedMeals.Count}, " +
+                        $"ShoppingItems={cloudData.ShoppingListItems.Count}, " +
+                        $"UserPreferences={cloudData.UserPreferences != null}");
+                    
+                    // Use FORCE import - cloud always wins
+                    var importedCount = await ForceImportCloudDataToLocalAsync(db, cloudData, ct);
+                    
+                    Log($"Cloud-first sync: Imported {importedCount} entities from cloud");
+                    
+                    // Apply user preferences from snapshot (no extra API call!)
+                    if (cloudData.UserPreferences != null)
+                    {
+                        try
+                        {
+                            var applied = ApplyUserPreferencesFromSnapshot(cloudData.UserPreferences);
+                            if (applied)
+                            {
+                                Log("Cloud-first sync: User preferences applied from snapshot");
+                            }
+                            else
+                            {
+                                Log("Cloud-first sync: Failed to apply user preferences from snapshot");
+                            }
+                        }
+                        catch (Exception prefEx)
+                        {
+                            Log($"Cloud-first sync: Failed to apply user preferences: {prefEx.Message}");
+                        }
+                    }
+                    else
+                    {
+                        Log("Cloud-first sync: No user preferences in cloud snapshot");
+                    }
+                    
+                    // Then queue any local-only entities for upload (entities that exist locally but not in cloud)
+                    queuedCount = await QueueLocalOnlyEntitiesForSyncAsync(db, accountId.Value, batchId, cloudData, ct);
+                    Log($"Cloud-first sync: Queued {queuedCount} local-only entities for upload");
+                }
+                catch (Exception cloudEx)
+                {
+                    Log($"ERROR fetching cloud data: {cloudEx.Message}");
+                    throw;
+                }
             }
             else
             {
@@ -621,9 +667,34 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
     /// <summary>
     /// Forces synchronization of all pending items without delays.
     /// Used for manual "Sync Now" button clicks.
+    /// If Cloud priority is set, first downloads all cloud data.
     /// </summary>
     public async Task<SyncResult> ForceSyncAllAsync(CancellationToken ct = default)
     {
+        // First, check if we should download from cloud (Cloud-First priority)
+        var preAccountId = await _tokenStore.GetActiveAccountIdAsync();
+        if (preAccountId.HasValue)
+        {
+            using var preScope = _serviceProvider.CreateScope();
+            var preDb = preScope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var preState = await preDb.SyncStates.FirstOrDefaultAsync(s => s.AccountId == preAccountId.Value, ct);
+            
+            if (preState?.Priority == SyncPriority.Cloud)
+            {
+                Log("ForceSyncAllAsync: Cloud priority detected - downloading from cloud first...");
+                var downloadResult = await ForceDownloadFromCloudAsync(ct);
+                if (!downloadResult.Success)
+                {
+                    Log($"ForceSyncAllAsync: Cloud download failed: {downloadResult.ErrorMessage}");
+                    // Continue with queue processing anyway
+                }
+                else
+                {
+                    Log($"ForceSyncAllAsync: Downloaded {downloadResult.ItemsProcessed} items from cloud");
+                }
+            }
+        }
+
         if (!await _syncLock.WaitAsync(TimeSpan.FromSeconds(5), ct))
         {
             return SyncResult.Ok(0, await GetPendingCountAsync(ct), TimeSpan.Zero);
@@ -753,163 +824,365 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         }
     }
 
-    public async Task<int> GetPendingCountAsync(CancellationToken ct = default)
-    {
-        var accountId = await _tokenStore.GetActiveAccountIdAsync();
-        if (!accountId.HasValue)
-            return 0;
-
-        using var scope = _serviceProvider.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-        return await db.SyncQueue.CountAsync(e => e.AccountId == accountId.Value && e.Status == SyncEntryStatus.Pending, ct);
-    }
-
-    public async Task ClearFailedEntriesAsync(CancellationToken ct = default)
-    {
-        var accountId = await _tokenStore.GetActiveAccountIdAsync();
-        if (!accountId.HasValue)
-            return;
-
-        using var scope = _serviceProvider.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-        var failedEntries = await db.SyncQueue
-            .Where(e => e.AccountId == accountId.Value && (e.Status == SyncEntryStatus.Failed || e.Status == SyncEntryStatus.Abandoned))
-            .ToListAsync(ct);
-
-        db.SyncQueue.RemoveRange(failedEntries);
-        await db.SaveChangesAsync(ct);
-    }
-
-    public async Task RetryFailedEntriesAsync(CancellationToken ct = default)
-    {
-        var accountId = await _tokenStore.GetActiveAccountIdAsync();
-        if (!accountId.HasValue)
-            return;
-
-        using var scope = _serviceProvider.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-        var failedEntries = await db.SyncQueue.Where(e => e.AccountId == accountId.Value && e.Status == SyncEntryStatus.Failed).ToListAsync(ct);
-        foreach (var entry in failedEntries)
-        {
-            entry.Status = SyncEntryStatus.Pending;
-            entry.RetryCount = 0;
-            entry.LastError = null;
-        }
-
-        await db.SaveChangesAsync(ct);
-    }
-
-    public void StartSyncTimer()
-    {
-        StopSyncTimer();
-        _syncTimer = new Timer(async _ => await ProcessQueueAsync(), null, DefaultSyncInterval, DefaultSyncInterval);
-    }
-
-    public void StopSyncTimer()
-    {
-        _syncTimer?.Dispose();
-        _syncTimer = null;
-    }
-
     /// <summary>
-    /// CRITICAL FIX: Restart sync timer when queue becomes empty or to continue processing batches
-    /// This prevents the timer from hanging after 3-4 batches
+    /// Forces immediate download of all cloud data to local database.
+    /// Designed for Cloud-First priority - imports all cloud data, overwriting local if timestamps differ.
     /// </summary>
-    private void RestartSyncTimerAsync()
+    public async Task<SyncResult> ForceDownloadFromCloudAsync(CancellationToken ct = default)
     {
-        try
+        if (!await _syncLock.WaitAsync(TimeSpan.FromSeconds(10), ct))
         {
-            _ = Task.Run(async () =>
-            {
-                await Task.Delay(500); // Small delay before restarting
-                StartSyncTimer();
-                Log("Sync timer restarted");
-            });
+            return SyncResult.Error("Could not acquire sync lock");
         }
-        catch (Exception ex)
-        {
-            Log($"Error restarting sync timer: {ex.Message}");
-        }
-    }
 
-    /// <summary>
-    /// CRITICAL FIX: Schedule next batch instead of waiting passively for timer
-    /// This ensures continuous processing while respecting rate limits
-    /// </summary>
-    private async Task ScheduleNextBatchAsync(int delayMs, CancellationToken ct)
-    {
-        try
-        {
-            await Task.Delay(delayMs, ct);
-            Log($"Scheduled batch timer firing after {delayMs}ms delay");
-            await ProcessQueueAsync(ct);
-        }
-        catch (OperationCanceledException)
-        {
-            Log("Scheduled batch cancelled");
-        }
-        catch (Exception ex)
-        {
-            Log($"Error scheduling next batch: {ex.Message}");
-        }
-    }
+        var sw = Stopwatch.StartNew();
+        int imported = 0;
 
-    /// <summary>
-    /// CRITICAL FIX: Immediate retry of failed batches
-    /// This bypasses the timer and attempts to resend failed items quickly
-    /// </summary>
-    private async Task RetryFailedBatchesAsync(CancellationToken ct)
-    {
         try
         {
             var accountId = await _tokenStore.GetActiveAccountIdAsync();
             if (!accountId.HasValue)
-                return;
+                return SyncResult.Error("No active account");
+
+            if (!await IsCloudSyncEnabledAsync(ct))
+                return SyncResult.Error("Sync not enabled");
+
+            Log("=== ForceDownloadFromCloudAsync START ===");
 
             using var scope = _serviceProvider.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            var failedBatches = await db.SyncQueue
-                .Where(e => e.AccountId == accountId.Value && e.Status == SyncEntryStatus.Failed)
-                .ToListAsync(ct);
-
-            foreach (var batch in failedBatches)
+            var state = await db.SyncStates.FirstOrDefaultAsync(s => s.AccountId == accountId.Value, ct);
+            if (state != null)
             {
-                Log($"Retrying failed batch {batch.BatchId}...");
-
-                // Immediately re-process the failed batch
-                batch.Status = SyncEntryStatus.Pending;
-                batch.LastError = null;
-                batch.RetryCount = 0;
-
+                state.Status = SyncStatus.Syncing;
+                state.LastSyncAttemptUtc = DateTime.UtcNow;
+                state.UpdatedUtc = DateTime.UtcNow;
                 await db.SaveChangesAsync(ct);
-                _ = ProcessQueueAsync(ct); // Fire and forget
             }
+
+            RaiseSyncStatusChanged(SyncStatus.Idle, SyncStatus.Syncing, "Downloading data from cloud...");
+
+            // Fetch ALL cloud data
+            Log("Fetching all data from cloud...");
+            var cloudData = await _crudService.FetchAllCloudDataAsync(ct);
+            
+            Log($"Cloud data fetched: " +
+                $"Folders={cloudData.Folders.Count}, " +
+                $"Labels={cloudData.RecipeLabels.Count}, " +
+                $"Recipes={cloudData.Recipes.Count}, " +
+                $"Ingredients={cloudData.Ingredients.Count}, " +
+                $"Plans={cloudData.Plans.Count}, " +
+                $"Meals={cloudData.PlannedMeals.Count}, " +
+                $"ShoppingItems={cloudData.ShoppingListItems.Count}, " +
+                $"UserPreferences={cloudData.UserPreferences != null}");
+
+            // Import with FORCE mode - always import, don't compare timestamps
+            imported = await ForceImportCloudDataToLocalAsync(db, cloudData, ct);
+
+            Log($"Imported {imported} entities from cloud");
+            
+            // Apply user preferences from snapshot (no extra API call!)
+            if (cloudData.UserPreferences != null)
+            {
+                try
+                {
+                    var applied = ApplyUserPreferencesFromSnapshot(cloudData.UserPreferences);
+                    if (applied)
+                    {
+                        imported++;
+                        Log("User preferences applied from snapshot");
+                    }
+                    else
+                    {
+                        Log("Failed to apply user preferences from snapshot");
+                    }
+                }
+                catch (Exception prefEx)
+                {
+                    Log($"Failed to apply user preferences: {prefEx.Message}");
+                }
+            }
+            else
+            {
+                Log("No user preferences in cloud snapshot");
+            }
+
+            if (state != null)
+            {
+                state.LastSyncUtc = DateTime.UtcNow;
+                state.LastCloudPollUtc = DateTime.UtcNow;
+                state.Status = SyncStatus.Idle;
+                state.LastSyncError = null;
+                state.TotalItemsSynced += imported;
+                state.UpdatedUtc = DateTime.UtcNow;
+                await db.SaveChangesAsync(ct);
+            }
+
+            sw.Stop();
+            RaiseSyncStatusChanged(SyncStatus.Syncing, SyncStatus.Idle, $"Downloaded {imported} items from cloud");
+
+            Log($"=== ForceDownloadFromCloudAsync COMPLETE: {imported} items in {sw.Elapsed.TotalSeconds:F1}s ===");
+            return SyncResult.Ok(imported, 0, sw.Elapsed);
         }
         catch (Exception ex)
         {
-            Log($"Error in RetryFailedBatchesAsync: {ex.Message}");
+            Log($"ERROR in ForceDownloadFromCloudAsync: {ex.Message}");
+            RaiseSyncStatusChanged(SyncStatus.Syncing, SyncStatus.Error, ex.Message);
+            return SyncResult.Error(ex.Message);
+        }
+        finally
+        {
+            _syncLock.Release();
         }
     }
-    
-    private Timer? _cloudPollingTimer;
-    private static readonly TimeSpan CloudPollingInterval = TimeSpan.FromMinutes(10);
-    
-    private void StartCloudPollingTimer()
+
+    /// <summary>
+    /// Force imports cloud data to local database - always adds/updates regardless of timestamps.
+    /// For Cloud-First priority where cloud data should always win.
+    /// NOTE: User preferences are NOT applied here - they are applied by the calling method 
+    /// (StartInitialSyncAsync or ForceDownloadFromCloudAsync) after this method returns.
+    /// </summary>
+    private async Task<int> ForceImportCloudDataToLocalAsync(AppDbContext db, CloudDataSnapshot cloudData, CancellationToken ct)
     {
-        StopCloudPollingTimer();
-        _cloudPollingTimer = new Timer(async _ => await PollCloudForChangesAsync(), null, CloudPollingInterval, CloudPollingInterval);
-        Log("Cloud polling timer started");
-    }
-    
-    private void StopCloudPollingTimer()
-    {
-        _cloudPollingTimer?.Dispose();
-        _cloudPollingTimer = null;
-        Log("Cloud polling timer stopped");
+        int imported = 0;
+        
+        try
+        {
+            Log("=== ForceImportCloudDataToLocalAsync START ===");
+            
+            // Import in order respecting FK constraints: Folders › Labels › Recipes › Ingredients › Plans › PlannedMeals › ShoppingItems
+            
+            // Folders - FORCE import
+            Log($"Importing {cloudData.Folders.Count} folders...");
+            foreach (var folder in cloudData.Folders)
+            {
+                var existing = await db.Folders.FindAsync(new object[] { folder.Id }, ct);
+                if (existing == null)
+                {
+                    db.Folders.Add(folder);
+                    imported++;
+                    Log($"  + Added folder: {folder.Name}");
+                }
+                else
+                {
+                    // Cloud wins - always update
+                    existing.Name = folder.Name;
+                    existing.Description = folder.Description;
+                    existing.ParentFolderId = folder.ParentFolderId;
+                    existing.Order = folder.Order;
+                    existing.CreatedAt = folder.CreatedAt;
+                    existing.UpdatedAt = folder.UpdatedAt ?? DateTime.UtcNow;
+                    imported++;
+                    Log($"  ~ Updated folder: {folder.Name}");
+                }
+            }
+            await db.SaveChangesAsync(ct);
+            
+            // Recipe Labels - FORCE import
+            Log($"Importing {cloudData.RecipeLabels.Count} labels...");
+            foreach (var label in cloudData.RecipeLabels)
+            {
+                var existing = await db.RecipeLabels.FindAsync(new object[] { label.Id }, ct);
+                if (existing == null)
+                {
+                    db.RecipeLabels.Add(label);
+                    imported++;
+                    Log($"  + Added label: {label.Name}");
+                }
+                else
+                {
+                    existing.Name = label.Name;
+                    existing.ColorHex = label.ColorHex;
+                    existing.CreatedAt = label.CreatedAt;
+                    existing.UpdatedAt = label.UpdatedAt ?? DateTime.UtcNow;
+                    imported++;
+                    Log($"  ~ Updated label: {label.Name}");
+                }
+            }
+            await db.SaveChangesAsync(ct);
+            
+            // Recipes - FORCE import (without ingredients - they come separately)
+            Log($"Importing {cloudData.Recipes.Count} recipes...");
+            foreach (var recipe in cloudData.Recipes)
+            {
+                var existing = await db.Recipes.FindAsync(new object[] { recipe.Id }, ct);
+                if (existing == null)
+                {
+                    // Detach ingredients - they will be imported separately
+                    var recipeToAdd = new Recipe
+                    {
+                        Id = recipe.Id,
+                        Name = recipe.Name,
+                        Description = recipe.Description,
+                        Calories = recipe.Calories,
+                        Protein = recipe.Protein,
+                        Fat = recipe.Fat,
+                        Carbs = recipe.Carbs,
+                        IloscPorcji = recipe.IloscPorcji,
+                        FolderId = recipe.FolderId,
+                        CreatedAt = recipe.CreatedAt,
+                        UpdatedAt = recipe.UpdatedAt
+                    };
+                    db.Recipes.Add(recipeToAdd);
+                    imported++;
+                    Log($"  + Added recipe: {recipe.Name}");
+                }
+                else
+                {
+                    existing.Name = recipe.Name;
+                    existing.Description = recipe.Description;
+                    existing.Calories = recipe.Calories;
+                    existing.Protein = recipe.Protein;
+                    existing.Fat = recipe.Fat;
+                    existing.Carbs = recipe.Carbs;
+                    existing.IloscPorcji = recipe.IloscPorcji;
+                    existing.FolderId = recipe.FolderId;
+                    existing.CreatedAt = recipe.CreatedAt;
+                    existing.UpdatedAt = recipe.UpdatedAt ?? DateTime.UtcNow;
+                    imported++;
+                    Log($"  ~ Updated recipe: {recipe.Name}");
+                }
+            }
+            await db.SaveChangesAsync(ct);
+            
+            // Ingredients - FORCE import
+            Log($"Importing {cloudData.Ingredients.Count} ingredients...");
+            foreach (var ingredient in cloudData.Ingredients)
+            {
+                var existing = await db.Ingredients.FindAsync(new object[] { ingredient.Id }, ct);
+                if (existing == null)
+                {
+                    var ingredientToAdd = new Ingredient
+                    {
+                        Id = ingredient.Id,
+                        Name = ingredient.Name,
+                        Quantity = ingredient.Quantity,
+                        Unit = ingredient.Unit,
+                        UnitWeight = ingredient.UnitWeight,
+                        Calories = ingredient.Calories,
+                        Protein = ingredient.Protein,
+                        Fat = ingredient.Fat,
+                        Carbs = ingredient.Carbs,
+                        RecipeId = ingredient.RecipeId,
+                        CreatedAt = ingredient.CreatedAt,
+                        UpdatedAt = ingredient.UpdatedAt
+                    };
+                    db.Ingredients.Add(ingredientToAdd);
+                    imported++;
+                }
+                else
+                {
+                    existing.Name = ingredient.Name;
+                    existing.Quantity = ingredient.Quantity;
+                    existing.Unit = ingredient.Unit;
+                    existing.UnitWeight = ingredient.UnitWeight;
+                    existing.Calories = ingredient.Calories;
+                    existing.Protein = ingredient.Protein;
+                    existing.Fat = ingredient.Fat;
+                    existing.Carbs = ingredient.Carbs;
+                    existing.RecipeId = ingredient.RecipeId;
+                    existing.CreatedAt = ingredient.CreatedAt;
+                    existing.UpdatedAt = ingredient.UpdatedAt ?? DateTime.UtcNow;
+                    imported++;
+                }
+            }
+            await db.SaveChangesAsync(ct);
+            Log($"  Imported {cloudData.Ingredients.Count} ingredients");
+            
+            // Plans - FORCE import
+            Log($"Importing {cloudData.Plans.Count} plans...");
+            foreach (var plan in cloudData.Plans)
+            {
+                var existing = await db.Plans.FindAsync(new object[] { plan.Id }, ct);
+                if (existing == null)
+                {
+                    db.Plans.Add(plan);
+                    imported++;
+                    Log($"  + Added plan: {plan.Title ?? plan.Id.ToString()}");
+                }
+                else
+                {
+                    existing.StartDate = plan.StartDate;
+                    existing.EndDate = plan.EndDate;
+                    existing.IsArchived = plan.IsArchived;
+                    existing.Type = plan.Type;
+                    existing.Title = plan.Title;
+                    existing.LinkedShoppingListPlanId = plan.LinkedShoppingListPlanId;
+                    existing.CreatedAt = plan.CreatedAt;
+                    existing.UpdatedAt = plan.UpdatedAt ?? DateTime.UtcNow;
+                    imported++;
+                    Log($"  ~ Updated plan: {plan.Title ?? plan.Id.ToString()}");
+                }
+            }
+            await db.SaveChangesAsync(ct);
+            
+            // Planned Meals - FORCE import
+            Log($"Importing {cloudData.PlannedMeals.Count} planned meals...");
+            foreach (var meal in cloudData.PlannedMeals)
+            {
+                var existing = await db.PlannedMeals.FindAsync(new object[] { meal.Id }, ct);
+                if (existing == null)
+                {
+                    db.PlannedMeals.Add(meal);
+                    imported++;
+                }
+                else
+                {
+                    existing.RecipeId = meal.RecipeId;
+                    existing.PlanId = meal.PlanId;
+                    existing.Date = meal.Date;
+                    existing.Portions = meal.Portions;
+                    existing.CreatedAt = meal.CreatedAt;
+                    existing.UpdatedAt = meal.UpdatedAt ?? DateTime.UtcNow;
+                    imported++;
+                }
+            }
+            await db.SaveChangesAsync(ct);
+            
+            // Shopping List Items - FORCE import
+            Log($"Importing {cloudData.ShoppingListItems.Count} shopping items...");
+            foreach (var item in cloudData.ShoppingListItems)
+            {
+                var existing = await db.ShoppingListItems.FindAsync(new object[] { item.Id }, ct);
+                if (existing == null)
+                {
+                    db.ShoppingListItems.Add(item);
+                    imported++;
+                }
+                else
+                {
+                    existing.PlanId = item.PlanId;
+                    existing.IngredientName = item.IngredientName;
+                    existing.Quantity = item.Quantity;
+                    existing.Unit = item.Unit;
+                    existing.IsChecked = item.IsChecked;
+                    existing.Order = item.Order;
+                    existing.CreatedAt = item.CreatedAt;
+                    existing.UpdatedAt = item.UpdatedAt ?? DateTime.UtcNow;
+                    imported++;
+                }
+            }
+            await db.SaveChangesAsync(ct);
+            
+            // NOTE: User preferences are applied by calling method, not here
+            // This avoids duplicate API calls since preferences are already in CloudDataSnapshot
+            if (cloudData.UserPreferences != null)
+            {
+                Log($"  UserPreferences present in snapshot (will be applied by caller)");
+            }
+            
+            Log($"=== ForceImportCloudDataToLocalAsync COMPLETE: {imported} entities imported ===");
+        }
+        catch (Exception ex)
+        {
+            Log($"ERROR in ForceImportCloudDataToLocalAsync: {ex.Message}");
+            if (ex.InnerException != null)
+                Log($"  Inner: {ex.InnerException.Message}");
+            throw;
+        }
+        
+        return imported;
     }
     
     /// <summary>
@@ -1132,11 +1405,13 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             }
             await db.SaveChangesAsync(ct);
             
-            Log($"ImportCloudDataToLocalAsync: Successfully imported {imported} entities");
+            Log($"=== ForceImportCloudDataToLocalAsync COMPLETE: {imported} entities imported ===");
         }
         catch (Exception ex)
         {
-            Log($"ERROR in ImportCloudDataToLocalAsync: {ex.Message}");
+            Log($"ERROR in ForceImportCloudDataToLocalAsync: {ex.Message}");
+            if (ex.InnerException != null)
+                Log($"  Inner: {ex.InnerException.Message}");
             throw;
         }
         
@@ -1595,6 +1870,95 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
 
     #region User Preferences Sync
 
+    /// <summary>
+    /// Applies user preferences from a UserPreferencesDto directly (no API call).
+    /// Use this when preferences are already fetched as part of CloudDataSnapshot.
+    /// </summary>
+    public bool ApplyUserPreferencesFromSnapshot(UserPreferencesDto cloudPrefs)
+    {
+        try
+        {
+            Log($"Applying preferences from snapshot...");
+
+            if (cloudPrefs == null)
+            {
+                Log("No preferences in snapshot");
+                return false;
+            }
+
+            // CRITICAL: Suppress cloud sync during load to prevent circular calls
+            var suppressField = _preferencesService.GetType().GetField("_suppressCloudSync", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            suppressField?.SetValue(_preferencesService, true);
+
+            try
+            {
+                // Apply cloud preferences to local storage
+                
+                if (!string.IsNullOrWhiteSpace(cloudPrefs.Language))
+                {
+                    _preferencesService.SaveLanguage(cloudPrefs.Language);
+                    Log($"Applied language: {cloudPrefs.Language}");
+                }
+
+                if (Enum.TryParse<Foodbook.Models.AppTheme>(cloudPrefs.Theme, out var theme))
+                {
+                    _preferencesService.SaveTheme(theme);
+                    _themeService.SetTheme(theme);
+                    Log($"Applied theme: {theme}");
+                }
+
+                if (Enum.TryParse<AppColorTheme>(cloudPrefs.ColorTheme, out var colorTheme))
+                {
+                    _preferencesService.SaveColorTheme(colorTheme);
+                    _themeService.SetColorTheme(colorTheme);
+                    Log($"Applied color theme: {colorTheme}");
+                }
+
+                _preferencesService.SaveColorfulBackground(cloudPrefs.IsColorfulBackground);
+                _preferencesService.SaveWallpaperEnabled(cloudPrefs.IsWallpaperEnabled);
+
+                // Apply font settings using IFontService
+                if (Enum.TryParse<AppFontFamily>(cloudPrefs.FontFamily, out var fontFamily))
+                {
+                    _preferencesService.SaveFontFamily(fontFamily);
+                    
+                    var fontService = _serviceProvider.GetService(typeof(IFontService)) as IFontService;
+                    if (fontService != null)
+                    {
+                        fontService.SetFontFamily(fontFamily);
+                        Log($"Applied font family: {fontFamily}");
+                    }
+                }
+
+                if (Enum.TryParse<AppFontSize>(cloudPrefs.FontSize, out var fontSize))
+                {
+                    _preferencesService.SaveFontSize(fontSize);
+                    
+                    var fontService = _serviceProvider.GetService(typeof(IFontService)) as IFontService;
+                    if (fontService != null)
+                    {
+                        fontService.SetFontSize(fontSize);
+                        Log($"Applied font size: {fontSize}");
+                    }
+                }
+
+                Log("? Successfully applied preferences from snapshot");
+                return true;
+            }
+            finally
+            {
+                // Re-enable cloud sync
+                suppressField?.SetValue(_preferencesService, false);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"? Error applying preferences from snapshot: {ex.Message}");
+            return false;
+        }
+    }
+
     public async Task<bool> LoadUserPreferencesFromCloudAsync(Guid userId, CancellationToken ct = default)
     {
         try
@@ -1755,6 +2119,126 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
     }
 
     #endregion
+
+    public async Task<int> GetPendingCountAsync(CancellationToken ct = default)
+    {
+        var accountId = await _tokenStore.GetActiveAccountIdAsync();
+        if (!accountId.HasValue)
+            return 0;
+
+        using var scope = _serviceProvider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        return await db.SyncQueue.CountAsync(e => e.AccountId == accountId.Value && e.Status == SyncEntryStatus.Pending, ct);
+    }
+
+    public async Task ClearFailedEntriesAsync(CancellationToken ct = default)
+    {
+        var accountId = await _tokenStore.GetActiveAccountIdAsync();
+        if (!accountId.HasValue)
+            return;
+
+        using var scope = _serviceProvider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var failedEntries = await db.SyncQueue
+            .Where(e => e.AccountId == accountId.Value && (e.Status == SyncEntryStatus.Failed || e.Status == SyncEntryStatus.Abandoned))
+            .ToListAsync(ct);
+
+        db.SyncQueue.RemoveRange(failedEntries);
+        await db.SaveChangesAsync(ct);
+    }
+
+    public async Task RetryFailedEntriesAsync(CancellationToken ct = default)
+    {
+        var accountId = await _tokenStore.GetActiveAccountIdAsync();
+        if (!accountId.HasValue)
+            return;
+
+        using var scope = _serviceProvider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var failedEntries = await db.SyncQueue.Where(e => e.AccountId == accountId.Value && e.Status == SyncEntryStatus.Failed).ToListAsync(ct);
+        foreach (var entry in failedEntries)
+        {
+            entry.Status = SyncEntryStatus.Pending;
+            entry.RetryCount = 0;
+            entry.LastError = null;
+        }
+
+        await db.SaveChangesAsync(ct);
+    }
+
+    public void StartSyncTimer()
+    {
+        StopSyncTimer();
+        _syncTimer = new Timer(async _ => await ProcessQueueAsync(), null, DefaultSyncInterval, DefaultSyncInterval);
+    }
+
+    public void StopSyncTimer()
+    {
+        _syncTimer?.Dispose();
+        _syncTimer = null;
+    }
+
+    /// <summary>
+    /// CRITICAL FIX: Restart sync timer when queue becomes empty or to continue processing batches
+    /// This prevents the timer from hanging after 3-4 batches
+    /// </summary>
+    private void RestartSyncTimerAsync()
+    {
+        try
+        {
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(500); // Small delay before restarting
+                StartSyncTimer();
+                Log("Sync timer restarted");
+            });
+        }
+        catch (Exception ex)
+        {
+            Log($"Error restarting sync timer: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// CRITICAL FIX: Schedule next batch instead of waiting passively for timer
+    /// This ensures continuous processing while respecting rate limits
+    /// </summary>
+    private async Task ScheduleNextBatchAsync(int delayMs, CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(delayMs, ct);
+            Log($"Scheduled batch timer firing after {delayMs}ms delay");
+            await ProcessQueueAsync(ct);
+        }
+        catch (OperationCanceledException)
+        {
+            Log("Scheduled batch cancelled");
+        }
+        catch (Exception ex)
+        {
+            Log($"Error scheduling next batch: {ex.Message}");
+        }
+    }
+    
+    private Timer? _cloudPollingTimer;
+    private static readonly TimeSpan CloudPollingInterval = TimeSpan.FromMinutes(10);
+    
+    private void StartCloudPollingTimer()
+    {
+        StopCloudPollingTimer();
+        _cloudPollingTimer = new Timer(async _ => await PollCloudForChangesAsync(), null, CloudPollingInterval, CloudPollingInterval);
+        Log("Cloud polling timer started");
+    }
+    
+    private void StopCloudPollingTimer()
+    {
+        _cloudPollingTimer?.Dispose();
+        _cloudPollingTimer = null;
+    }
 
     public void Dispose()
     {

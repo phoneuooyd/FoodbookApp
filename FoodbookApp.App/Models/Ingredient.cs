@@ -66,7 +66,20 @@ namespace Foodbook.Models
             }
         }
 
-        public double UnitWeight { get; set; } = 1.0;
+        private double _unitWeight = 1.0;
+        public double UnitWeight
+        {
+            get => _unitWeight;
+            set
+            {
+                if (Math.Abs(_unitWeight - value) > double.Epsilon)
+                {
+                    _unitWeight = value;
+                    OnPropertyChanged();
+                    RaiseDisplayNutritionChanged();
+                }
+            }
+        }
 
         private bool _isChecked;
         [NotMapped]

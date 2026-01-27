@@ -18,6 +18,14 @@ public interface ISupabaseSyncService
     Task<SyncResult> ProcessQueueAsync(CancellationToken ct = default);
     Task<SyncResult> ForceSyncAsync(CancellationToken ct = default);
     Task<SyncResult> ForceSyncAllAsync(CancellationToken ct = default);
+    
+    /// <summary>
+    /// Forces immediate download of all cloud data to local database.
+    /// Designed for Cloud-First priority - overwrites local data with cloud data.
+    /// Returns count of imported entities.
+    /// </summary>
+    Task<SyncResult> ForceDownloadFromCloudAsync(CancellationToken ct = default);
+    
     Task<int> GetPendingCountAsync(CancellationToken ct = default);
     Task ClearFailedEntriesAsync(CancellationToken ct = default);
     Task RetryFailedEntriesAsync(CancellationToken ct = default);

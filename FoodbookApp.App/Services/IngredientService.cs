@@ -170,6 +170,8 @@ public class IngredientService : IIngredientService
                 existingIngredient.Name = ingredient.Name;
                 existingIngredient.Quantity = ingredient.Quantity;
                 existingIngredient.Unit = ingredient.Unit;
+                // Persist UnitWeight as well (was missing - caused edits to UnitWeight to be lost)
+                existingIngredient.UnitWeight = ingredient.UnitWeight;
                 existingIngredient.Calories = ingredient.Calories;
                 existingIngredient.Protein = ingredient.Protein;
                 existingIngredient.Fat = ingredient.Fat;

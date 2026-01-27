@@ -998,6 +998,22 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
                 shoppingItems.AddRange(items);
             }
             
+            // Fetch user preferences as the LAST item (requires user ID)
+            UserPreferencesDto? userPreferences = null;
+            try
+            {
+                var userId = await GetCurrentUserIdAsync();
+                if (!string.IsNullOrWhiteSpace(userId) && Guid.TryParse(userId, out var userGuid))
+                {
+                    userPreferences = await GetUserPreferencesAsync(userGuid, ct);
+                    System.Diagnostics.Debug.WriteLine($"[SupabaseCrudService] FetchAllCloudDataAsync: UserPreferences fetched = {userPreferences != null}");
+                }
+            }
+            catch (Exception prefEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SupabaseCrudService] FetchAllCloudDataAsync: Failed to fetch UserPreferences: {prefEx.Message}");
+            }
+            
             return new CloudDataSnapshot(
                 await foldersTask,
                 await recipesTask,
@@ -1005,7 +1021,8 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
                 await labelsTask,
                 plans,
                 await plannedMealsTask,
-                shoppingItems
+                shoppingItems,
+                userPreferences
             );
         }
         catch (Exception ex)
@@ -1019,7 +1036,8 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
                 new List<RecipeLabel>(),
                 new List<Plan>(),
                 new List<PlannedMeal>(),
-                new List<ShoppingListItem>()
+                new List<ShoppingListItem>(),
+                null
             );
         }
     }

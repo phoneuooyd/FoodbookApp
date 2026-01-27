@@ -13,7 +13,8 @@ public record CloudDataSnapshot(
     List<RecipeLabel> RecipeLabels,
     List<Plan> Plans,
     List<PlannedMeal> PlannedMeals,
-    List<ShoppingListItem> ShoppingListItems
+    List<ShoppingListItem> ShoppingListItems,
+    UserPreferencesDto? UserPreferences = null
 );
 
 public interface ISupabaseCrudService
