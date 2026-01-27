@@ -10,7 +10,7 @@ using Foodbook.Views.Components;
 using Microsoft.Extensions.DependencyInjection;
 using FoodbookApp.Interfaces;
 using Foodbook.Services;
-using Foodbook.Messages;
+using FoodbookApp.Models.Messages;
 
 namespace Foodbook.Views;
 

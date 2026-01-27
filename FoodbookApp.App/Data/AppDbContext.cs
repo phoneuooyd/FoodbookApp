@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Foodbook.Models;
 using System.IO;
 using Microsoft.Maui.Storage;
+using FoodbookApp.Models;
 
 namespace Foodbook.Data
 {

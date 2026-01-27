@@ -1,3 +1,4 @@
+using FoodbookApp.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace Foodbook.Models;

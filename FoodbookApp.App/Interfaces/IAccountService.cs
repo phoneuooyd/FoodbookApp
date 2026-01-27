@@ -1,4 +1,5 @@
 using Foodbook.Models;
+using FoodbookApp.Models;
 
 namespace FoodbookApp.Interfaces;
 

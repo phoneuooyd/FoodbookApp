@@ -187,7 +187,7 @@ public sealed class SupabaseAuthService : ISupabaseAuthService
         var account = await _db.AuthAccounts.FirstOrDefaultAsync(a => a.SupabaseUserId == sbUserId);
         if (account == null)
         {
-            account = new AuthAccount
+            account = new Foodbook.Models.AuthAccount
             {
                 Id = Guid.NewGuid(),
                 SupabaseUserId = sbUserId,

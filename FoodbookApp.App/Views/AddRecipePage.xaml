@@ -182,8 +182,14 @@
                                                                                Title="Jednostka" />
                                                         </StackLayout>
                                                         <Button Grid.Row="0" Grid.Column="3" Style="{StaticResource DeleteButton}" Command="{Binding BindingContext.RemoveIngredientCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" VerticalOptions="End" HorizontalOptions="Center" />
-                                                        <!-- Unit Weight field - always editable, allows flexibility in recipes -->
-                                                        <!-- UnitWeight removed from recipe ingredients list (should not be editable here) -->
+                                                        
+                                                        <!-- Nutrition values per ingredient -->
+                                                        <StackLayout Grid.Row="1" Grid.ColumnSpan="4" Orientation="Horizontal" Spacing="12" Margin="0,8,0,0">
+                                                            <Label Text="{Binding DisplayCalories, StringFormat='🔥 {0:F1} kcal'}" FontSize="11" TextColor="{DynamicResource Secondary}" />
+                                                            <Label Text="{Binding DisplayProtein, StringFormat='💪 {0:F1}g'}" FontSize="11" TextColor="{DynamicResource Secondary}" />
+                                                            <Label Text="{Binding DisplayFat, StringFormat='🧈 {0:F1}g'}" FontSize="11" TextColor="{DynamicResource Secondary}" />
+                                                            <Label Text="{Binding DisplayCarbs, StringFormat='🍞 {0:F1}g'}" FontSize="11" TextColor="{DynamicResource Secondary}" />
+                                                        </StackLayout>
                                                     </Grid>
                                                 </Border>
 
