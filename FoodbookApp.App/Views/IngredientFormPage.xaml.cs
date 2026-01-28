@@ -52,6 +52,23 @@ public partial class IngredientFormPage : ContentPage
             if (Guid.TryParse(value, out var parsed) && parsed != Guid.Empty)
             {
                 System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] Valid GUID parsed for EDIT mode: {parsed}");
+
+                // If same ID is set again (for example after returning from a popup),
+                // avoid reloading the ingredient which would overwrite user changes made in-place.
+                if (_itemId == parsed)
+                {
+                    // If there is an in-flight load that hasn't completed, we allow it to continue.
+                    if (_loadTask != null && !_loadTask.IsCompleted)
+                    {
+                        System.Diagnostics.Debug.WriteLine("[IngredientFormPage] Same ID received and load in progress - waiting for existing load");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("[IngredientFormPage] Same ID received - skipping reload to avoid overwriting UI state");
+                        return;
+                    }
+                }
+
                 _itemId = parsed;
                 
                 // ? CRITICAL: Store the load task so OnAppearing can await it
