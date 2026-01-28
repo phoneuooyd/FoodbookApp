@@ -87,7 +87,7 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
             });
 
             // ✅ KLUCZOWA OPTYMALIZACJA: Ładuj w batchach BEZ await na dodawanie
-            const int batchSize = 100; // Zwiększam do 100 bo teraz nie blokujemy
+            const int batchSize = 150; // Zwiększam do 100 bo teraz nie blokujemy
             
             // Zacznij ładować w tle
             _ = Task.Run(async () =>
@@ -273,7 +273,7 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
             await dismissedTcs.Task;
             System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] IngredientFormPage dismissed");
 
-            await Task.Delay(200);
+            await Task.Delay(100);
 
             // ✅ CRITICAL FIX: Reload fresh ingredients and completely rebuild popup UI
             try

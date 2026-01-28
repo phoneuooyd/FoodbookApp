@@ -143,6 +143,59 @@ public sealed class SupabaseAuthService : ISupabaseAuthService
         }
     }
 
+    public async Task<Session?> SetSessionAsync(string accessToken, string refreshToken)
+    {
+        await EnsureInitializedAsync();
+        System.Diagnostics.Debug.WriteLine("[SupabaseAuthService] SetSessionAsync start - restoring session from tokens");
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(accessToken) || string.IsNullOrWhiteSpace(refreshToken))
+            {
+                System.Diagnostics.Debug.WriteLine("[SupabaseAuthService] SetSessionAsync: tokens are empty - cannot restore");
+                return null;
+            }
+
+            System.Diagnostics.Debug.WriteLine("[SupabaseAuthService] SetSessionAsync: calling _client.Auth.SetSession...");
+
+            // Use Supabase client to set session from tokens
+            var session = await _client.Auth.SetSession(accessToken, refreshToken);
+
+            if (session != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] SetSessionAsync SUCCESS: user email={session.User?.Email ?? "unknown"}, has access token: {!string.IsNullOrWhiteSpace(session.AccessToken)}, has refresh token: {!string.IsNullOrWhiteSpace(session.RefreshToken)}");
+                
+                // Verify the session is actually valid by checking CurrentSession
+                var currentSession = _client.Auth.CurrentSession;
+                System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] SetSessionAsync: CurrentSession after restore: {(currentSession != null ? "SET" : "NULL")}");
+
+                // Update stored tokens with potentially refreshed ones
+                var activeId = await _tokenStore.GetActiveAccountIdAsync();
+                if (activeId.HasValue && !string.IsNullOrWhiteSpace(session.AccessToken))
+                {
+                    await _tokenStore.SetTokensAsync(activeId.Value, session.AccessToken, session.RefreshToken, null);
+                    System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] SetSessionAsync: Updated stored tokens for account {activeId.Value}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] SetSessionAsync: Could not update tokens - activeId: {activeId}, hasAccessToken: {!string.IsNullOrWhiteSpace(session.AccessToken)}");
+                }
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[SupabaseAuthService] SetSessionAsync: SetSession returned null session - token restore failed");
+            }
+
+            return session;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] SetSessionAsync FAILED: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] SetSessionAsync error details: {ex}");
+            return null;
+        }
+    }
+
     public async Task SignOutAsync()
     {
         await EnsureInitializedAsync();
@@ -182,7 +235,12 @@ public sealed class SupabaseAuthService : ISupabaseAuthService
 
         var sbUserId = session.User?.Id ?? _client.Auth.CurrentUser?.Id;
         if (string.IsNullOrWhiteSpace(sbUserId))
+        {
+            System.Diagnostics.Debug.WriteLine("[SupabaseAuthService] PersistSessionAsync: No Supabase user ID available");
             return;
+        }
+
+        System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] PersistSessionAsync: Processing user {sbUserId}");
 
         var account = await _db.AuthAccounts.FirstOrDefaultAsync(a => a.SupabaseUserId == sbUserId);
         if (account == null)
@@ -193,14 +251,18 @@ public sealed class SupabaseAuthService : ISupabaseAuthService
                 SupabaseUserId = sbUserId,
                 Email = email,
                 CreatedUtc = DateTime.UtcNow,
-                LastSignInUtc = DateTime.UtcNow
+                LastSignInUtc = DateTime.UtcNow,
+                IsAutoLoginEnabled = true // ? Enable auto-login by default for new accounts
             };
             _db.AuthAccounts.Add(account);
+            System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] Created new account with auto-login enabled: {account.Id}");
         }
         else
         {
             account.Email ??= email;
             account.LastSignInUtc = DateTime.UtcNow;
+            account.IsAutoLoginEnabled = true; // ? Re-enable auto-login on every successful login
+            System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] Updated existing account {account.Id} - auto-login enabled");
         }
 
         await _db.SaveChangesAsync();
@@ -210,6 +272,8 @@ public sealed class SupabaseAuthService : ISupabaseAuthService
 
         await _tokenStore.SetTokensAsync(account.Id, session.AccessToken, session.RefreshToken, expiresAt);
         await _tokenStore.SetActiveAccountIdAsync(account.Id);
+
+        System.Diagnostics.Debug.WriteLine($"[SupabaseAuthService] Session persisted for account {account.Id} with IsAutoLoginEnabled={account.IsAutoLoginEnabled}");
 
         // NOTE: user_preferences should NOT be fetched/created during login.
         // It is handled after the user enables sync and chooses priority in ProfilePage.

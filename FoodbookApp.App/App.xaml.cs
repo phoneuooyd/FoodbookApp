@@ -14,6 +14,7 @@ namespace FoodbookApp
         private readonly IThemeService _themeService;
         private readonly IFontService _fontService;
         private bool _globalHandlersRegistered = false;
+        private bool _autoLoginCompleted = false;
 
         public App(ILocalizationService localizationService, IPreferencesService preferencesService, IThemeService themeService, IFontService fontService)
         {
@@ -51,7 +52,7 @@ namespace FoodbookApp
 
                 LoadSavedFontSettings();
 
-                // Best-effort autologin (no UI blocking)
+                // Best-effort autologin (no UI blocking) - run on thread-pool to avoid deadlocks during startup
                 try
                 {
                     var accountService = MauiProgram.ServiceProvider?.GetService<IAccountService>();
@@ -61,17 +62,21 @@ namespace FoodbookApp
                         {
                             try
                             {
+                                System.Diagnostics.Debug.WriteLine("[App] Background auto-login task started");
                                 var ok = await accountService.TryAutoLoginAsync();
-                                System.Diagnostics.Debug.WriteLine($"[App] Auto-login attempted: {ok}");
+                                System.Diagnostics.Debug.WriteLine($"[App] Background auto-login attempted: {ok}");
                             }
                             catch (Exception ex)
                             {
-                                System.Diagnostics.Debug.WriteLine($"[App] Auto-login failed: {ex.Message}");
+                                System.Diagnostics.Debug.WriteLine($"[App] Background auto-login failed: {ex.Message}");
                             }
                         });
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[App] Failed to start background auto-login task: {ex.Message}");
+                }
 
                 System.Diagnostics.Debug.WriteLine("[App] Application initialization completed successfully");
             }

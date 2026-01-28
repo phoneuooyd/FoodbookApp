@@ -1114,7 +1114,7 @@ namespace Foodbook.ViewModels
         /// </summary>
         private async Task UpdateIngredientNamesInBatchesAsync(List<Ingredient> ingredients)
         {
-            const int BATCH_SIZE = 50;
+            const int BATCH_SIZE = 150;
             var names = ingredients.Select(i => i.Name).ToList();
 
             await MainThread.InvokeOnMainThreadAsync(() =>
@@ -1139,7 +1139,7 @@ namespace Foodbook.ViewModels
                 // ✅ Małe opóźnienie aby UI było responsywne
                 if (i + BATCH_SIZE < names.Count)
                 {
-                    await Task.Delay(10);
+                    await Task.Delay(3);
                 }
             }
 

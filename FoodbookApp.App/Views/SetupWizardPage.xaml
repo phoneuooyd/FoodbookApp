@@ -108,7 +108,7 @@
                 FontAttributes="Bold"
                 HeightRequest="50"
                 CornerRadius="25"
-                Margin="0,10,0,20" />
+                Margin="0,10,0,5" />
 
             <!-- Status Message -->
             <Label Text="{Binding StatusMessage}"

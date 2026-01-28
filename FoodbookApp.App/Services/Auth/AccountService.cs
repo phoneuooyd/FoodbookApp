@@ -6,6 +6,7 @@ using Foodbook.Data;
 using FoodbookApp.Interfaces;
 using Foodbook.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Maui.Storage;
 using Supabase.Gotrue;
 
 namespace FoodbookApp.Services.Auth;
@@ -88,7 +89,55 @@ public sealed class AccountService : IAccountService
 
         await _tokenStore.SetActiveAccountIdAsync(account.Id);
 
-        return await EnsureClientSessionForActiveAccountAsync(ct);
+        var restored = await EnsureClientSessionForActiveAccountAsync(ct);
+
+        if (restored)
+        {
+            System.Diagnostics.Debug.WriteLine($"[AccountService] TryAutoLoginAsync: Session restored for account {account.Id}");
+
+            try
+            {
+                // Apply saved cloud sync preference if present
+                var storageKey = $"cloudsync.choice:{account.Id:N}";
+                var saved = await SecureStorage.GetAsync(storageKey);
+                if (!string.IsNullOrWhiteSpace(saved))
+                {
+                    var syncService = MauiProgram.ServiceProvider?.GetService(typeof(ISupabaseSyncService)) as ISupabaseSyncService;
+                    if (syncService != null)
+                    {
+                        if (saved == "cloud")
+                        {
+                            System.Diagnostics.Debug.WriteLine("[AccountService] Applying saved sync preference: cloud-first");
+                            await syncService.EnableCloudSyncAsync(Foodbook.Models.SyncPriority.Cloud, ct);
+                        }
+                        else if (saved == "local")
+                        {
+                            System.Diagnostics.Debug.WriteLine("[AccountService] Applying saved sync preference: local-first");
+                            await syncService.EnableCloudSyncAsync(Foodbook.Models.SyncPriority.Local, ct);
+                        }
+                        else if (saved == "disabled")
+                        {
+                            System.Diagnostics.Debug.WriteLine("[AccountService] Saved sync preference: disabled - ensuring cloud sync is disabled");
+                            await syncService.DisableCloudSyncAsync(ct);
+                        }
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("[AccountService] ISupabaseSyncService not available to apply saved sync preference");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[AccountService] No saved sync preference in SecureStorage for this account");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AccountService] Error applying saved sync preference: {ex.Message}");
+            }
+        }
+
+        return restored;
     }
 
     private async Task<AuthAccount> ResolveAccountFromSessionAsync(Session session, string? email, CancellationToken ct)
@@ -145,14 +194,60 @@ public sealed class AccountService : IAccountService
     private async Task<bool> EnsureClientSessionForActiveAccountAsync(CancellationToken ct)
     {
         var activeId = await _tokenStore.GetActiveAccountIdAsync();
-        if (!activeId.HasValue) return false;
+        if (!activeId.HasValue)
+        {
+            System.Diagnostics.Debug.WriteLine("[AccountService] EnsureClientSession: No active account ID stored");
+            return false;
+        }
+
+        System.Diagnostics.Debug.WriteLine($"[AccountService] EnsureClientSession: Found active account {activeId.Value}");
 
         var access = await _tokenStore.GetAccessTokenAsync(activeId.Value);
-        if (string.IsNullOrWhiteSpace(access))
+        var refresh = await _tokenStore.GetRefreshTokenAsync(activeId.Value);
+        
+        System.Diagnostics.Debug.WriteLine($"[AccountService] EnsureClientSession: access token present={!string.IsNullOrWhiteSpace(access)}, refresh token present={!string.IsNullOrWhiteSpace(refresh)}");
+
+        if (string.IsNullOrWhiteSpace(access) || string.IsNullOrWhiteSpace(refresh))
+        {
+            System.Diagnostics.Debug.WriteLine("[AccountService] EnsureClientSession: One or both tokens are missing - cannot restore session");
             return false;
+        }
 
-        await _client.InitializeAsync();
+        System.Diagnostics.Debug.WriteLine("[AccountService] EnsureClientSession: Both tokens present - attempting session restore...");
 
-        return _client.Auth.CurrentSession != null || !string.IsNullOrWhiteSpace(access);
+        // Try to restore the session using stored tokens
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[AccountService] EnsureClientSession: Calling SupabaseAuthService.SetSessionAsync");
+            var session = await _auth.SetSessionAsync(access, refresh);
+            if (session != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AccountService] EnsureClientSession: Session restored successfully! User: {session.User?.Email}");
+                return true;
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[AccountService] EnsureClientSession: SetSessionAsync returned null");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[AccountService] EnsureClientSession: SetSessionAsync threw exception: {ex.Message}");
+        }
+
+        // Fallback: Initialize client and check if session exists
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[AccountService] EnsureClientSession: Fallback - initializing client...");
+            await _client.InitializeAsync();
+            var hasSession = _client.Auth.CurrentSession != null;
+            System.Diagnostics.Debug.WriteLine($"[AccountService] EnsureClientSession: After init, CurrentSession exists: {hasSession}");
+            return hasSession;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[AccountService] EnsureClientSession: Client init failed - {ex.Message}");
+            return false;
+        }
     }
 }
