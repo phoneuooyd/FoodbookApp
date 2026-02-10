@@ -1,38 +1,44 @@
+using System;
 using System.IO;
 using Microsoft.Maui.Storage;
 
+#if ANDROID
+using Android.App;
+#endif
+
 namespace Foodbook.Data
 {
-    /// <summary>
-    /// Centralized database configuration to ensure consistent database path usage across all services.
-    /// This prevents database path mismatches between different parts of the application.
-    /// </summary>
     public static class DatabaseConfiguration
     {
-        // SINGLE SOURCE OF TRUTH for database filename
         private const string DatabaseFileName = "foodbookapp.db";
 
-        /// <summary>
-        /// Gets the absolute path to the SQLite database file.
-        /// This is the single source of truth for the database location.
-        /// </summary>
         public static string GetDatabasePath()
         {
+#if ANDROID
+            return GetAndroidExternalFilesPath();
+#else
             return Path.Combine(FileSystem.AppDataDirectory, DatabaseFileName);
+#endif
         }
 
-        /// <summary>
-        /// Gets the SQLite connection string for the application database.
-        /// </summary>
-        public static string GetConnectionString()
+#if ANDROID
+        private static string GetAndroidExternalFilesPath()
         {
-            return $"Data Source={GetDatabasePath()}";
-        }
+            var context = Android.App.Application.Context;
+            var dir = context.GetExternalFilesDir("database")
+                ?? throw new InvalidOperationException("ExternalFilesDir not available");
 
-        /// <summary>
-        /// Gets the paths to WAL and SHM files (Write-Ahead Log and Shared Memory).
-        /// These files are part of SQLite's WAL mode and need to be included in backups.
-        /// </summary>
+            if (!Directory.Exists(dir.AbsolutePath))
+                Directory.CreateDirectory(dir.AbsolutePath);
+
+            var dbPath = Path.Combine(dir.AbsolutePath, DatabaseFileName);
+            System.Diagnostics.Debug.WriteLine($"[DatabaseConfiguration] ExternalFilesDir path: {dbPath}");
+            return dbPath;
+        }
+#endif
+
+        public static string GetConnectionString() => $"Data Source={GetDatabasePath()}";
+
         public static (string walPath, string shmPath) GetWalFiles()
         {
             var dbPath = GetDatabasePath();

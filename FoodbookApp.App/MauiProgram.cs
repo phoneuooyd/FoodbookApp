@@ -207,29 +207,14 @@ namespace FoodbookApp
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Building app");
             var app = builder.Build();
             ServiceProvider = app.Services;
-            System.Diagnostics.Debug.WriteLine("[MauiProgram] ServiceProvider created");
 
-            // Initialize DB via DatabaseService synchronously to avoid async signature here
+            // Database startup: Initialize only (no conditional deployment on app start)
             try
             {
-                System.Diagnostics.Debug.WriteLine("[MauiProgram] Starting conditional deployment check...");
+                System.Diagnostics.Debug.WriteLine("[MauiProgram] Initializing database...");
                 var dbService = app.Services.GetRequiredService<IDatabaseService>();
-                
-                // FIRST: Run conditional deployment (checks for clean install flag and pending migrations)
-                var deploymentSuccess = dbService.ConditionalDeploymentAsync().GetAwaiter().GetResult();
-                if (deploymentSuccess)
-                {
-                    System.Diagnostics.Debug.WriteLine("[MauiProgram] Conditional deployment completed successfully");
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("[MauiProgram] WARNING: Conditional deployment reported failure");
-                }
-
-                // THEN: Run normal initialization (ensures migrations are applied if not already done)
-                System.Diagnostics.Debug.WriteLine("[MauiProgram] Running database initialization...");
                 dbService.InitializeAsync().GetAwaiter().GetResult();
-                System.Diagnostics.Debug.WriteLine("[MauiProgram] Database initialization completed");
+                System.Diagnostics.Debug.WriteLine("[MauiProgram] ✓ Database ready");
             }
             catch (Exception ex)
             {
@@ -239,10 +224,5 @@ namespace FoodbookApp
             System.Diagnostics.Debug.WriteLine("[MauiProgram] CreateMauiApp finished");
             return app;
         }
-
-        // Centralized logging methods
-        private static void LogDebug(string message) => System.Diagnostics.Debug.WriteLine($"[MauiProgram] {message}");
-        private static void LogWarning(string message) => System.Diagnostics.Debug.WriteLine($"[MauiProgram] WARNING: {message}");
-        private static void LogError(string message) => System.Diagnostics.Debug.WriteLine($"[MauiProgram] ERROR: {message}");
     }
 }

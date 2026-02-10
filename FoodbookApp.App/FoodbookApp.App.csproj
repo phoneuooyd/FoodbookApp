@@ -72,6 +72,10 @@
 	<!-- Ensure linker is disabled on Android in Debug as well -->
 	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-android' and '$(Configuration)' == 'Debug'">
 		<AndroidLinkMode>None</AndroidLinkMode>
+		<!-- Prevent data loss on redeploy: embed assemblies to avoid Fast Deployment issues -->
+		<EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+		<!-- Allow backup and preserve data during reinstall -->
+		<AndroidAllowBackup>true</AndroidAllowBackup>
 	</PropertyGroup>
 
 	<!-- Disable trimming for iOS and MacCatalyst for maximum stability -->
@@ -81,14 +85,19 @@
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android|AnyCPU'">
 	  <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
 	  <AndroidUseAapt2>True</AndroidUseAapt2>
+	  <AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
+	  <AndroidKeyStore>False</AndroidKeyStore>
+	  <EmbedAssembliesIntoApk>False</EmbedAssembliesIntoApk>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-windows10.0.19041.0|AnyCPU'">
 	  <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android|AnyCPU'">
 	  <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
-	  <AndroidUseAapt2>False</AndroidUseAapt2>
-	  <AndroidPackageFormat>aab</AndroidPackageFormat>
+	  <AndroidUseAapt2>True</AndroidUseAapt2>
+	  <AndroidPackageFormat>apk</AndroidPackageFormat>
+	  <AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
+	  <AndroidKeyStore>False</AndroidKeyStore>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-windows10.0.19041.0|AnyCPU'">
 	  <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
@@ -166,6 +175,7 @@
 		<PackageReference Include="Sharpnado.CollectionView.Maui" Version="3.1.2" />
 		<PackageReference Include="Sharpnado.Maui.DragDropGridView" Version="1.0.1" />
 		<PackageReference Include="Sharpnado.TaskMonitor" Version="1.1.0" />
+		<PackageReference Include="SQLitePCLRaw.core" Version="3.0.2" />
 		<PackageReference Include="Supabase" Version="1.1.1" />
 	</ItemGroup>
 
@@ -449,7 +459,13 @@
 	<ItemGroup>
 	  <Folder Include=".github\workflows\" />
 	  <Folder Include="Data\Migrations\" />
-	  <Folder Include="Scripts\" />
 	</ItemGroup>
+
+	<!-- Pre-build: Create deployment marker before Android builds -->
+	<!-- This triggers auto-restore from safety archive on next app launch -->
+	<Target Name="PreBuildArchiveMarker" BeforeTargets="Build" Condition="'$(TargetFramework)' == 'net9.0-android'">
+		<Message Text="[PreBuild] Creating deployment marker for safety archive restore..." Importance="high" />
+		<Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(ProjectDir)Scripts\PreBuildArchive.ps1&quot; -Configuration $(Configuration) -TargetFramework $(TargetFramework)" IgnoreExitCode="true" ContinueOnError="true" />
+	</Target>
 
 </Project>
