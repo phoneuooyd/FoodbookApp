@@ -15,8 +15,18 @@ public interface IDeduplicationService
     /// <summary>
     /// Compares local sync queue with cached cloud data and removes duplicates.
     /// Returns number of entries removed from queue.
+    /// MODE: Local-First Priority - prevents uploading duplicates to cloud.
     /// </summary>
     Task<int> DeduplicateSyncQueueAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Filters cloud ingredients to exclude those that already exist locally with matching name and macros.
+    /// Returns a filtered list of ingredients that should be imported.
+    /// MODE: Cloud-First Priority - prevents importing duplicates from cloud.
+    /// </summary>
+    Task<List<Foodbook.Models.Ingredient>> FilterCloudIngredientsForImportAsync(
+        List<Foodbook.Models.Ingredient> cloudIngredients, 
+        CancellationToken ct = default);
 
     /// <summary>
     /// Clears the in-memory cloud data cache.
@@ -27,4 +37,9 @@ public interface IDeduplicationService
     /// Indicates if cloud data has been fetched and cached.
     /// </summary>
     bool IsCachePopulated { get; }
+
+    /// <summary>
+    /// Indicates if local base ingredients have been fetched and cached.
+    /// </summary>
+    bool IsLocalCachePopulated { get; }
 }

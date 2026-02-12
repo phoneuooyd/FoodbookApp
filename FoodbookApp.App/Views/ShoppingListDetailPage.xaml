@@ -11,12 +11,13 @@
              x:Name="ThisPage"
              x:DataType="vm:ShoppingListDetailViewModel"
              Title="{loc:Translate Resource=ShoppingListDetailPageResources, Key=Title}"
-             BackgroundColor="{DynamicResource PageBackgroundColor}">
+             BackgroundColor="{DynamicResource PageBackgroundColor}"
+             >
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         
         <!-- Header template for group sections (To Buy / Collected) -->
-        <DataTemplate x:Key="ShoppingHeaderTemplate" x:DataType="vm:ShoppingListHeader">
+        <DataTemplate x:Key="ShoppingHeaderTemplate" x:DataType="vm:ShoppingListHeader" >
             <sho:DraggableViewCell IsDraggable="False">
                 <StackLayout Padding="3,3,3,3" IsVisible="{Binding IsVisible}">
                     <!-- Separator line above "Collected" section -->
@@ -113,6 +114,8 @@
             DragAndDropDirection="VerticalOnly"
             DragAndDropStartedCommand="{Binding DragStartedCommand}"
             DragAndDropEndedCommand="{Binding DragEndedCommand}"
-            TapCommand="{Binding ItemTappedCommand}" />
+            TapCommand="{Binding ItemTappedCommand}" 
+            ScrollSpeed="Slowest"
+            />
     </Grid>
 </ContentPage>

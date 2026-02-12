@@ -19,6 +19,10 @@ namespace FoodbookApp.Services.Supabase;
 /// DESIGN: This service is an optimization layer, not a blocking requirement.
 /// If cloud is empty (new user), sync should proceed normally.
 /// If fetch fails, sync should proceed without deduplication.
+/// 
+/// DEDUPLICATION MODES:
+/// 1. Local-First Priority: Marks cloud duplicates in sync queue as Completed (skip upload)
+/// 2. Cloud-First Priority: Prevents importing cloud items that already exist locally (skip download)
 /// </summary>
 public sealed class DeduplicationService : IDeduplicationService
 {
@@ -30,11 +34,16 @@ public sealed class DeduplicationService : IDeduplicationService
     private readonly ConcurrentDictionary<string, CloudIngredientData> _cloudIngredients = new();
     private readonly ConcurrentDictionary<string, CloudRecipeData> _cloudRecipes = new();
     
+    // In-memory cache for local BASE ingredients (RecipeId == null)
+    private readonly ConcurrentDictionary<string, LocalIngredientData> _localBaseIngredients = new();
+    
     private volatile bool _isCachePopulated = false;
+    private volatile bool _isLocalCachePopulated = false;
     private volatile bool _fetchAttempted = false; // Track if we already tried to fetch
     private readonly SemaphoreSlim _fetchLock = new(1, 1);
 
     public bool IsCachePopulated => _isCachePopulated;
+    public bool IsLocalCachePopulated => _isLocalCachePopulated;
 
     public DeduplicationService(
         IServiceProvider serviceProvider,
@@ -138,6 +147,69 @@ public sealed class DeduplicationService : IDeduplicationService
         }
     }
 
+    /// <summary>
+    /// Fetches local BASE ingredients (RecipeId == null) and caches in memory.
+    /// Used for Cloud-First priority to prevent importing duplicates.
+    /// </summary>
+    public async Task<bool> FetchLocalBaseIngredientsAsync(CancellationToken ct = default)
+    {
+        if (_isLocalCachePopulated)
+        {
+            Log("FetchLocalBaseIngredientsAsync: Using existing local cache");
+            return true;
+        }
+
+        try
+        {
+            var sw = Stopwatch.StartNew();
+            Log("Fetching local base ingredients for deduplication...");
+
+            using var scope = _serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            // Get all base ingredients (not part of recipes)
+            var localIngredients = await db.Ingredients
+                .AsNoTracking()
+                .Where(i => i.RecipeId == null)
+                .ToListAsync(ct);
+
+            _localBaseIngredients.Clear();
+
+            foreach (var ing in localIngredients)
+            {
+                if (ing == null) continue;
+                
+                var key = (ing.Name ?? string.Empty).Trim();
+                if (string.IsNullOrEmpty(key)) continue;
+                
+                var data = new LocalIngredientData
+                {
+                    Id = ing.Id,
+                    Name = key,
+                    Calories = ing.Calories,
+                    Protein = ing.Protein,
+                    Fat = ing.Fat,
+                    Carbs = ing.Carbs
+                };
+                
+                _localBaseIngredients.TryAdd(key, data);
+            }
+
+            _isLocalCachePopulated = true;
+            
+            sw.Stop();
+            Log($"Local base ingredients fetch completed in {sw.ElapsedMilliseconds}ms: " +
+                $"{_localBaseIngredients.Count} base ingredients cached");
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log($"ERROR in FetchLocalBaseIngredientsAsync: {ex.Message}");
+            return false;
+        }
+    }
+
     // Implement interface method (returns Task, not Task<bool>)
     async Task IDeduplicationService.FetchCloudDataAsync(CancellationToken ct)
     {
@@ -232,6 +304,8 @@ public sealed class DeduplicationService : IDeduplicationService
     /// Compares local sync queue with cached cloud data and removes duplicates.
     /// Returns 0 if cloud is empty (new user) - this is normal, not an error.
     /// Returns -1 if error occurred (but still allows sync to proceed).
+    /// 
+    /// MODE: Local-First Priority - prevents uploading items that already exist in cloud.
     /// </summary>
     public async Task<int> DeduplicateSyncQueueAsync(CancellationToken ct = default)
     {
@@ -323,6 +397,85 @@ public sealed class DeduplicationService : IDeduplicationService
         }
     }
 
+    /// <summary>
+    /// Filters cloud ingredients to exclude those that already exist locally with matching name and macros.
+    /// Returns a filtered list of ingredients that should be imported.
+    /// 
+    /// MODE: Cloud-First Priority - prevents importing items that already exist locally.
+    /// </summary>
+    public async Task<List<Ingredient>> FilterCloudIngredientsForImportAsync(List<Ingredient> cloudIngredients, CancellationToken ct = default)
+    {
+        try
+        {
+            // Populate local cache if not done
+            if (!_isLocalCachePopulated)
+            {
+                Log("FilterCloudIngredientsForImportAsync: Fetching local base ingredients...");
+                await FetchLocalBaseIngredientsAsync(ct);
+            }
+
+            if (_localBaseIngredients.Count == 0)
+            {
+                Log("FilterCloudIngredientsForImportAsync: No local ingredients, importing all cloud ingredients");
+                return cloudIngredients;
+            }
+
+            var sw = Stopwatch.StartNew();
+            var filteredIngredients = new List<Ingredient>();
+            int skippedCount = 0;
+
+            foreach (var cloudIng in cloudIngredients)
+            {
+                if (ct.IsCancellationRequested) break;
+
+                // Only check BASE ingredients (not recipe ingredients)
+                if (cloudIng.RecipeId != null)
+                {
+                    filteredIngredients.Add(cloudIng);
+                    continue;
+                }
+
+                var name = (cloudIng.Name ?? string.Empty).Trim();
+                if (string.IsNullOrEmpty(name))
+                {
+                    filteredIngredients.Add(cloudIng);
+                    continue;
+                }
+
+                // Check if exists in local cache
+                if (_localBaseIngredients.TryGetValue(name, out var localData))
+                {
+                    // Compare all macro values
+                    if (IsMacroMatch(
+                        cloudIng.Calories, localData.Calories,
+                        cloudIng.Protein, localData.Protein,
+                        cloudIng.Fat, localData.Fat,
+                        cloudIng.Carbs, localData.Carbs))
+                    {
+                        skippedCount++;
+                        Log($"DUPLICATE SKIP: Cloud ingredient '{name}' already exists locally - not importing");
+                        continue; // Skip this ingredient
+                    }
+                }
+
+                // Not a duplicate - add to filtered list
+                filteredIngredients.Add(cloudIng);
+            }
+
+            sw.Stop();
+            Log($"FilterCloudIngredientsForImportAsync: Filtered {cloudIngredients.Count} cloud ingredients in {sw.ElapsedMilliseconds}ms: " +
+                $"{filteredIngredients.Count} to import, {skippedCount} duplicates skipped");
+
+            return filteredIngredients;
+        }
+        catch (Exception ex)
+        {
+            Log($"ERROR in FilterCloudIngredientsForImportAsync: {ex.Message}");
+            // On error, return all ingredients to proceed with import
+            return cloudIngredients;
+        }
+    }
+
     private int ProcessIngredientEntries(List<SyncQueueEntry> entries, CancellationToken ct)
     {
         int removed = 0;
@@ -361,11 +514,11 @@ public sealed class DeduplicationService : IDeduplicationService
                         localIngredient.Carbs, cloudData.Carbs))
                     {
                         entry.Status = SyncEntryStatus.Completed;
-                        entry.LastError = "Duplicate found in cloud - skipped";
+                        entry.LastError = "Duplicate found in cloud - skipped upload";
                         entry.SyncedUtc = DateTime.UtcNow;
                         removed++;
                         
-                        Log($"DUPLICATE: Ingredient '{name}' (ID: {entry.EntityId}) matches cloud");
+                        Log($"DUPLICATE: Ingredient '{name}' (ID: {entry.EntityId}) matches cloud - marked as Completed");
                     }
                 }
             }
@@ -417,11 +570,11 @@ public sealed class DeduplicationService : IDeduplicationService
                         localRecipe.Carbs, cloudData.Carbs))
                     {
                         entry.Status = SyncEntryStatus.Completed;
-                        entry.LastError = "Duplicate found in cloud - skipped";
+                        entry.LastError = "Duplicate found in cloud - skipped upload";
                         entry.SyncedUtc = DateTime.UtcNow;
                         removed++;
                         
-                        Log($"DUPLICATE: Recipe '{name}' (ID: {entry.EntityId}) matches cloud");
+                        Log($"DUPLICATE: Recipe '{name}' (ID: {entry.EntityId}) matches cloud - marked as Completed");
                     }
                 }
             }
@@ -462,7 +615,9 @@ public sealed class DeduplicationService : IDeduplicationService
     {
         _cloudIngredients.Clear();
         _cloudRecipes.Clear();
+        _localBaseIngredients.Clear();
         _isCachePopulated = false;
+        _isLocalCachePopulated = false;
         _fetchAttempted = false;
     }
 
@@ -482,6 +637,16 @@ public sealed class DeduplicationService : IDeduplicationService
     }
 
     private readonly record struct CloudRecipeData
+    {
+        public Guid Id { get; init; }
+        public string Name { get; init; }
+        public double Calories { get; init; }
+        public double Protein { get; init; }
+        public double Fat { get; init; }
+        public double Carbs { get; init; }
+    }
+
+    private readonly record struct LocalIngredientData
     {
         public Guid Id { get; init; }
         public string Name { get; init; }

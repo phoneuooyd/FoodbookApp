@@ -32,12 +32,12 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
     private bool _disposed;
 
     private const int MaxRetryCount = 3;
-    private const int BatchSize = 80;  // Zwiêkszone z 50 na 80
+    private const int BatchSize = 300;  // Zwiêkszone z 50 na 80
     private static readonly TimeSpan DefaultSyncInterval = TimeSpan.FromMinutes(5);
     
     // Random delay between sync attempts (30 seconds - 4 minutes) to avoid rate limiting
     private static readonly Random _random = new();
-    private const int MinDelaySeconds = 30;
+    private const int MinDelaySeconds = 10;
     private const int MaxDelaySeconds = 240; // 4 minutes
 
     // Error codes that should stop sync immediately (RLS violations, auth errors)
