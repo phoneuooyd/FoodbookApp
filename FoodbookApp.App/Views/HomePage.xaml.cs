@@ -6,6 +6,7 @@ using CommunityToolkit.Maui.Views;
 using CommunityToolkit.Maui.Extensions;
 using FoodbookApp.Interfaces;
 using FoodbookApp.Services.Auth;
+using Foodbook.Services;
 
 namespace Foodbook.Views;
 
@@ -22,6 +23,21 @@ public partial class HomePage : ContentPage
     {
         InitializeComponent();
         BindingContext = vm;
+
+        // When the tab is the initial one, ensure a post-render load so counts are calculated
+        // even if OnAppearing ran before the DB/UI was fully ready.
+        Loaded += async (_, __) =>
+        {
+            try
+            {
+                if (ViewModel != null)
+                    await ViewModel.LoadAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[HomePage] Loaded-triggered LoadAsync failed: {ex.Message}");
+            }
+        };
     }
 
     private ISupabaseAuthService? GetSupabaseAuth()
@@ -34,8 +50,26 @@ public partial class HomePage : ContentPage
         // Initialize services and subscribe to events
         InitializeThemeAndFontHandling();
         
+        // Subscribe to data-change events so counts refresh without leaving the page
+        AppEvents.RecipesChangedAsync += OnDataChangedAsync;
+        AppEvents.PlanChangedAsync += OnDataChangedAsync;
+
         if (ViewModel != null)
-            await ViewModel.LoadAsync();
+        {
+            // If HomePage is the initial tab, OnAppearing may run before the layout is ready.
+            // Schedule the load on the UI thread after layout pass so bindings/render update immediately.
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                try
+                {
+                    await ViewModel.LoadAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[HomePage] Initial LoadAsync failed: {ex.Message}");
+                }
+            });
+        }
     }
 
     private async void OnProfileFetchJwtClicked(object sender, EventArgs e)
@@ -70,6 +104,22 @@ public partial class HomePage : ContentPage
         
         // Unsubscribe from events to prevent memory leaks
         CleanupThemeAndFontHandling();
+
+        AppEvents.RecipesChangedAsync -= OnDataChangedAsync;
+        AppEvents.PlanChangedAsync -= OnDataChangedAsync;
+    }
+
+    private async Task OnDataChangedAsync()
+    {
+        try
+        {
+            if (ViewModel != null)
+                await ViewModel.LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HomePage] OnDataChangedAsync error: {ex.Message}");
+        }
     }
 
     private void InitializeThemeAndFontHandling()

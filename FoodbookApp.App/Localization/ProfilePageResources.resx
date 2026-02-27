@@ -55,4 +55,14 @@
 	<data name="GenericErrorTitle" xml:space="preserve"><value>Error</value></data>
 
 	<data name="SyncStatusFormat" xml:space="preserve"><value>Status: {0}, Pending: {1}</value></data>
+	<data name="ForceSyncSynced" xml:space="preserve"><value>Synced: {0}</value></data>
+	<data name="ForceSyncFailed" xml:space="preserve"><value>Failed: {0}</value></data>
+	<data name="ForceSyncRemaining" xml:space="preserve"><value>Remaining: {0}</value></data>
+	<data name="ForceSyncDuration" xml:space="preserve"><value>Duration: {0}s</value></data>
+	<data name="ForceSyncDuplicatesRemoved" xml:space="preserve"><value>Cloud duplicates removed: {0}</value></data>
+	<data name="ForceSyncSkipped" xml:space="preserve"><value>Skipped (already in cloud): {0}</value></data>
+	<data name="ForceSyncError" xml:space="preserve"><value>Error: {0}</value></data>
+	<data name="SyncOverlaySyncing" xml:space="preserve"><value>Syncing data...</value></data>
+	<data name="SyncOverlayDeduplicating" xml:space="preserve"><value>Removing duplicates...</value></data>
+	<data name="SyncOverlayFetching" xml:space="preserve"><value>Fetching cloud data...</value></data>
 </root>

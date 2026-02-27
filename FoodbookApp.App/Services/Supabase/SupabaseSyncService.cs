@@ -32,13 +32,13 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
     private bool _disposed;
 
     private const int MaxRetryCount = 3;
-    private const int BatchSize = 300;  // Zwiêkszone z 50 na 80
+    private const int BatchSize = 3000;  // Zwiêkszone z 50 na 80
     private static readonly TimeSpan DefaultSyncInterval = TimeSpan.FromMinutes(5);
     
     // Random delay between sync attempts (30 seconds - 4 minutes) to avoid rate limiting
     private static readonly Random _random = new();
-    private const int MinDelaySeconds = 10;
-    private const int MaxDelaySeconds = 240; // 4 minutes
+    private const int MinDelaySeconds = 5;
+    private const int MaxDelaySeconds = 20; // 4 minutes
 
     // Error codes that should stop sync immediately (RLS violations, auth errors)
     private static readonly string[] FatalErrorCodes = new[] { "42501", "403", "401", "PGRST301" };
@@ -138,14 +138,12 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         await db.SaveChangesAsync(ct);
         Log($"Cloud sync enabled for account {accountId.Value} with priority: {priority}");
 
-        // Run deduplication OPTIONALLY - don't block initial sync if it fails
-        var deduplicationResult = await TryRunDeduplicationAsync(ct);
-        Log($"Deduplication result: {deduplicationResult.Message}");
+        // Deduplication is now integrated into StartInitialSyncAsync per-mode
+        // (CloudFirst runs DeduplicateForCloudFirstAsync, LocalFirst runs DeduplicateForLocalFirstAsync)
 
-        // Always proceed with initial sync regardless of deduplication result
         if (!state.InitialSyncCompleted)
         {
-            Log($"Starting initial sync with {priority} priority (deduplication complete or skipped)...");
+            Log($"Starting initial sync with {priority} priority...");
             _ = StartInitialSyncAsync(ct);
         }
         else
@@ -158,7 +156,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
     }
 
     /// <summary>
-    /// Runs deduplication service. Returns result with success/failure info.
+    /// Runs legacy deduplication on the sync queue. Returns result with success/failure info.
     /// NEVER throws - always returns a result.
     /// </summary>
     private async Task<DeduplicationResult> TryRunDeduplicationAsync(CancellationToken ct)
@@ -171,9 +169,8 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 return DeduplicationResult.Skipped("DeduplicationService not available");
             }
 
-            Log("Running deduplication before sync...");
+            Log("Running legacy queue deduplication...");
             
-            // Fetch cloud data - this handles empty cloud gracefully
             try
             {
                 if (!deduplicationService.IsCachePopulated)
@@ -186,7 +183,6 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 return DeduplicationResult.Failed($"Failed to fetch cloud data: {ex.Message}");
             }
             
-            // Deduplicate sync queue
             try
             {
                 var removed = await deduplicationService.DeduplicateSyncQueueAsync(ct);
@@ -419,6 +415,22 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                         $"ShoppingItems={cloudData.ShoppingListItems.Count}, " +
                         $"UserPreferences={cloudData.UserPreferences != null}");
                     
+                    // DEDUPLICATION: Remove local duplicates BEFORE importing cloud data
+                    // This prevents duplicate rows when cloud entity matches local entity with different ID
+                    try
+                    {
+                        var deduplicationService = _serviceProvider.GetService(typeof(IDeduplicationService)) as IDeduplicationService;
+                        if (deduplicationService != null)
+                        {
+                            var mergedCount = await deduplicationService.DeduplicateForCloudFirstAsync(db, cloudData, ct);
+                            Log($"Cloud-first deduplication: merged {mergedCount} local entities with cloud");
+                        }
+                    }
+                    catch (Exception dedupEx)
+                    {
+                        Log($"WARNING: Cloud-first deduplication failed (continuing): {dedupEx.Message}");
+                    }
+                    
                     // Use FORCE import - cloud always wins
                     var importedCount = await ForceImportCloudDataToLocalAsync(db, cloudData, ct);
                     
@@ -465,6 +477,22 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 Log("Local-first sync: Queuing local entities for upload...");
                 queuedCount = await QueueAllEntitiesForInitialSyncAsync(db, accountId.Value, batchId, ct);
                 Log($"Local-first sync: Queued {queuedCount} entities for upload");
+                
+                // DEDUPLICATION: Before processing the queue, remove cloud duplicates
+                // This deletes cloud entities that match local ones, so the upload creates clean entries
+                try
+                {
+                    var deduplicationService = _serviceProvider.GetService(typeof(IDeduplicationService)) as IDeduplicationService;
+                    if (deduplicationService != null)
+                    {
+                        var dedupCount = await deduplicationService.DeduplicateForLocalFirstAsync(db, ct);
+                        Log($"Local-first deduplication: deduplicated {dedupCount} cloud entities");
+                    }
+                }
+                catch (Exception dedupEx)
+                {
+                    Log($"WARNING: Local-first deduplication failed (continuing): {dedupEx.Message}");
+                }
             }
 
             state.InitialSyncCompleted = true;
@@ -876,6 +904,22 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 $"Meals={cloudData.PlannedMeals.Count}, " +
                 $"ShoppingItems={cloudData.ShoppingListItems.Count}, " +
                 $"UserPreferences={cloudData.UserPreferences != null}");
+
+            // DEDUPLICATION: Remove local duplicates BEFORE importing cloud data
+            // This prevents duplicate rows when cloud entity matches local entity with different ID
+            try
+            {
+                var deduplicationService = _serviceProvider.GetService(typeof(IDeduplicationService)) as IDeduplicationService;
+                if (deduplicationService != null)
+                {
+                    var mergedCount = await deduplicationService.DeduplicateForCloudFirstAsync(db, cloudData, ct);
+                    Log($"ForceDownload deduplication: merged {mergedCount} local entities with cloud");
+                }
+            }
+            catch (Exception dedupEx)
+            {
+                Log($"WARNING: ForceDownload deduplication failed (continuing): {dedupEx.Message}");
+            }
 
             // Import with FORCE mode - always import, don't compare timestamps
             imported = await ForceImportCloudDataToLocalAsync(db, cloudData, ct);

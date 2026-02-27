@@ -553,7 +553,11 @@ public partial class ProfilePage : ContentPage
                 var priority = action == cloud ? Foodbook.Models.SyncPriority.Cloud : Foodbook.Models.SyncPriority.Local;
 
                 SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "EnablingSync", "Enabling sync...");
+                ShowSpinner(GetLocalizedText("ProfilePageResources", "EnablingSync", "Enabling sync..."));
+
                 await syncService.EnableCloudSyncAsync(priority);
+
+                HideSpinner();
                 SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncEnabled", "Cloud sync enabled. Syncing data...");
 
                 // Persist user choice so we won't prompt next time
@@ -571,7 +575,11 @@ public partial class ProfilePage : ContentPage
             else
             {
                 SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "DisablingSync", "Disabling sync...");
+                ShowSpinner(GetLocalizedText("ProfilePageResources", "DisablingSync", "Disabling sync..."));
+
                 await syncService.DisableCloudSyncAsync();
+
+                HideSpinner();
                 SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncDisabled", "Cloud sync disabled");
 
                 // Persist disabled state so prompt can be shown again if desired
@@ -592,6 +600,7 @@ public partial class ProfilePage : ContentPage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ProfilePage] Sync toggle error: {ex.Message}");
+            HideSpinner();
             await DisplayAlert(
                 GetLocalizedText("ProfilePageResources", "SyncErrorTitle", "Sync Error"),
                 ex.Message,
@@ -617,28 +626,92 @@ public partial class ProfilePage : ContentPage
 
         SyncStatusLabel.IsVisible = true;
         SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "ForcingSync", "Forcing sync of ALL items...");
+        ShowSpinner(GetLocalizedText("ProfilePageResources", "SyncOverlaySyncing", "Syncing data..."));
 
         try
         {
-            // Use ForceSyncAllAsync to sync all items without delay
-            var result = await sync.ForceSyncAllAsync();
-            var sb = new StringBuilder();
-            sb.AppendLine($"Success: {result.Success}");
-            sb.AppendLine($"Processed: {result.ItemsProcessed}");
-            sb.AppendLine($"Remaining: {result.ItemsRemaining}");
-            sb.AppendLine($"Duration: {result.Duration.TotalSeconds:F1}s");
-            if (!string.IsNullOrEmpty(result.ErrorMessage)) 
-                sb.AppendLine($"Error: {result.ErrorMessage}");
+            // Run deduplication first so we can report stats
+            int dedupRemoved = 0;
+            int dedupSkipped = 0;
 
+            var deduplicationService = FoodbookApp.MauiProgram.ServiceProvider?
+                .GetService(typeof(IDeduplicationService)) as IDeduplicationService;
+
+            if (deduplicationService != null)
+            {
+                try
+                {
+                    ShowSpinner(GetLocalizedText("ProfilePageResources", "SyncOverlayDeduplicating", "Removing duplicates..."));
+
+                    if (!deduplicationService.IsCachePopulated)
+                    {
+                        ShowSpinner(GetLocalizedText("ProfilePageResources", "SyncOverlayFetching", "Fetching cloud data..."));
+                        await deduplicationService.FetchCloudDataAsync();
+                    }
+
+                    using var scope = FoodbookApp.MauiProgram.ServiceProvider!.CreateScope();
+                    var db = scope.ServiceProvider.GetRequiredService<Foodbook.Data.AppDbContext>();
+
+                    // Get pending count BEFORE dedup so we can calculate skipped
+                    var pendingBefore = await sync.GetPendingCountAsync();
+                    dedupRemoved = await deduplicationService.DeduplicateSyncQueueAsync();
+                    var pendingAfter = await sync.GetPendingCountAsync();
+                    dedupSkipped = Math.Max(0, pendingBefore - pendingAfter - dedupRemoved);
+                }
+                catch (Exception dedupEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ProfilePage] ForceSync dedup error (non-fatal): {dedupEx.Message}");
+                }
+            }
+
+            ShowSpinner(GetLocalizedText("ProfilePageResources", "SyncOverlaySyncing", "Syncing data..."));
+            var result = await sync.ForceSyncAllAsync();
+
+            var sb = new StringBuilder();
+            sb.AppendLine(string.Format(
+                GetLocalizedText("ProfilePageResources", "ForceSyncSynced", "Synced: {0}"),
+                result.ItemsProcessed));
+
+            if (result.ItemsRemaining > 0)
+                sb.AppendLine(string.Format(
+                    GetLocalizedText("ProfilePageResources", "ForceSyncRemaining", "Remaining: {0}"),
+                    result.ItemsRemaining));
+
+            if (result.ItemsFailed > 0)
+                sb.AppendLine(string.Format(
+                    GetLocalizedText("ProfilePageResources", "ForceSyncFailed", "Failed: {0}"),
+                    result.ItemsFailed));
+
+            if (dedupRemoved > 0)
+                sb.AppendLine(string.Format(
+                    GetLocalizedText("ProfilePageResources", "ForceSyncDuplicatesRemoved", "Cloud duplicates removed: {0}"),
+                    dedupRemoved));
+
+            if (dedupSkipped > 0)
+                sb.AppendLine(string.Format(
+                    GetLocalizedText("ProfilePageResources", "ForceSyncSkipped", "Skipped (already in cloud): {0}"),
+                    dedupSkipped));
+
+            sb.AppendLine(string.Format(
+                GetLocalizedText("ProfilePageResources", "ForceSyncDuration", "Duration: {0}s"),
+                result.Duration.TotalSeconds.ToString("F1")));
+
+            if (!string.IsNullOrEmpty(result.ErrorMessage))
+                sb.AppendLine(string.Format(
+                    GetLocalizedText("ProfilePageResources", "ForceSyncError", "Error: {0}"),
+                    result.ErrorMessage));
+
+            HideSpinner();
             await DisplayAlert(
                 GetLocalizedText("ProfilePageResources", "ForceSyncCompletedTitle", "Force sync completed"),
-                sb.ToString(),
+                sb.ToString().TrimEnd(),
                 GetLocalizedText("ProfilePageResources", "OK", "OK")
             );
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ProfilePage] ForceSync error: {ex}");
+            HideSpinner();
             await DisplayAlert(
                 GetLocalizedText("ProfilePageResources", "ForceSyncErrorTitle", "Force sync error"),
                 ex.Message,
@@ -647,6 +720,7 @@ public partial class ProfilePage : ContentPage
         }
         finally
         {
+            HideSpinner();
             await LoadSyncStatusAsync();
         }
     }
@@ -700,4 +774,31 @@ public partial class ProfilePage : ContentPage
             );
         }
     }
+
+    #region Spinner helpers
+
+    private void ShowSpinner(string message)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            SyncOverlayLabel.Text = message;
+            SyncActivityIndicator.IsRunning = true;
+            SyncingOverlay.IsVisible = true;
+            ForceSyncButton.IsEnabled = false;
+            CloudSyncCheckBox.IsEnabled = false;
+        });
+    }
+
+    private void HideSpinner()
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            SyncingOverlay.IsVisible = false;
+            SyncActivityIndicator.IsRunning = false;
+            ForceSyncButton.IsEnabled = true;
+            CloudSyncCheckBox.IsEnabled = true;
+        });
+    }
+
+    #endregion
 }

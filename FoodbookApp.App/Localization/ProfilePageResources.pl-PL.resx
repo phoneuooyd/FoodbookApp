@@ -55,4 +55,15 @@
 	<data name="GenericErrorTitle" xml:space="preserve"><value>Błąd</value></data>
 
 	<data name="SyncStatusFormat" xml:space="preserve"><value>Status: {0}, Oczekujące: {1}</value></data>
+	<data name="ForceSyncSynced" xml:space="preserve"><value>Zsynchronizowano: {0}</value></data>
+	<data name="ForceSyncFailed" xml:space="preserve"><value>Nieudane: {0}</value></data>
+	<data name="ForceSyncRemaining" xml:space="preserve"><value>Pozostałe: {0}</value></data>
+	<data name="ForceSyncDuration" xml:space="preserve"><value>Czas: {0}s</value></data>
+	<data name="ForceSyncDuplicatesRemoved" xml:space="preserve"><value>Usunięte duplikaty w chmurze: {0}</value></data>
+	<data name="ForceSyncSkipped" xml:space="preserve"><value>Pominięte (już w chmurze): {0}</value></data>
+	<data name="ForceSyncError" xml:space="preserve"><value>Błąd: {0}</value></data>
+
+	<data name="SyncOverlaySyncing" xml:space="preserve"><value>Synchronizacja danych...</value></data>
+	<data name="SyncOverlayDeduplicating" xml:space="preserve"><value>Usuwanie duplikatów...</value></data>
+	<data name="SyncOverlayFetching" xml:space="preserve"><value>Pobieranie danych z chmury...</value></data>
 </root>
