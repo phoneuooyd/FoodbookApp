@@ -16,6 +16,7 @@ public partial class SettingsViewModel : INotifyPropertyChanged
     private readonly IThemeService _themeService;
     private readonly IFontService _fontService;
     private readonly IDatabaseService _databaseService;
+    private readonly IDeduplicationService _deduplicationService;
 
     // Tabs management
     private int _selectedTabIndex;
@@ -329,14 +330,16 @@ public partial class SettingsViewModel : INotifyPropertyChanged
     public ICommand MigrateDatabaseCommand { get; }
     public ICommand ResetDatabaseCommand { get; }
     public ICommand FactoryResetCommand { get; }
+    public ICommand DeduplicateIngredientsCommand { get; }
 
-    public SettingsViewModel(LocalizationResourceManager locManager, IPreferencesService preferencesService, IThemeService themeService, IFontService fontService, IDatabaseService databaseService)
+    public SettingsViewModel(LocalizationResourceManager locManager, IPreferencesService preferencesService, IThemeService themeService, IFontService fontService, IDatabaseService databaseService, IDeduplicationService deduplicationService)
     {
         _locManager = locManager;
         _preferencesService = preferencesService;
         _themeService = themeService;
         _fontService = fontService;
         _databaseService = databaseService;
+        _deduplicationService = deduplicationService;
         
         // Tabs
         SelectTabCommand = new Command<object>(p =>
@@ -421,6 +424,7 @@ public partial class SettingsViewModel : INotifyPropertyChanged
         MigrateDatabaseCommand = new Command(async () => await MigrateDatabaseAsync(), () => CanExecuteMigration);
         ResetDatabaseCommand = new Command(async () => await ResetDatabaseAsync(), () => CanExecuteMigration);
         FactoryResetCommand = new Command(async () => await FactoryResetAsync(), () => CanExecuteMigration);
+        DeduplicateIngredientsCommand = new Command(async () => await DeduplicateIngredientsAsync(), () => CanExecuteMigration);
         
         System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Initialized with color theme and colorful/wallpaper background support");
 
@@ -670,6 +674,62 @@ public partial class SettingsViewModel : INotifyPropertyChanged
                 await Task.Delay(3000);
                 MainThread.BeginInvokeOnMainThread(() => MigrationStatus = string.Empty);
             });
+        }
+    }
+
+    private async Task DeduplicateIngredientsAsync()
+    {
+        try
+        {
+            var page = Application.Current?.MainPage;
+            if (page == null) return;
+
+            bool confirm = await page.DisplayAlert(
+                "Usuñ duplikaty sk³adników",
+                "Czy na pewno chcesz usun¹æ zduplikowane sk³adniki bazowe? (porównanie: nazwa + makra).\n\nTa operacja jest nieodwracalna.",
+                "Tak, usuñ",
+                "Anuluj");
+
+            if (!confirm) return;
+
+            IsMigrationInProgress = true;
+            MigrationStatus = "Usuwanie duplikatów sk³adników...";
+
+            using var scope = FoodbookApp.MauiProgram.ServiceProvider?.CreateScope();
+            var db = scope?.ServiceProvider.GetService<Foodbook.Data.AppDbContext>();
+            if (db == null)
+            {
+                MigrationStatus = "B³¹d: brak dostêpu do bazy danych";
+                return;
+            }
+
+            var removed = await _deduplicationService.DeduplicateLocalIngredientsAndQueueDeletesAsync(db);
+
+            // Notify UI/pages that ingredient catalog changed
+            try
+            {
+                await Foodbook.Services.AppEvents.RaiseIngredientsChangedAsync();
+            }
+            catch { }
+
+            MigrationStatus = removed > 0
+                ? $"Usuniêto duplikaty: {removed}"
+                : "Brak duplikatów do usuniêcia";
+
+            await page.DisplayAlert("Gotowe", MigrationStatus, "OK");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] DeduplicateIngredientsAsync error: {ex.Message}");
+            MigrationStatus = $"B³¹d: {ex.Message}";
+
+            var page = Application.Current?.MainPage;
+            if (page != null)
+                await page.DisplayAlert("B³¹d", MigrationStatus, "OK");
+        }
+        finally
+        {
+            IsMigrationInProgress = false;
         }
     }
 

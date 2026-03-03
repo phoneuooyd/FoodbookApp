@@ -734,4 +734,219 @@ public sealed class DeduplicationService : IDeduplicationService
     }
 
     #endregion
+
+    public async Task<int> DeduplicateLocalIngredientsAsync(AppDbContext db, CancellationToken ct = default)
+    {
+        try
+        {
+            if (db == null) throw new ArgumentNullException(nameof(db));
+
+            Log("=== DeduplicateLocalIngredientsAsync START ===");
+
+            var local = await db.Ingredients
+                .Where(i => i.RecipeId == null)
+                .ToListAsync(ct);
+
+            if (local.Count <= 1)
+            {
+                Log("DeduplicateLocalIngredientsAsync: Nothing to deduplicate");
+                return 0;
+            }
+
+            var removed = 0;
+
+            var groups = local
+                .GroupBy(i => (i.Name ?? string.Empty).Trim(), StringComparer.Ordinal)
+                .Where(g => !string.IsNullOrWhiteSpace(g.Key))
+                .ToList();
+
+            foreach (var g in groups)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                if (g.Count() <= 1) continue;
+
+                // Within same name, group by macros tolerance
+                var buckets = new List<List<Ingredient>>();
+
+                foreach (var ing in g)
+                {
+                    var placed = false;
+                    foreach (var bucket in buckets)
+                    {
+                        var pivot = bucket[0];
+                        if (IsMacroMatch(pivot.Calories, ing.Calories,
+                                         pivot.Protein, ing.Protein,
+                                         pivot.Fat, ing.Fat,
+                                         pivot.Carbs, ing.Carbs))
+                        {
+                            bucket.Add(ing);
+                            placed = true;
+                            break;
+                        }
+                    }
+
+                    if (!placed)
+                        buckets.Add([ing]);
+                }
+
+                foreach (var bucket in buckets)
+                {
+                    if (bucket.Count <= 1) continue;
+
+                    // Keep the oldest/newest doesn't matter much; keep the first deterministic by Id
+                    var ordered = bucket.OrderBy(i => i.Id).ToList();
+                    var keep = ordered[0];
+                    var toRemove = ordered.Skip(1).ToList();
+
+                    foreach (var r in toRemove)
+                    {
+                        Log($"  REMOVE duplicate local ingredient '{g.Key}' {r.Id} (keep {keep.Id})");
+                        db.Ingredients.Remove(r);
+                        removed++;
+                    }
+                }
+            }
+
+            if (removed > 0)
+                await db.SaveChangesAsync(ct);
+
+            Log($"=== DeduplicateLocalIngredientsAsync COMPLETE: removed {removed} ===");
+            return removed;
+        }
+        catch (OperationCanceledException)
+        {
+            Log("DeduplicateLocalIngredientsAsync: Cancelled");
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            Log($"ERROR in DeduplicateLocalIngredientsAsync: {ex.Message}");
+            return 0;
+        }
+    }
+
+    public async Task<int> DeduplicateLocalIngredientsAndQueueDeletesAsync(AppDbContext db, CancellationToken ct = default)
+    {
+        try
+        {
+            if (db == null) throw new ArgumentNullException(nameof(db));
+
+            Log("=== DeduplicateLocalIngredientsAndQueueDeletesAsync START ===");
+
+            var local = await db.Ingredients
+                .Where(i => i.RecipeId == null)
+                .ToListAsync(ct);
+
+            if (local.Count <= 1)
+            {
+                Log("DeduplicateLocalIngredientsAndQueueDeletesAsync: Nothing to deduplicate");
+                return 0;
+            }
+
+            var removedEntities = new List<Ingredient>();
+
+            var groups = local
+                .GroupBy(i => (i.Name ?? string.Empty).Trim(), StringComparer.Ordinal)
+                .Where(g => !string.IsNullOrWhiteSpace(g.Key))
+                .ToList();
+
+            foreach (var g in groups)
+            {
+                ct.ThrowIfCancellationRequested();
+                if (g.Count() <= 1) continue;
+
+                var buckets = new List<List<Ingredient>>();
+                foreach (var ing in g)
+                {
+                    var placed = false;
+                    foreach (var bucket in buckets)
+                    {
+                        var pivot = bucket[0];
+                        if (IsMacroMatch(pivot.Calories, ing.Calories,
+                                         pivot.Protein, ing.Protein,
+                                         pivot.Fat, ing.Fat,
+                                         pivot.Carbs, ing.Carbs))
+                        {
+                            bucket.Add(ing);
+                            placed = true;
+                            break;
+                        }
+                    }
+
+                    if (!placed)
+                        buckets.Add([ing]);
+                }
+
+                foreach (var bucket in buckets)
+                {
+                    if (bucket.Count <= 1) continue;
+
+                    var ordered = bucket.OrderBy(i => i.Id).ToList();
+                    var keep = ordered[0];
+                    var toRemove = ordered.Skip(1).ToList();
+
+                    foreach (var r in toRemove)
+                    {
+                        Log($"  REMOVE duplicate local ingredient '{g.Key}' {r.Id} (keep {keep.Id})");
+                        removedEntities.Add(r);
+                        db.Ingredients.Remove(r);
+                    }
+                }
+            }
+
+            if (removedEntities.Count == 0)
+            {
+                Log("DeduplicateLocalIngredientsAndQueueDeletesAsync: No duplicates found");
+                return 0;
+            }
+
+            await db.SaveChangesAsync(ct);
+
+            // Queue deletes for cloud sync (best-effort)
+            try
+            {
+                var syncService = _serviceProvider.GetService(typeof(ISupabaseSyncService)) as ISupabaseSyncService;
+                if (syncService == null)
+                {
+                    Log("DeduplicateLocalIngredientsAndQueueDeletesAsync: Sync service not available - skipping queueing deletes");
+                }
+                else
+                {
+                    var enabled = await syncService.IsCloudSyncEnabledAsync(ct);
+                    if (!enabled)
+                    {
+                        Log("DeduplicateLocalIngredientsAndQueueDeletesAsync: Cloud sync disabled - skipping queueing deletes");
+                    }
+                    else
+                    {
+                        // Use minimal entities (only Id required for delete)
+                        var deleteStubs = removedEntities
+                            .Select(i => new Ingredient { Id = i.Id, Name = i.Name })
+                            .ToList();
+
+                        await syncService.QueueBatchForSyncAsync(deleteStubs, SyncOperationType.Delete, ct);
+                        Log($"DeduplicateLocalIngredientsAndQueueDeletesAsync: Queued {deleteStubs.Count} ingredient deletions for sync");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log($"WARNING: Failed to queue ingredient deletions for sync: {ex.Message}");
+            }
+
+            Log($"=== DeduplicateLocalIngredientsAndQueueDeletesAsync COMPLETE: removed {removedEntities.Count} ===");
+            return removedEntities.Count;
+        }
+        catch (OperationCanceledException)
+        {
+            Log("DeduplicateLocalIngredientsAndQueueDeletesAsync: Cancelled");
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            Log($"ERROR in DeduplicateLocalIngredientsAndQueueDeletesAsync: {ex.Message}");
+            return 0;
+        }
+    }
 }

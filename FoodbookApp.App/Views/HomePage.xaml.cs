@@ -18,26 +18,12 @@ public partial class HomePage : ContentPage
     private ILocalizationService? _localizationService;
     private bool _isMealsPopupOpen = false; // Protection against multiple opens
     private ISupabaseAuthService? _supabaseAuth;
+    private bool _hasLoadedOnce;
 
     public HomePage(HomeViewModel vm)
     {
         InitializeComponent();
         BindingContext = vm;
-
-        // When the tab is the initial one, ensure a post-render load so counts are calculated
-        // even if OnAppearing ran before the DB/UI was fully ready.
-        Loaded += async (_, __) =>
-        {
-            try
-            {
-                if (ViewModel != null)
-                    await ViewModel.LoadAsync();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[HomePage] Loaded-triggered LoadAsync failed: {ex.Message}");
-            }
-        };
     }
 
     private ISupabaseAuthService? GetSupabaseAuth()
@@ -56,19 +42,20 @@ public partial class HomePage : ContentPage
 
         if (ViewModel != null)
         {
-            // If HomePage is the initial tab, OnAppearing may run before the layout is ready.
-            // Schedule the load on the UI thread after layout pass so bindings/render update immediately.
-            MainThread.BeginInvokeOnMainThread(async () =>
+            if (_hasLoadedOnce)
             {
+                // Re-appearing (e.g. returning from Settings) — refresh data
                 try
                 {
                     await ViewModel.LoadAsync();
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[HomePage] Initial LoadAsync failed: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[HomePage] Re-appearing LoadAsync failed: {ex.Message}");
                 }
-            });
+            }
+            // First appearance: skip — TabBarComponent.TriggerInitialLoadAsync handles the initial load
+            _hasLoadedOnce = true;
         }
     }
 

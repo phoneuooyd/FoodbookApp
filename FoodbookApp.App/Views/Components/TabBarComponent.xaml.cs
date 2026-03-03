@@ -135,23 +135,33 @@ namespace Foodbook.Views.Components
                 themeService.ThemeChanged += OnThemeChanged;
             }
 
-            Loaded += (_, __) =>
+            Loaded += async (_, __) =>
             {
                 try
                 {
-                    // Ensure Home is selected on startup
+                    // Ensure default tab is selected on startup
                     if (TabItems != null && TabItems.Count > 0)
                     {
                         var index = Math.Clamp(DefaultTabIndex, 0, TabItems.Count - 1);
-                        if (SelectedTab != TabItems[index])
+                        var desired = TabItems[index];
+
+                        if (SelectedTab != desired)
+                            SelectedTab = desired;
+
+                        // Force initial render + lifecycle for embedded pages (ContentPage.OnAppearing isn't automatic)
+                        if (ContentContainer?.Content == null && SelectedTab != null)
                         {
-                            SelectedTab = TabItems[index];
+                            UpdateContent(SelectedTab);
                         }
+
+                        // Give UI a tick, then ensure Appearing fired for initial page
+                        await Task.Yield();
+                        try { _currentPageInstance?.SendAppearing(); } catch { }
                     }
                 }
                 catch { }
             };
-            
+
             // Subscribe to Shell navigation to track context
             if (Shell.Current != null)
             {
@@ -228,58 +238,76 @@ namespace Foodbook.Views.Components
             }
         }
 
-        private void UpdateContent(TabItemModel tab)
+        private ContentPage? _currentPageInstance;
+
+private void UpdateContent(TabItemModel tab)
+{
+    try
+    {
+        if (ContentContainer == null) return;
+
+        // Fire Disappearing for previous embedded page (since ContentPage.OnDisappearing is not called when only its Content is rendered)
+        try
         {
-            try
+            _currentPageInstance?.SendDisappearing();
+        }
+        catch { }
+
+        ContentPage? pageInstance = null;
+
+        // Use cached page instance
+        if (!string.IsNullOrEmpty(tab.Route) && _pageCache.TryGetValue(tab.Route, out var cachedPage))
+        {
+            pageInstance = cachedPage;
+            System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Using cached page for route: {tab.Route}");
+        }
+        // Resolve page from DI
+        else if (tab.PageType != null)
+        {
+            pageInstance = MauiProgram.ServiceProvider?.GetService(tab.PageType) as ContentPage;
+            if (pageInstance != null)
             {
-                if (ContentContainer == null) return;
-
-                ContentPage? pageInstance = null;
-
-                // Use cached page instance
-                if (!string.IsNullOrEmpty(tab.Route) && _pageCache.TryGetValue(tab.Route, out var cachedPage))
-                {
-                    pageInstance = cachedPage;
-                    System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Using cached page for route: {tab.Route}");
-                }
-                // Resolve page from DI
-                else if (tab.PageType != null)
-                {
-                    pageInstance = MauiProgram.ServiceProvider?.GetService(tab.PageType) as ContentPage;
-                    if (pageInstance != null)
-                    {
-                        if (!string.IsNullOrEmpty(tab.Route))
-                            _pageCache[tab.Route] = pageInstance;
-                        System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Created new page from DI for route: {tab.Route}, VM: {pageInstance.BindingContext?.GetType().Name ?? "null"}");
-                    }
-                }
-                // Use ContentTemplate if provided
-                else if (tab.ContentTemplate != null)
-                {
-                    var created = tab.ContentTemplate.CreateContent();
-                    if (created is ContentPage cp)
-                    {
-                        pageInstance = cp;
-                    }
-                }
-
-                if (pageInstance != null)
-                {
-                    var viewToRender = pageInstance.Content;
-                    if (viewToRender != null)
-                    {
-                        viewToRender.BindingContext = pageInstance.BindingContext;
-                        ContentContainer.Content = viewToRender;
-                        System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Rendered content with BindingContext: {viewToRender.BindingContext?.GetType().Name ?? "null"}");
-                        _ = TriggerInitialLoadAsync(pageInstance);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Error updating content: {ex.Message}");
+                if (!string.IsNullOrEmpty(tab.Route))
+                    _pageCache[tab.Route] = pageInstance;
+                System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Created new page from DI for route: {tab.Route}, VM: {pageInstance.BindingContext?.GetType().Name ?? "null"}");
             }
         }
+        // Use ContentTemplate if provided
+        else if (tab.ContentTemplate != null)
+        {
+            var created = tab.ContentTemplate.CreateContent();
+            if (created is ContentPage cp)
+            {
+                pageInstance = cp;
+            }
+        }
+
+        if (pageInstance != null)
+        {
+            var viewToRender = pageInstance.Content;
+            if (viewToRender != null)
+            {
+                viewToRender.BindingContext = pageInstance.BindingContext;
+                ContentContainer.Content = viewToRender;
+                _currentPageInstance = pageInstance;
+
+                // Fire Appearing for the embedded page so its OnAppearing logic runs
+                try
+                {
+                    pageInstance.SendAppearing();
+                }
+                catch { }
+
+                System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Rendered content with BindingContext: {viewToRender.BindingContext?.GetType().Name ?? "null"}");
+                _ = TriggerInitialLoadAsync(pageInstance);
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Error updating content: {ex.Message}");
+    }
+}
 
         /// <summary>
         /// Handles tab selection with navigation stack management and unsaved changes detection
@@ -510,6 +538,15 @@ namespace Foodbook.Views.Components
                     initThemeMethod.Invoke(page, null);
                 }
 
+                // ?? Explicit handling for HomeViewModel (most reliable path) ??
+                if (vm is Foodbook.ViewModels.HomeViewModel homeVm)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Direct HomeViewModel.LoadAsync call");
+                    await homeVm.LoadAsync();
+                    System.Diagnostics.Debug.WriteLine($"[TabBarComponent] HomeViewModel.LoadAsync completed");
+                    return;
+                }
+
                 // Handle specific page initializations
                 var pageType = page.GetType();
                 if (pageType.Name == "IngredientsPage")
@@ -529,7 +566,6 @@ namespace Foodbook.Views.Components
                         resetMethod.Invoke(vm, null);
                     }
 
-                    // ? NEW: Call TriggerReloadAsync to ensure recipes are loaded even if page is cached
                     var triggerReloadMethod = pageType.GetMethod("TriggerReloadAsync", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
                     if (triggerReloadMethod != null)
                     {
@@ -550,35 +586,34 @@ namespace Foodbook.Views.Components
                     }
                 }
 
+                // ?? Generic reflection fallback for other VMs ??
                 var vmType = vm.GetType();
                 var loadRecipes = vmType.GetMethod("LoadRecipesAsync");
                 if (loadRecipes != null)
                 {
+                    System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Invoking LoadRecipesAsync on {vmType.Name}");
                     var task = loadRecipes.Invoke(vm, null) as Task;
                     if (task != null) await task;
                     return;
                 }
-                var loadIngredients = vmType.GetMethod("LoadAsync");
-                if (loadIngredients != null)
+                var loadAsync = vmType.GetMethod("LoadAsync");
+                if (loadAsync != null)
                 {
-                    var task = loadIngredients.Invoke(vm, null) as Task;
+                    System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Invoking LoadAsync on {vmType.Name}");
+                    var task = loadAsync.Invoke(vm, null) as Task;
                     if (task != null) await task;
                     return;
                 }
                 var loadPlans = vmType.GetMethod("LoadPlansAsync");
                 if (loadPlans != null)
                 {
+                    System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Invoking LoadPlansAsync on {vmType.Name}");
                     var task = loadPlans.Invoke(vm, null) as Task;
                     if (task != null) await task;
                     return;
                 }
-                var loadHome = vmType.GetMethod("LoadAsync");
-                if (loadHome != null)
-                {
-                    var task = loadHome.Invoke(vm, null) as Task;
-                    if (task != null) await task;
-                    return;
-                }
+
+                System.Diagnostics.Debug.WriteLine($"[TabBarComponent] No load method found on {vmType.Name}");
             }
             catch (Exception ex)
             {

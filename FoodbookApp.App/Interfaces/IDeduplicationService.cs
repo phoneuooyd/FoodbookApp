@@ -54,4 +54,18 @@ public interface IDeduplicationService
     /// Indicates if cloud data has been fetched and cached.
     /// </summary>
     bool IsCachePopulated { get; }
+
+    /// <summary>
+    /// LOCAL (offline) deduplication: removes duplicated base ingredients in local DB.
+    /// Duplicates are detected by Name (trimmed, case-sensitive) + macros (Calories/Protein/Fat/Carbs, tolerant).
+    /// Returns number of removed local rows.
+    /// </summary>
+    Task<int> DeduplicateLocalIngredientsAsync(Foodbook.Data.AppDbContext db, CancellationToken ct = default);
+
+    /// <summary>
+    /// LOCAL (offline) deduplication + SYNC: removes duplicated base ingredients in local DB
+    /// and queues delete operations so removed rows are also deleted from Supabase on next sync.
+    /// Returns number of removed local rows.
+    /// </summary>
+    Task<int> DeduplicateLocalIngredientsAndQueueDeletesAsync(Foodbook.Data.AppDbContext db, CancellationToken ct = default);
 }
