@@ -6,6 +6,8 @@
 [![.NET 9](https://img.shields.io/badge/.NET-9.0-512BD4?style=flat-square)](https://dotnet.microsoft.com/download/dotnet/9.0)
 [![SQLite](https://img.shields.io/badge/Database-SQLite-003B57?style=flat-square)](https://www.sqlite.org/)
 [![Entity Framework](https://img.shields.io/badge/Entity%20Framework-Core-blue?style=flat-square)](https://docs.microsoft.com/en-us/ef/core/)
+[![Supabase](https://img.shields.io/badge/Backend-Supabase-3ECF8E?style=flat-square)](https://supabase.com/)
+[![xUnit](https://img.shields.io/badge/Tests-xUnit-5B2D8B?style=flat-square)](https://xunit.net/)
 
 
 
@@ -17,6 +19,8 @@ FoodBook App to kompleksowa aplikacja mobilna stworzona w technologii .NET MAUI,
 -    Planowaniu posiłków na wybrane dni
 -    Automatycznym generowaniu list zakupów
 -    Importowaniu przepisów z internetu
+-    Synchronizacji danych z chmurą (Supabase)
+-    Personalizacji wyglądu (motyw, czcionka, język interfejsu)
 
 ##   Główne funkcjonalności
 
@@ -30,6 +34,8 @@ FoodBook App to kompleksowa aplikacja mobilna stworzona w technologii .NET MAUI,
 -     Usuwanie przepisów
 -    Automatyczny import przepisów z stron internetowych
 -    Automatyczne obliczanie wartości odżywczych
+-    Etykiety/kategorie przepisów z obsługą kolorów
+-    Organizacja przepisów w hierarchiczne foldery (z obsługą przeciągania i upuszczania)
 
 ###    **Baza składników**
 -    Rozbudowana baza składników z wartościami odżywczymi
@@ -52,19 +58,47 @@ FoodBook App to kompleksowa aplikacja mobilna stworzona w technologii .NET MAUI,
 -     Usuwanie niepotrzebnych pozycji
 -    Intuicyjny interfejs do zarządzania zakupami
 
+###    **Profil użytkownika i konto**
+-    Rejestracja i logowanie za pomocą e-maila i hasła (Supabase Auth)
+-    Bezpieczne przechowywanie tokenów JWT (SecureStorage)
+-    Zarządzanie kontem z poziomu ekranu Profil
+
+###    **Synchronizacja z chmurą**
+-    Dwukierunkowa synchronizacja danych z backendem Supabase
+-    Włączanie/wyłączanie synchronizacji chmurowej per konto
+-    Wymuszanie natychmiastowej synchronizacji (Force Sync)
+-    Kolejka synchronizacji z obsługą konfliktów (priorytet lokalny lub chmurowy)
+-    Deduplikacja danych podczas synchronizacji
+
+###    **Ustawienia i personalizacja**
+-    Wybór motywu: jasny / ciemny / systemowy
+-    Wiele palet kolorystycznych do wyboru
+-    Wybór czcionki (font family) i rozmiaru czcionki
+-    Wybór języka interfejsu (PL, EN, DE, ES, FR, KO)
+-    Migracja i archiwizacja danych
+
+###    **Archiwizacja danych**
+-    Eksport i import danych aplikacji
+-    Przeglądanie archiwów
+-    Kompatybilność archiwów między wersjami aplikacji
+
 ##     Architektura aplikacji
 
 ###     **Technologie**
 - **Framework**: .NET MAUI (Multi-platform App UI)
 - **Wersja .NET**: 9.0
 - **Baza danych**: SQLite z Entity Framework Core
+- **Backend / BaaS**: Supabase (REST API, Auth)
+- **Uwierzytelnianie**: JWT (walidacja po stronie klienta, SecureStorage)
 - **Wzorce**: MVVM (Model-View-ViewModel)
 - **DI**: Wbudowany Dependency Injection
 - **UI**: XAML z Material Design
+- **Lokalizacja**: .resx resource files (PL, EN, DE, ES, FR, KO)
+- **Testy**: xUnit
 
 ###    **Wzorzec MVVM**
 Aplikacja wykorzystuje wzorzec MVVM z:
-- **Models**: Klasy reprezentujące dane (Recipe, Ingredient, Plan)
+- **Models**: Klasy reprezentujące dane (Recipe, Ingredient, Plan, Folder, RecipeLabel, SyncState, AuthAccount)
 - **Views**: Widoki XAML definiujące interfejs użytkownika
 - **ViewModels**: Logika prezentacji i wiązanie danych
 
@@ -73,6 +107,23 @@ Aplikacja wykorzystuje wzorzec MVVM z:
 - **Entity Framework Core**: ORM do zarządzania danymi
 - **Migracje**: Automatyczne tworzenie i aktualizacja schematu
 - **Seed Data**: Automatyczne wypełnianie przykładowymi danymi
+
+###    **Uwierzytelnianie i synchronizacja**
+- **Supabase Auth**: Rejestracja i logowanie przez REST API
+- **JWT**: Walidacja tokenów po stronie klienta (`IJwtValidator`)
+- **SecureStorage**: Bezpieczne przechowywanie tokenów na urządzeniu (`IAuthTokenStore`)
+- **SupabaseSyncService**: Dwukierunkowa synchronizacja z Supabase
+- **DeduplicationService**: Wykrywanie i eliminacja duplikatów podczas synchronizacji
+- **SyncQueue**: Kolejka zmian lokalnych oczekujących na synchronizację
+
+###    **Lokalizacja**
+Interfejs aplikacji jest w pełni zlokalizowany przy użyciu plików zasobów `.resx`:
+- 🇵🇱 Polski (pl-PL)
+- 🇬🇧 Angielski (en)
+- 🇩🇪 Niemiecki (de-DE)
+- 🇪🇸 Hiszpański (es-ES)
+- 🇫🇷 Francuski (fr-FR)
+- 🇰🇷 Koreański (ko-KR)
 
 ##    Rozpoczęcie pracy
 
@@ -140,10 +191,54 @@ dotnet run --framework net9.0-windows10.0.19041.0
 ##    **Personalizacja**
 
 ###    **Motywy kolorystyczne**
-Aplikacja obsługuje jasny i ciemny motyw, automatycznie dostosowując się do ustawień systemu.
+Aplikacja obsługuje jasny i ciemny motyw, automatycznie dostosowując się do ustawień systemu. Dostępne są również dodatkowe palety kolorów do wyboru w ustawieniach.
+
+###    **Czcionki**
+Użytkownik może wybrać rodzinę czcionek (font family) oraz rozmiar tekstu (font size) w ustawieniach aplikacji.
+
+###    **Język interfejsu**
+Język interfejsu można zmienić niezależnie od języka systemu. Obsługiwane języki: Polski, English, Deutsch, Español, Français, 한국어.
 
 ###    **Układy responsywne**
 Interfejs automatycznie dostosowuje się do różnych rozmiarów ekranów i orientacji urządzenia.
+
+##    **Testy automatyczne**
+
+Projekt zawiera zestaw testów jednostkowych w folderze `FoodbookApp.Tests` (xUnit):
+- Testy modeli (Ingredient, Recipe, Plan, RecipeLabel)
+- Testy serwisów (DatabaseService, ThemeService, IngredientService, PlannerService)
+- Testy autentykacji (SupabaseAuthServiceTests)
+- Testy stron (HomePage, AddRecipePage, IngredientsPage, ArchivePage, DataArchivizationPage)
+
+Uruchomienie testów:
+```bash
+dotnet test
+```
+
+##    **Roadmapa projektu**
+
+### ✅ Zrealizowane
+- [x] Zarządzanie przepisami (CRUD, import z URL)
+- [x] Baza składników z wartościami odżywczymi
+- [x] Planer posiłków (zakres dat, liczba porcji)
+- [x] Automatyczne listy zakupów
+- [x] Etykiety/kategorie przepisów (z kolorami)
+- [x] Foldery do organizacji przepisów (hierarchia, drag & drop)
+- [x] Konto użytkownika (rejestracja, logowanie – Supabase Auth, JWT)
+- [x] Synchronizacja danych z chmurą (Supabase REST API)
+- [x] Archiwizacja i eksport/import danych
+- [x] Wielojęzyczny interfejs (PL, EN, DE, ES, FR, KO)
+- [x] Personalizacja motywu, palety kolorów, czcionki i rozmiaru tekstu
+- [x] Wizard konfiguracyjny przy pierwszym uruchomieniu
+- [x] Testy jednostkowe (xUnit)
+
+### 🔜 Planowane
+- [ ] Powiadomienia przypominające o posiłkach
+- [ ] Udostępnianie przepisów między użytkownikami
+- [ ] Skaner kodów kreskowych produktów
+- [ ] Integracja z zewnętrznymi bazami danych żywności (np. Open Food Facts)
+- [ ] Widżety na ekran główny (Android / iOS)
+- [ ] Wersja na macOS / Windows z pełnym wsparciem myszy i klawiatury
 
 ##    **Konfiguracja rozwoju**
 
@@ -151,6 +246,7 @@ Interfejs automatycznie dostosowuje się do różnych rozmiarów ekranów i orie
 <PackageReference Include="HtmlAgilityPack" />
 <PackageReference Include="Newtonsoft.Json" />
 <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
+<PackageReference Include="System.IdentityModel.Tokens.Jwt" />
 ###     **Dodawanie nowych funkcji**
 
 1. **Nowy model**: Dodaj klasę w folderze `Models/`
