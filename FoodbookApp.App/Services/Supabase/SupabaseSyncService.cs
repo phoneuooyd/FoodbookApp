@@ -25,7 +25,8 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
     private readonly IPreferencesService _preferencesService;
     private readonly IThemeService _themeService;
 
-    private Timer? _syncTimer;
+    private CancellationTokenSource? _syncLoopCts;
+    private Task? _syncLoopTask;
     private readonly SemaphoreSlim _syncLock = new(1, 1);
     private readonly SemaphoreSlim _queueLock = new(1, 1);
     private bool _disposed;
@@ -2228,13 +2229,46 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
     public void StartSyncTimer()
     {
         StopSyncTimer();
-        _syncTimer = new Timer(async _ => await ProcessQueueAsync(), null, DefaultSyncInterval, DefaultSyncInterval);
+        _syncLoopCts = new CancellationTokenSource();
+        _syncLoopTask = SyncLoopAsync(_syncLoopCts.Token);
     }
 
     public void StopSyncTimer()
     {
-        _syncTimer?.Dispose();
-        _syncTimer = null;
+        _syncLoopCts?.Cancel();
+        _syncLoopCts?.Dispose();
+        _syncLoopCts = null;
+        // Don't await _syncLoopTask here — it will complete on its own after cancellation.
+        _syncLoopTask = null;
+    }
+
+    /// <summary>
+    /// Single async loop that replaces Timer + async void callback.
+    /// PeriodicTimer guarantees no overlapping ticks — the next tick only fires
+    /// after the previous await completes, eliminating data races from K2.
+    /// </summary>
+    private async Task SyncLoopAsync(CancellationToken ct)
+    {
+        try
+        {
+            using var timer = new PeriodicTimer(DefaultSyncInterval);
+            while (await timer.WaitForNextTickAsync(ct))
+            {
+                try
+                {
+                    await ProcessQueueAsync(ct);
+                }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception ex)
+                {
+                    Log($"Error in sync loop iteration: {ex.Message}");
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Log("Sync loop cancelled");
+        }
     }
 
     /// <summary>
@@ -2245,12 +2279,8 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
     {
         try
         {
-            _ = Task.Run(async () =>
-            {
-                await Task.Delay(500); // Small delay before restarting
-                StartSyncTimer();
-                Log("Sync timer restarted");
-            });
+            StartSyncTimer();
+            Log("Sync timer restarted");
         }
         catch (Exception ex)
         {
@@ -2259,8 +2289,8 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
     }
 
     /// <summary>
-    /// CRITICAL FIX: Schedule next batch instead of waiting passively for timer
-    /// This ensures continuous processing while respecting rate limits
+    /// Schedule next batch instead of waiting passively for timer.
+    /// Ensures continuous processing while respecting rate limits.
     /// </summary>
     private async Task ScheduleNextBatchAsync(int delayMs, CancellationToken ct)
     {
@@ -2279,28 +2309,62 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             Log($"Error scheduling next batch: {ex.Message}");
         }
     }
-    
-    private Timer? _cloudPollingTimer;
+
+    private CancellationTokenSource? _cloudPollingCts;
+    private Task? _cloudPollingTask;
     private static readonly TimeSpan CloudPollingInterval = TimeSpan.FromMinutes(10);
     
     private void StartCloudPollingTimer()
     {
         StopCloudPollingTimer();
-        _cloudPollingTimer = new Timer(async _ => await PollCloudForChangesAsync(), null, CloudPollingInterval, CloudPollingInterval);
+        _cloudPollingCts = new CancellationTokenSource();
+        _cloudPollingTask = CloudPollingLoopAsync(_cloudPollingCts.Token);
         Log("Cloud polling timer started");
     }
     
     private void StopCloudPollingTimer()
     {
-        _cloudPollingTimer?.Dispose();
-        _cloudPollingTimer = null;
+        _cloudPollingCts?.Cancel();
+        _cloudPollingCts?.Dispose();
+        _cloudPollingCts = null;
+        _cloudPollingTask = null;
+    }
+
+    /// <summary>
+    /// Single async loop for cloud polling that replaces Timer + async void callback.
+    /// Prevents overlapping poll executions (K2 fix).
+    /// </summary>
+    private async Task CloudPollingLoopAsync(CancellationToken ct)
+    {
+        try
+        {
+            using var timer = new PeriodicTimer(CloudPollingInterval);
+            while (await timer.WaitForNextTickAsync(ct))
+            {
+                try
+                {
+                    await PollCloudForChangesAsync();
+                }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception ex)
+                {
+                    Log($"Error in cloud polling loop iteration: {ex.Message}");
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Log("Cloud polling loop cancelled");
+        }
     }
 
     public void Dispose()
     {
         if (_disposed) return;
-        _syncTimer?.Dispose();
-        _cloudPollingTimer?.Dispose();
+        _syncLoopCts?.Cancel();
+        _syncLoopCts?.Dispose();
+        _cloudPollingCts?.Cancel();
+        _cloudPollingCts?.Dispose();
         _syncLock.Dispose();
         _queueLock.Dispose();
         _disposed = true;

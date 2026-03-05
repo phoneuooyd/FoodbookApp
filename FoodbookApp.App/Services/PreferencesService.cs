@@ -3,6 +3,7 @@ using FoodbookApp.Interfaces;
 using FoodbookApp.Services.Auth;
 using Foodbook.Data;
 using Foodbook.Models.DTOs;
+using System.Threading;
 
 namespace Foodbook.Services;
 
@@ -13,7 +14,8 @@ public class PreferencesService : IPreferencesService
 {
     private readonly IAuthTokenStore _tokenStore;
     private bool _suppressCloudSync; // Flag to prevent sync during cloud load
-    
+    private CancellationTokenSource? _syncDebounce;
+
     private const string SelectedCultureKey = "SelectedCulture";
     private const string SelectedThemeKey = "SelectedTheme";
     private const string SelectedColorThemeKey = "SelectedColorTheme";
@@ -68,8 +70,7 @@ public class PreferencesService : IPreferencesService
             Preferences.Set(SelectedCultureKey, cultureCode);
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved culture preference: {cultureCode}");
             
-            // Auto-sync to cloud
-            _ = SyncToCloudAsync();
+            ScheduleCloudSync();
         }
         catch (Exception ex)
         {
@@ -114,8 +115,7 @@ public class PreferencesService : IPreferencesService
             Preferences.Set(SelectedThemeKey, theme.ToString());
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved theme preference: {theme}");
             
-            // Auto-sync to cloud
-            _ = SyncToCloudAsync();
+            ScheduleCloudSync();
         }
         catch (Exception ex)
         {
@@ -154,8 +154,7 @@ public class PreferencesService : IPreferencesService
             Preferences.Set(SelectedColorThemeKey, colorTheme.ToString());
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved color theme preference: {colorTheme}");
             
-            // Auto-sync to cloud
-            _ = SyncToCloudAsync();
+            ScheduleCloudSync();
         }
         catch (Exception ex)
         {
@@ -187,8 +186,7 @@ public class PreferencesService : IPreferencesService
             Preferences.Set(ColorfulBackgroundEnabledKey, isEnabled);
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved colorful background preference: {isEnabled}");
             
-            // Auto-sync to cloud
-            _ = SyncToCloudAsync();
+            ScheduleCloudSync();
         }
         catch (Exception ex)
         {
@@ -220,8 +218,7 @@ public class PreferencesService : IPreferencesService
             Preferences.Set(WallpaperEnabledKey, isEnabled);
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved wallpaper enabled: {isEnabled}");
             
-            // Auto-sync to cloud
-            _ = SyncToCloudAsync();
+            ScheduleCloudSync();
         }
         catch (Exception ex)
         {
@@ -260,8 +257,7 @@ public class PreferencesService : IPreferencesService
             Preferences.Set(SelectedFontFamilyKey, fontFamily.ToString());
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved font family preference: {fontFamily}");
             
-            // Auto-sync to cloud
-            _ = SyncToCloudAsync();
+            ScheduleCloudSync();
         }
         catch (Exception ex)
         {
@@ -300,8 +296,7 @@ public class PreferencesService : IPreferencesService
             Preferences.Set(SelectedFontSizeKey, fontSize.ToString());
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved font size preference: {fontSize}");
             
-            // Auto-sync to cloud
-            _ = SyncToCloudAsync();
+            ScheduleCloudSync();
         }
         catch (Exception ex)
         {
@@ -440,6 +435,27 @@ public class PreferencesService : IPreferencesService
     public void ResumeCloudSync()
     {
         _suppressCloudSync = false;
+    }
+
+    private void ScheduleCloudSync()
+    {
+        _syncDebounce?.Cancel();
+        _syncDebounce?.Dispose();
+        _syncDebounce = new CancellationTokenSource();
+        var ct = _syncDebounce.Token;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(800, ct);
+                await SyncToCloudAsync();
+            }
+            catch (OperationCanceledException)
+            {
+                // Debounced by newer preference change
+            }
+        }, ct);
     }
 
     /// <inheritdoc/>
