@@ -993,24 +993,42 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         }
     }
 
+    private enum ImportMode
+    {
+        Normal,
+        Force
+    }
+
     /// <summary>
     /// Force imports cloud data to local database - always adds/updates regardless of timestamps.
     /// For Cloud-First priority where cloud data should always win.
     /// NOTE: User preferences are NOT applied here - they are applied by the calling method 
     /// (StartInitialSyncAsync or ForceDownloadFromCloudAsync) after this method returns.
     /// </summary>
-    private async Task<int> ForceImportCloudDataToLocalAsync(AppDbContext db, CloudDataSnapshot cloudData, CancellationToken ct)
+    private Task<int> ForceImportCloudDataToLocalAsync(AppDbContext db, CloudDataSnapshot cloudData, CancellationToken ct)
+        => ImportCloudDataCoreAsync(db, cloudData, ImportMode.Force, ct);
+
+    /// <summary>
+    /// Imports cloud data to local database. Returns count of imported entities.
+    /// </summary>
+    private Task<int> ImportCloudDataToLocalAsync(AppDbContext db, CloudDataSnapshot cloudData, CancellationToken ct)
+        => ImportCloudDataCoreAsync(db, cloudData, ImportMode.Normal, ct);
+
+    /// <summary>
+    /// Core cloud->local import logic shared by normal and force modes.
+    /// </summary>
+    private async Task<int> ImportCloudDataCoreAsync(AppDbContext db, CloudDataSnapshot cloudData, ImportMode mode, CancellationToken ct)
     {
         int imported = 0;
-        
+        var isForce = mode == ImportMode.Force;
+
         try
         {
-            Log("=== ForceImportCloudDataToLocalAsync START ===");
-            
+            Log($"=== ImportCloudDataCoreAsync START ({mode}) ===");
+
             // Import in order respecting FK constraints: Folders › Labels › Recipes › Ingredients › Plans › PlannedMeals › ShoppingItems
-            
-            // Folders - FORCE import
-            Log($"Importing {cloudData.Folders.Count} folders...");
+
+            // Folders
             foreach (var folder in cloudData.Folders)
             {
                 var existing = await db.Folders.FindAsync(new object[] { folder.Id }, ct);
@@ -1018,25 +1036,28 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 {
                     db.Folders.Add(folder);
                     imported++;
-                    Log($"  + Added folder: {folder.Name}");
                 }
-                else
+                else if (isForce || folder.UpdatedAt > existing.UpdatedAt)
                 {
-                    // Cloud wins - always update
                     existing.Name = folder.Name;
                     existing.Description = folder.Description;
                     existing.ParentFolderId = folder.ParentFolderId;
                     existing.Order = folder.Order;
-                    existing.CreatedAt = folder.CreatedAt;
-                    existing.UpdatedAt = folder.UpdatedAt ?? DateTime.UtcNow;
+                    if (isForce)
+                    {
+                        existing.CreatedAt = folder.CreatedAt;
+                        existing.UpdatedAt = folder.UpdatedAt ?? DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        existing.UpdatedAt = folder.UpdatedAt;
+                    }
                     imported++;
-                    Log($"  ~ Updated folder: {folder.Name}");
                 }
             }
             await db.SaveChangesAsync(ct);
-            
-            // Recipe Labels - FORCE import
-            Log($"Importing {cloudData.RecipeLabels.Count} labels...");
+
+            // Recipe Labels
             foreach (var label in cloudData.RecipeLabels)
             {
                 var existing = await db.RecipeLabels.FindAsync(new object[] { label.Id }, ct);
@@ -1044,47 +1065,57 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 {
                     db.RecipeLabels.Add(label);
                     imported++;
-                    Log($"  + Added label: {label.Name}");
                 }
-                else
+                else if (isForce || label.UpdatedAt > existing.UpdatedAt)
                 {
                     existing.Name = label.Name;
                     existing.ColorHex = label.ColorHex;
-                    existing.CreatedAt = label.CreatedAt;
-                    existing.UpdatedAt = label.UpdatedAt ?? DateTime.UtcNow;
+                    if (isForce)
+                    {
+                        existing.CreatedAt = label.CreatedAt;
+                        existing.UpdatedAt = label.UpdatedAt ?? DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        existing.UpdatedAt = label.UpdatedAt;
+                    }
                     imported++;
-                    Log($"  ~ Updated label: {label.Name}");
                 }
             }
             await db.SaveChangesAsync(ct);
-            
-            // Recipes - FORCE import (without ingredients - they come separately)
-            Log($"Importing {cloudData.Recipes.Count} recipes...");
+
+            // Recipes
             foreach (var recipe in cloudData.Recipes)
             {
                 var existing = await db.Recipes.FindAsync(new object[] { recipe.Id }, ct);
                 if (existing == null)
                 {
-                    // Detach ingredients - they will be imported separately
-                    var recipeToAdd = new Recipe
+                    if (isForce)
                     {
-                        Id = recipe.Id,
-                        Name = recipe.Name,
-                        Description = recipe.Description,
-                        Calories = recipe.Calories,
-                        Protein = recipe.Protein,
-                        Fat = recipe.Fat,
-                        Carbs = recipe.Carbs,
-                        IloscPorcji = recipe.IloscPorcji,
-                        FolderId = recipe.FolderId,
-                        CreatedAt = recipe.CreatedAt,
-                        UpdatedAt = recipe.UpdatedAt
-                    };
-                    db.Recipes.Add(recipeToAdd);
+                        // Detach ingredients - they will be imported separately
+                        var recipeToAdd = new Recipe
+                        {
+                            Id = recipe.Id,
+                            Name = recipe.Name,
+                            Description = recipe.Description,
+                            Calories = recipe.Calories,
+                            Protein = recipe.Protein,
+                            Fat = recipe.Fat,
+                            Carbs = recipe.Carbs,
+                            IloscPorcji = recipe.IloscPorcji,
+                            FolderId = recipe.FolderId,
+                            CreatedAt = recipe.CreatedAt,
+                            UpdatedAt = recipe.UpdatedAt
+                        };
+                        db.Recipes.Add(recipeToAdd);
+                    }
+                    else
+                    {
+                        db.Recipes.Add(recipe);
+                    }
                     imported++;
-                    Log($"  + Added recipe: {recipe.Name}");
                 }
-                else
+                else if (isForce || recipe.UpdatedAt > existing.UpdatedAt)
                 {
                     existing.Name = recipe.Name;
                     existing.Description = recipe.Description;
@@ -1094,40 +1125,52 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                     existing.Carbs = recipe.Carbs;
                     existing.IloscPorcji = recipe.IloscPorcji;
                     existing.FolderId = recipe.FolderId;
-                    existing.CreatedAt = recipe.CreatedAt;
-                    existing.UpdatedAt = recipe.UpdatedAt ?? DateTime.UtcNow;
+                    if (isForce)
+                    {
+                        existing.CreatedAt = recipe.CreatedAt;
+                        existing.UpdatedAt = recipe.UpdatedAt ?? DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        existing.UpdatedAt = recipe.UpdatedAt;
+                    }
                     imported++;
-                    Log($"  ~ Updated recipe: {recipe.Name}");
                 }
             }
             await db.SaveChangesAsync(ct);
-            
-            // Ingredients - FORCE import
-            Log($"Importing {cloudData.Ingredients.Count} ingredients...");
+
+            // Ingredients
             foreach (var ingredient in cloudData.Ingredients)
             {
                 var existing = await db.Ingredients.FindAsync(new object[] { ingredient.Id }, ct);
                 if (existing == null)
                 {
-                    var ingredientToAdd = new Ingredient
+                    if (isForce)
                     {
-                        Id = ingredient.Id,
-                        Name = ingredient.Name,
-                        Quantity = ingredient.Quantity,
-                        Unit = ingredient.Unit,
-                        UnitWeight = ingredient.UnitWeight,
-                        Calories = ingredient.Calories,
-                        Protein = ingredient.Protein,
-                        Fat = ingredient.Fat,
-                        Carbs = ingredient.Carbs,
-                        RecipeId = ingredient.RecipeId,
-                        CreatedAt = ingredient.CreatedAt,
-                        UpdatedAt = ingredient.UpdatedAt
-                    };
-                    db.Ingredients.Add(ingredientToAdd);
+                        var ingredientToAdd = new Ingredient
+                        {
+                            Id = ingredient.Id,
+                            Name = ingredient.Name,
+                            Quantity = ingredient.Quantity,
+                            Unit = ingredient.Unit,
+                            UnitWeight = ingredient.UnitWeight,
+                            Calories = ingredient.Calories,
+                            Protein = ingredient.Protein,
+                            Fat = ingredient.Fat,
+                            Carbs = ingredient.Carbs,
+                            RecipeId = ingredient.RecipeId,
+                            CreatedAt = ingredient.CreatedAt,
+                            UpdatedAt = ingredient.UpdatedAt
+                        };
+                        db.Ingredients.Add(ingredientToAdd);
+                    }
+                    else
+                    {
+                        db.Ingredients.Add(ingredient);
+                    }
                     imported++;
                 }
-                else
+                else if (isForce || ingredient.UpdatedAt > existing.UpdatedAt)
                 {
                     existing.Name = ingredient.Name;
                     existing.Quantity = ingredient.Quantity;
@@ -1138,16 +1181,21 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                     existing.Fat = ingredient.Fat;
                     existing.Carbs = ingredient.Carbs;
                     existing.RecipeId = ingredient.RecipeId;
-                    existing.CreatedAt = ingredient.CreatedAt;
-                    existing.UpdatedAt = ingredient.UpdatedAt ?? DateTime.UtcNow;
+                    if (isForce)
+                    {
+                        existing.CreatedAt = ingredient.CreatedAt;
+                        existing.UpdatedAt = ingredient.UpdatedAt ?? DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        existing.UpdatedAt = ingredient.UpdatedAt;
+                    }
                     imported++;
                 }
             }
             await db.SaveChangesAsync(ct);
-            Log($"  Imported {cloudData.Ingredients.Count} ingredients");
-            
-            // Plans - FORCE import
-            Log($"Importing {cloudData.Plans.Count} plans...");
+
+            // Plans
             foreach (var plan in cloudData.Plans)
             {
                 var existing = await db.Plans.FindAsync(new object[] { plan.Id }, ct);
@@ -1155,9 +1203,8 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 {
                     db.Plans.Add(plan);
                     imported++;
-                    Log($"  + Added plan: {plan.Title ?? plan.Id.ToString()}");
                 }
-                else
+                else if (isForce || plan.UpdatedAt > existing.UpdatedAt)
                 {
                     existing.StartDate = plan.StartDate;
                     existing.EndDate = plan.EndDate;
@@ -1165,16 +1212,21 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                     existing.Type = plan.Type;
                     existing.Title = plan.Title;
                     existing.LinkedShoppingListPlanId = plan.LinkedShoppingListPlanId;
-                    existing.CreatedAt = plan.CreatedAt;
-                    existing.UpdatedAt = plan.UpdatedAt ?? DateTime.UtcNow;
+                    if (isForce)
+                    {
+                        existing.CreatedAt = plan.CreatedAt;
+                        existing.UpdatedAt = plan.UpdatedAt ?? DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        existing.UpdatedAt = plan.UpdatedAt;
+                    }
                     imported++;
-                    Log($"  ~ Updated plan: {plan.Title ?? plan.Id.ToString()}");
                 }
             }
             await db.SaveChangesAsync(ct);
-            
-            // Planned Meals - FORCE import
-            Log($"Importing {cloudData.PlannedMeals.Count} planned meals...");
+
+            // Planned Meals
             foreach (var meal in cloudData.PlannedMeals)
             {
                 var existing = await db.PlannedMeals.FindAsync(new object[] { meal.Id }, ct);
@@ -1183,21 +1235,27 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                     db.PlannedMeals.Add(meal);
                     imported++;
                 }
-                else
+                else if (isForce || meal.UpdatedAt > existing.UpdatedAt)
                 {
                     existing.RecipeId = meal.RecipeId;
                     existing.PlanId = meal.PlanId;
                     existing.Date = meal.Date;
                     existing.Portions = meal.Portions;
-                    existing.CreatedAt = meal.CreatedAt;
-                    existing.UpdatedAt = meal.UpdatedAt ?? DateTime.UtcNow;
+                    if (isForce)
+                    {
+                        existing.CreatedAt = meal.CreatedAt;
+                        existing.UpdatedAt = meal.UpdatedAt ?? DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        existing.UpdatedAt = meal.UpdatedAt;
+                    }
                     imported++;
                 }
             }
             await db.SaveChangesAsync(ct);
-            
-            // Shopping List Items - FORCE import
-            Log($"Importing {cloudData.ShoppingListItems.Count} shopping items...");
+
+            // Shopping List Items
             foreach (var item in cloudData.ShoppingListItems)
             {
                 var existing = await db.ShoppingListItems.FindAsync(new object[] { item.Id }, ct);
@@ -1206,7 +1264,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                     db.ShoppingListItems.Add(item);
                     imported++;
                 }
-                else
+                else if (isForce || item.UpdatedAt > existing.UpdatedAt)
                 {
                     existing.PlanId = item.PlanId;
                     existing.IngredientName = item.IngredientName;
@@ -1214,30 +1272,35 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                     existing.Unit = item.Unit;
                     existing.IsChecked = item.IsChecked;
                     existing.Order = item.Order;
-                    existing.CreatedAt = item.CreatedAt;
-                    existing.UpdatedAt = item.UpdatedAt ?? DateTime.UtcNow;
+                    if (isForce)
+                    {
+                        existing.CreatedAt = item.CreatedAt;
+                        existing.UpdatedAt = item.UpdatedAt ?? DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        existing.UpdatedAt = item.UpdatedAt;
+                    }
                     imported++;
                 }
             }
             await db.SaveChangesAsync(ct);
-            
-            // NOTE: User preferences are applied by calling method, not here
-            // This avoids duplicate API calls since preferences are already in CloudDataSnapshot
+
             if (cloudData.UserPreferences != null)
             {
-                Log($"  UserPreferences present in snapshot (will be applied by caller)");
+                Log("UserPreferences present in snapshot (will be applied by caller)");
             }
-            
-            Log($"=== ForceImportCloudDataToLocalAsync COMPLETE: {imported} entities imported ===");
+
+            Log($"=== ImportCloudDataCoreAsync COMPLETE ({mode}): {imported} entities imported ===");
         }
         catch (Exception ex)
         {
-            Log($"ERROR in ForceImportCloudDataToLocalAsync: {ex.Message}");
+            Log($"ERROR in ImportCloudDataCoreAsync ({mode}): {ex.Message}");
             if (ex.InnerException != null)
                 Log($"  Inner: {ex.InnerException.Message}");
             throw;
         }
-        
+
         return imported;
     }
     
@@ -1291,189 +1354,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             Log($"ERROR in PollCloudForChangesAsync: {ex.Message}");
         }
     }
-    
-    /// <summary>
-    /// Imports cloud data to local database. Returns count of imported entities.
-    /// </summary>
-    private async Task<int> ImportCloudDataToLocalAsync(AppDbContext db, CloudDataSnapshot cloudData, CancellationToken ct)
-    {
-        int imported = 0;
-        
-        try
-        {
-            // Import in order respecting FK constraints: Folders ? Labels ? Recipes ? Ingredients ? Plans ? PlannedMeals ? ShoppingItems
-            
-            // Folders
-            foreach (var folder in cloudData.Folders)
-            {
-                var existing = await db.Folders.FindAsync(new object[] { folder.Id }, ct);
-                if (existing == null)
-                {
-                    db.Folders.Add(folder);
-                    imported++;
-                }
-                else if (folder.UpdatedAt > existing.UpdatedAt)
-                {
-                    existing.Name = folder.Name;
-                    existing.Description = folder.Description;
-                    existing.ParentFolderId = folder.ParentFolderId;
-                    existing.Order = folder.Order;
-                    existing.UpdatedAt = folder.UpdatedAt;
-                    imported++;
-                }
-            }
-            await db.SaveChangesAsync(ct);
-            
-            // Recipe Labels
-            foreach (var label in cloudData.RecipeLabels)
-            {
-                var existing = await db.RecipeLabels.FindAsync(new object[] { label.Id }, ct);
-                if (existing == null)
-                {
-                    db.RecipeLabels.Add(label);
-                    imported++;
-                }
-                else if (label.UpdatedAt > existing.UpdatedAt)
-                {
-                    existing.Name = label.Name;
-                    existing.ColorHex = label.ColorHex;
-                    existing.UpdatedAt = label.UpdatedAt;
-                    imported++;
-                }
-            }
-            await db.SaveChangesAsync(ct);
-            
-            // Recipes
-            foreach (var recipe in cloudData.Recipes)
-            {
-                var existing = await db.Recipes.FindAsync(new object[] { recipe.Id }, ct);
-                if (existing == null)
-                {
-                    db.Recipes.Add(recipe);
-                    imported++;
-                }
-                else if (recipe.UpdatedAt > existing.UpdatedAt)
-                {
-                    existing.Name = recipe.Name;
-                    existing.Description = recipe.Description;
-                    existing.Calories = recipe.Calories;
-                    existing.Protein = recipe.Protein;
-                    existing.Fat = recipe.Fat;
-                    existing.Carbs = recipe.Carbs;
-                    existing.IloscPorcji = recipe.IloscPorcji;
-                    existing.FolderId = recipe.FolderId;
-                    existing.UpdatedAt = recipe.UpdatedAt;
-                    imported++;
-                }
-            }
-            await db.SaveChangesAsync(ct);
-            
-            // Ingredients
-            foreach (var ingredient in cloudData.Ingredients)
-            {
-                var existing = await db.Ingredients.FindAsync(new object[] { ingredient.Id }, ct);
-                if (existing == null)
-                {
-                    db.Ingredients.Add(ingredient);
-                    imported++;
-                }
-                else if (ingredient.UpdatedAt > existing.UpdatedAt)
-                {
-                    existing.Name = ingredient.Name;
-                    existing.Quantity = ingredient.Quantity;
-                    existing.Unit = ingredient.Unit;
-                    existing.UnitWeight = ingredient.UnitWeight;
-                    existing.Calories = ingredient.Calories;
-                    existing.Protein = ingredient.Protein;
-                    existing.Fat = ingredient.Fat;
-                    existing.Carbs = ingredient.Carbs;
-                    existing.RecipeId = ingredient.RecipeId;
-                    existing.UpdatedAt = ingredient.UpdatedAt;
-                    imported++;
-                }
-            }
-            await db.SaveChangesAsync(ct);
-            
-            // Plans
-            foreach (var plan in cloudData.Plans)
-            {
-                var existing = await db.Plans.FindAsync(new object[] { plan.Id }, ct);
-                if (existing == null)
-                {
-                    db.Plans.Add(plan);
-                    imported++;
-                }
-                else if (plan.UpdatedAt > existing.UpdatedAt)
-                {
-                    existing.StartDate = plan.StartDate;
-                    existing.EndDate = plan.EndDate;
-                    existing.IsArchived = plan.IsArchived;
-                    existing.Type = plan.Type;
-                    existing.Title = plan.Title;
-                    existing.LinkedShoppingListPlanId = plan.LinkedShoppingListPlanId;
-                    existing.UpdatedAt = plan.UpdatedAt;
-                    imported++;
-                }
-            }
-            await db.SaveChangesAsync(ct);
-            
-            // Planned Meals
-            foreach (var meal in cloudData.PlannedMeals)
-            {
-                var existing = await db.PlannedMeals.FindAsync(new object[] { meal.Id }, ct);
-                if (existing == null)
-                {
-                    db.PlannedMeals.Add(meal);
-                    imported++;
-                }
-                else if (meal.UpdatedAt > existing.UpdatedAt)
-                {
-                    existing.RecipeId = meal.RecipeId;
-                    existing.PlanId = meal.PlanId;
-                    existing.Date = meal.Date;
-                    existing.Portions = meal.Portions;
-                    existing.UpdatedAt = meal.UpdatedAt;
-                    imported++;
-                }
-            }
-            await db.SaveChangesAsync(ct);
-            
-            // Shopping List Items
-            foreach (var item in cloudData.ShoppingListItems)
-            {
-                var existing = await db.ShoppingListItems.FindAsync(new object[] { item.Id }, ct);
-                if (existing == null)
-                {
-                    db.ShoppingListItems.Add(item);
-                    imported++;
-                }
-                else if (item.UpdatedAt > existing.UpdatedAt)
-                {
-                    existing.PlanId = item.PlanId;
-                    existing.IngredientName = item.IngredientName;
-                    existing.Quantity = item.Quantity;
-                    existing.Unit = item.Unit;
-                    existing.IsChecked = item.IsChecked;
-                    existing.Order = item.Order;
-                    existing.UpdatedAt = item.UpdatedAt;
-                    imported++;
-                }
-            }
-            await db.SaveChangesAsync(ct);
-            
-            Log($"=== ForceImportCloudDataToLocalAsync COMPLETE: {imported} entities imported ===");
-        }
-        catch (Exception ex)
-        {
-            Log($"ERROR in ForceImportCloudDataToLocalAsync: {ex.Message}");
-            if (ex.InnerException != null)
-                Log($"  Inner: {ex.InnerException.Message}");
-            throw;
-        }
-        
-        return imported;
-    }
-    
+
     /// <summary>
     /// Queues only local entities that don't exist in cloud for upload (used in cloud-first sync).
     /// </summary>

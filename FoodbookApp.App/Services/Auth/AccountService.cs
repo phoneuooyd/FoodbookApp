@@ -17,13 +17,20 @@ public sealed class AccountService : IAccountService
     private readonly ISupabaseAuthService _auth;
     private readonly IAuthTokenStore _tokenStore;
     private readonly global::Supabase.Client _client;
+    private readonly ISupabaseSyncService _syncService;
 
-    public AccountService(AppDbContext db, ISupabaseAuthService auth, IAuthTokenStore tokenStore, global::Supabase.Client client)
+    public AccountService(
+        AppDbContext db,
+        ISupabaseAuthService auth,
+        IAuthTokenStore tokenStore,
+        global::Supabase.Client client,
+        ISupabaseSyncService syncService)
     {
         _db = db;
         _auth = auth;
         _tokenStore = tokenStore;
         _client = client;
+        _syncService = syncService;
     }
 
     public async Task<IReadOnlyList<AuthAccount>> GetAccountsAsync(CancellationToken ct = default)
@@ -102,28 +109,20 @@ public sealed class AccountService : IAccountService
                 var saved = await SecureStorage.GetAsync(storageKey);
                 if (!string.IsNullOrWhiteSpace(saved))
                 {
-                    var syncService = MauiProgram.ServiceProvider?.GetService(typeof(ISupabaseSyncService)) as ISupabaseSyncService;
-                    if (syncService != null)
+                    if (saved == "cloud")
                     {
-                        if (saved == "cloud")
-                        {
-                            System.Diagnostics.Debug.WriteLine("[AccountService] Applying saved sync preference: cloud-first");
-                            await syncService.EnableCloudSyncAsync(Foodbook.Models.SyncPriority.Cloud, ct);
-                        }
-                        else if (saved == "local")
-                        {
-                            System.Diagnostics.Debug.WriteLine("[AccountService] Applying saved sync preference: local-first");
-                            await syncService.EnableCloudSyncAsync(Foodbook.Models.SyncPriority.Local, ct);
-                        }
-                        else if (saved == "disabled")
-                        {
-                            System.Diagnostics.Debug.WriteLine("[AccountService] Saved sync preference: disabled - ensuring cloud sync is disabled");
-                            await syncService.DisableCloudSyncAsync(ct);
-                        }
+                        System.Diagnostics.Debug.WriteLine("[AccountService] Applying saved sync preference: cloud-first");
+                        await _syncService.EnableCloudSyncAsync(Foodbook.Models.SyncPriority.Cloud, ct);
                     }
-                    else
+                    else if (saved == "local")
                     {
-                        System.Diagnostics.Debug.WriteLine("[AccountService] ISupabaseSyncService not available to apply saved sync preference");
+                        System.Diagnostics.Debug.WriteLine("[AccountService] Applying saved sync preference: local-first");
+                        await _syncService.EnableCloudSyncAsync(Foodbook.Models.SyncPriority.Local, ct);
+                    }
+                    else if (saved == "disabled")
+                    {
+                        System.Diagnostics.Debug.WriteLine("[AccountService] Saved sync preference: disabled - ensuring cloud sync is disabled");
+                        await _syncService.DisableCloudSyncAsync(ct);
                     }
                 }
                 else
