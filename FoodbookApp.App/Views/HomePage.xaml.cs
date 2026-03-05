@@ -10,7 +10,7 @@ using Foodbook.Services;
 
 namespace Foodbook.Views;
 
-public partial class HomePage : ContentPage
+public partial class HomePage : ContentPage, ITabLoadable
 {
     private HomeViewModel ViewModel => BindingContext as HomeViewModel;
     private IThemeService? _themeService;
@@ -300,6 +300,26 @@ public partial class HomePage : ContentPage
         {
             System.Diagnostics.Debug.WriteLine($"[HomePage] OnBackButtonPressed error: {ex.Message}");
             return base.OnBackButtonPressed();
+        }
+    }
+
+    /// <summary>
+    /// Called by TabBarComponent when this tab is activated.
+    /// </summary>
+    public async Task OnTabActivatedAsync()
+    {
+        try
+        {
+            InitializeThemeAndFontHandling();
+
+            if (ViewModel != null)
+            {
+                await ViewModel.LoadAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HomePage] OnTabActivatedAsync error: {ex.Message}");
         }
     }
 }

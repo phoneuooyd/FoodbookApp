@@ -1,10 +1,11 @@
 using Microsoft.Maui.Controls;
 using Foodbook.ViewModels;
 using Foodbook.Views.Base;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.Views
 {
-    public partial class ShoppingListPage : ContentPage
+    public partial class ShoppingListPage : ContentPage, ITabLoadable
     {
         private readonly ShoppingListViewModel _viewModel;
         private readonly PageThemeHelper _themeHelper;
@@ -35,6 +36,22 @@ namespace Foodbook.Views
             // Cleanup theme and font handling
             _themeHelper.Cleanup();
             _viewModel.StopListening();
+        }
+
+        /// <summary>
+        /// Called by TabBarComponent when this tab is activated.
+        /// </summary>
+        public async Task OnTabActivatedAsync()
+        {
+            try
+            {
+                _viewModel.StartListening();
+                await _viewModel.LoadPlansAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListPage] OnTabActivatedAsync error: {ex.Message}");
+            }
         }
     }
 }

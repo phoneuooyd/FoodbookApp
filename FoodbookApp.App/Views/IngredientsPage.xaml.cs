@@ -9,10 +9,11 @@ using CommunityToolkit.Maui.Extensions;
 using CommunityToolkit.Maui.Behaviors;
 using Foodbook.Models;
 using Foodbook.Services;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.Views;
 
-public partial class IngredientsPage : ContentPage
+public partial class IngredientsPage : ContentPage, ITabLoadable
 {
     private readonly IngredientsViewModel _viewModel;
     private readonly PageThemeHelper _themeHelper;
@@ -148,6 +149,22 @@ public partial class IngredientsPage : ContentPage
         AppEvents.IngredientsChangedAsync += OnIngredientsChangedAsync;
         // Subscribe to single-ingredient saved event to force reload immediately
         AppEvents.IngredientSaved += OnIngredientSaved;
+    }
+
+    /// <summary>
+    /// Called by TabBarComponent when this tab is activated.
+    /// </summary>
+    public async Task OnTabActivatedAsync()
+    {
+        try
+        {
+            InitializeSubscriptionsForTabBar();
+            await _viewModel.LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientsPage] OnTabActivatedAsync error: {ex.Message}");
+        }
     }
 
     // Direct refresh API used by other components

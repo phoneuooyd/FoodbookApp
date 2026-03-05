@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using FoodbookApp;
 using FoodbookApp.Interfaces;
-using CommunityToolkit.Mvvm.Messaging;
 
 namespace Foodbook.Views.Components
 {
@@ -452,30 +451,23 @@ private void UpdateContent(TabItemModel tab)
         }
 
         /// <summary>
-        /// Checks if current page implements unsaved changes warning (_isDirty pattern)
+        /// Checks if current page or its ViewModel has unsaved changes.
+        /// Uses IHasUnsavedChanges interface instead of reflection.
         /// </summary>
         private async Task<bool> ShouldPreventNavigationAsync()
         {
             try
             {
-                var currentPage = Shell.Current?.CurrentPage as BindableObject;
+                var currentPage = Shell.Current?.CurrentPage;
                 if (currentPage == null) return false;
 
-                // Check for _isDirty field
-                var pageType = currentPage.GetType();
-                var isDirtyField = pageType.GetField("_isDirty", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                if (isDirtyField != null && isDirtyField.GetValue(currentPage) is bool isDirty && isDirty)
+                // Check page itself
+                if (currentPage is IHasUnsavedChanges pageWithChanges && pageWithChanges.HasUnsavedChanges)
                     return await ShowUnsavedChangesDialogAsync();
 
-                // Try to find HasUnsavedChanges property in ViewModel
-                var bindingContext = currentPage.BindingContext;
-                if (bindingContext != null)
-                {
-                    var vmType = bindingContext.GetType();
-                    var hasUnsavedProp = vmType.GetProperty("HasUnsavedChanges");
-                    if (hasUnsavedProp != null && hasUnsavedProp.GetValue(bindingContext) is bool hasUnsaved && hasUnsaved)
-                        return await ShowUnsavedChangesDialogAsync();
-                }
+                // Check ViewModel
+                if (currentPage.BindingContext is IHasUnsavedChanges vmWithChanges && vmWithChanges.HasUnsavedChanges)
+                    return await ShowUnsavedChangesDialogAsync();
 
                 return false;
             }
@@ -523,97 +515,21 @@ private void UpdateContent(TabItemModel tab)
         {
             try
             {
-                var vm = page.BindingContext;
-                System.Diagnostics.Debug.WriteLine($"[TabBarComponent] TriggerInitialLoadAsync for {page.GetType().Name}, VM: {vm?.GetType().Name ?? "null"}");
-                if (vm == null) 
-                {
-                    System.Diagnostics.Debug.WriteLine($"[TabBarComponent] No VM found for {page.GetType().Name}, skipping load");
-                    return;
-                }
+                System.Diagnostics.Debug.WriteLine($"[TabBarComponent] TriggerInitialLoadAsync for {page.GetType().Name}");
 
-                // First, initialize theme/font handling if the page has it
+                // Initialize theme/font handling if present (still via reflection — low risk, private method)
                 var initThemeMethod = page.GetType().GetMethod("InitializeThemeAndFontHandling", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                if (initThemeMethod != null)
-                {
-                    initThemeMethod.Invoke(page, null);
-                }
+                initThemeMethod?.Invoke(page, null);
 
-                // ?? Explicit handling for HomeViewModel (most reliable path) ??
-                if (vm is Foodbook.ViewModels.HomeViewModel homeVm)
+                // Use interface instead of reflection for tab activation
+                if (page is ITabLoadable tabLoadable)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Direct HomeViewModel.LoadAsync call");
-                    await homeVm.LoadAsync();
-                    System.Diagnostics.Debug.WriteLine($"[TabBarComponent] HomeViewModel.LoadAsync completed");
+                    System.Diagnostics.Debug.WriteLine($"[TabBarComponent] ITabLoadable.OnTabActivatedAsync on {page.GetType().Name}");
+                    await tabLoadable.OnTabActivatedAsync();
                     return;
                 }
 
-                // Handle specific page initializations
-                var pageType = page.GetType();
-                if (pageType.Name == "IngredientsPage")
-                {
-                    var initSubsMethod = pageType.GetMethod("InitializeSubscriptionsForTabBar", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                    if (initSubsMethod != null)
-                    {
-                        initSubsMethod.Invoke(page, null);
-                    }
-                }
-                else if (pageType.Name == "RecipesPage")
-                {
-                    // Reset folder breadcrumb to root on the Recipes tab by calling VM method
-                    var resetMethod = vm.GetType().GetMethod("ResetFolderNavigation", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                    if (resetMethod != null)
-                    {
-                        resetMethod.Invoke(vm, null);
-                    }
-
-                    var triggerReloadMethod = pageType.GetMethod("TriggerReloadAsync", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                    if (triggerReloadMethod != null)
-                    {
-                        var task = triggerReloadMethod.Invoke(page, null) as Task;
-                        if (task != null)
-                        {
-                            await task;
-                            return;
-                        }
-                    }
-                }
-                else if (pageType.Name == "ShoppingListPage")
-                {
-                    var startListeningMethod = pageType.GetMethod("StartListening", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                    if (startListeningMethod != null)
-                    {
-                        startListeningMethod.Invoke(page, null);
-                    }
-                }
-
-                // ?? Generic reflection fallback for other VMs ??
-                var vmType = vm.GetType();
-                var loadRecipes = vmType.GetMethod("LoadRecipesAsync");
-                if (loadRecipes != null)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Invoking LoadRecipesAsync on {vmType.Name}");
-                    var task = loadRecipes.Invoke(vm, null) as Task;
-                    if (task != null) await task;
-                    return;
-                }
-                var loadAsync = vmType.GetMethod("LoadAsync");
-                if (loadAsync != null)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Invoking LoadAsync on {vmType.Name}");
-                    var task = loadAsync.Invoke(vm, null) as Task;
-                    if (task != null) await task;
-                    return;
-                }
-                var loadPlans = vmType.GetMethod("LoadPlansAsync");
-                if (loadPlans != null)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Invoking LoadPlansAsync on {vmType.Name}");
-                    var task = loadPlans.Invoke(vm, null) as Task;
-                    if (task != null) await task;
-                    return;
-                }
-
-                System.Diagnostics.Debug.WriteLine($"[TabBarComponent] No load method found on {vmType.Name}");
+                System.Diagnostics.Debug.WriteLine($"[TabBarComponent] {page.GetType().Name} does not implement ITabLoadable - skipping load");
             }
             catch (Exception ex)
             {

@@ -9,7 +9,7 @@ using Foodbook.Views.Base;
 namespace Foodbook.Views
 {
     [QueryProperty(nameof(PlanId), "planId")]
-    public partial class PlannerPage : ContentPage
+    public partial class PlannerPage : ContentPage, ITabLoadable
     {
         private readonly object _viewModel; // Can be PlannerViewModel or PlannerEditViewModel
         private readonly PageThemeHelper _themeHelper;
@@ -168,6 +168,23 @@ namespace Foodbook.Views
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[PlannerPage] RefreshMealsRecipesAsync failed: {ex.Message}");
+            }
+        }
+
+        public async Task OnTabActivatedAsync()
+        {
+            try
+            {
+                if (_viewModel is PlannerViewModel newVM)
+                {
+                    await newVM.LoadAsync(forceReload: false);
+                }
+                // PlannerEditViewModel is loaded via OnAppearing + LoadPlanForEditAsync(planId);
+                // no parameterless reload method exists, so skip.
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PlannerPage] OnTabActivatedAsync error: {ex.Message}");
             }
         }
 

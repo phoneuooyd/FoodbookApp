@@ -215,11 +215,18 @@ public partial class ShoppingListDetailPage : ContentPage
         }
         catch { }
 
-        // NOTE: Do NOT unsubscribe popup event here - we need it to set skip flag
-        // when popup closes. The popup may cause OnDisappearing to fire.
-        // Unsubscription is done only on page destruction or explicit navigation away.
-        
-        // Don't unsubscribe SaveCompletedAsync - it's needed for save flow
+        // Unsubscribe popup event to prevent static event memory leak (S3).
+        // The skip flag (_skipNextAppearReload) is set when the popup opens, before
+        // OnDisappearing fires, so the flag is preserved across unsubscribe/resubscribe.
+        try
+        {
+            if (_popupSubscribed)
+            {
+                SimplePicker.GlobalPopupStateChanged -= OnGlobalPickerPopupStateChanged;
+                _popupSubscribed = false;
+            }
+        }
+        catch { }
     }
 
     protected override bool OnBackButtonPressed()

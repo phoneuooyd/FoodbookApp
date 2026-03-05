@@ -11,7 +11,7 @@ namespace Foodbook.Models.DTOs
     {
         [JsonPropertyName("id"), JsonProperty("id")] public Guid? Id { get; set; }
         [JsonPropertyName("owner_id"), JsonProperty("owner_id")] public string? OwnerId { get; set; }
-        [JsonPropertyName("plan_id"), JsonProperty("plan_id")] public Guid? PlanId { get; set; }
+        [Column("plan_id"), JsonPropertyName("plan_id"), JsonProperty("plan_id")] public Guid? PlanId { get; set; }
         [JsonPropertyName("ingredient_name"), JsonProperty("ingredient_name")] public string Name { get; set; } = string.Empty;
         [JsonPropertyName("unit"), JsonProperty("unit")] public int? Unit { get; set; }
         [JsonPropertyName("is_checked"), JsonProperty("is_checked")] public bool? IsChecked { get; set; }

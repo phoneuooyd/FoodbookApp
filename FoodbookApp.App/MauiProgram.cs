@@ -148,12 +148,12 @@ namespace FoodbookApp
             // Deduplication Service - singleton to maintain cache across login sessions
             builder.Services.AddSingleton<IDeduplicationService, DeduplicationService>();
 
-            builder.Services.AddScoped<RecipeViewModel>();
+            builder.Services.AddTransient<RecipeViewModel>();
             builder.Services.AddTransient<AddRecipeViewModel>();
-            builder.Services.AddScoped<PlannerViewModel>();
+            builder.Services.AddTransient<PlannerViewModel>();
             builder.Services.AddScoped<PlannerEditViewModel>(); 
-            builder.Services.AddScoped<HomeViewModel>();
-            builder.Services.AddScoped<ShoppingListViewModel>();
+            builder.Services.AddTransient<HomeViewModel>();
+            builder.Services.AddTransient<ShoppingListViewModel>();
             builder.Services.AddScoped<ShoppingListDetailViewModel>();
             builder.Services.AddScoped<IngredientsViewModel>();
             builder.Services.AddScoped<IngredientFormViewModel>();
@@ -165,15 +165,15 @@ namespace FoodbookApp
             builder.Services.AddTransient<PlannerListsViewModel>();
 
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering pages");
-            builder.Services.AddScoped<HomePage>();
-            builder.Services.AddScoped<RecipesPage>();
+            builder.Services.AddTransient<HomePage>();
+            builder.Services.AddTransient<RecipesPage>();
             builder.Services.AddTransient<AddRecipePage>();
-            builder.Services.AddScoped<IngredientsPage>();
+            builder.Services.AddTransient<IngredientsPage>();
             builder.Services.AddScoped<IngredientFormPage>();
-            builder.Services.AddScoped<PlannerPage>();
+            builder.Services.AddTransient<PlannerPage>();
             builder.Services.AddScoped<PlannerListsPage>();
             builder.Services.AddScoped<MealFormPage>();
-            builder.Services.AddScoped<ShoppingListPage>();
+            builder.Services.AddTransient<ShoppingListPage>();
             builder.Services.AddScoped<ShoppingListDetailPage>();
             builder.Services.AddScoped<ArchivePage>();
             builder.Services.AddScoped<SettingsPage>();
@@ -213,7 +213,7 @@ namespace FoodbookApp
             {
                 System.Diagnostics.Debug.WriteLine("[MauiProgram] Initializing database...");
                 var dbService = app.Services.GetRequiredService<IDatabaseService>();
-                dbService.InitializeAsync().GetAwaiter().GetResult();
+                Task.Run(() => dbService.InitializeAsync()).GetAwaiter().GetResult();
                 System.Diagnostics.Debug.WriteLine("[MauiProgram] ✓ Database ready");
             }
             catch (Exception ex)

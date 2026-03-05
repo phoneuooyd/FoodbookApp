@@ -431,6 +431,18 @@ public class PreferencesService : IPreferencesService
     }
 
     /// <inheritdoc/>
+    public void SuppressCloudSync()
+    {
+        _suppressCloudSync = true;
+    }
+
+    /// <inheritdoc/>
+    public void ResumeCloudSync()
+    {
+        _suppressCloudSync = false;
+    }
+
+    /// <inheritdoc/>
     public void ResetAllToDefaults()
     {
         try

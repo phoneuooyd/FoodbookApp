@@ -17,7 +17,7 @@ using Foodbook.Messages;
 
 namespace Foodbook.ViewModels
 {
-    public class AddRecipeViewModel : INotifyPropertyChanged
+    public class AddRecipeViewModel : INotifyPropertyChanged, IHasUnsavedChanges
     {
         private Recipe? _editingRecipe;
         

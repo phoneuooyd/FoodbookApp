@@ -14,7 +14,7 @@ using FoodbookApp.Models.Messages;
 
 namespace Foodbook.Views;
 
-public partial class RecipesPage : ContentPage
+public partial class RecipesPage : ContentPage, ITabLoadable
 {
     private readonly RecipeViewModel _viewModel;
     private readonly PageThemeHelper _themeHelper;
@@ -177,6 +177,14 @@ public partial class RecipesPage : ContentPage
         {
             System.Diagnostics.Debug.WriteLine($"[RecipesPage] TriggerReloadAsync failed: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Called by TabBarComponent when this tab is activated.
+    /// </summary>
+    public async Task OnTabActivatedAsync()
+    {
+        await TriggerReloadAsync();
     }
 
     private async Task OnRecipesChangedAsync()

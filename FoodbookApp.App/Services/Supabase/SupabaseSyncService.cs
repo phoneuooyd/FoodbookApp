@@ -22,7 +22,6 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IAuthTokenStore _tokenStore;
-    private readonly ISupabaseCrudService _crudService;
     private readonly IPreferencesService _preferencesService;
     private readonly IThemeService _themeService;
 
@@ -58,12 +57,10 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
 
     public SupabaseSyncService(
         IServiceProvider serviceProvider,
-        IAuthTokenStore tokenStore,
-        ISupabaseCrudService crudService)
+        IAuthTokenStore tokenStore)
     {
         _serviceProvider = serviceProvider;
         _tokenStore = tokenStore;
-        _crudService = crudService;
         
         // Resolve preferences and theme services (optional - may be null during startup)
         try
@@ -78,6 +75,20 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             Log($"WARNING: Failed to resolve preferences/theme services: {ex.Message}");
             throw;
         }
+    }
+
+    private async Task ExecuteWithCrudServiceAsync(Func<ISupabaseCrudService, Task> action)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var crudService = scope.ServiceProvider.GetRequiredService<ISupabaseCrudService>();
+        await action(crudService);
+    }
+
+    private async Task<T> ExecuteWithCrudServiceAsync<T>(Func<ISupabaseCrudService, Task<T>> action)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var crudService = scope.ServiceProvider.GetRequiredService<ISupabaseCrudService>();
+        return await action(crudService);
     }
 
     public async Task<SyncState?> GetSyncStateAsync(CancellationToken ct = default)
@@ -403,7 +414,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 
                 try
                 {
-                    var cloudData = await _crudService.FetchAllCloudDataAsync(ct);
+                    var cloudData = await ExecuteWithCrudServiceAsync(crud => crud.FetchAllCloudDataAsync(ct));
                     
                     Log($"Cloud data fetched: " +
                         $"Folders={cloudData.Folders.Count}, " +
@@ -893,7 +904,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
 
             // Fetch ALL cloud data
             Log("Fetching all data from cloud...");
-            var cloudData = await _crudService.FetchAllCloudDataAsync(ct);
+            var cloudData = await ExecuteWithCrudServiceAsync(crud => crud.FetchAllCloudDataAsync(ct));
             
             Log($"Cloud data fetched: " +
                 $"Folders={cloudData.Folders.Count}, " +
@@ -1263,7 +1274,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             }
 
             // Fetch current cloud data
-            var cloudData = await _crudService.FetchAllCloudDataAsync();
+            var cloudData = await ExecuteWithCrudServiceAsync(crud => crud.FetchAllCloudDataAsync());
             
             // Import changes to local DB (only newer/missing items)
             var importedCount = await ImportCloudDataToLocalAsync(db, cloudData, default);
@@ -1685,12 +1696,12 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             case SyncOperationType.Update:
                 var folder = DeserializeEntity<Folder>(entry.Payload!);
                 if (entry.OperationType == SyncOperationType.Insert)
-                    await _crudService.AddFolderAsync(folder, ct);
+                    await ExecuteWithCrudServiceAsync(crud => crud.AddFolderAsync(folder, ct));
                 else
-                    await _crudService.UpdateFolderAsync(folder, ct);
+                    await ExecuteWithCrudServiceAsync(crud => crud.UpdateFolderAsync(folder, ct));
                 break;
             case SyncOperationType.Delete:
-                await _crudService.DeleteFolderAsync(entry.EntityId, ct);
+                await ExecuteWithCrudServiceAsync(crud => crud.DeleteFolderAsync(entry.EntityId, ct));
                 break;
         }
     }
@@ -1703,12 +1714,12 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             case SyncOperationType.Update:
                 var recipe = DeserializeEntity<Recipe>(entry.Payload!);
                 if (entry.OperationType == SyncOperationType.Insert)
-                    await _crudService.AddRecipeAsync(recipe, ct);
+                    await ExecuteWithCrudServiceAsync(crud => crud.AddRecipeAsync(recipe, ct));
                 else
-                    await _crudService.UpdateRecipeAsync(recipe, ct);
+                    await ExecuteWithCrudServiceAsync(crud => crud.UpdateRecipeAsync(recipe, ct));
                 break;
             case SyncOperationType.Delete:
-                await _crudService.DeleteRecipeAsync(entry.EntityId, ct);
+                await ExecuteWithCrudServiceAsync(crud => crud.DeleteRecipeAsync(entry.EntityId, ct));
                 break;
         }
     }
@@ -1721,12 +1732,12 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             case SyncOperationType.Update:
                 var ingredient = DeserializeEntity<Ingredient>(entry.Payload!);
                 if (entry.OperationType == SyncOperationType.Insert)
-                    await _crudService.AddIngredientAsync(ingredient, ct);
+                    await ExecuteWithCrudServiceAsync(crud => crud.AddIngredientAsync(ingredient, ct));
                 else
-                    await _crudService.UpdateIngredientAsync(ingredient, ct);
+                    await ExecuteWithCrudServiceAsync(crud => crud.UpdateIngredientAsync(ingredient, ct));
                 break;
             case SyncOperationType.Delete:
-                await _crudService.DeleteIngredientAsync(entry.EntityId, ct);
+                await ExecuteWithCrudServiceAsync(crud => crud.DeleteIngredientAsync(entry.EntityId, ct));
                 break;
         }
     }
@@ -1739,12 +1750,12 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             case SyncOperationType.Update:
                 var label = DeserializeEntity<RecipeLabel>(entry.Payload!);
                 if (entry.OperationType == SyncOperationType.Insert)
-                    await _crudService.AddRecipeLabelAsync(label, ct);
+                    await ExecuteWithCrudServiceAsync(crud => crud.AddRecipeLabelAsync(label, ct));
                 else
-                    await _crudService.UpdateRecipeLabelAsync(label, ct);
+                    await ExecuteWithCrudServiceAsync(crud => crud.UpdateRecipeLabelAsync(label, ct));
                 break;
             case SyncOperationType.Delete:
-                await _crudService.DeleteRecipeLabelAsync(entry.EntityId, ct);
+                await ExecuteWithCrudServiceAsync(crud => crud.DeleteRecipeLabelAsync(entry.EntityId, ct));
                 break;
         }
     }
@@ -1757,12 +1768,12 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             case SyncOperationType.Update:
                 var plan = DeserializeEntity<Plan>(entry.Payload!);
                 if (entry.OperationType == SyncOperationType.Insert)
-                    await _crudService.AddPlanAsync(plan, ct);
+                    await ExecuteWithCrudServiceAsync(crud => crud.AddPlanAsync(plan, ct));
                 else
-                    await _crudService.UpdatePlanAsync(plan, ct);
+                    await ExecuteWithCrudServiceAsync(crud => crud.UpdatePlanAsync(plan, ct));
                 break;
             case SyncOperationType.Delete:
-                await _crudService.DeletePlanAsync(entry.EntityId, ct);
+                await ExecuteWithCrudServiceAsync(crud => crud.DeletePlanAsync(entry.EntityId, ct));
                 break;
         }
     }
@@ -1775,12 +1786,12 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             case SyncOperationType.Update:
                 var meal = DeserializeEntity<PlannedMeal>(entry.Payload!);
                 if (entry.OperationType == SyncOperationType.Insert)
-                    await _crudService.AddPlannedMealAsync(meal, ct);
+                    await ExecuteWithCrudServiceAsync(crud => crud.AddPlannedMealAsync(meal, ct));
                 else
-                    await _crudService.UpdatePlannedMealAsync(meal, ct);
+                    await ExecuteWithCrudServiceAsync(crud => crud.UpdatePlannedMealAsync(meal, ct));
                 break;
             case SyncOperationType.Delete:
-                await _crudService.DeletePlannedMealAsync(entry.EntityId, ct);
+                await ExecuteWithCrudServiceAsync(crud => crud.DeletePlannedMealAsync(entry.EntityId, ct));
                 break;
         }
     }
@@ -1793,12 +1804,12 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             case SyncOperationType.Update:
                 var item = DeserializeEntity<ShoppingListItem>(entry.Payload!);
                 if (entry.OperationType == SyncOperationType.Insert)
-                    await _crudService.AddShoppingListItemAsync(item, ct);
+                    await ExecuteWithCrudServiceAsync(crud => crud.AddShoppingListItemAsync(item, ct));
                 else
-                    await _crudService.UpdateShoppingListItemAsync(item, ct);
+                    await ExecuteWithCrudServiceAsync(crud => crud.UpdateShoppingListItemAsync(item, ct));
                 break;
             case SyncOperationType.Delete:
-                await _crudService.DeleteShoppingListItemAsync(entry.EntityId, ct);
+                await ExecuteWithCrudServiceAsync(crud => crud.DeleteShoppingListItemAsync(entry.EntityId, ct));
                 break;
         }
     }
@@ -1810,12 +1821,12 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             case SyncOperationType.Insert:
             case SyncOperationType.Update:
                 var prefs = DeserializeEntity<UserPreferencesDto>(entry.Payload!);
-                await _crudService.UpsertUserPreferencesAsync(prefs, ct);
+                await ExecuteWithCrudServiceAsync(crud => crud.UpsertUserPreferencesAsync(prefs, ct));
                 break;
             case SyncOperationType.Delete:
                 // Preferences are user-specific; soft delete by clearing data
                 var emptyPrefs = new UserPreferencesDto { Id = entry.EntityId };
-                await _crudService.UpsertUserPreferencesAsync(emptyPrefs, ct);
+                await ExecuteWithCrudServiceAsync(crud => crud.UpsertUserPreferencesAsync(emptyPrefs, ct));
                 break;
         }
     }
@@ -1931,9 +1942,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             }
 
             // CRITICAL: Suppress cloud sync during load to prevent circular calls
-            var suppressField = _preferencesService.GetType().GetField("_suppressCloudSync", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            suppressField?.SetValue(_preferencesService, true);
+            _preferencesService.SuppressCloudSync();
 
             try
             {
@@ -1993,7 +2002,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             finally
             {
                 // Re-enable cloud sync
-                suppressField?.SetValue(_preferencesService, false);
+                _preferencesService.ResumeCloudSync();
             }
         }
         catch (Exception ex)
@@ -2009,7 +2018,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         {
             Log($"Loading preferences from cloud for user {userId}");
 
-            var cloudPrefs = await _crudService.GetUserPreferencesAsync(userId, ct);
+            var cloudPrefs = await ExecuteWithCrudServiceAsync(crud => crud.GetUserPreferencesAsync(userId, ct));
             
             if (cloudPrefs == null)
             {
@@ -2018,10 +2027,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             }
 
             // CRITICAL: Suppress cloud sync during load to prevent circular calls
-            // This is done via reflection since PreferencesService doesn't expose this flag
-            var suppressField = _preferencesService.GetType().GetField("_suppressCloudSync", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            suppressField?.SetValue(_preferencesService, true);
+            _preferencesService.SuppressCloudSync();
 
             try
             {
@@ -2091,7 +2097,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             finally
             {
                 // Re-enable cloud sync
-                suppressField?.SetValue(_preferencesService, false);
+                _preferencesService.ResumeCloudSync();
             }
         }
         catch (Exception ex)
@@ -2106,7 +2112,8 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         try
         {
             Log($"Saving preferences to cloud for user {userId}");
-            await _crudService.UpsertUserPreferencesAsync(new UserPreferencesDto
+
+            var dto = new UserPreferencesDto
             {
                 Id = userId,
                 Theme = _preferencesService.GetSavedTheme().ToString(),
@@ -2117,8 +2124,13 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 FontSize = _preferencesService.GetSavedFontSize().ToString(),
                 Language = _preferencesService.GetSavedLanguage(),
                 UpdatedAt = DateTime.UtcNow
-            }, ct);
-            Log("? Successfully saved preferences to cloud");
+            };
+
+            // Use the same queue-based flow as other entities (Folder/Recipe/Ingredient/etc.)
+            // so UserPreferences follows identical sync lifecycle and status handling.
+            await QueueForSyncAsync(dto, SyncOperationType.Update, ct);
+
+            Log("? Successfully queued preferences for cloud sync");
         }
         catch (Exception ex)
         {
@@ -2132,7 +2144,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         {
             Log($"Creating initial preferences for user {userId}");
 
-            var existing = await _crudService.GetUserPreferencesAsync(userId, ct);
+            var existing = await ExecuteWithCrudServiceAsync(crud => crud.GetUserPreferencesAsync(userId, ct));
             if (existing != null)
             {
                 Log("Preferences already exist - skipping creation");
@@ -2152,7 +2164,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
     {
         try
         {
-            var prefs = await _crudService.GetUserPreferencesAsync(userId, ct);
+            var prefs = await ExecuteWithCrudServiceAsync(crud => crud.GetUserPreferencesAsync(userId, ct));
             return prefs != null;
         }
         catch (Exception ex)

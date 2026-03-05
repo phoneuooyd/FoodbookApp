@@ -10,7 +10,7 @@ using Sharpnado.CollectionView.ViewModels; // Sharpnado DragAndDropInfo
 
 namespace Foodbook.ViewModels;
 
-public class ShoppingListDetailViewModel : INotifyPropertyChanged
+public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedChanges
 {
     private readonly IShoppingListService _shoppingListService;
     private readonly IPlanService _planService;
@@ -486,6 +486,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
             var items = await _shoppingListService.GetShoppingListWithCheckedStateAsync(planId);
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Retrieved {items.Count} items from service");
             
+            UnsubscribeAllItems();
             UncheckedItems.Clear();
             CheckedItems.Clear();
             
@@ -550,33 +551,41 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
         }
     }
 
+    private void UnsubscribeAllItems()
+    {
+        foreach (var item in UncheckedItems.Concat(CheckedItems))
+            item.PropertyChanged -= OnItemPropertyChanged;
+    }
+
     private async void OnItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (sender is not Ingredient item) return;
 
         if (e.PropertyName == nameof(Ingredient.IsChecked))
         {
-            bool wasChecked = !item.IsChecked; // The value just changed, so inverse is the old value
+            bool wasChecked = !item.IsChecked;
             
-            if (item.IsChecked)
+            MainThread.BeginInvokeOnMainThread(() =>
             {
-                if (UncheckedItems.Contains(item)) 
-                { 
-                    UncheckedItems.Remove(item); 
-                    CheckedItems.Add(item); 
+                if (item.IsChecked)
+                {
+                    if (UncheckedItems.Contains(item)) 
+                    { 
+                        UncheckedItems.Remove(item); 
+                        CheckedItems.Add(item); 
+                    }
                 }
-            }
-            else
-            {
-                if (CheckedItems.Contains(item)) 
-                { 
-                    CheckedItems.Remove(item); 
-                    UncheckedItems.Add(item); 
+                else
+                {
+                    if (CheckedItems.Contains(item)) 
+                    { 
+                        CheckedItems.Remove(item); 
+                        UncheckedItems.Add(item); 
+                    }
                 }
-            }
-            
-            // Use incremental update instead of full rebuild to preserve scroll position
-            MoveItemBetweenSections(item, wasChecked);
+                
+                MoveItemBetweenSections(item, wasChecked);
+            });
         }
 
         if (e.PropertyName == nameof(Ingredient.IsChecked) ||
@@ -618,7 +627,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] PlanId: {_currentPlanId}");
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Total items to save: {FlatItems.OfType<Ingredient>().Count()}");
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Unchecked items: {UncheckedItems.Count}, Checked items: {CheckedItems.Count}");
-            
+                        
             // ? VALIDATION: Check if plan ID is valid
             if (_currentPlanId == Guid.Empty)
             {
