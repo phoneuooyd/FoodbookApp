@@ -36,6 +36,8 @@ namespace Foodbook.Services
 #endif
 
         private const string SafetyArchivePrefix = "Foodbook_Safety_Archive_Update";
+        private const string DbInitializedKey = "DbInitialized";
+        private const string DbSchemaVersionKey = "DbSchemaVersion";
 
         private static readonly string[] RequiredTables =
         {
@@ -120,14 +122,9 @@ namespace Foodbook.Services
 
         public async Task InitializeAsync()
         {
-            Log($"InitializeAsync ENTER (DbInitialized={Preferences.Get("DbInitialized", false)})");
-
-            // Deterministic init guard
-            if (Preferences.Get("DbInitialized", false))
-            {
-                Log("InitializeAsync SKIP: DbInitialized=true");
-                return;
-            }
+            var isSeeded = Preferences.Get(DbInitializedKey, false);
+            var currentSchemaVersion = Preferences.Get(DbSchemaVersionKey, 0);
+            Log($"InitializeAsync ENTER (DbInitialized={isSeeded}, DbSchemaVersion={currentSchemaVersion})");
 
             Log("=== InitializeAsync START ===");
 
@@ -137,15 +134,15 @@ namespace Foodbook.Services
                 var dbExists = File.Exists(dbPath);
                 Log($"InitializeAsync DB path: {dbPath} | exists={dbExists}");
 
-                // If the database file already exists — leave it alone, just ensure migrations
+                // If the database file already exists – leave it alone, just ensure migrations
                 if (dbExists)
                 {
                     var fi = new FileInfo(dbPath);
-                    Log($"DB exists ({fi.Length} bytes, modified {fi.LastWriteTime}) — skipping creation, applying migrations only");
+                    Log($"DB exists ({fi.Length} bytes, modified {fi.LastWriteTime}) – applying migrations and schema validation");
                 }
                 else
                 {
-                    Log("DB does not exist — will be created by MigrateAsync");
+                    Log("DB does not exist – will be created by MigrateAsync");
                 }
 
                 var missing = await MigrateAndValidateAsync().ConfigureAwait(false);
@@ -153,10 +150,24 @@ namespace Foodbook.Services
                 if (missing.Count > 0)
                     Log($"ERROR: Schema incomplete after migration. Missing: {string.Join(", ", missing)}");
                 else
-                    Log("Schema OK — all required tables present");
+                    Log("Schema OK – all required tables present");
 
-                Preferences.Set("DbInitialized", true);
-                Log("InitializeAsync SET DbInitialized=true");
+                // DbInitialized now means "seed/setup completed", not "schema migrated"
+                if (!isSeeded)
+                {
+                    Preferences.Set(DbInitializedKey, true);
+                    Log("InitializeAsync SET DbInitialized=true (seed/setup completed)");
+                }
+
+                // Persist current schema version based on applied EF migrations count
+                using (var scope = _services.CreateScope())
+                {
+                    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    var appliedMigrations = await db.Database.GetAppliedMigrationsAsync().ConfigureAwait(false);
+                    var newSchemaVersion = appliedMigrations.Count();
+                    Preferences.Set(DbSchemaVersionKey, newSchemaVersion);
+                    Log($"InitializeAsync SET DbSchemaVersion={newSchemaVersion}");
+                }
 
                 Log("=== InitializeAsync COMPLETE ===");
             }
@@ -231,11 +242,11 @@ namespace Foodbook.Services
 
         public async Task<bool> ConditionalDeploymentAsync()
         {
-            // Deterministic init guard
-            if (Preferences.Get("DbInitialized", false))
+            // DbInitialized means seed/setup done; schema validation must still run on every app version.
+            if (Preferences.Get(DbInitializedKey, false))
             {
-                Log("DbInitialized=true — skipping ConditionalDeploymentAsync");
-                return true;
+                Log("DbInitialized=true – skipping first-run deployment flow, running schema check only");
+                return await EnsureDatabaseSchemaAsync().ConfigureAwait(false);
             }
 
             Log($"=== ConditionalDeploymentAsync START (FORCE_CLEAN={FORCE_CLEAN_DEPLOYMENT}, ARCHIVE={ARCHIVE_BEFORE_DEPLOY}) ===");
@@ -265,7 +276,7 @@ namespace Foodbook.Services
 
                 if (FORCE_CLEAN_DEPLOYMENT)
                 {
-                    Log("WARNING: FORCE_CLEAN_DEPLOYMENT — wiping all app data");
+                    Log("WARNING: FORCE_CLEAN_DEPLOYMENT – wiping all app data");
                     using var scope = _services.CreateScope();
                     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                     await db.Database.EnsureDeletedAsync().ConfigureAwait(false);
@@ -274,11 +285,12 @@ namespace Foodbook.Services
                     ClearDirectory(FileSystem.AppDataDirectory, preserveDbFiles: true);
                     ClearDirectory(FileSystem.CacheDirectory, preserveDbFiles: false);
                     await db.Database.MigrateAsync().ConfigureAwait(false);
+                    Preferences.Set(DbSchemaVersionKey, 0);
                     Log("Fresh database created");
                     return true;
                 }
 
-                // Always run InitializeAsync once (sets DbInitialized flag)
+                // Always run InitializeAsync (migrations must run even when DbInitialized=true)
                 await InitializeAsync().ConfigureAwait(false);
 
                 Log("=== ConditionalDeploymentAsync COMPLETE ===");
