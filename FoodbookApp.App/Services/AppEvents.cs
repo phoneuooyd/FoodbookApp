@@ -6,6 +6,7 @@ namespace Foodbook.Services;
 public static class AppEvents
 {
     // ? NEW: Queue for recipe-saved events that occur before subscribers are ready
+    private static readonly int PendingRecipeSavedEventsLimit = 100;
     private static Queue<Guid> _pendingRecipeSavedEvents = new();
     private static object _recipeSavedQueueLock = new();
 
@@ -76,23 +77,13 @@ public static class AppEvents
     }
 
     /// <summary>
-    /// Synchronous version of RaiseIngredientsChangedAsync - fires and waits for the async handlers
+    /// Legacy sync API kept for compatibility.
+    /// Delegates to async version without blocking the caller thread.
     /// </summary>
+    [Obsolete("Use await RaiseIngredientsChangedAsync() instead.")]
     public static void RaiseIngredientsChangedSync()
     {
-        if (IngredientsChangedAsync != null)
-        {
-            try
-            {
-                var handlers = IngredientsChangedAsync.GetInvocationList().Cast<Func<Task>>();
-                var tasks = handlers.Select(handler => handler.Invoke());
-                Task.WhenAll(tasks).Wait();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error in AppEvents.RaiseIngredientsChangedSync: {ex.Message}");
-            }
-        }
+        _ = RaiseIngredientsChangedAsync();
     }
 
     /// <summary>
@@ -164,9 +155,14 @@ public static class AppEvents
         {
             if (RecipeSaved == null)
             {
-                // ? No subscribers yet - queue this event
+                // No subscribers yet - queue this event with bounded size (FIFO drop oldest)
                 lock (_recipeSavedQueueLock)
                 {
+                    while (_pendingRecipeSavedEvents.Count >= PendingRecipeSavedEventsLimit)
+                    {
+                        _pendingRecipeSavedEvents.Dequeue();
+                    }
+
                     _pendingRecipeSavedEvents.Enqueue(id);
                     System.Diagnostics.Debug.WriteLine($"[AppEvents] RecipeSaved queued (id={id}), queue size: {_pendingRecipeSavedEvents.Count}");
                 }
