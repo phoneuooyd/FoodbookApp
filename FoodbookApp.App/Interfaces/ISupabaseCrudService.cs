@@ -75,4 +75,13 @@ public interface ISupabaseCrudService
     
     // Bulk fetch all cloud data for sync operations
     Task<CloudDataSnapshot> FetchAllCloudDataAsync(CancellationToken ct = default);
+
+    // Batch insert operations for faster initial sync
+    Task<List<Folder>> AddFoldersBatchAsync(IEnumerable<Folder> folders, CancellationToken ct = default);
+    Task<List<RecipeLabel>> AddRecipeLabelsBatchAsync(IEnumerable<RecipeLabel> labels, CancellationToken ct = default);
+    Task<List<Recipe>> AddRecipesBatchAsync(IEnumerable<Recipe> recipes, CancellationToken ct = default);
+    Task<List<Ingredient>> AddIngredientsBatchAsync(IEnumerable<Ingredient> ingredients, CancellationToken ct = default);
+    Task<List<Plan>> AddPlansBatchAsync(IEnumerable<Plan> plans, CancellationToken ct = default);
+    Task<List<PlannedMeal>> AddPlannedMealsBatchAsync(IEnumerable<PlannedMeal> meals, CancellationToken ct = default);
+    Task<List<ShoppingListItem>> AddShoppingListItemsBatchAsync(IEnumerable<ShoppingListItem> items, CancellationToken ct = default);
 }

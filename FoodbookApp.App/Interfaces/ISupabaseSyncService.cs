@@ -31,8 +31,6 @@ public interface ISupabaseSyncService
     Task RetryFailedEntriesAsync(CancellationToken ct = default);
     event EventHandler<SyncStatusChangedEventArgs>? SyncStatusChanged;
     event EventHandler<SyncProgressEventArgs>? SyncProgressChanged;
-    void StartSyncTimer();
-    void StopSyncTimer();
     
     // User Preferences Sync
     Task<bool> LoadUserPreferencesFromCloudAsync(Guid userId, CancellationToken ct = default);

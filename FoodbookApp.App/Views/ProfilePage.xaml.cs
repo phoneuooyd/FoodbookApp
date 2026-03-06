@@ -15,6 +15,7 @@ public partial class ProfilePage : ContentPage
     private ISupabaseAuthService? _supabaseAuth;
     private ISupabaseSyncService? _syncService;
     private IAccountService? _accountService;
+    private CancellationTokenSource? _syncStatusRefreshCts;
     private bool _isLoggedIn;
     private bool _suppressCloudSyncToggled = false;
 
@@ -27,6 +28,7 @@ public partial class ProfilePage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        StartSyncStatusRefresh();
         
         // Always check session state on appearing (handles auto-login and app restarts)
         await CheckAndRestoreSessionAsync();
@@ -34,6 +36,56 @@ public partial class ProfilePage : ContentPage
         if (_isLoggedIn)
         {
             await LoadSyncStatusAsync();
+        }
+    }
+
+    protected override void OnDisappearing()
+    {
+        StopSyncStatusRefresh();
+        base.OnDisappearing();
+    }
+
+    private void StartSyncStatusRefresh()
+    {
+        StopSyncStatusRefresh();
+        _syncStatusRefreshCts = new CancellationTokenSource();
+        _ = RefreshSyncStatusLoopAsync(_syncStatusRefreshCts.Token);
+    }
+
+    private void StopSyncStatusRefresh()
+    {
+        _syncStatusRefreshCts?.Cancel();
+        _syncStatusRefreshCts?.Dispose();
+        _syncStatusRefreshCts = null;
+    }
+
+    private async Task RefreshSyncStatusLoopAsync(CancellationToken ct)
+    {
+        try
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+            while (await timer.WaitForNextTickAsync(ct))
+            {
+                if (!_isLoggedIn)
+                    continue;
+
+                try
+                {
+                    await LoadSyncStatusAsync();
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ProfilePage] Sync status refresh error: {ex.Message}");
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            System.Diagnostics.Debug.WriteLine("[ProfilePage] Sync status refresh stopped");
         }
     }
 
@@ -168,26 +220,40 @@ public partial class ProfilePage : ContentPage
                 return;
 
             var isEnabled = await syncService.IsCloudSyncEnabledAsync();
-            try
-            {
-                _suppressCloudSyncToggled = true;
-                CloudSyncCheckBox.IsChecked = isEnabled;
-            }
-            finally
-            {
-                _suppressCloudSyncToggled = false;
-            }
+            Foodbook.Models.SyncState? state = null;
+            var pendingCount = 0;
 
             if (isEnabled)
             {
-                var state = await syncService.GetSyncStateAsync();
+                state = await syncService.GetSyncStateAsync();
                 if (state != null)
                 {
-                    var pendingCount = await syncService.GetPendingCountAsync();
+                    pendingCount = await syncService.GetPendingCountAsync();
+                }
+            }
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                try
+                {
+                    _suppressCloudSyncToggled = true;
+                    CloudSyncCheckBox.IsChecked = isEnabled;
+                }
+                finally
+                {
+                    _suppressCloudSyncToggled = false;
+                }
+
+                if (isEnabled && state != null)
+                {
                     SyncStatusLabel.Text = $"Status: {state.Status}, Pending: {pendingCount}";
                     SyncStatusLabel.IsVisible = true;
                 }
-            }
+                else
+                {
+                    SyncStatusLabel.IsVisible = false;
+                }
+            });
         }
         catch (Exception ex)
         {
@@ -203,6 +269,7 @@ public partial class ProfilePage : ContentPage
         if (!_isLoggedIn)
         {
             LoggedInUserLabel.Text = string.Empty;
+            SyncStatusLabel.IsVisible = false;
         }
     }
 
@@ -773,6 +840,11 @@ public partial class ProfilePage : ContentPage
                 GetLocalizedText("ProfilePageResources", "OK", "OK")
             );
         }
+    }
+
+    private void OnBackgroundSyncClicked(object sender, EventArgs e)
+    {
+        HideSpinner();
     }
 
     #region Spinner helpers

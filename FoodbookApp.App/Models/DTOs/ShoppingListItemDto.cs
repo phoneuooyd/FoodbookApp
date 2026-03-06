@@ -9,6 +9,7 @@ namespace Foodbook.Models.DTOs
     [Table("shopping_list_items")]
     public class ShoppingListItemDto : BaseModel
     {
+        [PrimaryKey("id", true)]
         [JsonPropertyName("id"), JsonProperty("id")] public Guid? Id { get; set; }
         [JsonPropertyName("owner_id"), JsonProperty("owner_id")] public string? OwnerId { get; set; }
         [Column("plan_id"), JsonPropertyName("plan_id"), JsonProperty("plan_id")] public Guid? PlanId { get; set; }

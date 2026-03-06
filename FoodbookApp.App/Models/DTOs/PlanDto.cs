@@ -9,6 +9,7 @@ namespace Foodbook.Models.DTOs
     [Table("plans")]
     public class PlanDto : BaseModel
     {
+        [PrimaryKey("id", true)]
         [JsonPropertyName("id"), JsonProperty("id")] public Guid? Id { get; set; }
         [JsonPropertyName("owner_id"), JsonProperty("owner_id")] public string? OwnerId { get; set; }
         [JsonPropertyName("start_date"), JsonProperty("start_date")] public DateTime? StartDate { get; set; }

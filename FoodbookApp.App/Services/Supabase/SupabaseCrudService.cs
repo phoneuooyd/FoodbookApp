@@ -545,8 +545,50 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     #region Batch Operations (REST API)
 
+    public async Task<List<Folder>> AddFoldersBatchAsync(IEnumerable<Folder> folders, CancellationToken ct = default)
+    {
+        await EnsureAuthenticatedAsync();
+
+        var ownerId = await GetCurrentUserIdAsync();
+        var now = DateTime.UtcNow;
+        var dtos = folders.Select(f =>
+        {
+            if (f.Id == Guid.Empty) f.Id = Guid.NewGuid();
+            var dto = ToDto(f);
+            dto.OwnerId = ownerId;
+            dto.CreatedAt ??= now;
+            dto.UpdatedAt ??= dto.CreatedAt;
+            return dto;
+        }).ToList();
+
+        var results = await _restClient.InsertBatchAsync("folders", dtos, ct);
+        return results.Select(ToDomain).ToList();
+    }
+
+    public async Task<List<RecipeLabel>> AddRecipeLabelsBatchAsync(IEnumerable<RecipeLabel> labels, CancellationToken ct = default)
+    {
+        await EnsureAuthenticatedAsync();
+
+        var ownerId = await GetCurrentUserIdAsync();
+        var now = DateTime.UtcNow;
+        var dtos = labels.Select(l =>
+        {
+            if (l.Id == Guid.Empty) l.Id = Guid.NewGuid();
+            var dto = ToDto(l);
+            dto.OwnerId = ownerId;
+            dto.CreatedAt ??= now;
+            dto.UpdatedAt ??= dto.CreatedAt;
+            return dto;
+        }).ToList();
+
+        var results = await _restClient.InsertBatchAsync("recipe_labels", dtos, ct);
+        return results.Select(ToDomain).ToList();
+    }
+
     public async Task<List<Recipe>> AddRecipesBatchAsync(IEnumerable<Recipe> recipes, CancellationToken ct = default)
     {
+        await EnsureAuthenticatedAsync();
+
         var ownerId = await GetCurrentUserIdAsync();
         var now = DateTime.UtcNow;
         var dtos = recipes.Select(r =>
@@ -565,6 +607,8 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<List<Ingredient>> AddIngredientsBatchAsync(IEnumerable<Ingredient> ingredients, CancellationToken ct = default)
     {
+        await EnsureAuthenticatedAsync();
+
         var ownerId = await GetCurrentUserIdAsync();
         var now = DateTime.UtcNow;
         var dtos = ingredients.Select(i =>
@@ -581,8 +625,30 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         return results.Select(ToDomain).ToList();
     }
 
+    public async Task<List<Plan>> AddPlansBatchAsync(IEnumerable<Plan> plans, CancellationToken ct = default)
+    {
+        await EnsureAuthenticatedAsync();
+
+        var ownerId = await GetCurrentUserIdAsync();
+        var now = DateTime.UtcNow;
+        var dtos = plans.Select(p =>
+        {
+            if (p.Id == Guid.Empty) p.Id = Guid.NewGuid();
+            var dto = ToDto(p);
+            dto.OwnerId = ownerId;
+            dto.CreatedAt ??= now;
+            dto.UpdatedAt ??= dto.CreatedAt;
+            return dto;
+        }).ToList();
+
+        var results = await _restClient.InsertBatchAsync("plans", dtos, ct);
+        return results.Select(ToDomain).ToList();
+    }
+
     public async Task<List<PlannedMeal>> AddPlannedMealsBatchAsync(IEnumerable<PlannedMeal> meals, CancellationToken ct = default)
     {
+        await EnsureAuthenticatedAsync();
+
         var ownerId = await GetCurrentUserIdAsync();
         var now = DateTime.UtcNow;
         var dtos = meals.Select(pm =>
@@ -601,6 +667,8 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     public async Task<List<ShoppingListItem>> AddShoppingListItemsBatchAsync(IEnumerable<ShoppingListItem> items, CancellationToken ct = default)
     {
+        await EnsureAuthenticatedAsync();
+
         var ownerId = await GetCurrentUserIdAsync();
         var now = DateTime.UtcNow;
         var dtos = items.Select(s =>

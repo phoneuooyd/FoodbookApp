@@ -142,7 +142,7 @@ namespace FoodbookApp
             // Register SupabaseCrudService AFTER SupabaseRestClient
             builder.Services.AddScoped<ISupabaseCrudService, SupabaseCrudService>();
             
-            // Supabase Sync Service - singleton to maintain sync timer across app lifecycle
+            // Supabase Sync Service - singleton for durable queue and immediate processing across app lifecycle
             builder.Services.AddSingleton<ISupabaseSyncService, SupabaseSyncService>();
             
             // Deduplication Service - singleton to maintain cache across login sessions

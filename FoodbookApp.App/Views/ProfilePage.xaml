@@ -166,6 +166,10 @@
                            HorizontalTextAlignment="Center"
                            MaximumWidthRequest="220"
                            TextColor="{AppThemeBinding Light={StaticResource Gray700}, Dark={StaticResource Gray200}}" />
+                    <Button x:Name="BackgroundSyncButton"
+                            Text="Synchronizacja w tle"
+                            StyleClass="Secondary"
+                            Clicked="OnBackgroundSyncClicked" />
                 </VerticalStackLayout>
             </Border>
         </Grid>
