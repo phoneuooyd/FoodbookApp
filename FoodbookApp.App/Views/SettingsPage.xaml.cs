@@ -4,6 +4,7 @@ using Foodbook.ViewModels;
 using Foodbook.Views.Base;
 using Microsoft.Extensions.DependencyInjection;
 using Foodbook.Data;
+using FoodbookApp.Localization;
 
 namespace Foodbook.Views
 {
@@ -63,12 +64,19 @@ namespace Foodbook.Views
         {
             try
             {
-                bool confirm = await DisplayAlert("Aktualizacja sk³adników", "Czy na pewno chcesz dodaæ brakuj¹ce sk³adniki z pliku ingredients.json do bazy? (nie nadpisze ani nie usunie istniej¹cych)", "Tak", "Nie");
+                bool confirm = await DisplayAlert(
+                    SettingsPageResources.UpdateIngredientsTitle,
+                    SettingsPageResources.UpdateIngredientsDescription,
+                    GetButtonText("Yes", "Yes"),
+                    GetButtonText("No", "No"));
                 if (!confirm) return;
 
                 if (FoodbookApp.MauiProgram.ServiceProvider == null)
                 {
-                    await DisplayAlert("B³¹d", "Serwis DI niedostêpny.", "OK");
+                    await DisplayAlert(
+                        GetSettingsText("UpdateIngredientsErrorTitle", "Error"),
+                        GetSettingsText("UpdateIngredientsServiceUnavailableMessage", "DI service unavailable."),
+                        GetButtonText("OK", "OK"));
                     return;
                 }
 
@@ -78,15 +86,30 @@ namespace Foodbook.Views
                 int added = await SeedData.AddMissingIngredientsFromJsonAsync(db);
 
                 if (added > 0)
-                    await DisplayAlert("Sukces", $"Dodano {added} nowych sk³adników do bazy.", "OK");
+                    await DisplayAlert(
+                        GetSettingsText("UpdateIngredientsSuccessTitle", "Success"),
+                        string.Format(GetSettingsText("UpdateIngredientsSuccessMessage", "Added {0} new ingredients to the database."), added),
+                        GetButtonText("OK", "OK"));
                 else
-                    await DisplayAlert("Informacja", "Wszystkie sk³adniki z pliku ju¿ istniej¹ w bazie.", "OK");
+                    await DisplayAlert(
+                        GetSettingsText("UpdateIngredientsNoChangesTitle", "Information"),
+                        GetSettingsText("UpdateIngredientsNoChangesMessage", "All ingredients from the file already exist in the database."),
+                        GetButtonText("OK", "OK"));
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[SettingsPage] OnUpdateIngredientsClicked error: {ex.Message}");
-                await DisplayAlert("B³¹d", $"Aktualizacja nie powiod³a siê: {ex.Message}", "OK");
+                await DisplayAlert(
+                    GetSettingsText("UpdateIngredientsErrorTitle", "Error"),
+                    string.Format(GetSettingsText("UpdateIngredientsErrorMessage", "Update failed: {0}"), ex.Message),
+                    GetButtonText("OK", "OK"));
             }
         }
+        private static string GetSettingsText(string key, string fallback)
+            => SettingsPageResources.ResourceManager.GetString(key) ?? fallback;
+
+        private static string GetButtonText(string key, string fallback)
+            => ButtonResources.ResourceManager.GetString(key) ?? fallback;
+
     }
 }

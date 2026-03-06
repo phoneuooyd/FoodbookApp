@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -39,4 +39,4 @@
   <data name="NoCollected" xml:space="preserve">
     <value>No collected items</value>
   </data>
-</root>
+<data name="LoadErrorTitle" xml:space="preserve"><value>Error</value></data><data name="LoadErrorMessage" xml:space="preserve"><value>Unable to load shopping list.</value></data><data name="UnsavedChangesConfirmTitle" xml:space="preserve"><value>Confirmation</value></data><data name="UnsavedChangesConfirmMessage" xml:space="preserve"><value>You have unsaved changes. Do you want to leave this page without saving?</value></data></root>

@@ -7,6 +7,7 @@ using CommunityToolkit.Maui.Extensions;
 using FoodbookApp.Interfaces;
 using FoodbookApp.Services.Auth;
 using Foodbook.Services;
+using FoodbookApp.Localization;
 
 namespace Foodbook.Views;
 
@@ -44,8 +45,14 @@ public partial class HomePage : ContentPage, ITabLoadable
         {
             if (_hasLoadedOnce)
             {
-                // Re-appearing (e.g. returning from Settings) — refresh data
-                try
+        await DisplayAlert(
+            GetHomeText("ProfileFetchJwtDebugTitle", "Debug"),
+            GetHomeText("ProfileFetchJwtDebugMessage", "ok"),
+            GetButtonText("OK", "OK"));
+                await DisplayAlert(
+                    GetHomeText("ProfileFetchJwtTestTitle", "Test"),
+                    GetHomeText("ProfileFetchJwtTestMessage", "Button works!"),
+                    GetButtonText("OK", "OK"));
                 {
                     await ViewModel.LoadAsync();
                 }
@@ -54,7 +61,7 @@ public partial class HomePage : ContentPage, ITabLoadable
                     System.Diagnostics.Debug.WriteLine($"[HomePage] Re-appearing LoadAsync failed: {ex.Message}");
                 }
             }
-            // First appearance: skip — TabBarComponent.TriggerInitialLoadAsync handles the initial load
+            // First appearance: skip â€” TabBarComponent.TriggerInitialLoadAsync handles the initial load
             _hasLoadedOnce = true;
         }
     }
@@ -64,11 +71,11 @@ public partial class HomePage : ContentPage, ITabLoadable
         await DisplayAlert("dupa", "ok", "ok");
         System.Diagnostics.Debug.WriteLine("[HomePage] ===== BUTTON CLICKED - SYNC TEST =====");
         
-        // Najtuplejszy mo¿liwy test - bez DisplayAlert, bez async
+        // Najtuplejszy moÂ¿liwy test - bez DisplayAlert, bez async
         int testValue = 42;
         System.Diagnostics.Debug.WriteLine($"[HomePage] Test sync code executed: {testValue}");
         
-        // Teraz spróbuj DisplayAlert
+        // Teraz sprÃ³buj DisplayAlert
         try
         {
             System.Diagnostics.Debug.WriteLine("[HomePage] Before DisplayAlert");
@@ -265,7 +272,10 @@ public partial class HomePage : ContentPage, ITabLoadable
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[HomePage] Failed to open ProfilePage: {ex.Message}");
-            await DisplayAlert("B³¹d", "Nie mo¿na otworzyæ strony profilu.", "OK");
+            await DisplayAlert(
+                GetHomeText("ProfileOpenErrorTitle", "Error"),
+                GetHomeText("ProfileOpenErrorMessage", "Unable to open profile page."),
+                GetButtonText("OK", "OK"));
         }
     }
 
@@ -275,7 +285,11 @@ public partial class HomePage : ContentPage, ITabLoadable
         {
             MainThread.BeginInvokeOnMainThread(async () =>
             {
-                bool exit = await DisplayAlert("Potwierdzenie", "Czy na pewno chcesz wyjœæ z aplikacji?", "Tak", "Nie");
+                bool exit = await DisplayAlert(
+                    HomePageResources.ExitAppTitle,
+                    HomePageResources.ExitAppConfirmation,
+                    GetButtonText("Yes", "Yes"),
+                    GetButtonText("No", "No"));
                 if (exit)
                 {
                     try
@@ -322,5 +336,11 @@ public partial class HomePage : ContentPage, ITabLoadable
             System.Diagnostics.Debug.WriteLine($"[HomePage] OnTabActivatedAsync error: {ex.Message}");
         }
     }
+    private static string GetHomeText(string key, string fallback)
+        => HomePageResources.ResourceManager.GetString(key) ?? fallback;
+
+    private static string GetButtonText(string key, string fallback)
+        => ButtonResources.ResourceManager.GetString(key) ?? fallback;
+
 }
 
