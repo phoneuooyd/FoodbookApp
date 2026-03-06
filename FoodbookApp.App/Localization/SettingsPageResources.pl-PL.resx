@@ -338,4 +338,8 @@
   <data name="UpdateIngredientsButton" xml:space="preserve">
     <value>Aktualizuj bazę składników</value>
   </data>
+
+  <data name="DeduplicateIngredientsTitle" xml:space="preserve"><value>Usuń duplikaty składników</value></data>
+  <data name="DeduplicateIngredientsDescription" xml:space="preserve"><value>Czyści lokalnie powtórzone składniki bazowe (nazwa + makra).</value></data>
+  <data name="DeduplicateIngredientsButton" xml:space="preserve"><value>Usuń duplikaty</value></data>
 </root>
