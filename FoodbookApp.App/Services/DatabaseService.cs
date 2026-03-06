@@ -36,7 +36,8 @@ namespace Foodbook.Services
 #endif
 
         private const string SafetyArchivePrefix = "Foodbook_Safety_Archive_Update";
-        private const string DbInitializedKey = "DbInitialized";
+        private const string DbSeededKey = "DbSeeded";
+        // Legacy: "DbInitialized" was used for both migration and seeding status
         private const string DbSchemaVersionKey = "DbSchemaVersion";
 
         private static readonly string[] RequiredTables =
@@ -122,9 +123,25 @@ namespace Foodbook.Services
 
         public async Task InitializeAsync()
         {
-            var isSeeded = Preferences.Get(DbInitializedKey, false);
+            // Migration handling: 
+            // - "DbSeeded" tracks if initial data seeding ran (initially just a flag)
+            // - Migrations are tracked by EF Core __EFMigrationsHistory and DbSchemaVersion
+            
+            var isSeeded = Preferences.Get(DbSeededKey, false);
+            
+            // Backwards compatibility: if not seeded but "DbInitialized" exists/true, migrate flag
+            if (!isSeeded && Preferences.ContainsKey("DbInitialized"))
+            {
+                if (Preferences.Get("DbInitialized", false))
+                {
+                    isSeeded = true;
+                    Preferences.Set(DbSeededKey, true);
+                    Log("Migrated legacy DbInitialized -> DbSeeded");
+                }
+            }
+
             var currentSchemaVersion = Preferences.Get(DbSchemaVersionKey, 0);
-            Log($"InitializeAsync ENTER (DbInitialized={isSeeded}, DbSchemaVersion={currentSchemaVersion})");
+            Log($"InitializeAsync ENTER (DbSeeded={isSeeded}, DbSchemaVersion={currentSchemaVersion})");
 
             Log("=== InitializeAsync START ===");
 
@@ -142,21 +159,22 @@ namespace Foodbook.Services
                 }
                 else
                 {
-                    Log("DB does not exist – will be created by MigrateAsync");
+                    Log("DB does not exist  will be created by MigrateAsync");
                 }
 
+                // Always check pending migrations! (Rule K3.1)
                 var missing = await MigrateAndValidateAsync().ConfigureAwait(false);
 
                 if (missing.Count > 0)
                     Log($"ERROR: Schema incomplete after migration. Missing: {string.Join(", ", missing)}");
                 else
-                    Log("Schema OK – all required tables present");
+                    Log("Schema OK  all required tables present");
 
-                // DbInitialized now means "seed/setup completed", not "schema migrated"
+                // DbSeeded now strictly means "seed/setup completed" (Rule K3.2)
                 if (!isSeeded)
                 {
-                    Preferences.Set(DbInitializedKey, true);
-                    Log("InitializeAsync SET DbInitialized=true (seed/setup completed)");
+                    Preferences.Set(DbSeededKey, true);
+                    Log("InitializeAsync SET DbSeeded=true (seed/setup completed)");
                 }
 
                 // Persist current schema version based on applied EF migrations count
@@ -242,12 +260,9 @@ namespace Foodbook.Services
 
         public async Task<bool> ConditionalDeploymentAsync()
         {
-            // DbInitialized means seed/setup done; schema validation must still run on every app version.
-            if (Preferences.Get(DbInitializedKey, false))
-            {
-                Log("DbInitialized=true – skipping first-run deployment flow, running schema check only");
-                return await EnsureDatabaseSchemaAsync().ConfigureAwait(false);
-            }
+            // Rule K3.1: Always check for pending migrations (via InitializeAsync later), 
+            // do NOT return early based on a flag like DbInitialized.
+            // Removed the early DbInitialized check to ensure deployment safety checks run.
 
             Log($"=== ConditionalDeploymentAsync START (FORCE_CLEAN={FORCE_CLEAN_DEPLOYMENT}, ARCHIVE={ARCHIVE_BEFORE_DEPLOY}) ===");
 

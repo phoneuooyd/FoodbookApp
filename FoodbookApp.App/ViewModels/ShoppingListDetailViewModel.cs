@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Foodbook.Models;
 using FoodbookApp.Interfaces;
+using Microsoft.Maui.ApplicationModel;
 using Sharpnado.CollectionView.ViewModels; // Sharpnado DragAndDropInfo
 
 namespace Foodbook.ViewModels;
@@ -464,6 +465,66 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
         RebuildFlatItems();
     }
 
+    private void ResetCollectionsForReload()
+    {
+        UnsubscribeAllItems();
+        FlatItems.Clear();
+        UncheckedItems.Clear();
+        CheckedItems.Clear();
+
+        _toBuyHeader = null;
+        _collectedHeader = null;
+
+        Groups.Clear();
+        _uncheckedGroup = null;
+        _checkedGroup = null;
+
+        AllItemsGrouped.Clear();
+        _uncheckedItemsGroup = null;
+        _checkedItemsGroup = null;
+    }
+
+    private void ApplyLoadedItems(IReadOnlyCollection<Ingredient> items)
+    {
+        ResetCollectionsForReload();
+
+        int uncheckedCount = 0;
+        int checkedCount = 0;
+        int manuallyAddedCount = 0;
+
+        foreach (var item in items)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Loading item: [{item.Order}] {item.Name} | {item.Quantity} {item.Unit} | Checked: {item.IsChecked} | Id: {item.Id}");
+
+            if (item.Id == Guid.Empty)
+            {
+                manuallyAddedCount++;
+            }
+
+            item.PropertyChanged += OnItemPropertyChanged;
+
+            if (item.IsChecked)
+            {
+                CheckedItems.Add(item);
+                checkedCount++;
+            }
+            else
+            {
+                UncheckedItems.Add(item);
+                uncheckedCount++;
+            }
+        }
+
+        System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Load summary:");
+        System.Diagnostics.Debug.WriteLine($"  - Total items: {items.Count}");
+        System.Diagnostics.Debug.WriteLine($"  - Unchecked: {uncheckedCount}");
+        System.Diagnostics.Debug.WriteLine($"  - Checked: {checkedCount}");
+        System.Diagnostics.Debug.WriteLine($"  - Items without ID: {manuallyAddedCount}");
+
+        EnsureGroups();
+        HasUnsavedChanges = false;
+    }
+
     public async Task LoadAsync(Guid planId)
     {
         try
@@ -485,60 +546,8 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
 
             var items = await _shoppingListService.GetShoppingListWithCheckedStateAsync(planId);
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Retrieved {items.Count} items from service");
-            
-            UnsubscribeAllItems();
-            UncheckedItems.Clear();
-            CheckedItems.Clear();
-            
-            // Reset headers
-            _toBuyHeader = null;
-            _collectedHeader = null;
-            
-            int uncheckedCount = 0;
-            int checkedCount = 0;
-            int manuallyAddedCount = 0;
-            
-            foreach (var item in items)
-            {
-                // Log item details for diagnostics
-                System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Loading item: [{item.Order}] {item.Name} | {item.Quantity} {item.Unit} | Checked: {item.IsChecked} | Id: {item.Id}");
-                
-                // Track manually added items (those with empty GUID before save would have been assigned new IDs)
-                if (item.Id == Guid.Empty)
-                {
-                    manuallyAddedCount++;
-                }
-                
-                item.PropertyChanged += OnItemPropertyChanged;
-                
-                if (item.IsChecked) 
-                {
-                    CheckedItems.Add(item);
-                    checkedCount++;
-                }
-                else 
-                {
-                    UncheckedItems.Add(item);
-                    uncheckedCount++;
-                }
-            }
-            
-            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Load summary:");
-            System.Diagnostics.Debug.WriteLine($"  - Total items: {items.Count}");
-            System.Diagnostics.Debug.WriteLine($"  - Unchecked: {uncheckedCount}");
-            System.Diagnostics.Debug.WriteLine($"  - Checked: {checkedCount}");
-            System.Diagnostics.Debug.WriteLine($"  - Items without ID: {manuallyAddedCount}");
-            
-            Groups.Clear(); 
-            _uncheckedGroup = null; 
-            _checkedGroup = null;
-            AllItemsGrouped.Clear(); 
-            _uncheckedItemsGroup = null; 
-            _checkedItemsGroup = null;
-            
-            EnsureGroups();
-            
-            HasUnsavedChanges = false;
+
+            await MainThread.InvokeOnMainThreadAsync(() => ApplyLoadedItems(items));
             
             System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] ========== LoadAsync COMPLETED ==========");
         }
@@ -557,6 +566,39 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
             item.PropertyChanged -= OnItemPropertyChanged;
     }
 
+    private void UpdateItemCheckedState(Ingredient item, bool wasChecked)
+    {
+        if (item.IsChecked)
+        {
+            if (UncheckedItems.Contains(item))
+            {
+                UncheckedItems.Remove(item);
+                CheckedItems.Add(item);
+            }
+        }
+        else
+        {
+            if (CheckedItems.Contains(item))
+            {
+                CheckedItems.Remove(item);
+                UncheckedItems.Add(item);
+            }
+        }
+
+        MoveItemBetweenSections(item, wasChecked);
+    }
+
+    private void MarkDirtyOnMainThread()
+    {
+        if (MainThread.IsMainThread)
+        {
+            MarkDirty();
+            return;
+        }
+
+        MainThread.BeginInvokeOnMainThread(MarkDirty);
+    }
+
     private async void OnItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (sender is not Ingredient item) return;
@@ -564,28 +606,15 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
         if (e.PropertyName == nameof(Ingredient.IsChecked))
         {
             bool wasChecked = !item.IsChecked;
-            
-            MainThread.BeginInvokeOnMainThread(() =>
+
+            if (MainThread.IsMainThread)
             {
-                if (item.IsChecked)
-                {
-                    if (UncheckedItems.Contains(item)) 
-                    { 
-                        UncheckedItems.Remove(item); 
-                        CheckedItems.Add(item); 
-                    }
-                }
-                else
-                {
-                    if (CheckedItems.Contains(item)) 
-                    { 
-                        CheckedItems.Remove(item); 
-                        UncheckedItems.Add(item); 
-                    }
-                }
-                
-                MoveItemBetweenSections(item, wasChecked);
-            });
+                UpdateItemCheckedState(item, wasChecked);
+            }
+            else
+            {
+                MainThread.BeginInvokeOnMainThread(() => UpdateItemCheckedState(item, wasChecked));
+            }
         }
 
         if (e.PropertyName == nameof(Ingredient.IsChecked) ||
@@ -593,7 +622,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
             e.PropertyName == nameof(Ingredient.Name) ||
             e.PropertyName == nameof(Ingredient.Quantity))
         {
-            MarkDirty();
+            MarkDirtyOnMainThread();
         }
 
         if (e.PropertyName == nameof(Ingredient.Unit) && item.Id != Guid.Empty)
