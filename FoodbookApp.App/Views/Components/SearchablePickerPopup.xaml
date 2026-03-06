@@ -2,7 +2,6 @@
 <mct:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
            xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
            xmlns:mct="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui"
-           xmlns:loc="clr-namespace:Foodbook.Services"
            xmlns:components="clr-namespace:Foodbook.Views.Components"
            x:Class="Foodbook.Views.Components.SearchablePickerPopup"
            x:Name="ThisPopup"
@@ -51,10 +50,57 @@
                 </Grid>
             </Grid>
 
-            <!-- List -->
-            <ScrollView Grid.Row="1" Padding="8,4">
-                <StackLayout x:Name="ItemsHost" Spacing="6" />
-            </ScrollView>
+            <!-- CollectionView replacing ScrollView+StackLayout -->
+            <CollectionView Grid.Row="1"
+                            x:Name="ItemsCollectionView"
+                            Margin="8,4"
+                            SelectionMode="None"
+                            ItemsSource="{Binding FilteredItems, Source={x:Reference ThisPopup}}"
+                            ItemSizingStrategy="MeasureFirstItem">
+                <CollectionView.Header>
+                    <Grid Padding="4,0,4,8"
+                          IsVisible="{Binding ShowAddIngredientButton, Source={x:Reference ThisPopup}}">
+                        <HorizontalStackLayout Spacing="12"
+                                               VerticalOptions="Center">
+                            <Button Text="+"
+                                    WidthRequest="36"
+                                    HeightRequest="36"
+                                    CornerRadius="18"
+                                    Padding="0"
+                                    VerticalOptions="Center"
+                                    StyleClass="Secondary"
+                                    Command="{Binding AddIngredientCommand, Source={x:Reference ThisPopup}}" />
+                            <Label Text="Dodaj składnik"
+                                   FontSize="15"
+                                   VerticalOptions="Center"
+                                   TextColor="{DynamicResource PrimaryText}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding AddIngredientCommand, Source={x:Reference ThisPopup}}" />
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </HorizontalStackLayout>
+                    </Grid>
+                </CollectionView.Header>
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Vertical" ItemSpacing="6" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Button Text="{Binding .}"
+                                HorizontalOptions="Fill"
+                                BackgroundColor="Transparent"
+                                BorderWidth="1"
+                                CornerRadius="8"
+                                Padding="12,10"
+                                Margin="2,3"
+                                FontSize="15"
+                                TextColor="{DynamicResource PrimaryText}"
+                                BorderColor="{DynamicResource Secondary}"
+                                Command="{Binding SelectItemCommand, Source={x:Reference ThisPopup}}"
+                                CommandParameter="{Binding .}" />
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
         </Grid>
     </Border>
 </mct:Popup>

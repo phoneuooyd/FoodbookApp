@@ -1088,19 +1088,21 @@ namespace Foodbook.ViewModels
             try
             {
                 System.Diagnostics.Debug.WriteLine("📋 [AddRecipeViewModel] Loading available ingredients...");
-                
-                // ✅ OPTYMALIZACJA: Pobierz dane asynchronicznie z cache
+
                 var freshIngredients = await _ingredientService.GetIngredientsAsync();
-                
+                var freshNames = freshIngredients
+                    .Select(i => i.Name)
+                    .Where(name => !string.IsNullOrWhiteSpace(name))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
                 System.Diagnostics.Debug.WriteLine($"✅ [AddRecipeViewModel] Fetched {freshIngredients.Count} ingredients from service");
 
-                // ✅ KRYTYCZNA OPTYMALIZACJA: Aktualizuj UI w partiach aby nie blokować
-                await UpdateIngredientNamesInBatchesAsync(freshIngredients);
+                SyncAvailableIngredientNames(freshNames);
 
-                // Also update the local cache for consistency
                 _cachedIngredients = freshIngredients.ToList();
                 _lastCacheUpdate = DateTime.Now;
-                
+
                 System.Diagnostics.Debug.WriteLine("✅ [AddRecipeViewModel] Ingredients loaded successfully");
             }
             catch (Exception ex)
@@ -1109,41 +1111,44 @@ namespace Foodbook.ViewModels
             }
         }
 
-        /// <summary>
-        /// ✅ NOWA METODA: Aktualizacja listy składników w partiach aby nie blokować UI
-        /// </summary>
-        private async Task UpdateIngredientNamesInBatchesAsync(List<Ingredient> ingredients)
+        public void SyncAvailableIngredientNames(IEnumerable<string> names)
         {
-            const int BATCH_SIZE = 150;
-            var names = ingredients.Select(i => i.Name).ToList();
+            var normalized = names
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
-            await MainThread.InvokeOnMainThreadAsync(() =>
+            MainThread.BeginInvokeOnMainThread(() =>
             {
-                AvailableIngredientNames.Clear();
-                System.Diagnostics.Debug.WriteLine($"🔄 [AddRecipeViewModel] Starting batch update of {names.Count} ingredients...");
-            });
-
-            // ✅ Dodaj w partiach z małym opóźnieniem dla lepszej responsywności
-            for (int i = 0; i < names.Count; i += BATCH_SIZE)
-            {
-                var batch = names.Skip(i).Take(BATCH_SIZE).ToList();
-                
-                await MainThread.InvokeOnMainThreadAsync(() =>
+                try
                 {
-                    foreach (var name in batch)
+                    if (AvailableIngredientNames.Count == normalized.Count && AvailableIngredientNames.SequenceEqual(normalized))
                     {
-                        AvailableIngredientNames.Add(name);
+                        System.Diagnostics.Debug.WriteLine("[AddRecipeViewModel] Ingredient names unchanged - skipping UI sync");
+                        return;
                     }
-                });
 
-                // ✅ Małe opóźnienie aby UI było responsywne
-                if (i + BATCH_SIZE < names.Count)
-                {
-                    await Task.Delay(3);
+                    int commonCount = Math.Min(AvailableIngredientNames.Count, normalized.Count);
+
+                    for (int i = 0; i < commonCount; i++)
+                    {
+                        if (!string.Equals(AvailableIngredientNames[i], normalized[i], StringComparison.Ordinal))
+                            AvailableIngredientNames[i] = normalized[i];
+                    }
+
+                    while (AvailableIngredientNames.Count > normalized.Count)
+                        AvailableIngredientNames.RemoveAt(AvailableIngredientNames.Count - 1);
+
+                    for (int i = commonCount; i < normalized.Count; i++)
+                        AvailableIngredientNames.Add(normalized[i]);
+
+                    System.Diagnostics.Debug.WriteLine($"✅ [AddRecipeViewModel] Ingredient names synchronized: {AvailableIngredientNames.Count} items");
                 }
-            }
-
-            System.Diagnostics.Debug.WriteLine($"✅ [AddRecipeViewModel] Batch update completed: {AvailableIngredientNames.Count} ingredients");
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ [AddRecipeViewModel] SyncAvailableIngredientNames failed: {ex.Message}");
+                }
+            });
         }
 
         private void SelectTab(object parameter)

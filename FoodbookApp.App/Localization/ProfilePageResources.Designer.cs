@@ -142,11 +142,74 @@ namespace FoodbookApp.Localization {
         }
         
         /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Cloud duplicates removed: {0}.
+        /// </summary>
+        internal static string ForceSyncDuplicatesRemoved {
+            get {
+                return ResourceManager.GetString("ForceSyncDuplicatesRemoved", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Duration: {0}s.
+        /// </summary>
+        internal static string ForceSyncDuration {
+            get {
+                return ResourceManager.GetString("ForceSyncDuration", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Error: {0}.
+        /// </summary>
+        internal static string ForceSyncError {
+            get {
+                return ResourceManager.GetString("ForceSyncError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         /// Wyszukuje zlokalizowany ciąg podobny do ciągu Force sync error.
         /// </summary>
         internal static string ForceSyncErrorTitle {
             get {
                 return ResourceManager.GetString("ForceSyncErrorTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Failed: {0}.
+        /// </summary>
+        internal static string ForceSyncFailed {
+            get {
+                return ResourceManager.GetString("ForceSyncFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Remaining: {0}.
+        /// </summary>
+        internal static string ForceSyncRemaining {
+            get {
+                return ResourceManager.GetString("ForceSyncRemaining", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Skipped (already in cloud): {0}.
+        /// </summary>
+        internal static string ForceSyncSkipped {
+            get {
+                return ResourceManager.GetString("ForceSyncSkipped", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Synced: {0}.
+        /// </summary>
+        internal static string ForceSyncSynced {
+            get {
+                return ResourceManager.GetString("ForceSyncSynced", resourceCulture);
             }
         }
         
@@ -345,6 +408,33 @@ namespace FoodbookApp.Localization {
         internal static string SyncErrorTitle {
             get {
                 return ResourceManager.GetString("SyncErrorTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Removing duplicates....
+        /// </summary>
+        internal static string SyncOverlayDeduplicating {
+            get {
+                return ResourceManager.GetString("SyncOverlayDeduplicating", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Fetching cloud data....
+        /// </summary>
+        internal static string SyncOverlayFetching {
+            get {
+                return ResourceManager.GetString("SyncOverlayFetching", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Syncing data....
+        /// </summary>
+        internal static string SyncOverlaySyncing {
+            get {
+                return ResourceManager.GetString("SyncOverlaySyncing", resourceCulture);
             }
         }
         
