@@ -9,4 +9,7 @@
   <data name="AddButton" xml:space="preserve"><value>Ajouter une recette</value></data>
   <data name="EmptyTitle" xml:space="preserve"><value>Aucune recette</value></data>
   <data name="EmptyHint" xml:space="preserve"><value>Appuyer sur Ajouter une recette</value></data>
+  <!-- FAB action texts -->
+  <data name="AddRecipeAction" xml:space="preserve"><value>Ajouter une recette</value></data>
+  <data name="AddFolderAction" xml:space="preserve"><value>Ajouter un dossier</value></data>
 </root>

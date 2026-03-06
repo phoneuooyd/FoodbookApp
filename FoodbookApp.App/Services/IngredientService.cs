@@ -8,43 +8,125 @@ namespace Foodbook.Services;
 public class IngredientService : IIngredientService
 {
     private readonly AppDbContext _context;
+    private readonly ISupabaseSyncService? _syncService;
     
-    // ? NOWE: Cache sk³adników z invalidacj¹
-    private List<Ingredient>? _cachedIngredients;
-    private DateTime _lastCacheTime = DateTime.MinValue;
-    private readonly TimeSpan _cacheValidity = TimeSpan.FromMinutes(10);
+    // Shared (static) cache so different DI scopes see the same cached data
+    private static List<Ingredient>? _cachedIngredientsStatic;
+    private static DateTime _lastCacheTimeStatic = DateTime.MinValue;
+    private static readonly TimeSpan _cacheValidityStatic = TimeSpan.FromMinutes(10);
+    private static readonly object _cacheLock = new();
     
-    public IngredientService(AppDbContext context)
+    private static List<string>? _cachedIngredientNamesStatic;
+    private static DateTime _lastNamesCacheTimeStatic = DateTime.MinValue;
+    
+    public IngredientService(AppDbContext context, IServiceProvider serviceProvider)
     {
         _context = context;
+        
+        // Try to resolve sync service
+        try
+        {
+            _syncService = serviceProvider.GetService(typeof(ISupabaseSyncService)) as ISupabaseSyncService;
+        }
+        catch
+        {
+            _syncService = null;
+        }
     }
 
-    // ? ZOPTYMALIZOWANE: Getter z cache
+    // Getter uses shared static cache with lock for thread-safety
     public async Task<List<Ingredient>> GetIngredientsAsync()
     {
-        if (_cachedIngredients == null || 
-            DateTime.Now - _lastCacheTime > _cacheValidity)
+        try
         {
-            _cachedIngredients = await _context.Ingredients
-                .AsNoTracking() // Improves performance for read-only operations
-                .Where(i => i.RecipeId == null) // Only standalone ingredients
+            lock (_cacheLock)
+            {
+                if (_cachedIngredientsStatic != null && DateTime.Now - _lastCacheTimeStatic <= _cacheValidityStatic)
+                {
+                    // Return a copy to prevent caller mutation
+                    return _cachedIngredientsStatic.ToList();
+                }
+            }
+
+            // Load from DB outside lock
+            var fresh = await _context.Ingredients
+                .AsNoTracking()
+                .Where(i => i.RecipeId == null)
                 .OrderBy(i => i.Name)
                 .ToListAsync();
-            _lastCacheTime = DateTime.Now;
-            
-            System.Diagnostics.Debug.WriteLine($"Ingredients cache refreshed: {_cachedIngredients.Count} items");
-        }
 
-        return _cachedIngredients.ToList(); // Return copy to prevent mutations
+            lock (_cacheLock)
+            {
+                _cachedIngredientsStatic = fresh;
+                _lastCacheTimeStatic = DateTime.Now;
+                
+                // ? OPTYMALIZACJA: Aktualizuj te¿ cache nazw
+                _cachedIngredientNamesStatic = fresh.Select(i => i.Name).ToList();
+                _lastNamesCacheTimeStatic = DateTime.Now;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"? Ingredients cache refreshed (shared): {fresh.Count} items");
+            return fresh.ToList();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"? [IngredientService] GetIngredientsAsync failed: {ex.Message}");
+            return new List<Ingredient>();
+        }
     }
 
-    public async Task<Ingredient?> GetIngredientAsync(int id) => 
+    /// <summary>
+    /// ? NOWA METODA: Szybkie pobieranie tylko nazw sk³adników (lightweight)
+    /// </summary>
+    public async Task<List<string>> GetIngredientNamesAsync()
+    {
+        try
+        {
+            lock (_cacheLock)
+            {
+                if (_cachedIngredientNamesStatic != null && DateTime.Now - _lastNamesCacheTimeStatic <= _cacheValidityStatic)
+                {
+                    System.Diagnostics.Debug.WriteLine($"? [IngredientService] Returning {_cachedIngredientNamesStatic.Count} names from cache");
+                    return _cachedIngredientNamesStatic.ToList();
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine("?? [IngredientService] Loading ingredient names from database...");
+
+            // ? KRYTYCZNA OPTYMALIZACJA: Pobierz TYLKO nazwy bez ca³ych obiektów
+            var names = await _context.Ingredients
+                .AsNoTracking()
+                .Where(i => i.RecipeId == null)
+                .OrderBy(i => i.Name)
+                .Select(i => i.Name)
+                .ToListAsync();
+
+            lock (_cacheLock)
+            {
+                _cachedIngredientNamesStatic = names;
+                _lastNamesCacheTimeStatic = DateTime.Now;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"? [IngredientService] Loaded {names.Count} ingredient names");
+            return names.ToList();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"? [IngredientService] GetIngredientNamesAsync failed: {ex.Message}");
+            return new List<string>();
+        }
+    }
+
+    public async Task<Ingredient?> GetIngredientAsync(Guid id) => 
         await _context.Ingredients
             .AsNoTracking()
             .FirstOrDefaultAsync(i => i.Id == id);
 
     public async Task AddIngredientAsync(Ingredient ingredient)
     {
+        if (ingredient.Id == Guid.Empty)
+            ingredient.Id = Guid.NewGuid();
+
         // Ensure RecipeId is null for standalone ingredients
         if (ingredient.Recipe == null)
             ingredient.RecipeId = null;
@@ -53,12 +135,29 @@ public class IngredientService : IIngredientService
         {
             _context.Ingredients.Add(ingredient);
             await _context.SaveChangesAsync();
+
+            if (ingredient.RecipeId == null && _syncService != null)
+            {
+                try
+                {
+                    await _syncService.QueueForSyncAsync(ingredient, SyncOperationType.Insert);
+                    System.Diagnostics.Debug.WriteLine($"[IngredientService] Queued ingredient {ingredient.Id} for Insert sync");
+                }
+                catch (Exception syncEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[IngredientService] Failed to queue insert sync: {syncEx.Message}");
+                }
+            }
             
-            // ? OPTYMALIZACJA: Invaliduj cache tylko gdy to konieczne
-            if (ingredient.RecipeId == null) 
+            // Invalidate shared cache only when standalone ingredient added
+            if (ingredient.RecipeId == null)
             {
                 InvalidateCache();
                 System.Diagnostics.Debug.WriteLine($"? Added standalone ingredient: {ingredient.Name}, ID: {ingredient.Id}");
+                
+                // ? KRYTYCZNE FIX: Wywo³aj event aby poinformowaæ subskrybentów (IngredientsPage, AddRecipePage)
+                AppEvents.RaiseIngredientSaved(ingredient.Id);
+                System.Diagnostics.Debug.WriteLine($"[IngredientService] Raised IngredientSaved event for ID: {ingredient.Id}");
             }
             else
             {
@@ -76,29 +175,46 @@ public class IngredientService : IIngredientService
     {
         try
         {
-            // Use more efficient update approach
             var existingIngredient = await _context.Ingredients
                 .FirstOrDefaultAsync(i => i.Id == ingredient.Id);
                 
             if (existingIngredient != null)
             {
-                // Update only the fields we want to change
                 existingIngredient.Name = ingredient.Name;
                 existingIngredient.Quantity = ingredient.Quantity;
                 existingIngredient.Unit = ingredient.Unit;
+                // Persist UnitWeight as well (was missing - caused edits to UnitWeight to be lost)
+                existingIngredient.UnitWeight = ingredient.UnitWeight;
                 existingIngredient.Calories = ingredient.Calories;
                 existingIngredient.Protein = ingredient.Protein;
                 existingIngredient.Fat = ingredient.Fat;
                 existingIngredient.Carbs = ingredient.Carbs;
-                // RecipeId stays the same
 
                 await _context.SaveChangesAsync();
-                
-                // ? OPTYMALIZACJA: Invaliduj cache tylko dla standalone ingredients
+
+                // Invalidate shared cache for standalone ingredients
                 if (existingIngredient.RecipeId == null)
                 {
                     InvalidateCache();
                     System.Diagnostics.Debug.WriteLine($"? Updated standalone ingredient: {ingredient.Name}, ID: {ingredient.Id}");
+                    
+                    // ? KRYTYCZNE FIX: Wywo³aj event aby poinformowaæ subskrybentów
+                    AppEvents.RaiseIngredientSaved(ingredient.Id);
+                    System.Diagnostics.Debug.WriteLine($"[IngredientService] Raised IngredientSaved event for ID: {ingredient.Id}");
+                    
+                    // Queue for cloud sync (Update operation)
+                    if (_syncService != null)
+                    {
+                        try
+                        {
+                            await _syncService.QueueForSyncAsync(ingredient, SyncOperationType.Update);
+                            System.Diagnostics.Debug.WriteLine($"[IngredientService] Queued ingredient {ingredient.Id} for Update sync");
+                        }
+                        catch (Exception syncEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[IngredientService] Failed to queue sync: {syncEx.Message}");
+                        }
+                    }
                 }
                 else
                 {
@@ -107,7 +223,7 @@ public class IngredientService : IIngredientService
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"? Ingredient with ID {ingredient.Id} not found for update");
+                System.Diagnostics.Debug.WriteLine($"?? Ingredient with ID {ingredient.Id} not found for update");
             }
         }
         catch (Exception ex)
@@ -117,11 +233,10 @@ public class IngredientService : IIngredientService
         }
     }
 
-    public async Task DeleteIngredientAsync(int id)
+    public async Task DeleteIngredientAsync(Guid id)
     {
         try
         {
-            // ? OPTYMALIZACJA: SprawdŸ czy to standalone ingredient przed usuniêciem
             var ingredient = await _context.Ingredients.FindAsync(id);
             bool wasStandalone = ingredient?.RecipeId == null;
             
@@ -130,11 +245,25 @@ public class IngredientService : IIngredientService
                 _context.Ingredients.Remove(ingredient);
                 await _context.SaveChangesAsync();
                 
-                // Invaliduj cache tylko dla standalone ingredients
                 if (wasStandalone)
                 {
                     InvalidateCache();
                     System.Diagnostics.Debug.WriteLine($"? Deleted standalone ingredient ID: {id}");
+                    
+                    // Queue for cloud sync (Delete operation)
+                    if (_syncService != null)
+                    {
+                        try
+                        {
+                            var deleteEntity = new Ingredient { Id = id, Name = ingredient.Name };
+                            await _syncService.QueueForSyncAsync(deleteEntity, SyncOperationType.Delete);
+                            System.Diagnostics.Debug.WriteLine($"[IngredientService] Queued ingredient {id} for Delete sync");
+                        }
+                        catch (Exception syncEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[IngredientService] Failed to queue sync: {syncEx.Message}");
+                        }
+                    }
                 }
                 else
                 {
@@ -146,7 +275,6 @@ public class IngredientService : IIngredientService
         {
             System.Diagnostics.Debug.WriteLine($"? Error deleting ingredient: {ex.Message}");
             
-            // Fallback to traditional delete if the above fails
             try
             {
                 var ing = await _context.Ingredients.FindAsync(id);
@@ -159,6 +287,21 @@ public class IngredientService : IIngredientService
                     if (wasStandalone)
                     {
                         InvalidateCache();
+                        
+                        // Queue for cloud sync (Delete operation) in fallback
+                        if (_syncService != null)
+                        {
+                            try
+                            {
+                                var deleteEntity = new Ingredient { Id = id, Name = ing.Name };
+                                await _syncService.QueueForSyncAsync(deleteEntity, SyncOperationType.Delete);
+                                System.Diagnostics.Debug.WriteLine($"[IngredientService] Queued ingredient {id} for Delete sync (fallback)");
+                            }
+                            catch (Exception syncEx)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[IngredientService] Failed to queue sync (fallback): {syncEx.Message}");
+                            }
+                        }
                     }
                     System.Diagnostics.Debug.WriteLine($"? Deleted ingredient ID: {id} (fallback method)");
                 }
@@ -171,11 +314,17 @@ public class IngredientService : IIngredientService
         }
     }
 
-    // ? NOWE: Publiczna metoda do invalidacji cache
+    // Invalidate the shared cache
     public void InvalidateCache()
     {
-        _cachedIngredients = null;
-        _lastCacheTime = DateTime.MinValue;
-        System.Diagnostics.Debug.WriteLine("Ingredients cache invalidated");
+        lock (_cacheLock)
+        {
+            _cachedIngredientsStatic = null;
+            _lastCacheTimeStatic = DateTime.MinValue;
+            
+            _cachedIngredientNamesStatic = null;
+            _lastNamesCacheTimeStatic = DateTime.MinValue;
+        }
+        System.Diagnostics.Debug.WriteLine("? Ingredients cache invalidated (shared + names)");
     }
 }

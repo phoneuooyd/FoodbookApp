@@ -50,8 +50,8 @@ namespace FoodbookApp.Tests
             // Arrange
             var ingredients = new List<Ingredient>
             {
-                new() { Id = 1, Name = "Test Ingredient 1", Quantity = 100, Unit = Unit.Gram },
-                new() { Id = 2, Name = "Test Ingredient 2", Quantity = 200, Unit = Unit.Milliliter }
+                new() { Id = Guid.NewGuid(), Name = "Test Ingredient 1", Quantity = 100, Unit = Unit.Gram },
+                new() { Id = Guid.NewGuid(), Name = "Test Ingredient 2", Quantity = 200, Unit = Unit.Milliliter }
             };
 
             _mockIngredientService.Setup(s => s.GetIngredientsAsync())
@@ -70,7 +70,7 @@ namespace FoodbookApp.Tests
         public void IngredientsViewModel_DeleteCommand_ShouldBeExecutable()
         {
             // Arrange
-            var ingredient = new Ingredient { Id = 1, Name = "Test Ingredient", Quantity = 100, Unit = Unit.Gram };
+            var ingredient = new Ingredient { Id = Guid.NewGuid(), Name = "Test Ingredient", Quantity = 100, Unit = Unit.Gram };
             _viewModel.Ingredients.Add(ingredient);
 
             _mockIngredientService.Setup(s => s.DeleteIngredientAsync(ingredient.Id))

@@ -124,17 +124,67 @@ public class IngredientsViewModel : INotifyPropertyChanged
         catch { }
     }
 
-    private async void OnIngredientSaved(int id)
+    // Safe dispatcher helpers (avoid COM exceptions in headless unit tests)
+    private void RunOnUiThread(Action action)
     {
+        try
+        {
+            Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(action);
+        }
+        catch
+        {
+            // No dispatcher available (e.g., unit tests) – run inline
+            try { action(); } catch { }
+        }
+    }
+
+    private async Task RunOnUiThreadAsync(Action action)
+    {
+        try
+        {
+            await Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(action);
+        }
+        catch
+        {
+            // No dispatcher available – run inline
+            try { action(); } catch { }
+            await Task.CompletedTask;
+        }
+    }
+
+    private async void OnIngredientSaved(Guid id)
+    {
+        System.Diagnostics.Debug.WriteLine($"[IngredientsViewModel] OnIngredientSaved triggered for ID: {id}");
         // Ensure next fetch hits DB, then refresh
-        try { _service.InvalidateCache(); } catch { }
+        try 
+        { 
+            _service.InvalidateCache();
+            System.Diagnostics.Debug.WriteLine("[IngredientsViewModel] Service cache invalidated");
+        } 
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientsViewModel] Error invalidating cache: {ex.Message}");
+        }
+        
         await HardReloadAsync();
+        System.Diagnostics.Debug.WriteLine($"[IngredientsViewModel] OnIngredientSaved completed for ID: {id}");
     }
 
     private async Task OnIngredientsChangedSignal()
     {
-        try { _service.InvalidateCache(); } catch { }
+        System.Diagnostics.Debug.WriteLine("[IngredientsViewModel] OnIngredientsChangedSignal triggered");
+        try 
+        { 
+            _service.InvalidateCache();
+            System.Diagnostics.Debug.WriteLine("[IngredientsViewModel] Service cache invalidated");
+        } 
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientsViewModel] Error invalidating cache: {ex.Message}");
+        }
+        
         await HardReloadAsync();
+        System.Diagnostics.Debug.WriteLine("[IngredientsViewModel] OnIngredientsChangedSignal completed");
     }
 
     private void RaiseDataLoaded()
@@ -144,7 +194,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
             var handler = DataLoaded; 
             if (handler != null)
             {
-                MainThread.BeginInvokeOnMainThread(() =>
+                RunOnUiThread(() =>
                 {
                     try { handler.Invoke(this, EventArgs.Empty); } catch { }
                 });
@@ -158,28 +208,36 @@ public class IngredientsViewModel : INotifyPropertyChanged
     /// </summary>
     private async Task FetchIngredientsAsync()
     {
+        System.Diagnostics.Debug.WriteLine("[IngredientsViewModel] FetchIngredientsAsync started");
+        
         var list = await _service.GetIngredientsAsync();
         _allIngredients = list;
+        
+        System.Diagnostics.Debug.WriteLine($"[IngredientsViewModel] Fetched {list.Count} ingredients from service");
 
-        // Update observable collection on the UI thread
-        await MainThread.InvokeOnMainThreadAsync(() =>
+        // Update observable collection safely
+        await RunOnUiThreadAsync(() =>
         {
+            System.Diagnostics.Debug.WriteLine("[IngredientsViewModel] Updating Ingredients collection on UI thread");
             Ingredients.Clear();
             foreach (var ingredient in list)
             {
                 Ingredients.Add(ingredient);
             }
+            System.Diagnostics.Debug.WriteLine($"[IngredientsViewModel] Ingredients collection updated with {Ingredients.Count} items");
         });
 
-        // Apply current filter and sort (also on UI thread)
-        await MainThread.InvokeOnMainThreadAsync(() =>
+        // Apply current filter and sort
+        await RunOnUiThreadAsync(() =>
         {
+            System.Diagnostics.Debug.WriteLine("[IngredientsViewModel] Applying filter and sort");
             FilterIngredients();
             ((Command)BulkVerifyCommand).ChangeCanExecute(); // Refresh command state
         });
 
         // Signal that all data required by the view is ready
         RaiseDataLoaded();
+        System.Diagnostics.Debug.WriteLine("[IngredientsViewModel] FetchIngredientsAsync completed, DataLoaded event raised");
     }
 
     /// <summary>
@@ -187,9 +245,26 @@ public class IngredientsViewModel : INotifyPropertyChanged
     /// </summary>
     public async Task HardReloadAsync()
     {
-        if (IsRefreshing) return;
-        try { _service.InvalidateCache(); } catch { }
+        System.Diagnostics.Debug.WriteLine($"[IngredientsViewModel] HardReloadAsync called (IsRefreshing: {IsRefreshing})");
+        
+        if (IsRefreshing)
+        {
+            System.Diagnostics.Debug.WriteLine("[IngredientsViewModel] Already refreshing, skipping this reload request");
+            return;
+        }
+        
+        try 
+        { 
+            _service.InvalidateCache();
+            System.Diagnostics.Debug.WriteLine("[IngredientsViewModel] Cache invalidated in HardReloadAsync");
+        } 
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientsViewModel] Error invalidating cache: {ex.Message}");
+        }
+        
         await ReloadAsync();
+        System.Diagnostics.Debug.WriteLine("[IngredientsViewModel] HardReloadAsync completed");
     }
 
     /// <summary>
@@ -277,7 +352,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
             var successMessage =
                 "Weryfikacja zakoñczona!\n\n" +
                 $"? Zaktualizowano: {updatedCount} sk³adników\n" +
-                $"• Bez zmian: {totalCount - updatedCount - failedCount} sk³adników\n" +
+                $"?? Bez zmian: {totalCount - updatedCount - failedCount} sk³adników\n" +
                 (failedCount > 0 ? $"? B³êdy/nie znaleziono: {failedCount} sk³adników" : "");
 
             BulkVerificationStatus = $"? Zakoñczono - zaktualizowano {updatedCount}/{totalCount} sk³adników";
@@ -326,8 +401,17 @@ public class IngredientsViewModel : INotifyPropertyChanged
 
     public async Task ReloadAsync()
     {
-        if (IsRefreshing) return;
+        System.Diagnostics.Debug.WriteLine($"[IngredientsViewModel] ReloadAsync called (IsRefreshing: {IsRefreshing})");
+        
+        if (IsRefreshing)
+        {
+            System.Diagnostics.Debug.WriteLine("[IngredientsViewModel] Already refreshing, skipping");
+            return;
+        }
+        
         IsRefreshing = true;
+        System.Diagnostics.Debug.WriteLine("[IngredientsViewModel] IsRefreshing set to TRUE");
+        
         try
         {
             var fetchTask = FetchIngredientsAsync();
@@ -336,19 +420,21 @@ public class IngredientsViewModel : INotifyPropertyChanged
             if (completed == fetchTask)
             {
                 await fetchTask; // propagate exceptions if any
+                System.Diagnostics.Debug.WriteLine("[IngredientsViewModel] Fetch completed successfully");
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("[IngredientsViewModel] Refresh timeout reached - stopping spinner");
+                System.Diagnostics.Debug.WriteLine("[IngredientsViewModel] ?? Refresh timeout reached - stopping spinner");
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[IngredientsViewModel] Reload error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[IngredientsViewModel] ? Reload error: {ex.Message}");
         }
         finally
         {
             IsRefreshing = false;
+            System.Diagnostics.Debug.WriteLine("[IngredientsViewModel] IsRefreshing set to FALSE");
         }
     }
 
@@ -369,15 +455,15 @@ public class IngredientsViewModel : INotifyPropertyChanged
             ? source.OrderBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase)
             : source.OrderByDescending(i => i.Name, StringComparer.CurrentCultureIgnoreCase);
 
-        // Ensure UI thread when updating bound collection
-        MainThread.BeginInvokeOnMainThread(() =>
+        // Update bound collection safely (works without UI thread in tests)
+        RunOnUiThread(() =>
         {
             Ingredients.Clear();
             foreach (var ingredient in source)
             {
                 Ingredients.Add(ingredient);
             }
-            ((Command)BulkVerifyCommand).ChangeCanExecute(); // Refresh command state when filter changes
+            ((Command)BulkVerifyCommand).ChangeCanExecute();
         });
     }
 

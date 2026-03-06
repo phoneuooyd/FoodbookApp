@@ -32,4 +32,16 @@
   <data name="ExitAppTitle" xml:space="preserve">
     <value>Beenden</value>
   </data>
+
+	<!-- Profile tile (German) -->
+	<data name="Profile" xml:space="preserve"><value>Profil</value></data>
+	<data name="ProfileSubtitle" xml:space="preserve"><value>Konto und Cloud-Synchronisierung verwalten</value></data>
+	<data name="GoToProfile" xml:space="preserve"><value>Öffnen</value></data>
+
+	<data name="NoPlannedMealsMessage" xml:space="preserve">
+  <value>Keine geplanten Mahlzeiten für den ausgewählten Zeitraum</value>
+</data>
+	<data name="PortionsFormat" xml:space="preserve">
+  <value>({0} Portionen)</value>
+</data>
 </root>

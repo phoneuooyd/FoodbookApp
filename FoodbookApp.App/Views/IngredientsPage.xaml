@@ -6,12 +6,14 @@
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:converters="clr-namespace:Foodbook.Converters"
              xmlns:components="clr-namespace:Foodbook.Views.Components"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:resources="clr-namespace:FoodbookApp.Localization"
              x:Class="Foodbook.Views.IngredientsPage"
              x:Name="ThisPage"
              x:DataType="vm:IngredientsViewModel"
              Title="{loc:Translate Resource=IngredientsPageResources, Key=Title}"
-             BackgroundColor="{DynamicResource PageBackgroundColor}">
+             BackgroundColor="{DynamicResource PageBackgroundColor}"
+             Shell.NavBarIsVisible="false">
 
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
@@ -37,14 +39,20 @@
                                                ClearCommand="{Binding ClearSearchCommand}"
                                                IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
             <ImageButton Grid.Column="1"
+                         x:Name="FilterButton"
                          WidthRequest="28"
                          HeightRequest="28"
                          BackgroundColor="Transparent"
                          HorizontalOptions="End"
                          Source="Resources/Images/filter.png"
-                         Opacity="0.4"
+                         
                          Clicked="OnIngredientSortClicked"
-                         AutomationId="IngredientsFilterButton"/>
+                         AutomationId="IngredientsFilterButton">
+                <ImageButton.Behaviors>
+                    <!-- Use Primary so the icon is colored based on theme -->
+                    <toolkit:IconTintColorBehavior TintColor="{DynamicResource Primary}" />
+                </ImageButton.Behaviors>
+            </ImageButton>
         </Grid>
 
         <!-- Content -->

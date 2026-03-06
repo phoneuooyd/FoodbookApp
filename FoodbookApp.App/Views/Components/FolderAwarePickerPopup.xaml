@@ -46,7 +46,7 @@
         </ResourceDictionary>
     </mct:Popup.Resources>
 
-    <Border BackgroundColor="{DynamicResource PageBackgroundColor}"
+    <Border BackgroundColor="{DynamicResource PopupBackgroundColor}"
             StrokeShape="RoundRectangle 12"
             StrokeThickness="1"
             Stroke="{DynamicResource Secondary}"
@@ -68,9 +68,11 @@
                     <StackLayout Grid.Column="0" Orientation="Vertical" Spacing="6">
                         <components:ModernSearchBarComponent
                             SearchText="{Binding SearchText, Source={x:Reference ThisPopup}}"
-                            PlaceholderText="Szukaj..."
-                            ClearCommand="{Binding ClearSearchCommand, Source={x:Reference ThisPopup}}"
-                            />
+                            ClearCommand="{Binding ClearSearchCommand, Source={x:Reference ThisPopup}}">
+                            <components:ModernSearchBarComponent.PlaceholderText>
+                                <loc:Translate Resource="FolderResources" Key="SearchPlaceholder" />
+                            </components:ModernSearchBarComponent.PlaceholderText>
+                        </components:ModernSearchBarComponent>
 			    </StackLayout>
 
                     <!-- Filter button -->
@@ -96,25 +98,9 @@
 			</Grid>
 		</StackLayout>
 
-            <!-- Back row under header -->
-            <Grid Grid.Row="1"
-                  BackgroundColor="{DynamicResource ShellBackgroundColor}"
-                  Padding="12,0,12,6"
-                  IsVisible="{Binding HasBreadcrumb, Source={x:Reference ThisPopup}}">
-                <Button Text="←"
-                        FontSize="16"
-                        WidthRequest="32"
-                        HeightRequest="32"
-                        CornerRadius="16"
-                        BackgroundColor="Transparent"
-                        TextColor="{DynamicResource ShellTitleColor}"
-                        HorizontalOptions="Start"
-                        Command="{Binding BackCommand, Source={x:Reference ThisPopup}}" />
-            </Grid>
-            
             <!-- Content -->
             <ScrollView Grid.Row="2" 
-                        BackgroundColor="{DynamicResource PageBackgroundColor}"
+                        BackgroundColor="{DynamicResource PopupBackgroundColor}"
                         Padding="6,4">
                 <StackLayout BindableLayout.ItemsSource="{Binding Items, Source={x:Reference ThisPopup}}"
                              Spacing="8">
@@ -149,7 +135,7 @@
                                                 <DataTrigger TargetType="Border" 
                                                            Binding="{Binding ItemType}" 
                                                            Value="Recipe">
-                                                    <Setter Property="BackgroundColor" Value="{DynamicResource PageBackgroundColor}" />
+                                                    <Setter Property="BackgroundColor" Value="{DynamicResource PopupBackgroundColor}" />
                                                     <Setter Property="Stroke" Value="{DynamicResource Secondary}" />
                                                 </DataTrigger>
                                                 <DataTrigger TargetType="Border" 
@@ -162,7 +148,7 @@
                                         </Style>
                                     </Border.Style>
                                     
-                                    <!-- TouchBehavior handles BOTH tap and long press with visual feedback -->
+                                    <!-- TouchBehavior handles tap and long press -->
                                     <Border.Behaviors>
                                         <behaviors:TouchBehavior
                                             LongPressDuration="600"
@@ -174,8 +160,6 @@
                                             DefaultAnimationEasing="{x:Static Easing.CubicInOut}"
                                             PressedOpacity="0.75"
                                             PressedScale="0.97"
-                                            HoveredOpacity="0.9"
-                                            HoveredScale="1.02"
                                             ShouldMakeChildrenInputTransparent="True" />
                                     </Border.Behaviors>
                                     
@@ -197,13 +181,13 @@
                                                    FontSize="17"
                                                    FontAttributes="{Binding FontAttributes}"
                                                    TextColor="{DynamicResource PrimaryText}"
-                                                   LineBreakMode="TailTruncation" />
+                                                   LineBreakMode="WordWrap" />
                                             
                                             <Label Text="{Binding Description}"
                                                    FontSize="13"
                                                    TextColor="{DynamicResource SecondaryText}"
                                                    IsVisible="{Binding HasDescription}"
-                                                   LineBreakMode="TailTruncation" />
+                                                   LineBreakMode="WordWrap" />
                                         </StackLayout>
                                         
                                         <!-- Arrow for folders -->
@@ -228,7 +212,7 @@
                                    FontSize="48"
                                    HorizontalOptions="Center"
                                    TextColor="{DynamicResource SecondaryText}" />
-                            <Label FontSize="16" HorizontalOptions="Center" TextColor="{DynamicResource PrimaryText}" HorizontalTextAlignment="Center">
+                            <Label FontSize="15" HorizontalOptions="Center" TextColor="{DynamicResource PrimaryText}" HorizontalTextAlignment="Center">
                                 <Label.Text>
                                     <loc:Translate Resource="FolderResources" Key="EmptyFolderTitle" />
                                 </Label.Text>

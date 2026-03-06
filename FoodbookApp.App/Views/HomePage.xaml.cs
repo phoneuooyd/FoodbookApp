@@ -5,22 +5,29 @@ using Foodbook.Views.Components;
 using CommunityToolkit.Maui.Views;
 using CommunityToolkit.Maui.Extensions;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Services.Auth;
+using Foodbook.Services;
 
 namespace Foodbook.Views;
 
-public partial class HomePage : ContentPage
+public partial class HomePage : ContentPage, ITabLoadable
 {
     private HomeViewModel ViewModel => BindingContext as HomeViewModel;
     private IThemeService? _themeService;
     private IFontService? _fontService;
     private ILocalizationService? _localizationService;
     private bool _isMealsPopupOpen = false; // Protection against multiple opens
+    private ISupabaseAuthService? _supabaseAuth;
+    private bool _hasLoadedOnce;
 
     public HomePage(HomeViewModel vm)
     {
         InitializeComponent();
         BindingContext = vm;
     }
+
+    private ISupabaseAuthService? GetSupabaseAuth()
+        => _supabaseAuth ??= FoodbookApp.MauiProgram.ServiceProvider?.GetService<ISupabaseAuthService>();
 
     protected override async void OnAppearing()
     {
@@ -29,8 +36,53 @@ public partial class HomePage : ContentPage
         // Initialize services and subscribe to events
         InitializeThemeAndFontHandling();
         
+        // Subscribe to data-change events so counts refresh without leaving the page
+        AppEvents.RecipesChangedAsync += OnDataChangedAsync;
+        AppEvents.PlanChangedAsync += OnDataChangedAsync;
+
         if (ViewModel != null)
-            await ViewModel.LoadAsync();
+        {
+            if (_hasLoadedOnce)
+            {
+                // Re-appearing (e.g. returning from Settings) — refresh data
+                try
+                {
+                    await ViewModel.LoadAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[HomePage] Re-appearing LoadAsync failed: {ex.Message}");
+                }
+            }
+            // First appearance: skip — TabBarComponent.TriggerInitialLoadAsync handles the initial load
+            _hasLoadedOnce = true;
+        }
+    }
+
+    private async void OnProfileFetchJwtClicked(object sender, EventArgs e)
+    {
+        await DisplayAlert("dupa", "ok", "ok");
+        System.Diagnostics.Debug.WriteLine("[HomePage] ===== BUTTON CLICKED - SYNC TEST =====");
+        
+        // Najtuplejszy mo¿liwy test - bez DisplayAlert, bez async
+        int testValue = 42;
+        System.Diagnostics.Debug.WriteLine($"[HomePage] Test sync code executed: {testValue}");
+        
+        // Teraz spróbuj DisplayAlert
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[HomePage] Before DisplayAlert");
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                System.Diagnostics.Debug.WriteLine("[HomePage] Inside MainThread");
+                await DisplayAlert("TEST", "Button works!", "OK");
+                System.Diagnostics.Debug.WriteLine("[HomePage] After DisplayAlert");
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HomePage] Exception in click handler: {ex.Message}");
+        }
     }
 
     protected override void OnDisappearing()
@@ -39,6 +91,22 @@ public partial class HomePage : ContentPage
         
         // Unsubscribe from events to prevent memory leaks
         CleanupThemeAndFontHandling();
+
+        AppEvents.RecipesChangedAsync -= OnDataChangedAsync;
+        AppEvents.PlanChangedAsync -= OnDataChangedAsync;
+    }
+
+    private async Task OnDataChangedAsync()
+    {
+        try
+        {
+            if (ViewModel != null)
+                await ViewModel.LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HomePage] OnDataChangedAsync error: {ex.Message}");
+        }
     }
 
     private void InitializeThemeAndFontHandling()
@@ -185,6 +253,73 @@ public partial class HomePage : ContentPage
         {
             _isMealsPopupOpen = false;
             System.Diagnostics.Debug.WriteLine("?? HomePage: Meals popup protection released");
+        }
+    }
+
+    private async void OnOpenProfileClicked(object sender, EventArgs e)
+    {
+        try
+        {
+            await Shell.Current.GoToAsync(nameof(ProfilePage));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HomePage] Failed to open ProfilePage: {ex.Message}");
+            await DisplayAlert("B³¹d", "Nie mo¿na otworzyæ strony profilu.", "OK");
+        }
+    }
+
+    protected override bool OnBackButtonPressed()
+    {
+        try
+        {
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                bool exit = await DisplayAlert("Potwierdzenie", "Czy na pewno chcesz wyjœæ z aplikacji?", "Tak", "Nie");
+                if (exit)
+                {
+                    try
+                    {
+                        Application.Current?.Quit();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[HomePage] Quit failed: {ex.Message}");
+                        // Fallback for platforms without Quit support
+#if ANDROID
+                        // On Android, simulate back to close
+                        await Task.Delay(50);
+                        System.Diagnostics.Process.GetCurrentProcess().CloseMainWindow();
+#endif
+                    }
+                }
+            });
+            return true; // consume back press
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HomePage] OnBackButtonPressed error: {ex.Message}");
+            return base.OnBackButtonPressed();
+        }
+    }
+
+    /// <summary>
+    /// Called by TabBarComponent when this tab is activated.
+    /// </summary>
+    public async Task OnTabActivatedAsync()
+    {
+        try
+        {
+            InitializeThemeAndFontHandling();
+
+            if (ViewModel != null)
+            {
+                await ViewModel.LoadAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HomePage] OnTabActivatedAsync error: {ex.Message}");
         }
     }
 }

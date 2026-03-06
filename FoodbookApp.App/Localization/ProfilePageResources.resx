@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+
+	<data name="Title" xml:space="preserve"><value>Profile</value></data>
+	<data name="HeaderTitle" xml:space="preserve"><value>Profile</value></data>
+	<data name="HeaderSubtitle" xml:space="preserve"><value>Sign in to Supabase</value></data>
+
+	<data name="LoginPanelTitle" xml:space="preserve"><value>Sign in</value></data>
+	<data name="EmailLabel" xml:space="preserve"><value>Email</value></data>
+	<data name="EmailPlaceholder" xml:space="preserve"><value>name@example.com</value></data>
+	<data name="PasswordLabel" xml:space="preserve"><value>Password</value></data>
+	<data name="PasswordPlaceholder" xml:space="preserve"><value>Enter password</value></data>
+	<data name="LoginButton" xml:space="preserve"><value>Sign in</value></data>
+	<data name="RegisterButton" xml:space="preserve"><value>Register</value></data>
+
+	<data name="LoggedInTitle" xml:space="preserve"><value>You are signed in</value></data>
+	<data name="CloudSyncHeader" xml:space="preserve"><value>Cloud Synchronization</value></data>
+	<data name="EnableCloudSync" xml:space="preserve"><value>Enable cloud data sync</value></data>
+	<data name="ForceSyncButton" xml:space="preserve"><value>Force sync now</value></data>
+	<data name="LogoutButton" xml:space="preserve"><value>Sign out</value></data>
+
+	<data name="ServiceMissingTitle" xml:space="preserve"><value>Service unavailable</value></data>
+	<data name="ServiceMissingMessage" xml:space="preserve"><value>Authentication service not found.</value></data>
+	<data name="OK" xml:space="preserve"><value>OK</value></data>
+
+	<data name="EmailRequired" xml:space="preserve"><value>Email cannot be empty.</value></data>
+	<data name="PasswordRequired" xml:space="preserve"><value>Password cannot be empty.</value></data>
+	<data name="LoggingIn" xml:space="preserve"><value>Signing in...</value></data>
+	<data name="LoginErrorTitle" xml:space="preserve"><value>Login Error</value></data>
+	<data name="LoginErrorMessage" xml:space="preserve"><value>Login failed. Please check your credentials.</value></data>
+
+	<data name="SyncErrorTitle" xml:space="preserve"><value>Sync Error</value></data>
+	<data name="SyncServiceUnavailable" xml:space="preserve"><value>Sync service not available</value></data>
+	<data name="EnablingSync" xml:space="preserve"><value>Enabling sync...</value></data>
+	<data name="DisablingSync" xml:space="preserve"><value>Disabling sync...</value></data>
+	<data name="SyncEnabled" xml:space="preserve"><value>Cloud sync enabled. Syncing data...</value></data>
+	<data name="SyncDisabled" xml:space="preserve"><value>Cloud sync disabled</value></data>
+	<data name="ForcingSync" xml:space="preserve"><value>Forcing sync of ALL items...</value></data>
+	<data name="ForceSyncCompletedTitle" xml:space="preserve"><value>Force sync completed</value></data>
+	<data name="ForceSyncErrorTitle" xml:space="preserve"><value>Force sync error</value></data>
+
+	<data name="LogoutErrorTitle" xml:space="preserve"><value>Logout Error</value></data>
+	<data name="GenericErrorTitle" xml:space="preserve"><value>Error</value></data>
+
+	<data name="SyncStatusFormat" xml:space="preserve"><value>Status: {0}, Pending: {1}</value></data>
+	<data name="ForceSyncSynced" xml:space="preserve"><value>Synced: {0}</value></data>
+	<data name="ForceSyncFailed" xml:space="preserve"><value>Failed: {0}</value></data>
+	<data name="ForceSyncRemaining" xml:space="preserve"><value>Remaining: {0}</value></data>
+	<data name="ForceSyncDuration" xml:space="preserve"><value>Duration: {0}s</value></data>
+	<data name="ForceSyncDuplicatesRemoved" xml:space="preserve"><value>Cloud duplicates removed: {0}</value></data>
+	<data name="ForceSyncSkipped" xml:space="preserve"><value>Skipped (already in cloud): {0}</value></data>
+	<data name="ForceSyncError" xml:space="preserve"><value>Error: {0}</value></data>
+	<data name="SyncOverlaySyncing" xml:space="preserve"><value>Syncing data...</value></data>
+	<data name="SyncOverlayDeduplicating" xml:space="preserve"><value>Removing duplicates...</value></data>
+	<data name="SyncOverlayFetching" xml:space="preserve"><value>Fetching cloud data...</value></data>
+</root>

@@ -27,5 +27,46 @@ namespace FoodbookApp.Localization {
         internal static string EditDescriptionTitle => ResourceManager.GetString("EditDescriptionTitle", resourceCulture);
         internal static string EditDescriptionPrompt => ResourceManager.GetString("EditDescriptionPrompt", resourceCulture);
         internal static string ValidationNameRequired => ResourceManager.GetString("ValidationNameRequired", resourceCulture);
+        internal static string Root {
+            get {
+                return ResourceManager.GetString("Root", resourceCulture);
+            }
+        }
+        
+        internal static string BackButton {
+            get {
+                return ResourceManager.GetString("BackButton", resourceCulture);
+            }
+        }
+        
+        internal static string SearchPlaceholder {
+            get {
+                return ResourceManager.GetString("SearchPlaceholder", resourceCulture);
+            }
+        }
+        
+        internal static string ChooseRecipeTitle {
+            get {
+                return ResourceManager.GetString("ChooseRecipeTitle", resourceCulture);
+            }
+        }
+        
+        internal static string EmptyFolderTitle {
+            get {
+                return ResourceManager.GetString("EmptyFolderTitle", resourceCulture);
+            }
+        }
+        
+        internal static string EmptyFolderHint {
+            get {
+                return ResourceManager.GetString("EmptyFolderHint", resourceCulture);
+            }
+        }
+        
+        internal static string FooterHint {
+            get {
+                return ResourceManager.GetString("FooterHint", resourceCulture);
+            }
+        }
     }
 }

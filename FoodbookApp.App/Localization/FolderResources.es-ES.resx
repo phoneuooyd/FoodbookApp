@@ -15,4 +15,6 @@
   <data name="EmptyFolderHint" xml:space="preserve"><value>Añade recetas o navega a otra carpeta</value></data>
   <data name="FooterHint" xml:space="preserve"><value>Selecciona una receta o ve a una carpeta</value></data>
   <data name="Root" xml:space="preserve"><value>Raíz</value></data>
+  <data name="BackButton" xml:space="preserve"><value>Atrás</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Buscar...</value></data>
 </root>

@@ -3,6 +3,9 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Foodbook.Converters;
+using Foodbook.Services;
+using Foodbook.Models;
+
 
 namespace Foodbook.Views.Components;
 
@@ -17,6 +20,7 @@ public class TabComponent : ContentView, INotifyPropertyChanged
     private readonly ObservableCollection<TabItem> _tabs = new();
     private Grid? _tabHeaderGrid;
     private ContentView? _tabContentContainer;
+    private Color _iconColor;
 
     public static readonly BindableProperty SelectedIndexProperty =
         BindableProperty.Create(nameof(SelectedIndex), typeof(int), typeof(TabComponent), 0, BindingMode.TwoWay, propertyChanged: OnSelectedIndexChanged);
@@ -56,6 +60,9 @@ public class TabComponent : ContentView, INotifyPropertyChanged
 
     private void BuildControl()
     {
+        //get primary color from ThemeService to the _iconColor field
+        _iconColor = (Color)Application.Current.Resources["Primary"];
+
         // Create header grid
         _tabHeaderGrid = new Grid
         {
@@ -132,12 +139,15 @@ public class TabComponent : ContentView, INotifyPropertyChanged
             // Create tab button
             var button = new Button
             {
-                Text = tab.Name,
+                // Text is bound so that updates to TabItem.Name (e.g., from localization) update automatically
                 FontSize = 14,
                 CornerRadius = 0,
                 BorderWidth = 0,
                 Padding = new Thickness(0)
             };
+
+            // Bind the button text to the TabItem.Name property so translated names update dynamically
+            button.SetBinding(Button.TextProperty, new Binding(nameof(TabItem.Name), source: tab));
 
             // Bind button properties to tab selection state
             button.SetBinding(Button.BackgroundColorProperty, new Binding(

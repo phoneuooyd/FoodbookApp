@@ -8,11 +8,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace FoodbookApp.Data.Migrations
+namespace FoodbookApp.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251112165338_AddLinkedShoppingListPlanId")]
-    partial class AddLinkedShoppingListPlanId
+    [Migration("20260126193304_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -20,11 +20,47 @@ namespace FoodbookApp.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
 
+            modelBuilder.Entity("Foodbook.Models.AuthAccount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(320)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsAutoLoginEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("LastSignInUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SupabaseUserId")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SupabaseUserId")
+                        .IsUnique();
+
+                    b.ToTable("AuthAccounts");
+                });
+
             modelBuilder.Entity("Foodbook.Models.Folder", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
@@ -41,8 +77,11 @@ namespace FoodbookApp.Data.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("ParentFolderId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid?>("ParentFolderId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -57,15 +96,18 @@ namespace FoodbookApp.Data.Migrations
 
             modelBuilder.Entity("Foodbook.Models.Ingredient", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<double>("Calories")
                         .HasColumnType("REAL");
 
                     b.Property<double>("Carbs")
                         .HasColumnType("REAL");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
 
                     b.Property<double>("Fat")
                         .HasColumnType("REAL");
@@ -80,14 +122,17 @@ namespace FoodbookApp.Data.Migrations
                     b.Property<double>("Quantity")
                         .HasColumnType("REAL");
 
-                    b.Property<int?>("RecipeId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid?>("RecipeId")
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("Unit")
                         .HasColumnType("INTEGER");
 
                     b.Property<double>("UnitWeight")
                         .HasColumnType("REAL");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -102,9 +147,12 @@ namespace FoodbookApp.Data.Migrations
 
             modelBuilder.Entity("Foodbook.Models.Plan", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("TEXT");
@@ -112,16 +160,23 @@ namespace FoodbookApp.Data.Migrations
                     b.Property<bool>("IsArchived")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("LinkedShoppingListPlanId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid?>("LinkedShoppingListPlanId")
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("StartDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Type")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER")
                         .HasDefaultValue(0);
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -130,21 +185,27 @@ namespace FoodbookApp.Data.Migrations
 
             modelBuilder.Entity("Foodbook.Models.PlannedMeal", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("Date")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("PlanId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid?>("PlanId")
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("Portions")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("RecipeId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("RecipeId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -157,9 +218,9 @@ namespace FoodbookApp.Data.Migrations
 
             modelBuilder.Entity("Foodbook.Models.Recipe", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<double>("Calories")
                         .HasColumnType("REAL");
@@ -167,14 +228,17 @@ namespace FoodbookApp.Data.Migrations
                     b.Property<double>("Carbs")
                         .HasColumnType("REAL");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");
 
                     b.Property<double>("Fat")
                         .HasColumnType("REAL");
 
-                    b.Property<int?>("FolderId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid?>("FolderId")
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("IloscPorcji")
                         .HasColumnType("INTEGER");
@@ -185,6 +249,9 @@ namespace FoodbookApp.Data.Migrations
 
                     b.Property<double>("Protein")
                         .HasColumnType("REAL");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -199,9 +266,9 @@ namespace FoodbookApp.Data.Migrations
 
             modelBuilder.Entity("Foodbook.Models.RecipeLabel", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("ColorHex")
                         .HasMaxLength(9)
@@ -215,6 +282,9 @@ namespace FoodbookApp.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
@@ -225,9 +295,12 @@ namespace FoodbookApp.Data.Migrations
 
             modelBuilder.Entity("Foodbook.Models.ShoppingListItem", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("IngredientName")
                         .IsRequired()
@@ -239,14 +312,17 @@ namespace FoodbookApp.Data.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("PlanId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("PlanId")
+                        .HasColumnType("TEXT");
 
                     b.Property<double>("Quantity")
                         .HasColumnType("REAL");
 
                     b.Property<int>("Unit")
                         .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -257,17 +333,151 @@ namespace FoodbookApp.Data.Migrations
                     b.ToTable("ShoppingListItems");
                 });
 
+            modelBuilder.Entity("Foodbook.Models.SyncQueueEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("BatchId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastAttemptUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("OperationType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Payload")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("SyncedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId")
+                        .HasDatabaseName("IX_SyncQueue_AccountId");
+
+                    b.HasIndex("BatchId")
+                        .HasDatabaseName("IX_SyncQueue_BatchId");
+
+                    b.HasIndex("AccountId", "Status")
+                        .HasDatabaseName("IX_SyncQueue_AccountId_Status");
+
+                    b.HasIndex("AccountId", "EntityType", "EntityId")
+                        .HasDatabaseName("IX_SyncQueue_AccountId_Entity");
+
+                    b.HasIndex("Status", "Priority", "CreatedUtc")
+                        .HasDatabaseName("IX_SyncQueue_Processing");
+
+                    b.ToTable("SyncQueue");
+                });
+
+            modelBuilder.Entity("Foodbook.Models.SyncState", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("InitialSyncCompleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("InitialSyncCompletedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("InitialSyncStartedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsCloudSyncEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("LastCloudPollUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastKnownServerHash")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastSyncAttemptUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastSyncError")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastSyncUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PendingItemsCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SyncIntervalMinutes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("TotalItemsSynced")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("UpdatedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_SyncStates_AccountId");
+
+                    b.ToTable("SyncStates");
+                });
+
             modelBuilder.Entity("RecipeRecipeLabel", b =>
                 {
-                    b.Property<int>("LabelsId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("LabelId")
+                        .HasColumnType("TEXT");
 
-                    b.Property<int>("RecipesId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("RecipeId")
+                        .HasColumnType("TEXT");
 
-                    b.HasKey("LabelsId", "RecipesId");
+                    b.HasKey("LabelId", "RecipeId");
 
-                    b.HasIndex("RecipesId");
+                    b.HasIndex("RecipeId");
 
                     b.ToTable("RecipeRecipeLabel");
                 });
@@ -329,17 +539,28 @@ namespace FoodbookApp.Data.Migrations
                     b.Navigation("Plan");
                 });
 
+            modelBuilder.Entity("Foodbook.Models.SyncState", b =>
+                {
+                    b.HasOne("Foodbook.Models.AuthAccount", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+                });
+
             modelBuilder.Entity("RecipeRecipeLabel", b =>
                 {
                     b.HasOne("Foodbook.Models.RecipeLabel", null)
                         .WithMany()
-                        .HasForeignKey("LabelsId")
+                        .HasForeignKey("LabelId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Foodbook.Models.Recipe", null)
                         .WithMany()
-                        .HasForeignKey("RecipesId")
+                        .HasForeignKey("RecipeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

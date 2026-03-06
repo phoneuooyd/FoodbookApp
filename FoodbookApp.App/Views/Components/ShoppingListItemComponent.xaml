@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Foodbook.Services"
+             xmlns:converters="clr-namespace:Foodbook.Converters"
+             xmlns:components="clr-namespace:Foodbook.Views.Components"
+             xmlns:models="clr-namespace:Foodbook.Models"
+             x:Class="Foodbook.Views.Components.ShoppingListItemComponent"
+             x:Name="ItemComponent"
+             x:DataType="models:Ingredient">
+    
+    <ContentView.Resources>
+        <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        <converters:DragStateToColorConverter x:Key="DragStateToColorConverter" />
+        <converters:DropZoneToColorConverter x:Key="DropZoneToColorConverter" />
+        <converters:DropZoneBorderColorConverter x:Key="DropZoneBorderColorConverter" />
+        <converters:UnitToLocalizedStringConverter x:Key="UnitToLocalizedStringConverter" />
+        <converters:BoolToGrayConverter x:Key="BoolToGrayConverter" />
+    </ContentView.Resources>
+    
+    <!-- Wrapper grid - usuń drop zones, Sharpnado to obsługuje -->
+    <Grid RowDefinitions="Auto" Padding="0" Margin="0">
+        <Border Grid.Row="0"
+                x:Name="ItemFrame"
+                Padding="5,5"
+                Margin="7,2"
+                Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#3A3A3A}"
+                StrokeThickness="1"
+                StrokeShape="RoundRectangle 8"
+                BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#2D2D30}"
+                MinimumHeightRequest="115">
+            <Border.Triggers>
+                <DataTrigger TargetType="Border" Binding="{Binding IsBeingDragged}" Value="True">
+                    <Setter Property="Opacity" Value="0.4" />
+                    <Setter Property="Stroke" Value="{DynamicResource Primary}" />
+                </DataTrigger>
+            </Border.Triggers>
+
+            <!-- Restored borders for visual clarity -->
+            <Grid RowDefinitions="Auto,Auto" 
+                  ColumnSpacing="7" 
+                  BackgroundColor="Transparent">
+                
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                
+                <!-- Checkbox -->
+                <CheckBox Grid.Row="0" 
+                          Grid.Column="0" 
+                          IsChecked="{Binding IsChecked}" 
+                          Color="{DynamicResource Primary}" 
+                          BackgroundColor="Transparent" 
+                          VerticalOptions="Center" 
+                          HorizontalOptions="Center"
+                          Scale="0.85" />
+                
+                <!-- Name: Editor when unchecked, Label when checked -->
+                <Editor Grid.Row="0" 
+                        Grid.Column="1" 
+                        Text="{Binding Name}" 
+                        Placeholder="{loc:Translate Resource=ShoppingListDetailPageResources, Key=NameHeader}" 
+                        AutoSize="TextChanges" 
+                        MinimumHeightRequest="30" 
+                        BackgroundColor="Transparent"
+                        FontSize="13"
+                        Focused="OnEntryFocused" 
+                        Unfocused="OnEntryUnfocused"
+                        IsVisible="{Binding IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
+                
+                <Label Grid.Row="0" 
+                       Grid.Column="1" 
+                       Text="{Binding Name}" 
+                       LineBreakMode="WordWrap" 
+                       MaxLines="3"
+                       FontSize="13"
+                       TextDecorations="Strikethrough" 
+                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
+                       VerticalTextAlignment="Center"
+                       IsVisible="{Binding IsChecked}" />
+                
+                <!-- Remove button -->
+                <Button Grid.Row="0" 
+                        Grid.Column="2" 
+                        Style="{StaticResource DeleteButton}"
+                       Command="{Binding RemoveItemCommand, Source={x:Reference ItemComponent}}" 
+                        CommandParameter="{Binding .}" 
+                        WidthRequest="27" 
+                        HeightRequest="27" 
+                        Padding="0" 
+                        BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}" 
+                        TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}" 
+                        FontSize="12" 
+                        CornerRadius="14" 
+                        BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}" 
+                        BorderWidth="1" />
+                
+                <!-- Quantity + Unit row -->
+                <Grid Grid.Row="1" 
+                      Grid.Column="1" 
+                      ColumnDefinitions="Auto,Auto,*" 
+                      ColumnSpacing="7" 
+                      Margin="0,3,0,0">
+                    <!-- Unchecked: Entry + Picker -->
+                    <Entry Grid.Column="0" 
+                           Text="{Binding Quantity}" 
+                           Placeholder="{loc:Translate Resource=ShoppingListDetailPageResources, Key=QuantityHeader}" 
+                           Keyboard="Numeric" 
+                           WidthRequest="72" 
+                           HorizontalTextAlignment="Center" 
+                           FontSize="11" 
+                           Focused="OnEntryFocused" 
+                           Unfocused="OnEntryUnfocused"
+                           IsVisible="{Binding IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
+                    
+                    <components:SimplePicker Grid.Column="1" 
+                                            WidthRequest="100" 
+                                            Scale="0.81" 
+                                            ItemsSource="{Binding UnitsSource, Source={x:Reference ItemComponent}}" 
+                                            SelectedItem="{Binding Unit}" 
+                                            ItemDisplayBinding="{Binding ., Converter={StaticResource UnitToLocalizedStringConverter}}" 
+                                            PlaceholderText="{loc:Translate Resource=ShoppingListDetailPageResources, Key=UnitHeader}" 
+                                            SelectionChanged="OnUnitPickerSelectionChanged"
+                                            IsVisible="{Binding IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
+                    
+                    <!-- Checked: Labels with strikethrough -->
+                    <Label Grid.Column="0" 
+                           Text="{Binding Quantity}" 
+                           FontSize="11" 
+                           TextDecorations="Strikethrough" 
+                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
+                           VerticalTextAlignment="Center" 
+                           HorizontalTextAlignment="Center"
+                           IsVisible="{Binding IsChecked}" />
+                    
+                    <Label Grid.Column="1" 
+                           Text="{Binding Unit, Converter={StaticResource UnitToLocalizedStringConverter}}" 
+                           FontSize="11" 
+                           TextDecorations="Strikethrough" 
+                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" 
+                           VerticalTextAlignment="Center" 
+                           HorizontalTextAlignment="Center"
+                           IsVisible="{Binding IsChecked}" />
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</ContentView>

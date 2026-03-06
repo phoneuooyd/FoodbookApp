@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:FoodbookApp.Localization"
+             x:Class="Foodbook.Views.ProfilePage"
+             Title="{x:Static loc:ProfilePageResources.Title}"
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
+
+    <Grid>
+        <!-- Main content -->
+        <ScrollView>
+            <VerticalStackLayout Padding="16" Spacing="16">
+
+                <!-- Header card -->
+                <Border Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 16"
+                        BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                        Padding="16">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="{x:Static loc:ProfilePageResources.HeaderTitle}"
+                               FontSize="22"
+                               FontAttributes="Bold"
+                               TextColor="{DynamicResource Primary}"
+                               HorizontalOptions="Center" />
+                        <Label Text="{x:Static loc:ProfilePageResources.HeaderSubtitle}"
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}"
+                               HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- LOGIN PANEL -->
+                <Border x:Name="LoginPanel"
+                        Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 16"
+                        BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                        Padding="16">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="{x:Static loc:ProfilePageResources.LoginPanelTitle}" FontAttributes="Bold" FontSize="18" TextColor="{DynamicResource Primary}" />
+
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="{x:Static loc:ProfilePageResources.EmailLabel}" FontSize="12" FontAttributes="Bold" />
+                            <Border Style="{StaticResource ModernBorder}">
+                                <Entry x:Name="EmailEntry"
+                                       Style="{StaticResource ModernEntry}"
+                                       Placeholder="{x:Static loc:ProfilePageResources.EmailPlaceholder}"
+                                       Keyboard="Email" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="{x:Static loc:ProfilePageResources.PasswordLabel}" FontSize="12" FontAttributes="Bold" />
+                            <Border Style="{StaticResource ModernBorder}">
+                                <Entry x:Name="PasswordEntry"
+                                       Style="{StaticResource ModernEntry}"
+                                       Placeholder="{x:Static loc:ProfilePageResources.PasswordPlaceholder}"
+                                       IsPassword="True" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <Label x:Name="StatusLabel"
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+
+                        <Button Text="{x:Static loc:ProfilePageResources.LoginButton}"
+                                StyleClass="Primary"
+                                Clicked="OnProfileFetchJwtClicked" />
+
+                        <Button Text="{x:Static loc:ProfilePageResources.RegisterButton}"
+                                StyleClass="Secondary"
+                                Clicked="OnRegisterClicked" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- LOGGED-IN PANEL -->
+                <Border x:Name="LoggedInPanel"
+                        IsVisible="False"
+                        Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 16"
+                        BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                        Padding="16">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="{x:Static loc:ProfilePageResources.LoggedInTitle}"
+                               FontAttributes="Bold"
+                               FontSize="18"
+                               TextColor="{DynamicResource Primary}"
+                               HorizontalOptions="Center" />
+
+                        <Label x:Name="LoggedInUserLabel"
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}"
+                               HorizontalOptions="Center" />
+
+                        <!-- Cloud Sync Section -->
+                        <Border Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 12"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}"
+                                Padding="12"
+                                Margin="0,8,0,0">
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="{x:Static loc:ProfilePageResources.CloudSyncHeader}"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="{DynamicResource Primary}" />
+
+                                <HorizontalStackLayout Spacing="12">
+                                    <CheckBox x:Name="CloudSyncCheckBox"
+                                              IsChecked="False"
+                                              Color="{DynamicResource Primary}"
+                                              CheckedChanged="OnCloudSyncToggled" />
+                                    <Label Text="{x:Static loc:ProfilePageResources.EnableCloudSync}"
+                                           FontSize="14"
+                                           VerticalOptions="Center"
+                                           TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray200}}" />
+                                </HorizontalStackLayout>
+
+                                <Label x:Name="SyncStatusLabel"
+                                       FontSize="12"
+                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
+                                       IsVisible="False" />
+
+                                <!-- Force Sync button -->
+                                <Button x:Name="ForceSyncButton"
+                                        Text="{x:Static loc:ProfilePageResources.ForceSyncButton}"
+                                        StyleClass="Primary"
+                                        Clicked="OnForceSyncClicked" />
+
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Button Text="{x:Static loc:ProfilePageResources.LogoutButton}"
+                                StyleClass="Secondary"
+                                Clicked="OnLogoutClicked" />
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Syncing overlay with spinner -->
+        <Grid x:Name="SyncingOverlay"
+              IsVisible="False"
+              BackgroundColor="{AppThemeBinding Light=#80FFFFFF, Dark=#80000000}"
+              ZIndex="10">
+            <Border HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    StrokeShape="RoundRectangle 16"
+                    StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                    Padding="32,24">
+                <VerticalStackLayout Spacing="16" HorizontalOptions="Center">
+                    <ActivityIndicator x:Name="SyncActivityIndicator"
+                                       IsRunning="False"
+                                       Color="{DynamicResource Primary}"
+                                       WidthRequest="48"
+                                       HeightRequest="48"
+                                       HorizontalOptions="Center" />
+                    <Label x:Name="SyncOverlayLabel"
+                           FontSize="14"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center"
+                           MaximumWidthRequest="220"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray700}, Dark={StaticResource Gray200}}" />
+                    <Button x:Name="BackgroundSyncButton"
+                            Text="Synchronizacja w tle"
+                            StyleClass="Secondary"
+                            Clicked="OnBackgroundSyncClicked" />
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+
+    </Grid>
+</ContentPage>

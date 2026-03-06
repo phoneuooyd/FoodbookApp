@@ -6,7 +6,7 @@ namespace Foodbook.Models
 {
     public class RecipeLabel
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         [Required]
         [MaxLength(100)]
@@ -17,6 +17,7 @@ namespace Foodbook.Models
         public string? ColorHex { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
 
         // UI helper (not persisted): selection state when assigning labels in UI
         [NotMapped]

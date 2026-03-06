@@ -9,13 +9,20 @@ using System.Linq;
 using Foodbook.Services;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace Foodbook.ViewModels;
 
 public class IngredientFormViewModel : INotifyPropertyChanged
 {
     private readonly IIngredientService _service;
-    private Ingredient? _ingredient;
+    private Guid _itemId = Guid.Empty;
+    private Guid? _loadedRecipeId = null; // preserve RecipeId when editing
+
+    // Dirty tracking
+    private bool _isDirty = false;
+    private bool _suppressDirtyTracking = false;
+    public bool HasUnsavedChanges => _isDirty;
 
     // Event raised after a successful save; subscribers can await it
     public event Func<Task>? SavedAsync;
@@ -46,10 +53,10 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     
     public ICommand SelectTabCommand { get; }
 
-    public string Name { get => _name; set { _name = value; OnPropertyChanged(); ValidateInput(); } }
+    public string Name { get => _name; set { _name = value; OnPropertyChanged(); ValidateInput(); if (!_suppressDirtyTracking) MarkDirty(); } }
     private string _name = string.Empty;
 
-    public string Quantity { get => _quantity; set { _quantity = value; OnPropertyChanged(); ValidateInput(); } }
+    public string Quantity { get => _quantity; set { _quantity = value; OnPropertyChanged(); ValidateInput(); if (!_suppressDirtyTracking) MarkDirty(); } }
     private string _quantity = "100";  // Default value
 
     public string UnitWeight
@@ -60,33 +67,49 @@ public class IngredientFormViewModel : INotifyPropertyChanged
             _unitWeight = value;
             OnPropertyChanged();
             ValidateInput();
+            if (!_suppressDirtyTracking) MarkDirty();
         }
     }
     private string _unitWeight = "1.0";
 
-    public bool IsUnitWeightVisible => SelectedUnit == Unit.Piece;
-
-    public Unit SelectedUnit { get => _unit; set { if (_unit != value) { _unit = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsUnitWeightVisible)); ValidateInput(); } } }
+    // ? CRITICAL: Immediately save to database on unit change in EDIT mode
+    public Unit SelectedUnit 
+    { 
+        get => _unit; 
+        set 
+        { 
+            if (_unit != value) 
+            { 
+                var oldUnit = _unit;
+                _unit = value; 
+                OnPropertyChanged(); 
+                ValidateInput();
+                if (!_suppressDirtyTracking) MarkDirty();
+                
+                System.Diagnostics.Debug.WriteLine($"[IngredientFormViewModel] SelectedUnit changed: {oldUnit} -> {value} (will save on explicit Save)");
+            } 
+        } 
+    }
     private Unit _unit = Unit.Gram;  // Default value
 
     // Nutritional information fields
-    public string Calories { get => _calories; set { _calories = value; OnPropertyChanged(); ValidateInput(); } }
+    public string Calories { get => _calories; set { _calories = value; OnPropertyChanged(); ValidateInput(); if (!_suppressDirtyTracking) MarkDirty(); } }
     private string _calories = "0";
 
-    public string Protein { get => _protein; set { _protein = value; OnPropertyChanged(); ValidateInput(); } }
+    public string Protein { get => _protein; set { _protein = value; OnPropertyChanged(); ValidateInput(); if (!_suppressDirtyTracking) MarkDirty(); } }
     private string _protein = "0";
 
-    public string Fat { get => _fat; set { _fat = value; OnPropertyChanged(); ValidateInput(); } }
+    public string Fat { get => _fat; set { _fat = value; OnPropertyChanged(); ValidateInput(); if (!_suppressDirtyTracking) MarkDirty(); } }
     private string _fat = "0";
 
-    public string Carbs { get => _carbs; set { _carbs = value; OnPropertyChanged(); ValidateInput(); } }
+    public string Carbs { get => _carbs; set { _carbs = value; OnPropertyChanged(); ValidateInput(); if (!_suppressDirtyTracking) MarkDirty(); } }
     private string _carbs = "0";
 
-    public string Title => _ingredient == null 
+    public string Title => _itemId == Guid.Empty 
         ? FoodbookApp.Localization.ButtonResources.NewIngredient 
         : FoodbookApp.Localization.ButtonResources.EditIngredient;
     
-    public string SaveButtonText => _ingredient == null 
+    public string SaveButtonText => _itemId == Guid.Empty 
         ? FoodbookApp.Localization.ButtonResources.AddIngredient 
         : FoodbookApp.Localization.ButtonResources.SaveChanges;
 
@@ -95,7 +118,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
 
     public bool HasValidationError => !string.IsNullOrEmpty(ValidationMessage);
 
-    public bool IsPartOfRecipe => _ingredient?.RecipeId.HasValue == true;
+    public bool IsPartOfRecipe => _loadedRecipeId.HasValue;
     
     public string RecipeInfo => IsPartOfRecipe ? "Ten sk³adnik jest czêœci¹ przepisu" : string.Empty;
 
@@ -111,7 +134,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
 
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
-    public ICommand VerifyNutritionCommand { get; } // Nowa komenda
+    public ICommand VerifyNutritionCommand { get; }
 
     public IngredientFormViewModel(IIngredientService service)
     {
@@ -159,14 +182,61 @@ public class IngredientFormViewModel : INotifyPropertyChanged
         }
     }
 
-    public async Task LoadAsync(int id)
+    /// <summary>
+    /// Resets the form to default values for adding a new ingredient
+    /// </summary>
+    public void Reset()
     {
         try
         {
+            _suppressDirtyTracking = true;
+            _itemId = Guid.Empty;
+            _loadedRecipeId = null;
+            Name = string.Empty;
+            Quantity = "100";
+            SelectedUnit = Unit.Gram;
+            UnitWeight = "1.0";
+            Calories = "0";
+            Protein = "0";
+            Fat = "0";
+            Carbs = "0";
+            ValidationMessage = string.Empty;
+            VerificationStatus = string.Empty;
+            IsVerifying = false;
+            SelectedTabIndex = 0;
+
+            // Notify UI about property changes
+            OnPropertyChanged(nameof(Title));
+            OnPropertyChanged(nameof(SaveButtonText));
+            OnPropertyChanged(nameof(IsPartOfRecipe));
+            OnPropertyChanged(nameof(RecipeInfo));
+            
+            ValidateInput();
+
+            _isDirty = false;
+            _suppressDirtyTracking = false;
+            
+            System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Form reset to defaults");
+        }
+        catch (Exception ex)
+        {
+            _suppressDirtyTracking = false;
+            System.Diagnostics.Debug.WriteLine($"Error in Reset: {ex.Message}");
+        }
+    }
+
+    public async Task LoadAsync(Guid id)
+    {
+        try
+        {
+            // ? CRITICAL: Suppress dirty tracking during load
+            _suppressDirtyTracking = true;
+            
             var ing = await _service.GetIngredientAsync(id);
             if (ing != null)
             {
-                _ingredient = ing;
+                _itemId = ing.Id;
+                _loadedRecipeId = ing.RecipeId;
                 Name = ing.Name;
                 Quantity = ing.Quantity.ToString("F2");
                 SelectedUnit = ing.Unit;
@@ -174,6 +244,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 Protein = ing.Protein.ToString("F1");
                 Fat = ing.Fat.ToString("F1");
                 Carbs = ing.Carbs.ToString("F1");
+                // ? KRYTYCZNE: Normalizuj UnitWeight zawsze jako string z formatowaniem
                 UnitWeight = ing.UnitWeight.ToString("F2");
                 // Reset to first tab when loading
                 SelectedTabIndex = 0;
@@ -182,13 +253,19 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 OnPropertyChanged(nameof(SaveButtonText));
                 OnPropertyChanged(nameof(IsPartOfRecipe));
                 OnPropertyChanged(nameof(RecipeInfo));
-                OnPropertyChanged(nameof(IsUnitWeightVisible));
                 ValidateInput();
             }
+            
+            // ? CRITICAL: Reset dirty flag after loading and re-enable tracking
+            _isDirty = false;
+            _suppressDirtyTracking = false;
+            
+            System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Ingredient loaded, dirty tracking reset");
         }
         catch (Exception ex)
         {
-            ValidationMessage = $"B??d podczas ?adowania sk?adnika: {ex.Message}";
+            _suppressDirtyTracking = false;
+            ValidationMessage = $"B³¹d podczas ³adowania sk³adnika: {ex.Message}";
             System.Diagnostics.Debug.WriteLine($"Error in LoadAsync: {ex.Message}");
         }
     }
@@ -250,7 +327,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
             }
             else
             {
-                VerificationStatus = $"? Nie znaleziono produktu '{Name}' w OpenFoodFacts";
+                VerificationStatus = $"?? Nie znaleziono produktu '{Name}' w OpenFoodFacts";
                 
                 await Shell.Current.DisplayAlert(
                     "Weryfikacja sk³adnika", 
@@ -328,6 +405,14 @@ public class IngredientFormViewModel : INotifyPropertyChanged
             {
                 ValidationMessage = "Wêglowodany musz¹ byæ liczb¹";
             }
+            else if (!IsValidDouble(UnitWeight))
+            {
+                ValidationMessage = "Waga jednostkowa musi byæ liczb¹";
+            }
+            else if (ParseDoubleValue(UnitWeight) <= 0)
+            {
+                ValidationMessage = "Waga jednostkowa musi byæ wiêksza od zera";
+            }
 
             OnPropertyChanged(nameof(HasValidationError));
             ((Command)SaveCommand).ChangeCanExecute();
@@ -340,6 +425,35 @@ public class IngredientFormViewModel : INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Builds or updates an Ingredient instance from current VM state.
+    /// Does not persist; only prepares the entity to be saved by the service.
+    /// </summary>
+    private Ingredient BuildIngredientFromVm()
+    {
+        var qty = ParseDoubleValue(Quantity);
+        var cal = ParseDoubleValue(Calories);
+        var prot = ParseDoubleValue(Protein);
+        var fat = ParseDoubleValue(Fat);
+        var carbs = ParseDoubleValue(Carbs);
+        var unitWeight = ParseDoubleValue(UnitWeight);
+        if (unitWeight <= 0) unitWeight = 1.0;
+
+        return new Ingredient
+        {
+            Id = _itemId,
+            Name = Name.Trim(),
+            Quantity = qty,
+            Unit = SelectedUnit,
+            Calories = cal,
+            Protein = prot,
+            Fat = fat,
+            Carbs = carbs,
+            UnitWeight = unitWeight,
+            RecipeId = null
+        };
+    }
+
     private async Task SaveAsync()
     {
         try
@@ -349,136 +463,81 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 return;
             }
 
-            var qty = ParseDoubleValue(Quantity);
-            var cal = ParseDoubleValue(Calories);
-            var prot = ParseDoubleValue(Protein);
-            var fat = ParseDoubleValue(Fat);
-            var carbs = ParseDoubleValue(Carbs);
-            var unitWeight = ParseDoubleValue(UnitWeight);
-            if (unitWeight <= 0) unitWeight = 1.0;
-            
-            if (_ingredient == null)
+            System.Diagnostics.Debug.WriteLine("[SaveAsync] START - preparing ingredient payload from VM");
+
+            bool isNewIngredient = _itemId == Guid.Empty;
+            var toSave = BuildIngredientFromVm();
+            Guid savedId = Guid.Empty;
+
+            if (isNewIngredient)
             {
-                // Creating new ingredient
-                var newIng = new Ingredient 
-                { 
-                    Name = Name.Trim(), 
-                    Quantity = qty, 
-                    Unit = SelectedUnit,
-                    Calories = cal,
-                    Protein = prot,
-                    Fat = fat,
-                    Carbs = carbs,
-                    UnitWeight = unitWeight,
-                    RecipeId = null  // Explicitly set to null for standalone ingredients
-                };
-                
-                await _service.AddIngredientAsync(newIng);
-                System.Diagnostics.Debug.WriteLine($"Added new ingredient: {Name}, {qty}, {SelectedUnit}, {cal} cal");
+                System.Diagnostics.Debug.WriteLine($"[SaveAsync] NEW INGREDIENT payload: {JsonConvert.SerializeObject(new { toSave.Id, toSave.Name, toSave.Quantity, toSave.Unit, toSave.UnitWeight })}");
+                await _service.AddIngredientAsync(toSave);
+                savedId = toSave.Id;
+                System.Diagnostics.Debug.WriteLine($"[SaveAsync] ? Added new ingredient: {toSave.Name}, {toSave.Quantity}, {toSave.Unit}, {toSave.UnitWeight}");
             }
             else
             {
-                // Updating existing ingredient
-                _ingredient.Name = Name.Trim();
-                _ingredient.Quantity = qty;
-                _ingredient.Unit = SelectedUnit;
-                _ingredient.Calories = cal;
-                _ingredient.Protein = prot;
-                _ingredient.Fat = fat;
-                _ingredient.Carbs = carbs;
-                _ingredient.UnitWeight = unitWeight;
-                // Preserve existing RecipeId and Recipe navigation property
-                await _service.UpdateIngredientAsync(_ingredient);
-                System.Diagnostics.Debug.WriteLine($"Updated ingredient: {Name}, {qty}, {SelectedUnit}, {cal} cal");
-            }
-            
-            // Invalidate potential cache in service
-            try { _service.InvalidateCache(); } catch { }
-
-            // Invalidate AddRecipeViewModel cache if available
-            try
-            {
-                var addRecipeVm = Application.Current?.Handler?.MauiContext?.Services?.GetService<AddRecipeViewModel>();
-                if (addRecipeVm == null)
-                {
-                    addRecipeVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<AddRecipeViewModel>();
-                }
-                addRecipeVm?.InvalidateIngredientsCache();
-            }
-            catch { }
-
-            // Reload IngredientsViewModel
-            try
-            {
-                var ingVm = Application.Current?.Handler?.MauiContext?.Services?.GetService<IngredientsViewModel>();
-                if (ingVm == null)
-                {
-                    ingVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IngredientsViewModel>();
-                }
-                if (ingVm != null)
-                {
-                    await ingVm.ReloadAsync();
-                }
-            }
-            catch { }
-
-            // Directly refresh IngredientsPage if it's alive
-            try 
-            { 
-                if (Foodbook.Views.IngredientsPage.Current != null)
-                {
-                    await Foodbook.Views.IngredientsPage.Current.ForceReloadAsync();
-                }
-            } 
-            catch { }
-
-            // Notify globally so any listeners can reload (backup mechanism)
-            try { AppEvents.RaiseIngredientsChanged(); } catch { }
-
-            // Raise SavedAsync for subscribers (popup) so they know save completed
-            if (SavedAsync != null)
-            {
-                try
-                {
-                    var handlers = SavedAsync.GetInvocationList().Cast<Func<Task>>();
-                    var tasks = handlers.Select(h => h());
-                    await Task.WhenAll(tasks);
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error raising SavedAsync: {ex.Message}");
-                }
+                System.Diagnostics.Debug.WriteLine($"[SaveAsync] UPDATE INGREDIENT payload: {JsonConvert.SerializeObject(new { toSave.Id, toSave.Name, toSave.Quantity, toSave.Unit, toSave.UnitWeight })}");
+                await _service.UpdateIngredientAsync(toSave);
+                savedId = toSave.Id;
+                System.Diagnostics.Debug.WriteLine($"[SaveAsync] ? Updated ingredient: {toSave.Name}, {toSave.Quantity}, {toSave.Unit}, {toSave.UnitWeight}");
             }
 
-            // Close appropriately depending on how the page was opened - now after refresh and notifications
+            // Reset dirty flag immediately after successful persistence
+            _isDirty = false;
+            System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Dirty flag reset after successful save");
+
+            // Close form first to avoid any subscribers reloading while form is still active
+            System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Preparing to close form...");
             var nav = Shell.Current?.Navigation;
             if (nav?.ModalStack?.Count > 0)
+            {
+                System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Closing modal...");
                 await nav.PopModalAsync();
+            }
             else
+            {
+                System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Navigating back...");
                 await Shell.Current.GoToAsync("..");
-            
-            int savedId = 0;
-            if (_ingredient == null)
-            {
-                // newIng was added above; need to fetch its id
-                // try to get last added by querying service (best-effort)
-                try
-                {
-                    var list = await _service.GetIngredientsAsync();
-                    var match = list.FirstOrDefault(i => i.Name == Name.Trim());
-                    if (match != null) savedId = match.Id;
-                }
-                catch { }
             }
-            else
+            System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Form closed successfully");
+
+            // AFTER navigation completes: invalidate caches and notify other VMs/pages
+            try { _service.InvalidateCache(); } catch { }
+            System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Service cache invalidated (post-close)");
+
+            try
             {
-                savedId = _ingredient.Id;
+                AppEvents.RaiseIngredientSaved(savedId);
+                System.Diagnostics.Debug.WriteLine($"[IngredientFormViewModel] Event IngredientSaved raised for ID: {savedId} (post-close)");
             }
-            try { AppEvents.RaiseIngredientSaved(savedId); } catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[IngredientFormViewModel] Error raising IngredientSaved: {ex.Message}");
+            }
+
+            try
+            {
+                await AppEvents.RaiseIngredientsChangedAsync();
+                System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Event IngredientsChangedAsync raised and awaited (post-close)");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[IngredientFormViewModel] Error raising IngredientsChangedAsync: {ex.Message}");
+            }
+
+            // Reset VM for new-ingredient case after navigation
+            if (isNewIngredient)
+            {
+                await Task.Delay(100);
+                Reset();
+                System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Form reset after adding new ingredient and navigation complete");
+            }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error saving ingredient: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[IngredientFormViewModel] Error saving ingredient: {ex.Message}\n{ex.StackTrace}");
             ValidationMessage = $"Nie uda³o siê zapisaæ sk³adnika: {ex.Message}";
         }
     }
@@ -550,5 +609,36 @@ public class IngredientFormViewModel : INotifyPropertyChanged
         {
             return 0;
         }
+    }
+
+    /// <summary>
+    /// Discards any unsaved changes and resets dirty flag
+    /// </summary>
+    public void DiscardChanges()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Discarding changes");
+            _suppressDirtyTracking = true;
+            Reset();
+            _isDirty = false;
+            _suppressDirtyTracking = false;
+            System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Changes discarded, dirty flag reset");
+        }
+        catch (Exception ex)
+        {
+            _suppressDirtyTracking = false;
+            System.Diagnostics.Debug.WriteLine($"[IngredientFormViewModel] Error in DiscardChanges: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Marks the form as having unsaved changes
+    /// </summary>
+    private void MarkDirty()
+    {
+        if (_suppressDirtyTracking) return;
+        _isDirty = true;
+        System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Form marked as dirty");
     }
 }

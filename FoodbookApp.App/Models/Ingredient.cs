@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -18,7 +19,7 @@ namespace Foodbook.Models
 
     public class Ingredient : INotifyPropertyChanged
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         private string _name = string.Empty;
         public string Name
@@ -65,7 +66,20 @@ namespace Foodbook.Models
             }
         }
 
-        public double UnitWeight { get; set; } = 1.0;
+        private double _unitWeight = 1.0;
+        public double UnitWeight
+        {
+            get => _unitWeight;
+            set
+            {
+                if (Math.Abs(_unitWeight - value) > double.Epsilon)
+                {
+                    _unitWeight = value;
+                    OnPropertyChanged();
+                    RaiseDisplayNutritionChanged();
+                }
+            }
+        }
 
         private bool _isChecked;
         [NotMapped]
@@ -195,8 +209,12 @@ namespace Foodbook.Models
             }
         }
 
-        public int? RecipeId { get; set; }
+        public Guid? RecipeId { get; set; }
         public Recipe? Recipe { get; set; }
+
+        // Timestamps
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
 
         // Computed nutrition for the specified Quantity and Unit
         [NotMapped]
@@ -216,7 +234,7 @@ namespace Foodbook.Models
                 {
                     Unit.Gram => quantity / 100.0,
                     Unit.Milliliter => quantity / 100.0,
-                    Unit.Piece => unitWeight > 0 ? (quantity * unitWeight) / 100.0 : quantity,
+                    Unit.Piece => unitWeight > 0 ? (quantity * unitWeight) / 100.0 : quantity / 100.0,
                     _ => quantity / 100.0
                 };
             }

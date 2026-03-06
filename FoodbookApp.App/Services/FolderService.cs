@@ -1,6 +1,7 @@
 using Foodbook.Data;
 using Foodbook.Models;
 using Microsoft.EntityFrameworkCore;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.Services
 {
@@ -8,24 +9,33 @@ namespace Foodbook.Services
     {
         Task<List<Folder>> GetFoldersAsync(CancellationToken ct = default);
         Task<List<Folder>> GetFolderHierarchyAsync(CancellationToken ct = default);
-        Task<Folder?> GetFolderByIdAsync(int id, CancellationToken ct = default);
+        Task<Folder?> GetFolderByIdAsync(Guid id, CancellationToken ct = default);
         Task<Folder> AddFolderAsync(Folder folder, CancellationToken ct = default);
         Task UpdateFolderAsync(Folder folder, CancellationToken ct = default);
-        Task DeleteFolderAsync(int id, CancellationToken ct = default);
-        Task<bool> MoveFolderAsync(int folderId, int? newParentFolderId, CancellationToken ct = default);
-        Task<bool> MoveRecipeToFolderAsync(int recipeId, int? targetFolderId, CancellationToken ct = default);
-        Task<bool> IsValidFolderMoveAsync(int folderId, int? newParentFolderId, CancellationToken ct = default);
-        // New: reorder folder among siblings
-        Task<bool> ReorderFolderAsync(int folderId, int? parentFolderId, int newIndex, CancellationToken ct = default);
+        Task DeleteFolderAsync(Guid id, CancellationToken ct = default);
+        Task<bool> MoveFolderAsync(Guid folderId, Guid? newParentFolderId, CancellationToken ct = default);
+        Task<bool> MoveRecipeToFolderAsync(Guid recipeId, Guid? targetFolderId, CancellationToken ct = default);
+        Task<bool> IsValidFolderMoveAsync(Guid folderId, Guid? newParentFolderId, CancellationToken ct = default);
+        Task<bool> ReorderFolderAsync(Guid folderId, Guid? parentFolderId, int newIndex, CancellationToken ct = default);
     }
 
     public class FolderService : IFolderService
     {
         private readonly AppDbContext _db;
+        private readonly ISupabaseSyncService? _syncService;
 
-        public FolderService(AppDbContext db)
+        public FolderService(AppDbContext db, IServiceProvider serviceProvider)
         {
             _db = db;
+            
+            try
+            {
+                _syncService = serviceProvider.GetService(typeof(ISupabaseSyncService)) as ISupabaseSyncService;
+            }
+            catch
+            {
+                _syncService = null;
+            }
         }
 
         public async Task<List<Folder>> GetFoldersAsync(CancellationToken ct = default)
@@ -36,7 +46,9 @@ namespace Foodbook.Services
                     .AsNoTracking()
                     .Include(f => f.SubFolders)
                     .Include(f => f.Recipes)
-                    .OrderBy(f => f.Name)
+                    .OrderBy(f => f.ParentFolderId)
+                    .ThenBy(f => f.Order)
+                    .ThenBy(f => f.Name)
                     .ToListAsync(ct);
             }
             catch (Exception ex)
@@ -53,6 +65,9 @@ namespace Foodbook.Services
                 var folders = await _db.Folders
                     .AsNoTracking()
                     .Include(f => f.Recipes)
+                    .OrderBy(f => f.ParentFolderId)
+                    .ThenBy(f => f.Order)
+                    .ThenBy(f => f.Name)
                     .ToListAsync(ct);
 
                 return BuildHierarchy(folders);
@@ -64,7 +79,7 @@ namespace Foodbook.Services
             }
         }
 
-        public async Task<Folder?> GetFolderByIdAsync(int id, CancellationToken ct = default)
+        public async Task<Folder?> GetFolderByIdAsync(Guid id, CancellationToken ct = default)
         {
             try
             {
@@ -99,6 +114,20 @@ namespace Foodbook.Services
 
                 _db.Folders.Add(folder);
                 await _db.SaveChangesAsync(ct);
+
+                if (_syncService != null)
+                {
+                    try
+                    {
+                        await _syncService.QueueForSyncAsync(folder, SyncOperationType.Insert, ct);
+                        System.Diagnostics.Debug.WriteLine($"[FolderService] Queued folder {folder.Id} for Insert sync");
+                    }
+                    catch (Exception syncEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[FolderService] Failed to queue insert sync: {syncEx.Message}");
+                    }
+                }
+
                 return folder;
             }
             catch (DbUpdateException ex)
@@ -115,6 +144,20 @@ namespace Foodbook.Services
                 folder.Name = folder.Name?.Trim() ?? string.Empty;
                 _db.Folders.Update(folder);
                 await _db.SaveChangesAsync(ct);
+                
+                // Queue for sync (Update)
+                if (_syncService != null)
+                {
+                    try
+                    {
+                        await _syncService.QueueForSyncAsync(folder, SyncOperationType.Update, ct);
+                        System.Diagnostics.Debug.WriteLine($"[FolderService] Queued folder {folder.Id} for Update sync");
+                    }
+                    catch (Exception syncEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[FolderService] Failed to queue sync: {syncEx.Message}");
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -123,7 +166,7 @@ namespace Foodbook.Services
             }
         }
 
-        public async Task DeleteFolderAsync(int id, CancellationToken ct = default)
+        public async Task DeleteFolderAsync(Guid id, CancellationToken ct = default)
         {
             try
             {
@@ -133,24 +176,46 @@ namespace Foodbook.Services
                     .FirstOrDefaultAsync(f => f.Id == id, ct);
                 if (folder == null) return;
 
+                var parentFolderId = folder.ParentFolderId;
+                var recipesToMove = folder.Recipes.ToList();
+                var subFoldersToMove = folder.SubFolders.ToList();
+
                 // Move recipes to parent folder (or root)
-                foreach (var recipe in folder.Recipes)
+                foreach (var recipe in recipesToMove)
                 {
-                    recipe.FolderId = folder.ParentFolderId; // may be null => move to root
+                    recipe.FolderId = parentFolderId;
                 }
 
                 await _db.SaveChangesAsync(ct);
+                await QueueRecipesForUpdateAsync(recipesToMove, ct);
 
                 // Ensure no child folders remain attached to this parent to satisfy Restrict behavior
-                foreach (var sub in folder.SubFolders)
+                foreach (var sub in subFoldersToMove)
                 {
-                    sub.ParentFolderId = folder.ParentFolderId;
+                    sub.ParentFolderId = parentFolderId;
                 }
 
                 await _db.SaveChangesAsync(ct);
+                await QueueFolderUpdatesAsync(subFoldersToMove, ct);
 
                 _db.Folders.Remove(folder);
                 await _db.SaveChangesAsync(ct);
+                await NormalizeSiblingOrderAsync(parentFolderId, ct);
+                
+                // Queue for sync (Delete)
+                if (_syncService != null)
+                {
+                    try
+                    {
+                        var deleteEntity = new Folder { Id = id, Name = folder.Name };
+                        await _syncService.QueueForSyncAsync(deleteEntity, SyncOperationType.Delete, ct);
+                        System.Diagnostics.Debug.WriteLine($"[FolderService] Queued folder {id} for Delete sync");
+                    }
+                    catch (Exception syncEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[FolderService] Failed to queue sync: {syncEx.Message}");
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -159,7 +224,7 @@ namespace Foodbook.Services
             }
         }
 
-        public async Task<bool> MoveFolderAsync(int folderId, int? newParentFolderId, CancellationToken ct = default)
+        public async Task<bool> MoveFolderAsync(Guid folderId, Guid? newParentFolderId, CancellationToken ct = default)
         {
             try
             {
@@ -169,16 +234,20 @@ namespace Foodbook.Services
                 var folder = await _db.Folders.FirstOrDefaultAsync(f => f.Id == folderId, ct);
                 if (folder == null) return false;
 
+                var previousParentFolderId = folder.ParentFolderId;
                 folder.ParentFolderId = newParentFolderId;
 
                 // When moving to a new parent, assign order to the end of that parent's list
                 var maxOrder = await _db.Folders
-                    .Where(f => f.ParentFolderId == newParentFolderId)
+                    .Where(f => f.ParentFolderId == newParentFolderId && f.Id != folderId)
                     .Select(f => (int?)f.Order)
                     .MaxAsync(ct) ?? -1;
                 folder.Order = maxOrder + 1;
 
                 await _db.SaveChangesAsync(ct);
+                await QueueFolderUpdatesAsync(new[] { folder }, ct);
+                await NormalizeSiblingOrderAsync(previousParentFolderId, ct);
+                await NormalizeSiblingOrderAsync(newParentFolderId, ct);
                 return true;
             }
             catch (Exception ex)
@@ -188,7 +257,7 @@ namespace Foodbook.Services
             }
         }
 
-        public async Task<bool> MoveRecipeToFolderAsync(int recipeId, int? targetFolderId, CancellationToken ct = default)
+        public async Task<bool> MoveRecipeToFolderAsync(Guid recipeId, Guid? targetFolderId, CancellationToken ct = default)
         {
             try
             {
@@ -203,6 +272,7 @@ namespace Foodbook.Services
 
                 recipe.FolderId = targetFolderId; // null => root
                 await _db.SaveChangesAsync(ct);
+                await QueueRecipesForUpdateAsync(new[] { recipe }, ct);
                 return true;
             }
             catch (Exception ex)
@@ -212,18 +282,18 @@ namespace Foodbook.Services
             }
         }
 
-        public async Task<bool> IsValidFolderMoveAsync(int folderId, int? newParentFolderId, CancellationToken ct = default)
+        public async Task<bool> IsValidFolderMoveAsync(Guid folderId, Guid? newParentFolderId, CancellationToken ct = default)
         {
             try
             {
-                if (folderId == newParentFolderId) return false; // cannot move under itself
+                if (newParentFolderId.HasValue && folderId == newParentFolderId.Value) return false;
                 if (!newParentFolderId.HasValue) return true; // move to root allowed
 
                 // prevent cycles: new parent cannot be a descendant of folderId
                 var folders = await _db.Folders.AsNoTracking().ToListAsync(ct);
                 var map = folders.ToDictionary(f => f.Id, f => f.ParentFolderId);
 
-                int? current = newParentFolderId;
+                Guid? current = newParentFolderId;
                 while (current.HasValue)
                 {
                     if (current.Value == folderId) return false; // cycle detected
@@ -238,7 +308,7 @@ namespace Foodbook.Services
             }
         }
 
-        public async Task<bool> ReorderFolderAsync(int folderId, int? parentFolderId, int newIndex, CancellationToken ct = default)
+        public async Task<bool> ReorderFolderAsync(Guid folderId, Guid? parentFolderId, int newIndex, CancellationToken ct = default)
         {
             try
             {
@@ -262,12 +332,88 @@ namespace Foodbook.Services
                 }
 
                 await _db.SaveChangesAsync(ct);
+                await QueueFolderUpdatesAsync(siblings, ct);
                 return true;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[FolderService] ReorderFolderAsync failed: {ex.Message}");
                 return false;
+            }
+        }
+
+        private async Task NormalizeSiblingOrderAsync(Guid? parentFolderId, CancellationToken ct)
+        {
+            var siblings = await _db.Folders
+                .Where(f => f.ParentFolderId == parentFolderId)
+                .OrderBy(f => f.Order)
+                .ThenBy(f => f.Name)
+                .ToListAsync(ct);
+
+            var changed = false;
+            for (int i = 0; i < siblings.Count; i++)
+            {
+                if (siblings[i].Order != i)
+                {
+                    siblings[i].Order = i;
+                    changed = true;
+                }
+            }
+
+            if (!changed)
+                return;
+
+            await _db.SaveChangesAsync(ct);
+            await QueueFolderUpdatesAsync(siblings, ct);
+        }
+
+        private async Task QueueFolderUpdatesAsync(IEnumerable<Folder> folders, CancellationToken ct)
+        {
+            if (_syncService == null)
+                return;
+
+            var items = folders
+                .Where(f => f.Id != Guid.Empty)
+                .GroupBy(f => f.Id)
+                .Select(g => g.First())
+                .ToList();
+
+            if (items.Count == 0)
+                return;
+
+            try
+            {
+                await _syncService.QueueBatchForSyncAsync(items, SyncOperationType.Update, ct);
+                System.Diagnostics.Debug.WriteLine($"[FolderService] Queued {items.Count} folders for Update sync");
+            }
+            catch (Exception syncEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FolderService] Failed to queue folder batch sync: {syncEx.Message}");
+            }
+        }
+
+        private async Task QueueRecipesForUpdateAsync(IEnumerable<Recipe> recipes, CancellationToken ct)
+        {
+            if (_syncService == null)
+                return;
+
+            var items = recipes
+                .Where(r => r.Id != Guid.Empty)
+                .GroupBy(r => r.Id)
+                .Select(g => g.First())
+                .ToList();
+
+            if (items.Count == 0)
+                return;
+
+            try
+            {
+                await _syncService.QueueBatchForSyncAsync(items, SyncOperationType.Update, ct);
+                System.Diagnostics.Debug.WriteLine($"[FolderService] Queued {items.Count} recipes for Update sync");
+            }
+            catch (Exception syncEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FolderService] Failed to queue recipe batch sync: {syncEx.Message}");
             }
         }
 

@@ -24,7 +24,7 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
 
     // NEW: sorting and label filtering state
     private SortOrder _sortOrder = SortOrder.Asc;
-    private readonly HashSet<int> _selectedLabelIds = new();
+    private readonly HashSet<Guid> _selectedLabelIds = new();
 
     // NEW: ingredient names filter state
     private readonly HashSet<string> _selectedIngredientNames = new(System.StringComparer.OrdinalIgnoreCase);
@@ -60,7 +60,7 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
         ? string.Join(" / ", _breadcrumb.Select(b => b.Name)) + (_currentFolder != null ? $" / {_currentFolder.Name}" : "")
         : (_currentFolder?.Name ?? "Root");
 
-    public bool HasBreadcrumb => _breadcrumb.Count > 0 || _currentFolder != null;
+    public bool HasBreadcrumb => _breadcrumb.Count > 0;
 
     private string _searchText = string.Empty;
     public string SearchText
@@ -90,7 +90,7 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
         _allFolders = folders ?? new List<Folder>();
         _dataRefreshFunc = dataRefreshFunc;
         Items = new ObservableCollection<FolderPickerItem>();
-        Title = "Wybierz przepis";
+        Title = FoodbookApp.Localization.FolderResources.ChooseRecipeTitle;
         
         TapCommand = new Command<FolderPickerItem>(OnItemTapped);
         CloseCommand = new Command(() => CloseWithResult(null));
@@ -248,13 +248,14 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
         Items.Clear();
 
         // Add back navigation if not at root
-        if (_breadcrumb.Count > 0)
+        // Show boxed "back" item whenever we're inside any folder (either we have breadcrumb history or we're in a folder)
+        if (_breadcrumb.Count > 0 || _currentFolder != null)
         {
             Items.Add(new FolderPickerItem
             {
                 ItemType = FolderPickerItemType.Navigation,
-                DisplayName = "Wróæ",
-                Description = _breadcrumb.LastOrDefault()?.Name ?? "Root",
+                DisplayName = FoodbookApp.Localization.FolderResources.BackButton,
+                Description = _breadcrumb.LastOrDefault()?.Name ?? FoodbookApp.Localization.FolderResources.Root,
                 Icon = "\u2190", // Unicode left arrow
                 FontAttributes = FontAttributes.None,
                 ShowArrow = false,
@@ -366,7 +367,7 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
 
             // If user typed a folder name, show recipes from that folder too
             var matchingFolders = _allFolders.Where(f => (f.Name?.ToLower().Contains(query) ?? false)).ToList();
-            var folderIds = matchingFolders.Select(f => (int?)f.Id).ToHashSet();
+            var folderIds = matchingFolders.Select(f => (Guid?)f.Id).ToHashSet();
 
             // Search recipes by name/description OR located in matched folders
             var matchedRecipes = _allRecipes.Where(r =>

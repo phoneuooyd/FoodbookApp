@@ -9,6 +9,12 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http;
 using CommunityToolkit.Maui;
 using FoodbookApp.Interfaces;
+using Sharpnado.CollectionView; // ? Sharpnado CollectionView namespace
+using Supabase;
+using Microsoft.IdentityModel.Tokens;
+using FoodbookApp.Services.Auth;
+using Foodbook.Views.Components;
+using FoodbookApp.Services.Supabase;
 
 namespace FoodbookApp
 {
@@ -22,6 +28,7 @@ namespace FoodbookApp
             builder
                 .UseMauiApp<App>()
                 .UseMauiCommunityToolkit()
+                .UseSharpnadoCollectionView(loggerEnable: false) // ? Initialize Sharpnado CollectionView with drag-and-drop support
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -67,12 +74,86 @@ namespace FoodbookApp
             builder.Services.AddSingleton<IThemeService, ThemeService>();
             builder.Services.AddSingleton<IFontService, FontService>();
             builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
-            builder.Services.AddScoped<RecipeViewModel>();
+
+            // MAUI client-side JWT handling:
+            // - store token in SecureStorage
+            // - attach token to outgoing HttpClient requests
+            // - optionally validate token locally via JwtValidator (no AspNetCore middleware)
+            builder.Services.AddSingleton<IAuthTokenStore, SecureStorageAuthTokenStore>();
+            builder.Services.AddTransient<BearerTokenHandler>();
+            builder.Services.AddSingleton<IJwtValidator>(_ => new JwtValidator(new JwtValidationOptions
+            {
+                SigningKey = builder.Configuration["Authentication:JwtSecret"] ?? string.Empty,
+                Audience = builder.Configuration["Authentication:ValidAudience"] ?? string.Empty,
+                Issuer = builder.Configuration["Authentication:ValidIssuer"] ?? string.Empty
+            }));
+            builder.Services.AddScoped<ISupabaseAuthService, SupabaseAuthService>();
+            builder.Services.AddScoped<IAccountService, AccountService>();
+            
+            builder.Services.AddScoped<Supabase.Client>(_ =>
+            new Supabase.Client(
+                "https://gscbdvezastxpyndkauh.supabase.co",
+                "sb_publishable_gwkJSRidW1DP28CCEeQUDA_ELLTHT92",
+                new SupabaseOptions 
+                { 
+                    AutoRefreshToken = true,
+                    AutoConnectRealtime = false // disable default realtime to avoid 403 storms; connect explicitly when needed
+                }
+            ));
+            
+            // Http / import - must register BEFORE SupabaseRestClient
+            builder.Services.AddScoped(sp =>
+            {
+                var handler = sp.GetRequiredService<BearerTokenHandler>();
+                // CRITICAL: DelegatingHandler requires InnerHandler to be set
+                handler.InnerHandler = new HttpClientHandler();
+                
+                var client = new HttpClient(handler, disposeHandler: true);
+
+                var baseUrl = builder.Configuration["Supabase:Url"];
+                if (!string.IsNullOrWhiteSpace(baseUrl))
+                {
+                    client.BaseAddress = new Uri(baseUrl);
+                }
+
+                return client;
+            });
+
+            // Dedicated HttpClient for `RecipeImporter` (plain HTTP, no auth handler)
+            builder.Services.AddScoped<RecipeImporter>(sp =>
+            {
+                var ingredientService = sp.GetRequiredService<IIngredientService>();
+                return new RecipeImporter(new HttpClient(), ingredientService);
+            });
+
+            // Register SupabaseRestClient BEFORE SupabaseCrudService - must have HttpClient available
+            builder.Services.AddScoped(sp =>
+            {
+                var httpClient = sp.GetRequiredService<HttpClient>();
+                var tokenStore = sp.GetRequiredService<IAuthTokenStore>();
+                return new SupabaseRestClient(
+                    httpClient,
+                    tokenStore,
+                    "https://gscbdvezastxpyndkauh.supabase.co",
+                    "sb_publishable_gwkJSRidW1DP28CCEeQUDA_ELLTHT92"
+                );
+            });
+            
+            // Register SupabaseCrudService AFTER SupabaseRestClient
+            builder.Services.AddScoped<ISupabaseCrudService, SupabaseCrudService>();
+            
+            // Supabase Sync Service - singleton for durable queue and immediate processing across app lifecycle
+            builder.Services.AddSingleton<ISupabaseSyncService, SupabaseSyncService>();
+            
+            // Deduplication Service - singleton to maintain cache across login sessions
+            builder.Services.AddSingleton<IDeduplicationService, DeduplicationService>();
+
+            builder.Services.AddTransient<RecipeViewModel>();
             builder.Services.AddTransient<AddRecipeViewModel>();
-            builder.Services.AddScoped<PlannerViewModel>();
-            builder.Services.AddScoped<PlannerEditViewModel>(); // NEW: Dedicated edit VM
-            builder.Services.AddScoped<HomeViewModel>();
-            builder.Services.AddScoped<ShoppingListViewModel>();
+            builder.Services.AddTransient<PlannerViewModel>();
+            builder.Services.AddScoped<PlannerEditViewModel>(); 
+            builder.Services.AddTransient<HomeViewModel>();
+            builder.Services.AddTransient<ShoppingListViewModel>();
             builder.Services.AddScoped<ShoppingListDetailViewModel>();
             builder.Services.AddScoped<IngredientsViewModel>();
             builder.Services.AddScoped<IngredientFormViewModel>();
@@ -83,28 +164,32 @@ namespace FoodbookApp
             // New: Planner lists VM
             builder.Services.AddTransient<PlannerListsViewModel>();
 
-            // Http / import
-            builder.Services.AddScoped<HttpClient>();
-            builder.Services.AddScoped<RecipeImporter>();
-
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering pages");
-            builder.Services.AddScoped<HomePage>();
-            builder.Services.AddScoped<RecipesPage>();
+            builder.Services.AddTransient<HomePage>();
+            builder.Services.AddTransient<RecipesPage>();
             builder.Services.AddTransient<AddRecipePage>();
-            builder.Services.AddScoped<IngredientsPage>();
+            builder.Services.AddTransient<IngredientsPage>();
             builder.Services.AddScoped<IngredientFormPage>();
-            builder.Services.AddScoped<PlannerPage>();
+            builder.Services.AddTransient<PlannerPage>();
             builder.Services.AddScoped<PlannerListsPage>();
             builder.Services.AddScoped<MealFormPage>();
-            builder.Services.AddScoped<ShoppingListPage>();
+            builder.Services.AddTransient<ShoppingListPage>();
             builder.Services.AddScoped<ShoppingListDetailPage>();
             builder.Services.AddScoped<ArchivePage>();
             builder.Services.AddScoped<SettingsPage>();
             builder.Services.AddScoped<SetupWizardPage>();
             builder.Services.AddScoped<DataArchivizationPage>();
+            builder.Services.AddScoped<ProfilePage>();
+            
+            // NEW: MainPage with custom TabBarComponent
+            builder.Services.AddScoped<MainPage>();
+
+            // NEW: Popups
+            builder.Services.AddTransient<RegisterPopup>();
 
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering routes");
             Routing.RegisterRoute(nameof(HomePage), typeof(HomePage));
+            Routing.RegisterRoute(nameof(ProfilePage), typeof(ProfilePage));
             Routing.RegisterRoute(nameof(RecipesPage), typeof(RecipesPage));
             Routing.RegisterRoute(nameof(AddRecipePage), typeof(AddRecipePage));
             Routing.RegisterRoute(nameof(IngredientFormPage), typeof(IngredientFormPage));
@@ -122,29 +207,14 @@ namespace FoodbookApp
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Building app");
             var app = builder.Build();
             ServiceProvider = app.Services;
-            System.Diagnostics.Debug.WriteLine("[MauiProgram] ServiceProvider created");
 
-            // Initialize DB via DatabaseService synchronously to avoid async signature here
+            // Database startup: Initialize only (no conditional deployment on app start)
             try
             {
-                System.Diagnostics.Debug.WriteLine("[MauiProgram] Starting conditional deployment check...");
+                System.Diagnostics.Debug.WriteLine("[MauiProgram] Initializing database...");
                 var dbService = app.Services.GetRequiredService<IDatabaseService>();
-                
-                // FIRST: Run conditional deployment (checks for clean install flag and pending migrations)
-                var deploymentSuccess = dbService.ConditionalDeploymentAsync().GetAwaiter().GetResult();
-                if (deploymentSuccess)
-                {
-                    System.Diagnostics.Debug.WriteLine("[MauiProgram] Conditional deployment completed successfully");
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("[MauiProgram] WARNING: Conditional deployment reported failure");
-                }
-
-                // THEN: Run normal initialization (ensures migrations are applied if not already done)
-                System.Diagnostics.Debug.WriteLine("[MauiProgram] Running database initialization...");
-                dbService.InitializeAsync().GetAwaiter().GetResult();
-                System.Diagnostics.Debug.WriteLine("[MauiProgram] Database initialization completed");
+                Task.Run(() => dbService.InitializeAsync()).GetAwaiter().GetResult();
+                System.Diagnostics.Debug.WriteLine("[MauiProgram] ✓ Database ready");
             }
             catch (Exception ex)
             {
@@ -154,10 +224,5 @@ namespace FoodbookApp
             System.Diagnostics.Debug.WriteLine("[MauiProgram] CreateMauiApp finished");
             return app;
         }
-
-        // Centralized logging methods
-        private static void LogDebug(string message) => System.Diagnostics.Debug.WriteLine($"[MauiProgram] {message}");
-        private static void LogWarning(string message) => System.Diagnostics.Debug.WriteLine($"[MauiProgram] WARNING: {message}");
-        private static void LogError(string message) => System.Diagnostics.Debug.WriteLine($"[MauiProgram] ERROR: {message}");
     }
 }

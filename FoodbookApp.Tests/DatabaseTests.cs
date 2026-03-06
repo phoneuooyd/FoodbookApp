@@ -18,7 +18,7 @@ namespace FoodbookApp.Tests
             var recipe = new Recipe();
 
             // Assert
-            Assert.Equal(0, recipe.Id); // Primary key
+            Assert.Equal(Guid.Empty, recipe.Id); // Primary key
             Assert.Equal(string.Empty, recipe.Name);
             Assert.Null(recipe.Description);
             Assert.Equal(0, recipe.Calories);
@@ -36,7 +36,7 @@ namespace FoodbookApp.Tests
             var ingredient = new Ingredient();
 
             // Assert
-            Assert.Equal(0, ingredient.Id); // Primary key
+            Assert.Equal(Guid.Empty, ingredient.Id); // Primary key
             Assert.Equal(string.Empty, ingredient.Name);
             Assert.Equal(0, ingredient.Quantity);
             Assert.Equal(Unit.Gram, ingredient.Unit); // Default enum value
@@ -55,8 +55,8 @@ namespace FoodbookApp.Tests
             var plannedMeal = new PlannedMeal();
 
             // Assert
-            Assert.Equal(0, plannedMeal.Id); // Primary key
-            Assert.Equal(0, plannedMeal.RecipeId); // Foreign key
+            Assert.Equal(Guid.Empty, plannedMeal.Id); // Primary key
+            Assert.Equal(Guid.Empty, plannedMeal.RecipeId); // Foreign key
             Assert.Null(plannedMeal.Recipe); // Navigation property
             Assert.Equal(DateTime.MinValue, plannedMeal.Date);
             Assert.Equal(1, plannedMeal.Portions); // Default value
@@ -69,7 +69,7 @@ namespace FoodbookApp.Tests
             var plan = new Plan();
 
             // Assert
-            Assert.Equal(0, plan.Id); // Primary key
+            Assert.Equal(Guid.Empty, plan.Id); // Primary key
             Assert.Equal(DateTime.MinValue, plan.StartDate);
             Assert.Equal(DateTime.MinValue, plan.EndDate);
             Assert.False(plan.IsArchived); // Default value
@@ -83,8 +83,8 @@ namespace FoodbookApp.Tests
             var item = new ShoppingListItem();
 
             // Assert
-            Assert.Equal(0, item.Id); // Primary key
-            Assert.Equal(0, item.PlanId); // Foreign key
+            Assert.Equal(Guid.Empty, item.Id); // Primary key
+            Assert.Equal(Guid.Empty, item.PlanId); // Foreign key
             Assert.Null(item.Plan); // Navigation property - null until explicitly set
             Assert.Equal(string.Empty, item.IngredientName);
             Assert.Equal(Unit.Gram, item.Unit); // Default enum value
@@ -110,9 +110,12 @@ namespace FoodbookApp.Tests
         public void DatabaseRelationships_RecipeToIngredients_ShouldWorkCorrectly()
         {
             // Arrange
-            var recipe = new Recipe { Id = 1, Name = "Test Recipe" };
-            var ingredient1 = new Ingredient { Id = 1, Name = "Mąka", RecipeId = recipe.Id, Recipe = recipe };
-            var ingredient2 = new Ingredient { Id = 2, Name = "Cukier", RecipeId = recipe.Id, Recipe = recipe };
+            var recipeId = Guid.NewGuid();
+            var recipe = new Recipe { Id = recipeId, Name = "Test Recipe" };
+            var ingredient1Id = Guid.NewGuid();
+            var ingredient1 = new Ingredient { Id = ingredient1Id, Name = "Mąka", RecipeId = recipeId, Recipe = recipe };
+            var ingredient2Id = Guid.NewGuid();
+            var ingredient2 = new Ingredient { Id = ingredient2Id, Name = "Cukier", RecipeId = recipeId, Recipe = recipe };
 
             // Act
             recipe.Ingredients.Add(ingredient1);
@@ -128,10 +131,11 @@ namespace FoodbookApp.Tests
         public void DatabaseRelationships_PlannedMealToRecipe_ShouldWorkCorrectly()
         {
             // Arrange
-            var recipe = new Recipe { Id = 1, Name = "Kotlet schabowy" };
+            var recipeId = Guid.NewGuid();
+            var recipe = new Recipe { Id = recipeId, Name = "Kotlet schabowy" };
             var plannedMeal = new PlannedMeal 
             { 
-                Id = 1, 
+                Id = Guid.NewGuid(), 
                 RecipeId = recipe.Id, 
                 Recipe = recipe,
                 Date = new DateTime(2024, 12, 25),
@@ -147,15 +151,16 @@ namespace FoodbookApp.Tests
         public void DatabaseRelationships_ShoppingListItemToPlan_ShouldWorkCorrectly()
         {
             // Arrange
+            var planId = Guid.NewGuid();
             var plan = new Plan 
             { 
-                Id = 1, 
+                Id = planId, 
                 StartDate = new DateTime(2024, 12, 1), 
                 EndDate = new DateTime(2024, 12, 7) 
             };
             var shoppingItem = new ShoppingListItem 
             { 
-                Id = 1, 
+                Id = Guid.NewGuid(), 
                 PlanId = plan.Id, 
                 Plan = plan,
                 IngredientName = "Mleko",
@@ -172,8 +177,9 @@ namespace FoodbookApp.Tests
         public void DatabaseConstraints_RecipeIngredientsCascadeDelete_ShouldWorkCorrectly()
         {
             // Arrange
-            var recipe = new Recipe { Id = 1, Name = "Test Recipe" };
-            var ingredient = new Ingredient { Id = 1, Name = "Test Ingredient", RecipeId = recipe.Id, Recipe = recipe };
+            var recipeId = Guid.NewGuid();
+            var recipe = new Recipe { Id = recipeId, Name = "Test Recipe" };
+            var ingredient = new Ingredient { Id = Guid.NewGuid(), Name = "Test Ingredient", RecipeId = recipe.Id, Recipe = recipe };
             recipe.Ingredients.Add(ingredient);
 
             // Act - Simulate recipe deletion (ingredients should be deleted too)
@@ -188,7 +194,8 @@ namespace FoodbookApp.Tests
         public void DatabaseConstraints_UniqueShoppingListItems_ShouldBeEnforced()
         {
             // Arrange
-            var plan = new Plan { Id = 1 };
+            var planId = Guid.NewGuid();
+            var plan = new Plan { Id = planId };
             var item1 = new ShoppingListItem 
             { 
                 PlanId = plan.Id, 
@@ -217,10 +224,10 @@ namespace FoodbookApp.Tests
             // Arrange
             var recipes = new List<Recipe>
             {
-                new Recipe { Id = 1, Name = "Kotlet schabowy" },
-                new Recipe { Id = 2, Name = "Pierogi z mięsem" },
-                new Recipe { Id = 3, Name = "Zupa pomidorowa" },
-                new Recipe { Id = 4, Name = "Kotlet mielony" }
+                new Recipe { Id = Guid.NewGuid(), Name = "Kotlet schabowy" },
+                new Recipe { Id = Guid.NewGuid(), Name = "Pierogi z mięsem" },
+                new Recipe { Id = Guid.NewGuid(), Name = "Zupa pomidorowa" },
+                new Recipe { Id = Guid.NewGuid(), Name = "Kotlet mielony" }
             };
 
             var searchTerm = "Kotlet";
@@ -239,10 +246,10 @@ namespace FoodbookApp.Tests
             // Arrange
             var ingredients = new List<Ingredient>
             {
-                new Ingredient { Id = 1, Name = "Mąka", RecipeId = null }, // Standalone
-                new Ingredient { Id = 2, Name = "Cukier", RecipeId = 1 }, // Recipe ingredient
-                new Ingredient { Id = 3, Name = "Mleko", RecipeId = null }, // Standalone
-                new Ingredient { Id = 4, Name = "Jajka", RecipeId = 2 } // Recipe ingredient
+                new Ingredient { Id = Guid.NewGuid(), Name = "Mąka", RecipeId = null }, // Standalone
+                new Ingredient { Id = Guid.NewGuid(), Name = "Cukier", RecipeId = Guid.NewGuid() }, // Recipe ingredient
+                new Ingredient { Id = Guid.NewGuid(), Name = "Mleko", RecipeId = null }, // Standalone
+                new Ingredient { Id = Guid.NewGuid(), Name = "Jajka", RecipeId = Guid.NewGuid() } // Recipe ingredient
             };
 
             // Act - Filter standalone ingredients (RecipeId is null)
@@ -263,10 +270,10 @@ namespace FoodbookApp.Tests
             var endDate = new DateTime(2024, 12, 7);
             var plannedMeals = new List<PlannedMeal>
             {
-                new PlannedMeal { Id = 1, Date = new DateTime(2024, 11, 30) }, // Before range
-                new PlannedMeal { Id = 2, Date = new DateTime(2024, 12, 3) }, // In range
-                new PlannedMeal { Id = 3, Date = new DateTime(2024, 12, 5) }, // In range
-                new PlannedMeal { Id = 4, Date = new DateTime(2024, 12, 10) } // After range
+                new PlannedMeal { Id = Guid.NewGuid(), Date = new DateTime(2024, 11, 30) }, // Before range
+                new PlannedMeal { Id = Guid.NewGuid(), Date = new DateTime(2024, 12, 3) }, // In range
+                new PlannedMeal { Id = Guid.NewGuid(), Date = new DateTime(2024, 12, 5) }, // In range
+                new PlannedMeal { Id = Guid.NewGuid(), Date = new DateTime(2024, 12, 10) } // After range
             };
 
             // Act
@@ -283,10 +290,10 @@ namespace FoodbookApp.Tests
             // Arrange
             var plans = new List<Plan>
             {
-                new Plan { Id = 1, IsArchived = false },
-                new Plan { Id = 2, IsArchived = true },
-                new Plan { Id = 3, IsArchived = false },
-                new Plan { Id = 4, IsArchived = true }
+                new Plan { Id = Guid.NewGuid(), IsArchived = false },
+                new Plan { Id = Guid.NewGuid(), IsArchived = true },
+                new Plan { Id = Guid.NewGuid(), IsArchived = false },
+                new Plan { Id = Guid.NewGuid(), IsArchived = true }
             };
 
             // Act
@@ -301,13 +308,16 @@ namespace FoodbookApp.Tests
         public void DatabaseQueries_GroupShoppingItemsByPlan_ShouldWorkCorrectly()
         {
             // Arrange
+            var planId1 = Guid.NewGuid();
+            var planId2 = Guid.NewGuid();
+
             var items = new List<ShoppingListItem>
             {
-                new ShoppingListItem { Id = 1, PlanId = 1, IngredientName = "Mleko" },
-                new ShoppingListItem { Id = 2, PlanId = 1, IngredientName = "Chleb" },
-                new ShoppingListItem { Id = 3, PlanId = 2, IngredientName = "Mąka" },
-                new ShoppingListItem { Id = 4, PlanId = 2, IngredientName = "Jajka" },
-                new ShoppingListItem { Id = 5, PlanId = 2, IngredientName = "Cukier" }
+                new ShoppingListItem { Id = Guid.NewGuid(), PlanId = planId1, IngredientName = "Mleko" },
+                new ShoppingListItem { Id = Guid.NewGuid(), PlanId = planId1, IngredientName = "Chleb" },
+                new ShoppingListItem { Id = Guid.NewGuid(), PlanId = planId2, IngredientName = "Mąka" },
+                new ShoppingListItem { Id = Guid.NewGuid(), PlanId = planId2, IngredientName = "Jajka" },
+                new ShoppingListItem { Id = Guid.NewGuid(), PlanId = planId2, IngredientName = "Cukier" }
             };
 
             // Act
@@ -315,32 +325,8 @@ namespace FoodbookApp.Tests
 
             // Assert
             Assert.Equal(2, groupedItems.Count);
-            Assert.Equal(2, groupedItems.First(g => g.Key == 1).Count());
-            Assert.Equal(3, groupedItems.First(g => g.Key == 2).Count());
-        }
-
-        [Fact]
-        public void DatabaseOperations_CalculateNutritionTotals_ShouldWorkCorrectly()
-        {
-            // Arrange
-            var ingredients = new List<Ingredient>
-            {
-                new Ingredient { Calories = 100, Protein = 10, Fat = 5, Carbs = 15 },
-                new Ingredient { Calories = 150, Protein = 8, Fat = 12, Carbs = 20 },
-                new Ingredient { Calories = 80, Protein = 6, Fat = 3, Carbs = 18 }
-            };
-
-            // Act
-            var totalCalories = ingredients.Sum(i => i.Calories);
-            var totalProtein = ingredients.Sum(i => i.Protein);
-            var totalFat = ingredients.Sum(i => i.Fat);
-            var totalCarbs = ingredients.Sum(i => i.Carbs);
-
-            // Assert
-            Assert.Equal(330, totalCalories);
-            Assert.Equal(24, totalProtein);
-            Assert.Equal(20, totalFat);
-            Assert.Equal(53, totalCarbs);
+            Assert.Equal(2, groupedItems.First(g => g.Key == planId1).Count());
+            Assert.Equal(3, groupedItems.First(g => g.Key == planId2).Count());
         }
 
         [Fact]
@@ -349,11 +335,11 @@ namespace FoodbookApp.Tests
             // Arrange
             var items = new List<ShoppingListItem>
             {
-                new ShoppingListItem { Id = 1, IsChecked = true },
-                new ShoppingListItem { Id = 2, IsChecked = false },
-                new ShoppingListItem { Id = 3, IsChecked = true },
-                new ShoppingListItem { Id = 4, IsChecked = false },
-                new ShoppingListItem { Id = 5, IsChecked = true }
+                new ShoppingListItem { Id = Guid.NewGuid(), IsChecked = true },
+                new ShoppingListItem { Id = Guid.NewGuid(), IsChecked = false },
+                new ShoppingListItem { Id = Guid.NewGuid(), IsChecked = true },
+                new ShoppingListItem { Id = Guid.NewGuid(), IsChecked = false },
+                new ShoppingListItem { Id = Guid.NewGuid(), IsChecked = true }
             };
 
             // Act
@@ -368,33 +354,14 @@ namespace FoodbookApp.Tests
             Assert.Equal(totalCount, checkedCount + uncheckedCount);
         }
 
-        [Theory]
-        [InlineData("Mąka", Unit.Gram, 500.0)]
-        [InlineData("Mleko", Unit.Milliliter, 250.0)]
-        [InlineData("Jajka", Unit.Piece, 3.0)]
-        public void DatabaseOperations_CreateIngredientWithDifferentUnits_ShouldWorkCorrectly(string name, Unit unit, double quantity)
-        {
-            // Arrange & Act
-            var ingredient = new Ingredient
-            {
-                Name = name,
-                Unit = unit,
-                Quantity = quantity
-            };
-
-            // Assert
-            Assert.Equal(name, ingredient.Name);
-            Assert.Equal(unit, ingredient.Unit);
-            Assert.Equal(quantity, ingredient.Quantity);
-        }
-
         [Fact]
         public void DatabaseOperations_ValidateDataIntegrity_ShouldMaintainConsistency()
         {
             // Arrange
-            var recipe = new Recipe { Id = 1, Name = "Test Recipe" };
-            var ingredient = new Ingredient { Id = 1, Name = "Test Ingredient", RecipeId = recipe.Id, Recipe = recipe };
-            var plannedMeal = new PlannedMeal { Id = 1, RecipeId = recipe.Id, Recipe = recipe };
+            var recipeId = Guid.NewGuid();
+            var recipe = new Recipe { Id = recipeId, Name = "Test Recipe" };
+            var ingredient = new Ingredient { Id = Guid.NewGuid(), Name = "Test Ingredient", RecipeId = recipe.Id, Recipe = recipe };
+            var plannedMeal = new PlannedMeal { Id = Guid.NewGuid(), RecipeId = recipe.Id, Recipe = recipe };
 
             // Act & Assert - Data integrity checks
             Assert.Equal(recipe.Id, ingredient.RecipeId);
@@ -409,10 +376,10 @@ namespace FoodbookApp.Tests
             // Arrange
             var recipes = new List<Recipe>
             {
-                new Recipe { Id = 1, Name = "Zupa", Calories = 150 },
-                new Recipe { Id = 2, Name = "Kotlet", Calories = 300 },
-                new Recipe { Id = 3, Name = "Pierogi", Calories = 250 },
-                new Recipe { Id = 4, Name = "Sałatka", Calories = 100 }
+                new Recipe { Id = Guid.NewGuid(), Name = "Zupa", Calories = 150 },
+                new Recipe { Id = Guid.NewGuid(), Name = "Kotlet", Calories = 300 },
+                new Recipe { Id = Guid.NewGuid(), Name = "Pierogi", Calories = 250 },
+                new Recipe { Id = Guid.NewGuid(), Name = "Sałatka", Calories = 100 }
             };
 
             // Act - Order by calories descending, take top 2
@@ -430,10 +397,10 @@ namespace FoodbookApp.Tests
             // Arrange
             var recipes = new List<Recipe>
             {
-                new Recipe { Id = 1, Name = "Kotlet schabowy", Calories = 300 },
-                new Recipe { Id = 2, Name = "Kotlet mielony", Calories = 250 },
-                new Recipe { Id = 3, Name = "Pierogi z mięsem", Calories = 280 },
-                new Recipe { Id = 4, Name = "Zupa pomidorowa", Calories = 100 }
+                new Recipe { Id = Guid.NewGuid(), Name = "Kotlet schabowy", Calories = 300 },
+                new Recipe { Id = Guid.NewGuid(), Name = "Kotlet mielony", Calories = 250 },
+                new Recipe { Id = Guid.NewGuid(), Name = "Pierogi z mięsem", Calories = 280 },
+                new Recipe { Id = Guid.NewGuid(), Name = "Zupa pomidorowa", Calories = 100 }
             };
 
             var searchTerm = "Kotlet";

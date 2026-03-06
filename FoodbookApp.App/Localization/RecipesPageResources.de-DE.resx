@@ -9,4 +9,7 @@
   <data name="AddButton" xml:space="preserve"><value>Rezept hinzufugen</value></data>
   <data name="EmptyTitle" xml:space="preserve"><value>Keine Rezepte</value></data>
   <data name="EmptyHint" xml:space="preserve"><value>'Rezept hinzufugen' tippen</value></data>
+  <!-- FAB action texts -->
+  <data name="AddRecipeAction" xml:space="preserve"><value>Rezept hinzufügen</value></data>
+  <data name="AddFolderAction" xml:space="preserve"><value>Ordner hinzufügen</value></data>
 </root>

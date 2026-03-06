@@ -5,12 +5,14 @@
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:converters="clr-namespace:Foodbook.Converters"
              xmlns:components="clr-namespace:Foodbook.Views.Components"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:resources="clr-namespace:FoodbookApp.Localization"
              x:Class="Foodbook.Views.RecipesPage"
              x:Name="ThisPage"
              x:DataType="vm:RecipeViewModel"
              Title="{loc:Translate Resource=RecipesPageResources, Key=Title}"
-             BackgroundColor="{DynamicResource PageBackgroundColor}">
+             BackgroundColor="{DynamicResource PageBackgroundColor}"
+             Shell.NavBarIsVisible="false">
     
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
@@ -45,14 +47,20 @@
                                                ClearCommand="{Binding ClearSearchCommand}"
                                                IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
             <ImageButton Grid.Column="1"
+                         x:Name="FilterButton"
                          WidthRequest="28"
                          HeightRequest="28"
                          BackgroundColor="Transparent"
                          HorizontalOptions="End"
                          Source="Resources/Images/filter.png"
-                         Opacity="0.4"
+                         
                          Clicked="OnFilterSortClicked"
-                         AutomationId="RecipesFilterButton"/>
+                         AutomationId="RecipesFilterButton">
+                <ImageButton.Behaviors>
+                    <!-- Use Primary color directly so it always matches current theme -->
+                    <toolkit:IconTintColorBehavior TintColor="{DynamicResource Primary}" />
+                </ImageButton.Behaviors>
+            </ImageButton>
         </Grid>
 
         <!-- Breadcrumb with Back button under search bar -->
@@ -97,8 +105,9 @@
                 IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
                 ButtonText="+">
                 <components:FloatingActionButtonComponent.Actions>
-                    <components:FabActionItem Text="Dodaj folder" Command="{Binding BindingContext.AddFolderCommand, Source={x:Reference ThisPage}}" />
-                    <components:FabActionItem Text="Dodaj przepis" Command="{Binding BindingContext.AddRecipeCommand, Source={x:Reference ThisPage}}" />
+                    <!-- Reordered: Add Recipe on top, Add Folder below -->
+                    <components:FabActionItem Text="{loc:Translate Resource=RecipesPageResources, Key=AddRecipeAction}" Command="{Binding BindingContext.AddRecipeCommand, Source={x:Reference ThisPage}}" />
+                    <components:FabActionItem Text="{loc:Translate Resource=RecipesPageResources, Key=AddFolderAction}" Command="{Binding BindingContext.AddFolderCommand, Source={x:Reference ThisPage}}" />
                 </components:FloatingActionButtonComponent.Actions>
             </components:FloatingActionButtonComponent>
         </Grid>

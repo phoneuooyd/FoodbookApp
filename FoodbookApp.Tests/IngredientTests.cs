@@ -12,7 +12,7 @@ namespace FoodbookApp.Tests
             var ingredient = new Ingredient();
 
             // Assert
-            Assert.Equal(0, ingredient.Id);
+            Assert.Equal(Guid.Empty, ingredient.Id);
             Assert.Equal(string.Empty, ingredient.Name);
             Assert.Equal(0, ingredient.Quantity);
             Assert.Equal(Unit.Gram, ingredient.Unit);
@@ -30,9 +30,10 @@ namespace FoodbookApp.Tests
         {
             // Arrange
             var ingredient = new Ingredient();
+            var id = Guid.NewGuid();
 
             // Act
-            ingredient.Id = 1;
+            ingredient.Id = id;
             ingredient.Name = "Pomidor";
             ingredient.Quantity = 150;
             ingredient.Unit = Unit.Gram;
@@ -42,7 +43,7 @@ namespace FoodbookApp.Tests
             ingredient.Carbs = 3.9;
 
             // Assert
-            Assert.Equal(1, ingredient.Id);
+            Assert.Equal(id, ingredient.Id);
             Assert.Equal("Pomidor", ingredient.Name);
             Assert.Equal(150, ingredient.Quantity);
             Assert.Equal(Unit.Gram, ingredient.Unit);

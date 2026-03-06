@@ -6,12 +6,14 @@ using Microsoft.Extensions.DependencyInjection;
 using FoodbookApp;
 using Foodbook.Views.Components;
 using CommunityToolkit.Maui.Extensions;
+using CommunityToolkit.Maui.Behaviors;
 using Foodbook.Models;
 using Foodbook.Services;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.Views;
 
-public partial class IngredientsPage : ContentPage
+public partial class IngredientsPage : ContentPage, ITabLoadable
 {
     private readonly IngredientsViewModel _viewModel;
     private readonly PageThemeHelper _themeHelper;
@@ -48,6 +50,10 @@ public partial class IngredientsPage : ContentPage
         
         // Initialize theme and font handling
         _themeHelper.Initialize();
+        _themeHelper.ThemeChanged += OnThemeChanged;
+        
+        // Apply initial tint color
+        RefreshFilterButtonTintColor();
         
         // Subscribe to global ingredients-changed event
         AppEvents.IngredientsChangedAsync += OnIngredientsChangedAsync;
@@ -79,6 +85,7 @@ public partial class IngredientsPage : ContentPage
         base.OnDisappearing();
         
         // Cleanup theme and font handling
+        _themeHelper.ThemeChanged -= OnThemeChanged;
         _themeHelper.Cleanup();
 
         // Unsubscribe to avoid leaks
@@ -87,6 +94,77 @@ public partial class IngredientsPage : ContentPage
 
         if (Current == this)
             Current = null;
+    }
+
+    private void OnThemeChanged(object? sender, EventArgs e)
+    {
+        MainThread.BeginInvokeOnMainThread(RefreshFilterButtonTintColor);
+    }
+
+    private void RefreshFilterButtonTintColor()
+    {
+        try
+        {
+            // Resolve Primary color from application resources (ThemeService updates these)
+            Color? tintColor = null;
+            var app = Application.Current;
+            if (app?.Resources != null)
+            {
+                if (app.Resources.TryGetValue("Primary", out var primaryObj))
+                {
+                    if (primaryObj is Color c)
+                        tintColor = c;
+                    else if (primaryObj is SolidColorBrush b)
+                        tintColor = b.Color;
+                }
+            }
+
+            // Fallback to TabBarIconTint if Primary not found
+            if (tintColor == null && app?.Resources != null && app.Resources.TryGetValue("TabBarIconTint", out var iconTintObj))
+            {
+                if (iconTintObj is Color c2)
+                    tintColor = c2;
+                else if (iconTintObj is SolidColorBrush b2)
+                    tintColor = b2.Color;
+            }
+
+            if (tintColor == null || FilterButton == null) return;
+
+            var behavior = FilterButton.Behaviors.OfType<IconTintColorBehavior>().FirstOrDefault();
+            if (behavior != null)
+            {
+                behavior.TintColor = tintColor;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientsPage] RefreshFilterButtonTintColor failed: {ex.Message}");
+        }
+    }
+
+    // Public method for TabBarComponent to initialize subscriptions
+    public void InitializeSubscriptionsForTabBar()
+    {
+        // Subscribe to global ingredients-changed event
+        AppEvents.IngredientsChangedAsync += OnIngredientsChangedAsync;
+        // Subscribe to single-ingredient saved event to force reload immediately
+        AppEvents.IngredientSaved += OnIngredientSaved;
+    }
+
+    /// <summary>
+    /// Called by TabBarComponent when this tab is activated.
+    /// </summary>
+    public async Task OnTabActivatedAsync()
+    {
+        try
+        {
+            InitializeSubscriptionsForTabBar();
+            await _viewModel.LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientsPage] OnTabActivatedAsync error: {ex.Message}");
+        }
     }
 
     // Direct refresh API used by other components
@@ -115,7 +193,7 @@ public partial class IngredientsPage : ContentPage
     }
 
     // Handler for AppEvents.IngredientSaved
-    private void OnIngredientSaved(int id)
+    private void OnIngredientSaved(Guid id)
     {
         try
         {
@@ -131,8 +209,11 @@ public partial class IngredientsPage : ContentPage
     {
         try
         {
-            bool create = await DisplayAlert("Brak składników", 
-                "Utworzyć listę przykładowych składników?", "Tak", "Nie");
+            bool create = await DisplayAlert(
+                FoodbookApp.Localization.IngredientsPageResources.EmptyIngredientsTitle, 
+                FoodbookApp.Localization.IngredientsPageResources.EmptyIngredientsMessage, 
+                FoodbookApp.Localization.IngredientsPageResources.Yes, 
+                FoodbookApp.Localization.IngredientsPageResources.No);
             
             if (create && MauiProgram.ServiceProvider != null)
             {
@@ -147,7 +228,10 @@ public partial class IngredientsPage : ContentPage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error handling empty ingredients: {ex.Message}");
-            await DisplayAlert("Błąd", "Wystąpił problem podczas ładowania składników.", "OK");
+            await DisplayAlert(
+                FoodbookApp.Localization.IngredientsPageResources.ErrorTitle, 
+                FoodbookApp.Localization.IngredientsPageResources.LoadingIngredientsError, 
+                FoodbookApp.Localization.IngredientsPageResources.OK);
         }
     }
 

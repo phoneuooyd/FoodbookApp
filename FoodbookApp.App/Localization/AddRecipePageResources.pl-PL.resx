@@ -222,4 +222,37 @@
   <data name="SelectIngredientPlaceholder" xml:space="preserve">
     <value>Wybierz składnik...</value>
   </data>
+  <data name="ConfirmTitle" xml:space="preserve">
+    <value>Potwierdź</value>
+  </data>
+  <data name="UnsavedChangesMessage" xml:space="preserve">
+    <value>Masz niezapisane zmiany. Czy na pewno chcesz wyjść?</value>
+  </data>
+  <data name="YesButton" xml:space="preserve">
+    <value>Tak</value>
+  </data>
+  <data name="NoButton" xml:space="preserve">
+    <value>Nie</value>
+  </data>
+  <data name="ErrorTitle" xml:space="preserve">
+    <value>Błąd</value>
+  </data>
+  <data name="CannotOpenLabelsManagement" xml:space="preserve">
+    <value>Nie można otworzyć zarządzania etykietami</value>
+  </data>
+  <data name="OKButton" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="UnableToResolveCurrentPage" xml:space="preserve">
+    <value>Nie można rozpoznać bieżącej strony.</value>
+  </data>
+  <data name="CouldNotOpenRecipeSelectionDialog" xml:space="preserve">
+    <value>Nie można otworzyć okna wyboru przepisu</value>
+  </data>
+  <data name="FailedToFetchRecipeDetails" xml:space="preserve">
+    <value>Nie udało się pobrać szczegółów przepisu.</value>
+  </data>
+  <data name="FailedToOpenRecipeDetails" xml:space="preserve">
+    <value>Nie udało się otworzyć szczegółów przepisu</value>
+  </data>
 </root>

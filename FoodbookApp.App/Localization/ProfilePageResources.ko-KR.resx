@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="Title" xml:space="preserve"><value>프로필</value></data>
+  <data name="HeaderTitle" xml:space="preserve"><value>프로필</value></data>
+  <data name="HeaderSubtitle" xml:space="preserve"><value>Supabase에 로그인하세요</value></data>
+
+  <data name="LoginPanelTitle" xml:space="preserve"><value>로그인</value></data>
+  <data name="EmailLabel" xml:space="preserve"><value>이메일</value></data>
+  <data name="EmailPlaceholder" xml:space="preserve"><value>name@example.com</value></data>
+  <data name="PasswordLabel" xml:space="preserve"><value>비밀번호</value></data>
+  <data name="PasswordPlaceholder" xml:space="preserve"><value>비밀번호 입력</value></data>
+  <data name="LoginButton" xml:space="preserve"><value>로그인</value></data>
+  <data name="RegisterButton" xml:space="preserve"><value>회원가입</value></data>
+
+  <data name="LoggedInTitle" xml:space="preserve"><value>로그인되었습니다</value></data>
+  <data name="CloudSyncHeader" xml:space="preserve"><value>클라우드 동기화</value></data>
+  <data name="EnableCloudSync" xml:space="preserve"><value>클라우드 데이터 동기화 활성화</value></data>
+  <data name="ForceSyncButton" xml:space="preserve"><value>동기화 강제 실행</value></data>
+  <data name="LogoutButton" xml:space="preserve"><value>로그아웃</value></data>
+
+  <data name="ServiceMissingTitle" xml:space="preserve"><value>서비스를 사용할 수 없음</value></data>
+  <data name="ServiceMissingMessage" xml:space="preserve"><value>인증 서비스를 찾을 수 없습니다.</value></data>
+  <data name="OK" xml:space="preserve"><value>확인</value></data>
+
+  <data name="EmailRequired" xml:space="preserve"><value>이메일을 입력하세요.</value></data>
+  <data name="PasswordRequired" xml:space="preserve"><value>비밀번호를 입력하세요.</value></data>
+  <data name="LoggingIn" xml:space="preserve"><value>로그인 중...</value></data>
+  <data name="LoginErrorTitle" xml:space="preserve"><value>로그인 오류</value></data>
+  <data name="LoginErrorMessage" xml:space="preserve"><value>로그인에 실패했습니다. 자격 증명을 확인하세요.</value></data>
+
+  <data name="SyncErrorTitle" xml:space="preserve"><value>동기화 오류</value></data>
+  <data name="SyncServiceUnavailable" xml:space="preserve"><value>동기화 서비스를 사용할 수 없음</value></data>
+  <data name="EnablingSync" xml:space="preserve"><value>동기화 활성화 중...</value></data>
+  <data name="DisablingSync" xml:space="preserve"><value>동기화 비활성화 중...</value></data>
+  <data name="SyncEnabled" xml:space="preserve"><value>클라우드 동기화가 활성화되었습니다. 데이터 동기화 중...</value></data>
+  <data name="SyncDisabled" xml:space="preserve"><value>클라우드 동기화가 비활성화되었습니다</value></data>
+  <data name="ForcingSync" xml:space="preserve"><value>모든 항목 동기화 강제 실행 중...</value></data>
+  <data name="ForceSyncCompletedTitle" xml:space="preserve"><value>동기화 강제 실행 완료</value></data>
+  <data name="ForceSyncErrorTitle" xml:space="preserve"><value>동기화 강제 실행 오류</value></data>
+
+  <data name="LogoutErrorTitle" xml:space="preserve"><value>로그아웃 오류</value></data>
+  <data name="GenericErrorTitle" xml:space="preserve"><value>오류</value></data>
+
+  <data name="SyncStatusFormat" xml:space="preserve"><value>상태: {0}, 대기 중: {1}</value></data>
+</root>

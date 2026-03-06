@@ -49,8 +49,8 @@ public class CRUDComponentPopup : Popup
     private bool _isAddingNew = false;
 
     // Selection storage (acts as Select control)
-    private readonly HashSet<int> _selectedIds = new();
-    public IReadOnlyCollection<int> SelectedIds => _selectedIds;
+    private readonly HashSet<Guid> _selectedIds = new();
+    public IReadOnlyCollection<Guid> SelectedIds => _selectedIds;
     
     // Task to await for result
     public Task<object?> ResultTask => _tcs.Task;
@@ -65,7 +65,7 @@ public class CRUDComponentPopup : Popup
     private Border _detailsPanel = null!;
     private Grid _footerBar = null!;
 
-    public CRUDComponentPopup(SettingsViewModel vm, IEnumerable<int>? initiallySelectedIds = null)
+    public CRUDComponentPopup(SettingsViewModel vm, IEnumerable<Guid>? initiallySelectedIds = null)
     {
         _vm = vm;
         CanBeDismissedByTappingOutsideOfPopup = true;

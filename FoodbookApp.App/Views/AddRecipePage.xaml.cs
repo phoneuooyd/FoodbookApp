@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,11 +9,16 @@ using Foodbook.Views.Components;
 using Foodbook.Views.Base;
 using CommunityToolkit.Maui.Views;
 using CommunityToolkit.Maui.Extensions; // For ShowPopupAsync extension
+using Microsoft.Maui.Graphics;
+using Microsoft.Maui.Dispatching;
+using Microsoft.Extensions.DependencyInjection;
+using FoodbookApp.Interfaces;
 
 namespace Foodbook.Views
 {
-    [QueryProperty(nameof(RecipeId), "id")]
-    [QueryProperty(nameof(FolderId), "folderId")]
+    // ✅ FIX: Changed property names to accept strings (Shell passes query params as strings)
+    [QueryProperty(nameof(RecipeIdString), "id")]
+    [QueryProperty(nameof(FolderIdString), "folderId")]
     public partial class AddRecipePage : ContentPage
     {
         private AddRecipeViewModel? ViewModel => BindingContext as AddRecipeViewModel;
@@ -26,6 +31,23 @@ namespace Foodbook.Views
 
         // drag state for reordering ingredients
         private Ingredient? _draggingIngredient;
+
+        // ✅ SIMPLIFIED: Shell navigation handling for unsaved changes (based on ShoppingListDetailPage)
+        private bool _isSubscribedToShellNavigating = false;
+        private bool _suppressShellNavigating = false;
+
+        // ✅ OPTYMALIZACJA: Task cache dla asynchronicznych operacji
+        private Task? _pendingLoadTask;
+        private readonly SemaphoreSlim _loadSemaphore = new(1, 1);
+
+        // Track original popup background resources so we can restore them
+        private object? _originalPopupBackgroundColorResource;
+        private object? _originalPopupBackgroundBrushResource;
+        private bool _isSubscribedToGlobalPopupEvents = false;
+
+        private object? _originalPageBackgroundColorResource;
+        private object? _originalPageBackgroundBrushResource;
+        private bool _appliedLocalOpaqueBackground = false;
 
         public AddRecipePage(AddRecipeViewModel vm)
         {
@@ -43,33 +65,75 @@ namespace Foodbook.Views
                 _themeHelper.ThemeChanged += OnThemeChanged;
                 _themeHelper.CultureChanged += OnCultureChanged;
 
+                // Hide underlying content and enforce opaque bg when this page is shown modally from a popup (PlannerPage/Popups scenarios)
+                try
+                {
+                    if (IsModalPage())
+                    {
+                        HideUnderlyingContent();
+
+                        var themeService = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IThemeService>();
+                        bool wallpaperEnabled = themeService?.IsWallpaperBackgroundEnabled() == true;
+                        bool colorfulEnabled = themeService?.GetIsColorfulBackgroundEnabled() == true;
+
+                        if (wallpaperEnabled || colorfulEnabled)
+                        {
+                            ApplyOpaqueLocalBackground();
+                        }
+                    }
+                }
+                catch { }
+
+                // ✅ SIMPLIFIED: Subscribe to Shell.Navigating for unsaved changes prompt
+                try
+                {
+                    if (!_isSubscribedToShellNavigating && Shell.Current != null)
+                    {
+                        Shell.Current.Navigating += OnShellNavigating;
+                        _isSubscribedToShellNavigating = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AddRecipePage] Failed to subscribe Shell.Navigating: {ex.Message}");
+                }
+
+                // Subscribe to global popup state events so we can adjust popup overlay when page is modal
+                try
+                {
+                    if (!_isSubscribedToGlobalPopupEvents)
+                    {
+                        SimplePicker.GlobalPopupStateChanged += OnGlobalPopupStateChanged;
+                        SearchablePickerComponent.GlobalPopupStateChanged += OnGlobalPopupStateChanged;
+                        _isSubscribedToGlobalPopupEvents = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AddRecipePage] Failed to subscribe to global popup events: {ex.Message}");
+                }
+
                 if (!_hasEverLoaded)
                 {
-                    // First time loading - perform full initialization
-                    System.Diagnostics.Debug.WriteLine("?? AddRecipePage: First load - performing full initialization");
+                    // ✅ KRYTYCZNA OPTYMALIZACJA: Asynchroniczne ładowanie w tle
+                    System.Diagnostics.Debug.WriteLine("🚀 AddRecipePage: First load - performing optimized initialization");
                     
+                    // Reset synchronicznie
                     ViewModel?.Reset();
-                    await (ViewModel?.LoadAvailableIngredientsAsync() ?? Task.CompletedTask);
-                    await (ViewModel?.LoadAvailableLabelsAsync() ?? Task.CompletedTask);
 
-                    if (RecipeId > 0 && ViewModel != null)
-                    {
-                        await ViewModel.LoadRecipeAsync(RecipeId);
-                    }
-
-                    // If navigation passed FolderId, preselect it
-                    if (FolderId > 0 && ViewModel != null)
-                        ViewModel.SelectedFolderId = FolderId;
-                        
+                    // ✅ Pokazuj UI natychmiast, ładuj dane w tle
+                    _ = InitializeDataAsync();
+                    
                     _hasEverLoaded = true;
                     _isInitialized = true;
                 }
                 else
                 {
                     // Subsequent appearances (e.g., after popup close) - do not reset
-                    System.Diagnostics.Debug.WriteLine("?? AddRecipePage: Skipping reset on re-appear");
-                    // Refresh labels list in case user added/removed labels
-                    await (ViewModel?.LoadAvailableLabelsAsync() ?? Task.CompletedTask);
+                    System.Diagnostics.Debug.WriteLine("🔄 AddRecipePage: Skipping reset on re-appear");
+                    
+                    // ✅ OPTYMALIZACJA: Tylko labels refresh (lżejsze niż pełne składniki)
+                    _ = ViewModel?.LoadAvailableLabelsAsync();
                 }
             }
             catch (Exception ex)
@@ -77,7 +141,75 @@ namespace Foodbook.Views
                 System.Diagnostics.Debug.WriteLine($"Error in OnAppearing: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"B��d �adowania strony: {ex.Message}";
+                    ViewModel.ValidationMessage = $"Błąd ładowania strony: {ex.Message}";
+                }
+            }
+        }
+
+        /// <summary>
+        /// ✅ NOWA METODA: Asynchroniczne ładowanie danych w tle bez blokowania UI
+        /// </summary>
+        private async Task InitializeDataAsync()
+        {
+            // Zabezpieczenie przed wielokrotnym ładowaniem
+            if (_pendingLoadTask != null && !_pendingLoadTask.IsCompleted)
+            {
+                System.Diagnostics.Debug.WriteLine("⏳ AddRecipePage: Load already in progress, waiting...");
+                await _pendingLoadTask;
+                return;
+            }
+
+            await _loadSemaphore.WaitAsync();
+            try
+            {
+                _pendingLoadTask = LoadDataInternalAsync();
+                await _pendingLoadTask;
+            }
+            finally
+            {
+                _loadSemaphore.Release();
+            }
+        }
+
+        /// <summary>
+        /// ✅ NOWA METODA: Wewnętrzna metoda ładowania danych
+        /// </summary>
+        private async Task LoadDataInternalAsync()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("📦 AddRecipePage: Loading data in background...");
+
+                // ✅ OPTYMALIZACJA: Ładuj równolegle składniki i etykiety
+                var ingredientsTask = ViewModel?.LoadAvailableIngredientsAsync() ?? Task.CompletedTask;
+                var labelsTask = ViewModel?.LoadAvailableLabelsAsync() ?? Task.CompletedTask;
+
+                // Poczekaj na oba zadania
+                await Task.WhenAll(ingredientsTask, labelsTask);
+
+                System.Diagnostics.Debug.WriteLine("✅ AddRecipePage: Background data loaded successfully");
+
+                // Jeśli edytujemy przepis, załaduj jego dane
+                if (RecipeId != Guid.Empty && ViewModel != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"📖 AddRecipePage: Loading recipe {RecipeId}...");
+                    await ViewModel.LoadRecipeAsync(RecipeId);
+                }
+
+                // ✅ FIX: Use SetInitialFolderId to preselect folder without marking dirty
+                // This is not a user change, so it shouldn't mark the form as dirty
+                if (FolderId.HasValue && FolderId.Value != Guid.Empty && ViewModel != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"📁 AddRecipePage: Preselecting folder {FolderId}");
+                    ViewModel.SetInitialFolderId(FolderId);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ AddRecipePage: Error loading data: {ex.Message}");
+                if (ViewModel != null)
+                {
+                    ViewModel.ValidationMessage = $"Błąd ładowania danych: {ex.Message}";
                 }
             }
         }
@@ -85,11 +217,307 @@ namespace Foodbook.Views
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
+
+            // Restore underlying content visibility
+            try { RestoreUnderlyingContent(); } catch { }
+
             _themeHelper.ThemeChanged -= OnThemeChanged;
             _themeHelper.CultureChanged -= OnCultureChanged;
             _themeHelper.Cleanup();
+
+            // ✅ SIMPLIFIED: Unsubscribe Shell.Navigating
+            try
+            {
+                if (_isSubscribedToShellNavigating && Shell.Current != null)
+                {
+                    Shell.Current.Navigating -= OnShellNavigating;
+                    _isSubscribedToShellNavigating = false;
+                }
+            }
+            catch { }
+
+            // Unsubscribe global popup events
+            try
+            {
+                if (_isSubscribedToGlobalPopupEvents)
+                {
+                    SimplePicker.GlobalPopupStateChanged -= OnGlobalPopupStateChanged;
+                    SearchablePickerComponent.GlobalPopupStateChanged -= OnGlobalPopupStateChanged;
+                    _isSubscribedToGlobalPopupEvents = false;
+                }
+            }
+            catch { }
+
+            // Cleanup local opaque override
+            try
+            {
+                if (_appliedLocalOpaqueBackground)
+                {
+                    try { this.Resources.Remove("PageBackgroundColor"); } catch { }
+                    try { this.Resources.Remove("PageBackgroundBrush"); } catch { }
+                    _appliedLocalOpaqueBackground = false;
+                }
+            }
+            catch { }
             
-            System.Diagnostics.Debug.WriteLine("? AddRecipePage: Disappearing - preserving current state");
+            System.Diagnostics.Debug.WriteLine("👋 AddRecipePage: Disappearing - preserving current state");
+        }
+
+        private void ApplyOpaqueLocalBackground()
+        {
+            try
+            {
+                var app = Application.Current;
+                if (app?.Resources == null) return;
+
+                if (_originalPageBackgroundColorResource == null && app.Resources.TryGetValue("PageBackgroundColor", out var origColor))
+                    _originalPageBackgroundColorResource = origColor;
+                if (_originalPageBackgroundBrushResource == null && app.Resources.TryGetValue("PageBackgroundBrush", out var origBrush))
+                    _originalPageBackgroundBrushResource = origBrush;
+
+                Color pageBg = Colors.White;
+                if (app.Resources.TryGetValue("PageBackgroundColor", out var pb) && pb is Color c)
+                    pageBg = c;
+
+                var overlay = Color.FromRgb(pageBg.Red, pageBg.Green, pageBg.Blue); // alpha=1
+                this.Resources["PageBackgroundColor"] = overlay;
+                this.Resources["PageBackgroundBrush"] = new SolidColorBrush(overlay);
+                this.BackgroundColor = overlay;
+                _appliedLocalOpaqueBackground = true;
+                System.Diagnostics.Debug.WriteLine("[AddRecipePage] Applied opaque local background (wallpaper/colorful mode)");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] ApplyOpaqueLocalBackground error: {ex.Message}");
+            }
+        }
+
+        private void HideUnderlyingContent()
+        {
+            try
+            {
+                var underlying = Shell.Current?.CurrentPage;
+                if (underlying != null && !ReferenceEquals(underlying, this))
+                {
+                    MainThread.BeginInvokeOnMainThread(() => underlying.Opacity = 0);
+                    System.Diagnostics.Debug.WriteLine("[AddRecipePage] Hidden underlying page (Opacity=0)");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] HideUnderlyingContent error: {ex.Message}");
+            }
+        }
+
+        private void RestoreUnderlyingContent()
+        {
+            try
+            {
+                var underlying = Shell.Current?.CurrentPage;
+                if (underlying != null && !ReferenceEquals(underlying, this))
+                {
+                    MainThread.BeginInvokeOnMainThread(() => underlying.Opacity = 1);
+                    System.Diagnostics.Debug.WriteLine("[AddRecipePage] Restored underlying page (Opacity=1)");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] RestoreUnderlyingContent error: {ex.Message}");
+            }
+        }
+
+        // Global popup state handler - adjust popup overlay color when this page is presented modally
+        private void OnGlobalPopupStateChanged(object? sender, bool isOpen)
+        {
+            try
+            {
+                // Only adjust when this page is shown modally (e.g., AddRecipePage pushed modally)
+                if (!IsModalPage())
+                    return;
+
+                var app = Application.Current;
+                if (app?.Resources == null)
+                    return;
+
+                // Resolve theme service to check wallpaper mode
+                var themeService = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IThemeService>();
+                bool wallpaperEnabled = themeService?.IsWallpaperBackgroundEnabled() == true;
+
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    try
+                    {
+                        // Grab current page background color if available
+                        Color pageBg = Colors.White;
+                        if (app.Resources.TryGetValue("PageBackgroundColor", out var existing) && existing is Color c)
+                            pageBg = c;
+
+                        if (isOpen)
+                        {
+                            // Store original resources once
+                            if (_originalPopupBackgroundColorResource == null && app.Resources.TryGetValue("PopupBackgroundColor", out var origColor))
+                                _originalPopupBackgroundColorResource = origColor;
+                            if (_originalPopupBackgroundBrushResource == null && app.Resources.TryGetValue("PopupBackgroundBrush", out var origBrush))
+                                _originalPopupBackgroundBrushResource = origBrush;
+
+                            // If wallpaper enabled, use opaque overlay so wallpaper does not show through.
+                            var alpha = wallpaperEnabled ? 1.0f : 0.82f;
+
+                            var overlay = Color.FromRgba(pageBg.Red, pageBg.Green, pageBg.Blue, alpha);
+                            app.Resources["PopupBackgroundColor"] = overlay;
+                            app.Resources["PopupBackgroundBrush"] = new SolidColorBrush(overlay);
+
+                            System.Diagnostics.Debug.WriteLine($"[AddRecipePage] Overrode PopupBackgroundColor for modal context (wallpaperEnabled={wallpaperEnabled})");
+                        }
+                        else
+                        {
+                            // Restore originals if we saved them
+                            if (_originalPopupBackgroundColorResource != null)
+                            {
+                                app.Resources["PopupBackgroundColor"] = _originalPopupBackgroundColorResource;
+                                _originalPopupBackgroundColorResource = null;
+                            }
+                            if (_originalPopupBackgroundBrushResource != null)
+                            {
+                                app.Resources["PopupBackgroundBrush"] = _originalPopupBackgroundBrushResource;
+                                _originalPopupBackgroundBrushResource = null;
+                            }
+
+                            System.Diagnostics.Debug.WriteLine("[AddRecipePage] Restored original PopupBackground resources after modal popup closed");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[AddRecipePage] OnGlobalPopupStateChanged error: {ex.Message}");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] Global popup state handler failed: {ex.Message}");
+            }
+        }
+
+        // Helper to detect whether this page was pushed modally
+        private bool IsModalPage()
+        {
+            try
+            {
+                var nav = Shell.Current?.Navigation ?? Application.Current?.MainPage?.Navigation;
+                if (nav?.ModalStack == null) return false;
+                return nav.ModalStack.Contains(this);
+            }
+            catch { return false; }
+        }
+
+        /// <summary>
+        /// ✅ SIMPLIFIED: Handle Shell navigation for unsaved changes (based on ShoppingListDetailPage)
+        /// </summary>
+        private void OnShellNavigating(object? sender, ShellNavigatingEventArgs e)
+        {
+            try
+            {
+                // If suppressed, allow navigation
+                if (_suppressShellNavigating) return;
+                
+                // If pushing a new page, allow
+                if (e.Source == ShellNavigationSource.Push) return;
+
+                // Check for unsaved changes
+                if (ViewModel?.HasUnsavedChanges == true)
+                {
+                    e.Cancel();
+                    MainThread.BeginInvokeOnMainThread(async () =>
+                    {
+                        bool leave = await DisplayAlert(
+                            FoodbookApp.Localization.AddRecipePageResources.ConfirmTitle, 
+                            FoodbookApp.Localization.AddRecipePageResources.UnsavedChangesMessage, 
+                            FoodbookApp.Localization.AddRecipePageResources.YesButton, 
+                            FoodbookApp.Localization.AddRecipePageResources.NoButton);
+                        
+                        if (leave)
+                        {
+                            try { ViewModel?.DiscardChanges(); } catch { }
+                            _suppressShellNavigating = true;
+                            try
+                            {
+                                var targetLoc = e.Target?.Location?.OriginalString ?? string.Empty;
+                                var nav = Shell.Current?.Navigation;
+                                
+                                // If modal, pop modal first
+                                if (nav?.ModalStack?.Count > 0)
+                                    await nav.PopModalAsync(false);
+                                else if (!string.IsNullOrEmpty(targetLoc))
+                                    await Shell.Current.GoToAsync(targetLoc);
+                                else
+                                    await Shell.Current.GoToAsync("..", false);
+                            }
+                            catch { }
+                            finally
+                            {
+                                await Task.Delay(200);
+                                _suppressShellNavigating = false;
+                            }
+                        }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] OnShellNavigating error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// ✅ SIMPLIFIED: Handle hardware back button (based on ShoppingListDetailPage)
+        /// </summary>
+        protected override bool OnBackButtonPressed()
+        {
+            try
+            {
+                if (ViewModel?.HasUnsavedChanges == true)
+                {
+                    MainThread.BeginInvokeOnMainThread(async () =>
+                    {
+                        bool leave = await DisplayAlert(
+                            FoodbookApp.Localization.AddRecipePageResources.ConfirmTitle, 
+                            FoodbookApp.Localization.AddRecipePageResources.UnsavedChangesMessage, 
+                            FoodbookApp.Localization.AddRecipePageResources.YesButton, 
+                            FoodbookApp.Localization.AddRecipePageResources.NoButton);
+                        
+                        if (leave)
+                        {
+                            try { ViewModel?.DiscardChanges(); } catch { }
+                            _suppressShellNavigating = true;
+                            try
+                            {
+                                var nav = Shell.Current?.Navigation;
+                                if (nav?.ModalStack?.Count > 0)
+                                    await nav.PopModalAsync(false);
+                                else
+                                    await Shell.Current.GoToAsync("..", false);
+                            }
+                            catch { }
+                            finally
+                            {
+                                await Task.Delay(200);
+                                _suppressShellNavigating = false;
+                            }
+                        }
+                    });
+                    return true; // Cancel default back, we handle it
+                }
+
+                // No unsaved changes - use CancelCommand if available
+                if (ViewModel?.CancelCommand?.CanExecute(null) == true)
+                    ViewModel.CancelCommand.Execute(null);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] OnBackButtonPressed error: {ex.Message}");
+                return base.OnBackButtonPressed();
+            }
         }
 
         private void OnThemeChanged(object? sender, EventArgs e)
@@ -196,24 +624,53 @@ namespace Foodbook.Views
             }
         }
 
-        private int _recipeId;
-        public int RecipeId { get => _recipeId; set => _recipeId = value; }
-
-        private int _folderId;
-        public int FolderId { get => _folderId; set => _folderId = value; }
-
-        protected override bool OnBackButtonPressed()
+        private Guid _recipeId;
+        public Guid RecipeId
         {
-            try
+            get => _recipeId;
+            set { _recipeId = value; }
+        }
+
+        // ✅ FIX: String property that Shell can set, then parse to Guid
+        public string? RecipeIdString
+        {
+            set
             {
-                if (ViewModel?.CancelCommand?.CanExecute(null) == true)
-                    ViewModel.CancelCommand.Execute(null);
-                return true;
+                if (Guid.TryParse(value, out var parsed))
+                {
+                    _recipeId = parsed;
+                    System.Diagnostics.Debug.WriteLine($"✅ RecipeIdString parsed: {_recipeId}");
+                }
+                else
+                {
+                    _recipeId = Guid.Empty;
+                    System.Diagnostics.Debug.WriteLine($"⚠️ RecipeIdString could not parse: '{value}'");
+                }
             }
-            catch (Exception ex)
+        }
+
+        private Guid? _folderId;
+        public Guid? FolderId
+        {
+            get => _folderId;
+            set { _folderId = value; }
+        }
+
+        // ✅ FIX: String property that Shell can set, then parse to Guid
+        public string? FolderIdString
+        {
+            set
             {
-                System.Diagnostics.Debug.WriteLine($"Error in OnBackButtonPressed: {ex.Message}");
-                return base.OnBackButtonPressed();
+                if (Guid.TryParse(value, out var parsed))
+                {
+                    _folderId = parsed;
+                    System.Diagnostics.Debug.WriteLine($"✅ FolderIdString parsed: {_folderId}");
+                }
+                else
+                {
+                    _folderId = null;
+                    System.Diagnostics.Debug.WriteLine($"⚠️ FolderIdString could not parse: '{value}'");
+                }
             }
         }
 
@@ -231,7 +688,7 @@ namespace Foodbook.Views
                 System.Diagnostics.Debug.WriteLine($"Error in OnAutoModeClicked: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"B��d prze��czania trybu: {ex.Message}";
+                    ViewModel.ValidationMessage = $"Błąd przełączania trybu: {ex.Message}";
                 }
             }
         }
@@ -250,7 +707,7 @@ namespace Foodbook.Views
                 System.Diagnostics.Debug.WriteLine($"Error in OnManualModeClicked: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"B��d prze��czania trybu: {ex.Message}";
+                    ViewModel.ValidationMessage = $"Błąd przełączania trybu: {ex.Message}";
                 }
             }
         }
@@ -319,7 +776,7 @@ namespace Foodbook.Views
                 System.Diagnostics.Debug.WriteLine($"Error in OnIngredientNameChanged: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"B��d aktualizacji sk�adnika: {ex.Message}";
+                    ViewModel.ValidationMessage = $"Błąd aktualizacji składnika: {ex.Message}";
                 }
             }
         }
@@ -433,12 +890,41 @@ namespace Foodbook.Views
                 var settingsVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<SettingsViewModel>();
                 if (settingsVm == null)
                 {
-                    await DisplayAlert("B��d", "Nie mo�na otworzy� zarz�dzania etykietami", "OK");
+                    await DisplayAlert(FoodbookApp.Localization.AddRecipePageResources.ErrorTitle, FoodbookApp.Localization.AddRecipePageResources.CannotOpenLabelsManagement, FoodbookApp.Localization.AddRecipePageResources.OKButton);
                     return;
                 }
 
-                var initiallySelected = ViewModel?.SelectedLabels.Select(l => l.Id).ToList() ?? new List<int>();
+                var initiallySelected = ViewModel?.SelectedLabels.Select(l => l.Id).ToList() ?? new List<Guid>();
                 var popup = new CRUDComponentPopup(settingsVm, initiallySelected);
+
+                // If this page is modal, override popup resources to use semi-transparent overlay (or opaque when wallpaper enabled)
+                try
+                {
+                    if (IsModalPage())
+                    {
+                        var app = Application.Current;
+                        if (app?.Resources != null)
+                        {
+                            // Resolve theme service to check wallpaper mode
+                            var themeService = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IThemeService>();
+                            bool wallpaperEnabled = themeService?.IsWallpaperBackgroundEnabled() == true;
+
+                            // Try to determine a suitable overlay color based on PageBackgroundColor
+                            if (app.Resources.TryGetValue("PageBackgroundColor", out var pb) && pb is Color pageColor)
+                            {
+                                var alpha = wallpaperEnabled ? 1.0f : 0.82f;
+                                var overlay = Color.FromRgba(pageColor.Red, pageColor.Green, pageColor.Blue, alpha);
+                                popup.Resources["PopupBackgroundColor"] = overlay;
+                                popup.Resources["PopupBackgroundBrush"] = new SolidColorBrush(overlay);
+                                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] Applied local PopupBackgroundColor override for CRUDComponentPopup (modal, wallpaperEnabled={wallpaperEnabled})");
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AddRecipePage] Failed to apply local popup override: {ex.Message}");
+                }
 
                 // Use extension method from CommunityToolkit.Maui.Extensions and await ResultTask
                 var showTask = this.ShowPopupAsync(popup);
@@ -450,7 +936,7 @@ namespace Foodbook.Views
                 var result = resultTask.IsCompleted ? await resultTask : null;
 
                 // Handle result
-                if (result is IEnumerable<int> selectedIds && ViewModel != null)
+                if (result is IEnumerable<Guid> selectedIds && ViewModel != null)
                 {
                     await ViewModel.LoadAvailableLabelsAsync();
                     var idSet = selectedIds.ToHashSet();
@@ -462,7 +948,7 @@ namespace Foodbook.Views
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[AddRecipePage] CRUDComponentPopup error: {ex.Message}");
-                await DisplayAlert("B��d", "Nie mo�na otworzy� zarz�dzania etykietami", "OK");
+                await DisplayAlert(FoodbookApp.Localization.AddRecipePageResources.ErrorTitle, FoodbookApp.Localization.AddRecipePageResources.CannotOpenLabelsManagement, FoodbookApp.Localization.AddRecipePageResources.OKButton);
             }
             finally
             {

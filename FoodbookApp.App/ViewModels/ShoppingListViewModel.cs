@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Windows.Input;
 using Foodbook.Models;
 using Foodbook.Views;
@@ -16,7 +17,7 @@ public class ShoppingListViewModel
     public ObservableCollection<Plan> Plans { get; } = new();
 
     public ICommand OpenPlanCommand { get; }
-    public ICommand ArchivePlanCommand { get; }
+    public ICommand DeletePlanCommand { get; }
     public ICommand CreateShoppingListCommand { get; }
 
     // Handler stored so we can unsubscribe later
@@ -28,7 +29,7 @@ public class ShoppingListViewModel
         _planService = planService;
         _plannerService = plannerService;
         OpenPlanCommand = new Command<Plan>(async p => await OpenPlanAsync(p));
-        ArchivePlanCommand = new Command<Plan>(async p => await ArchivePlanAsync(p));
+        DeletePlanCommand = new Command<Plan>(async p => await DeletePlanAsync(p));
         CreateShoppingListCommand = new Command(async () => await CreateShoppingListAsync());
 
         _planChangedHandler = async () => await LoadPlansAsync();
@@ -65,23 +66,23 @@ public class ShoppingListViewModel
         await Shell.Current.GoToAsync($"{nameof(ShoppingListDetailPage)}?id={plan.Id}");
     }
 
-    private async Task ArchivePlanAsync(Plan? plan)
+    private async Task DeletePlanAsync(Plan? plan)
     {
         if (plan == null) return;
         
         bool confirm = await Shell.Current.DisplayAlert(
-            "Archiwizacja", 
-            "Czy na pewno chcesz zarchiwizowaæ tê listê zakupów?", 
+            "Usuwanie", 
+            "Czy na pewno chcesz trwale usun¹æ tê listê zakupów?", 
             "Tak", 
             "Nie");
             
         if (confirm)
         {
-            plan.IsArchived = true;
-            await _planService.UpdatePlanAsync(plan);
+            // Remove the plan entity; related items will be handled by DB constraints if configured
+            await _planService.RemovePlanAsync(plan.Id);
             await LoadPlansAsync();
             
-            // Notify archive page
+            // Notify archive and other pages
             AppEvents.RaisePlanChanged();
         }
     }
@@ -91,34 +92,51 @@ public class ShoppingListViewModel
         try
         {
             System.Diagnostics.Debug.WriteLine("[ShoppingListVM] Creating new empty shopping list");
-            
-            // Create a new empty shopping list (no dates, not tied to any planner)
+
+            var today = DateTime.Today;
+
+            // If a standalone shopping list for today already exists, open it instead of creating another one.
+            // This prevents overlap/duplicate-plan edge cases that can surface as 'cannot add shopping list'.
+            var existingStandalone = (await _planService.GetPlansAsync())
+                .FirstOrDefault(p =>
+                    !p.IsArchived &&
+                    p.Type == PlanType.ShoppingList &&
+                    p.StartDate.Date == today &&
+                    p.EndDate.Date == today &&
+                    (!p.LinkedShoppingListPlanId.HasValue || p.LinkedShoppingListPlanId == Guid.Empty));
+
+            if (existingStandalone != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListVM] Standalone shopping list for today already exists: {existingStandalone.Id} - opening");
+                await Shell.Current.GoToAsync($"{nameof(ShoppingListDetailPage)}?id={existingStandalone.Id}");
+                return;
+            }
+
             var newPlan = new Plan
             {
                 Type = PlanType.ShoppingList,
-                StartDate = DateTime.Today,
-                EndDate = DateTime.Today,
+                StartDate = today,
+                EndDate = today,
                 IsArchived = false,
-                LinkedShoppingListPlanId = null // Ensure not linked to any planner
+                LinkedShoppingListPlanId = null,
+                Title = $"Lista zakupów ({today.ToString("dd.MM.yyyy", CultureInfo.CurrentCulture)})"
             };
-            
-            // Add to database
+
             await _planService.AddPlanAsync(newPlan);
             System.Diagnostics.Debug.WriteLine($"[ShoppingListVM] Created shopping list with ID: {newPlan.Id}");
-            
+
+            // Notify other views first so list refreshes even if navigation is slow
+            AppEvents.RaisePlanChanged();
+
             // Navigate to detail page to add items
             await Shell.Current.GoToAsync($"{nameof(ShoppingListDetailPage)}?id={newPlan.Id}");
-            
-            // Reload the list
+
             await LoadPlansAsync();
-            
-            // Notify other views
-            AppEvents.RaisePlanChanged();
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ShoppingListVM] Error creating shopping list: {ex.Message}");
-            await Shell.Current.DisplayAlert("B³¹d", "Nie uda³o siê utworzyæ listy zakupów.", "OK");
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListVM] Error creating shopping list: {ex.Message}\n{ex.StackTrace}");
+            await Shell.Current.DisplayAlert("B³¹d", $"Nie uda³o siê utworzyæ listy zakupów.\n{ex.Message}", "OK");
         }
     }
 }

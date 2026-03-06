@@ -8,7 +8,7 @@ namespace Foodbook.Models
 {
     public class Folder
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         [Required]
         [MaxLength(200)]
@@ -17,13 +17,14 @@ namespace Foodbook.Models
         [MaxLength(1000)]
         public string? Description { get; set; }
 
-        public int? ParentFolderId { get; set; }
+        public Guid? ParentFolderId { get; set; }
         public Folder? ParentFolder { get; set; }
 
         // Manual ordering among siblings. Lower numbers appear first.
         public int Order { get; set; } = 0;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
 
         public ICollection<Folder> SubFolders { get; set; } = new Collection<Folder>();
         public ICollection<Recipe> Recipes { get; set; } = new Collection<Recipe>();

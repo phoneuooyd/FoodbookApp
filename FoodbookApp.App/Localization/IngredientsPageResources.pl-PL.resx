@@ -27,4 +27,25 @@
   <data name="EmptyHint" xml:space="preserve">
     <value>Dotknij 'Dodaj składnik' aby dodać pierwszy składnik</value>
   </data>
+  <data name="EmptyIngredientsTitle" xml:space="preserve">
+    <value>Brak składników</value>
+  </data>
+  <data name="EmptyIngredientsMessage" xml:space="preserve">
+    <value>Utworzyć listę przykładowych składników?</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>Tak</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>Nie</value>
+  </data>
+  <data name="ErrorTitle" xml:space="preserve">
+    <value>Błąd</value>
+  </data>
+  <data name="LoadingIngredientsError" xml:space="preserve">
+    <value>Wystąpił problem podczas ładowania składników.</value>
+  </data>
+  <data name="OK" xml:space="preserve">
+    <value>OK</value>
+  </data>
 </root>

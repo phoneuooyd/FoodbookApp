@@ -138,6 +138,16 @@ public interface IPreferencesService
     void SaveInstallBasicIngredients(bool install);
 
     /// <summary>
+    /// Temporarily suppresses auto cloud sync for preference write operations.
+    /// </summary>
+    void SuppressCloudSync();
+
+    /// <summary>
+    /// Resumes auto cloud sync for preference write operations.
+    /// </summary>
+    void ResumeCloudSync();
+
+    /// <summary>
     /// Clears all preferences to defaults and marks the app as first launch.
     /// </summary>
     void ResetAllToDefaults();

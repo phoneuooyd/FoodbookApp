@@ -86,4 +86,8 @@
   <data name="FactoryResetDone" xml:space="preserve"><value>Valores de fábrica restaurados</value></data>
   <data name="FactoryResetFailedShort" xml:space="preserve"><value>Error al restablecer</value></data>
   <data name="FactoryResetErrorShort" xml:space="preserve"><value>Error de restablecimiento</value></data>
+  <!-- Nueva funciones de ingredientes -->
+  <data name="UpdateIngredientsTitle" xml:space="preserve"><value>Actualizar base de ingredientes</value></data>
+  <data name="UpdateIngredientsDescription" xml:space="preserve"><value>Agrega ingredientes que faltan desde el archivo ingredients.json embebido. No sobrescribe ni elimina ingredientes existentes.</value></data>
+  <data name="UpdateIngredientsButton" xml:space="preserve"><value>Actualizar ingredientes</value></data>
 </root>

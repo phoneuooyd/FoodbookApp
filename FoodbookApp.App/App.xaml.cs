@@ -14,6 +14,7 @@ namespace FoodbookApp
         private readonly IThemeService _themeService;
         private readonly IFontService _fontService;
         private bool _globalHandlersRegistered = false;
+        private bool _autoLoginCompleted = false;
 
         public App(ILocalizationService localizationService, IPreferencesService preferencesService, IThemeService themeService, IFontService fontService)
         {
@@ -45,12 +46,38 @@ namespace FoodbookApp
                 _themeService.SetColorfulBackground(isColorfulBackgroundEnabled);
                 System.Diagnostics.Debug.WriteLine($"[App][Ctor] Colorful background: {isColorfulBackgroundEnabled}");
 
-                // NEW: Apply saved wallpaper setting
                 var isWallpaperEnabled = LoadSavedWallpaperSetting();
                 _themeService.EnableWallpaperBackground(isWallpaperEnabled);
                 System.Diagnostics.Debug.WriteLine($"[App][Ctor] Wallpaper background: {isWallpaperEnabled}");
 
                 LoadSavedFontSettings();
+
+                // Best-effort autologin (no UI blocking) - run on thread-pool to avoid deadlocks during startup
+                try
+                {
+                    var accountService = MauiProgram.ServiceProvider?.GetService<IAccountService>();
+                    if (accountService != null)
+                    {
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                System.Diagnostics.Debug.WriteLine("[App] Background auto-login task started");
+                                var ok = await accountService.TryAutoLoginAsync();
+                                System.Diagnostics.Debug.WriteLine($"[App] Background auto-login attempted: {ok}");
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[App] Background auto-login failed: {ex.Message}");
+                            }
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[App] Failed to start background auto-login task: {ex.Message}");
+                }
+
                 System.Diagnostics.Debug.WriteLine("[App] Application initialization completed successfully");
             }
             catch (Exception ex)

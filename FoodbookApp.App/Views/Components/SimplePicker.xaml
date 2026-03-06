@@ -4,7 +4,7 @@
              x:Class="Foodbook.Views.Components.SimplePicker"
              x:Name="ThisPicker">
     <Border Style="{StaticResource ModernBorder}">
-        <Button x:Name="PickerButton"
+        <!--<Button x:Name="PickerButton"
                 Text="{Binding DisplayText, Source={x:Reference ThisPicker}}"
                 Command="{Binding OpenSelectionDialogCommand, Source={x:Reference ThisPicker}}"
                 HorizontalOptions="FillAndExpand"
@@ -12,6 +12,22 @@
                 BorderWidth="0"
                 FontSize="14"
                 TextColor="{AppThemeBinding Light=Black, Dark=White}"
-                Padding="12,8" />
+                Padding="12,8" />-->
+
+        <!-- Use a Label with wrapping and a TapGestureRecognizer so long text will wrap instead of ellipsizing -->
+        <Grid HorizontalOptions="FillAndExpand">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding OpenSelectionDialogCommand, Source={x:Reference ThisPicker}}" NumberOfTapsRequired="1" />
+            </Grid.GestureRecognizers>
+
+            <Label x:Name="PickerLabel"
+                   Text="{Binding DisplayText, Source={x:Reference ThisPicker}}"
+                   FontSize="14"
+                   TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                   Padding="12,8"
+                   LineBreakMode="WordWrap"
+                   HorizontalOptions="FillAndExpand"
+                   VerticalOptions="Center" />
+        </Grid>
     </Border>
 </ContentView>

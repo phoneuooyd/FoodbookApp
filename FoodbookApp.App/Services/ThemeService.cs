@@ -14,6 +14,8 @@ namespace Foodbook.Services
 {
     public class ThemeService : IThemeService
     {
+        private readonly IPreferencesService _preferencesService;
+        
         public event EventHandler? ThemeChanged;
 
         private Foodbook.Models.AppTheme _currentTheme = Foodbook.Models.AppTheme.System;
@@ -49,6 +51,12 @@ namespace Foodbook.Services
 
         public ThemeService()
         {
+            _availableColorThemes = InitializeThemes();
+        }
+
+        public ThemeService(IPreferencesService preferencesService)
+        {
+            _preferencesService = preferencesService ?? throw new ArgumentNullException(nameof(preferencesService));
             _availableColorThemes = InitializeThemes();
         }
 
@@ -108,6 +116,8 @@ namespace Foodbook.Services
             };
 
             ApplyColorTheme(_currentColorTheme);
+            
+            // Don't auto-save from SetTheme - caller (SettingsViewModel/LoadFromCloud) handles persistence
         }
 
         public void SetColorTheme(AppColorTheme colorTheme)
@@ -119,6 +129,8 @@ namespace Foodbook.Services
                 _isWallpaperEnabled = false;
 
             ApplyColorTheme(colorTheme);
+            
+            // Don't auto-save from SetColorTheme - caller handles persistence
         }
 
         public void UpdateSystemBars()
@@ -287,11 +299,13 @@ namespace Foodbook.Services
                     if (isDark)
                     {
                         // Dark mode: make overlay a bit darker than before (0.45 vs 0.35)
+                        // Dark mode: semi-transparent overlay to let wallpaper show through
                         pageBackground = Color.FromRgba(0, 0, 0, 0.15);
                     }
                     else
                     {
                         // Light mode: a touch stronger to improve contrast on bright wallpapers (0.14 vs 0.10)
+                        // Light mode: semi-transparent overlay so wallpaper remains visible
                         pageBackground = Color.FromRgba(255, 255, 255, 0.14);
                     }
                 }
@@ -300,6 +314,7 @@ namespace Foodbook.Services
                     if (isDark)
                     {
                         var darkened = Darken(secondary, 0.12);
+                        // Keep some translucency so background feels layered but not fully opaque on pages
                         pageBackground = Color.FromRgba(darkened.Red, darkened.Green, darkened.Blue, 0.35);
                     }
                     else
@@ -322,6 +337,11 @@ namespace Foodbook.Services
                 app.Resources["PageBackgroundColor"] = pageBackground;
                 app.Resources["PageBackgroundBrush"] = new SolidColorBrush(pageBackground);
 
+                // Provide an opaque background resource specifically for popups/modal UI
+                var popupBackground = Color.FromRgba(pageBackground.Red, pageBackground.Green, pageBackground.Blue, 1.0);
+                app.Resources["PopupBackgroundColor"] = popupBackground;
+                app.Resources["PopupBackgroundBrush"] = new SolidColorBrush(popupBackground);
+
                 // Adaptive Text Color
                 Color adaptiveTextColor = (_isColorfulBackgroundEnabled && !wallpaperEnabled)
                     ? ChooseReadableEnhanced(pageBackground, Colors.White, Color.FromArgb("#000000"))
@@ -334,36 +354,37 @@ namespace Foodbook.Services
                 app.Resources["FrameBackgroundColor"] = frameBackgroundColor;
                 app.Resources["FrameTextColor"] = frameTextColor;
 
-                // Folder card colors
+                // Folder card colors (use translucent accents so the card feels subtle over page background)
+                // Restore translucency specifically for folder cards while page background remains opaque.
                 var folderBg = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 0.12);
                 var folderStroke = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 0.32);
-                Color folderTextColor = frameTextColor;
+                 Color folderTextColor = frameTextColor;
 
-                if (wallpaperEnabled)
-                {
-                    // Opaque Secondary background for folder cards
-                    var opaqueSecondary = Color.FromRgb(secondary.Red, secondary.Green, secondary.Blue);
-                    folderBg = opaqueSecondary;
-                    folderStroke = isDark ? Lighten(opaqueSecondary, 0.18) : Darken(opaqueSecondary, 0.18);
-                    var candidateText = ChooseReadableEnhanced(opaqueSecondary, Colors.White, Color.FromArgb("#000000"));
-                    folderTextColor = EnsureContrastEnhanced(candidateText, opaqueSecondary, RelativeLuminance(opaqueSecondary) > 0.45 ? Colors.Black : Colors.White);
-                }
-                else
-                {
-                    if (isDark && _isColorfulBackgroundEnabled)
-                    {
-                        folderStroke = Color.FromArgb("#2A2A2A");
-                        folderTextColor = Color.FromArgb("#000000");
-                    }
-                    else if (!isDark)
-                    {
-                        folderStroke = Color.FromArgb("#424242");
-                    }
-                }
+                 if (wallpaperEnabled)
+                 {
+                     // Opaque Secondary background for folder cards
+                     var opaqueSecondary = Color.FromRgb(secondary.Red, secondary.Green, secondary.Blue);
+                     folderBg = opaqueSecondary;
+                     folderStroke = isDark ? Lighten(opaqueSecondary, 0.18) : Darken(opaqueSecondary, 0.18);
+                     var candidateText = ChooseReadableEnhanced(opaqueSecondary, Colors.White, Color.FromArgb("#000000"));
+                     folderTextColor = EnsureContrastEnhanced(candidateText, opaqueSecondary, RelativeLuminance(opaqueSecondary) > 0.45 ? Colors.Black : Colors.White);
+                 }
+                 else
+                 {
+                     if (isDark && _isColorfulBackgroundEnabled)
+                     {
+                         folderStroke = Color.FromArgb("#2A2A2A");
+                         folderTextColor = Color.FromArgb("#000000");
+                     }
+                     else if (!isDark)
+                     {
+                         folderStroke = Color.FromArgb("#424242");
+                     }
+                 }
 
-                app.Resources["FolderCardBackgroundColor"] = folderBg;
-                app.Resources["FolderCardStrokeColor"] = folderStroke;
-                app.Resources["FolderCardTextColor"] = folderTextColor;
+                 app.Resources["FolderCardBackgroundColor"] = folderBg;
+                 app.Resources["FolderCardStrokeColor"] = folderStroke;
+                 app.Resources["FolderCardTextColor"] = folderTextColor;
 
                 // Buttons & TabBar & Shell
                 var buttonPrimaryText = ChooseReadableEnhanced(primary, Colors.White, Color.FromArgb("#000000"));
@@ -384,7 +405,30 @@ namespace Foodbook.Services
                 var shellTitleBg = primary;
                 var shellTitleColor = ChooseReadableEnhanced(shellTitleBg, Colors.White, Color.FromArgb("#000000"));
                 shellTitleColor = EnsureContrastEnhanced(shellTitleColor, shellTitleBg, RelativeLuminance(shellTitleBg) > 0.45 ? Colors.Black : Colors.White);
+                
+                // Darken TabBarBackground for pressed state
+                var tabBarBackgroundDarken = Darken(tabBarBg, 0.05);
+                
+                // TabBar icon tint and pressed background adjustments for dark mode
+                Color tabBarIconTint;
+                Color tabBarPressedBackground;
+                
+                if (isDark)
+                {
+                    // Dark mode: Lighten pressed background, Darken icon tint
+                    tabBarPressedBackground = Lighten(tabBarBg, 0.05);
+                    tabBarIconTint = Darken(primary, 0.05);
+                }
+                else
+                {
+                    // Light mode: use existing behavior
+                    tabBarPressedBackground = tabBarBackgroundDarken;
+                    tabBarIconTint = primary;
+                }
+                
                 app.Resources["TabBarBackground"] = tabBarBg;
+                app.Resources["TabBarBackgroundDarken"] = tabBarPressedBackground;
+                app.Resources["TabBarIconTint"] = tabBarIconTint;
                 app.Resources["TabBarForeground"] = activeColor;
                 app.Resources["TabBarTitle"] = activeColor;
                 app.Resources["TabBarUnselected"] = unselectedColor;
@@ -447,7 +491,7 @@ namespace Foodbook.Services
                     Name = "Nature",
                     PrimaryLight = Color.FromArgb("#2E7D32"), SecondaryLight = Color.FromArgb("#C8E6C9"), TertiaryLight = Color.FromArgb("#1B5E20"), AccentLight = Color.FromArgb("#4CAF50"),
                     PrimaryDark = Color.FromArgb("#81C784"), SecondaryDark = Color.FromArgb("#4CAF50"), TertiaryDark = Color.FromArgb("#66BB6A"), AccentDark = Color.FromArgb("#81C784"),
-                    PrimaryTextLight = Color.FromArgb("#1B5E20"), SecondaryTextLight = Color.FromArgb("#2E7D32"), PrimaryTextDark = Color.FromArgb("#E8F5E8"), SecondaryTextDark = Color.FromArgb("#C8E6C9")
+                    PrimaryTextLight = Color.FromArgb("#1B5E20"), SecondaryTextLight = Color.FromArgb("#2E7D32"), PrimaryTextDark = Color.FromRgb(232, 245, 232), SecondaryTextDark = Color.FromArgb("#C8E6C9")
                 },
                 [AppColorTheme.Forest] = new ThemeColors
                 {
@@ -488,7 +532,7 @@ namespace Foodbook.Services
                 {
                     Name = "Monochrome",
                     PrimaryLight = Color.FromArgb("#424242"), SecondaryLight = Color.FromArgb("#F5F5F5"), TertiaryLight = Color.FromArgb("#212121"), AccentLight = Color.FromArgb("#757575"),
-                    PrimaryDark = Color.FromArgb("#E0E0E0"), SecondaryDark = Color.FromArgb("#616161"), TertiaryDark = Color.FromArgb("#9E9E0E").ClampFix(), AccentDark = Color.FromArgb("#BDBDBD"),
+                    PrimaryDark = Color.FromArgb("#E0E0E0"), SecondaryDark = Color.FromArgb("#616161"), TertiaryDark = Color.FromArgb("#9E9E9E"), AccentDark = Color.FromArgb("#BDBDBD"),
                     PrimaryTextLight = Color.FromArgb("#212121"), SecondaryTextLight = Color.FromArgb("#616161"), PrimaryTextDark = Color.FromArgb("#FFFFFF"), SecondaryTextDark = Color.FromArgb("#E0E0E0")
                 },
                 [AppColorTheme.Navy] = new ThemeColors

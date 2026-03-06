@@ -2,196 +2,421 @@ using Foodbook.Models;
 using Foodbook.Data;
 using Microsoft.EntityFrameworkCore;
 using FoodbookApp.Interfaces;
+using Foodbook.Services;
+using Newtonsoft.Json;
+using System.Data.Common;
 
 namespace Foodbook.Services
 {
     public class RecipeService : IRecipeService
     {
         private readonly AppDbContext _context;
+        private readonly ISupabaseSyncService? _syncService;
 
-        public RecipeService(AppDbContext context)
+        public RecipeService(AppDbContext context, IServiceProvider serviceProvider)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
+            
+            // Try to resolve sync service (may be null if not registered)
+            try
+            {
+                _syncService = serviceProvider.GetService(typeof(ISupabaseSyncService)) as ISupabaseSyncService;
+            }
+            catch
+            {
+                _syncService = null;
+            }
         }
 
-        // ? KRYTYCZNA OPTYMALIZACJA: AsNoTracking dla odczytu
-        public async Task<List<Recipe>> GetRecipesAsync() => 
-            await _context.Recipes
-                .AsNoTracking() // Eliminuje tracking conflicts
-                .Include(r => r.Ingredients)
-                .Include(r => r.Labels)
-                .ToListAsync();
+        public async Task<List<Recipe>> GetRecipesAsync()
+        {
+            try
+            {
+                // Clear any stale tracking state before query
+                _context.ChangeTracker.Clear();
+                
+                return await _context.Recipes
+                    .AsNoTracking()
+                    .Include(r => r.Ingredients)
+                    .Include(r => r.Labels)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"? GetRecipesAsync error: {ex.Message}");
+                return new List<Recipe>();
+            }
+        }
 
-        // ? KRYTYCZNA OPTYMALIZACJA: AsNoTracking dla pojedynczego odczytu
-        public async Task<Recipe?> GetRecipeAsync(int id) => 
-            await _context.Recipes
-                .AsNoTracking() // Eliminuje tracking conflicts
-                .Include(r => r.Ingredients)
-                .Include(r => r.Labels)
-                .FirstOrDefaultAsync(r => r.Id == id);
+        public async Task<Recipe?> GetRecipeAsync(Guid id)
+        {
+            try
+            {
+                if (id == Guid.Empty)
+                {
+                    System.Diagnostics.Debug.WriteLine("?? GetRecipeAsync called with Guid.Empty");
+                    return null;
+                }
 
-        // ? KRYTYCZNA OPTYMALIZACJA: Kontrolowane dodawanie
+                // Clear any stale tracking state before query
+                _context.ChangeTracker.Clear();
+                
+                return await _context.Recipes
+                    .AsNoTracking()
+                    .Include(r => r.Ingredients)
+                    .Include(r => r.Labels)
+                    .FirstOrDefaultAsync(r => r.Id == id);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"? GetRecipeAsync error for id {id}: {ex.Message}");
+                return null;
+            }
+        }
+
         public async Task AddRecipeAsync(Recipe recipe)
         {
             if (recipe == null)
                 throw new ArgumentNullException(nameof(recipe));
-            if (recipe.Ingredients == null)
-                recipe.Ingredients = new List<Ingredient>();
-            if (recipe.Labels == null)
-                recipe.Labels = new List<RecipeLabel>();
+
+            // Clear tracking to avoid conflicts
+            _context.ChangeTracker.Clear();
 
             try
             {
-                // Detach wszystkich sk?adnik?w przed dodaniem
-                foreach (var ingredient in recipe.Ingredients)
+                // Diagnostic: log current Recipes table schema to help diagnose datatype mismatch errors
+                try
                 {
-                    var existingEntry = _context.Entry(ingredient);
-                    if (existingEntry.State != EntityState.Detached)
+                    var conn = _context.Database.GetDbConnection();
+                    try
                     {
-                        existingEntry.State = EntityState.Detached;
+                        if (conn.State != System.Data.ConnectionState.Open)
+                            await conn.OpenAsync();
+
+                        using var cmd = conn.CreateCommand();
+                        cmd.CommandText = "PRAGMA table_info('Recipes');";
+                        using var reader = await cmd.ExecuteReaderAsync();
+                        System.Diagnostics.Debug.WriteLine("? PRAGMA table_info('Recipes') ->");
+                        while (await reader.ReadAsync())
+                        {
+                            try
+                            {
+                                var cid = reader.GetInt32(0);
+                                var name = reader.IsDBNull(1) ? "" : reader.GetString(1);
+                                var type = reader.IsDBNull(2) ? "" : reader.GetString(2);
+                                var notnull = reader.GetInt32(3);
+                                var dflt = reader.IsDBNull(4) ? "" : reader.GetValue(4)?.ToString();
+                                var pk = reader.GetInt32(5);
+                                System.Diagnostics.Debug.WriteLine($"? Column: cid={cid}, name={name}, type={type}, notnull={notnull}, dflt={dflt}, pk={pk}");
+                            }
+                            catch (Exception innerEx)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"? Error reading PRAGMA row: {innerEx.Message}");
+                            }
+                        }
+
+                        // Also log Recipes indexes
+                        cmd.CommandText = "PRAGMA index_list('Recipes');";
+                        using var idxReader = await cmd.ExecuteReaderAsync();
+                        System.Diagnostics.Debug.WriteLine("? PRAGMA index_list('Recipes') ->");
+                        while (await idxReader.ReadAsync())
+                        {
+                            try
+                            {
+                                var name = idxReader.IsDBNull(1) ? "" : idxReader.GetString(1);
+                                var unique = idxReader.IsDBNull(2) ? 0 : idxReader.GetInt32(2);
+                                System.Diagnostics.Debug.WriteLine($"? Index: name={name}, unique={unique}");
+                            }
+                            catch { }
+                        }
                     }
-                    
-                    // Reset ID dla nowych sk?adnik?w przepisu
-                    if (ingredient.RecipeId == null)
+                    finally
                     {
-                        ingredient.Id = 0; // Nowy sk?adnik przepisu
+                        try { await conn.CloseAsync(); } catch { }
                     }
                 }
-
-                // Attach existing labels (by Id) to avoid duplicates
-                var attachedLabels = new List<RecipeLabel>();
-                foreach (var label in recipe.Labels)
+                catch (Exception exSchema)
                 {
-                    if (label.Id > 0)
-                    {
-                        var tracked = await _context.RecipeLabels.FindAsync(label.Id);
-                        if (tracked != null) attachedLabels.Add(tracked);
-                    }
-                    else
-                    {
-                        attachedLabels.Add(label);
-                    }
-                }
-                recipe.Labels = attachedLabels;
-
-                _context.Recipes.Add(recipe);
-                await _context.SaveChangesAsync();
-                
-                System.Diagnostics.Debug.WriteLine($"? Added recipe: {recipe.Name} with {recipe.Ingredients.Count} ingredients and {recipe.Labels.Count} labels");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"? Error adding recipe: {ex.Message}");
-                
-                // Clear tracking na b??d
-                _context.ChangeTracker.Clear();
-                throw;
-            }
-        }
-
-        // ? KRYTYCZNA OPTYMALIZACJA: Transakcyjne updatey
-        public async Task UpdateRecipeAsync(Recipe recipe)
-        {
-            if (recipe == null)
-                throw new ArgumentNullException(nameof(recipe));
-
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            
-            try
-            {
-                // Pobierz istniej?cy przepis z sk?adnikami
-                var existingRecipe = await _context.Recipes
-                    .Include(r => r.Ingredients)
-                    .Include(r => r.Labels)
-                    .FirstOrDefaultAsync(r => r.Id == recipe.Id);
-
-                if (existingRecipe == null)
-                {
-                    throw new InvalidOperationException($"Recipe with ID {recipe.Id} not found");
+                    System.Diagnostics.Debug.WriteLine($"? Failed to read PRAGMA schema: {exSchema.Message}");
                 }
 
-                // Aktualizuj podstawowe w?a?ciwo?ci przepisu
-                existingRecipe.Name = recipe.Name;
-                existingRecipe.Description = recipe.Description;
-                existingRecipe.Calories = recipe.Calories;
-                existingRecipe.Protein = recipe.Protein;
-                existingRecipe.Fat = recipe.Fat;
-                existingRecipe.Carbs = recipe.Carbs;
-                existingRecipe.IloscPorcji = recipe.IloscPorcji;
-                existingRecipe.FolderId = recipe.FolderId; // FIX: persist folder assignment
+                // Ensure recipe has valid ID
+                if (recipe.Id == Guid.Empty)
+                    recipe.Id = Guid.NewGuid();
 
-                // Ingredients: reset and add new
-                var existingIngredients = existingRecipe.Ingredients.ToList();
-                _context.Ingredients.RemoveRange(existingIngredients);
+                // Normalize FolderId: Guid.Empty ? null
+                if (recipe.FolderId.HasValue && recipe.FolderId.Value == Guid.Empty)
+                    recipe.FolderId = null;
 
+                // Initialize collections if null
+                recipe.Ingredients ??= new List<Ingredient>();
+                recipe.Labels ??= new List<RecipeLabel>();
+
+                // Process ingredients - create fresh instances to avoid tracking issues
+                var ingredientsToAdd = new List<Ingredient>();
                 foreach (var ingredient in recipe.Ingredients)
                 {
                     var newIngredient = new Ingredient
                     {
-                        Name = ingredient.Name,
+                        Id = ingredient.Id == Guid.Empty ? Guid.NewGuid() : ingredient.Id,
+                        Name = ingredient.Name ?? string.Empty,
                         Quantity = ingredient.Quantity,
                         Unit = ingredient.Unit,
+                        UnitWeight = ingredient.UnitWeight,
                         Calories = ingredient.Calories,
                         Protein = ingredient.Protein,
                         Fat = ingredient.Fat,
                         Carbs = ingredient.Carbs,
                         RecipeId = recipe.Id
                     };
-                    
-                    _context.Ingredients.Add(newIngredient);
+                    ingredientsToAdd.Add(newIngredient);
                 }
+                recipe.Ingredients = ingredientsToAdd;
 
-                // Labels: replace with provided set
-                existingRecipe.Labels.Clear();
+                // Process labels - attach existing or create new
+                var labelsToAttach = new List<RecipeLabel>();
                 foreach (var label in recipe.Labels)
                 {
-                    if (label.Id > 0)
+                    if (label.Id != Guid.Empty)
                     {
-                        var tracked = await _context.RecipeLabels.FindAsync(label.Id);
-                        if (tracked != null) existingRecipe.Labels.Add(tracked);
+                        var existingLabel = await _context.RecipeLabels.FindAsync(label.Id);
+                        if (existingLabel != null)
+                            labelsToAttach.Add(existingLabel);
                     }
-                    else
+                }
+                recipe.Labels = labelsToAttach;
+
+                _context.Recipes.Add(recipe);
+                await _context.SaveChangesAsync();
+
+                if (_syncService != null)
+                {
+                    try
                     {
-                        existingRecipe.Labels.Add(label);
+                        await _syncService.QueueForSyncAsync(recipe, SyncOperationType.Insert);
+                        System.Diagnostics.Debug.WriteLine($"[RecipeService] Queued recipe {recipe.Id} for Insert sync");
+                    }
+                    catch (Exception syncEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[RecipeService] Failed to queue insert sync: {syncEx.Message}");
                     }
                 }
 
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-                
-                System.Diagnostics.Debug.WriteLine($"? Updated recipe: {recipe.Name} with {recipe.Ingredients.Count} ingredients and {recipe.Labels.Count} labels");
+                System.Diagnostics.Debug.WriteLine($"? Added recipe: {recipe.Name} (Id: {recipe.Id})");
+
+                // Raise events after successful save
+                AppEvents.RaiseRecipeSaved(recipe.Id);
+                AppEvents.RaiseRecipesChanged();
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                System.Diagnostics.Debug.WriteLine($"? Error updating recipe: {ex.Message}");
-                
-                // Clear tracking na b??d
+                // Try to gather as much diagnostic information as possible
+                try
+                {
+                    var conn = string.Empty;
+                    try { conn = _context.Database.GetDbConnection()?.ConnectionString ?? string.Empty; } catch { }
+
+                    System.Diagnostics.Debug.WriteLine("? AddRecipeAsync error: " + ex.ToString());
+                    if (!string.IsNullOrEmpty(conn))
+                        System.Diagnostics.Debug.WriteLine($"? ConnectionString: {conn}");
+
+                    try
+                    {
+                        var recipeJson = JsonConvert.SerializeObject(recipe, Formatting.None,
+                            new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
+                        System.Diagnostics.Debug.WriteLine($"? Recipe JSON: {recipeJson}");
+                    }
+                    catch (Exception sx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"? Failed to serialize recipe for diagnostics: {sx.Message}");
+                    }
+
+                    if (ex is DbUpdateException dbEx)
+                    {
+                        try
+                        {
+                            System.Diagnostics.Debug.WriteLine($"? DbUpdateException detected: {dbEx.ToString()}");
+                            foreach (var entry in dbEx.Entries)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"? Entry EntityType: {entry.Entity?.GetType().FullName}, State: {entry.State}");
+                            }
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+
                 _context.ChangeTracker.Clear();
                 throw;
             }
         }
 
-        public async Task DeleteRecipeAsync(int id)
+        public async Task UpdateRecipeAsync(Recipe recipe)
         {
+            if (recipe == null)
+                throw new ArgumentNullException(nameof(recipe));
+
+            if (recipe.Id == Guid.Empty)
+                throw new ArgumentException("Recipe ID cannot be empty", nameof(recipe));
+
+            // Clear tracking to avoid conflicts
+            _context.ChangeTracker.Clear();
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            
+            try
+            {
+                var existingRecipe = await _context.Recipes
+                    .Include(r => r.Ingredients)
+                    .Include(r => r.Labels)
+                    .FirstOrDefaultAsync(r => r.Id == recipe.Id);
+
+                if (existingRecipe == null)
+                    throw new InvalidOperationException($"Recipe with ID {recipe.Id} not found");
+
+                // Update basic properties
+                existingRecipe.Name = recipe.Name ?? string.Empty;
+                existingRecipe.Description = recipe.Description;
+                existingRecipe.Calories = recipe.Calories;
+                existingRecipe.Protein = recipe.Protein;
+                existingRecipe.Fat = recipe.Fat;
+                existingRecipe.Carbs = recipe.Carbs;
+                existingRecipe.IloscPorcji = recipe.IloscPorcji;
+                
+                // Normalize FolderId: Guid.Empty ? null
+                existingRecipe.FolderId = (recipe.FolderId.HasValue && recipe.FolderId.Value != Guid.Empty) 
+                    ? recipe.FolderId 
+                    : null;
+
+                // Remove old ingredients
+                if (existingRecipe.Ingredients.Any())
+                {
+                    _context.Ingredients.RemoveRange(existingRecipe.Ingredients);
+                }
+
+                // Add new ingredients
+                recipe.Ingredients ??= new List<Ingredient>();
+                foreach (var ingredient in recipe.Ingredients)
+                {
+                    var newIngredient = new Ingredient
+                    {
+                        Id = Guid.NewGuid(), // Always new ID for updated ingredients
+                        Name = ingredient.Name ?? string.Empty,
+                        Quantity = ingredient.Quantity,
+                        Unit = ingredient.Unit,
+                        UnitWeight = ingredient.UnitWeight,
+                        Calories = ingredient.Calories,
+                        Protein = ingredient.Protein,
+                        Fat = ingredient.Fat,
+                        Carbs = ingredient.Carbs,
+                        RecipeId = recipe.Id
+                    };
+                    _context.Ingredients.Add(newIngredient);
+                }
+
+                // Update labels
+                existingRecipe.Labels.Clear();
+                recipe.Labels ??= new List<RecipeLabel>();
+                foreach (var label in recipe.Labels)
+                {
+                    if (label.Id != Guid.Empty)
+                    {
+                        var existingLabel = await _context.RecipeLabels.FindAsync(label.Id);
+                        if (existingLabel != null)
+                            existingRecipe.Labels.Add(existingLabel);
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                System.Diagnostics.Debug.WriteLine($"? Updated recipe: {recipe.Name} (Id: {recipe.Id})");
+
+                // Queue for cloud sync (Update operation)
+                if (_syncService != null)
+                {
+                    try
+                    {
+                        await _syncService.QueueForSyncAsync(recipe, SyncOperationType.Update);
+                        System.Diagnostics.Debug.WriteLine($"[RecipeService] Queued recipe {recipe.Id} for Update sync");
+                    }
+                    catch (Exception syncEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[RecipeService] Failed to queue sync: {syncEx.Message}");
+                    }
+                }
+
+                // Raise events after successful save
+                AppEvents.RaiseRecipeSaved(recipe.Id);
+                AppEvents.RaiseRecipesChanged();
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                System.Diagnostics.Debug.WriteLine("? UpdateRecipeAsync error: " + ex.ToString());
+
+                try
+                {
+                    var conn = string.Empty;
+                    try { conn = _context.Database.GetDbConnection()?.ConnectionString ?? string.Empty; } catch { }
+                    if (!string.IsNullOrEmpty(conn))
+                        System.Diagnostics.Debug.WriteLine($"? ConnectionString: {conn}");
+                }
+                catch { }
+
+                _context.ChangeTracker.Clear();
+                throw;
+            }
+        }
+
+        public async Task DeleteRecipeAsync(Guid id)
+        {
+            if (id == Guid.Empty)
+            {
+                System.Diagnostics.Debug.WriteLine("? DeleteRecipeAsync called with Guid.Empty");
+                return;
+            }
+
+            // Clear tracking to avoid conflicts
+            _context.ChangeTracker.Clear();
+
             try
             {
                 var recipe = await _context.Recipes
                     .Include(r => r.Ingredients)
                     .Include(r => r.Labels)
                     .FirstOrDefaultAsync(r => r.Id == id);
-                    
+
                 if (recipe != null)
                 {
                     _context.Recipes.Remove(recipe);
                     await _context.SaveChangesAsync();
-                    
+
                     System.Diagnostics.Debug.WriteLine($"? Deleted recipe: {recipe.Name}");
+
+                    // Queue for cloud sync (Delete operation)
+                    if (_syncService != null)
+                    {
+                        try
+                        {
+                            // Create minimal entity for delete operation
+                            var deleteEntity = new Recipe { Id = id, Name = recipe.Name };
+                            await _syncService.QueueForSyncAsync(deleteEntity, SyncOperationType.Delete);
+                            System.Diagnostics.Debug.WriteLine($"[RecipeService] Queued recipe {id} for Delete sync");
+                        }
+                        catch (Exception syncEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[RecipeService] Failed to queue sync: {syncEx.Message}");
+                        }
+                    }
+
+                    AppEvents.RaiseRecipesChanged();
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"? Error deleting recipe: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"? DeleteRecipeAsync error: {ex.Message}");
+                _context.ChangeTracker.Clear();
                 throw;
             }
         }

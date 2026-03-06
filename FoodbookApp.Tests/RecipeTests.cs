@@ -13,7 +13,7 @@ namespace FoodbookApp.Tests
             var recipe = new Recipe();
 
             // Assert
-            Assert.Equal(0, recipe.Id);
+            Assert.Equal(Guid.Empty, recipe.Id);
             Assert.Equal(string.Empty, recipe.Name);
             Assert.Null(recipe.Description);
             Assert.Equal(0, recipe.Calories);
@@ -30,9 +30,10 @@ namespace FoodbookApp.Tests
         {
             // Arrange
             var recipe = new Recipe();
+            var id = Guid.NewGuid();
 
             // Act
-            recipe.Id = 1;
+            recipe.Id = id;
             recipe.Name = "Pierogi z mięsem";
             recipe.Description = "Tradycyjne polskie pierogi z farszem mięsnym";
             recipe.Calories = 280;
@@ -42,7 +43,7 @@ namespace FoodbookApp.Tests
             recipe.IloscPorcji = 4;
 
             // Assert
-            Assert.Equal(1, recipe.Id);
+            Assert.Equal(id, recipe.Id);
             Assert.Equal("Pierogi z mięsem", recipe.Name);
             Assert.Equal("Tradycyjne polskie pierogi z farszem mięsnym", recipe.Description);
             Assert.Equal(280, recipe.Calories);
@@ -145,7 +146,8 @@ namespace FoodbookApp.Tests
         public void Recipe_IngredientWithRecipeRelation_ShouldMaintainBidirectionalRelationship()
         {
             // Arrange
-            var recipe = new Recipe { Id = 1, Name = "Test Recipe" };
+            var recipeId = Guid.NewGuid();
+            var recipe = new Recipe { Id = recipeId, Name = "Test Recipe" };
             var ingredient = new Ingredient 
             { 
                 Name = "Test Ingredient", 
@@ -157,7 +159,7 @@ namespace FoodbookApp.Tests
             recipe.Ingredients.Add(ingredient);
 
             // Assert
-            Assert.Equal(recipe.Id, ingredient.RecipeId);
+            Assert.Equal(recipeId, ingredient.RecipeId);
             Assert.Same(recipe, ingredient.Recipe);
             Assert.Contains(ingredient, recipe.Ingredients);
         }

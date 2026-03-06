@@ -13,6 +13,15 @@ public partial class SearchablePickerComponent : ContentView, INotifyPropertyCha
 {
     private bool _isPopupOpen = false; // Protection against multiple opens
 
+    // Static event that SearchablePickerComponent instances can fire to notify AddRecipePage (or any page) about popup state
+    public static event EventHandler<bool>? GlobalPopupStateChanged;
+
+    // ? NEW: Static method to allow external classes to safely raise the event
+    public static void RaiseGlobalPopupStateChanged(object? sender, bool isOpen)
+    {
+        GlobalPopupStateChanged?.Invoke(sender, isOpen);
+    }
+
     public static readonly BindableProperty ItemsSourceProperty =
         BindableProperty.Create(nameof(ItemsSource), typeof(IList<string>), typeof(SearchablePickerComponent), default(IList<string>));
 
@@ -73,26 +82,35 @@ public partial class SearchablePickerComponent : ContentView, INotifyPropertyCha
 
         try
         {
+            // ? Notify global event listeners
+            GlobalPopupStateChanged?.Invoke(this, true);
+            System.Diagnostics.Debug.WriteLine("?? SearchablePickerComponent: Notified popup opening");
+
             _isPopupOpen = true;
             ((Command)OpenSelectionDialogCommand).ChangeCanExecute();
 
-            // Always fetch fresh ingredient names from DB via service
+            // ? KRYTYCZNA OPTYMALIZACJA: U¿yj lightweight metody tylko z nazwami
             List<string> options;
             try
             {
                 var svc = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IIngredientService>();
                 if (svc != null)
                 {
-                    var fresh = await svc.GetIngredientsAsync();
-                    options = fresh.Select(i => i.Name).Where(n => !string.IsNullOrWhiteSpace(n)).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(n => n).ToList();
+                    System.Diagnostics.Debug.WriteLine("?? SearchablePickerComponent: Fetching ingredient names (lightweight)...");
+                    
+                    // ? U¿yj nowej metody GetIngredientNamesAsync zamiast pe³nego GetIngredientsAsync
+                    options = await svc.GetIngredientNamesAsync();
+                    
+                    System.Diagnostics.Debug.WriteLine($"? SearchablePickerComponent: Fetched {options.Count} ingredient names");
                 }
                 else
                 {
                     options = (ItemsSource?.ToList() ?? new List<string>());
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"? SearchablePickerComponent: Error fetching ingredients: {ex.Message}");
                 options = (ItemsSource?.ToList() ?? new List<string>());
             }
 
@@ -102,7 +120,7 @@ public partial class SearchablePickerComponent : ContentView, INotifyPropertyCha
             var page = Application.Current?.Windows.FirstOrDefault()?.Page;
             if (page == null)
             {
-                await Shell.Current.DisplayAlert("Error", "Unable to resolve current page.", "OK");
+                await Shell.Current.DisplayAlert(FoodbookApp.Localization.AddRecipePageResources.ErrorTitle, FoodbookApp.Localization.AddRecipePageResources.UnableToResolveCurrentPage, FoodbookApp.Localization.AddRecipePageResources.OKButton);
                 return;
             }
 
@@ -123,13 +141,16 @@ public partial class SearchablePickerComponent : ContentView, INotifyPropertyCha
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"? SearchablePickerComponent: Error opening popup: {ex.Message}");
-            await Shell.Current.DisplayAlert("Error", "Could not open selection dialog", "OK");
+            await Shell.Current.DisplayAlert(FoodbookApp.Localization.AddRecipePageResources.ErrorTitle, FoodbookApp.Localization.AddRecipePageResources.CouldNotOpenRecipeSelectionDialog, FoodbookApp.Localization.AddRecipePageResources.OKButton);
         }
         finally
         {
+            GlobalPopupStateChanged?.Invoke(this, false);
+            System.Diagnostics.Debug.WriteLine("?? SearchablePickerComponent: Notified popup closing");
+
             _isPopupOpen = false;
             ((Command)OpenSelectionDialogCommand).ChangeCanExecute();
-            System.Diagnostics.Debug.WriteLine("?? SearchablePickerComponent: Popup protection released");
+            System.Diagnostics.Debug.WriteLine("? SearchablePickerComponent: Popup protection released");
         }
     }
 

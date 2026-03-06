@@ -365,5 +365,104 @@ namespace FoodbookApp.Localization {
                 return ResourceManager.GetString("UrlPlaceholder", resourceCulture);
             }
         }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Confirm.
+        /// </summary>
+        internal static string ConfirmTitle {
+            get {
+                return ResourceManager.GetString("ConfirmTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu You have unsaved changes. Do you really want to leave?
+        /// </summary>
+        internal static string UnsavedChangesMessage {
+            get {
+                return ResourceManager.GetString("UnsavedChangesMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Yes.
+        /// </summary>
+        internal static string YesButton {
+            get {
+                return ResourceManager.GetString("YesButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu No.
+        /// </summary>
+        internal static string NoButton {
+            get {
+                return ResourceManager.GetString("NoButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Error.
+        /// </summary>
+        internal static string ErrorTitle {
+            get {
+                return ResourceManager.GetString("ErrorTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Cannot open label management.
+        /// </summary>
+        internal static string CannotOpenLabelsManagement {
+            get {
+                return ResourceManager.GetString("CannotOpenLabelsManagement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu OK.
+        /// </summary>
+        internal static string OKButton {
+            get {
+                return ResourceManager.GetString("OKButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Unable to resolve current page..
+        /// </summary>
+        internal static string UnableToResolveCurrentPage {
+            get {
+                return ResourceManager.GetString("UnableToResolveCurrentPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Could not open recipe selection dialog.
+        /// </summary>
+        internal static string CouldNotOpenRecipeSelectionDialog {
+            get {
+                return ResourceManager.GetString("CouldNotOpenRecipeSelectionDialog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Failed to fetch recipe details..
+        /// </summary>
+        internal static string FailedToFetchRecipeDetails {
+            get {
+                return ResourceManager.GetString("FailedToFetchRecipeDetails", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Failed to open recipe details.
+        /// </summary>
+        internal static string FailedToOpenRecipeDetails {
+            get {
+                return ResourceManager.GetString("FailedToOpenRecipeDetails", resourceCulture);
+            }
+        }
     }
 }

@@ -51,8 +51,8 @@
                                         </StackLayout>
                                     </Border>
                                 </Grid>
-                                <!-- UnitWeight field, visible only for Piece -->
-                                <Border Style="{StaticResource ModernBorder}" IsVisible="{Binding IsUnitWeightVisible}">
+                                <!-- UnitWeight field, now always visible -->
+                                <Border Style="{StaticResource ModernBorder}">
                                     <StackLayout Spacing="5" Padding="12,8">
                                         <Label Text="Waga 1 sztuki [g]" Style="{StaticResource FieldLabel}" />
                                         <Entry Placeholder="np. 60" Keyboard="Numeric" Text="{Binding UnitWeight}" ClearButtonVisibility="WhileEditing" HorizontalTextAlignment="Center" Style="{StaticResource ModernEntry}" />

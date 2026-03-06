@@ -364,4 +364,14 @@
   <data name="FactoryResetErrorShort" xml:space="preserve">
     <value>Factory reset error</value>
   </data>
+  <!-- Update Ingredients localization -->
+  <data name="UpdateIngredientsTitle" xml:space="preserve">
+    <value>Update ingredient database</value>
+  </data>
+  <data name="UpdateIngredientsDescription" xml:space="preserve">
+    <value>Add missing ingredients from the embedded ingredients.json file. Does not overwrite or remove existing ingredients.</value>
+  </data>
+  <data name="UpdateIngredientsButton" xml:space="preserve">
+    <value>Update ingredient database</value>
+  </data>
 </root>

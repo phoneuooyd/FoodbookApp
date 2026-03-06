@@ -217,9 +217,18 @@
                             <!-- NEW: Update Ingredients Card at the very top of Data section -->
                             <Frame Style="{StaticResource DashboardCardStyle}">
                                 <StackLayout>
-                                    <Label Text="Aktualizuj bazę składników" Style="{StaticResource CardTitleStyle}" />
-                                    <Label Text="Dodaj brakujące składniki z pliku ingredients.json do bazy. Nie nadpisuje ani nie usuwa istniejących składników." Style="{StaticResource DescriptionStyle}" />
-                                    <Button Text="Aktualizuj bazę składników" Style="{StaticResource MigrationButtonStyle}" Clicked="OnUpdateIngredientsClicked" />
+                                    <Label Text="{loc:Translate Resource=SettingsPageResources, Key=UpdateIngredientsTitle}" Style="{StaticResource CardTitleStyle}" />
+                                    <Label Text="{loc:Translate Resource=SettingsPageResources, Key=UpdateIngredientsDescription}" Style="{StaticResource DescriptionStyle}" />
+                                    <Button Text="{loc:Translate Resource=SettingsPageResources, Key=UpdateIngredientsButton}" Style="{StaticResource MigrationButtonStyle}" Clicked="OnUpdateIngredientsClicked" />
+                                </StackLayout>
+                            </Frame>
+
+                            <!-- NEW: Deduplicate Ingredients Card -->
+                            <Frame Style="{StaticResource DashboardCardStyle}">
+                                <StackLayout>
+                                    <Label Text="Usuń duplikaty składników" Style="{StaticResource CardTitleStyle}" />
+                                    <Label Text="Czyści lokalnie powtórzone składniki bazowe (nazwa + makra)." Style="{StaticResource DescriptionStyle}" />
+                                    <Button Text="Usuń duplikaty" Style="{StaticResource MigrationButtonStyle}" Command="{Binding DeduplicateIngredientsCommand}" IsEnabled="{Binding CanExecuteMigration}" />
                                 </StackLayout>
                             </Frame>
 

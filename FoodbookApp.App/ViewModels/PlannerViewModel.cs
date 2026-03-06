@@ -27,7 +27,7 @@ public class PlannerViewModel : INotifyPropertyChanged
     private List<PlannerDay> _cachedDays = new();
 
     private bool _isEditing;
-    private int? _editingPlanId;
+    private Guid? _editingPlanId;
     
     // NEW: Flag to suppress auto-reload when user is actively editing
     private bool _suppressAutoReload = false;
@@ -162,7 +162,7 @@ public class PlannerViewModel : INotifyPropertyChanged
                 {
                     await Shell.Current.DisplayAlert(
                         "Zapisano",
-                        $"Zapisano listę zakupów ({plan.StartDate:dd.MM.yyyy} - {plan.EndDate:dd.MM.yyyy})",
+                        $"Zapisano planer: {plan.Name} ({plan.StartDate:dd.MM.yyyy} - {plan.EndDate:dd.MM.yyyy})",
                         "OK");
                     
                     // Notify shopping lists/plans
@@ -186,30 +186,29 @@ public class PlannerViewModel : INotifyPropertyChanged
     /// Initialize view model for editing an existing plan. This only sets editing flags and dates;
     /// actual data loading can be triggered via LoadAsync or LoadForEditAsync.
     /// </summary>
-    public async Task InitializeForEditAsync(int planId)
+    public async Task InitializeForEditAsync(Guid planId)
     {
         try
         {
             System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] InitializeForEditAsync: planId={planId}");
-            
+
             var plan = await _planService.GetPlanAsync(planId);
             if (plan == null)
             {
                 System.Diagnostics.Debug.WriteLine("[PlannerViewModel] Plan not found");
                 return;
             }
-            
+
             _editingPlanId = plan.Id;
             IsEditing = true;
-            
-            // IMPORTANT: Suppress auto-reload while setting dates in edit mode
+
             _suppressAutoReload = true;
-            
+
             _startDate = plan.StartDate;
             _endDate = plan.EndDate;
             OnPropertyChanged(nameof(StartDate));
             OnPropertyChanged(nameof(EndDate));
-            
+
             System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Edit mode initialized: {plan.StartDate:yyyy-MM-dd} to {plan.EndDate:yyyy-MM-dd}");
         }
         catch (Exception ex)
@@ -574,7 +573,7 @@ public class PlannerViewModel : INotifyPropertyChanged
         {
             meal.PropertyChanged -= OnMealRecipeChanged;
             day.Meals.Remove(meal);
-            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Meal removed from {day.Date:yyyy-MM-dd}");
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] RemoveMeal called: Removed meal from {day.Date:yyyy-MM-dd}");
         }
     }
 
@@ -617,12 +616,47 @@ public class PlannerViewModel : INotifyPropertyChanged
         await InitializeEmptyPlannerAsync();
     }
 
+    private async Task<string?> PromptForPlannerNameAsync(string? currentName)
+    {
+        try
+        {
+            return await Shell.Current.DisplayPromptAsync(
+                "Nazwa planu",
+                "Podaj nazwę planu (opcjonalnie)",
+                accept: "Zapisz",
+                cancel: "Anuluj",
+                placeholder: "Planner",
+                initialValue: currentName ?? string.Empty,
+                maxLength: 50,
+                keyboard: Microsoft.Maui.Keyboard.Text);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] PromptForPlannerNameAsync error: {ex.Message}");
+            return null;
+        }
+    }
+
     private async Task<Plan?> SaveAsync()
     {
         try
         {
             System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] SaveAsync started - IsEditing={IsEditing}, PlanId={_editingPlanId}");
-            
+
+            // Ask for planner name first. Cancel => abort save.
+            string? existingName = null;
+            if (_editingPlanId.HasValue)
+            {
+                var existingPlan = await _planService.GetPlanAsync(_editingPlanId.Value);
+                existingName = existingPlan?.PlannerName;
+            }
+
+            var enteredName = await PromptForPlannerNameAsync(existingName);
+            if (enteredName == null)
+                return null;
+
+            var finalName = string.IsNullOrWhiteSpace(enteredName) ? "Planner" : enteredName.Trim();
+
             // Check for exact existing plan in the same period (ignore archived and the plan being edited)
             var allPlans = await _planService.GetPlansAsync();
             var conflictingPlan = allPlans.FirstOrDefault(p =>
@@ -665,7 +699,7 @@ public class PlannerViewModel : INotifyPropertyChanged
                         {
                             foreach (var meal in day.Meals)
                             {
-                                if (meal.RecipeId <= 0) continue;
+                                if (meal.RecipeId == Guid.Empty) continue;
                                 var key = $"{meal.Date.Date:yyyy-MM-dd}|{meal.RecipeId}";
                                 if (existingKeys.Contains(key))
                                     continue;
@@ -727,7 +761,8 @@ public class PlannerViewModel : INotifyPropertyChanged
                 plan = await _planService.GetPlanAsync(_editingPlanId.Value) ?? new Plan { Type = PlanType.Planner };
                 plan.StartDate = StartDate;
                 plan.EndDate = EndDate;
-                if (plan.Id == 0)
+                plan.PlannerName = finalName;
+                if (plan.Id == Guid.Empty)
                     await _planService.AddPlanAsync(plan);
                 else
                     await _planService.UpdatePlanAsync(plan);
@@ -740,20 +775,21 @@ public class PlannerViewModel : INotifyPropertyChanged
                 { 
                     StartDate = StartDate, 
                     EndDate = EndDate,
-                    Type = PlanType.Planner
+                    Type = PlanType.Planner,
+                    PlannerName = finalName
                 };
                 await _planService.AddPlanAsync(plan);
-                _editingPlanId = plan.Id; // assign after create to save meals under this plan
+                _editingPlanId = plan.Id;
                 IsEditing = true;
             }
 
             // Remove meals only for this plan (if existing) or for this date range old entries of this plan
-            if (plan.Id > 0)
+            if (plan.Id != Guid.Empty)
             {
                 var existing = await _plannerService.GetPlannedMealsAsync(plan.Id);
                 foreach (var m in existing)
                     await _plannerService.RemovePlannedMealAsync(m.Id);
-                
+
                 System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Removed {existing.Count} old meals");
             }
 
@@ -765,7 +801,7 @@ public class PlannerViewModel : INotifyPropertyChanged
                 {
                     if (meal.Recipe != null)
                         meal.RecipeId = meal.Recipe.Id;
-                    if (meal.RecipeId > 0)
+                    if (meal.RecipeId != Guid.Empty)
                     {
                         await _plannerService.AddPlannedMealAsync(new PlannedMeal
                         {
@@ -824,7 +860,7 @@ public class PlannerViewModel : INotifyPropertyChanged
                 p.Type == PlanType.ShoppingList &&
                 p.StartDate.Date == plan.StartDate.Date &&
                 p.EndDate.Date == plan.EndDate.Date &&
-                (!p.LinkedShoppingListPlanId.HasValue || p.LinkedShoppingListPlanId == 0)
+                (!p.LinkedShoppingListPlanId.HasValue || p.LinkedShoppingListPlanId == Guid.Empty)
             );
             if (manualShoppingList != null)
             {
@@ -1001,6 +1037,7 @@ public class PlannerViewModel : INotifyPropertyChanged
         if (meal != null && meal.Portions < 20)
         {
             meal.Portions++;
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] IncreasePortions called: Portions = {meal.Portions}");
         }
     }
 
@@ -1009,6 +1046,7 @@ public class PlannerViewModel : INotifyPropertyChanged
         if (meal != null && meal.Portions > 1)
         {
             meal.Portions--;
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] DecreasePortions called: Portions = {meal.Portions}");
         }
     }
 

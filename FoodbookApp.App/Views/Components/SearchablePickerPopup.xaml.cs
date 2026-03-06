@@ -1,12 +1,12 @@
+﻿using CommunityToolkit.Maui.Views;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using CommunityToolkit.Maui.Views;
 using System.Windows.Input;
+using Foodbook.Views;
+using Foodbook.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using FoodbookApp.Interfaces;
-using Foodbook.ViewModels;
-using Foodbook.Views;
-using Foodbook.Services;
+using System.Collections.ObjectModel;
 
 namespace Foodbook.Views.Components;
 
@@ -14,6 +14,8 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
 {
     private readonly List<string> _allItems;
     private readonly TaskCompletionSource<object?> _tcs = new();
+    
+    private List<string> _filteredItems = new();
 
     public Task<object?> ResultTask => _tcs.Task;
 
@@ -40,6 +42,9 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
         }
     }
 
+    // Prevent duplicate UI items by versioning population runs
+    private int _populateVersion = 0;
+
     public SearchablePickerPopup(List<string> allItems, string? selected)
     {
         _allItems = allItems ?? new List<string>();
@@ -48,7 +53,83 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
         AddIngredientCommand = new Command(async () => await OnAddIngredientAsync());
         InitializeComponent();
         DetectContext();
-        Populate(_allItems);
+        
+        // ✅ Szybko: Schedule na backgroundzie
+        _ = PopulateAsync(_allItems);
+    }
+
+    /// <summary>
+    /// ✅ ULTRA ZOPTYMALIZOWANA: Twórz buttony w tle i dodawaj bez bloku UI
+    /// Dodatkowo: wersjonowanie, aby uniknąć duplikatów przy wielu wywołaniach.
+    /// </summary>
+    private async Task PopulateAsync(IEnumerable<string> items)
+    {
+        try
+        {
+            // Capture a new version and invalidate any previous scheduled additions
+            var myVersion = ++_populateVersion;
+
+            _filteredItems = items.ToList();
+            var totalCount = _filteredItems.Count;
+
+            // Wyczyść UI (await jest OK tutaj bo to jednorazowa szybka operacja)
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                // If a newer population has started since scheduling, skip clearing/adds
+                if (myVersion != _populateVersion) return;
+
+                var host = ItemsHost;
+                if (host == null) return;
+                host.Children.Clear();
+
+                if (ShowAddIngredientButton)
+                    host.Children.Add(CreateAddIngredientRow());
+            });
+
+            // ✅ KLUCZOWA OPTYMALIZACJA: Ładuj w batchach BEZ await na dodawanie
+            const int batchSize = 150; // Zwiększam do 100 bo teraz nie blokujemy
+            
+            // Zacznij ładować w tle
+            _ = Task.Run(async () =>
+            {
+                for (int i = 0; i < totalCount; i += batchSize)
+                {
+                    // If a newer population started, stop scheduling further batches
+                    if (myVersion != _populateVersion)
+                        break;
+
+                    var batch = _filteredItems.Skip(i).Take(batchSize).ToList();
+                    
+                    // Twórz buttony w tle
+                    var buttons = batch.Select(item => CreateItemButton(item)).ToList();
+
+                    // ✅ CRITICAL: BeginInvokeOnMainThread (NIE await!) - schedule i kontynuuj
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        // Drop if stale
+                        if (myVersion != _populateVersion) return;
+
+                        var host = ItemsHost;
+                        if (host == null) return;
+
+                        foreach (var button in buttons)
+                            host.Children.Add(button);
+                    });
+
+                    // Daj UI chwilę na odświeżenie między batchami
+                    if (i + batchSize < totalCount)
+                        await Task.Delay(5);
+                }
+
+                System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] All {totalCount} items scheduled for loading (version={myVersion})");
+            });
+
+            System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] Started loading {totalCount} items in background (version={myVersion})");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] PopulateAsync error: {ex.Message}");
+        }
     }
 
     private void DetectContext()
@@ -65,88 +146,80 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
         }
     }
 
-    private void Populate(IEnumerable<string> items)
+    /// <summary>
+    /// ✅ NOWA METODA: Tworzenie przycisku "Dodaj składnik"
+    /// </summary>
+    private View CreateAddIngredientRow()
     {
-        var host = ItemsHost;
-        if (host == null)
-            return;
-
-        host.Children.Clear();
-
-        var app = Application.Current;
-        var primaryText = (app?.Resources?.TryGetValue("PrimaryText", out var v1) == true && v1 is Color c1) ? c1 : Colors.Black;
-        var secondary = (app?.Resources?.TryGetValue("Secondary", out var v2) == true && v2 is Color c2) ? c2 : Colors.Gray;
-
-        // First row: add ingredient action in AddRecipe context
-        if (ShowAddIngredientButton)
+        var addRow = new HorizontalStackLayout
         {
-            var addRow = new HorizontalStackLayout
-            {
-                Spacing = 12,
-                Padding = new Thickness(4, 0, 4, 8),
-                VerticalOptions = LayoutOptions.Center
-            };
+            Spacing = 12,
+            Padding = new Thickness(4, 0, 4, 8),
+            VerticalOptions = LayoutOptions.Center
+        };
 
-            var plusButton = new Button
-            {
-                Text = "+",
-                WidthRequest = 36,
-                HeightRequest = 36,
-                CornerRadius = 18,
-                Padding = 0,
-                VerticalOptions = LayoutOptions.Center
-            };
-            plusButton.StyleClass = new[] { "Secondary" };
-            plusButton.Clicked += async (_, __) => await OnAddIngredientAsync();
-
-            var textLabel = new Label
-            {
-                Text = "Dodaj sk�adnik",
-                TextColor = primaryText,
-                FontSize = 15,
-                VerticalOptions = LayoutOptions.Center
-            };
-            var tap = new TapGestureRecognizer();
-            tap.Tapped += async (_, __) => await OnAddIngredientAsync();
-            textLabel.GestureRecognizers.Add(tap);
-
-            addRow.Children.Add(plusButton);
-            addRow.Children.Add(textLabel);
-            host.Children.Add(addRow);
-        }
-
-        foreach (var item in items)
+        var plusButton = new Button
         {
-            var btn = new Button
-            {
-                Text = item,
-                HorizontalOptions = LayoutOptions.Fill,
-                BackgroundColor = Colors.Transparent,
-                TextColor = primaryText,
-                BorderColor = secondary,
-                BorderWidth = 1,
-                CornerRadius = 8,
-                Padding = new Thickness(12, 10),
-                Margin = new Thickness(2, 3)
-            };
-            btn.Clicked += async (_, __) => await CloseWithResultAsync(item);
-            host.Children.Add(btn);
-        }
+            Text = "+",
+            WidthRequest = 36,
+            HeightRequest = 36,
+            CornerRadius = 18,
+            Padding = 0,
+            VerticalOptions = LayoutOptions.Center
+        };
+        plusButton.StyleClass = new[] { "Secondary" };
+        plusButton.Clicked += async (_, __) => await OnAddIngredientAsync();
+
+        var textLabel = new Label
+        {
+            Text = "Dodaj składnik",
+            FontSize = 15,
+            VerticalOptions = LayoutOptions.Center
+        };
+        textLabel.SetAppThemeColor(Label.TextColorProperty, 
+            (Color)Application.Current!.Resources["PrimaryText"],
+            (Color)Application.Current!.Resources["PrimaryText"]);
+
+        var tap = new TapGestureRecognizer();
+        tap.Tapped += async (_, __) => await OnAddIngredientAsync();
+        textLabel.GestureRecognizers.Add(tap);
+
+        addRow.Children.Add(plusButton);
+        addRow.Children.Add(textLabel);
+        
+        return addRow;
     }
 
-    // Replaces Entry.TextChanged handler using two-way bound SearchText
-    private void ApplySearch()
+    /// <summary>
+    /// ✅ ZOPTYMALIZOWANA: Lekka metoda tworzenia przycisku elementu
+    /// </summary>
+    private Button CreateItemButton(string item)
     {
-        var query = SearchText?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(query))
+        var button = new Button
         {
-            Populate(_allItems);
-            return;
-        }
-        var filtered = _allItems
-            .Where(x => x?.Contains(query, StringComparison.OrdinalIgnoreCase) == true)
-            .ToList();
-        Populate(filtered);
+            Text = item,
+            HorizontalOptions = LayoutOptions.Fill,
+            BackgroundColor = Colors.Transparent,
+            BorderWidth = 1,
+            CornerRadius = 8,
+            Padding = new Thickness(12, 10),
+            Margin = new Thickness(2, 3),
+            FontSize = 15
+        };
+
+        // ✅ OPTYMALIZACJA: Binding kolorów bez convertera
+        button.SetAppThemeColor(Button.TextColorProperty,
+            (Color)Application.Current!.Resources["PrimaryText"],
+            (Color)Application.Current!.Resources["PrimaryText"]);
+
+        button.SetAppThemeColor(Button.BorderColorProperty,
+            (Color)Application.Current!.Resources["Secondary"],
+            (Color)Application.Current!.Resources["Secondary"]);
+
+        // ✅ KRYTYCZNA OPTYMALIZACJA: Async event handler bez blokowania UI
+        button.Clicked += async (_, __) => await CloseWithResultAsync(item);
+
+        return button;
     }
 
     private async Task OnAddIngredientAsync()
@@ -160,74 +233,124 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
             var vm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IngredientFormViewModel>();
             if (vm == null)
             {
-                await Shell.Current.DisplayAlert("B��d", "Nie mo�na otworzy� formularza sk�adnika.", "OK");
+                await Shell.Current.DisplayAlert("Błąd", "Nie można otworzyć formularza składnika.", "OK");
                 return;
             }
 
+            vm.Reset();
+            System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] IngredientFormViewModel reset before opening");
+
             var formPage = new IngredientFormPage(vm);
 
-            var tcs = new TaskCompletionSource();
-
-            // Show the page modally
-            await currentPage.Navigation.PushModalAsync(formPage);
-
-            // Await save completion from the page (or timeout)
             try
             {
-                await formPage.AwaitSaveAsync(500000);
+                SearchablePickerComponent.RaiseGlobalPopupStateChanged(this, true);
+                System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] Notified GlobalPopupStateChanged: opening modal");
             }
-            catch { }
-
-            // Ensure page closed (if still open, pop it)
-            try
+            catch (Exception ex)
             {
-                if (currentPage.Navigation.ModalStack.Count > 0 && currentPage.Navigation.ModalStack.LastOrDefault() == formPage)
+                System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] Failed to notify GlobalPopupStateChanged: {ex.Message}");
+            }
+
+            var dismissedTcs = new TaskCompletionSource();
+            formPage.Disappearing += (_, __) => 
+            {
+                try
                 {
-                    await currentPage.Navigation.PopModalAsync();
+                    dismissedTcs.TrySetResult();
+                    SearchablePickerComponent.RaiseGlobalPopupStateChanged(this, false);
+                    System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] Notified GlobalPopupStateChanged: closing modal");
                 }
-            }
-            catch { }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] Error in modal closing notification: {ex.Message}");
+                }
+            };
+            
+            await currentPage.Navigation.PushModalAsync(formPage);
+            System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] IngredientFormPage opened modally");
+            
+            await dismissedTcs.Task;
+            System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] IngredientFormPage dismissed");
 
-            // Now reload freshest data directly from service (bypass any VM caches)
+            await Task.Delay(100);
+
+            // ✅ CRITICAL FIX: Reload fresh ingredients and completely rebuild popup UI
             try
             {
                 var ingredientService = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IIngredientService>();
                 if (ingredientService != null)
                 {
+                    System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] Fetching fresh ingredients from service...");
+                    
+                    try { ingredientService.InvalidateCache(); } catch { }
+                    
                     var fresh = await ingredientService.GetIngredientsAsync();
-                    // Update IngredientsPage directly if alive
-                    try { await IngredientsPage.Current?.ForceReloadAsync(); } catch { }
+                    System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] Fetched {fresh.Count} ingredients");
 
-                    // Update AddRecipeViewModel list if present
+                    // ✅ Update AddRecipeViewModel list if we're in AddRecipePage context
                     if (currentPage is Foodbook.Views.AddRecipePage arp)
                     {
                         var recipeVm = arp.BindingContext as Foodbook.ViewModels.AddRecipeViewModel;
                         if (recipeVm != null)
                         {
-                            // Reload available names directly from service to guarantee freshness
-                            recipeVm.AvailableIngredientNames.Clear();
-                            foreach (var ing in fresh)
-                                recipeVm.AvailableIngredientNames.Add(ing.Name);
-
-                            // Update local popup list
+                            System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] Updating AddRecipeViewModel.AvailableIngredientNames...");
+                            
                             await MainThread.InvokeOnMainThreadAsync(() =>
                             {
-                                _allItems.Clear();
-                                _allItems.AddRange(recipeVm.AvailableIngredientNames);
-                                ApplySearch();
+                                recipeVm.AvailableIngredientNames.Clear();
+                                foreach (var ing in fresh)
+                                    recipeVm.AvailableIngredientNames.Add(ing.Name);
                             });
+                            
+                            System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] AddRecipeViewModel updated with {fresh.Count} ingredients");
                         }
                     }
-                    else
+
+                    // ✅ CRITICAL FIX: Completely rebuild local list and UI
+                    System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] Rebuilding popup list...");
+                    
+                    // Clear and rebuild _allItems
+                    _allItems.Clear();
+                    foreach (var ing in fresh)
+                        _allItems.Add(ing.Name);
+                    
+                    // Small delay before UI rebuild to ensure everything is ready
+                    await Task.Delay(100);
+                    
+                    // ✅ CRITICAL: Trigger full UI rebuild by clearing search and reapplying
+                    await MainThread.InvokeOnMainThreadAsync(() =>
                     {
-                        // Generic popup update: repopulate from fresh service data
-                        await MainThread.InvokeOnMainThreadAsync(() =>
+                        var currentSearch = SearchText;
+                        SearchText = string.Empty; // This triggers PopulateAsync with cleared UI
+                        
+                        // Immediately restore search if there was one (will filter new data)
+                        if (!string.IsNullOrWhiteSpace(currentSearch))
                         {
-                            _allItems.Clear();
-                            foreach (var ing in fresh)
-                                _allItems.Add(ing.Name);
+                            SearchText = currentSearch;
+                        }
+                        else
+                        {
+                            // Force rebuild with all items
                             ApplySearch();
-                        });
+                        }
+                        
+                        System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] Popup UI rebuilt with {_allItems.Count} items");
+                    });
+
+                    // ✅ Force reload IngredientsPage if it's alive
+                    try 
+                    { 
+                        if (IngredientsPage.Current != null)
+                        {
+                            System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] Force reloading IngredientsPage...");
+                            await IngredientsPage.Current.ForceReloadAsync();
+                            System.Diagnostics.Debug.WriteLine("[SearchablePickerPopup] IngredientsPage reloaded successfully");
+                        }
+                    } 
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] IngredientsPage reload error: {ex.Message}");
                     }
                 }
             }
@@ -239,13 +362,14 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[SearchablePickerPopup] Error adding ingredient: {ex.Message}");
+            
+            // ✅ Ensure we reset popup state even on error
+            try
+            {
+                SearchablePickerComponent.RaiseGlobalPopupStateChanged(this, false);
+            }
+            catch { }
         }
-    }
-
-    // Kept for backward compatibility; no longer wired in XAML
-    private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
-    {
-        SearchText = e.NewTextValue;
     }
 
     private async Task CloseWithResultAsync(object? result)
@@ -253,6 +377,26 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
         if (!_tcs.Task.IsCompleted)
             _tcs.SetResult(result);
         await CloseAsync();
+    }
+
+    /// <summary>
+    /// ✅ ZOPTYMALIZOWANA: Szybkie filtrowanie i resetowanie widoku
+    /// </summary>
+    private void ApplySearch()
+    {
+        var query = SearchText?.Trim() ?? string.Empty;
+        
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            _ = PopulateAsync(_allItems);
+            return;
+        }
+
+        var filtered = _allItems
+            .Where(x => x?.Contains(query, StringComparison.OrdinalIgnoreCase) == true)
+            .ToList();
+
+        _ = PopulateAsync(filtered);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

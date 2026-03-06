@@ -8,5 +8,8 @@
   <data name="SearchPlaceholder" xml:space="preserve"><value>레시피 검색...</value></data>
   <data name="AddButton" xml:space="preserve"><value>레시피 추가</value></data>
   <data name="EmptyTitle" xml:space="preserve"><value>레시피 없음</value></data>
-  <data name="EmptyHint" xml:space="preserve"><value>레시피 추가를 탭하세요</value></data>
+  <data name="EmptyHint" xml:space="preserve"><value>레시피 추가를 탭하여 생성하세요</value></data>
+  <!-- FAB action texts -->
+  <data name="AddRecipeAction" xml:space="preserve"><value>레시피 추가</value></data>
+  <data name="AddFolderAction" xml:space="preserve"><value>폴더 추가</value></data>
 </root>

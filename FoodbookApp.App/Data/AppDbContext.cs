@@ -1,9 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Foodbook.Models;
 using System.IO;
-#if ANDROID
 using Microsoft.Maui.Storage;
-#endif
+using FoodbookApp.Models;
 
 namespace Foodbook.Data
 {
@@ -16,7 +15,12 @@ namespace Foodbook.Data
         public DbSet<ShoppingListItem> ShoppingListItems => Set<ShoppingListItem>();
         public DbSet<Folder> Folders => Set<Folder>();
         public DbSet<RecipeLabel> RecipeLabels => Set<RecipeLabel>();
-
+        public DbSet<AuthAccount> AuthAccounts => Set<AuthAccount>();
+        
+        // Sync tables
+        public DbSet<SyncQueueEntry> SyncQueue => Set<SyncQueueEntry>();
+        public DbSet<SyncState> SyncStates => Set<SyncState>();
+        
         // Used by DI at runtime
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -28,12 +32,11 @@ namespace Foodbook.Data
             // Configure only if not already configured by DI
             if (!optionsBuilder.IsConfigured)
             {
-#if ANDROID
-                var dbPath = Path.Combine(FileSystem.AppDataDirectory, "foodbookapp.db");
-#else
-                var dbPath = Path.Combine(Directory.GetCurrentDirectory(), "foodbook.dev.db");
-#endif
-                optionsBuilder.UseSqlite($"Data Source={dbPath}");
+                // CRITICAL FIX: Always use centralized DatabaseConfiguration
+                // This ensures consistency between runtime, design-time, and all platforms
+                var connectionString = DatabaseConfiguration.GetConnectionString();
+                System.Diagnostics.Debug.WriteLine($"[AppDbContext] OnConfiguring fallback using: {connectionString}");
+                optionsBuilder.UseSqlite(connectionString);
             }
         }
 
@@ -117,13 +120,58 @@ namespace Foodbook.Data
                 .WithMany()
                 .UsingEntity<Dictionary<string, object>>(
                     "RecipeRecipeLabel",
-                    j => j.HasOne<RecipeLabel>().WithMany().HasForeignKey("LabelsId").OnDelete(DeleteBehavior.Cascade),
-                    j => j.HasOne<Recipe>().WithMany().HasForeignKey("RecipesId").OnDelete(DeleteBehavior.Cascade)
+                    j => j.HasOne<RecipeLabel>().WithMany().HasForeignKey("LabelId").OnDelete(DeleteBehavior.Cascade),
+                    j => j.HasOne<Recipe>().WithMany().HasForeignKey("RecipeId").OnDelete(DeleteBehavior.Cascade)
                 );
 
             modelBuilder.Entity<RecipeLabel>()
                 .HasIndex(l => l.Name)
                 .HasDatabaseName("IX_RecipeLabels_Name");
+
+            modelBuilder.Entity<AuthAccount>()
+                .HasIndex(a => a.SupabaseUserId)
+                .IsUnique();
+
+            // Sync Queue Entry configuration
+            modelBuilder.Entity<SyncQueueEntry>(entity =>
+            {
+                entity.HasIndex(e => e.AccountId)
+                    .HasDatabaseName("IX_SyncQueue_AccountId");
+
+                entity.HasIndex(e => new { e.AccountId, e.Status })
+                    .HasDatabaseName("IX_SyncQueue_AccountId_Status");
+
+                entity.HasIndex(e => new { e.AccountId, e.EntityType, e.EntityId })
+                    .HasDatabaseName("IX_SyncQueue_AccountId_Entity");
+
+                entity.HasIndex(e => e.BatchId)
+                    .HasDatabaseName("IX_SyncQueue_BatchId");
+
+                entity.HasIndex(e => new { e.Status, e.Priority, e.CreatedUtc })
+                    .HasDatabaseName("IX_SyncQueue_Processing");
+
+                entity.Property(e => e.OperationType)
+                    .HasConversion<int>();
+
+                entity.Property(e => e.Status)
+                    .HasConversion<int>();
+            });
+
+            // Sync State configuration
+            modelBuilder.Entity<SyncState>(entity =>
+            {
+                entity.HasIndex(e => e.AccountId)
+                    .IsUnique()
+                    .HasDatabaseName("IX_SyncStates_AccountId");
+
+                entity.HasOne(e => e.Account)
+                    .WithMany()
+                    .HasForeignKey(e => e.AccountId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.Property(e => e.Status)
+                    .HasConversion<int>();
+            });
 
             base.OnModelCreating(modelBuilder);
         }

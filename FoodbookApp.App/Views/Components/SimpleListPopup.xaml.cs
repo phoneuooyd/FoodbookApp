@@ -4,8 +4,8 @@ using FoodbookApp.Interfaces;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
 using System.Windows.Input;
-using Microsoft.Extensions.DependencyInjection; // for GetService
-using FoodbookApp; // to access MauiProgram.ServiceProvider
+using Microsoft.Extensions.DependencyInjection;
+using FoodbookApp;
 using Foodbook.Models;
 using Foodbook.Utils;
 using Foodbook.ViewModels;
@@ -17,6 +17,8 @@ public partial class SimpleListPopup : Popup
 {
     private readonly TaskCompletionSource<object?> _tcs = new();
     private IThemeService? _themeService;
+    private Recipe? _currentRecipe; // Track current recipe for edit button
+
     public Task<object?> ResultTask => _tcs.Task;
 
     public static readonly BindableProperty TitleTextProperty =
@@ -57,9 +59,11 @@ public partial class SimpleListPopup : Popup
     }
 
     public ICommand CloseCommand { get; }
-
-    // New: command to add ingredient
     public ICommand AddIngredientCommand { get; }
+    public ICommand EditRecipeCommand { get; } // NEW: command for edit button
+
+    // NEW: property to control edit button visibility
+    public bool ShowEditButton => _currentRecipe != null;
 
     // Structured item models for richer rendering
     public class SectionHeader { public string Text { get; set; } = string.Empty; }
@@ -73,12 +77,10 @@ public partial class SimpleListPopup : Popup
     }
     public class Description { public string Text { get; set; } = string.Empty; }
 
-    // Interactive block for planned meal preview with +/- and ingredients scaling
     public class MealPreviewBlock
     {
         public PlannedMeal Meal { get; set; } = new PlannedMeal();
         public Recipe Recipe { get; set; } = new Recipe();
-        // Commands kept for backward-compatibility but ignored here to keep changes visual-only
         public ICommand? IncreaseCommand { get; set; }
         public ICommand? DecreaseCommand { get; set; }
     }
@@ -87,6 +89,7 @@ public partial class SimpleListPopup : Popup
     {
         CloseCommand = new Command(async () => await CloseWithResultAsync(null));
         AddIngredientCommand = new Command(async () => await OnAddIngredientAsync());
+        EditRecipeCommand = new Command(async () => await OnEditRecipeAsync()); // NEW
 
         // Resolve theme service from DI if available
         try
@@ -100,6 +103,7 @@ public partial class SimpleListPopup : Popup
         {
             DetectContext();
             BuildItems();
+            UpdateEditButtonVisibility(); // NEW
         };
     }
 
@@ -110,10 +114,86 @@ public partial class SimpleListPopup : Popup
             // When opened while AddRecipePage is the active page, enable add action in first row
             var currentPage = Shell.Current?.CurrentPage;
             ShowAddIngredientButton = currentPage is Foodbook.Views.AddRecipePage;
+            
+            // NEW: Detect if we're showing a recipe (for edit button)
+            if (Items != null)
+            {
+                var mealPreview = Items.OfType<MealPreviewBlock>().FirstOrDefault();
+                _currentRecipe = mealPreview?.Recipe;
+            }
         }
         catch
         {
             ShowAddIngredientButton = false;
+            _currentRecipe = null;
+        }
+    }
+
+    // NEW: Edit recipe handler
+    private async Task OnEditRecipeAsync()
+    {
+        try
+        {
+            if (_currentRecipe == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[SimpleListPopup] No recipe to edit");
+                return;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[SimpleListPopup] Opening edit page for recipe: {_currentRecipe.Name} (ID: {_currentRecipe.Id})");
+
+            // Resolve edit page from DI
+            var editPage = MauiProgram.ServiceProvider?.GetService<AddRecipePage>();
+            if (editPage == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[SimpleListPopup] Failed to resolve AddRecipePage from DI");
+                await Shell.Current.DisplayAlert("Błąd", "Nie można otworzyć formularza edycji przepisu.", "OK");
+                return;
+            }
+
+            // Pass recipe ID parameter
+            editPage.RecipeId = _currentRecipe.Id;
+
+            // Close this popup first
+            await CloseWithResultAsync(null);
+
+            // Wait a moment for popup to close
+            await Task.Delay(100);
+
+            // Navigate to edit page
+            var nav = Application.Current?.MainPage?.Navigation;
+            if (nav != null)
+            {
+                await nav.PushModalAsync(editPage);
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[SimpleListPopup] Navigation is null");
+                await Shell.Current.DisplayAlert("Błąd", "Błąd nawigacji.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SimpleListPopup] OnEditRecipeAsync error: {ex.Message}");
+            await Shell.Current.DisplayAlert("Błąd", $"Nie udało się otworzyć edycji: {ex.Message}", "OK");
+        }
+    }
+
+    // NEW: Update edit button visibility
+    private void UpdateEditButtonVisibility()
+    {
+        try
+        {
+            // Find edit button in footer and update visibility
+            var editBtn = this.FindByName<Button>("EditRecipeButton");
+            if (editBtn != null)
+            {
+                editBtn.IsVisible = _currentRecipe != null;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SimpleListPopup] UpdateEditButtonVisibility error: {ex.Message}");
         }
     }
 
@@ -132,7 +212,37 @@ public partial class SimpleListPopup : Popup
                 return;
             }
 
+            // ✅ FIXED: Reset form to clear previous values when adding new ingredient
+            vm.Reset();
+            System.Diagnostics.Debug.WriteLine("[SimpleListPopup] Reset IngredientFormViewModel for new ingredient");
+
             var formPage = new IngredientFormPage(vm);
+
+            // Ensure modal page background is opaque when wallpaper mode is enabled
+            try
+            {
+                var app = Application.Current;
+                var themeService = MauiProgram.ServiceProvider?.GetService<IThemeService>();
+                bool wallpaperEnabled = themeService?.IsWallpaperBackgroundEnabled() == true;
+
+                Color pageBg = Colors.White;
+                if (app?.Resources != null && app.Resources.TryGetValue("PageBackgroundColor", out var pb) && pb is Color c)
+                    pageBg = c;
+
+                var alpha = wallpaperEnabled ? 1.0f : pageBg.Alpha;
+                var overlay = Color.FromRgba(pageBg.Red, pageBg.Green, pageBg.Blue, alpha);
+
+                // Apply local resource override so XAML DynamicResource picks it up, and set explicit BackgroundColor as fallback
+                formPage.Resources["PageBackgroundColor"] = overlay;
+                formPage.Resources["PageBackgroundBrush"] = new SolidColorBrush(overlay);
+                formPage.BackgroundColor = overlay;
+
+                System.Diagnostics.Debug.WriteLine($"[SimpleListPopup] Applied local PageBackgroundColor override for IngredientFormPage (wallpaperEnabled={wallpaperEnabled})");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SimpleListPopup] Failed to apply local page background override: {ex.Message}");
+            }
 
             // Await page dismissal using Disappearing
             var dismissedTcs = new TaskCompletionSource();
@@ -246,10 +356,17 @@ public partial class SimpleListPopup : Popup
                 host.Children.Add(addRow);
             }
 
+            // Detect if any MealPreviewBlock exists to avoid duplicating MacroRow entries
+            bool hasMealPreview = data.OfType<MealPreviewBlock>().Any();
+
             foreach (var obj in data)
             {
                 // Skip duplicating the header (day + date) inside the item list
                 if (IsDuplicateHeaderItem(obj))
+                    continue;
+
+                // If there is a MealPreviewBlock present, prefer it and skip standalone MacroRow items to avoid duplicate macro rows
+                if (hasMealPreview && obj is MacroRow)
                     continue;
 
                 var view = CreateViewForItem(obj, contentPrimary, contentSecondary);
@@ -257,6 +374,8 @@ public partial class SimpleListPopup : Popup
                     host.Children.Add(view);
             }
 
+            // NEW: Update edit button visibility after building items
+            UpdateEditButtonVisibility();
         }
         catch (Exception ex)
         {
@@ -467,16 +586,35 @@ public partial class SimpleListPopup : Popup
 
         wrapper.Children.Add(row);
 
+        // Macro row (show per 1 portion - always from DB)
+        var macroLayout = new HorizontalStackLayout
+        {
+            Spacing = 20,
+            Margin = new Thickness(0, 2, 0, 6)
+        };
+        // Add placeholder labels; will be updated when recipe is fetched
+        var kcalLabel = new Label { Text = "K: - kcal", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText };
+        var pLabel = new Label { Text = "B: - g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText };
+        var fLabel = new Label { Text = "T: - g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText };
+        var cLabel = new Label { Text = "W: - g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText };
+        macroLayout.Children.Add(kcalLabel);
+        macroLayout.Children.Add(pLabel);
+        macroLayout.Children.Add(fLabel);
+        macroLayout.Children.Add(cLabel);
+
+        wrapper.Children.Add(macroLayout);
+
         // Ingredients list recalculated by local displayPortions
         var list = new VerticalStackLayout { Spacing = 4 };
 
-        void rebuild()
+        void rebuildIngredients(Recipe recipe)
         {
             list.Children.Clear();
-            var multiplier = (double)displayPortions / Math.Max(mpb.Recipe.IloscPorcji, 1);
-            if (mpb.Recipe.Ingredients != null)
+            // Ingredients are defined per 1 portion; multiply by displayPortions for preview
+            var multiplier = (double)displayPortions;
+            if (recipe.Ingredients != null)
             {
-                foreach (var ing in mpb.Recipe.Ingredients)
+                foreach (var ing in recipe.Ingredients)
                 {
                     var adjusted = ing.Quantity * multiplier;
                     list.Children.Add(new Label
@@ -489,7 +627,21 @@ public partial class SimpleListPopup : Popup
             }
         }
 
-        rebuild();
+        // Initial build using provided recipe object (may be stale)
+        if (mpb.Recipe != null)
+        {
+            // Update macro labels from provided Recipe (treat as per 1 portion)
+            kcalLabel.Text = $"K: {mpb.Recipe.Calories:F0} kcal";
+            pLabel.Text = $"B: {mpb.Recipe.Protein:F1}g";
+            fLabel.Text = $"T: {mpb.Recipe.Fat:F1}g";
+            cLabel.Text = $"W: {mpb.Recipe.Carbs:F1}g";
+
+            // DO NOT call rebuildIngredients here to avoid duplicate ingredient rows when RefreshRecipeDisplayAsync runs
+            // rebuildIngredients(mpb.Recipe);
+        }
+
+        // Fire-and-forget: fetch fresh recipe from DB and update UI when ready
+        _ = RefreshRecipeDisplayAsync(mpb, titleLabel, kcalLabel, pLabel, fLabel, cLabel, list, secondaryText);
 
         // Wire events after variables are defined
         minus.Clicked += (s, e) =>
@@ -497,7 +649,8 @@ public partial class SimpleListPopup : Popup
             if (displayPortions <= 1) return;
             displayPortions--;
             titleLabel.Text = $"{mpb.Recipe.Name} ({displayPortions} porcji)";
-            rebuild();
+            // Rebuild ingredients using current recipe instance
+            rebuildIngredients(mpb.Recipe);
             minus.IsEnabled = displayPortions > 1;
             plus.IsEnabled = displayPortions < 20;
         };
@@ -507,13 +660,76 @@ public partial class SimpleListPopup : Popup
             if (displayPortions >= 20) return;
             displayPortions++;
             titleLabel.Text = $"{mpb.Recipe.Name} ({displayPortions} porcji)";
-            rebuild();
+            rebuildIngredients(mpb.Recipe);
             minus.IsEnabled = displayPortions > 1;
             plus.IsEnabled = displayPortions < 20;
         };
 
         wrapper.Children.Add(list);
         return wrapper;
+    }
+
+    private async Task RefreshRecipeDisplayAsync(MealPreviewBlock mpb, Label titleLabel, Label kcalLabel, Label pLabel, Label fLabel, Label cLabel, VerticalStackLayout list, Color ingredientTextColor)
+    {
+        try
+        {
+            var recipeService = MauiProgram.ServiceProvider?.GetService<IRecipeService>();
+            if (recipeService == null) return;
+
+            var id = mpb.Recipe?.Id ?? Guid.Empty;
+            if (id == Guid.Empty) return;
+
+            var fresh = await recipeService.GetRecipeAsync(id);
+            if (fresh == null) return;
+
+            // Update the MealPreviewBlock recipe reference
+            mpb.Recipe = fresh;
+
+            // Update UI on main thread
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                try
+                {
+                    // Title keep current portions text
+                    var text = titleLabel.Text ?? string.Empty;
+                    // Replace name part with fresh name while preserving parentheses
+                    var idx = text.IndexOf('(');
+                    var portionsPart = idx >= 0 ? text.Substring(idx) : string.Empty;
+                    titleLabel.Text = $"{fresh.Name} {portionsPart}".Trim();
+
+                    kcalLabel.Text = $"K: {fresh.Calories:F0} kcal";
+                    pLabel.Text = $"B: {fresh.Protein:F1}g";
+                    fLabel.Text = $"T: {fresh.Fat:F1}g";
+                    cLabel.Text = $"W: {fresh.Carbs:F1}g";
+
+                    // Rebuild ingredients list using fresh recipe (ingredients per 1 portion)
+                    list.Children.Clear();
+                    int currentPortions = mpb.Meal.Portions > 0 ? mpb.Meal.Portions : Math.Max(fresh.IloscPorcji, 1);
+                    var multiplier = (double)currentPortions;
+                    if (fresh.Ingredients != null)
+                    {
+                        foreach (var ing in fresh.Ingredients)
+                        {
+                            var adjusted = ing.Quantity * multiplier;
+                            list.Children.Add(new Label
+                            {
+                                Text = $"• {ing.Name}: {adjusted:F1} {GetUnitText(ing.Unit)}",
+                                FontSize = 14,
+                                TextColor = ingredientTextColor
+                            });
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SimpleListPopup] RefreshRecipeDisplayAsync UI update failed: {ex.Message}");
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SimpleListPopup] Failed to refresh recipe from DB: {ex.Message}");
+        }
     }
 
     private static string GetUnitText(Unit unit)

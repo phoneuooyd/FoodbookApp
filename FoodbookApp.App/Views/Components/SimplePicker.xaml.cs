@@ -1,14 +1,18 @@
-using Microsoft.Maui.Controls;
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Windows.Input;
-using CommunityToolkit.Maui.Views;
-using CommunityToolkit.Maui.Extensions;
-using System.Collections; // Added for IEnumerable
-using Microsoft.Extensions.DependencyInjection;
-using FoodbookApp.Interfaces;
 using System.Globalization;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
+using System.Windows.Input;
+using CommunityToolkit.Maui.Extensions;
+using CommunityToolkit.Maui.Views;
 using Foodbook.Utils;
+using FoodbookApp.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Maui.Controls;
 
 namespace Foodbook.Views.Components;
 
@@ -16,6 +20,9 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
 {
     private bool _isPopupOpen = false; // Protection against multiple opens
     private ILocalizationService? _localizationService; // Localization service subscription
+
+    // Static event that SimplePicker instances can fire to notify AddRecipePage (or any page) about popup state
+    public static event EventHandler<bool>? GlobalPopupStateChanged;
 
     public static readonly BindableProperty ItemsSourceProperty =
         BindableProperty.Create(nameof(ItemsSource), typeof(IEnumerable), typeof(SimplePicker), null);
@@ -41,7 +48,13 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
     public object? SelectedItem
     {
         get => GetValue(SelectedItemProperty);
-        set => SetValue(SelectedItemProperty, value);
+        set
+        {
+            System.Diagnostics.Debug.WriteLine($"[SimplePicker] SelectedItem setter called. Old: {GetValue(SelectedItemProperty)}, New: {value}");
+            SetValue(SelectedItemProperty, value);
+            
+            // Property change notifications are handled by OnSelectedItemChanged callback
+        }
     }
 
     public BindingBase? ItemDisplayBinding
@@ -228,6 +241,29 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
         {
             picker.OnPropertyChanged(nameof(DisplayText));
             picker.SelectionChanged?.Invoke(picker, EventArgs.Empty);
+            
+            // ? SIMPLIFIED: Only propagate to Ingredient model (for shopping lists)
+            // IngredientFormViewModel now handles unit changes internally with immediate DB save
+            try
+            {
+                if (newValue != oldValue && newValue is Enum enumValue)
+                {
+                    // Case: Ingredient model bound in lists (ShoppingList/Recipe ingredients)
+                    if (picker.BindingContext is Foodbook.Models.Ingredient ingredient)
+                    {
+                        if (enumValue is Foodbook.Models.Unit unit)
+                        {
+                            var oldUnit = ingredient.Unit;
+                            ingredient.Unit = unit; // raises PropertyChanged in Ingredient
+                            System.Diagnostics.Debug.WriteLine($"[SimplePicker] Ingredient.Unit changed: {oldUnit} -> {unit}");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SimplePicker] Failed to propagate SelectedItem: {ex.Message}");
+            }
         }
     }
 
@@ -251,6 +287,10 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
 
         try
         {
+            // ?? Notify global event listeners
+            GlobalPopupStateChanged?.Invoke(this, true);
+            System.Diagnostics.Debug.WriteLine("?? SimplePicker: Notified popup opening");
+
             _isPopupOpen = true;
             ((Command)OpenSelectionDialogCommand).ChangeCanExecute();
 
@@ -258,6 +298,9 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
             var options = ItemsSource?.Cast<object>().Select(GetOptionText).ToList() ?? new List<string>();
 
             var currentSelection = DisplayText == PlaceholderText ? null : DisplayText;
+            
+            System.Diagnostics.Debug.WriteLine($"[SimplePicker] Opening selection dialog. Current selection: {currentSelection}, SelectedItem: {SelectedItem}");
+            
             var popup = new SearchablePickerPopup(options, currentSelection);
 
             // Get the current page to show popup on
@@ -289,12 +332,43 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
 
                 if (matchingItem != null)
                 {
-                    SelectedItem = matchingItem;
+                    System.Diagnostics.Debug.WriteLine($"[SimplePicker] Setting SelectedItem from '{SelectedItem}' to '{matchingItem}'");
+                    
+                    await MainThread.InvokeOnMainThreadAsync(() =>
+                    {
+                        // Update picker selected item
+                        SelectedItem = matchingItem;
+                        OnPropertyChanged(nameof(SelectedItem));
+                        OnPropertyChanged(nameof(DisplayText));
+                        
+                        // ? SIMPLIFIED: Only explicit propagation for Ingredient lists
+                        // IngredientFormViewModel handles unit changes via setter with immediate DB save
+                        try
+                        {
+                            if (BindingContext is Foodbook.Models.Ingredient ingredient && matchingItem is Foodbook.Models.Unit unit)
+                            {
+                                var oldUnit = ingredient.Unit;
+                                ingredient.Unit = unit;
+                                System.Diagnostics.Debug.WriteLine($"[SimplePicker] Ingredient.Unit changed (popup): {oldUnit} -> {unit}");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[SimplePicker] Failed to set Unit on BindingContext: {ex.Message}");
+                        }
+                    });
+                    
+                    // Give binding system time to propagate changes
+                    await Task.Delay(50);
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SimplePicker] ?? Could not find matching item for selected text: {selectedText}");
                 }
             }
             else if (result == null)
             {
-                // User cancelled or closed popup - keep current selection
+                System.Diagnostics.Debug.WriteLine("[SimplePicker] User cancelled or closed popup - keeping current selection");
             }
         }
         catch (Exception ex)
@@ -318,7 +392,7 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
                 }
                 catch (Exception modalEx)
                 {
-                    System.Diagnostics.Debug.WriteLine($"?? SimplePicker: Could not clear modal stack: {modalEx.Message}");
+                    System.Diagnostics.Debug.WriteLine($"? SimplePicker: Could not clear modal stack: {modalEx.Message}");
                 }
             }
 
@@ -327,6 +401,9 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
         }
         finally
         {
+            GlobalPopupStateChanged?.Invoke(this, false);
+            System.Diagnostics.Debug.WriteLine("?? SimplePicker: Notified popup closing");
+
             _isPopupOpen = false;
             ((Command)OpenSelectionDialogCommand).ChangeCanExecute();
             System.Diagnostics.Debug.WriteLine("?? SimplePicker: Popup protection released");
