@@ -38,9 +38,40 @@
             </Grid>
 
             <!-- List -->
-            <ScrollView Grid.Row="1" Padding="16,12">
-                <StackLayout x:Name="ItemsHost" Spacing="8" />
-            </ScrollView>
+            <CollectionView Grid.Row="1"
+                            x:Name="ItemsCollectionView"
+                            Margin="16,12"
+                            SelectionMode="None"
+                            ItemsSource="{Binding VisibleItems, Source={x:Reference ThisPopup}}"
+                            ItemSizingStrategy="MeasureFirstItem">
+                <CollectionView.Header>
+                    <Grid Padding="0,0,0,8"
+                          IsVisible="{Binding ShowAddIngredientButton, Source={x:Reference ThisPopup}}">
+                        <HorizontalStackLayout Spacing="12"
+                                               VerticalOptions="Center">
+                            <Button Text="+"
+                                    WidthRequest="36"
+                                    HeightRequest="36"
+                                    CornerRadius="18"
+                                    Padding="0"
+                                    VerticalOptions="Center"
+                                    StyleClass="Secondary"
+                                    Command="{Binding AddIngredientCommand, Source={x:Reference ThisPopup}}" />
+                            <Label Text="Dodaj składnik"
+                                   FontSize="15"
+                                   VerticalOptions="Center"
+                                   TextColor="{Binding PrimaryTextColor, Source={x:Reference ThisPopup}}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding AddIngredientCommand, Source={x:Reference ThisPopup}}" />
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </HorizontalStackLayout>
+                    </Grid>
+                </CollectionView.Header>
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Vertical" ItemSpacing="8" />
+                </CollectionView.ItemsLayout>
+            </CollectionView>
 
             <!-- Footer with Edit and Cancel buttons -->
             <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" Padding="16,12" BackgroundColor="{DynamicResource ShellBackgroundColor}">

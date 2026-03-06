@@ -17,22 +17,24 @@ public partial class SimpleListPopup : Popup
 {
     private readonly TaskCompletionSource<object?> _tcs = new();
     private IThemeService? _themeService;
-    private Recipe? _currentRecipe; // Track current recipe for edit button
+    private Recipe? _currentRecipe;
+    private IEnumerable<object> _visibleItems = Array.Empty<object>();
+    private Color _primaryTextColor = Colors.Black;
+    private Color _secondaryTextColor = Colors.Gray;
 
     public Task<object?> ResultTask => _tcs.Task;
 
     public static readonly BindableProperty TitleTextProperty =
-        BindableProperty.Create(nameof(TitleText), typeof(string), typeof(SimpleListPopup), "");
+        BindableProperty.Create(nameof(TitleText), typeof(string), typeof(SimpleListPopup), string.Empty, propertyChanged: OnPopupContentChanged);
 
     public static readonly BindableProperty ItemsProperty =
-        BindableProperty.Create(nameof(Items), typeof(IEnumerable<object>), typeof(SimpleListPopup), null);
+        BindableProperty.Create(nameof(Items), typeof(IEnumerable<object>), typeof(SimpleListPopup), null, propertyChanged: OnPopupContentChanged);
 
     public static readonly BindableProperty IsBulletedProperty =
-        BindableProperty.Create(nameof(IsBulleted), typeof(bool), typeof(SimpleListPopup), false);
+        BindableProperty.Create(nameof(IsBulleted), typeof(bool), typeof(SimpleListPopup), false, propertyChanged: OnPopupContentChanged);
 
-    // New: shows add action in first row for AddRecipePage context
     public static readonly BindableProperty ShowAddIngredientButtonProperty =
-        BindableProperty.Create(nameof(ShowAddIngredientButton), typeof(bool), typeof(SimpleListPopup), false);
+        BindableProperty.Create(nameof(ShowAddIngredientButton), typeof(bool), typeof(SimpleListPopup), false, propertyChanged: OnPopupContentChanged);
 
     public string TitleText
     {
@@ -58,22 +60,40 @@ public partial class SimpleListPopup : Popup
         set => SetValue(ShowAddIngredientButtonProperty, value);
     }
 
+    public IEnumerable<object> VisibleItems
+    {
+        get => _visibleItems;
+        private set
+        {
+            _visibleItems = value;
+            OnPropertyChanged(nameof(VisibleItems));
+        }
+    }
+
+    public Color PrimaryTextColor
+    {
+        get => _primaryTextColor;
+        private set
+        {
+            _primaryTextColor = value;
+            OnPropertyChanged(nameof(PrimaryTextColor));
+        }
+    }
+
     public ICommand CloseCommand { get; }
     public ICommand AddIngredientCommand { get; }
-    public ICommand EditRecipeCommand { get; } // NEW: command for edit button
+    public ICommand EditRecipeCommand { get; }
 
-    // NEW: property to control edit button visibility
     public bool ShowEditButton => _currentRecipe != null;
 
-    // Structured item models for richer rendering
     public class SectionHeader { public string Text { get; set; } = string.Empty; }
     public class MealTitle { public string Text { get; set; } = string.Empty; }
-    public class MacroRow 
-    { 
-        public double Calories { get; set; } 
-        public double Protein { get; set; } 
-        public double Fat { get; set; } 
-        public double Carbs { get; set; } 
+    public class MacroRow
+    {
+        public double Calories { get; set; }
+        public double Protein { get; set; }
+        public double Fat { get; set; }
+        public double Carbs { get; set; }
     }
     public class Description { public string Text { get; set; } = string.Empty; }
 
@@ -89,33 +109,52 @@ public partial class SimpleListPopup : Popup
     {
         CloseCommand = new Command(async () => await CloseWithResultAsync(null));
         AddIngredientCommand = new Command(async () => await OnAddIngredientAsync());
-        EditRecipeCommand = new Command(async () => await OnEditRecipeAsync()); // NEW
+        EditRecipeCommand = new Command(async () => await OnEditRecipeAsync());
 
-        // Resolve theme service from DI if available
         try
         {
             _themeService = MauiProgram.ServiceProvider?.GetService<IThemeService>();
         }
-        catch { /* ignore and keep null -> we'll fallback in BuildItems */ }
+        catch { }
 
         InitializeComponent();
+        BindingContext = this;
+        ItemsCollectionView.ItemTemplate = new DataTemplate(() => new PopupItemHostView(this));
+
         Loaded += (_, __) =>
         {
             DetectContext();
             BuildItems();
-            UpdateEditButtonVisibility(); // NEW
+            UpdateEditButtonVisibility();
         };
+    }
+
+    private static void OnPopupContentChanged(BindableObject bindable, object? oldValue, object? newValue)
+    {
+        if (bindable is not SimpleListPopup popup)
+            return;
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            try
+            {
+                popup.DetectContext();
+                popup.BuildItems();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SimpleListPopup] OnPopupContentChanged error: {ex.Message}");
+            }
+        });
     }
 
     private void DetectContext()
     {
         try
         {
-            // When opened while AddRecipePage is the active page, enable add action in first row
             var currentPage = Shell.Current?.CurrentPage;
             ShowAddIngredientButton = currentPage is Foodbook.Views.AddRecipePage;
-            
-            // NEW: Detect if we're showing a recipe (for edit button)
+
             if (Items != null)
             {
                 var mealPreview = Items.OfType<MealPreviewBlock>().FirstOrDefault();
@@ -129,7 +168,6 @@ public partial class SimpleListPopup : Popup
         }
     }
 
-    // NEW: Edit recipe handler
     private async Task OnEditRecipeAsync()
     {
         try
@@ -142,7 +180,6 @@ public partial class SimpleListPopup : Popup
 
             System.Diagnostics.Debug.WriteLine($"[SimpleListPopup] Opening edit page for recipe: {_currentRecipe.Name} (ID: {_currentRecipe.Id})");
 
-            // Resolve edit page from DI
             var editPage = MauiProgram.ServiceProvider?.GetService<AddRecipePage>();
             if (editPage == null)
             {
@@ -151,16 +188,10 @@ public partial class SimpleListPopup : Popup
                 return;
             }
 
-            // Pass recipe ID parameter
             editPage.RecipeId = _currentRecipe.Id;
-
-            // Close this popup first
             await CloseWithResultAsync(null);
-
-            // Wait a moment for popup to close
             await Task.Delay(100);
 
-            // Navigate to edit page
             var nav = Application.Current?.MainPage?.Navigation;
             if (nav != null)
             {
@@ -179,12 +210,10 @@ public partial class SimpleListPopup : Popup
         }
     }
 
-    // NEW: Update edit button visibility
     private void UpdateEditButtonVisibility()
     {
         try
         {
-            // Find edit button in footer and update visibility
             var editBtn = this.FindByName<Button>("EditRecipeButton");
             if (editBtn != null)
             {
@@ -212,13 +241,11 @@ public partial class SimpleListPopup : Popup
                 return;
             }
 
-            // ✅ FIXED: Reset form to clear previous values when adding new ingredient
             vm.Reset();
             System.Diagnostics.Debug.WriteLine("[SimpleListPopup] Reset IngredientFormViewModel for new ingredient");
 
             var formPage = new IngredientFormPage(vm);
 
-            // Ensure modal page background is opaque when wallpaper mode is enabled
             try
             {
                 var app = Application.Current;
@@ -232,7 +259,6 @@ public partial class SimpleListPopup : Popup
                 var alpha = wallpaperEnabled ? 1.0f : pageBg.Alpha;
                 var overlay = Color.FromRgba(pageBg.Red, pageBg.Green, pageBg.Blue, alpha);
 
-                // Apply local resource override so XAML DynamicResource picks it up, and set explicit BackgroundColor as fallback
                 formPage.Resources["PageBackgroundColor"] = overlay;
                 formPage.Resources["PageBackgroundBrush"] = new SolidColorBrush(overlay);
                 formPage.BackgroundColor = overlay;
@@ -244,13 +270,11 @@ public partial class SimpleListPopup : Popup
                 System.Diagnostics.Debug.WriteLine($"[SimpleListPopup] Failed to apply local page background override: {ex.Message}");
             }
 
-            // Await page dismissal using Disappearing
             var dismissedTcs = new TaskCompletionSource();
             formPage.Disappearing += (_, __) => dismissedTcs.TrySetResult();
             await currentPage.Navigation.PushModalAsync(formPage);
             await dismissedTcs.Task;
 
-            // After returning, refresh caches and UI lists in AddRecipe context
             var ingredientService = MauiProgram.ServiceProvider?.GetService<IIngredientService>();
             ingredientService?.InvalidateCache();
 
@@ -263,7 +287,6 @@ public partial class SimpleListPopup : Popup
                 }
             }
 
-            // Rebuild items to reflect possible new entries
             BuildItems();
         }
         catch (Exception ex)
@@ -277,13 +300,9 @@ public partial class SimpleListPopup : Popup
         try
         {
             TitleLabel.Text = TitleText ?? string.Empty;
-            var host = ItemsHost;
-            if (host == null) return;
-            host.Children.Clear();
 
             var data = Items?.ToList() ?? new List<object>();
 
-            // Determine effective colors with better contrast in dark mode on tinted backgrounds
             var app = Application.Current;
             bool isDark = false;
             if (app != null)
@@ -295,11 +314,9 @@ public partial class SimpleListPopup : Popup
             var primaryTextRes = app?.Resources.TryGetValue("PrimaryText", out var v1) == true && v1 is Color c1 ? c1 : Colors.Black;
             var secondaryTextRes = app?.Resources.TryGetValue("SecondaryText", out var v2) == true && v2 is Color c2 ? c2 : Colors.Gray;
 
-            // flags from theme service
             var isColorful = _themeService?.GetIsColorfulBackgroundEnabled() == true;
             var isWallpaper = _themeService?.IsWallpaperBackgroundEnabled() == true;
 
-            // Base colours
             var contentPrimary = !isColorful
                 ? (isDark ? Colors.White : primaryTextRes)
                 : (isDark ? Colors.Black : primaryTextRes);
@@ -308,73 +325,45 @@ public partial class SimpleListPopup : Popup
                 ? (isDark ? Color.FromArgb("#858585") : secondaryTextRes)
                 : (isDark ? Color.FromArgb("#000000") : secondaryTextRes);
 
-            // Adjust when wallpaper is enabled in dark mode: slightly darken text for softer contrast
             if (isWallpaper && isDark)
             {
-                contentPrimary = Color.FromArgb("#858585");  // soften primary
-                contentSecondary = Color.FromArgb("#000000"); // soften secondary vs bg
+                contentPrimary = Color.FromArgb("#858585");
+                contentSecondary = Color.FromArgb("#000000");
             }
 
-            // Ensure header title adopts the same tuned colour
+            PrimaryTextColor = contentPrimary;
+            _secondaryTextColor = contentSecondary;
             TitleLabel.TextColor = contentPrimary;
 
-            // Inject first-row add action when applicable
-            if (ShowAddIngredientButton)
-            {
-                var addRow = new HorizontalStackLayout
-                {
-                    Spacing = 12,
-                    Padding = new Thickness(0, 0, 0, 8),
-                    VerticalOptions = LayoutOptions.Center
-                };
-
-                var plusButton = new Button
-                {
-                    Text = "+",
-                    WidthRequest = 36,
-                    HeightRequest = 36,
-                    CornerRadius = 18,
-                    Padding = 0,
-                    VerticalOptions = LayoutOptions.Center
-                };
-                plusButton.StyleClass = new[] { "Secondary" };
-                plusButton.Clicked += async (_, __) => await OnAddIngredientAsync();
-
-                var textLabel = new Label
-                {
-                    Text = "Dodaj składnik",
-                    TextColor = contentPrimary,
-                    FontSize = 15,
-                    VerticalOptions = LayoutOptions.Center
-                };
-                var tap = new TapGestureRecognizer();
-                tap.Tapped += async (_, __) => await OnAddIngredientAsync();
-                textLabel.GestureRecognizers.Add(tap);
-
-                addRow.Children.Add(plusButton);
-                addRow.Children.Add(textLabel);
-                host.Children.Add(addRow);
-            }
-
-            // Detect if any MealPreviewBlock exists to avoid duplicating MacroRow entries
             bool hasMealPreview = data.OfType<MealPreviewBlock>().Any();
+            var visibleItems = new List<object>(data.Count);
 
             foreach (var obj in data)
             {
-                // Skip duplicating the header (day + date) inside the item list
                 if (IsDuplicateHeaderItem(obj))
                     continue;
 
-                // If there is a MealPreviewBlock present, prefer it and skip standalone MacroRow items to avoid duplicate macro rows
                 if (hasMealPreview && obj is MacroRow)
                     continue;
 
-                var view = CreateViewForItem(obj, contentPrimary, contentSecondary);
-                if (view != null)
-                    host.Children.Add(view);
+                if (obj is IEnumerable<string> groupStr && obj is not string)
+                {
+                    foreach (var item in groupStr)
+                        visibleItems.Add(item);
+                    continue;
+                }
+
+                if (obj is IEnumerable<object> groupObj && obj is not string)
+                {
+                    foreach (var item in groupObj)
+                        visibleItems.Add(GetDisplayText(item));
+                    continue;
+                }
+
+                visibleItems.Add(obj);
             }
 
-            // NEW: Update edit button visibility after building items
+            VisibleItems = visibleItems;
             UpdateEditButtonVisibility();
         }
         catch (Exception ex)
@@ -401,7 +390,7 @@ public partial class SimpleListPopup : Popup
         }
     }
 
-    private View? CreateViewForItem(object obj, Color primaryText, Color secondaryText)
+    private View CreateViewForItem(object obj, Color primaryText, Color secondaryText)
     {
         switch (obj)
         {
@@ -411,7 +400,7 @@ public partial class SimpleListPopup : Popup
                     Text = header.Text,
                     FontSize = 18,
                     FontAttributes = FontAttributes.Bold,
-                    TextColor = primaryText, // use readable primary text instead of accent color
+                    TextColor = primaryText,
                     Margin = new Thickness(0, 16, 0, 8)
                 };
 
@@ -457,24 +446,7 @@ public partial class SimpleListPopup : Popup
             case string s:
                 return CreateRow(s, primaryText);
 
-            case IEnumerable<string> groupStr:
-            {
-                var container = new VerticalStackLayout { Spacing = 6 };
-                foreach (var s2 in groupStr)
-                    container.Children.Add(CreateRow(s2, primaryText));
-                return container;
-            }
-
-            case IEnumerable<object> groupObj:
-            {
-                var container = new VerticalStackLayout { Spacing = 6 };
-                foreach (var o in groupObj)
-                    container.Children.Add(CreateRow(GetDisplayText(o), primaryText));
-                return container;
-            }
-
             default:
-                // Generic path: format using enum Display attributes if applicable
                 return CreateRow(GetDisplayText(obj), primaryText);
         }
     }
@@ -484,7 +456,6 @@ public partial class SimpleListPopup : Popup
         if (obj is null) return string.Empty;
         if (obj is Enum e)
         {
-            // Prefer ShortName when available for compact chips, fall back to Name
             var shortName = e.GetDisplayShortName();
             return string.IsNullOrWhiteSpace(shortName) ? e.GetDisplayName() : shortName;
         }
@@ -493,6 +464,15 @@ public partial class SimpleListPopup : Popup
 
     private View CreateRow(string text, Color primaryText)
     {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return new BoxView
+            {
+                HeightRequest = 8,
+                Opacity = 0
+            };
+        }
+
         if (IsBulleted)
         {
             var grid = new Grid
@@ -512,27 +492,23 @@ public partial class SimpleListPopup : Popup
             grid.Add(textLabel);
             return grid;
         }
-        else
+
+        return new Label
         {
-            return new Label
-            {
-                Text = text,
-                TextColor = primaryText,
-                FontSize = 15,
-                LineBreakMode = LineBreakMode.WordWrap,
-                Margin = new Thickness(0, 6)
-            };
-        }
+            Text = text,
+            TextColor = primaryText,
+            FontSize = 15,
+            LineBreakMode = LineBreakMode.WordWrap,
+            Margin = new Thickness(0, 6)
+        };
     }
 
     private View CreateMealPreviewView(MealPreviewBlock mpb, Color primaryText, Color secondaryText)
     {
         var wrapper = new VerticalStackLayout { Spacing = 8 };
 
-        // Local, visual-only portions value (does not modify plan)
         int displayPortions = mpb.Meal.Portions > 0 ? mpb.Meal.Portions : Math.Max(mpb.Recipe.IloscPorcji, 1);
 
-        // Title with portions and +/- controls
         var row = new Grid
         {
             ColumnDefinitions = new ColumnDefinitionCollection
@@ -586,13 +562,11 @@ public partial class SimpleListPopup : Popup
 
         wrapper.Children.Add(row);
 
-        // Macro row (show per 1 portion - always from DB)
         var macroLayout = new HorizontalStackLayout
         {
             Spacing = 20,
             Margin = new Thickness(0, 2, 0, 6)
         };
-        // Add placeholder labels; will be updated when recipe is fetched
         var kcalLabel = new Label { Text = "K: - kcal", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText };
         var pLabel = new Label { Text = "B: - g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText };
         var fLabel = new Label { Text = "T: - g", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = secondaryText };
@@ -604,13 +578,11 @@ public partial class SimpleListPopup : Popup
 
         wrapper.Children.Add(macroLayout);
 
-        // Ingredients list recalculated by local displayPortions
         var list = new VerticalStackLayout { Spacing = 4 };
 
         void rebuildIngredients(Recipe recipe)
         {
             list.Children.Clear();
-            // Ingredients are defined per 1 portion; multiply by displayPortions for preview
             var multiplier = (double)displayPortions;
             if (recipe.Ingredients != null)
             {
@@ -627,29 +599,21 @@ public partial class SimpleListPopup : Popup
             }
         }
 
-        // Initial build using provided recipe object (may be stale)
         if (mpb.Recipe != null)
         {
-            // Update macro labels from provided Recipe (treat as per 1 portion)
             kcalLabel.Text = $"K: {mpb.Recipe.Calories:F0} kcal";
             pLabel.Text = $"B: {mpb.Recipe.Protein:F1}g";
             fLabel.Text = $"T: {mpb.Recipe.Fat:F1}g";
             cLabel.Text = $"W: {mpb.Recipe.Carbs:F1}g";
-
-            // DO NOT call rebuildIngredients here to avoid duplicate ingredient rows when RefreshRecipeDisplayAsync runs
-            // rebuildIngredients(mpb.Recipe);
         }
 
-        // Fire-and-forget: fetch fresh recipe from DB and update UI when ready
         _ = RefreshRecipeDisplayAsync(mpb, titleLabel, kcalLabel, pLabel, fLabel, cLabel, list, secondaryText);
 
-        // Wire events after variables are defined
         minus.Clicked += (s, e) =>
         {
             if (displayPortions <= 1) return;
             displayPortions--;
             titleLabel.Text = $"{mpb.Recipe.Name} ({displayPortions} porcji)";
-            // Rebuild ingredients using current recipe instance
             rebuildIngredients(mpb.Recipe);
             minus.IsEnabled = displayPortions > 1;
             plus.IsEnabled = displayPortions < 20;
@@ -682,17 +646,13 @@ public partial class SimpleListPopup : Popup
             var fresh = await recipeService.GetRecipeAsync(id);
             if (fresh == null) return;
 
-            // Update the MealPreviewBlock recipe reference
             mpb.Recipe = fresh;
 
-            // Update UI on main thread
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
                 try
                 {
-                    // Title keep current portions text
                     var text = titleLabel.Text ?? string.Empty;
-                    // Replace name part with fresh name while preserving parentheses
                     var idx = text.IndexOf('(');
                     var portionsPart = idx >= 0 ? text.Substring(idx) : string.Empty;
                     titleLabel.Text = $"{fresh.Name} {portionsPart}".Trim();
@@ -702,7 +662,6 @@ public partial class SimpleListPopup : Popup
                     fLabel.Text = $"T: {fresh.Fat:F1}g";
                     cLabel.Text = $"W: {fresh.Carbs:F1}g";
 
-                    // Rebuild ingredients list using fresh recipe (ingredients per 1 portion)
                     list.Children.Clear();
                     int currentPortions = mpb.Meal.Portions > 0 ? mpb.Meal.Portions : Math.Max(fresh.IloscPorcji, 1);
                     var multiplier = (double)currentPortions;
@@ -734,7 +693,6 @@ public partial class SimpleListPopup : Popup
 
     private static string GetUnitText(Unit unit)
     {
-        // Use Display ShortName from enum annotations (resx-backed)
         return unit.GetDisplayShortName();
     }
 
@@ -765,6 +723,30 @@ public partial class SimpleListPopup : Popup
                 {
                     System.Diagnostics.Debug.WriteLine($"?? SimpleListPopup: Could not handle popup blocking: {modalEx.Message}");
                 }
+            }
+        }
+    }
+
+    private sealed class PopupItemHostView : ContentView
+    {
+        private readonly SimpleListPopup _owner;
+
+        public PopupItemHostView(SimpleListPopup owner)
+        {
+            _owner = owner;
+        }
+
+        protected override void OnBindingContextChanged()
+        {
+            base.OnBindingContextChanged();
+
+            if (BindingContext is object item)
+            {
+                Content = _owner.CreateViewForItem(item, _owner.PrimaryTextColor, _owner._secondaryTextColor);
+            }
+            else
+            {
+                Content = new BoxView { HeightRequest = 0, Opacity = 0 };
             }
         }
     }
