@@ -1,226 +1,82 @@
 # PROJECT-FILES.md
 
-<!-- This file will contain information about the project structure and file organization of the FoodBook App -->
+Aktualny, skrócony opis struktury repozytorium FoodbookApp.
+Dokument ma charakter „high-level + kluczowe punkty orientacyjne” i nie zawiera pełnego, ręcznie utrzymywanego spisu wszystkich plików.
 
-Kompletny spis plik�w projektu FoodbookApp (bez plik�w tymczasowych bin/obj poza artefaktami platform � mo�na oczy�ci� przy potrzebie). Stan na moment generacji.
+## 1) Struktura repo (high-level)
 
-## Struktura katalog�w (high-level)FoodbookApp/
-??? App.xaml.cs
-??? AppShell.xaml / AppShell.xaml.cs
-??? FoodbookApp.csproj
-??? MauiProgram.cs
-??? Data/
-??? Models/
-??? Services/
-??? ViewModels/
-??? Views/
-??? Converters/
-??? Localization/
-??? Resources/
-?   ??? AppIcon/
-?   ??? Fonts/
-?   ??? Images/
-?   ??? Raw/
-?   ??? Splash/
-?   ??? Styles/
-??? Platforms/
-?   ??? Android/
-?   ??? iOS/
-?   ??? MacCatalyst/
-?   ??? Tizen/
-?   ??? Windows/
-??? Properties/
-??? AGENTS.md
-??? README.md (je�li istnieje w katalogu g��wnym)
-??? DOCUMENTATION-GUIDE.md
-??? PROJECT-FILES.md
-## Pliki �r�d�owe C# (code)
-### Root
-- App.xaml.cs  
-- AppShell.xaml  
-- AppShell.xaml.cs  
-- MauiProgram.cs  
-- FoodbookApp.csproj
+```text
+FoodbookApp/
+├── FoodbookApp.App/      # Główna aplikacja .NET MAUI
+└── FoodbookApp.Tests/    # Testy (xUnit)
+```
 
-### Data
-- Data/AppDbContext.cs  
-- Data/SeedData.cs
+## 2) Moduły aplikacji (`FoodbookApp.App`)
 
-### Models
-- Models/Ingredient.cs  
-- Models/PlannedMeal.cs  
-- Models/PlannerDay.cs  
-- Models/Plan.cs  
-- Models/Recipe.cs
+```text
+FoodbookApp.App/
+├── Data/                 # EF Core DbContext + migracje
+│   └── Migrations/
+├── Models/               # Modele domenowe i kontrakty danych
+│   └── DTOs/
+├── Services/             # Logika aplikacyjna i integracje
+│   ├── Auth/             # Uwierzytelnianie
+│   ├── Supabase/         # Synchronizacja / usługi zewnętrzne
+│   └── Archive/          # Archiwizacja danych
+├── ViewModels/           # MVVM ViewModels
+├── Views/                # Widoki XAML + code-behind
+│   └── Components/       # Komponenty UI
+├── Converters/           # Konwertery bindingów
+├── Localization/         # Pliki .resx i designer
+├── Resources/            # Obrazy, style, fonty, raw assets
+├── Platforms/            # Kod specyficzny dla Android/iOS/Windows/macOS/Tizen
+├── Properties/           # Konfiguracja uruchamiania
+├── DOCS/                 # Dokumentacja projektu
+├── Interfaces/           # Interfejsy współdzielone
+├── Messages/             # Typy komunikatów
+├── Utils/                # Narzędzia pomocnicze
+├── Scripts/              # Skrypty pomocnicze
+└── Trimming/             # Konfiguracja trimowania/AOT
+```
 
-### Services (interfejsy + implementacje + lokalizacja + importer)
-- Services/IIngredientService.cs  
-- Services/ILocalizationService.cs  
-- Services/IPlannerService.cs  
-- Services/IPlanService.cs  
-- Services/IRecipeService.cs  
-- Services/IShoppingListService.cs  
-- Services/IngredientService.cs  
-- Services/LocalizationResourceManager.cs  
-- Services/LocalizationService.cs  
-- Services/PlannerService.cs  
-- Services/PlanService.cs  
-- Services/RecipeImporter.cs  
-- Services/RecipeService.cs  
-- Services/ShoppingListService.cs  
-- Services/TranslateExtension.cs
+### Uwaga o modułach wymaganych przez standard projektu
+- `Components`: obecnie utrzymywane jako `Views/Components/`.
+- `Helpers`: odpowiedniki narzędzi pomocniczych znajdują się w `Utils/`.
+- `Behaviors`: obecnie brak wydzielonego katalogu top-level `Behaviors/` (dodać przy pierwszym behaviorze współdzielonym).
 
-### ViewModels
-- ViewModels/AddRecipeViewModel.cs  
-- ViewModels/ArchiveViewModel.cs  
-- ViewModels/HomeViewModel.cs  
-- ViewModels/IngredientFormViewModel.cs  
-- ViewModels/IngredientsViewModel.cs  
-- ViewModels/PlannedMealFormViewModel.cs  
-- ViewModels/PlannerViewModel.cs  
-- ViewModels/RecipeViewModel.cs  
-- ViewModels/SettingsViewModel.cs  
-- ViewModels/ShoppingListDetailViewModel.cs  
-- ViewModels/ShoppingListViewModel.cs
+## 3) Kluczowe pliki startowe (`FoodbookApp.App`)
 
-### Converters
-- Converters/BoolToColorConverter.cs  
-- Converters/InvertedBoolConverter.cs
+- `FoodbookApp.App/FoodbookApp.App.csproj`
+- `FoodbookApp.App/MauiProgram.cs`
+- `FoodbookApp.App/App.xaml`, `FoodbookApp.App/App.xaml.cs`
+- `FoodbookApp.App/AppShell.xaml`, `FoodbookApp.App/AppShell.xaml.cs`
 
-### Views (XAML + code-behind)
-- Views/AddRecipePage.xaml  
-- Views/AddRecipePage.xaml.cs  
-- Views/ArchivePage.xaml  
-- Views/ArchivePage.xaml.cs  
-- Views/HomePage.xaml  
-- Views/HomePage.xaml.cs  
-- Views/IngredientFormPage.xaml  
-- Views/IngredientFormPage.xaml.cs  
-- Views/IngredientsPage.xaml  
-- Views/IngredientsPage.xaml.cs  
-- Views/MealFormPage.xaml  
-- Views/MealFormPage.xaml.cs  
-- Views/PlannerPage.xaml  
-- Views/PlannerPage.xaml.cs  
-- Views/RecipesPage.xaml  
-- Views/RecipesPage.xaml.cs  
-- Views/SettingsPage.xaml  
-- Views/SettingsPage.xaml.cs  
-- Views/ShoppingListDetailPage.xaml  
-- Views/ShoppingListDetailPage.xaml.cs  
-- Views/ShoppingListPage.xaml  
-- Views/ShoppingListPage.xaml.cs
+## 4) Testy (`FoodbookApp.Tests`)
 
-## Lokalizacja (Resources .resx + generowane Designery)
-- Localization/AddRecipePageResources.resx  
-- Localization/AddRecipePageResources.pl-PL.resx  
-- Localization/AddRecipePageResources.Designer.cs  
-- Localization/ArchivePageResources.resx  
-- Localization/ArchivePageResources.pl-PL.resx  
-- Localization/ArchivePageResources.Designer.cs  
-- Localization/ButtonResources.resx  
-- Localization/ButtonResources.pl-PL.resx  
-- Localization/ButtonResources.Designer.cs  
-- Localization/HomePageResources.resx  
-- Localization/HomePageResources.pl-PL.resx  
-- Localization/HomePageResources.Designer.cs  
-- Localization/IngredientFormPageResources.resx  
-- Localization/IngredientFormPageResources.pl-PL.resx  
-- Localization/IngredientFormPageResources.Designer.cs  
-- Localization/IngredientsPageResources.resx  
-- Localization/IngredientsPageResources.pl-PL.resx  
-- Localization/IngredientsPageResources.Designer.cs  
-- Localization/MealFormPageResources.resx  
-- Localization/MealFormPageResources.pl-PL.resx  
-- Localization/MealFormPageResources.Designer.cs  
-- Localization/PlannerPageResources.resx  
-- Localization/PlannerPageResources.pl-PL.resx  
-- Localization/PlannerPageResources.Designer.cs  
-- Localization/RecipesPageResources.resx  
-- Localization/RecipesPageResources.pl-PL.resx  
-- Localization/RecipesPageResources.Designer.cs  
-- Localization/SettingsPageResources.resx  
-- Localization/SettingsPageResources.pl-PL.resx  
-- Localization/SettingsPageResources.Designer.cs  
-- Localization/ShoppingListDetailPageResources.resx  
-- Localization/ShoppingListDetailPageResources.pl-PL.resx  
-- Localization/ShoppingListDetailPageResources.Designer.cs  
-- Localization/ShoppingListPageResources.resx  
-- Localization/ShoppingListPageResources.pl-PL.resx  
-- Localization/ShoppingListPageResources.Designer.cs  
-- Localization/TabBarResources.resx  
-- Localization/TabBarResources.pl-PL.resx  
-- Localization/TabBarResources.Designer.cs
+```text
+FoodbookApp.Tests/
+├── FoodbookApp.Tests.csproj
+├── *Tests.cs             # Testy jednostkowe i komponentowe
+```
 
-## Zasoby (Resources)
-### AppIcon
-- Resources/AppIcon/appicon.png  
-- Resources/AppIcon/appicon.svg  
-- Resources/AppIcon/appiconfg.svg
+Przykładowe obszary pokryte testami: baza danych, składniki, przepisy, planner, archiwizacja, motywy oraz auth (Supabase).
 
-### Fonts
-- Resources/Fonts/OpenSans-Regular.ttf  
-- Resources/Fonts/OpenSans-Semibold.ttf
+## 5) Nowe obszary funkcjonalne (istotne dla orientacji)
 
-### Images
-- Resources/Images/chef_hat.png  
-- Resources/Images/event_list.png  
-- Resources/Images/event_upcoming.png  
-- Resources/Images/grocery.png  
-- Resources/Images/home.png
+- DTO: `FoodbookApp.App/Models/DTOs/`
+- Auth: `FoodbookApp.App/Services/Auth/`
+- Sync / integracje zewnętrzne: `FoodbookApp.App/Services/Supabase/`
+- Migracje EF Core: `FoodbookApp.App/Data/Migrations/`
 
-### Raw
-- Resources/Raw/AboutAssets.txt  
-- Resources/Raw/ingredients.json
+## 6) Zasada utrzymania tego dokumentu
 
-### Splash
-- Resources/Splash/appsplash.png  
-- Resources/Splash/splash.svg
+Zamiast pełnego wyliczania wszystkich plików utrzymujemy tylko:
+1. strukturę high-level,
+2. kluczowe katalogi modułów,
+3. najważniejsze pliki startowe,
+4. katalog testów i główne obszary funkcjonalne.
 
-### Styles
-- Resources/Styles/Colors.xaml  
-- Resources/Styles/Styles.xaml
-
-## Platforms
-### Android
-- Platforms/Android/AndroidManifest.xml  
-- Platforms/Android/MainActivity.cs  
-- Platforms/Android/MainApplication.cs  
-- Platforms/Android/Resources/values/colors.xml
-
-### iOS
-- Platforms/iOS/AppDelegate.cs  
-- Platforms/iOS/Info.plist  
-- Platforms/iOS/Program.cs  
-- Platforms/iOS/Resources/PrivacyInfo.xcprivacy
-
-### MacCatalyst
-- Platforms/MacCatalyst/AppDelegate.cs  
-- Platforms/MacCatalyst/Entitlements.plist  
-- Platforms/MacCatalyst/Info.plist  
-- Platforms/MacCatalyst/Program.cs
-
-### Tizen
-- Platforms/Tizen/Main.cs  
-- Platforms/Tizen/tizen-manifest.xml
-
-### Windows
-- Platforms/Windows/App.xaml  
-- Platforms/Windows/App.xaml.cs  
-- Platforms/Windows/app.manifest  
-- Platforms/Windows/Package.appxmanifest
-
-## Properties
-- Properties/launchSettings.json
-
-## Dokumentacja / Meta
-- AGENTS.md  
-- DOCUMENTATION-GUIDE.md  
-- PROJECT-FILES.md  
-- README.md (je�eli w repo; nie zawsze widoczny w tej li�cie)  
-
-## Wygenerowane / Tymczasowe (przyk�ad � mo�na pomin�� przy przegl�dzie kodu)
-Pliki w katalogach obj/ i bin/ zawieraj� artefakty kompilacji (AssemblyInfo, XamlTypeInfo, zasoby wygenerowane przez Resizetizer itd.) i nie s� r�cznie edytowane. Przy potrzebie pe�nego audytu mo�na je dopisa�.
+Przy każdej zmianie struktury katalogów (dodanie, usunięcie, przeniesienie modułu) zaktualizuj sekcje 1–5.
 
 ---
-**Uwaga**: Je�li dodasz nowe modu�y (np. Tests/, Scripts/, Tools/), zaktualizuj ten dokument.
+**Ostatnio zweryfikowano strukturę:** 2026-03-06
