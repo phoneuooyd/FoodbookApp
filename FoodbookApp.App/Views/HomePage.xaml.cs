@@ -45,14 +45,7 @@ public partial class HomePage : ContentPage, ITabLoadable
         {
             if (_hasLoadedOnce)
             {
-        await DisplayAlert(
-            GetHomeText("ProfileFetchJwtDebugTitle", "Debug"),
-            GetHomeText("ProfileFetchJwtDebugMessage", "ok"),
-            GetButtonText("OK", "OK"));
-                await DisplayAlert(
-                    GetHomeText("ProfileFetchJwtTestTitle", "Test"),
-                    GetHomeText("ProfileFetchJwtTestMessage", "Button works!"),
-                    GetButtonText("OK", "OK"));
+                try
                 {
                     await ViewModel.LoadAsync();
                 }
@@ -63,32 +56,6 @@ public partial class HomePage : ContentPage, ITabLoadable
             }
             // First appearance: skip — TabBarComponent.TriggerInitialLoadAsync handles the initial load
             _hasLoadedOnce = true;
-        }
-    }
-
-    private async void OnProfileFetchJwtClicked(object sender, EventArgs e)
-    {
-        await DisplayAlert("dupa", "ok", "ok");
-        System.Diagnostics.Debug.WriteLine("[HomePage] ===== BUTTON CLICKED - SYNC TEST =====");
-        
-        // Najtuplejszy mo¿liwy test - bez DisplayAlert, bez async
-        int testValue = 42;
-        System.Diagnostics.Debug.WriteLine($"[HomePage] Test sync code executed: {testValue}");
-        
-        // Teraz spróbuj DisplayAlert
-        try
-        {
-            System.Diagnostics.Debug.WriteLine("[HomePage] Before DisplayAlert");
-            MainThread.BeginInvokeOnMainThread(async () =>
-            {
-                System.Diagnostics.Debug.WriteLine("[HomePage] Inside MainThread");
-                await DisplayAlert("TEST", "Button works!", "OK");
-                System.Diagnostics.Debug.WriteLine("[HomePage] After DisplayAlert");
-            });
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[HomePage] Exception in click handler: {ex.Message}");
         }
     }
 
@@ -343,4 +310,3 @@ public partial class HomePage : ContentPage, ITabLoadable
         => ButtonResources.ResourceManager.GetString(key) ?? fallback;
 
 }
-
