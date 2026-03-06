@@ -6,6 +6,7 @@ using Foodbook.Models;
 using Foodbook.ViewModels;
 using Foodbook.Views.Base;
 using Foodbook.Views.Components;
+using FoodbookApp.Localization;
 
 namespace Foodbook.Views;
 
@@ -205,7 +206,7 @@ public partial class ShoppingListDetailPage : ContentPage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Load error: {ex.Message}");
-            await DisplayAlert("B³¹d", "Nie mo¿na za³adowaæ listy zakupów", "OK");
+            await DisplayAlert(GetShoppingListText("LoadErrorTitle", "Error"), GetShoppingListText("LoadErrorMessage", "Unable to load shopping list."), GetButtonText("OK", "OK"));
         }
     }
 
@@ -241,7 +242,11 @@ public partial class ShoppingListDetailPage : ContentPage
             {
                 MainThread.BeginInvokeOnMainThread(async () =>
                 {
-                    bool leave = await DisplayAlert("Potwierdzenie", "Masz niezapisane zmiany. Czy chcesz opuœciæ stronê bez zapisu?", "Tak", "Nie");
+                    bool leave = await DisplayAlert(
+                        GetShoppingListText("UnsavedChangesConfirmTitle", "Confirmation"),
+                        GetShoppingListText("UnsavedChangesConfirmMessage", "You have unsaved changes. Do you want to leave this page without saving?"),
+                        GetButtonText("Yes", "Yes"),
+                        GetButtonText("No", "No"));
                     if (leave)
                     {
                         try { _viewModel.DiscardChanges(); } catch { }
@@ -290,7 +295,11 @@ public partial class ShoppingListDetailPage : ContentPage
                 e.Cancel();
                 MainThread.BeginInvokeOnMainThread(async () =>
                 {
-                    bool leave = await DisplayAlert("Potwierdzenie", "Masz niezapisane zmiany. Czy chcesz opuœciæ stronê bez zapisu?", "Tak", "Nie");
+                    bool leave = await DisplayAlert(
+                        GetShoppingListText("UnsavedChangesConfirmTitle", "Confirmation"),
+                        GetShoppingListText("UnsavedChangesConfirmMessage", "You have unsaved changes. Do you want to leave this page without saving?"),
+                        GetButtonText("Yes", "Yes"),
+                        GetButtonText("No", "No"));
                     if (leave)
                     {
                         try { _viewModel.DiscardChanges(); } catch { }
@@ -318,6 +327,12 @@ public partial class ShoppingListDetailPage : ContentPage
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] OnShellNavigating error: {ex.Message}");
         }
     }
+
+    private static string GetShoppingListText(string key, string fallback)
+        => ShoppingListDetailPageResources.ResourceManager.GetString(key) ?? fallback;
+
+    private static string GetButtonText(string key, string fallback)
+        => ButtonResources.ResourceManager.GetString(key) ?? fallback;
 
     #region Component Event Handlers
 

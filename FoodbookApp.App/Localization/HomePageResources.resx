@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <root>
 	<resheader name="resmimetype">
 		<value>text/microsoft-resx</value>
@@ -85,7 +85,7 @@
     <value>Exit</value>
   </data>
 
-	<!-- Profile tile -->
+	
 	<data name="Profile" xml:space="preserve">
     <value>Profile</value>
   </data>
@@ -102,4 +102,4 @@
 	<data name="PortionsFormat" xml:space="preserve">
   <value>({0} portions)</value>
 </data>
-</root>
+<data name="ProfileOpenErrorTitle" xml:space="preserve"><value>Error</value></data><data name="ProfileOpenErrorMessage" xml:space="preserve"><value>Unable to open profile page.</value></data><data name="ProfileFetchJwtDebugTitle" xml:space="preserve"><value>Debug</value></data><data name="ProfileFetchJwtDebugMessage" xml:space="preserve"><value>ok</value></data><data name="ProfileFetchJwtTestTitle" xml:space="preserve"><value>Test</value></data><data name="ProfileFetchJwtTestMessage" xml:space="preserve"><value>Button works!</value></data></root>
