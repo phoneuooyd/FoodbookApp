@@ -325,10 +325,34 @@ Jeśli AI-generated code ma problemy:
 - [ ] No memory leaks w ViewModels
 - [ ] Platform-specific code w Platforms/
 
+## Obowiązki po zmianach w kodzie
+
+Po każdej zmianie w kodzie należy przeanalizować i w razie potrzeby zaktualizować:
+- `FoodbookApp.App/DOCS/DOCUMENTATION-GUIDE.md`
+- `FoodbookApp.App/DOCS/ARCHITECTURE.md`
+- `FoodbookApp.App/DOCS/PROJECT-FILES.md`
+
+## Jakość kodu (Sonar)
+
+Każda zmiana w kodzie .NET musi być zgodna z zasadami jakości SonarLint/SonarQube.
+
+Minimalne oczekiwania jakościowe:
+- usuwanie code smell na etapie implementacji,
+- unikanie duplikacji kodu (DRY),
+- poprawna i przewidywalna obsługa wyjątków,
+- brak martwego kodu (unused code),
+- zgodność z nullable reference types,
+- stosowanie dobrych praktyk async/await.
+
+### Checklista przed zamknięciem zadania
+- [ ] Kod został zaktualizowany i działa zgodnie z wymaganiem.
+- [ ] Dokumentacja została przeanalizowana i zaktualizowana tam, gdzie to potrzebne.
+- [ ] Kod spełnia minimalne wymagania jakościowe Sonar.
+
 ---
 
-**Ostatnia aktualizacja**: 2.11.2025  
-**Wersja**: 1.1
+**Ostatnia aktualizacja**: 6.03.2026  
+**Wersja**: 1.2
 **Autor**: phoneuyood
 
 ---
