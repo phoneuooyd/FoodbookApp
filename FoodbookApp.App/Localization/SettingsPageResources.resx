@@ -374,4 +374,8 @@
   <data name="UpdateIngredientsButton" xml:space="preserve">
     <value>Update ingredient database</value>
   </data>
+
+  <data name="DeduplicateIngredientsTitle" xml:space="preserve"><value>Remove duplicate ingredients</value></data>
+  <data name="DeduplicateIngredientsDescription" xml:space="preserve"><value>Cleans locally duplicated base ingredients (name + macros).</value></data>
+  <data name="DeduplicateIngredientsButton" xml:space="preserve"><value>Remove duplicates</value></data>
 </root>

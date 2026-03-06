@@ -308,4 +308,8 @@
   <data name="UpdateIngredientsTitle" xml:space="preserve"><value>재료 데이터베이스 업데이트</value></data>
   <data name="UpdateIngredientsDescription" xml:space="preserve"><value>내장된 ingredients.json 파일에서 누락된 재료를 추가합니다. 기존 재료는 덮어쓰지 않으며 삭제하지 않습니다.</value></data>
   <data name="UpdateIngredientsButton" xml:space="preserve"><value>재료 업데이트</value></data>
+
+  <data name="DeduplicateIngredientsTitle" xml:space="preserve"><value>중복 재료 제거</value></data>
+  <data name="DeduplicateIngredientsDescription" xml:space="preserve"><value>로컬에 중복된 기본 재료(이름 + 매크로)를 정리합니다.</value></data>
+  <data name="DeduplicateIngredientsButton" xml:space="preserve"><value>중복 제거</value></data>
 </root>

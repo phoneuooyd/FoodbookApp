@@ -90,4 +90,8 @@
   <data name="UpdateIngredientsTitle" xml:space="preserve"><value>Actualizar base de ingredientes</value></data>
   <data name="UpdateIngredientsDescription" xml:space="preserve"><value>Agrega ingredientes que faltan desde el archivo ingredients.json embebido. No sobrescribe ni elimina ingredientes existentes.</value></data>
   <data name="UpdateIngredientsButton" xml:space="preserve"><value>Actualizar ingredientes</value></data>
+
+  <data name="DeduplicateIngredientsTitle" xml:space="preserve"><value>Eliminar ingredientes duplicados</value></data>
+  <data name="DeduplicateIngredientsDescription" xml:space="preserve"><value>Limpia ingredientes base duplicados localmente (nombre + macros).</value></data>
+  <data name="DeduplicateIngredientsButton" xml:space="preserve"><value>Eliminar duplicados</value></data>
 </root>

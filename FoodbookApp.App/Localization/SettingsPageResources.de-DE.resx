@@ -91,4 +91,8 @@
   <data name="UpdateIngredientsTitle" xml:space="preserve"><value>Zutaten-Datenbank aktualisieren</value></data>
   <data name="UpdateIngredientsDescription" xml:space="preserve"><value>Fügt fehlende Zutaten aus der eingebetteten ingredients.json Datei hinzu. Überschreibt oder entfernt bestehende Zutaten nicht.</value></data>
   <data name="UpdateIngredientsButton" xml:space="preserve"><value>Zutaten aktualisieren</value></data>
+
+  <data name="DeduplicateIngredientsTitle" xml:space="preserve"><value>Doppelte Zutaten entfernen</value></data>
+  <data name="DeduplicateIngredientsDescription" xml:space="preserve"><value>Bereinigt lokal doppelte Basiszutaten (Name + Makros).</value></data>
+  <data name="DeduplicateIngredientsButton" xml:space="preserve"><value>Duplikate entfernen</value></data>
 </root>
