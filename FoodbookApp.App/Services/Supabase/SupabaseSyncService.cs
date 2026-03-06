@@ -27,6 +27,8 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
 
     private const int MaxRetryCount = 3;
     private const int InitialSyncBatchRequestSize = 500;
+    private const int QueueProcessingBatchSize = 50;
+    private static readonly TimeSpan InProgressRecoveryThreshold = TimeSpan.FromMinutes(5);
 
     // Error codes that should stop sync immediately (RLS violations, auth errors)
     private static readonly string[] FatalErrorCodes = new[] { "42501", "403", "401", "PGRST301" };
@@ -580,14 +582,13 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             state.UpdatedUtc = DateTime.UtcNow;
             await db.SaveChangesAsync(ct);
 
-            var pending = await db.SyncQueue
-                .Where(e => e.AccountId == accountId.Value && e.Status == SyncEntryStatus.Pending)
-                .OrderBy(e => e.Priority)
-                .ThenBy(e => e.CreatedUtc)
-                .ToListAsync(ct);
+            var recoveredEntries = await RecoverStaleInProgressEntriesAsync(db, accountId.Value, ct);
+            if (recoveredEntries > 0)
+            {
+                Log($"Recovered {recoveredEntries} stale in-progress queue entries");
+            }
 
-            var totalPending = pending.Count;
-
+            var totalPending = await GetPendingCountAsync(db, accountId.Value, ct);
             Log($"Processing queue: {totalPending} items pending");
 
             if (totalPending == 0)
@@ -601,64 +602,26 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 return SyncResult.Ok(0, 0, sw.Elapsed);
             }
 
-            foreach (var entry in pending)
+            while (fatalError == null)
             {
-                entry.Status = SyncEntryStatus.InProgress;
-                entry.LastAttemptUtc = DateTime.UtcNow;
-            }
-            await db.SaveChangesAsync(ct);
+                var batch = await GetPendingBatchAsync(db, accountId.Value, QueueProcessingBatchSize, ct);
+                if (batch.Count == 0)
+                    break;
 
-            var batchResult = await TryProcessInitialSyncBatchesAsync(crud, db, pending, totalPending, ct);
-            processed += batchResult.Processed;
-            failed += batchResult.Failed;
-            fatalError = batchResult.FatalError;
+                MarkEntriesInProgress(batch);
+                await db.SaveChangesAsync(ct);
 
-            if (fatalError == null)
-            {
-                foreach (var entry in pending)
-                {
-                    if (batchResult.HandledEntryIds.Contains(entry.Id))
-                        continue;
-
-                    ct.ThrowIfCancellationRequested();
-
-                    try
-                    {
-                        await ProcessSingleEntryAsync(entry, ct);
-
-                        entry.Status = SyncEntryStatus.Completed;
-                        entry.SyncedUtc = DateTime.UtcNow;
-                        processed++;
-
-                        RaiseSyncProgress(totalPending, processed, failed, entry.EntityType);
-                    }
-                    catch (Exception ex)
-                    {
-                        entry.RetryCount++;
-                        entry.LastError = ex.Message;
-                        entry.Status = entry.RetryCount >= MaxRetryCount ? SyncEntryStatus.Abandoned : SyncEntryStatus.Failed;
-                        failed++;
-                        Log($"Error processing entry {entry.EntityId}: {ex.Message}");
-
-                        if (IsFatalError(ex.Message))
-                        {
-                            fatalError = ex.Message;
-                            Log($"FATAL ERROR detected - stopping sync immediately: {ex.Message}");
-                            entry.Status = SyncEntryStatus.Abandoned;
-                            await db.SaveChangesAsync(ct);
-                            break;
-                        }
-                    }
-
-                    await db.SaveChangesAsync(ct);
-                }
+                var batchResult = await ProcessPendingBatchAsync(crud, db, batch, totalPending, processed, failed, ct);
+                processed += batchResult.Processed;
+                failed += batchResult.Failed;
+                fatalError = batchResult.FatalError;
             }
 
             if (fatalError != null)
             {
                 state.Status = SyncStatus.Error;
                 state.LastSyncError = $"Sync stopped: {fatalError}";
-                state.PendingItemsCount = await GetPendingCountAsync(ct);
+                state.PendingItemsCount = await GetPendingCountAsync(db, accountId.Value, ct);
                 state.UpdatedUtc = DateTime.UtcNow;
                 await db.SaveChangesAsync(ct);
 
@@ -667,7 +630,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 return SyncResult.Error($"Sync stopped: {fatalError}", failed);
             }
 
-            var remainingPending = await GetPendingCountAsync(ct);
+            var remainingPending = await GetPendingCountAsync(db, accountId.Value, ct);
 
             state.LastSyncUtc = DateTime.UtcNow;
             state.TotalItemsSynced += processed;
@@ -691,11 +654,146 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         }
     }
 
+    private async Task<int> RecoverStaleInProgressEntriesAsync(AppDbContext db, Guid accountId, CancellationToken ct)
+    {
+        var recoveryThresholdUtc = DateTime.UtcNow - InProgressRecoveryThreshold;
+        var staleEntries = await db.SyncQueue
+            .Where(e => e.AccountId == accountId
+                && e.Status == SyncEntryStatus.InProgress
+                && (!e.LastAttemptUtc.HasValue || e.LastAttemptUtc.Value <= recoveryThresholdUtc))
+            .ToListAsync(ct);
+
+        if (staleEntries.Count == 0)
+            return 0;
+
+        foreach (var entry in staleEntries)
+        {
+            entry.Status = SyncEntryStatus.Pending;
+        }
+
+        await db.SaveChangesAsync(ct);
+        return staleEntries.Count;
+    }
+
+    private async Task<List<SyncQueueEntry>> GetPendingBatchAsync(AppDbContext db, Guid accountId, int batchSize, CancellationToken ct)
+    {
+        return await db.SyncQueue
+            .Where(e => e.AccountId == accountId && e.Status == SyncEntryStatus.Pending)
+            .OrderBy(e => e.Priority)
+            .ThenBy(e => e.CreatedUtc)
+            .Take(batchSize)
+            .ToListAsync(ct);
+    }
+
+    private static Task<int> GetPendingCountAsync(AppDbContext db, Guid accountId, CancellationToken ct)
+    {
+        return db.SyncQueue.CountAsync(e => e.AccountId == accountId && e.Status == SyncEntryStatus.Pending, ct);
+    }
+
+    private static void MarkEntriesInProgress(IEnumerable<SyncQueueEntry> entries)
+    {
+        var attemptUtc = DateTime.UtcNow;
+        foreach (var entry in entries)
+        {
+            entry.Status = SyncEntryStatus.InProgress;
+            entry.LastAttemptUtc = attemptUtc;
+        }
+    }
+
+    private async Task<QueueBatchProcessResult> ProcessPendingBatchAsync(
+        ISupabaseCrudService crud,
+        AppDbContext db,
+        List<SyncQueueEntry> batch,
+        int totalPending,
+        int processedSoFar,
+        int failedSoFar,
+        CancellationToken ct)
+    {
+        var handledEntryIds = new HashSet<Guid>();
+        var processed = 0;
+        var failed = 0;
+
+        var initialBatchResult = await TryProcessInitialSyncBatchesAsync(
+            crud,
+            db,
+            batch,
+            totalPending,
+            processedSoFar,
+            failedSoFar,
+            ct);
+
+        processed += initialBatchResult.Processed;
+        failed += initialBatchResult.Failed;
+        handledEntryIds.UnionWith(initialBatchResult.HandledEntryIds);
+
+        if (initialBatchResult.FatalError != null)
+        {
+            ResetUnhandledEntriesToPending(batch, handledEntryIds);
+            await db.SaveChangesAsync(ct);
+            return new QueueBatchProcessResult(processed, failed, initialBatchResult.FatalError);
+        }
+
+        foreach (var entry in batch)
+        {
+            if (handledEntryIds.Contains(entry.Id))
+                continue;
+
+            ct.ThrowIfCancellationRequested();
+
+            try
+            {
+                await ProcessSingleEntryAsync(entry, ct);
+
+                entry.Status = SyncEntryStatus.Completed;
+                entry.SyncedUtc = DateTime.UtcNow;
+                entry.LastError = null;
+                handledEntryIds.Add(entry.Id);
+                processed++;
+
+                RaiseSyncProgress(totalPending, processedSoFar + processed, failedSoFar + failed, entry.EntityType);
+            }
+            catch (Exception ex)
+            {
+                entry.RetryCount++;
+                entry.LastError = ex.Message;
+                entry.Status = entry.RetryCount >= MaxRetryCount ? SyncEntryStatus.Abandoned : SyncEntryStatus.Failed;
+                handledEntryIds.Add(entry.Id);
+                failed++;
+                Log($"Error processing entry {entry.EntityId}: {ex.Message}");
+
+                if (IsFatalError(ex.Message))
+                {
+                    entry.Status = SyncEntryStatus.Abandoned;
+                    Log($"FATAL ERROR detected - stopping sync immediately: {ex.Message}");
+                    ResetUnhandledEntriesToPending(batch, handledEntryIds);
+                    await db.SaveChangesAsync(ct);
+                    return new QueueBatchProcessResult(processed, failed, ex.Message);
+                }
+            }
+        }
+
+        await db.SaveChangesAsync(ct);
+        return new QueueBatchProcessResult(processed, failed, null);
+    }
+
+    private static void ResetUnhandledEntriesToPending(IEnumerable<SyncQueueEntry> entries, HashSet<Guid> handledEntryIds)
+    {
+        foreach (var entry in entries)
+        {
+            if (!handledEntryIds.Contains(entry.Id) && entry.Status == SyncEntryStatus.InProgress)
+            {
+                entry.Status = SyncEntryStatus.Pending;
+            }
+        }
+    }
+
     private async Task<InitialBatchProcessResult> TryProcessInitialSyncBatchesAsync(
         ISupabaseCrudService crud,
         AppDbContext db,
         List<SyncQueueEntry> pending,
         int totalPending,
+        int processedOffset,
+        int failedOffset,
         CancellationToken ct)
     {
         var handled = new HashSet<Guid>();
@@ -761,7 +859,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                     processed += chunk.Length;
                     await db.SaveChangesAsync(ct);
                     await AppendInitialSyncLogAsync($"Batch chunk success: type={group.Key.EntityType}, chunkSize={chunk.Length}, processed={processed}, failed={failed}");
-                    RaiseSyncProgress(totalPending, processed, failed, $"{group.Key.EntityType}(batch)");
+                    RaiseSyncProgress(totalPending, processedOffset + processed, failedOffset + failed, $"{group.Key.EntityType}(batch)");
                 }
                 catch (Exception ex)
                 {
@@ -815,6 +913,11 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         int Failed,
         string? FatalError,
         HashSet<Guid> HandledEntryIds);
+
+    private readonly record struct QueueBatchProcessResult(
+        int Processed,
+        int Failed,
+        string? FatalError);
 
     public Task<SyncResult> ForceSyncAsync(CancellationToken ct = default)
     {
@@ -2154,7 +2257,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         using var scope = _serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        return await db.SyncQueue.CountAsync(e => e.AccountId == accountId.Value && e.Status == SyncEntryStatus.Pending, ct);
+        return await GetPendingCountAsync(db, accountId.Value, ct);
     }
 
     public async Task ClearFailedEntriesAsync(CancellationToken ct = default)
@@ -2183,7 +2286,10 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         using var scope = _serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var failedEntries = await db.SyncQueue.Where(e => e.AccountId == accountId.Value && e.Status == SyncEntryStatus.Failed).ToListAsync(ct);
+        var failedEntries = await db.SyncQueue
+            .Where(e => e.AccountId == accountId.Value && e.Status == SyncEntryStatus.Failed)
+            .ToListAsync(ct);
+
         foreach (var entry in failedEntries)
         {
             entry.Status = SyncEntryStatus.Pending;
@@ -2196,7 +2302,9 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
+
         _syncLock.Dispose();
         _queueLock.Dispose();
         _disposed = true;

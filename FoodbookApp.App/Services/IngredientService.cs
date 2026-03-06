@@ -135,6 +135,19 @@ public class IngredientService : IIngredientService
         {
             _context.Ingredients.Add(ingredient);
             await _context.SaveChangesAsync();
+
+            if (ingredient.RecipeId == null && _syncService != null)
+            {
+                try
+                {
+                    await _syncService.QueueForSyncAsync(ingredient, SyncOperationType.Insert);
+                    System.Diagnostics.Debug.WriteLine($"[IngredientService] Queued ingredient {ingredient.Id} for Insert sync");
+                }
+                catch (Exception syncEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[IngredientService] Failed to queue insert sync: {syncEx.Message}");
+                }
+            }
             
             // Invalidate shared cache only when standalone ingredient added
             if (ingredient.RecipeId == null)

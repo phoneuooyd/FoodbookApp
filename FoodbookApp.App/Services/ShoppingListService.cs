@@ -140,6 +140,7 @@ public class ShoppingListService : IShoppingListService
             existingItem.IsChecked = isChecked;
             existingItem.Quantity = quantity;
             existingItem.Order = order;
+            existingItem.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             
             // Queue for sync (Update)
@@ -167,10 +168,24 @@ public class ShoppingListService : IShoppingListService
             Unit = unit,
             IsChecked = isChecked,
             Quantity = quantity,
-            Order = order
+            Order = order,
+            CreatedAt = DateTime.UtcNow
         };
         _context.ShoppingListItems.Add(newItem);
         await _context.SaveChangesAsync();
+
+        if (_syncService != null)
+        {
+            try
+            {
+                await _syncService.QueueForSyncAsync(newItem, SyncOperationType.Insert);
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Queued ShoppingListItem {newItem.Id} for Insert sync");
+            }
+            catch (Exception syncEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Failed to queue insert sync: {syncEx.Message}");
+            }
+        }
         return newItem.Id;
     }
 
@@ -233,7 +248,6 @@ public class ShoppingListService : IShoppingListService
             System.Diagnostics.Debug.WriteLine($"[ShoppingListService] PlanId: {planId}");
             System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Total ingredients to save: {ingredients?.Count ?? 0}");
 
-            // VALIDATION: Check plan ID
             if (planId == Guid.Empty)
             {
                 var errorMsg = "Cannot save shopping list: planId is empty";
@@ -241,7 +255,6 @@ public class ShoppingListService : IShoppingListService
                 throw new ArgumentException(errorMsg, nameof(planId));
             }
 
-            // VALIDATION: Check ingredients list
             if (ingredients == null)
             {
                 var errorMsg = "Cannot save shopping list: ingredients list is null";
@@ -249,144 +262,104 @@ public class ShoppingListService : IShoppingListService
                 throw new ArgumentNullException(nameof(ingredients), errorMsg);
             }
 
-            // STEP 1: Remove existing items
-            System.Diagnostics.Debug.WriteLine("[ShoppingListService] Step 1: Removing existing items...");
-            var existing = await _context.ShoppingListItems.Where(sli => sli.PlanId == planId).ToListAsync();
-            System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Found {existing.Count} existing items to remove");
-            
-            if (existing.Count > 0)
-            {
-                try
-                {
-                    _context.ShoppingListItems.RemoveRange(existing);
-                    await _context.SaveChangesAsync();
-                    System.Diagnostics.Debug.WriteLine($"[ShoppingListService] ? Successfully removed {existing.Count} existing items");
-                }
-                catch (Exception removeEx)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[ShoppingListService] ? ERROR removing existing items: {removeEx.Message}");
-                    throw new InvalidOperationException("Failed to remove existing shopping list items", removeEx);
-                }
-            }
-
-            // STEP 2: Normalize and validate ingredients
-            System.Diagnostics.Debug.WriteLine("[ShoppingListService] Step 2: Normalizing and validating ingredients...");
             var normalized = ingredients.Where(i => !string.IsNullOrWhiteSpace(i.Name)).ToList();
             System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Normalized {normalized.Count} valid ingredients (filtered out {ingredients.Count - normalized.Count} invalid)");
-            
+
             if (normalized.Count == 0)
             {
-                System.Diagnostics.Debug.WriteLine("[ShoppingListService] ?? WARNING: No valid ingredients to save after normalization");
+                var existingItems = await _context.ShoppingListItems.Where(sli => sli.PlanId == planId).ToListAsync();
+                if (existingItems.Count > 0)
+                {
+                    _context.ShoppingListItems.RemoveRange(existingItems);
+                    await _context.SaveChangesAsync();
+                    await QueueShoppingListDeletesAsync(existingItems);
+                }
+
                 System.Diagnostics.Debug.WriteLine("[ShoppingListService] ========== SaveAllShoppingListStatesAsync COMPLETED (empty list) ==========");
                 return;
             }
 
-            // Assign order based on position in list
-            for (int i = 0; i < normalized.Count; i++) 
+            for (int i = 0; i < normalized.Count; i++)
             {
                 normalized[i].Order = i;
+                if (normalized[i].Quantity <= 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ShoppingListService] ?? WARNING: Ingredient '{normalized[i].Name}' has invalid quantity {normalized[i].Quantity}, using 1 instead");
+                    normalized[i].Quantity = 1;
+                }
             }
-            System.Diagnostics.Debug.WriteLine($"[ShoppingListService] ? Assigned order to {normalized.Count} ingredients");
 
-            // STEP 3: Save each ingredient
-            System.Diagnostics.Debug.WriteLine("[ShoppingListService] Step 3: Saving ingredients...");
-            int savedCount = 0;
-            int failedCount = 0;
-            
+            var existing = await _context.ShoppingListItems
+                .Where(sli => sli.PlanId == planId)
+                .OrderBy(sli => sli.Order)
+                .ToListAsync();
+
+            var existingById = existing.ToDictionary(item => item.Id);
+            var matchedExistingIds = new HashSet<Guid>();
+            var insertedItems = new List<ShoppingListItem>();
+            var updatedItems = new List<ShoppingListItem>();
+
             foreach (var src in normalized)
             {
-                try
+                ShoppingListItem? entity = null;
+
+                if (src.Id != Guid.Empty && existingById.TryGetValue(src.Id, out var existingByIdItem))
                 {
-                    // Additional validation per item
-                    if (string.IsNullOrWhiteSpace(src.Name))
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[ShoppingListService] ?? Skipping ingredient with empty name at order {src.Order}");
-                        failedCount++;
-                        continue;
-                    }
+                    entity = existingByIdItem;
+                }
+                else
+                {
+                    entity = existing.FirstOrDefault(item =>
+                        !matchedExistingIds.Contains(item.Id) &&
+                        item.IngredientName == src.Name &&
+                        item.Unit == src.Unit);
+                }
 
-                    if (src.Quantity <= 0)
+                if (entity == null)
+                {
+                    entity = new ShoppingListItem
                     {
-                        System.Diagnostics.Debug.WriteLine($"[ShoppingListService] ?? WARNING: Ingredient '{src.Name}' has invalid quantity {src.Quantity}, using 1 instead");
-                        src.Quantity = 1;
-                    }
-
-                    var entity = new ShoppingListItem
-                    {
-                        Id = Guid.NewGuid(),
+                        Id = src.Id != Guid.Empty ? src.Id : Guid.NewGuid(),
                         PlanId = planId,
-                        IngredientName = src.Name!,
-                        Unit = src.Unit,
-                        IsChecked = src.IsChecked,
-                        Quantity = src.Quantity,
-                        Order = src.Order
+                        CreatedAt = DateTime.UtcNow
                     };
-                    
                     _context.ShoppingListItems.Add(entity);
-                    
-                    try
-                    {
-                        await _context.SaveChangesAsync();
-                        src.Id = entity.Id;
-                        savedCount++;
-                        
-                        if (savedCount % 10 == 0 || savedCount == normalized.Count)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Progress: {savedCount}/{normalized.Count} items saved");
-                        }
-                    }
-                    catch (Microsoft.EntityFrameworkCore.DbUpdateException dbEx)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[ShoppingListService] ? DATABASE ERROR saving ingredient '{src.Name}': {dbEx.Message}");
-                        System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Inner exception: {dbEx.InnerException?.Message}");
-                        
-                        // Remove the failed entity from context to prevent further issues
-                        _context.Entry(entity).State = Microsoft.EntityFrameworkCore.EntityState.Detached;
-                        
-                        failedCount++;
-                        
-                        // If this is a critical error (e.g., constraint violation), throw to abort
-                        if (dbEx.InnerException?.Message?.Contains("constraint", StringComparison.OrdinalIgnoreCase) == true)
-                        {
-                            throw new InvalidOperationException($"Database constraint violation when saving '{src.Name}'", dbEx);
-                        }
-                    }
-                    catch (Exception itemEx)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[ShoppingListService] ? ERROR saving ingredient '{src.Name}': {itemEx.Message}");
-                        
-                        // Remove the failed entity from context
-                        try
-                        {
-                            _context.Entry(entity).State = Microsoft.EntityFrameworkCore.EntityState.Detached;
-                        }
-                        catch { }
-                        
-                        failedCount++;
-                    }
+                    insertedItems.Add(entity);
                 }
-                catch (Exception ex)
+                else
                 {
-                    System.Diagnostics.Debug.WriteLine($"[ShoppingListService] ? ERROR processing ingredient at order {src.Order}: {ex.Message}");
-                    failedCount++;
+                    updatedItems.Add(entity);
                 }
+
+                entity.IngredientName = src.Name!;
+                entity.Unit = src.Unit;
+                entity.IsChecked = src.IsChecked;
+                entity.Quantity = src.Quantity;
+                entity.Order = src.Order;
+                entity.UpdatedAt = entity.CreatedAt == default ? null : DateTime.UtcNow;
+                matchedExistingIds.Add(entity.Id);
+                src.Id = entity.Id;
             }
 
-            // SUMMARY
+            var itemsToDelete = existing
+                .Where(item => !matchedExistingIds.Contains(item.Id))
+                .ToList();
+
+            if (itemsToDelete.Count > 0)
+            {
+                _context.ShoppingListItems.RemoveRange(itemsToDelete);
+            }
+
+            await _context.SaveChangesAsync();
+            await QueueShoppingListDeletesAsync(itemsToDelete);
+            await QueueShoppingListBatchAsync(insertedItems, SyncOperationType.Insert);
+            await QueueShoppingListBatchAsync(updatedItems.Where(item => !insertedItems.Any(inserted => inserted.Id == item.Id)).ToList(), SyncOperationType.Update);
+
             System.Diagnostics.Debug.WriteLine("[ShoppingListService] ========== SAVE SUMMARY ==========");
             System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Total ingredients: {normalized.Count}");
-            System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Successfully saved: {savedCount}");
-            System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Failed to save: {failedCount}");
-            
-            if (failedCount > 0 && savedCount == 0)
-            {
-                throw new InvalidOperationException($"Failed to save all {failedCount} shopping list items. No items were saved.");
-            }
-            else if (failedCount > 0)
-            {
-                System.Diagnostics.Debug.WriteLine($"[ShoppingListService] ?? WARNING: Partial save - {failedCount} items failed");
-            }
-            
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Inserts: {insertedItems.Count}");
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Updates: {updatedItems.Count}");
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Deletes: {itemsToDelete.Count}");
             System.Diagnostics.Debug.WriteLine("[ShoppingListService] ========== SaveAllShoppingListStatesAsync COMPLETED ==========");
         }
         catch (Exception ex)
@@ -400,7 +373,42 @@ public class ShoppingListService : IShoppingListService
                 System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Inner exception: {ex.InnerException.Message}");
             }
             
-            throw; // Re-throw to let caller handle the error
+            throw;
+        }
+    }
+
+    private async Task QueueShoppingListBatchAsync(List<ShoppingListItem> items, SyncOperationType operation)
+    {
+        if (_syncService == null || items.Count == 0)
+            return;
+
+        try
+        {
+            await _syncService.QueueBatchForSyncAsync(items, operation);
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Queued {items.Count} ShoppingListItems for {operation} sync");
+        }
+        catch (Exception syncEx)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Failed to queue {operation} batch sync: {syncEx.Message}");
+        }
+    }
+
+    private async Task QueueShoppingListDeletesAsync(List<ShoppingListItem> items)
+    {
+        if (_syncService == null || items.Count == 0)
+            return;
+
+        foreach (var item in items)
+        {
+            try
+            {
+                var deleteEntity = new ShoppingListItem { Id = item.Id, IngredientName = item.IngredientName };
+                await _syncService.QueueForSyncAsync(deleteEntity, SyncOperationType.Delete);
+            }
+            catch (Exception syncEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Failed to queue delete sync for item {item.Id}: {syncEx.Message}");
+            }
         }
     }
 }

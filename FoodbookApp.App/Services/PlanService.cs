@@ -50,10 +50,18 @@ public class PlanService : IPlanService
         _context.Plans.Add(plan);
         await _context.SaveChangesAsync();
         
-        // NOTE: Plan is metadata-only - PlannedMeals are the actual data
-        // Do NOT queue Plan for sync; only PlannedMeals are synced
-        // Cloud will auto-create Plan container when first PlannedMeal with this PlanId arrives
-        System.Diagnostics.Debug.WriteLine($"[PlanService] Created plan {plan.Id} (metadata only - sync via PlannedMeals)");
+        if (_syncService != null)
+        {
+            try
+            {
+                await _syncService.QueueForSyncAsync(plan, SyncOperationType.Insert);
+                System.Diagnostics.Debug.WriteLine($"[PlanService] Queued plan {plan.Id} for Insert sync");
+            }
+            catch (Exception syncEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PlanService] Failed to queue insert sync: {syncEx.Message}");
+            }
+        }
     }
 
     public async Task UpdatePlanAsync(Plan plan)

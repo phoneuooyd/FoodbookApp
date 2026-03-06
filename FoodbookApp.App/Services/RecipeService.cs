@@ -189,6 +189,19 @@ namespace Foodbook.Services
                 _context.Recipes.Add(recipe);
                 await _context.SaveChangesAsync();
 
+                if (_syncService != null)
+                {
+                    try
+                    {
+                        await _syncService.QueueForSyncAsync(recipe, SyncOperationType.Insert);
+                        System.Diagnostics.Debug.WriteLine($"[RecipeService] Queued recipe {recipe.Id} for Insert sync");
+                    }
+                    catch (Exception syncEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[RecipeService] Failed to queue insert sync: {syncEx.Message}");
+                    }
+                }
+
                 System.Diagnostics.Debug.WriteLine($"? Added recipe: {recipe.Name} (Id: {recipe.Id})");
 
                 // Raise events after successful save
