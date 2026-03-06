@@ -65,8 +65,8 @@ namespace Foodbook.Views
             try
             {
                 bool confirm = await DisplayAlert(
-                    SettingsPageResources.UpdateIngredientsTitle,
-                    SettingsPageResources.UpdateIngredientsDescription,
+                    GetSettingsText("UpdateIngredientsTitle", "Update ingredients database"),
+                    GetSettingsText("UpdateIngredientsDescription", "Add missing ingredients from embedded ingredients.json without overwriting existing items."),
                     GetButtonText("Yes", "Yes"),
                     GetButtonText("No", "No"));
                 if (!confirm) return;

@@ -12,6 +12,10 @@ namespace Foodbook.Views;
 
 public partial class ProfilePage : ContentPage
 {
+    private const string CloudSyncChoiceDisabled = "disabled";
+    private const string CloudSyncChoiceCloud = "cloud";
+    private const string CloudSyncChoiceLocal = "local";
+
     private ISupabaseAuthService? _supabaseAuth;
     private ISupabaseSyncService? _syncService;
     private IAccountService? _accountService;
@@ -333,59 +337,104 @@ public partial class ProfilePage : ContentPage
         }
     }
 
-    private async Task<bool> PromptAndEnableSyncAfterLoginAsync()
+    private async Task<string?> GetSavedCloudSyncChoiceAsync()
     {
-        var syncService = GetSyncService();
-        if (syncService == null)
-            return false;
-
         var storageKey = await GetCloudSyncStorageKeyAsync();
+        if (string.IsNullOrWhiteSpace(storageKey))
+            return null;
 
-        // If we have a saved choice for this account, apply it WITHOUT prompting
-        if (!string.IsNullOrWhiteSpace(storageKey))
+        try
         {
-            try
-            {
-                var saved = await SecureStorage.GetAsync(storageKey);
-                System.Diagnostics.Debug.WriteLine($"[ProfilePage] Retrieved saved cloud sync value: '{saved}' for key {storageKey}");
-                if (!string.IsNullOrWhiteSpace(saved))
-                {
-                    if (saved == "cloud")
-                    {
-                        SyncStatusLabel.IsVisible = true;
-                        SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "EnablingSync", "Enabling sync...");
-                        await syncService.EnableCloudSyncAsync(Foodbook.Models.SyncPriority.Cloud);
-                        try { _suppressCloudSyncToggled = true; CloudSyncCheckBox.IsChecked = true; } finally { _suppressCloudSyncToggled = false; }
-                        SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncEnabled", "Cloud sync enabled. Syncing data...");
-                        return true;
-                    }
-                    else if (saved == "local")
-                    {
-                        SyncStatusLabel.IsVisible = true;
-                        SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "EnablingSync", "Enabling sync...");
-                        await syncService.EnableCloudSyncAsync(Foodbook.Models.SyncPriority.Local);
-                        try { _suppressCloudSyncToggled = true; CloudSyncCheckBox.IsChecked = true; } finally { _suppressCloudSyncToggled = false; }
-                        SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncEnabled", "Cloud sync enabled. Syncing data...");
-                        return true;
-                    }
-                    else if (saved == "disabled")
-                    {
-                        await syncService.DisableCloudSyncAsync();
-                        try { _suppressCloudSyncToggled = true; CloudSyncCheckBox.IsChecked = false; } finally { _suppressCloudSyncToggled = false; }
-                        SyncStatusLabel.IsVisible = false;
-                        System.Diagnostics.Debug.WriteLine("[ProfilePage] Cloud sync explicitly disabled for this account (saved)");
-                        return true;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[ProfilePage] SecureStorage read failed in PromptAndEnableSyncAfterLoginAsync: {ex.Message}");
-                // fall through to prompt
-            }
+            var saved = await SecureStorage.GetAsync(storageKey);
+            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Retrieved saved cloud sync value: '{saved}' for key {storageKey}");
+            return string.IsNullOrWhiteSpace(saved) ? null : saved;
         }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Failed to read cloud sync choice: {ex.Message}");
+            return null;
+        }
+    }
 
-        // No saved choice -> show the prompt on UI thread
+    private async Task SaveCloudSyncChoiceAsync(Foodbook.Models.SyncPriority priority)
+    {
+        var storageKey = await GetCloudSyncStorageKeyAsync();
+        if (string.IsNullOrWhiteSpace(storageKey))
+            return;
+
+        try
+        {
+            var value = priority == Foodbook.Models.SyncPriority.Cloud ? CloudSyncChoiceCloud : CloudSyncChoiceLocal;
+            await SecureStorage.SetAsync(storageKey, value);
+            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Saved cloud sync choice to SecureStorage: {storageKey}={value}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Failed to save cloud sync choice: {ex.Message}");
+        }
+    }
+
+    private async Task SaveCloudSyncDisabledChoiceAsync()
+    {
+        var storageKey = await GetCloudSyncStorageKeyAsync();
+        if (string.IsNullOrWhiteSpace(storageKey))
+            return;
+
+        try
+        {
+            await SecureStorage.SetAsync(storageKey, CloudSyncChoiceDisabled);
+            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Saved cloud sync disabled flag to SecureStorage: {storageKey}={CloudSyncChoiceDisabled}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Failed to save cloud sync disabled flag: {ex.Message}");
+        }
+    }
+
+    private void SetCloudSyncCheckBox(bool isChecked)
+    {
+        try
+        {
+            _suppressCloudSyncToggled = true;
+            CloudSyncCheckBox.IsChecked = isChecked;
+        }
+        finally
+        {
+            _suppressCloudSyncToggled = false;
+        }
+    }
+
+    private async Task ApplySyncChoiceAsync(ISupabaseSyncService syncService, string savedChoice)
+    {
+        switch (savedChoice)
+        {
+            case CloudSyncChoiceCloud:
+                SyncStatusLabel.IsVisible = true;
+                SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "EnablingSync", "Enabling sync...");
+                await syncService.EnableCloudSyncAsync(Foodbook.Models.SyncPriority.Cloud);
+                SetCloudSyncCheckBox(true);
+                SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncEnabled", "Cloud sync enabled. Syncing data...");
+                break;
+
+            case CloudSyncChoiceLocal:
+                SyncStatusLabel.IsVisible = true;
+                SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "EnablingSync", "Enabling sync...");
+                await syncService.EnableCloudSyncAsync(Foodbook.Models.SyncPriority.Local);
+                SetCloudSyncCheckBox(true);
+                SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncEnabled", "Cloud sync enabled. Syncing data...");
+                break;
+
+            case CloudSyncChoiceDisabled:
+                await syncService.DisableCloudSyncAsync();
+                SetCloudSyncCheckBox(false);
+                SyncStatusLabel.IsVisible = false;
+                System.Diagnostics.Debug.WriteLine("[ProfilePage] Cloud sync explicitly disabled for this account (saved)");
+                break;
+        }
+    }
+
+    private async Task<Foodbook.Models.SyncPriority?> PromptForSyncPriorityAsync()
+    {
         var title = GetLocalizedTextSafe("ProfilePageResources", "CloudSyncHeader", "Cloud sync");
         var cancel = GetLocalizedTextSafe("ButtonResources", "Cancel", "Cancel");
         var cloud = GetLocalizedTextSafe("ProfilePageResources", "CloudFirstOption", "Cloud first (download from cloud first)");
@@ -394,54 +443,67 @@ public partial class ProfilePage : ContentPage
         var action = await MainThread.InvokeOnMainThreadAsync(() => DisplayActionSheet(title, cancel, null, cloud, local));
 
         if (action == cancel || action == null)
+            return null;
+
+        return action == cloud ? Foodbook.Models.SyncPriority.Cloud : Foodbook.Models.SyncPriority.Local;
+    }
+
+    private async Task RunPostEnableSyncPreferencesAsync(ISupabaseSyncService syncService, Foodbook.Models.SyncPriority priority)
+    {
+        var userId = await GetCurrentSupabaseUserIdAsync();
+        if (!userId.HasValue)
+            return;
+
+        try
+        {
+            if (priority == Foodbook.Models.SyncPriority.Cloud)
+            {
+                await syncService.LoadUserPreferencesFromCloudAsync(userId.Value);
+            }
+            else
+            {
+                await syncService.SaveUserPreferencesToCloudAsync(userId.Value);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Post-login preferences sync failed (non-fatal): {ex.Message}");
+        }
+    }
+
+    private async Task<bool> PromptAndEnableSyncAfterLoginAsync()
+    {
+        var syncService = GetSyncService();
+        if (syncService == null)
             return false;
 
-        var priority = action == cloud ? Foodbook.Models.SyncPriority.Cloud : Foodbook.Models.SyncPriority.Local;
+        var savedChoice = await GetSavedCloudSyncChoiceAsync();
+        if (!string.IsNullOrWhiteSpace(savedChoice))
+        {
+            await ApplySyncChoiceAsync(syncService, savedChoice);
+            return true;
+        }
+
+        var isEnabled = await syncService.IsCloudSyncEnabledAsync();
+        if (isEnabled)
+        {
+            System.Diagnostics.Debug.WriteLine("[ProfilePage] Cloud sync is already enabled for current account - skipping prompt");
+            SetCloudSyncCheckBox(true);
+            return true;
+        }
+
+        var priority = await PromptForSyncPriorityAsync();
+        if (!priority.HasValue)
+            return false;
 
         SyncStatusLabel.IsVisible = true;
         SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "EnablingSync", "Enabling sync...");
 
-        await syncService.EnableCloudSyncAsync(priority);
+        await syncService.EnableCloudSyncAsync(priority.Value);
+        await SaveCloudSyncChoiceAsync(priority.Value);
+        await RunPostEnableSyncPreferencesAsync(syncService, priority.Value);
 
-        // Persist user choice so we won't prompt next time
-        if (!string.IsNullOrWhiteSpace(storageKey))
-        {
-            try
-            {
-                var val = priority == Foodbook.Models.SyncPriority.Cloud ? "cloud" : "local";
-                await SecureStorage.SetAsync(storageKey, val);
-                System.Diagnostics.Debug.WriteLine($"[ProfilePage] Saved cloud sync choice to SecureStorage: {storageKey}={val}");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[ProfilePage] Failed to save cloud sync choice: {ex.Message}");
-            }
-        }
-
-        // Only AFTER enabling sync, handle cloud preferences/theme depending on priority
-        var userId = await GetCurrentSupabaseUserIdAsync();
-        if (userId.HasValue)
-        {
-            try
-            {
-                if (priority == Foodbook.Models.SyncPriority.Cloud)
-                {
-                    // Cloud-first: pull prefs/theme from cloud and apply locally
-                    await syncService.LoadUserPreferencesFromCloudAsync(userId.Value);
-                }
-                else
-                {
-                    // Local-first: push current local prefs/theme to cloud
-                    await syncService.SaveUserPreferencesToCloudAsync(userId.Value);
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[ProfilePage] Post-login preferences sync failed (non-fatal): {ex.Message}");
-            }
-        }
-
-        try { _suppressCloudSyncToggled = true; CloudSyncCheckBox.IsChecked = true; } finally { _suppressCloudSyncToggled = false; }
+        SetCloudSyncCheckBox(true);
         SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncEnabled", "Cloud sync enabled. Syncing data...");
         return true;
     }
@@ -590,54 +652,25 @@ public partial class ProfilePage : ContentPage
 
             SyncStatusLabel.IsVisible = true;
 
-            // Build storage key scoped to active account
-            string storageKey = "cloudsync.choice";
-            try
-            {
-                var tokenStore = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IAuthTokenStore>();
-                var activeAccountId = tokenStore == null ? (Guid?)null : await tokenStore.GetActiveAccountIdAsync();
-                if (activeAccountId.HasValue)
-                    storageKey = $"cloudsync.choice:{activeAccountId.Value:N}";
-            }
-            catch { }
-
             if (e.Value)
             {
-                var title = GetLocalizedTextSafe("ProfilePageResources", "CloudSyncHeader", "Cloud sync");
-                var cancel = GetLocalizedTextSafe("ButtonResources", "Cancel", "Cancel");
-                var cloud = GetLocalizedTextSafe("ProfilePageResources", "CloudFirstOption", "Cloud first (download from cloud first)");
-                var local = GetLocalizedTextSafe("ProfilePageResources", "LocalFirstOption", "Local first (upload local data first)");
+                var priority = await PromptForSyncPriorityAsync();
 
-                var action = await DisplayActionSheet(title, cancel, null, cloud, local);
-
-                if (action == cancel || action == null)
+                if (!priority.HasValue)
                 {
                     CloudSyncCheckBox.IsChecked = false;
                     SyncStatusLabel.IsVisible = false;
                     return;
                 }
 
-                var priority = action == cloud ? Foodbook.Models.SyncPriority.Cloud : Foodbook.Models.SyncPriority.Local;
-
                 SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "EnablingSync", "Enabling sync...");
                 ShowSpinner(GetLocalizedText("ProfilePageResources", "EnablingSync", "Enabling sync..."));
 
-                await syncService.EnableCloudSyncAsync(priority);
+                await syncService.EnableCloudSyncAsync(priority.Value);
+                await SaveCloudSyncChoiceAsync(priority.Value);
 
                 HideSpinner();
                 SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncEnabled", "Cloud sync enabled. Syncing data...");
-
-                // Persist user choice so we won't prompt next time
-                try
-                {
-                    var val = priority == Foodbook.Models.SyncPriority.Cloud ? "cloud" : "local";
-                    await SecureStorage.SetAsync(storageKey, val);
-                    System.Diagnostics.Debug.WriteLine($"[ProfilePage] Saved cloud sync choice to SecureStorage: {storageKey}={val}");
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[ProfilePage] Failed to save cloud sync choice: {ex.Message}");
-                }
             }
             else
             {
@@ -648,17 +681,7 @@ public partial class ProfilePage : ContentPage
 
                 HideSpinner();
                 SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncDisabled", "Cloud sync disabled");
-
-                // Persist disabled state so prompt can be shown again if desired
-                try
-                {
-                    await SecureStorage.SetAsync(storageKey, "disabled");
-                    System.Diagnostics.Debug.WriteLine($"[ProfilePage] Saved cloud sync disabled flag to SecureStorage: {storageKey}=disabled");
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[ProfilePage] Failed to save cloud sync disabled flag: {ex.Message}");
-                }
+                await SaveCloudSyncDisabledChoiceAsync();
             }
 
             await Task.Delay(2000);
