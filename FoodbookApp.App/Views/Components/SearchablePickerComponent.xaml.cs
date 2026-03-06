@@ -23,7 +23,7 @@ public partial class SearchablePickerComponent : ContentView, INotifyPropertyCha
     }
 
     public static readonly BindableProperty ItemsSourceProperty =
-        BindableProperty.Create(nameof(ItemsSource), typeof(IList<string>), typeof(SearchablePickerComponent), default(IList<string>));
+        BindableProperty.Create(nameof(ItemsSource), typeof(IEnumerable<string>), typeof(SearchablePickerComponent), default(IEnumerable<string>));
 
     public static readonly BindableProperty SelectedItemProperty =
         BindableProperty.Create(nameof(SelectedItem), typeof(string), typeof(SearchablePickerComponent), default(string), BindingMode.TwoWay, propertyChanged: OnSelectedItemChanged);
@@ -31,9 +31,9 @@ public partial class SearchablePickerComponent : ContentView, INotifyPropertyCha
     public static readonly BindableProperty PlaceholderTextProperty =
         BindableProperty.Create(nameof(PlaceholderText), typeof(string), typeof(SearchablePickerComponent), "Wybierz...");
 
-    public IList<string>? ItemsSource
+    public IEnumerable<string>? ItemsSource
     {
-        get => (IList<string>?)GetValue(ItemsSourceProperty);
+        get => (IEnumerable<string>?)GetValue(ItemsSourceProperty);
         set => SetValue(ItemsSourceProperty, value);
     }
 
