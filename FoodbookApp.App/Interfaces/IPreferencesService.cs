@@ -138,6 +138,16 @@ public interface IPreferencesService
     void SaveInstallBasicIngredients(bool install);
 
     /// <summary>
+    /// Saves selected onboarding plan choice (e.g. Free/Premium)
+    /// </summary>
+    void SavePlanChoice(string planChoice);
+
+    /// <summary>
+    /// Reads selected onboarding plan choice
+    /// </summary>
+    string GetPlanChoice();
+
+    /// <summary>
     /// Temporarily suppresses auto cloud sync for preference write operations.
     /// </summary>
     void SuppressCloudSync();
