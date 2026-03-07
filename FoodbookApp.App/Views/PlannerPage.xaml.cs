@@ -13,6 +13,8 @@ namespace Foodbook.Views
     {
         private readonly object _viewModel; // Can be PlannerViewModel or PlannerEditViewModel
         private readonly PageThemeHelper _themeHelper;
+        private readonly IFoodbookTemplateService? _templateService;
+        private readonly IFeatureAccessService? _featureAccessService;
         private bool _isInitialized;
         private bool _hasEverLoaded;
 
@@ -43,33 +45,37 @@ namespace Foodbook.Views
         public PlannerPage(PlannerViewModel viewModel)
         {
             System.Diagnostics.Debug.WriteLine("[PlannerPage] Constructor called with PlannerViewModel (NEW planner mode)");
-            
+
             InitializeComponent();
             _viewModel = viewModel;
             BindingContext = viewModel;
             _themeHelper = new PageThemeHelper();
+            _templateService = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IFoodbookTemplateService>();
+            _featureAccessService = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IFeatureAccessService>();
         }
 
         // Constructor for EDIT mode (PlannerEditViewModel)
         public PlannerPage(PlannerEditViewModel viewModel)
         {
             System.Diagnostics.Debug.WriteLine("[PlannerPage] Constructor called with PlannerEditViewModel (EDIT mode)");
-            
+
             InitializeComponent();
             _viewModel = viewModel;
             BindingContext = viewModel;
             _themeHelper = new PageThemeHelper();
+            _templateService = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IFoodbookTemplateService>();
+            _featureAccessService = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IFeatureAccessService>();
         }
 
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            
+
             System.Diagnostics.Debug.WriteLine($"[PlannerPage] OnAppearing - ViewModel type: {_viewModel.GetType().Name}, PlanId={_planId}, _pendingPlanId={_pendingPlanId}");
-            
+
             // Initialize theme and font handling
             _themeHelper.Initialize();
-            
+
             // Hook date validation once
             EnsureDatePickersHandlers();
 
@@ -77,9 +83,9 @@ namespace Foodbook.Views
             if (_viewModel is PlannerEditViewModel editVM)
             {
                 System.Diagnostics.Debug.WriteLine("[PlannerPage] ?? EDIT MODE detected");
-                
+
                 Guid planIdToLoad = Guid.Empty;
-                
+
                 // Try to get planId from QueryProperty first
                 if (_pendingPlanId.HasValue && _pendingPlanId.Value != Guid.Empty)
                 {
@@ -92,7 +98,7 @@ namespace Foodbook.Views
                     planIdToLoad = _planId;
                     System.Diagnostics.Debug.WriteLine($"[PlannerPage] Using _planId: {planIdToLoad}");
                 }
-                
+
                 // Load the plan data
                 if (planIdToLoad != Guid.Empty && !_hasEverLoaded)
                 {
@@ -115,7 +121,7 @@ namespace Foodbook.Views
                 {
                     System.Diagnostics.Debug.WriteLine("[PlannerPage] ?? WARNING: No valid planId provided for edit mode");
                 }
-                
+
                 _hasEverLoaded = true;
                 _isInitialized = true;
                 return;
@@ -125,7 +131,7 @@ namespace Foodbook.Views
             if (_viewModel is PlannerViewModel newVM)
             {
                 System.Diagnostics.Debug.WriteLine("[PlannerPage] ?? NEW PLANNER MODE detected");
-                
+
                 // If navigation provided a plan id in NEW mode, this shouldn't happen
                 // but handle it gracefully by switching to edit
                 if (_pendingPlanId.HasValue)
@@ -133,14 +139,14 @@ namespace Foodbook.Views
                     System.Diagnostics.Debug.WriteLine($"[PlannerPage] ?? WARNING: PlanId provided but using PlannerViewModel - this is unexpected");
                     _pendingPlanId = null;
                 }
-                
+
                 // Already in edit mode (returning from popup), don't reload
                 if (newVM.IsEditing)
                 {
                     System.Diagnostics.Debug.WriteLine("[PlannerPage] Already in edit mode - skipping reload (returning from popup)");
                     return;
                 }
-                
+
                 if (!_hasEverLoaded)
                 {
                     // First time loading - load fresh data
@@ -253,7 +259,7 @@ namespace Foodbook.Views
             try
             {
                 System.Diagnostics.Debug.WriteLine($"[PlannerPage] StartDate changed: {e.NewDate:yyyy-MM-dd}");
-                
+
                 // Handle both ViewModel types
                 if (_viewModel is PlannerEditViewModel editVM)
                 {
@@ -281,7 +287,7 @@ namespace Foodbook.Views
             try
             {
                 System.Diagnostics.Debug.WriteLine($"[PlannerPage] EndDate changed: {e.NewDate:yyyy-MM-dd}");
-                
+
                 // Handle both ViewModel types
                 if (_viewModel is PlannerEditViewModel editVM)
                 {
@@ -323,7 +329,7 @@ namespace Foodbook.Views
                 if (button?.BindingContext is PlannedMeal meal)
                 {
                     System.Diagnostics.Debug.WriteLine($"[PlannerPage] OnDecreasePortionsClicked: Current portions = {meal.Portions}");
-                    
+
                     if (meal.Portions > 1)
                     {
                         meal.Portions--;
@@ -345,7 +351,7 @@ namespace Foodbook.Views
                 if (button?.BindingContext is PlannedMeal meal)
                 {
                     System.Diagnostics.Debug.WriteLine($"[PlannerPage] OnIncreasePortionsClicked: Current portions = {meal.Portions}");
-                    
+
                     if (meal.Portions < 20)
                     {
                         meal.Portions++;
@@ -367,7 +373,7 @@ namespace Foodbook.Views
                 if (button?.BindingContext is PlannedMeal meal)
                 {
                     System.Diagnostics.Debug.WriteLine($"[PlannerPage] OnRemoveMealClicked: Removing meal from {meal.Date:yyyy-MM-dd}");
-                    
+
                     // Get the ViewModel and call RemoveMealCommand
                     if (_viewModel is PlannerViewModel newVM)
                     {
@@ -390,11 +396,87 @@ namespace Foodbook.Views
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
-            
+
             // Cleanup theme and font handling
             _themeHelper.Cleanup();
-            
+
             System.Diagnostics.Debug.WriteLine($"[PlannerPage] Disappearing - ViewModel type: {_viewModel.GetType().Name}");
         }
-    }
+
+
+        private async void OnPlannerMenuClicked(object? sender, EventArgs e)
+        {
+            var action = await DisplayActionSheet(
+                "Foodbook",
+                "Cancel",
+                null,
+                "Save current plan as template",
+                "Apply template");
+
+            if (action == "Save current plan as template")
+            {
+                await SaveCurrentPlanAsTemplateAsync();
+            }
+            else if (action == "Apply template")
+            {
+                await ApplyTemplateAsync();
+            }
+        }
+
+        private async Task SaveCurrentPlanAsTemplateAsync()
+        {
+            if (_templateService is null || _featureAccessService is null)
+                return;
+
+            var hasAccess = await _featureAccessService.CanUsePremiumFeatureAsync(PremiumFeature.FoodbookTemplates);
+            if (!hasAccess)
+            {
+                await DisplayAlert("Premium", "This feature is available in premium.", "OK");
+                return;
+            }
+
+            if (_planId == Guid.Empty)
+            {
+                await DisplayAlert("Save template", "First save and reopen this plan to create a template.", "OK");
+                return;
+            }
+
+            var name = await DisplayPromptAsync("Save template", "Template name");
+            if (string.IsNullOrWhiteSpace(name)) return;
+
+            var description = await DisplayPromptAsync("Save template", "Template description");
+            await _templateService.SaveTemplateFromPlanAsync(_planId, name, description, false);
+            await DisplayAlert("Save template", "Template saved.", "OK");
+        }
+
+        private async Task ApplyTemplateAsync()
+        {
+            if (_templateService is null)
+                return;
+
+            var templates = await _templateService.GetTemplatesAsync();
+            if (templates.Count == 0)
+            {
+                await DisplayAlert("Apply template", "No templates available.", "OK");
+                return;
+            }
+
+            var selectedName = await DisplayActionSheet("Apply template", "Cancel", null, templates.Select(t => t.Name).ToArray());
+            if (string.IsNullOrWhiteSpace(selectedName) || selectedName == "Cancel")
+                return;
+
+            var selected = templates.FirstOrDefault(t => t.Name == selectedName);
+            if (selected is null)
+                return;
+
+            var dateInput = await DisplayPromptAsync("Apply template", "Start date (yyyy-MM-dd)", initialValue: DateTime.Today.ToString("yyyy-MM-dd"));
+            if (string.IsNullOrWhiteSpace(dateInput) || !DateTime.TryParse(dateInput, out var startDate))
+                return;
+
+            var plan = await _templateService.ApplyTemplateAsync(selected.Id, startDate.Date);
+            await DisplayAlert("Apply template", $"Template applied ({plan.StartDate:yyyy-MM-dd} - {plan.EndDate:yyyy-MM-dd})", "OK");
+            await Shell.Current.GoToAsync($"{nameof(PlannerPage)}?planId={plan.Id}");
+        }
+
+}
 }

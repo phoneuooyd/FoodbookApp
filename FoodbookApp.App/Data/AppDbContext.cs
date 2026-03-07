@@ -16,6 +16,8 @@ namespace Foodbook.Data
         public DbSet<Folder> Folders => Set<Folder>();
         public DbSet<RecipeLabel> RecipeLabels => Set<RecipeLabel>();
         public DbSet<AuthAccount> AuthAccounts => Set<AuthAccount>();
+        public DbSet<FoodbookTemplate> FoodbookTemplates => Set<FoodbookTemplate>();
+        public DbSet<TemplateMeal> TemplateMeals => Set<TemplateMeal>();
         
         // Sync tables
         public DbSet<SyncQueueEntry> SyncQueue => Set<SyncQueueEntry>();
@@ -131,6 +133,27 @@ namespace Foodbook.Data
             modelBuilder.Entity<AuthAccount>()
                 .HasIndex(a => a.SupabaseUserId)
                 .IsUnique();
+
+            modelBuilder.Entity<FoodbookTemplate>()
+                .HasMany(t => t.Meals)
+                .WithOne(m => m.FoodbookTemplate)
+                .HasForeignKey(m => m.FoodbookTemplateId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<FoodbookTemplate>()
+                .HasIndex(t => new { t.UserId, t.Name })
+                .HasDatabaseName("IX_FoodbookTemplates_UserId_Name");
+
+            modelBuilder.Entity<TemplateMeal>()
+                .HasOne(tm => tm.Recipe)
+                .WithMany()
+                .HasForeignKey(tm => tm.RecipeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TemplateMeal>()
+                .HasIndex(tm => new { tm.FoodbookTemplateId, tm.DayOffset, tm.SlotIndex })
+                .IsUnique()
+                .HasDatabaseName("IX_TemplateMeals_Template_Day_Slot");
 
             // Sync Queue Entry configuration
             modelBuilder.Entity<SyncQueueEntry>(entity =>

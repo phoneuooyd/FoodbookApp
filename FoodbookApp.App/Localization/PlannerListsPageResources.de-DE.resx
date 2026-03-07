@@ -126,4 +126,14 @@
   <data name="PlannerTitle" xml:space="preserve">
     <value>Planer</value>
   </data>
+
+  <data name="FoodbooksTab" xml:space="preserve">
+    <value>Foodbooks</value>
+  </data>
+  <data name="ManageFoodbooksButton" xml:space="preserve">
+    <value>Manage Foodbooks</value>
+  </data>
+  <data name="FoodbookTemplateFormTitle" xml:space="preserve">
+    <value>Foodbook template</value>
+  </data>
 </root>

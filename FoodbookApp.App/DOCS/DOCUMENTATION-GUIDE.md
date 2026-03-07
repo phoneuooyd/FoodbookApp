@@ -588,3 +588,6 @@ Patrz dalsza część dokumentu (standardy dokumentowania kodu, lokalizacji, tes
 
 ---
 **Ostatnia aktualizacja**: 20.08.2025
+
+## Feature note: Foodbook templates
+When introducing schema-level features, ensure `RequiredTables` in `DatabaseService` includes new tables so startup schema validation passes on-device.
