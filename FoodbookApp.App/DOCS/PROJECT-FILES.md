@@ -80,3 +80,7 @@ Przy każdej zmianie struktury katalogów (dodanie, usunięcie, przeniesienie mo
 
 ---
 **Ostatnio zweryfikowano strukturę:** 2026-03-06
+
+## Update 2026-03-07
+
+- Archive -> Planner: dodano tryb recyklingu planu (`RecycleMode`, `sourceArchivePlanId`) z walidacją premium (`PremiumFeature.PlanRecycling`) oraz mapowaniem posiłków z planu archiwalnego do nowego tygodnia.

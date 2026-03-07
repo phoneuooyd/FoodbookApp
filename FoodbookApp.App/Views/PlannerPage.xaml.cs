@@ -9,6 +9,8 @@ using Foodbook.Views.Base;
 namespace Foodbook.Views
 {
     [QueryProperty(nameof(PlanId), "planId")]
+    [QueryProperty(nameof(RecycleMode), "recycleMode")]
+    [QueryProperty(nameof(SourceArchivePlanId), "sourceArchivePlanId")]
     public partial class PlannerPage : ContentPage, ITabLoadable
     {
         private readonly object _viewModel; // Can be PlannerViewModel or PlannerEditViewModel
@@ -38,6 +40,14 @@ namespace Foodbook.Views
         }
         private Guid _planId;
         private Guid? _pendingPlanId;
+
+        public string? RecycleMode { get; set; }
+        public string? SourceArchivePlanId { get; set; }
+
+        private bool IsRecycleModeEnabled =>
+            !string.IsNullOrWhiteSpace(RecycleMode) &&
+            bool.TryParse(RecycleMode, out var recycleMode) &&
+            recycleMode;
 
         // Constructor for NEW planner (PlannerViewModel)
         public PlannerPage(PlannerViewModel viewModel)
@@ -143,9 +153,18 @@ namespace Foodbook.Views
                 
                 if (!_hasEverLoaded)
                 {
-                    // First time loading - load fresh data
-                    System.Diagnostics.Debug.WriteLine("[PlannerPage] First load - loading fresh data (new planner)");
-                    await newVM.LoadAsync(forceReload: false);
+                    if (IsRecycleModeEnabled && Guid.TryParse(SourceArchivePlanId, out var sourceArchivePlanId))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[PlannerPage] Recycle mode ON - loading from archive plan {sourceArchivePlanId}");
+                        await newVM.LoadFromArchiveAsync(sourceArchivePlanId);
+                    }
+                    else
+                    {
+                        // First time loading - load fresh data
+                        System.Diagnostics.Debug.WriteLine("[PlannerPage] First load - loading fresh data (new planner)");
+                        await newVM.LoadAsync(forceReload: false);
+                    }
+
                     _hasEverLoaded = true;
                     _isInitialized = true;
                 }

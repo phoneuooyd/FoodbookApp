@@ -297,6 +297,90 @@ public class PlannerViewModel : INotifyPropertyChanged
         }
     }
 
+    public async Task LoadFromArchiveAsync(Guid planId)
+    {
+        if (planId == Guid.Empty)
+        {
+            return;
+        }
+
+        if (IsLoading)
+        {
+            return;
+        }
+
+        IsLoading = true;
+        try
+        {
+            var archivedPlan = await _planService.GetArchivedPlanWithMealsAsync(planId);
+            if (archivedPlan == null)
+            {
+                return;
+            }
+
+            _suppressAutoReload = true;
+            _editingPlanId = null;
+            IsEditing = false;
+
+            var today = DateTime.Today;
+            _startDate = today;
+            _endDate = today.AddDays(6);
+            OnPropertyChanged(nameof(StartDate));
+            OnPropertyChanged(nameof(EndDate));
+
+            Days.Clear();
+            Recipes.Clear();
+
+            var recipes = await _recipeService.GetRecipesAsync();
+            foreach (var recipe in recipes)
+            {
+                Recipes.Add(recipe);
+            }
+
+            for (var date = _startDate.Date; date <= _endDate.Date; date = date.AddDays(1))
+            {
+                Days.Add(new PlannerDay(date));
+            }
+
+            var sourceDays = archivedPlan.PlannedMeals
+                .GroupBy(m => m.Date.Date)
+                .OrderBy(g => g.Key)
+                .ToList();
+
+            var maxMealsPerDay = Math.Max(1, sourceDays.Count == 0 ? MealsPerDay : sourceDays.Max(g => g.Count()));
+            _mealsPerDay = maxMealsPerDay;
+            OnPropertyChanged(nameof(MealsPerDay));
+
+            for (var index = 0; index < sourceDays.Count && index < Days.Count; index++)
+            {
+                var targetDay = Days[index];
+                foreach (var meal in sourceDays[index].OrderBy(m => m.CreatedAt))
+                {
+                    var mappedRecipe = Recipes.FirstOrDefault(r => r.Id == meal.RecipeId) ?? meal.Recipe;
+                    var mappedMeal = new PlannedMeal
+                    {
+                        Date = targetDay.Date,
+                        PlanId = null,
+                        RecipeId = meal.RecipeId,
+                        Recipe = mappedRecipe,
+                        Portions = meal.Portions
+                    };
+
+                    mappedMeal.PropertyChanged += OnMealRecipeChanged;
+                    targetDay.Meals.Add(mappedMeal);
+                }
+            }
+
+            AdjustMealsPerDay();
+            _suppressAutoReload = false;
+            ClearCache();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
     public async Task LoadAsync(bool forceReload = false)
     {
         // FIXED: Don't reload if we're in edit mode and reload is suppressed

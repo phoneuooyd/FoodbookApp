@@ -42,6 +42,16 @@ public class PlanService : IPlanService
         return await _context.Plans.FindAsync(id);
     }
 
+    public async Task<Plan?> GetArchivedPlanWithMealsAsync(Guid planId)
+    {
+        return await _context.Plans
+            .Where(p => p.Id == planId && p.IsArchived && p.Type == PlanType.Planner)
+            .Include(p => p.PlannedMeals)
+                .ThenInclude(pm => pm.Recipe)
+            .FirstOrDefaultAsync();
+    }
+
+
     public async Task AddPlanAsync(Plan plan)
     {
         if (plan.Id == Guid.Empty)

@@ -588,3 +588,6 @@ Patrz dalsza część dokumentu (standardy dokumentowania kodu, lokalizacji, tes
 
 ---
 **Ostatnia aktualizacja**: 20.08.2025
+## Update 2026-03-07
+
+- Archive -> Planner: dodano tryb recyklingu planu (`RecycleMode`, `sourceArchivePlanId`) z walidacją premium (`PremiumFeature.PlanRecycling`) oraz mapowaniem posiłków z planu archiwalnego do nowego tygodnia.

@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Collections.Generic;
 
 namespace Foodbook.Models
 {
@@ -29,6 +30,8 @@ namespace Foodbook.Models
         [MaxLength(200)]
         public string? Title { get; set; }
 
+        public ICollection<PlannedMeal> PlannedMeals { get; set; } = new List<PlannedMeal>();
+
         // Timestamps
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
@@ -45,10 +48,10 @@ namespace Foodbook.Models
         [NotMapped]
         public string Name => !string.IsNullOrWhiteSpace(Title)
             ? Title!
-            : (Type == PlanType.Planner ? "Planner" : "Lista zakupÛw");
+            : (Type == PlanType.Planner ? "Planner" : "Lista zakup√≥w");
 
         // Label used for display - reflect the current type
         [NotMapped]
-        public string Label => Type == PlanType.Planner ? "Planner" : "Lista zakupÛw";
+        public string Label => Type == PlanType.Planner ? "Planner" : "Lista zakup√≥w";
     }
 }

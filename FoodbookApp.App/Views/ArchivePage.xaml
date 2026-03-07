@@ -13,15 +13,21 @@
     
     <ContentPage.Resources>
         <DataTemplate x:Key="ArchivedPlanItemTemplate" x:DataType="models:Plan">
-            <components:UniversalListItemComponent 
-                RestoreCommand="{Binding BindingContext.RestorePlanCommand, Source={x:Reference ThisPage}}"
-                DeleteCommand="{Binding BindingContext.DeletePlanCommand, Source={x:Reference ThisPage}}"
-                ShowNutritionLayout="False"
-                ShowPlanLayout="True"
-                ShowDeleteButton="True"
-                ShowArchiveButton="False"
-                ShowRestoreButton="True"
-                ShowSubtitle="False" />
+            <VerticalStackLayout Spacing="8">
+                <components:UniversalListItemComponent 
+                    RestoreCommand="{Binding BindingContext.RestorePlanCommand, Source={x:Reference ThisPage}}"
+                    DeleteCommand="{Binding BindingContext.DeletePlanCommand, Source={x:Reference ThisPage}}"
+                    ShowNutritionLayout="False"
+                    ShowPlanLayout="True"
+                    ShowDeleteButton="True"
+                    ShowArchiveButton="False"
+                    ShowRestoreButton="True"
+                    ShowSubtitle="False" />
+                <Button Text="{loc:Translate Resource=ArchivePageResources, Key=ReuseAction}"
+                        HorizontalOptions="End"
+                        Command="{Binding BindingContext.UseArchivedPlannerCommand, Source={x:Reference ThisPage}}"
+                        CommandParameter="{Binding .}" />
+            </VerticalStackLayout>
         </DataTemplate>
     </ContentPage.Resources>
 
