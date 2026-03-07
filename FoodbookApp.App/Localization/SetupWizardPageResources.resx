@@ -49,7 +49,7 @@
     <value>Welcome to FoodBook</value>
   </data>
   <data name="HeaderSubtitle" xml:space="preserve">
-    <value>Let's set up your app</value>
+    <value>Configure the app in a few quick steps</value>
   </data>
   <data name="LanguageSectionTitle" xml:space="preserve">
     <value>Choose your language</value>
@@ -118,7 +118,7 @@
     <value>Choose your plan</value>
   </data>
   <data name="PlanSectionDescription" xml:space="preserve">
-    <value>Select Free mode or Premium to unlock additional features.</value>
+    <value>After login you can choose any plan. Guest mode keeps Free plan only.</value>
   </data>
   <data name="FreePlanTitle" xml:space="preserve">
     <value>Free</value>
@@ -149,5 +149,20 @@
   </data>
   <data name="PasswordsDoNotMatch" xml:space="preserve">
     <value>Passwords do not match.</value>
+  </data>
+  <data name="NextButton" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="AppearanceSectionTitle" xml:space="preserve">
+    <value>Choose theme and font</value>
+  </data>
+  <data name="ThemeSectionTitle" xml:space="preserve">
+    <value>Theme</value>
+  </data>
+  <data name="FontSectionTitle" xml:space="preserve">
+    <value>Font</value>
+  </data>
+  <data name="GuestPlanLockedInfo" xml:space="preserve">
+    <value>Guest mode selected: Free plan is preselected and Premium is unavailable without an account.</value>
   </data>
 </root>

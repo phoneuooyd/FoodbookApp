@@ -65,7 +65,7 @@
     <value>Witaj w FoodBook</value>
   </data>
   <data name="HeaderSubtitle" xml:space="preserve">
-    <value>Skonfigurujmy Twoja aplikacje</value>
+    <value>Skonfiguruj aplikacje w kilku szybkich krokach</value>
   </data>
   <data name="LanguageSectionTitle" xml:space="preserve">
     <value>Wybierz jezyk</value>
@@ -134,7 +134,7 @@
     <value>Wybierz plan</value>
   </data>
   <data name="PlanSectionDescription" xml:space="preserve">
-    <value>Wybierz tryb Free lub Premium, aby odblokowac dodatkowe funkcje.</value>
+    <value>Po zalogowaniu mozesz wybrac dowolny plan. Tryb goscia pozostawia tylko plan Free.</value>
   </data>
   <data name="FreePlanTitle" xml:space="preserve">
     <value>Free</value>
@@ -165,5 +165,20 @@
   </data>
   <data name="PasswordsDoNotMatch" xml:space="preserve">
     <value>Hasla nie sa takie same.</value>
+  </data>
+  <data name="NextButton" xml:space="preserve">
+    <value>Dalej</value>
+  </data>
+  <data name="AppearanceSectionTitle" xml:space="preserve">
+    <value>Wybierz motyw i czcionke</value>
+  </data>
+  <data name="ThemeSectionTitle" xml:space="preserve">
+    <value>Motyw</value>
+  </data>
+  <data name="FontSectionTitle" xml:space="preserve">
+    <value>Czcionka</value>
+  </data>
+  <data name="GuestPlanLockedInfo" xml:space="preserve">
+    <value>Wybrano tryb goscia: plan Free jest ustawiony automatycznie, a Premium jest niedostepny bez konta.</value>
   </data>
 </root>

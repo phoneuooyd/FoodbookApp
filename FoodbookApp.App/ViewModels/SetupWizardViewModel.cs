@@ -8,6 +8,7 @@ using Foodbook.Models;
 using Foodbook.Services;
 using FoodbookApp;
 using FoodbookApp.Interfaces;
+using AppTheme = Foodbook.Models.AppTheme;
 
 namespace Foodbook.ViewModels;
 
@@ -16,40 +17,62 @@ public class SetupWizardViewModel : INotifyPropertyChanged
     private readonly IPreferencesService _preferencesService;
     private readonly ILocalizationService _localizationService;
     private readonly LocalizationResourceManager _localizationManager;
+    private readonly IThemeService _themeService;
+    private readonly IFontService _fontService;
 
     private LanguageOption _selectedLanguage;
     private bool _installBasicIngredients = true;
     private bool _isCompleting;
     private string _statusMessage = string.Empty;
-    private SetupWizardStep _currentStep = SetupWizardStep.Welcome;
+    private SetupWizardStep _currentStep = SetupWizardStep.LanguageAndIngredients;
+    private bool _isGuestMode;
+    private string _selectedPlanChoice = string.Empty;
+    private AppTheme _selectedTheme;
+    private AppFontFamily _selectedFontFamily;
 
     public SetupWizardViewModel(
         IPreferencesService preferencesService,
         ILocalizationService localizationService,
         LocalizationResourceManager localizationManager,
+        IThemeService themeService,
+        IFontService fontService,
         SetupLoginViewModel setupLoginViewModel)
     {
         _preferencesService = preferencesService ?? throw new ArgumentNullException(nameof(preferencesService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _localizationManager = localizationManager ?? throw new ArgumentNullException(nameof(localizationManager));
+        _themeService = themeService ?? throw new ArgumentNullException(nameof(themeService));
+        _fontService = fontService ?? throw new ArgumentNullException(nameof(fontService));
 
         LoginViewModel = setupLoginViewModel ?? throw new ArgumentNullException(nameof(setupLoginViewModel));
-        LoginViewModel.LoginStepCompleted += (_, _) => MoveToNextStep();
+        LoginViewModel.LoginStepCompleted += (_, args) =>
+        {
+            IsGuestMode = !args.IsAuthenticated;
+            if (IsGuestMode)
+            {
+                SelectedPlanChoice = "Free";
+            }
+
+            MoveToNextStep();
+        };
 
         _localizationManager.PropertyChanged += OnLocalizationManagerPropertyChanged;
 
         InitializeLanguages();
+        InitializeAppearanceSettings();
         InstallBasicIngredients = _preferencesService.GetInstallBasicIngredients();
 
-        NextStepCommand = new Command(MoveToNextStep, () => !IsCompleting);
-        PreviousStepCommand = new Command(MoveToPreviousStep, () => !IsCompleting && CurrentStep != SetupWizardStep.Welcome);
+        NextStepCommand = new Command(MoveToNextStep, () => !IsCompleting && CanMoveToNextStep);
+        PreviousStepCommand = new Command(MoveToPreviousStep, () => CanGoBack);
         SelectFreePlanCommand = new Command(() => SelectPlan("Free"), () => !IsCompleting);
-        SelectPremiumPlanCommand = new Command(() => SelectPlan("Premium"), () => !IsCompleting);
-        CompleteSetupCommand = new Command(async () => await CompleteSetupAsync(), () => !IsCompleting);
+        SelectPremiumPlanCommand = new Command(() => SelectPlan("Premium"), () => !IsCompleting && !IsGuestMode);
+        CompleteSetupCommand = new Command(async () => await CompleteSetupAsync(), () => CanCompleteSetup);
     }
 
     public SetupLoginViewModel LoginViewModel { get; }
     public ObservableCollection<LanguageOption> AvailableLanguages { get; } = new();
+    public ObservableCollection<AppTheme> AvailableThemes { get; } = new();
+    public ObservableCollection<AppFontFamily> AvailableFontFamilies { get; } = new();
 
     public SetupWizardStep CurrentStep
     {
@@ -59,18 +82,62 @@ public class SetupWizardViewModel : INotifyPropertyChanged
             if (_currentStep == value) return;
             _currentStep = value;
             OnPropertyChanged();
-            OnPropertyChanged(nameof(IsWelcomeStep));
+            OnPropertyChanged(nameof(IsLanguageIngredientsStep));
+            OnPropertyChanged(nameof(IsAppearanceStep));
             OnPropertyChanged(nameof(IsLoginStep));
             OnPropertyChanged(nameof(IsPlanSelectionStep));
-            OnPropertyChanged(nameof(IsPreferencesStep));
+            OnPropertyChanged(nameof(CanGoBack));
+            OnPropertyChanged(nameof(CanMoveToNextStep));
             ((Command)PreviousStepCommand).ChangeCanExecute();
+            ((Command)NextStepCommand).ChangeCanExecute();
         }
     }
 
-    public bool IsWelcomeStep => CurrentStep == SetupWizardStep.Welcome;
+    public bool IsLanguageIngredientsStep => CurrentStep == SetupWizardStep.LanguageAndIngredients;
+    public bool IsAppearanceStep => CurrentStep == SetupWizardStep.Appearance;
     public bool IsLoginStep => CurrentStep == SetupWizardStep.Login;
     public bool IsPlanSelectionStep => CurrentStep == SetupWizardStep.PlanSelection;
-    public bool IsPreferencesStep => CurrentStep == SetupWizardStep.Preferences;
+    public bool CanGoBack => !IsCompleting && CurrentStep != SetupWizardStep.LanguageAndIngredients;
+    public bool CanMoveToNextStep => CurrentStep is SetupWizardStep.LanguageAndIngredients or SetupWizardStep.Appearance;
+    public bool CanCompleteSetup => !IsCompleting && !string.IsNullOrWhiteSpace(SelectedPlanChoice);
+
+    public bool IsGuestMode
+    {
+        get => _isGuestMode;
+        set
+        {
+            if (_isGuestMode == value) return;
+            _isGuestMode = value;
+
+            if (_isGuestMode && SelectedPlanChoice == "Premium")
+            {
+                SelectedPlanChoice = "Free";
+            }
+
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(CanSelectPremiumPlan));
+            ((Command)SelectPremiumPlanCommand).ChangeCanExecute();
+        }
+    }
+
+    public bool CanSelectPremiumPlan => !IsGuestMode;
+    public bool IsFreePlanSelected => SelectedPlanChoice == "Free";
+    public bool IsPremiumPlanSelected => SelectedPlanChoice == "Premium";
+
+    public string SelectedPlanChoice
+    {
+        get => _selectedPlanChoice;
+        set
+        {
+            if (_selectedPlanChoice == value) return;
+            _selectedPlanChoice = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsFreePlanSelected));
+            OnPropertyChanged(nameof(IsPremiumPlanSelected));
+            OnPropertyChanged(nameof(CanCompleteSetup));
+            ((Command)CompleteSetupCommand).ChangeCanExecute();
+        }
+    }
 
     public LanguageOption SelectedLanguage
     {
@@ -96,6 +163,30 @@ public class SetupWizardViewModel : INotifyPropertyChanged
         }
     }
 
+    public AppTheme SelectedTheme
+    {
+        get => _selectedTheme;
+        set
+        {
+            if (_selectedTheme == value) return;
+            _selectedTheme = value;
+            OnPropertyChanged();
+            _themeService.SetTheme(_selectedTheme);
+        }
+    }
+
+    public AppFontFamily SelectedFontFamily
+    {
+        get => _selectedFontFamily;
+        set
+        {
+            if (_selectedFontFamily == value) return;
+            _selectedFontFamily = value;
+            OnPropertyChanged();
+            _fontService.SetFontFamily(_selectedFontFamily);
+        }
+    }
+
     public bool InstallBasicIngredients
     {
         get => _installBasicIngredients;
@@ -115,6 +206,8 @@ public class SetupWizardViewModel : INotifyPropertyChanged
             if (_isCompleting == value) return;
             _isCompleting = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(CanGoBack));
+            OnPropertyChanged(nameof(CanCompleteSetup));
             ((Command)NextStepCommand).ChangeCanExecute();
             ((Command)PreviousStepCommand).ChangeCanExecute();
             ((Command)SelectFreePlanCommand).ChangeCanExecute();
@@ -147,28 +240,33 @@ public class SetupWizardViewModel : INotifyPropertyChanged
     {
         CurrentStep = CurrentStep switch
         {
-            SetupWizardStep.Welcome => SetupWizardStep.Login,
+            SetupWizardStep.LanguageAndIngredients => SetupWizardStep.Appearance,
+            SetupWizardStep.Appearance => SetupWizardStep.Login,
             SetupWizardStep.Login => SetupWizardStep.PlanSelection,
-            SetupWizardStep.PlanSelection => SetupWizardStep.Preferences,
-            _ => SetupWizardStep.Preferences
+            _ => SetupWizardStep.PlanSelection
         };
     }
 
-    private void MoveToPreviousStep()
+    public void MoveToPreviousStep()
     {
+        if (!CanGoBack)
+            return;
+
         CurrentStep = CurrentStep switch
         {
-            SetupWizardStep.Login => SetupWizardStep.Welcome,
+            SetupWizardStep.Appearance => SetupWizardStep.LanguageAndIngredients,
+            SetupWizardStep.Login => SetupWizardStep.Appearance,
             SetupWizardStep.PlanSelection => SetupWizardStep.Login,
-            SetupWizardStep.Preferences => SetupWizardStep.PlanSelection,
-            _ => SetupWizardStep.Welcome
+            _ => SetupWizardStep.LanguageAndIngredients
         };
     }
 
     private void SelectPlan(string planChoice)
     {
-        _preferencesService.SavePlanChoice(planChoice);
-        MoveToNextStep();
+        if (planChoice == "Premium" && IsGuestMode)
+            return;
+
+        SelectedPlanChoice = planChoice;
     }
 
     private void InitializeLanguages()
@@ -213,10 +311,29 @@ public class SetupWizardViewModel : INotifyPropertyChanged
         }
     }
 
+    private void InitializeAppearanceSettings()
+    {
+        foreach (var theme in Enum.GetValues<AppTheme>())
+        {
+            AvailableThemes.Add(theme);
+        }
+
+        foreach (var fontFamily in _fontService.GetAvailableFontFamilies())
+        {
+            AvailableFontFamilies.Add(fontFamily);
+        }
+
+        SelectedTheme = _preferencesService.GetSavedTheme();
+        SelectedFontFamily = _preferencesService.GetSavedFontFamily();
+    }
+
     private async Task CompleteSetupAsync()
     {
         try
         {
+            if (!CanCompleteSetup)
+                return;
+
             IsCompleting = true;
             StatusMessage = "Completing setup...";
 
@@ -226,6 +343,9 @@ public class SetupWizardViewModel : INotifyPropertyChanged
                 await Task.Delay(100);
             }
 
+            _preferencesService.SavePlanChoice(SelectedPlanChoice);
+            _preferencesService.SaveTheme(SelectedTheme);
+            _preferencesService.SaveFontFamily(SelectedFontFamily);
             _preferencesService.SaveInstallBasicIngredients(InstallBasicIngredients);
 
             if (InstallBasicIngredients)
@@ -287,10 +407,10 @@ public class SetupWizardViewModel : INotifyPropertyChanged
 
 public enum SetupWizardStep
 {
-    Welcome,
+    LanguageAndIngredients,
+    Appearance,
     Login,
-    PlanSelection,
-    Preferences
+    PlanSelection
 }
 
 public class LanguageOption
