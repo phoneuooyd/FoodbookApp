@@ -16,12 +16,30 @@
             <converters:CultureCodeToNativeNameConverter x:Key="CultureCodeToNativeNameConverter" />
             <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <converters:StringIsNotNullOrEmptyConverter x:Key="StringIsNotNullOrEmptyConverter" />
+            <converters:AppThemeToLocalizedStringConverter x:Key="AppThemeToLocalizedStringConverter" />
+            <converters:FontFamilyToLocalizedStringConverter x:Key="FontFamilyToLocalizedStringConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
     <ScrollView Padding="20">
         <VerticalStackLayout Spacing="20">
-            <VerticalStackLayout Spacing="8" Margin="0,16,0,0">
+            <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding CanGoBack}">
+                <Button Grid.Column="0"
+                        Text="←"
+                        Command="{Binding PreviousStepCommand}"
+                        FontSize="24"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        CornerRadius="22"
+                        BackgroundColor="Transparent"
+                        TextColor="{DynamicResource Primary}" />
+                <Label Grid.Column="1"
+                       VerticalOptions="Center"
+                       Text="{loc:Translate Resource=SetupWizardPageResources, Key=BackButton}"
+                       TextColor="{DynamicResource Primary}" />
+            </Grid>
+
+            <VerticalStackLayout Spacing="8" Margin="0,4,0,0">
                 <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=HeaderTitle}"
                        FontSize="30"
                        FontAttributes="Bold"
@@ -33,30 +51,7 @@
                        HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
 
-            <Frame IsVisible="{Binding IsWelcomeStep}"
-                   BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
-                   BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
-                   CornerRadius="10"
-                   Padding="20">
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=WelcomeStepTitle}"
-                           FontAttributes="Bold"
-                           FontSize="22" />
-                    <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=WelcomeStepDescription}"
-                           FontSize="14" />
-                    <Button Text="{loc:Translate Resource=SetupWizardPageResources, Key=StartSetupButton}"
-                            Command="{Binding NextStepCommand}"
-                            BackgroundColor="{DynamicResource Primary}"
-                            TextColor="{DynamicResource ButtonPrimaryText}" />
-                </VerticalStackLayout>
-            </Frame>
-
-            <views:SetupLoginPage IsVisible="{Binding IsLoginStep}"
-                                  BindingContext="{Binding LoginViewModel}" />
-
-            <views:SetupPlanSelectionPage IsVisible="{Binding IsPlanSelectionStep}" />
-
-            <Frame IsVisible="{Binding IsPreferencesStep}"
+            <Frame IsVisible="{Binding IsLanguageIngredientsStep}"
                    BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
                    BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
                    CornerRadius="10"
@@ -78,19 +73,45 @@
                                      IsChecked="{Binding InstallBasicIngredients, Converter={StaticResource InvertedBoolConverter}}" />
                     </VerticalStackLayout>
 
-                    <Button Text="{loc:Translate Resource=SetupWizardPageResources, Key=CompleteSetupButton}"
-                            Command="{Binding CompleteSetupCommand}"
-                            IsEnabled="{Binding IsCompleting, Converter={StaticResource InvertedBoolConverter}}"
+                    <Button Text="{loc:Translate Resource=SetupWizardPageResources, Key=NextButton}"
+                            Command="{Binding NextStepCommand}"
                             BackgroundColor="{DynamicResource Primary}"
                             TextColor="{DynamicResource ButtonPrimaryText}" />
                 </VerticalStackLayout>
             </Frame>
 
-            <Button IsVisible="{Binding IsWelcomeStep, Converter={StaticResource InvertedBoolConverter}}"
-                    Text="{loc:Translate Resource=SetupWizardPageResources, Key=BackButton}"
-                    Command="{Binding PreviousStepCommand}"
-                    BackgroundColor="Transparent"
-                    TextColor="{DynamicResource Primary}" />
+            <Frame IsVisible="{Binding IsAppearanceStep}"
+                   BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                   BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                   CornerRadius="10"
+                   Padding="20">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=AppearanceSectionTitle}"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           TextColor="{DynamicResource Primary}" />
+
+                    <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=ThemeSectionTitle}" />
+                    <Picker ItemsSource="{Binding AvailableThemes}"
+                            SelectedItem="{Binding SelectedTheme}"
+                            ItemDisplayBinding="{Binding ., Converter={StaticResource AppThemeToLocalizedStringConverter}}" />
+
+                    <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=FontSectionTitle}" />
+                    <Picker ItemsSource="{Binding AvailableFontFamilies}"
+                            SelectedItem="{Binding SelectedFontFamily}"
+                            ItemDisplayBinding="{Binding ., Converter={StaticResource FontFamilyToLocalizedStringConverter}}" />
+
+                    <Button Text="{loc:Translate Resource=SetupWizardPageResources, Key=NextButton}"
+                            Command="{Binding NextStepCommand}"
+                            BackgroundColor="{DynamicResource Primary}"
+                            TextColor="{DynamicResource ButtonPrimaryText}" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <views:SetupLoginPage IsVisible="{Binding IsLoginStep}"
+                                  BindingContext="{Binding LoginViewModel}" />
+
+            <views:SetupPlanSelectionPage IsVisible="{Binding IsPlanSelectionStep}" />
 
             <Label Text="{Binding StatusMessage}"
                    FontSize="14"

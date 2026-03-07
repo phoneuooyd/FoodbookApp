@@ -16,6 +16,11 @@
                FontSize="14"
                TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
 
+        <Label IsVisible="{Binding IsGuestMode}"
+               Text="{loc:Translate Resource=SetupWizardPageResources, Key=GuestPlanLockedInfo}"
+               FontSize="13"
+               TextColor="{DynamicResource Primary}" />
+
         <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
                BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
                CornerRadius="10"
@@ -45,6 +50,7 @@
                        FontSize="13" />
                 <Button Text="{loc:Translate Resource=SetupWizardPageResources, Key=ChoosePremiumPlanButton}"
                         Command="{Binding SelectPremiumPlanCommand}"
+                        IsEnabled="{Binding CanSelectPremiumPlan}"
                         BackgroundColor="{DynamicResource Primary}"
                         TextColor="{DynamicResource ButtonPrimaryText}" />
             </VerticalStackLayout>
