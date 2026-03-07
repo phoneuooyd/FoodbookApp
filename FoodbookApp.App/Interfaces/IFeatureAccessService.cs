@@ -1,0 +1,12 @@
+using Foodbook.Models;
+
+namespace FoodbookApp.Interfaces;
+
+public interface IFeatureAccessService
+{
+    Task<bool> CanCreatePlanAsync();
+    Task<bool> CanUsePremiumFeatureAsync(PremiumFeature feature);
+    Task<AdUnlockResult> RequestAdUnlockAsync(PremiumFeature feature);
+    bool IsAdUnlockActive(PremiumFeature feature);
+    Task RefreshAccessAsync();
+}
