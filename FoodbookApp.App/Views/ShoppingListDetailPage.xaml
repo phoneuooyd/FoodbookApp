@@ -115,7 +115,7 @@
             DragAndDropStartedCommand="{Binding DragStartedCommand}"
             DragAndDropEndedCommand="{Binding DragEndedCommand}"
             TapCommand="{Binding ItemTappedCommand}" 
-            ScrollSpeed="Slowest"
+            ScrollSpeed="Slower"
             />
     </Grid>
 </ContentPage>
