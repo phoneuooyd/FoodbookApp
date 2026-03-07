@@ -29,7 +29,7 @@ public class SetupLoginViewModel : INotifyPropertyChanged
         ContinueWithoutAccountCommand = new Command(async () => await ContinueWithoutAccountAsync(), () => !IsBusy);
     }
 
-    public event EventHandler? LoginStepCompleted;
+    public event EventHandler<SetupLoginCompletedEventArgs>? LoginStepCompleted;
 
     public string Email
     {
@@ -140,7 +140,7 @@ public class SetupLoginViewModel : INotifyPropertyChanged
                 await _accountService.SignInAsync(Email.Trim(), Password, enableAutoLogin: true);
             }
 
-            LoginStepCompleted?.Invoke(this, EventArgs.Empty);
+            LoginStepCompleted?.Invoke(this, new SetupLoginCompletedEventArgs(isGuestFlow: false));
         }
         catch (Exception ex)
         {
@@ -188,7 +188,7 @@ public class SetupLoginViewModel : INotifyPropertyChanged
                 await _supabaseAuthService.SignOutAsync();
             }
 
-            LoginStepCompleted?.Invoke(this, EventArgs.Empty);
+            LoginStepCompleted?.Invoke(this, new SetupLoginCompletedEventArgs(isGuestFlow: true));
         }
         catch (Exception ex)
         {
@@ -204,4 +204,14 @@ public class SetupLoginViewModel : INotifyPropertyChanged
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+}
+
+public sealed class SetupLoginCompletedEventArgs : EventArgs
+{
+    public SetupLoginCompletedEventArgs(bool isGuestFlow)
+    {
+        IsGuestFlow = isGuestFlow;
+    }
+
+    public bool IsGuestFlow { get; }
 }

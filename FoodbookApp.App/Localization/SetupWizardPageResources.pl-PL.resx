@@ -166,4 +166,19 @@
   <data name="PasswordsDoNotMatch" xml:space="preserve">
     <value>Hasla nie sa takie same.</value>
   </data>
+  <data name="AppearanceSectionTitle" xml:space="preserve">
+    <value>Wybierz motyw i czcionke</value>
+  </data>
+  <data name="ThemeSectionTitle" xml:space="preserve">
+    <value>Motyw</value>
+  </data>
+  <data name="FontSectionTitle" xml:space="preserve">
+    <value>Czcionka</value>
+  </data>
+  <data name="ContinueButton" xml:space="preserve">
+    <value>Dalej</value>
+  </data>
+  <data name="GuestPlanLockedInfo" xml:space="preserve">
+    <value>Bez konta plan Free jest wybierany automatycznie.</value>
+  </data>
 </root>

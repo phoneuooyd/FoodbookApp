@@ -9,4 +9,14 @@ public partial class SetupWizardPage : ContentPage
         InitializeComponent();
         BindingContext = viewModel;
     }
+
+    protected override bool OnBackButtonPressed()
+    {
+        if (BindingContext is SetupWizardViewModel viewModel && viewModel.HandleBackNavigation())
+        {
+            return true;
+        }
+
+        return base.OnBackButtonPressed();
+    }
 }
