@@ -49,7 +49,7 @@
     <value>Welcome to FoodBook</value>
   </data>
   <data name="HeaderSubtitle" xml:space="preserve">
-    <value>Let's set up your app</value>
+    <value>Configure the app in a few quick steps</value>
   </data>
   <data name="LanguageSectionTitle" xml:space="preserve">
     <value>Choose your language</value>
@@ -74,5 +74,95 @@
   </data>
   <data name="CompleteSetupButton" xml:space="preserve">
     <value>Complete Setup</value>
+  </data>
+  <data name="WelcomeStepTitle" xml:space="preserve">
+    <value>Quick setup</value>
+  </data>
+  <data name="WelcomeStepDescription" xml:space="preserve">
+    <value>In a few steps you can configure login, plan and app defaults.</value>
+  </data>
+  <data name="StartSetupButton" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="BackButton" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="LoginSectionTitle" xml:space="preserve">
+    <value>Account setup</value>
+  </data>
+  <data name="LoginSectionDescription" xml:space="preserve">
+    <value>Sign in or create an account to sync your data.</value>
+  </data>
+  <data name="EmailPlaceholder" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="PasswordPlaceholder" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="ConfirmPasswordPlaceholder" xml:space="preserve">
+    <value>Confirm password</value>
+  </data>
+  <data name="LoginSubmitButton" xml:space="preserve">
+    <value>Sign in</value>
+  </data>
+  <data name="RegisterSubmitButton" xml:space="preserve">
+    <value>Create account</value>
+  </data>
+  <data name="ToggleModeButton" xml:space="preserve">
+    <value>Switch login/register mode</value>
+  </data>
+  <data name="ContinueWithoutAccountButton" xml:space="preserve">
+    <value>Continue without account</value>
+  </data>
+  <data name="PlanSectionTitle" xml:space="preserve">
+    <value>Choose your plan</value>
+  </data>
+  <data name="PlanSectionDescription" xml:space="preserve">
+    <value>After login you can choose any plan. Guest mode keeps Free plan only.</value>
+  </data>
+  <data name="FreePlanTitle" xml:space="preserve">
+    <value>Free</value>
+  </data>
+  <data name="FreePlanDescription" xml:space="preserve">
+    <value>Core recipes, planner and shopping list.</value>
+  </data>
+  <data name="ChooseFreePlanButton" xml:space="preserve">
+    <value>Choose Free</value>
+  </data>
+  <data name="PremiumPlanTitle" xml:space="preserve">
+    <value>Premium</value>
+  </data>
+  <data name="PremiumPlanDescription" xml:space="preserve">
+    <value>Cloud-first experience and future premium features.</value>
+  </data>
+  <data name="ChoosePremiumPlanButton" xml:space="preserve">
+    <value>Choose Premium</value>
+  </data>
+  <data name="EmailRequired" xml:space="preserve">
+    <value>Email is required.</value>
+  </data>
+  <data name="EmailInvalid" xml:space="preserve">
+    <value>Please provide a valid email address.</value>
+  </data>
+  <data name="PasswordTooShort" xml:space="preserve">
+    <value>Password must contain at least 6 characters.</value>
+  </data>
+  <data name="PasswordsDoNotMatch" xml:space="preserve">
+    <value>Passwords do not match.</value>
+  </data>
+  <data name="NextButton" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="AppearanceSectionTitle" xml:space="preserve">
+    <value>Choose theme and font</value>
+  </data>
+  <data name="ThemeSectionTitle" xml:space="preserve">
+    <value>Theme</value>
+  </data>
+  <data name="FontSectionTitle" xml:space="preserve">
+    <value>Font</value>
+  </data>
+  <data name="GuestPlanLockedInfo" xml:space="preserve">
+    <value>Guest mode selected: Free plan is preselected and Premium is unavailable without an account.</value>
   </data>
 </root>

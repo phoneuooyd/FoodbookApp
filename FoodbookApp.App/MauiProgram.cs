@@ -161,6 +161,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<PlannedMealFormViewModel>();
             builder.Services.AddScoped<ArchiveViewModel>();
             builder.Services.AddSingleton<SettingsViewModel>();
+            builder.Services.AddTransient<SetupLoginViewModel>();
             builder.Services.AddTransient<SetupWizardViewModel>();
             // New: Planner lists VM
             builder.Services.AddTransient<PlannerListsViewModel>();
@@ -179,6 +180,8 @@ namespace FoodbookApp
             builder.Services.AddScoped<ArchivePage>();
             builder.Services.AddScoped<SettingsPage>();
             builder.Services.AddScoped<SetupWizardPage>();
+            builder.Services.AddTransient<SetupLoginPage>();
+            builder.Services.AddTransient<SetupPlanSelectionPage>();
             builder.Services.AddScoped<DataArchivizationPage>();
             builder.Services.AddScoped<ProfilePage>();
             

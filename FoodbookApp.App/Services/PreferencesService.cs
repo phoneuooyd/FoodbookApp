@@ -25,6 +25,7 @@ public class PreferencesService : IPreferencesService
     private const string SelectedFontSizeKey = "SelectedFontSize";
     private const string IsFirstLaunchKey = "IsFirstLaunch";
     private const string InstallBasicIngredientsKey = "InstallBasicIngredients";
+    private const string PlanChoiceKey = "PlanChoice";
     
     private static readonly string[] SupportedCultures = { "en", "pl-PL", "de-DE", "es-ES", "fr-FR", "ko-KR" };
 
@@ -355,7 +356,7 @@ public class PreferencesService : IPreferencesService
     {
         try
         {
-            // Domyœlnie true - je¿eli nie ma zapisanej preferencji, to oznacza pierwszy start
+            // DomyÂœlnie true - jeÂ¿eli nie ma zapisanej preferencji, to oznacza pierwszy start
             var isFirstLaunch = Preferences.Get(IsFirstLaunchKey, true);
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Is first launch: {isFirstLaunch}");
             return isFirstLaunch;
@@ -363,7 +364,7 @@ public class PreferencesService : IPreferencesService
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to check first launch: {ex.Message}");
-            return true; // W razie b³êdu, zak³adamy ¿e to pierwszy start
+            return true; // W razie bÂ³Ãªdu, zakÂ³adamy Â¿e to pierwszy start
         }
     }
 
@@ -422,6 +423,37 @@ public class PreferencesService : IPreferencesService
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to save install basic ingredients preference: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc/>
+    public void SavePlanChoice(string planChoice)
+    {
+        try
+        {
+            var safeChoice = string.IsNullOrWhiteSpace(planChoice) ? "Free" : planChoice.Trim();
+            Preferences.Set(PlanChoiceKey, safeChoice);
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Saved plan choice: {safeChoice}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to save plan choice: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc/>
+    public string GetPlanChoice()
+    {
+        try
+        {
+            var choice = Preferences.Get(PlanChoiceKey, "Free");
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Loaded plan choice: {choice}");
+            return string.IsNullOrWhiteSpace(choice) ? "Free" : choice;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to read plan choice: {ex.Message}");
+            return "Free";
         }
     }
 
