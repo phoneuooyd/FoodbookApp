@@ -11,40 +11,66 @@ using FoodbookApp.Interfaces;
 
 namespace Foodbook.ViewModels;
 
-/// <summary>
-/// ViewModel for the initial setup wizard
-/// </summary>
 public class SetupWizardViewModel : INotifyPropertyChanged
 {
     private readonly IPreferencesService _preferencesService;
-    private readonly ILocalizationService _localizationService; // kept for persistence only
-    private readonly LocalizationResourceManager _localizationManager; // used to broadcast dynamic changes
+    private readonly ILocalizationService _localizationService;
+    private readonly LocalizationResourceManager _localizationManager;
+
     private LanguageOption _selectedLanguage;
     private bool _installBasicIngredients = true;
-    private bool _isCompleting = false;
+    private bool _isCompleting;
     private string _statusMessage = string.Empty;
+    private SetupWizardStep _currentStep = SetupWizardStep.Welcome;
 
-    public SetupWizardViewModel(IPreferencesService preferencesService,
-                                ILocalizationService localizationService,
-                                LocalizationResourceManager localizationManager)
+    public SetupWizardViewModel(
+        IPreferencesService preferencesService,
+        ILocalizationService localizationService,
+        LocalizationResourceManager localizationManager,
+        SetupLoginViewModel setupLoginViewModel)
     {
         _preferencesService = preferencesService ?? throw new ArgumentNullException(nameof(preferencesService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _localizationManager = localizationManager ?? throw new ArgumentNullException(nameof(localizationManager));
+
+        LoginViewModel = setupLoginViewModel ?? throw new ArgumentNullException(nameof(setupLoginViewModel));
+        LoginViewModel.LoginStepCompleted += (_, _) => MoveToNextStep();
+
         _localizationManager.PropertyChanged += OnLocalizationManagerPropertyChanged;
+
         InitializeLanguages();
+        InstallBasicIngredients = _preferencesService.GetInstallBasicIngredients();
+
+        NextStepCommand = new Command(MoveToNextStep, () => !IsCompleting);
+        PreviousStepCommand = new Command(MoveToPreviousStep, () => !IsCompleting && CurrentStep != SetupWizardStep.Welcome);
+        SelectFreePlanCommand = new Command(() => SelectPlan("Free"), () => !IsCompleting);
+        SelectPremiumPlanCommand = new Command(() => SelectPlan("Premium"), () => !IsCompleting);
         CompleteSetupCommand = new Command(async () => await CompleteSetupAsync(), () => !IsCompleting);
     }
 
-    private void OnLocalizationManagerPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    public SetupLoginViewModel LoginViewModel { get; }
+    public ObservableCollection<LanguageOption> AvailableLanguages { get; } = new();
+
+    public SetupWizardStep CurrentStep
     {
-        // Force refresh of labels whose values come purely from TranslateExtension but might cache
-        OnPropertyChanged(string.Empty); // broadcast change
+        get => _currentStep;
+        set
+        {
+            if (_currentStep == value) return;
+            _currentStep = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsWelcomeStep));
+            OnPropertyChanged(nameof(IsLoginStep));
+            OnPropertyChanged(nameof(IsPlanSelectionStep));
+            OnPropertyChanged(nameof(IsPreferencesStep));
+            ((Command)PreviousStepCommand).ChangeCanExecute();
+        }
     }
 
-    #region Properties
-
-    public ObservableCollection<LanguageOption> AvailableLanguages { get; } = new();
+    public bool IsWelcomeStep => CurrentStep == SetupWizardStep.Welcome;
+    public bool IsLoginStep => CurrentStep == SetupWizardStep.Login;
+    public bool IsPlanSelectionStep => CurrentStep == SetupWizardStep.PlanSelection;
+    public bool IsPreferencesStep => CurrentStep == SetupWizardStep.Preferences;
 
     public LanguageOption SelectedLanguage
     {
@@ -55,7 +81,6 @@ public class SetupWizardViewModel : INotifyPropertyChanged
             {
                 _selectedLanguage = value;
                 OnPropertyChanged();
-                // Change culture via manager (fires PropertyChanged(null) to all TranslateExtension bindings)
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
                     try
@@ -76,11 +101,9 @@ public class SetupWizardViewModel : INotifyPropertyChanged
         get => _installBasicIngredients;
         set
         {
-            if (_installBasicIngredients != value)
-            {
-                _installBasicIngredients = value;
-                OnPropertyChanged();
-            }
+            if (_installBasicIngredients == value) return;
+            _installBasicIngredients = value;
+            OnPropertyChanged();
         }
     }
 
@@ -89,12 +112,14 @@ public class SetupWizardViewModel : INotifyPropertyChanged
         get => _isCompleting;
         set
         {
-            if (_isCompleting != value)
-            {
-                _isCompleting = value;
-                OnPropertyChanged();
-                ((Command)CompleteSetupCommand).ChangeCanExecute();
-            }
+            if (_isCompleting == value) return;
+            _isCompleting = value;
+            OnPropertyChanged();
+            ((Command)NextStepCommand).ChangeCanExecute();
+            ((Command)PreviousStepCommand).ChangeCanExecute();
+            ((Command)SelectFreePlanCommand).ChangeCanExecute();
+            ((Command)SelectPremiumPlanCommand).ChangeCanExecute();
+            ((Command)CompleteSetupCommand).ChangeCanExecute();
         }
     }
 
@@ -103,30 +128,54 @@ public class SetupWizardViewModel : INotifyPropertyChanged
         get => _statusMessage;
         set
         {
-            if (_statusMessage != value)
-            {
-                _statusMessage = value;
-                OnPropertyChanged();
-            }
+            if (_statusMessage == value) return;
+            _statusMessage = value;
+            OnPropertyChanged();
         }
     }
 
-    #endregion
-
-    #region Commands
-
+    public ICommand NextStepCommand { get; }
+    public ICommand PreviousStepCommand { get; }
+    public ICommand SelectFreePlanCommand { get; }
+    public ICommand SelectPremiumPlanCommand { get; }
     public ICommand CompleteSetupCommand { get; }
 
-    #endregion
+    private void OnLocalizationManagerPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        => OnPropertyChanged(string.Empty);
 
-    #region Private Methods
+    private void MoveToNextStep()
+    {
+        CurrentStep = CurrentStep switch
+        {
+            SetupWizardStep.Welcome => SetupWizardStep.Login,
+            SetupWizardStep.Login => SetupWizardStep.PlanSelection,
+            SetupWizardStep.PlanSelection => SetupWizardStep.Preferences,
+            _ => SetupWizardStep.Preferences
+        };
+    }
+
+    private void MoveToPreviousStep()
+    {
+        CurrentStep = CurrentStep switch
+        {
+            SetupWizardStep.Login => SetupWizardStep.Welcome,
+            SetupWizardStep.PlanSelection => SetupWizardStep.Login,
+            SetupWizardStep.Preferences => SetupWizardStep.PlanSelection,
+            _ => SetupWizardStep.Welcome
+        };
+    }
+
+    private void SelectPlan(string planChoice)
+    {
+        _preferencesService.SavePlanChoice(planChoice);
+        MoveToNextStep();
+    }
 
     private void InitializeLanguages()
     {
         try
         {
             var supportedCultures = _preferencesService.GetSupportedCultures();
-
             foreach (var culture in supportedCultures)
             {
                 var languageOption = culture switch
@@ -134,9 +183,9 @@ public class SetupWizardViewModel : INotifyPropertyChanged
                     "en" => new LanguageOption { CultureCode = "en", DisplayName = "English", NativeName = "English" },
                     "pl-PL" => new LanguageOption { CultureCode = "pl-PL", DisplayName = "Polish", NativeName = "Polski" },
                     "de-DE" => new LanguageOption { CultureCode = "de-DE", DisplayName = "German", NativeName = "Deutsch" },
-                    "es-ES" => new LanguageOption { CultureCode = "es-ES", DisplayName = "Spanish", NativeName = "Espa?ol" },
-                    "fr-FR" => new LanguageOption { CultureCode = "fr-FR", DisplayName = "French", NativeName = "Fran�ais" },
-                    "ko-KR" => new LanguageOption { CultureCode = "ko-KR", DisplayName = "Korean", NativeName = "???" },
+                    "es-ES" => new LanguageOption { CultureCode = "es-ES", DisplayName = "Spanish", NativeName = "Español" },
+                    "fr-FR" => new LanguageOption { CultureCode = "fr-FR", DisplayName = "French", NativeName = "Français" },
+                    "ko-KR" => new LanguageOption { CultureCode = "ko-KR", DisplayName = "Korean", NativeName = "한국어" },
                     _ => new LanguageOption { CultureCode = culture, DisplayName = culture, NativeName = culture }
                 };
 
@@ -144,34 +193,21 @@ public class SetupWizardViewModel : INotifyPropertyChanged
             }
 
             var saved = _preferencesService.GetSavedLanguage();
-            LanguageOption? defaultLanguage = null;
-            if (!string.IsNullOrWhiteSpace(saved))
-                defaultLanguage = AvailableLanguages.FirstOrDefault(l => l.CultureCode == saved);
+            var defaultLanguage = !string.IsNullOrWhiteSpace(saved)
+                ? AvailableLanguages.FirstOrDefault(l => l.CultureCode == saved)
+                : null;
 
-            if (defaultLanguage == null)
-            {
-                var systemCulture = System.Globalization.CultureInfo.CurrentUICulture.Name;
-                defaultLanguage = AvailableLanguages.FirstOrDefault(l => l.CultureCode == systemCulture)
-                                   ?? AvailableLanguages.FirstOrDefault();
-            }
+            defaultLanguage ??= AvailableLanguages.FirstOrDefault(l => l.CultureCode == System.Globalization.CultureInfo.CurrentUICulture.Name)
+                               ?? AvailableLanguages.FirstOrDefault();
 
             if (defaultLanguage != null)
                 SelectedLanguage = defaultLanguage;
-
-            System.Diagnostics.Debug.WriteLine($"[SetupWizardViewModel] Initialized {AvailableLanguages.Count} languages, selected: {SelectedLanguage?.CultureCode}");
         }
-        catch (Exception ex)
+        catch
         {
-            System.Diagnostics.Debug.WriteLine($"[SetupWizardViewModel] Error initializing languages: {ex.Message}");
-
             if (!AvailableLanguages.Any())
             {
-                AvailableLanguages.Add(new LanguageOption
-                {
-                    CultureCode = "en",
-                    DisplayName = "English",
-                    NativeName = "English"
-                });
+                AvailableLanguages.Add(new LanguageOption { CultureCode = "en", DisplayName = "English", NativeName = "English" });
                 SelectedLanguage = AvailableLanguages.First();
             }
         }
@@ -181,19 +217,15 @@ public class SetupWizardViewModel : INotifyPropertyChanged
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine("[SetupWizardViewModel] Starting CompleteSetupAsync");
             IsCompleting = true;
             StatusMessage = "Completing setup...";
 
             if (SelectedLanguage != null)
             {
-                System.Diagnostics.Debug.WriteLine($"[SetupWizardViewModel] Saving language: {SelectedLanguage.CultureCode}");
                 _preferencesService.SaveLanguage(SelectedLanguage.CultureCode);
-                StatusMessage = "Language preference saved...";
                 await Task.Delay(100);
             }
 
-            System.Diagnostics.Debug.WriteLine($"[SetupWizardViewModel] Saving install ingredients: {InstallBasicIngredients}");
             _preferencesService.SaveInstallBasicIngredients(InstallBasicIngredients);
 
             if (InstallBasicIngredients)
@@ -206,18 +238,12 @@ public class SetupWizardViewModel : INotifyPropertyChanged
                 {
                     try
                     {
-                        System.Diagnostics.Debug.WriteLine("[SetupWizardViewModel] Starting ingredient seeding with language override: " + lang);
                         var services = FoodbookApp.MauiProgram.ServiceProvider;
                         if (services != null)
                         {
                             using var scope = services.CreateScope();
                             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                             await SeedData.SeedIngredientsAsync(dbContext, lang);
-                            System.Diagnostics.Debug.WriteLine("[SetupWizardViewModel] Ingredient seeding completed");
-                        }
-                        else
-                        {
-                            System.Diagnostics.Debug.WriteLine("[SetupWizardViewModel] ServiceProvider is null");
                         }
                     }
                     catch (Exception ex)
@@ -227,55 +253,24 @@ public class SetupWizardViewModel : INotifyPropertyChanged
                 });
             }
 
-            StatusMessage = "Finalizing setup...";
-            await Task.Delay(100);
-
-            System.Diagnostics.Debug.WriteLine("[SetupWizardViewModel] Marking setup as completed");
             _preferencesService.MarkInitialSetupCompleted();
-
             StatusMessage = "Setup completed!";
-            await Task.Delay(500);
+            await Task.Delay(300);
 
-            System.Diagnostics.Debug.WriteLine("[SetupWizardViewModel] Navigating to main shell");
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
-                try
-                {
-                    var app = Application.Current;
-                    if (app?.MainPage != null)
-                    {
-                        app.MainPage = new AppShell();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[SetupWizardViewModel] Error replacing MainPage: {ex.Message}");
-                }
+                var app = Application.Current;
+                if (app?.MainPage != null)
+                    app.MainPage = new AppShell();
             });
-
-            System.Diagnostics.Debug.WriteLine("[SetupWizardViewModel] Setup wizard completed successfully");
         }
-        catch (Exception ex)
+        catch
         {
-            System.Diagnostics.Debug.WriteLine($"[SetupWizardViewModel] Error completing setup: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"[SetupWizardViewModel] Stack trace: {ex.StackTrace}");
-            StatusMessage = "Setup completed with some issues, but you can continue using the app.";
-            await Task.Delay(1000);
-
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
-                try
-                {
-                    var app = Application.Current;
-                    if (app != null)
-                    {
-                        app.MainPage = new AppShell();
-                    }
-                }
-                catch (Exception navEx)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[SetupWizardViewModel] Fallback navigation failed: {navEx.Message}");
-                }
+                var app = Application.Current;
+                if (app != null)
+                    app.MainPage = new AppShell();
             });
         }
         finally
@@ -284,31 +279,25 @@ public class SetupWizardViewModel : INotifyPropertyChanged
         }
     }
 
-    #endregion
-
-    #region INotifyPropertyChanged
-
     public event PropertyChangedEventHandler? PropertyChanged;
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
-
-    #endregion
+        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }
 
-/// <summary>
-/// Represents a language option for the setup wizard
-/// </summary>
+public enum SetupWizardStep
+{
+    Welcome,
+    Login,
+    PlanSelection,
+    Preferences
+}
+
 public class LanguageOption
 {
     public string CultureCode { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public string NativeName { get; set; } = string.Empty;
 
-    public override string ToString()
-    {
-        return NativeName;
-    }
+    public override string ToString() => NativeName;
 }

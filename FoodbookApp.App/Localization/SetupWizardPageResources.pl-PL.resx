@@ -91,4 +91,79 @@
   <data name="CompleteSetupButton" xml:space="preserve">
     <value>Zakoncz konfiguracje</value>
   </data>
+  <data name="WelcomeStepTitle" xml:space="preserve">
+    <value>Szybka konfiguracja</value>
+  </data>
+  <data name="WelcomeStepDescription" xml:space="preserve">
+    <value>W kilku krokach ustawisz logowanie, plan i domyslne preferencje aplikacji.</value>
+  </data>
+  <data name="StartSetupButton" xml:space="preserve">
+    <value>Rozpocznij</value>
+  </data>
+  <data name="BackButton" xml:space="preserve">
+    <value>Wstecz</value>
+  </data>
+  <data name="LoginSectionTitle" xml:space="preserve">
+    <value>Konfiguracja konta</value>
+  </data>
+  <data name="LoginSectionDescription" xml:space="preserve">
+    <value>Zaloguj sie lub utworz konto, aby synchronizowac dane.</value>
+  </data>
+  <data name="EmailPlaceholder" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="PasswordPlaceholder" xml:space="preserve">
+    <value>Haslo</value>
+  </data>
+  <data name="ConfirmPasswordPlaceholder" xml:space="preserve">
+    <value>Potwierdz haslo</value>
+  </data>
+  <data name="LoginSubmitButton" xml:space="preserve">
+    <value>Zaloguj sie</value>
+  </data>
+  <data name="RegisterSubmitButton" xml:space="preserve">
+    <value>Utworz konto</value>
+  </data>
+  <data name="ToggleModeButton" xml:space="preserve">
+    <value>Przelacz tryb logowanie/rejestracja</value>
+  </data>
+  <data name="ContinueWithoutAccountButton" xml:space="preserve">
+    <value>Kontynuuj bez konta</value>
+  </data>
+  <data name="PlanSectionTitle" xml:space="preserve">
+    <value>Wybierz plan</value>
+  </data>
+  <data name="PlanSectionDescription" xml:space="preserve">
+    <value>Wybierz tryb Free lub Premium, aby odblokowac dodatkowe funkcje.</value>
+  </data>
+  <data name="FreePlanTitle" xml:space="preserve">
+    <value>Free</value>
+  </data>
+  <data name="FreePlanDescription" xml:space="preserve">
+    <value>Podstawowe przepisy, planer i lista zakupow.</value>
+  </data>
+  <data name="ChooseFreePlanButton" xml:space="preserve">
+    <value>Wybierz Free</value>
+  </data>
+  <data name="PremiumPlanTitle" xml:space="preserve">
+    <value>Premium</value>
+  </data>
+  <data name="PremiumPlanDescription" xml:space="preserve">
+    <value>Doswiadczenie cloud-first i przyszle funkcje premium.</value>
+  </data>
+  <data name="ChoosePremiumPlanButton" xml:space="preserve">
+    <value>Wybierz Premium</value>
+  </data>
+  <data name="EmailRequired" xml:space="preserve">
+    <value>Email jest wymagany.</value>
+  </data>
+  <data name="EmailInvalid" xml:space="preserve">
+    <value>Podaj poprawny adres email.</value>
+  </data>
+  <data name="PasswordTooShort" xml:space="preserve">
+    <value>Haslo musi miec co najmniej 6 znakow.</value>
+  </data>
+  <data name="PasswordsDoNotMatch" xml:space="preserve">
+    <value>Hasla nie sa takie same.</value>
+  </data>
 </root>

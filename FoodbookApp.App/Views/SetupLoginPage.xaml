@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Foodbook.Services"
+             xmlns:vm="clr-namespace:Foodbook.ViewModels"
+             x:Class="Foodbook.Views.SetupLoginPage"
+             x:DataType="vm:SetupLoginViewModel">
+
+    <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+           BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+           CornerRadius="10"
+           Padding="20">
+        <VerticalStackLayout Spacing="12">
+            <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=LoginSectionTitle}"
+                   FontSize="20"
+                   FontAttributes="Bold"
+                   TextColor="{DynamicResource Primary}" />
+
+            <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=LoginSectionDescription}"
+                   FontSize="14"
+                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+
+            <Entry Placeholder="{loc:Translate Resource=SetupWizardPageResources, Key=EmailPlaceholder}"
+                   Text="{Binding Email}"
+                   Keyboard="Email"
+                   BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" />
+
+            <Entry Placeholder="{loc:Translate Resource=SetupWizardPageResources, Key=PasswordPlaceholder}"
+                   Text="{Binding Password}"
+                   IsPassword="True"
+                   BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" />
+
+            <Entry Placeholder="{loc:Translate Resource=SetupWizardPageResources, Key=ConfirmPasswordPlaceholder}"
+                   Text="{Binding ConfirmPassword}"
+                   IsVisible="{Binding IsRegisterMode}"
+                   IsPassword="True"
+                   BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" />
+
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="Red"
+                   IsVisible="{Binding HasError}" />
+
+            <Button Text="{loc:Translate Resource=SetupWizardPageResources, Key=LoginSubmitButton}"
+                    Command="{Binding SubmitCommand}"
+                    IsVisible="{Binding IsLoginMode}"
+                    BackgroundColor="{DynamicResource Primary}"
+                    TextColor="{DynamicResource ButtonPrimaryText}" />
+
+            <Button Text="{loc:Translate Resource=SetupWizardPageResources, Key=RegisterSubmitButton}"
+                    Command="{Binding SubmitCommand}"
+                    IsVisible="{Binding IsRegisterMode}"
+                    BackgroundColor="{DynamicResource Primary}"
+                    TextColor="{DynamicResource ButtonPrimaryText}" />
+
+            <Button Text="{loc:Translate Resource=SetupWizardPageResources, Key=ToggleModeButton}"
+                    Command="{Binding ToggleModeCommand}"
+                    BackgroundColor="Transparent"
+                    TextColor="{DynamicResource Primary}" />
+
+            <Button Text="{loc:Translate Resource=SetupWizardPageResources, Key=ContinueWithoutAccountButton}"
+                    Command="{Binding ContinueWithoutAccountCommand}"
+                    BackgroundColor="Transparent"
+                    TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+        </VerticalStackLayout>
+    </Frame>
+</ContentView>

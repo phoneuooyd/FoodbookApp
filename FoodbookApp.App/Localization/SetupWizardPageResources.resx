@@ -75,4 +75,79 @@
   <data name="CompleteSetupButton" xml:space="preserve">
     <value>Complete Setup</value>
   </data>
+  <data name="WelcomeStepTitle" xml:space="preserve">
+    <value>Quick setup</value>
+  </data>
+  <data name="WelcomeStepDescription" xml:space="preserve">
+    <value>In a few steps you can configure login, plan and app defaults.</value>
+  </data>
+  <data name="StartSetupButton" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="BackButton" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="LoginSectionTitle" xml:space="preserve">
+    <value>Account setup</value>
+  </data>
+  <data name="LoginSectionDescription" xml:space="preserve">
+    <value>Sign in or create an account to sync your data.</value>
+  </data>
+  <data name="EmailPlaceholder" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="PasswordPlaceholder" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="ConfirmPasswordPlaceholder" xml:space="preserve">
+    <value>Confirm password</value>
+  </data>
+  <data name="LoginSubmitButton" xml:space="preserve">
+    <value>Sign in</value>
+  </data>
+  <data name="RegisterSubmitButton" xml:space="preserve">
+    <value>Create account</value>
+  </data>
+  <data name="ToggleModeButton" xml:space="preserve">
+    <value>Switch login/register mode</value>
+  </data>
+  <data name="ContinueWithoutAccountButton" xml:space="preserve">
+    <value>Continue without account</value>
+  </data>
+  <data name="PlanSectionTitle" xml:space="preserve">
+    <value>Choose your plan</value>
+  </data>
+  <data name="PlanSectionDescription" xml:space="preserve">
+    <value>Select Free mode or Premium to unlock additional features.</value>
+  </data>
+  <data name="FreePlanTitle" xml:space="preserve">
+    <value>Free</value>
+  </data>
+  <data name="FreePlanDescription" xml:space="preserve">
+    <value>Core recipes, planner and shopping list.</value>
+  </data>
+  <data name="ChooseFreePlanButton" xml:space="preserve">
+    <value>Choose Free</value>
+  </data>
+  <data name="PremiumPlanTitle" xml:space="preserve">
+    <value>Premium</value>
+  </data>
+  <data name="PremiumPlanDescription" xml:space="preserve">
+    <value>Cloud-first experience and future premium features.</value>
+  </data>
+  <data name="ChoosePremiumPlanButton" xml:space="preserve">
+    <value>Choose Premium</value>
+  </data>
+  <data name="EmailRequired" xml:space="preserve">
+    <value>Email is required.</value>
+  </data>
+  <data name="EmailInvalid" xml:space="preserve">
+    <value>Please provide a valid email address.</value>
+  </data>
+  <data name="PasswordTooShort" xml:space="preserve">
+    <value>Password must contain at least 6 characters.</value>
+  </data>
+  <data name="PasswordsDoNotMatch" xml:space="preserve">
+    <value>Passwords do not match.</value>
+  </data>
 </root>
