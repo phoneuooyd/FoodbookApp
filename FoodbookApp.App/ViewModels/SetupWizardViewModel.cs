@@ -8,6 +8,7 @@ using Foodbook.Models;
 using Foodbook.Services;
 using FoodbookApp;
 using FoodbookApp.Interfaces;
+using AppTheme = Foodbook.Models.AppTheme;
 
 namespace Foodbook.ViewModels;
 
@@ -25,6 +26,7 @@ public class SetupWizardViewModel : INotifyPropertyChanged
     private string _statusMessage = string.Empty;
     private SetupWizardStep _currentStep = SetupWizardStep.LanguageAndIngredients;
     private bool _isGuestMode;
+    private string _selectedPlanChoice = string.Empty;
     private AppTheme _selectedTheme;
     private AppFontFamily _selectedFontFamily;
 
@@ -48,7 +50,7 @@ public class SetupWizardViewModel : INotifyPropertyChanged
             IsGuestMode = !args.IsAuthenticated;
             if (IsGuestMode)
             {
-                _preferencesService.SavePlanChoice("Free");
+                SelectedPlanChoice = "Free";
             }
 
             MoveToNextStep();
@@ -64,7 +66,7 @@ public class SetupWizardViewModel : INotifyPropertyChanged
         PreviousStepCommand = new Command(MoveToPreviousStep, () => CanGoBack);
         SelectFreePlanCommand = new Command(() => SelectPlan("Free"), () => !IsCompleting);
         SelectPremiumPlanCommand = new Command(() => SelectPlan("Premium"), () => !IsCompleting && !IsGuestMode);
-        CompleteSetupCommand = new Command(async () => await CompleteSetupAsync(), () => !IsCompleting);
+        CompleteSetupCommand = new Command(async () => await CompleteSetupAsync(), () => CanCompleteSetup);
     }
 
     public SetupLoginViewModel LoginViewModel { get; }
@@ -97,6 +99,7 @@ public class SetupWizardViewModel : INotifyPropertyChanged
     public bool IsPlanSelectionStep => CurrentStep == SetupWizardStep.PlanSelection;
     public bool CanGoBack => !IsCompleting && CurrentStep != SetupWizardStep.LanguageAndIngredients;
     public bool CanMoveToNextStep => CurrentStep is SetupWizardStep.LanguageAndIngredients or SetupWizardStep.Appearance;
+    public bool CanCompleteSetup => !IsCompleting && !string.IsNullOrWhiteSpace(SelectedPlanChoice);
 
     public bool IsGuestMode
     {
@@ -105,6 +108,12 @@ public class SetupWizardViewModel : INotifyPropertyChanged
         {
             if (_isGuestMode == value) return;
             _isGuestMode = value;
+
+            if (_isGuestMode && SelectedPlanChoice == "Premium")
+            {
+                SelectedPlanChoice = "Free";
+            }
+
             OnPropertyChanged();
             OnPropertyChanged(nameof(CanSelectPremiumPlan));
             ((Command)SelectPremiumPlanCommand).ChangeCanExecute();
@@ -112,6 +121,23 @@ public class SetupWizardViewModel : INotifyPropertyChanged
     }
 
     public bool CanSelectPremiumPlan => !IsGuestMode;
+    public bool IsFreePlanSelected => SelectedPlanChoice == "Free";
+    public bool IsPremiumPlanSelected => SelectedPlanChoice == "Premium";
+
+    public string SelectedPlanChoice
+    {
+        get => _selectedPlanChoice;
+        set
+        {
+            if (_selectedPlanChoice == value) return;
+            _selectedPlanChoice = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsFreePlanSelected));
+            OnPropertyChanged(nameof(IsPremiumPlanSelected));
+            OnPropertyChanged(nameof(CanCompleteSetup));
+            ((Command)CompleteSetupCommand).ChangeCanExecute();
+        }
+    }
 
     public LanguageOption SelectedLanguage
     {
@@ -181,6 +207,7 @@ public class SetupWizardViewModel : INotifyPropertyChanged
             _isCompleting = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(CanGoBack));
+            OnPropertyChanged(nameof(CanCompleteSetup));
             ((Command)NextStepCommand).ChangeCanExecute();
             ((Command)PreviousStepCommand).ChangeCanExecute();
             ((Command)SelectFreePlanCommand).ChangeCanExecute();
@@ -234,10 +261,12 @@ public class SetupWizardViewModel : INotifyPropertyChanged
         };
     }
 
-    private async void SelectPlan(string planChoice)
+    private void SelectPlan(string planChoice)
     {
-        _preferencesService.SavePlanChoice(planChoice);
-        await CompleteSetupAsync();
+        if (planChoice == "Premium" && IsGuestMode)
+            return;
+
+        SelectedPlanChoice = planChoice;
     }
 
     private void InitializeLanguages()
@@ -302,6 +331,9 @@ public class SetupWizardViewModel : INotifyPropertyChanged
     {
         try
         {
+            if (!CanCompleteSetup)
+                return;
+
             IsCompleting = true;
             StatusMessage = "Completing setup...";
 
@@ -311,6 +343,7 @@ public class SetupWizardViewModel : INotifyPropertyChanged
                 await Task.Delay(100);
             }
 
+            _preferencesService.SavePlanChoice(SelectedPlanChoice);
             _preferencesService.SaveTheme(SelectedTheme);
             _preferencesService.SaveFontFamily(SelectedFontFamily);
             _preferencesService.SaveInstallBasicIngredients(InstallBasicIngredients);
