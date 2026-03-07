@@ -12,38 +12,40 @@ namespace Foodbook.ViewModels;
 public class PlannerListsViewModel
 {
     private readonly IPlanService _planService;
+    private readonly IFoodbookTemplateService _templateService;
 
     public ObservableCollection<Plan> Plans { get; } = new();
+    public ObservableCollection<FoodbookTemplate> Templates { get; } = new();
 
+    public int SelectedTabIndex { get; set; }
+
+    public bool IsLoading { get; set; }
+
+    public ICommand SelectTabCommand { get; }
     public ICommand LoadCommand { get; }
     public ICommand CreatePlanCommand { get; }
     public ICommand EditPlanCommand { get; }
     public ICommand OpenShoppingListCommand { get; }
     public ICommand ArchivePlanCommand { get; }
+    public ICommand OpenTemplatesCommand { get; }
 
-    public PlannerListsViewModel(IPlanService planService)
+    public PlannerListsViewModel(IPlanService planService, IFoodbookTemplateService templateService)
     {
         _planService = planService;
+        _templateService = templateService;
 
         LoadCommand = new Command(async () => await LoadPlansAsync());
-        
-        // Navigate to PlannerPage with NEW planner ViewModel
+        SelectTabCommand = new Command<int>(i => SelectedTabIndex = i);
+
         CreatePlanCommand = new Command(async () =>
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("[PlannerListsVM] Creating NEW planner");
-                
-                // Resolve PlannerViewModel and PlannerPage from DI
                 var newVM = FoodbookApp.MauiProgram.ServiceProvider?.GetService<PlannerViewModel>();
                 if (newVM != null)
                 {
                     var page = new PlannerPage(newVM);
                     await Shell.Current.Navigation.PushAsync(page);
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("[PlannerListsVM] Failed to resolve PlannerViewModel");
                 }
             }
             catch (Exception ex)
@@ -51,30 +53,19 @@ public class PlannerListsViewModel
                 System.Diagnostics.Debug.WriteLine($"[PlannerListsVM] Navigation to NEW PlannerPage failed: {ex.Message}");
             }
         });
-        
-        // Navigate to PlannerPage with EDIT ViewModel
+
         EditPlanCommand = new Command<Plan>(async (p) =>
         {
             if (p == null) return;
-            
+
             try
             {
-                System.Diagnostics.Debug.WriteLine($"[PlannerListsVM] EDITING existing plan {p.Id}");
-                
-                // Resolve PlannerEditViewModel from DI
                 var editVM = FoodbookApp.MauiProgram.ServiceProvider?.GetService<PlannerEditViewModel>();
                 if (editVM != null)
                 {
                     var page = new PlannerPage(editVM);
-                    
-                    // Set the PlanId property for QueryProperty
                     page.PlanId = p.Id.ToString();
-                    
                     await Shell.Current.Navigation.PushAsync(page);
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("[PlannerListsVM] Failed to resolve PlannerEditViewModel");
                 }
             }
             catch (Exception ex)
@@ -82,28 +73,37 @@ public class PlannerListsViewModel
                 System.Diagnostics.Debug.WriteLine($"[PlannerListsVM] Navigation to EDIT PlannerPage failed: {ex.Message}");
             }
         });
-        
+
         OpenShoppingListCommand = new Command<Plan>(async (p) =>
         {
             if (p == null) return;
             await Shell.Current.GoToAsync($"{nameof(ShoppingListDetailPage)}?id={p.Id}");
         });
-        
-        ArchivePlanCommand = new Command<Plan>(async (p) => await ArchivePlanAsync(p));
 
-        // Refresh when plans change elsewhere
+        ArchivePlanCommand = new Command<Plan>(async (p) => await ArchivePlanAsync(p));
+        OpenTemplatesCommand = new Command(async () => await Shell.Current.Navigation.PushAsync(new FoodbookTemplatesPage()));
+
         AppEvents.PlanChangedAsync += async () => await LoadPlansAsync();
     }
 
     public async Task LoadPlansAsync()
     {
+        IsLoading = true;
         Plans.Clear();
         var plans = await _planService.GetPlansAsync();
-        // Filter only non-archived Planner type plans
         foreach (var p in plans.Where(x => !x.IsArchived && x.Type == PlanType.Planner).OrderByDescending(x => x.StartDate))
         {
             Plans.Add(p);
         }
+
+        Templates.Clear();
+        var templates = await _templateService.GetTemplatesAsync();
+        foreach (var template in templates)
+        {
+            Templates.Add(template);
+        }
+
+        IsLoading = false;
     }
 
     private async Task ArchivePlanAsync(Plan? plan)
@@ -112,7 +112,7 @@ public class PlannerListsViewModel
 
         bool confirm = await Shell.Current.DisplayAlert(
             "Archiwizacja",
-            "Czy na pewno chcesz zarchiwizowaæ ten planner?",
+            "Czy na pewno chcesz zarchiwizowaÄ‡ ten planner?",
             "Tak",
             "Nie");
 
@@ -121,8 +121,6 @@ public class PlannerListsViewModel
             plan.IsArchived = true;
             await _planService.UpdatePlanAsync(plan);
             await LoadPlansAsync();
-
-            // Notify other views including archive page
             AppEvents.RaisePlanChanged();
         }
     }

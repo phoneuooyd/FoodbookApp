@@ -28,26 +28,47 @@
         </DataTemplate>
     </ContentPage.Resources>
 
-    <Grid>
-        <Label
-            Text="{loc:Translate Resource=PlannerListsPageResources, Key=PlannerTitle}"
-            FontSize="20"
-            FontAttributes="Bold"
-            TextColor="{DynamicResource Primary}"
-            Margin="10,5,5,5" />
+    <components:TabComponent SelectedIndex="{Binding SelectedTabIndex}" SelectTabCommand="{Binding SelectTabCommand}">
+        <components:TabComponent.Tabs>
+            <components:TabItem Name="{loc:Translate Resource=PlannerListsPageResources, Key=PlannerTitle}">
+                <components:TabItem.Content>
+                    <Grid>
+                        <components:GenericListComponent
+                            x:Name="PlannerList"
+                            ItemsSource="{Binding Plans}"
+                            ItemTemplate="{StaticResource PlanRowTemplate}"
+                            EmptyTitle="{loc:Translate Resource=PlannerListsPageResources, Key=EmptyTitle}"
+                            EmptyHint="{loc:Translate Resource=PlannerListsPageResources, Key=EmptyHint}"
+                            IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
 
-        <components:GenericListComponent
-            x:Name="PlannerList"
-            ItemsSource="{Binding Plans}"
-            ItemTemplate="{StaticResource PlanRowTemplate}"
-            EmptyTitle="{loc:Translate Resource=PlannerListsPageResources, Key=EmptyTitle}"
-            EmptyHint="{loc:Translate Resource=PlannerListsPageResources, Key=EmptyHint}"
-            IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+                        <components:FloatingActionButtonComponent
+                            Command="{Binding CreatePlanCommand}"
+                            IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+                            ButtonText="+"
+                            IsExpandable="False" />
+                    </Grid>
+                </components:TabItem.Content>
+            </components:TabItem>
 
-        <components:FloatingActionButtonComponent
-            Command="{Binding CreatePlanCommand}"
-            IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
-            ButtonText="+"
-            IsExpandable="False" />
-    </Grid>
+            <components:TabItem Name="{loc:Translate Resource=PlannerListsPageResources, Key=FoodbooksTab}">
+                <components:TabItem.Content>
+                    <Grid Padding="12" RowDefinitions="Auto,*">
+                        <Button Grid.Row="0" Text="{loc:Translate Resource=PlannerListsPageResources, Key=ManageFoodbooksButton}" Command="{Binding OpenTemplatesCommand}" />
+                        <CollectionView Grid.Row="1" ItemsSource="{Binding Templates}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:FoodbookTemplate">
+                                    <Frame Margin="0,8" Padding="12">
+                                        <VerticalStackLayout>
+                                            <Label Text="{Binding Name}" FontAttributes="Bold" />
+                                            <Label Text="{Binding Description}" FontSize="12" />
+                                        </VerticalStackLayout>
+                                    </Frame>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </Grid>
+                </components:TabItem.Content>
+            </components:TabItem>
+        </components:TabComponent.Tabs>
+    </components:TabComponent>
 </ContentPage>

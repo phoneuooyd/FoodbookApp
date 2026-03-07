@@ -11,6 +11,9 @@
              x:Name="ThisPage"
              Title="{loc:Translate Resource=PlannerPageResources, Key=Title}"
              BackgroundColor="{DynamicResource PageBackgroundColor}">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="⋮" Clicked="OnPlannerMenuClicked" Order="Primary" Priority="0" />
+    </ContentPage.ToolbarItems>
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         <converters:RecipeSelectedToStrokeConverter x:Key="RecipeSelectedToStrokeConverter" />
