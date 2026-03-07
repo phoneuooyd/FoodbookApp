@@ -588,3 +588,7 @@ Patrz dalsza część dokumentu (standardy dokumentowania kodu, lokalizacji, tes
 
 ---
 **Ostatnia aktualizacja**: 20.08.2025
+## Templates feature notes
+- Use `IFoodbookTemplateService` as the single entry point for creating, reading, applying, and deleting foodbook templates.
+- Template application creates a planner `Plan` and corresponding `PlannedMeal` rows shifted by selected start date.
+- UI entry points: planner three-dot action menu and planner lists templates tab.

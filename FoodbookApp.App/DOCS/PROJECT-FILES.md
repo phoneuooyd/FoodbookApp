@@ -80,3 +80,14 @@ Przy każdej zmianie struktury katalogów (dodanie, usunięcie, przeniesienie mo
 
 ---
 **Ostatnio zweryfikowano strukturę:** 2026-03-06
+
+### New files (templates)
+- `Models/FoodbookTemplate.cs`
+- `Models/TemplateMeal.cs`
+- `Interfaces/IFoodbookTemplateService.cs`
+- `Services/FoodbookTemplateService.cs`
+- `ViewModels/FoodbookTemplatesViewModel.cs`
+- `ViewModels/FoodbookTemplateFormViewModel.cs`
+- `Views/FoodbookTemplatesPage.xaml(.cs)`
+- `Views/FoodbookTemplateFormPage.xaml(.cs)`
+- `Data/Migrations/20260307120000_AddFoodbookTemplates.cs`

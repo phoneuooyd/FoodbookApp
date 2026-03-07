@@ -91,6 +91,107 @@ namespace FoodbookApp.Migrations
                     b.ToTable("Folders");
                 });
 
+            modelBuilder.Entity("Foodbook.Models.FoodbookTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("DurationDays")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsPublic")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MealsPerDay")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "CreatedAt")
+                        .HasDatabaseName("IX_FoodbookTemplates_UserId_CreatedAt");
+
+                    b.ToTable("FoodbookTemplates");
+                });
+
+            modelBuilder.Entity("Foodbook.Models.TemplateMeal", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("DayOffset")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("FoodbookTemplateId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Portions")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("RecipeId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SlotIndex")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FoodbookTemplateId", "DayOffset", "SlotIndex")
+                        .HasDatabaseName("IX_TemplateMeals_Template_Day_Slot");
+
+                    b.HasIndex("RecipeId");
+
+                    b.ToTable("TemplateMeals");
+                });
+
+            modelBuilder.Entity("Foodbook.Models.FoodbookTemplate", b =>
+                {
+                    b.HasMany("Foodbook.Models.TemplateMeal", "Meals")
+                        .WithOne("FoodbookTemplate")
+                        .HasForeignKey("FoodbookTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Meals");
+                });
+
+            modelBuilder.Entity("Foodbook.Models.TemplateMeal", b =>
+                {
+                    b.HasOne("Foodbook.Models.FoodbookTemplate", "FoodbookTemplate")
+                        .WithMany("Meals")
+                        .HasForeignKey("FoodbookTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Foodbook.Models.Recipe", "Recipe")
+                        .WithMany()
+                        .HasForeignKey("RecipeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FoodbookTemplate");
+
+                    b.Navigation("Recipe");
+                });
+
             modelBuilder.Entity("Foodbook.Models.Ingredient", b =>
                 {
                     b.Property<Guid>("Id")

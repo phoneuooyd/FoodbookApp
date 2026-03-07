@@ -58,8 +58,8 @@
         <!-- Content -->
         <ScrollView Grid.Row="0" IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
             <Grid Padding="10" RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="15">
-                <!-- Row 0: Date pickers -->
-                <Grid Grid.Row="0" ColumnDefinitions="*,*" ColumnSpacing="15" Margin="0,5">
+                <!-- Row 0: Date pickers + actions -->
+                <Grid Grid.Row="0" ColumnDefinitions="*,*,Auto" ColumnSpacing="15" Margin="0,5">
                     <Grid Grid.Column="0" RowDefinitions="Auto,Auto" HorizontalOptions="Start">
                         <Label Grid.Row="0" Text="{loc:Translate Resource=PlannerPageResources, Key=DateFrom}" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource Primary}" Margin="0,0,0,5" />
                         <!-- Date From card -->
@@ -74,6 +74,17 @@
                             <DatePicker x:Name="EndDatePicker" Date="{Binding EndDate}" Format="dd.MM.yyyy" Style="{StaticResource PlannerDatePicker}" />
                         </Border>
                     </Grid>
+
+                    <Button Grid.Column="2"
+                            Text="⋮"
+                            WidthRequest="36"
+                            HeightRequest="36"
+                            CornerRadius="18"
+                            FontSize="18"
+                            VerticalOptions="End"
+                            Clicked="OnTemplateMenuClicked"
+                            BackgroundColor="{DynamicResource FrameBackgroundColor}"
+                            TextColor="{DynamicResource Primary}" />
                 </Grid>
 
                 <!-- Row 1: Meals per day card -->

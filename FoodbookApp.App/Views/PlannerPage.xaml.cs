@@ -5,6 +5,7 @@ using FoodbookApp.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Foodbook.Models;
 using Foodbook.Views.Base;
+using Foodbook.Services;
 
 namespace Foodbook.Views
 {
@@ -302,6 +303,135 @@ namespace Foodbook.Views
             {
                 System.Diagnostics.Debug.WriteLine($"[PlannerPage] OnEndDateSelected error: {ex.Message}");
             }
+        }
+
+
+        private async void OnTemplateMenuClicked(object? sender, EventArgs e)
+        {
+            try
+            {
+                var choice = await Shell.Current.DisplayActionSheet(
+                    "Szablony",
+                    "Anuluj",
+                    null,
+                    "Zapisz bieżący plan jako szablon",
+                    "Zastosuj szablon");
+
+                if (choice == "Zapisz bieżący plan jako szablon")
+                {
+                    await SaveCurrentPlanAsTemplateAsync();
+                }
+                else if (choice == "Zastosuj szablon")
+                {
+                    await OpenTemplatesPageAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PlannerPage] OnTemplateMenuClicked error: {ex.Message}");
+            }
+        }
+
+        private async Task SaveCurrentPlanAsTemplateAsync()
+        {
+            var featureAccess = MauiProgram.ServiceProvider?.GetService<IFeatureAccessService>();
+            if (featureAccess == null)
+            {
+                return;
+            }
+
+            var canUseTemplates = await featureAccess.CanUsePremiumFeatureAsync(PremiumFeature.FoodbookTemplates);
+            if (!canUseTemplates)
+            {
+                await Shell.Current.DisplayAlert("Premium", "Ta funkcja jest dostępna w planie premium.", "OK");
+                return;
+            }
+
+            var days = GetCurrentDays();
+            if (days.Count == 0)
+            {
+                await Shell.Current.DisplayAlert("Brak danych", "Brak danych planu do zapisania.", "OK");
+                return;
+            }
+
+            var startDate = GetCurrentStartDate();
+            var meals = new List<TemplateMeal>();
+            foreach (var day in days)
+            {
+                var dayOffset = (day.Date.Date - startDate.Date).Days;
+                for (var slot = 0; slot < day.Meals.Count; slot++)
+                {
+                    var meal = day.Meals[slot];
+                    var recipeId = meal.Recipe?.Id ?? meal.RecipeId;
+                    if (recipeId == Guid.Empty)
+                    {
+                        continue;
+                    }
+
+                    meals.Add(new TemplateMeal
+                    {
+                        DayOffset = dayOffset,
+                        SlotIndex = slot,
+                        RecipeId = recipeId,
+                        Portions = Math.Max(1, meal.Portions)
+                    });
+                }
+            }
+
+            if (meals.Count == 0)
+            {
+                await Shell.Current.DisplayAlert("Brak danych", "Dodaj przynajmniej jeden posiłek, aby utworzyć szablon.", "OK");
+                return;
+            }
+
+            var suggestedName = await Shell.Current.DisplayPromptAsync("Nazwa szablonu", "Podaj nazwę szablonu", "Dalej", "Anuluj", initialValue: "Nowy szablon");
+            if (string.IsNullOrWhiteSpace(suggestedName))
+            {
+                return;
+            }
+
+            await Shell.Current.Navigation.PushAsync(new FoodbookTemplateFormPage(suggestedName.Trim(), null, meals, GetCurrentMealsPerDay()));
+        }
+
+        private async Task OpenTemplatesPageAsync()
+        {
+            var vm = MauiProgram.ServiceProvider?.GetService<FoodbookTemplatesViewModel>();
+            if (vm == null)
+            {
+                return;
+            }
+
+            await Shell.Current.Navigation.PushAsync(new FoodbookTemplatesPage(vm));
+        }
+
+        private List<PlannerDay> GetCurrentDays()
+        {
+            return _viewModel switch
+            {
+                PlannerViewModel vm => vm.Days.ToList(),
+                PlannerEditViewModel vm => vm.Days.ToList(),
+                _ => new List<PlannerDay>()
+            };
+        }
+
+        private DateTime GetCurrentStartDate()
+        {
+            return _viewModel switch
+            {
+                PlannerViewModel vm => vm.StartDate,
+                PlannerEditViewModel vm => vm.StartDate,
+                _ => DateTime.Today
+            };
+        }
+
+        private int GetCurrentMealsPerDay()
+        {
+            return _viewModel switch
+            {
+                PlannerViewModel vm => vm.MealsPerDay,
+                PlannerEditViewModel vm => vm.MealsPerDay,
+                _ => 3
+            };
         }
 
         private void OnMealRecipeChanged(object? sender, PropertyChangedEventArgs e)

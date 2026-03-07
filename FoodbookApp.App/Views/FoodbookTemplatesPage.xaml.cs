@@ -1,14 +1,13 @@
 using Foodbook.ViewModels;
 using Foodbook.Views.Base;
-using Microsoft.Maui.Controls;
 
 namespace Foodbook.Views;
 
-public partial class PlannerListsPage : ContentPage
+public partial class FoodbookTemplatesPage : ContentPage
 {
     private readonly PageThemeHelper _themeHelper;
 
-    public PlannerListsPage(PlannerListsViewModel viewModel)
+    public FoodbookTemplatesPage(FoodbookTemplatesViewModel viewModel)
     {
         InitializeComponent();
         BindingContext = viewModel;
@@ -19,7 +18,8 @@ public partial class PlannerListsPage : ContentPage
     {
         base.OnAppearing();
         _themeHelper.Initialize();
-        if (BindingContext is PlannerListsViewModel vm)
+
+        if (BindingContext is FoodbookTemplatesViewModel vm)
         {
             await vm.LoadAsync();
         }

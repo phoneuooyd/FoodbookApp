@@ -7,7 +7,6 @@
     xmlns:vm="clr-namespace:Foodbook.ViewModels"
     xmlns:models="clr-namespace:Foodbook.Models"
     xmlns:components="clr-namespace:Foodbook.Views.Components"
-    xmlns:resources="clr-namespace:FoodbookApp.Localization"
     xmlns:converters="clr-namespace:Foodbook.Converters"
     x:Name="ThisPage"
     x:DataType="vm:PlannerListsViewModel"
@@ -17,7 +16,7 @@
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         <DataTemplate x:Key="PlanRowTemplate" x:DataType="models:Plan">
-            <components:UniversalListItemComponent 
+            <components:UniversalListItemComponent
                 EditCommand="{Binding BindingContext.EditPlanCommand, Source={x:Reference ThisPage}}"
                 ArchiveCommand="{Binding BindingContext.ArchivePlanCommand, Source={x:Reference ThisPage}}"
                 ShowNutritionLayout="False"
@@ -28,26 +27,61 @@
         </DataTemplate>
     </ContentPage.Resources>
 
-    <Grid>
-        <Label
-            Text="{loc:Translate Resource=PlannerListsPageResources, Key=PlannerTitle}"
-            FontSize="20"
-            FontAttributes="Bold"
-            TextColor="{DynamicResource Primary}"
-            Margin="10,5,5,5" />
+    <Grid RowDefinitions="Auto,*" Padding="0">
+        <Label Grid.Row="0"
+               Text="{loc:Translate Resource=PlannerListsPageResources, Key=PlannerTitle}"
+               FontSize="20"
+               FontAttributes="Bold"
+               TextColor="{DynamicResource Primary}"
+               Margin="10,8,5,5" />
 
-        <components:GenericListComponent
-            x:Name="PlannerList"
-            ItemsSource="{Binding Plans}"
-            ItemTemplate="{StaticResource PlanRowTemplate}"
-            EmptyTitle="{loc:Translate Resource=PlannerListsPageResources, Key=EmptyTitle}"
-            EmptyHint="{loc:Translate Resource=PlannerListsPageResources, Key=EmptyHint}"
-            IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+        <components:TabComponent Grid.Row="1" SelectedIndex="{Binding SelectedTabIndex}">
+            <components:TabItem Name="{loc:Translate Resource=PlannerListsPageResources, Key=PlannersTab}">
+                <components:TabItem.Content>
+                    <Grid>
+                        <components:GenericListComponent
+                            x:Name="PlannerList"
+                            ItemsSource="{Binding Plans}"
+                            ItemTemplate="{StaticResource PlanRowTemplate}"
+                            EmptyTitle="{loc:Translate Resource=PlannerListsPageResources, Key=EmptyTitle}"
+                            EmptyHint="{loc:Translate Resource=PlannerListsPageResources, Key=EmptyHint}" />
 
-        <components:FloatingActionButtonComponent
-            Command="{Binding CreatePlanCommand}"
-            IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
-            ButtonText="+"
-            IsExpandable="False" />
+                        <components:FloatingActionButtonComponent
+                            Command="{Binding CreatePlanCommand}"
+                            ButtonText="+"
+                            IsExpandable="False" />
+                    </Grid>
+                </components:TabItem.Content>
+            </components:TabItem>
+
+            <components:TabItem Name="{loc:Translate Resource=PlannerListsPageResources, Key=TemplatesTab}">
+                <components:TabItem.Content>
+                    <Grid RowDefinitions="Auto,*" Padding="10">
+                        <Button Grid.Row="0"
+                                Text="{loc:Translate Resource=PlannerTemplatesResources, Key=OpenTemplatesPage}"
+                                Command="{Binding OpenTemplatesPageCommand}"
+                                BackgroundColor="{DynamicResource Primary}"
+                                TextColor="{DynamicResource ButtonPrimaryText}" />
+                        <CollectionView Grid.Row="1" ItemsSource="{Binding Templates}" Margin="0,10,0,0">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:FoodbookTemplate">
+                                    <Border Stroke="{AppThemeBinding Light=#DDDDDD, Dark=#555555}" StrokeShape="RoundRectangle 10" Padding="10" Margin="0,0,0,8" BackgroundColor="{DynamicResource FrameBackgroundColor}">
+                                        <VerticalStackLayout Spacing="8">
+                                            <Label Text="{Binding Name}" FontAttributes="Bold" TextColor="{DynamicResource PrimaryText}" />
+                                            <Label Text="{Binding Description}" TextColor="{DynamicResource SecondaryText}" FontSize="12" />
+                                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                                                <Button Grid.Column="0" Text="{loc:Translate Resource=PlannerTemplatesResources, Key=ApplyTemplate}" Command="{Binding BindingContext.ApplyTemplateCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
+                                                <Button Grid.Column="1" Text="{loc:Translate Resource=PlannerTemplatesResources, Key=EditTemplate}" Command="{Binding BindingContext.EditTemplateCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
+                                                <Button Grid.Column="2" Text="{loc:Translate Resource=PlannerTemplatesResources, Key=DeleteTemplate}" Command="{Binding BindingContext.DeleteTemplateCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" BackgroundColor="#C33" TextColor="White" />
+                                            </Grid>
+                                        </VerticalStackLayout>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </Grid>
+                </components:TabItem.Content>
+            </components:TabItem>
+        </components:TabComponent>
     </Grid>
 </ContentPage>

@@ -67,6 +67,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<IPlanService, PlanService>();
             builder.Services.AddScoped<IFeatureAccessService, FeatureAccessService>();
             builder.Services.AddScoped<IIngredientService, IngredientService>();
+            builder.Services.AddScoped<IFoodbookTemplateService, FoodbookTemplateService>();
             builder.Services.AddScoped<IFolderService, FolderService>();
             builder.Services.AddScoped<IRecipeLabelService, RecipeLabelService>();
             builder.Services.AddSingleton<ILocalizationService, LocalizationService>();
@@ -165,6 +166,8 @@ namespace FoodbookApp
             builder.Services.AddTransient<SetupWizardViewModel>();
             // New: Planner lists VM
             builder.Services.AddTransient<PlannerListsViewModel>();
+            builder.Services.AddTransient<FoodbookTemplatesViewModel>();
+            builder.Services.AddTransient<FoodbookTemplateFormViewModel>();
 
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering pages");
             builder.Services.AddTransient<HomePage>();
@@ -174,6 +177,8 @@ namespace FoodbookApp
             builder.Services.AddScoped<IngredientFormPage>();
             builder.Services.AddTransient<PlannerPage>();
             builder.Services.AddScoped<PlannerListsPage>();
+            builder.Services.AddScoped<FoodbookTemplatesPage>();
+            builder.Services.AddScoped<FoodbookTemplateFormPage>();
             builder.Services.AddScoped<MealFormPage>();
             builder.Services.AddTransient<ShoppingListPage>();
             builder.Services.AddScoped<ShoppingListDetailPage>();
@@ -200,6 +205,8 @@ namespace FoodbookApp
             Routing.RegisterRoute(nameof(IngredientsPage), typeof(IngredientsPage));
             Routing.RegisterRoute(nameof(PlannerPage), typeof(PlannerPage));
             Routing.RegisterRoute(nameof(PlannerListsPage), typeof(PlannerListsPage));
+            Routing.RegisterRoute(nameof(FoodbookTemplatesPage), typeof(FoodbookTemplatesPage));
+            Routing.RegisterRoute(nameof(FoodbookTemplateFormPage), typeof(FoodbookTemplateFormPage));
             Routing.RegisterRoute(nameof(MealFormPage), typeof(MealFormPage));
             Routing.RegisterRoute(nameof(ShoppingListPage), typeof(ShoppingListPage));
             Routing.RegisterRoute(nameof(ShoppingListDetailPage), typeof(ShoppingListDetailPage));

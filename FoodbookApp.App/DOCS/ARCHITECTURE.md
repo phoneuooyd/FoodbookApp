@@ -3,221 +3,225 @@
 <!-- This file will contain detailed information about the FoodBook App architecture, design patterns, and technical decisions -->
 
 ## 1. Cel dokumentu
-Dokument opisuje architekturê aplikacji FoodBook App: warstwy, wzorce, zale¿noœci, decyzje techniczne oraz wytyczne rozwoju i rozszerzalnoœci. Ma byæ punktem odniesienia dla deweloperów i agentów AI generuj¹cych kod.
+Dokument opisuje architekturÄ™ aplikacji FoodBook App: warstwy, wzorce, zaleÅ¼noÅ›ci, decyzje techniczne oraz wytyczne rozwoju i rozszerzalnoÅ›ci. Ma byÄ‡ punktem odniesienia dla deweloperÃ³w i agentÃ³w AI generujÄ…cych kod.
 
 ---
 ## 2. Kontekst biznesowy
 FoodBook App to wieloplatformowa (Android, iOS, Windows, macOS) aplikacja mobilna do:
-- Zarz¹dzania baz¹ przepisów (dodawanie, edycja, import z sieci, obliczenia makro)
-- Planowania posi³ków w przedzia³ach dat z konfiguracj¹ liczby posi³ków dziennie
-- Generowania list zakupów na podstawie planów
-- Archiwizacji i przywracania planów/list zakupów
-- Zbierania i wyœwietlania statystyk ¿ywieniowych (kalorie, bia³ko, t³uszcze, wêglowodany)
+- ZarzÄ…dzania bazÄ… przepisÃ³w (dodawanie, edycja, import z sieci, obliczenia makro)
+- Planowania posiÅ‚kÃ³w w przedziaÅ‚ach dat z konfiguracjÄ… liczby posiÅ‚kÃ³w dziennie
+- Generowania list zakupÃ³w na podstawie planÃ³w
+- Archiwizacji i przywracania planÃ³w/list zakupÃ³w
+- Zbierania i wyÅ›wietlania statystyk Å¼ywieniowych (kalorie, biaÅ‚ko, tÅ‚uszcze, wÄ™glowodany)
 
 ---
-## 3. Warstwy i podzia³ odpowiedzialnoœci
+## 3. Warstwy i podziaÅ‚ odpowiedzialnoÅ›ci
 | Warstwa | Zakres | Technologie / Artefakty |
 |---------|--------|-------------------------|
 | Prezentacji | UI, XAML Pages, Shell | .NET MAUI XAML, Shell, ResourceDictionary, Style, Converters |
 | ViewModel (MVVM) | Logika prezentacji, komendy, stan UI | Klasy w `ViewModels/`, INotifyPropertyChanged |
 | Serwisy Aplikacyjne | Operacje domenowe / agregacja danych | Klasy w `Services/` (RecipeService, PlannerService, PlanService, ShoppingListService, IngredientService) |
-| Dostêp do danych | ORM, persystencja | EF Core (AppDbContext), SQLite |
+| DostÄ™p do danych | ORM, persystencja | EF Core (AppDbContext), SQLite |
 | Modele Domenowe | Encje i obiekty transferu | Klasy w `Models/` (Recipe, Ingredient, PlannedMeal, PlannerDay, Plan) |
-| Infrastruktura | DI, lokalizacja, import, narzêdzia | MauiProgram.cs, Localization*, RecipeImporter, konwertery |
+| Infrastruktura | DI, lokalizacja, import, narzÄ™dzia | MauiProgram.cs, Localization*, RecipeImporter, konwertery |
 
 ---
 ## 4. Wzorce projektowe
-- MVVM (oddzielenie UI od logiki – View ? ViewModel przez binding)
+- MVVM (oddzielenie UI od logiki â€“ View ? ViewModel przez binding)
 - Dependency Injection (constructor injection, rejestracje w `MauiProgram.cs`)
-- Repository-like podejœcie uproszczone (serwisy aplikacyjne wykorzystuj¹ce EF Core – bez osobnych repozytoriów dla prostoty)
+- Repository-like podejÅ›cie uproszczone (serwisy aplikacyjne wykorzystujÄ…ce EF Core â€“ bez osobnych repozytoriÃ³w dla prostoty)
 - Observer (INotifyPropertyChanged w modelach dynamicznych: Ingredient, PlannedMeal)
 - Command Pattern (ICommand w ViewModelach do akcji UI)
-- Caching in-memory (PlannerViewModel – w³asny cache zakresu dat)
+- Caching in-memory (PlannerViewModel â€“ wÅ‚asny cache zakresu dat)
 
 ---
 ## 5. Struktura projektu
-Patrz `PROJECT-FILES.md` – g³ówne katalogi: `Models/`, `Data/`, `Services/`, `ViewModels/`, `Views/`, `Localization/`, `Resources/`, `Converters/`, `Platforms/`.
+Patrz `PROJECT-FILES.md` â€“ gÅ‚Ã³wne katalogi: `Models/`, `Data/`, `Services/`, `ViewModels/`, `Views/`, `Localization/`, `Resources/`, `Converters/`, `Platforms/`.
 
 ---
-## 6. Modele domenowe (skrót)
-- `Recipe`: podstawowe makro wartoœci (Calories, Protein, Fat, Carbs), lista Ingredient, IloscPorcji
-- `Ingredient`: wartoœci od¿ywcze przypisane do jednostki/iloœci, powi¹zanie opcjonalne z Recipe
+## 6. Modele domenowe (skrÃ³t)
+- `Recipe`: podstawowe makro wartoÅ›ci (Calories, Protein, Fat, Carbs), lista Ingredient, IloscPorcji
+- `Ingredient`: wartoÅ›ci odÅ¼ywcze przypisane do jednostki/iloÅ›ci, powiÄ…zanie opcjonalne z Recipe
 - `PlannedMeal`: referencja do Recipe (RecipeId), Date, Portions
-- `PlannerDay`: agreguje kolekcjê PlannedMeal dla konkretnej daty (UI helper)
-- `Plan`: przedzia³ dat (StartDate, EndDate), IsArchived – logiczna archiwizacja
+- `PlannerDay`: agreguje kolekcjÄ™ PlannedMeal dla konkretnej daty (UI helper)
+- `Plan`: przedziaÅ‚ dat (StartDate, EndDate), IsArchived â€“ logiczna archiwizacja
 
-Relacje kluczowe: Recipe (1) — (N) Ingredient; Plan (N) — (N) PlannedMeal (powi¹zanie via zakres dat i RecipeId logicznie, faktycznie PlannedMeal nie ma PlanId – identyfikacja poprzez daty w przedziale planu).
+Relacje kluczowe: Recipe (1) â€” (N) Ingredient; Plan (N) â€” (N) PlannedMeal (powiÄ…zanie via zakres dat i RecipeId logicznie, faktycznie PlannedMeal nie ma PlanId â€“ identyfikacja poprzez daty w przedziale planu).
 
 ---
-## 7. Dostêp do danych
+## 7. DostÄ™p do danych
 - ORM: Entity Framework Core 9 + SQLite
 - Kontekst: `AppDbContext` (DbSet: Recipes, Ingredients, PlannedMeals, Plans)
-- Migrations: mog¹ byæ dodane (w README – instrukcja), obecnie inicjalizacja przez `EnsureCreated()` + seed
-- Seed: `SeedData.InitializeAsync()` + `SeedIngredientsAsync()` – fallback mechanizmy (embedded resource ? app package ? filesystem ? fallback statyczny)
-- Udoskonalenia przysz³e: wprowadzenie migracji kontrolowanych; osobne repozytoria (opcjonalnie); indeksy (np. na PlannedMeals.Date)
+- Migrations: mogÄ… byÄ‡ dodane (w README â€“ instrukcja), obecnie inicjalizacja przez `EnsureCreated()` + seed
+- Seed: `SeedData.InitializeAsync()` + `SeedIngredientsAsync()` â€“ fallback mechanizmy (embedded resource ? app package ? filesystem ? fallback statyczny)
+- Udoskonalenia przyszÅ‚e: wprowadzenie migracji kontrolowanych; osobne repozytoria (opcjonalnie); indeksy (np. na PlannedMeals.Date)
 
 ---
 ## 8. Serwisy aplikacyjne
 | Serwis | Cel |
 |--------|-----|
-| IRecipeService / RecipeService | CRUD przepisów, pobieranie pojedynczego i listy |
-| IIngredientService / IngredientService | Operacje na sk³adnikach globalnych i przypisanych do przepisu |
-| IPlannerService / PlannerService | Zarz¹dzanie PlannedMeal (dodawanie/aktualizacja/usuwanie/pobieranie zakresu) |
+| IRecipeService / RecipeService | CRUD przepisÃ³w, pobieranie pojedynczego i listy |
+| IIngredientService / IngredientService | Operacje na skÅ‚adnikach globalnych i przypisanych do przepisu |
+| IPlannerService / PlannerService | ZarzÄ…dzanie PlannedMeal (dodawanie/aktualizacja/usuwanie/pobieranie zakresu) |
 | IPlanService / PlanService | Operacje na Plan (archiwizacja, kolizje dat) |
-| IShoppingListService / ShoppingListService | Generowanie list zakupów na podstawie planu (agregacje sk³adników) |
-| LocalizationService / LocalizationResourceManager | Lokalizacja tekstów (resx) i dynamiczne odœwie¿anie |
+| IShoppingListService / ShoppingListService | Generowanie list zakupÃ³w na podstawie planu (agregacje skÅ‚adnikÃ³w) |
+| LocalizationService / LocalizationResourceManager | Lokalizacja tekstÃ³w (resx) i dynamiczne odÅ›wieÅ¼anie |
 | RecipeImporter | Import przepisu z URL (scraping i heurystyka) |
 
 ---
-## 9. ViewModel (MVVM) – kluczowe aspekty
-- Ka¿dy ViewModel izoluje logikê UI: komendy, validacja, ³adowanie danych async
-- `PlannerViewModel`: zarz¹dzanie datami, batch loading, progress reporting, caching
+## 9. ViewModel (MVVM) â€“ kluczowe aspekty
+- KaÅ¼dy ViewModel izoluje logikÄ™ UI: komendy, validacja, Å‚adowanie danych async
+- `PlannerViewModel`: zarzÄ…dzanie datami, batch loading, progress reporting, caching
 - `HomeViewModel`: agregacja statystyk (nutritional) + elastyczne zakresy dat
 - `AddRecipeViewModel`: dwa tryby (manual / import), dynamiczne przeliczanie makro
-- `ShoppingListViewModel` i `ArchiveViewModel`: filtrowanie aktywnych/archiwalnych planów
+- `ShoppingListViewModel` i `ArchiveViewModel`: filtrowanie aktywnych/archiwalnych planÃ³w
 
-Konwencje: minimalizacja logiki w code-behind (XAML.cs) – ograniczona do delegowania zdarzeñ do VM.
+Konwencje: minimalizacja logiki w code-behind (XAML.cs) â€“ ograniczona do delegowania zdarzeÅ„ do VM.
 
 ---
 ## 10. Nawigacja i routing
-- `.NET MAUI Shell` (`AppShell.xaml`) – TabBar (Ingredients, Recipes, Home, Planner, ShoppingList)
+- `.NET MAUI Shell` (`AppShell.xaml`) â€“ TabBar (Ingredients, Recipes, Home, Planner, ShoppingList)
 - Dodatkowe widoki rejestrowane przez `Routing.RegisterRoute` w `MauiProgram.cs`
-- Nawigacja wywo³ywana poprzez `Shell.Current.GoToAsync()` z parametrami Query (np. `?id=`)
+- Nawigacja wywoÅ‚ywana poprzez `Shell.Current.GoToAsync()` z parametrami Query (np. `?id=`)
 
 ---
 ## 11. Dependency Injection (DI)
 Rejestracje w `MauiProgram.cs`:
-- DbContext (AddDbContext) – scope per request (dla MAUI de facto per scope tworzony z providerem)
+- DbContext (AddDbContext) â€“ scope per request (dla MAUI de facto per scope tworzony z providerem)
 - Serwisy domenowe: `AddScoped` (operacje na danych), `RecipeImporter` + `HttpClient`
-- ViewModels: mieszanka `AddScoped` / `AddTransient` (AddRecipePageViewModel jako transient – unikanie re-u¿ycia stanu)
-- Niektóre VM jako Singleton (SettingsViewModel) – stan globalny aplikacji
+- ViewModels: mieszanka `AddScoped` / `AddTransient` (AddRecipePageViewModel jako transient â€“ unikanie re-uÅ¼ycia stanu)
+- NiektÃ³re VM jako Singleton (SettingsViewModel) â€“ stan globalny aplikacji
 - Lokalizacja: Singleton (`LocalizationService`, `LocalizationResourceManager`)
 
-Uzasadnienie: transiency dla formularzy edycji (œwie¿y stan), scope dla serwisów które korzystaj¹ z DbContext.
+Uzasadnienie: transiency dla formularzy edycji (Å›wieÅ¼y stan), scope dla serwisÃ³w ktÃ³re korzystajÄ… z DbContext.
 
 ---
 ## 12. Lokalizacja
-- Folder `Localization/` – pary plików resx (neutral + pl-PL) + wygenerowane Designer.cs
-- Binding do zasobów poprzez niestandardowe rozszerzenie `TranslateExtension`
-- Strings w UI nie powinny byæ hardcodowane (przysz³e refaktory: przenieœæ jeszcze pozosta³e literalne teksty do zasobów)
+- Folder `Localization/` â€“ pary plikÃ³w resx (neutral + pl-PL) + wygenerowane Designer.cs
+- Binding do zasobÃ³w poprzez niestandardowe rozszerzenie `TranslateExtension`
+- Strings w UI nie powinny byÄ‡ hardcodowane (przyszÅ‚e refaktory: przenieÅ›Ä‡ jeszcze pozostaÅ‚e literalne teksty do zasobÃ³w)
 
 ---
-## 13. Caching i optymalizacja ³adowania
-- `PlannerViewModel` implementuje mechanizm cache (StartDate, EndDate, MealsPerDay) aby unikn¹æ ponownego pobierania
-- Batch loading (paczki po 20 przepisów) + krótkie `Task.Delay` dla responsywnoœci UI
+## 13. Caching i optymalizacja Å‚adowania
+- `PlannerViewModel` implementuje mechanizm cache (StartDate, EndDate, MealsPerDay) aby uniknÄ…Ä‡ ponownego pobierania
+- Batch loading (paczki po 20 przepisÃ³w) + krÃ³tkie `Task.Delay` dla responsywnoÅ›ci UI
 - Potencjalne ulepszenia: MemoryCache dla Recipes globalnie, prefetching, kompresja/serializacja offline
 
 ---
 ## 14. Wzorce asynchroniczne
 - Wszystkie operacje I/O (EF, HTTP, import) = async/await
-- Progress UI przez w³aœciwoœci `LoadingStatus` / `LoadingProgress`
-- Brak blokowania w¹tku UI – w krytycznych miejscach u¿yte krótkie opóŸnienia dla p³ynnoœci
+- Progress UI przez wÅ‚aÅ›ciwoÅ›ci `LoadingStatus` / `LoadingProgress`
+- Brak blokowania wÄ…tku UI â€“ w krytycznych miejscach uÅ¼yte krÃ³tkie opÃ³Åºnienia dla pÅ‚ynnoÅ›ci
 
 ---
-## 15. Obs³uga b³êdów i odpornoœæ
+## 15. ObsÅ‚uga bÅ‚Ä™dÃ³w i odpornoÅ›Ä‡
 - Try/catch w punktach granicznych (LoadAsync, SeedData, Import, Nutrition calc)
 - Logowanie przez `System.Diagnostics.Debug.WriteLine`
 - User-friendly komunikaty przez `DisplayAlert`
-- Mo¿liwe przysz³e rozszerzenia: centralny logger (ILogger), telemetry, retry policy (Polly) dla HTTP
+- MoÅ¼liwe przyszÅ‚e rozszerzenia: centralny logger (ILogger), telemetry, retry policy (Polly) dla HTTP
 
 ---
 ## 16. Walidacja
-- `AddRecipeViewModel` – walidacja pól (konwersja liczb, makra, iloœæ porcji)
-- Brak centralnego systemu walidacji – potencja³ na wprowadzenie FluentValidation / dedykowanego adaptera do MVVM
+- `AddRecipeViewModel` â€“ walidacja pÃ³l (konwersja liczb, makra, iloÅ›Ä‡ porcji)
+- Brak centralnego systemu walidacji â€“ potencjaÅ‚ na wprowadzenie FluentValidation / dedykowanego adaptera do MVVM
 
 ---
-## 17. Bezpieczeñstwo i prywatnoœæ
-- Lokalne dane w SQLite (brak jeszcze szyfrowania – mo¿liwoœæ u¿ycia Microsoft.Data.Sqlite z has³em / rozwi¹zania typu SQLCipher)
-- Potencjalne klucze/API – przechowywaæ w SecureStorage
-- Brak zewnêtrznego logowania / kont u¿ytkowników (aplikacja lokalna)
-- Anonimizacja – brak danych osobowych (N/A na obecnym etapie)
+## 17. BezpieczeÅ„stwo i prywatnoÅ›Ä‡
+- Lokalne dane w SQLite (brak jeszcze szyfrowania â€“ moÅ¼liwoÅ›Ä‡ uÅ¼ycia Microsoft.Data.Sqlite z hasÅ‚em / rozwiÄ…zania typu SQLCipher)
+- Potencjalne klucze/API â€“ przechowywaÄ‡ w SecureStorage
+- Brak zewnÄ™trznego logowania / kont uÅ¼ytkownikÃ³w (aplikacja lokalna)
+- Anonimizacja â€“ brak danych osobowych (N/A na obecnym etapie)
 
 ---
-## 18. Wydajnoœæ
+## 18. WydajnoÅ›Ä‡
 Aktualne praktyki:
 - Batch update listy recept
-- Minimalizacja UI lock przez krótkie Task.Delay i ObservableCollection
-- Unikanie zbêdnych Include() – ³adowanie sk³adników przepisu dopiero gdy potrzebne (miejsce do poprawy – lazy load / selektywne zapytania)
+- Minimalizacja UI lock przez krÃ³tkie Task.Delay i ObservableCollection
+- Unikanie zbÄ™dnych Include() â€“ Å‚adowanie skÅ‚adnikÃ³w przepisu dopiero gdy potrzebne (miejsce do poprawy â€“ lazy load / selektywne zapytania)
 Propozycje optymalizacji:
 - Indeks na PlannedMeals.Date + RecipeId
-- Prekomputacja makr / denormalizacja (cache sum sk³adników w Recipe)
+- Prekomputacja makr / denormalizacja (cache sum skÅ‚adnikÃ³w w Recipe)
 - Virtualization / CollectionView optymalizacje
-- Profilowanie zu¿ycia pamiêci dla d³ugich sesji (szczególnie event handler unsubscription)
+- Profilowanie zuÅ¼ycia pamiÄ™ci dla dÅ‚ugich sesji (szczegÃ³lnie event handler unsubscription)
 
 ---
 ## 19. Testy (plan)
 - Unit: serwisy (mock DbContext via InMemory), ViewModel (mock services, FluentAssertions)
 - Integration: real EF Core SQLite in-memory / plik testowy
 - UI (opcjonalnie): .NET MAUI UITest / AppCenter
-- Coverage target: 80% logicznych ga³êzi w Services + krytyczne VM
+- Coverage target: 80% logicznych gaÅ‚Ä™zi w Services + krytyczne VM
 
 ---
-## 20. Rozszerzalnoœæ
+## 20. RozszerzalnoÅ›Ä‡
 | Scenariusz | Zalecenie |
 |------------|-----------|
-| Dodanie API synchronizacji | Wydziel warstwê Infrastructure/ApiClient + DTO Mappery |
-| Wprowadzenie u¿ytkowników | Dodaæ warstwê auth + kontener SecureStorage, modele User/Profile |
-| Analiza makro trendów | Wprowadziæ modu³ AnalyticsService z cachingiem statystyk |
-| AI Planner | Nowy serwis `IAiMealPlanningService` ? generuje listê PlannedMeal; integracja w PlannerViewModel |
-| Eksport / PDF | Adapter eksportuj¹cy Plan + Ingredients do PDF/CSV (oddzielny modu³) |
+| Dodanie API synchronizacji | Wydziel warstwÄ™ Infrastructure/ApiClient + DTO Mappery |
+| Wprowadzenie uÅ¼ytkownikÃ³w | DodaÄ‡ warstwÄ™ auth + kontener SecureStorage, modele User/Profile |
+| Analiza makro trendÃ³w | WprowadziÄ‡ moduÅ‚ AnalyticsService z cachingiem statystyk |
+| AI Planner | Nowy serwis `IAiMealPlanningService` ? generuje listÄ™ PlannedMeal; integracja w PlannerViewModel |
+| Eksport / PDF | Adapter eksportujÄ…cy Plan + Ingredients do PDF/CSV (oddzielny moduÅ‚) |
 
 ---
-## 21. Decyzje architektoniczne (ADR skrót)
+## 21. Decyzje architektoniczne (ADR skrÃ³t)
 | ID | Decyzja | Status | Uzasadnienie |
 |----|---------|--------|--------------|
 | ADR-01 | EF Core + SQLite | Zaakceptowane | Prosta lokalna baza, wsparcie multi-platform |
-| ADR-02 | Brak osobnych repozytoriów | Tymczasowe | Redukcja boilerplate – ma³y zespó³ / MVP |
+| ADR-02 | Brak osobnych repozytoriÃ³w | Tymczasowe | Redukcja boilerplate â€“ maÅ‚y zespÃ³Å‚ / MVP |
 | ADR-03 | Shell Navigation | Zaakceptowane | Standaryzowany routing + TabBar multi-platform |
-| ADR-04 | Manual caching w PlannerViewModel | Zaakceptowane | Prosty wzrost responsywnoœci bez zewnêtrznych bibliotek |
-| ADR-05 | Resource .resx lokalizacja | Zaakceptowane | Standard .NET, póŸniejsza ³atwa rozbudowa jêzyków |
-| ADR-06 | Batch UI loading | Zaakceptowane | P³ynnoœæ UI na s³abszych urz¹dzeniach |
-| ADR-07 | Brak migracji przy starcie (EnsureCreated) | Do rewizji | Skrócenie czasu startu – docelowo wprowadziæ migracje |
+| ADR-04 | Manual caching w PlannerViewModel | Zaakceptowane | Prosty wzrost responsywnoÅ›ci bez zewnÄ™trznych bibliotek |
+| ADR-05 | Resource .resx lokalizacja | Zaakceptowane | Standard .NET, pÃ³Åºniejsza Å‚atwa rozbudowa jÄ™zykÃ³w |
+| ADR-06 | Batch UI loading | Zaakceptowane | PÅ‚ynnoÅ›Ä‡ UI na sÅ‚abszych urzÄ…dzeniach |
+| ADR-07 | Brak migracji przy starcie (EnsureCreated) | Do rewizji | SkrÃ³cenie czasu startu â€“ docelowo wprowadziÄ‡ migracje |
 
 ---
 ## 22. Ryzyka i mitigacje
 | Ryzyko | Skutek | Mitigacja |
 |--------|--------|----------|
-| Brak migracji | Trudna ewolucja schematu | Wprowadziæ EF Migrations + CI krok aktualizacji |
-| Memory leak (event handlers) | Degradacja wydajnoœci | Audyty, wzorzec WeakEvent / odsubskrybowanie w Reset |
-| Brak szyfrowania DB | Mo¿liwy dostêp do danych | Szyfrowany provider / encja tylko z danymi niesensytywnymi |
-| Z³o¿one importy z sieci | Wra¿liwoœæ na layout strony | Parser plug-in + testy kontraktowe |
+| Brak migracji | Trudna ewolucja schematu | WprowadziÄ‡ EF Migrations + CI krok aktualizacji |
+| Memory leak (event handlers) | Degradacja wydajnoÅ›ci | Audyty, wzorzec WeakEvent / odsubskrybowanie w Reset |
+| Brak szyfrowania DB | MoÅ¼liwy dostÄ™p do danych | Szyfrowany provider / encja tylko z danymi niesensytywnymi |
+| ZÅ‚oÅ¼one importy z sieci | WraÅ¼liwoÅ›Ä‡ na layout strony | Parser plug-in + testy kontraktowe |
 
 ---
-## 23. Roadmap techniczny (skrót)
+## 23. Roadmap techniczny (skrÃ³t)
 1. Wprowadzenie migracji + testy migracyjne
-2. Dodanie testów jednostkowych (min. Services + PlannerViewModel)
+2. Dodanie testÃ³w jednostkowych (min. Services + PlannerViewModel)
 3. Warstwa caching globalny (IMemoryCache lub LiteDB dla offline sync)
-4. Modu³ AI planowania posi³ków (heurystyki + preferencje u¿ytkownika)
-5. Odchudzenie modeli UI (DTO zamiast bezpoœrednich encji w bindingach – ograniczenie ryzyka side effects)
-6. Audyt lokalizacji – pe³ne pokrycie stringów
+4. ModuÅ‚ AI planowania posiÅ‚kÃ³w (heurystyki + preferencje uÅ¼ytkownika)
+5. Odchudzenie modeli UI (DTO zamiast bezpoÅ›rednich encji w bindingach â€“ ograniczenie ryzyka side effects)
+6. Audyt lokalizacji â€“ peÅ‚ne pokrycie stringÃ³w
 
 ---
-## 24. Konwencje kodu (skrót)
-- C# 13, nullable enabled, `var` gdy typ oczywisty, jawne typy gdy zwiêksza czytelnoœæ
+## 24. Konwencje kodu (skrÃ³t)
+- C# 13, nullable enabled, `var` gdy typ oczywisty, jawne typy gdy zwiÄ™ksza czytelnoÅ›Ä‡
 - Nazwy async metod: sufiks `Async`
-- Publiczne cz³ony dokumentowane XML
-- Brak logiki biznesowej w code-behind – tylko routing/UI glue
+**Waciciel dokumentu:** Zesp FoodBook App.
+## Foodbook templates module (2026-03)
+- Added `FoodbookTemplate` aggregate with child `TemplateMeal` for reusable planner blueprints.
+- Planner now supports premium-gated save-as-template and applying templates to generate `Plan` + `PlannedMeal` entries.
+- Planner lists screen now exposes tabs for planners and templates management.
+- Brak logiki biznesowej w code-behind â€“ tylko routing/UI glue
 
 ---
 ## 25. Dalsze rekomendacje
-- Rozwa¿yæ wprowadzenie CommunityToolkit.Mvvm (atrybuty `[ObservableProperty]`, `[RelayCommand]`) dla redukcji boilerplate
+- RozwaÅ¼yÄ‡ wprowadzenie CommunityToolkit.Mvvm (atrybuty `[ObservableProperty]`, `[RelayCommand]`) dla redukcji boilerplate
 - Centralny serwis logowania (ILogger<T>) zamiast Debug.WriteLine
-- Mechanizm diff / change tracking dla szybszych zapisów (tylko zmienione encje)
-- Utrzymywanie PURE metod dla obliczeñ makro (³atwiejsze unit testy)
+- Mechanizm diff / change tracking dla szybszych zapisÃ³w (tylko zmienione encje)
+- Utrzymywanie PURE metod dla obliczeÅ„ makro (Å‚atwiejsze unit testy)
 
 ---
-## 26. S³owniczek
-| Pojêcie | Definicja |
+## 26. SÅ‚owniczek
+| PojÄ™cie | Definicja |
 |---------|-----------|
-| Plan | Zakres dat + meta (archiwizacja) determinuj¹cy listê zakupów |
-| PlannedMeal | Element planu – posi³ek odwo³uj¹cy siê do przepisu w dacie |
-| Lista zakupów | Agregacja sk³adników z posi³ków w ramach planu |
-| Makro | Kalorie, bia³ko, t³uszcz, wêglowodany |
+| Plan | Zakres dat + meta (archiwizacja) determinujÄ…cy listÄ™ zakupÃ³w |
+| PlannedMeal | Element planu â€“ posiÅ‚ek odwoÅ‚ujÄ…cy siÄ™ do przepisu w dacie |
+| Lista zakupÃ³w | Agregacja skÅ‚adnikÃ³w z posiÅ‚kÃ³w w ramach planu |
+| Makro | Kalorie, biaÅ‚ko, tÅ‚uszcz, wÄ™glowodany |
 
 ---
 ## 27. Aktualizacja dokumentu
-Dokument aktualizowaæ przy ka¿dej istotnej zmianie: dodanie nowej warstwy, refaktoryzacja modeli, zmiana strategii seedowania, dodanie migracji lub modu³u AI.
+Dokument aktualizowaÄ‡ przy kaÅ¼dej istotnej zmianie: dodanie nowej warstwy, refaktoryzacja modeli, zmiana strategii seedowania, dodanie migracji lub moduÅ‚u AI.
 
 ---
-**Ostatnia aktualizacja:** (auto) – dopasuj przy commicie.  
-**W³aœciciel dokumentu:** Zespó³ FoodBook App.
+**Ostatnia aktualizacja:** (auto) â€“ dopasuj przy commicie.  
+**WÅ‚aÅ›ciciel dokumentu:** ZespÃ³Å‚ FoodBook App.

@@ -126,4 +126,10 @@
   <data name="PlannerTitle" xml:space="preserve">
     <value>Plans</value>
   </data>
+  <data name="PlannersTab" xml:space="preserve">
+    <value>Planners</value>
+  </data>
+  <data name="TemplatesTab" xml:space="preserve">
+    <value>Templates</value>
+  </data>
 </root>

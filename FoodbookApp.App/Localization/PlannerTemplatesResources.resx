@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="TemplatesTitle" xml:space="preserve"><value>Foodbook templates</value></data>
+  <data name="CreateTemplate" xml:space="preserve"><value>Create template</value></data>
+  <data name="ApplyTemplate" xml:space="preserve"><value>Apply</value></data>
+  <data name="EditTemplate" xml:space="preserve"><value>Edit</value></data>
+  <data name="DeleteTemplate" xml:space="preserve"><value>Delete</value></data>
+  <data name="TemplateFormTitle" xml:space="preserve"><value>Template</value></data>
+  <data name="TemplateName" xml:space="preserve"><value>Name</value></data>
+  <data name="TemplateNamePlaceholder" xml:space="preserve"><value>Enter template name</value></data>
+  <data name="TemplateDescription" xml:space="preserve"><value>Description</value></data>
+  <data name="TemplatePublic" xml:space="preserve"><value>Public template</value></data>
+  <data name="SaveTemplate" xml:space="preserve"><value>Save template</value></data>
+  <data name="OpenTemplatesPage" xml:space="preserve"><value>Open template manager</value></data>
+</root>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Foodbook.ViewModels"
+             xmlns:loc="clr-namespace:Foodbook.Services"
+             xmlns:models="clr-namespace:Foodbook.Models"
+             x:Class="Foodbook.Views.FoodbookTemplatesPage"
+             x:DataType="vm:FoodbookTemplatesViewModel"
+             x:Name="ThisPage"
+             Title="{loc:Translate Resource=PlannerTemplatesResources, Key=TemplatesTitle}"
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
+    <Grid RowDefinitions="Auto,*" Padding="12">
+        <Button Grid.Row="0"
+                Text="{loc:Translate Resource=PlannerTemplatesResources, Key=CreateTemplate}"
+                Command="{Binding CreateCommand}"
+                BackgroundColor="{DynamicResource Primary}"
+                TextColor="{DynamicResource ButtonPrimaryText}" />
+
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Templates}" Margin="0,12,0,0">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:FoodbookTemplate">
+                    <Border Stroke="{AppThemeBinding Light=#DDDDDD, Dark=#555555}" StrokeShape="RoundRectangle 10" Padding="10" Margin="0,0,0,10" BackgroundColor="{DynamicResource FrameBackgroundColor}">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="16" TextColor="{DynamicResource PrimaryText}" />
+                            <Label Text="{Binding Description}" FontSize="13" TextColor="{DynamicResource SecondaryText}" />
+                            <Label FontSize="12" TextColor="{DynamicResource SecondaryText}">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding DurationDays}" />
+                                        <Span Text=" d • " />
+                                        <Span Text="{Binding MealsPerDay}" />
+                                        <Span Text="/day" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                                <Button Grid.Column="0" Text="{loc:Translate Resource=PlannerTemplatesResources, Key=ApplyTemplate}" Command="{Binding BindingContext.ApplyCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
+                                <Button Grid.Column="1" Text="{loc:Translate Resource=PlannerTemplatesResources, Key=EditTemplate}" Command="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" />
+                                <Button Grid.Column="2" Text="{loc:Translate Resource=PlannerTemplatesResources, Key=DeleteTemplate}" Command="{Binding BindingContext.DeleteCommand, Source={x:Reference ThisPage}}" CommandParameter="{Binding .}" BackgroundColor="#C33" TextColor="White" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>
