@@ -6,6 +6,7 @@
              xmlns:converters="clr-namespace:Foodbook.Converters"
              xmlns:controls="clr-namespace:Foodbook.Views.Components"
              x:Class="Foodbook.Views.SettingsPage"
+             x:Name="SettingsPageRoot"
              x:DataType="vm:SettingsViewModel"
              Title="{loc:Translate Resource=SettingsPageResources, Key=Title}"
              BackgroundColor="{DynamicResource PageBackgroundColor}">
@@ -224,7 +225,8 @@
                             </Frame>
 
                             <!-- NEW: Deduplicate Ingredients Card -->
-                            <Frame Style="{StaticResource DashboardCardStyle}">
+                            <Frame Style="{StaticResource DashboardCardStyle}"
+                                   IsVisible="{Binding Source={x:Reference SettingsPageRoot}, Path=IsDiagnosticMode}">
                                 <StackLayout>
                                     <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DeduplicateIngredientsTitle}" Style="{StaticResource CardTitleStyle}" />
                                     <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DeduplicateIngredientsDescription}" Style="{StaticResource DescriptionStyle}" />
@@ -242,7 +244,8 @@
                             </Frame>
 
                             <!-- Database Migration Card -->
-                            <Frame Style="{StaticResource DashboardCardStyle}">
+                            <Frame Style="{StaticResource DashboardCardStyle}"
+                                   IsVisible="{Binding Source={x:Reference SettingsPageRoot}, Path=IsDiagnosticMode}">
                                 <StackLayout>
                                     <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseMigrationTitle}" Style="{StaticResource CardTitleStyle}" />
                                     <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseMigrationDescription}" Style="{StaticResource DescriptionStyle}" />

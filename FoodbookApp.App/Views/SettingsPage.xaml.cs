@@ -10,6 +10,9 @@ namespace Foodbook.Views
 {
     public partial class SettingsPage : ContentPage
     {
+        private const bool DiagnosticMode = false;
+        public bool IsDiagnosticMode => DiagnosticMode;
+
         private readonly PageThemeHelper _themeHelper;
 
         private SettingsViewModel ViewModel => BindingContext as SettingsViewModel;
