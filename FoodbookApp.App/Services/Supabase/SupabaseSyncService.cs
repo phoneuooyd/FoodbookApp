@@ -27,7 +27,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
 
     private const int MaxRetryCount = 3;
     private const int InitialSyncBatchRequestSize = 500;
-    private const int QueueProcessingBatchSize = 50;
+    private const int QueueProcessingBatchSize = 500;
     private static readonly TimeSpan InProgressRecoveryThreshold = TimeSpan.FromMinutes(5);
 
     // Error codes that should stop sync immediately (RLS violations, auth errors)

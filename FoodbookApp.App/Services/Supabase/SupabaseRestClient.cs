@@ -116,11 +116,14 @@ public sealed class SupabaseRestClient
         }
     }
 
+    private static string ResolveTable(string table) => SupabaseTableResolver.Resolve(table);
+
     /// <summary>
     /// GET records from a table with optional filters
     /// </summary>
     public async Task<List<T>> GetAsync<T>(string table, string? filter = null, CancellationToken ct = default)
     {
+        table = ResolveTable(table);
         var endpoint = string.IsNullOrEmpty(filter) ? $"{table}?select=*" : $"{table}?select=*&{filter}";
         var request = await CreateRequestAsync(HttpMethod.Get, endpoint);
 
@@ -136,6 +139,7 @@ public sealed class SupabaseRestClient
     /// </summary>
     public async Task<T?> GetByIdAsync<T>(string table, Guid id, CancellationToken ct = default) where T : class
     {
+        table = ResolveTable(table);
         var request = await CreateRequestAsync(HttpMethod.Get, $"{table}?id=eq.{id}&select=*");
         request.Headers.TryAddWithoutValidation("Accept", "application/vnd.pgrst.object+json");
 
@@ -156,7 +160,8 @@ public sealed class SupabaseRestClient
     public async Task<T> InsertAsync<T>(string table, T data, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(data);
-        
+        table = ResolveTable(table);
+
         var request = await CreateRequestAsync(HttpMethod.Post, table);
         request.Headers.TryAddWithoutValidation("Prefer", "return=representation");
         
@@ -181,6 +186,7 @@ public sealed class SupabaseRestClient
     /// </summary>
     public async Task<List<T>> InsertBatchAsync<T>(string table, IEnumerable<T> data, CancellationToken ct = default)
     {
+        table = ResolveTable(table);
         var request = await CreateRequestAsync(HttpMethod.Post, table);
         request.Headers.TryAddWithoutValidation("Prefer", "return=representation");
         
@@ -200,6 +206,7 @@ public sealed class SupabaseRestClient
     /// </summary>
     public async Task<T?> UpdateAsync<T>(string table, Guid id, T data, CancellationToken ct = default) where T : class
     {
+        table = ResolveTable(table);
         var request = await CreateRequestAsync(new HttpMethod("PATCH"), $"{table}?id=eq.{id}");
         request.Headers.TryAddWithoutValidation("Prefer", "return=representation");
         
@@ -220,6 +227,7 @@ public sealed class SupabaseRestClient
     /// </summary>
     public async Task DeleteAsync(string table, Guid id, CancellationToken ct = default)
     {
+        table = ResolveTable(table);
         var request = await CreateRequestAsync(HttpMethod.Delete, $"{table}?id=eq.{id}");
         request.Headers.TryAddWithoutValidation("Prefer", "return=representation");
 
@@ -232,6 +240,7 @@ public sealed class SupabaseRestClient
     /// </summary>
     public async Task<List<T>> UpsertAsync<T>(string table, IEnumerable<T> data, CancellationToken ct = default)
     {
+        table = ResolveTable(table);
         var request = await CreateRequestAsync(HttpMethod.Post, table);
         request.Headers.TryAddWithoutValidation("Prefer", "resolution=merge-duplicates,return=representation");
         
@@ -251,6 +260,7 @@ public sealed class SupabaseRestClient
     /// </summary>
     public async Task SoftDeleteAsync(string table, Guid id, CancellationToken ct = default)
     {
+        table = ResolveTable(table);
         var patchData = new { is_deleted = true, deleted_at = DateTime.UtcNow, updated_at = DateTime.UtcNow };
         
         var request = await CreateRequestAsync(new HttpMethod("PATCH"), $"{table}?id=eq.{id}");

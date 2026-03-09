@@ -3,10 +3,11 @@ using System.Text.Json.Serialization;
 using Supabase.Postgrest.Models;
 using Supabase.Postgrest.Attributes;
 using Newtonsoft.Json;
+using FoodbookApp.Services.Supabase;
 
 namespace Foodbook.Models.DTOs
 {
-    [Table("folders")]
+    [Table(SupabaseTableResolver.TEST_ENDPOINTS ? "folders_test" : "folders")]
     public class FolderDto : BaseModel
     {
         [PrimaryKey("id", true)]
