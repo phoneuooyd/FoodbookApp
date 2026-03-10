@@ -119,7 +119,7 @@
                                             StrokeThickness="1.2"
                                             Stroke="{DynamicResource Primary}"
                                             StrokeShape="RoundRectangle 15"
-                                            BackgroundColor="{AppThemeBinding Light=#1A5B3FE8, Dark=#335B3FE8}">
+                                            BackgroundColor="{AppThemeBinding Light=#1A000000, Dark=#33000000}">
                                         <Label Text="{Binding Emoji}"
                                                FontSize="26"
                                                HorizontalOptions="Center" VerticalOptions="Center" />

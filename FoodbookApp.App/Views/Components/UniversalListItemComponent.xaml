@@ -71,7 +71,7 @@
                             Margin="10,0,0,0"
                             VerticalOptions="Center"
                             StrokeThickness="0"
-                            BackgroundColor="{AppThemeBinding Light=#EDE9FF, Dark=#2C2650}">
+                            BackgroundColor="{DynamicResource Secondary}">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="12" />
                         </Border.StrokeShape>
@@ -174,10 +174,13 @@
                                 IsVisible="{Binding ShowApplyButton, Source={x:Reference ItemComponent}}"
                                 FontSize="12"
                                 FontAttributes="Bold"
-                                BackgroundColor="Transparent"
-                                BorderWidth="0"
+                                HeightRequest="36"
+                                CornerRadius="18"
+                                BackgroundColor="{AppThemeBinding Light=#1A5B3FE8, Dark=#334A90E2}"
+                                BorderColor="{AppThemeBinding Light=#335B3FE8, Dark=#557AB2FF}"
+                                BorderWidth="1"
                                 TextColor="{DynamicResource Primary}"
-                                Padding="6,0"
+                                Padding="12,0"
                                 VerticalOptions="Center" />
 
                         <!-- Archive button for plans -->
