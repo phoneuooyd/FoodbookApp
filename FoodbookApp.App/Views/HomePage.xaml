@@ -5,8 +5,6 @@
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:converters="clr-namespace:Foodbook.Converters"
-             xmlns:resources="clr-namespace:FoodbookApp.Localization"
-             xmlns:controls="clr-namespace:Foodbook.Views.Components"
              x:Class="Foodbook.Views.HomePage"
              x:Name="HomePageView"
              x:DataType="vm:HomeViewModel"
@@ -16,470 +14,496 @@
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         <converters:FormatWithResourceConverter x:Key="FormatWithResourceConverter" />
-        
-        <!-- Enhanced Card Style with better separation -->
-        <Style x:Key="DashboardCardStyle" TargetType="Frame">
+
+        <LinearGradientBrush x:Key="HeroGradientBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="{DynamicResource Primary}" Offset="0.0" />
+            <GradientStop Color="{DynamicResource Tertiary}" Offset="1.0" />
+        </LinearGradientBrush>
+
+        <Style x:Key="SectionCardStyle" TargetType="Border">
             <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}" />
-            <Setter Property="HasShadow" Value="True" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 22" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="Stroke" Value="{AppThemeBinding Light=#ECEAF6, Dark={StaticResource Gray700}}" />
+            <Setter Property="Padding" Value="16" />
+            <Setter Property="Margin" Value="0,0,0,14" />
+            <Setter Property="Shadow">
+                <Setter.Value>
+                    <Shadow Brush="{AppThemeBinding Light=#12000000, Dark=#24000000}"
+                            Offset="0,6"
+                            Radius="16"
+                            Opacity="0.8" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SectionTitleStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="{DynamicResource PrimaryText}" />
+        </Style>
+
+        <Style x:Key="SectionSubtitleStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextColor" Value="{DynamicResource SecondaryText}" />
+        </Style>
+
+        <Style x:Key="PeriodButtonStyle" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="{DynamicResource Secondary}" />
+            <Setter Property="TextColor" Value="{DynamicResource Primary}" />
             <Setter Property="CornerRadius" Value="16" />
-            <Setter Property="Padding" Value="20" />
-            <Setter Property="Margin" Value="12,8" />
-            <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+            <Setter Property="HeightRequest" Value="32" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontAttributes" Value="Bold" />
         </Style>
-        
-        <!-- Card Title Style -->
-        <Style x:Key="CardTitleStyle" TargetType="Label">
+
+        <Style x:Key="MacroValueStyle" TargetType="Label">
             <Setter Property="FontSize" Value="18" />
             <Setter Property="FontAttributes" Value="Bold" />
-            <!-- Use single dynamic resource so ThemeService runtime updates propagate -->
-            <Setter Property="TextColor" Value="{DynamicResource Primary}" />
-            <Setter Property="Margin" Value="0,0,0,12" />
-        </Style>
-        
-        <!-- Large Number Style -->
-        <Style x:Key="StatNumberStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="32" />
-            <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="HorizontalTextAlignment" Value="Center" />
-            <Setter Property="TextColor" Value="{DynamicResource Primary}" />
-            <Setter Property="Margin" Value="0,4" />
-        </Style>
-        
-        <!-- Description Style -->
-        <Style x:Key="StatDescriptionStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="HorizontalTextAlignment" Value="Center" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
-            <Setter Property="Margin" Value="0,0,0,8" />
-        </Style>
-        
-        <!-- Card Button Style -->
-        <Style x:Key="CardButtonStyle" TargetType="Button">
-            <Setter Property="TextColor" Value="White" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="HeightRequest" Value="40" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Margin" Value="0,12,0,0" />
-            <Setter Property="BackgroundColor" Value="{DynamicResource Primary}" />
-        </Style>
-        
-        <!-- Disabled Button Style -->
-        <Style x:Key="DisabledButtonStyle" TargetType="Button">
-            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray400}}" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="HeightRequest" Value="40" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Margin" Value="0,12,0,0" />
-        </Style>
-        
-        <!-- Emoji Style -->
-        <Style x:Key="EmojiStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="24" />
-            <Setter Property="HorizontalTextAlignment" Value="Center" />
-            <Setter Property="Margin" Value="0,0,0,8" />
-        </Style>
-        
-        <!-- Micro Stat Style -->
-        <Style x:Key="MicroStatStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="18" />
-            <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="HorizontalTextAlignment" Value="Center" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}" />
-        </Style>
-
-        <!-- Planned Meal Styles -->
-        <Style x:Key="DateHeaderStyle" TargetType="Label">
-            <!-- reduced from 16 -->
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="FontAttributes" Value="Bold" />
-            <!-- Make date header light in dark mode -->
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={DynamicResource Primary}, Dark=White}" />
-            <Setter Property="Margin" Value="0,8,0,4" />
-        </Style>
-
-        <Style x:Key="MealItemStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
-            <Setter Property="Margin" Value="16,2,0,2" />
-        </Style>
-
-        <!-- Clickable Meal Item Style -->
-        <Style x:Key="ClickableMealItemStyle" TargetType="Frame">
-            <Setter Property="BackgroundColor" Value="Transparent" />
-            <Setter Property="HasShadow" Value="False" />
-            <Setter Property="BorderColor" Value="Transparent" />
-            <Setter Property="Padding" Value="8,4" />
-            <Setter Property="Margin" Value="8,1" />
+            <Setter Property="TextColor" Value="{DynamicResource PrimaryText}" />
         </Style>
     </ContentPage.Resources>
 
-    <ScrollView BackgroundColor="Transparent">
-        <StackLayout Padding="16" Spacing="0" 
-                     BackgroundColor="{DynamicResource PageBackgroundColor}">
+    <ScrollView BackgroundColor="Transparent"
+                VerticalScrollBarVisibility="Never">
+        <VerticalStackLayout Padding="16,12,16,96"
+                             Spacing="0"
+                             BackgroundColor="{DynamicResource PageBackgroundColor}">
 
-            <!-- Header with gradient-like effect -->
-            <Border BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}" 
-                   StrokeShape="RoundRectangle 20"
-                   StrokeThickness="1"
-                   Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
-                   Margin="0,0,0,20"
-                   Padding="20,16">
-                <Border.Shadow>
-                    <Shadow Brush="{AppThemeBinding Light=#10000000, Dark=#20000000}" Offset="0,2" Radius="4" Opacity="0.5" />
-                </Border.Shadow>
-                <StackLayout>
-                    <Label Text="{loc:Translate Resource=HomePageResources, Key=Welcome}"
-                           FontSize="26"
-                           FontAttributes="Bold"
-                           HorizontalTextAlignment="Center"
-                           TextColor="{DynamicResource Primary}"
-                           Margin="0,4" />
-                    <Label Text="{loc:Translate Resource=HomePageResources, Key=Subtitle}"
-                           FontSize="14"
-                           HorizontalTextAlignment="Center"
-                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}"
-                           Margin="0,0,0,4" />
-                </StackLayout>
+            <Border StrokeThickness="0"
+                    Stroke="Transparent"
+                    StrokeShape="RoundRectangle 28"
+                    Margin="0,0,0,18"
+                    Padding="18,16,18,18"
+                    MinimumHeightRequest="170"
+                    Background="{StaticResource HeroGradientBrush}">
+                <Grid RowDefinitions="Auto,Auto"
+                      RowSpacing="16">
+                    <VerticalStackLayout Spacing="3">
+                        <Label Text="{loc:Translate Resource=HomePageResources, Key=Title}"
+                               FontSize="11"
+                               FontAttributes="Bold"
+                               TextColor="#B9AAFF" />
+                        <Label Text="{loc:Translate Resource=HomePageResources, Key=Welcome}"
+                               FontSize="26"
+                               FontAttributes="Bold"
+                               TextColor="White" />
+                        <Label Text="{loc:Translate Resource=HomePageResources, Key=Subtitle}"
+                               FontSize="13"
+                               TextColor="#D9D0FF" />
+                    </VerticalStackLayout>
+
+                    <Grid Grid.Row="1"
+                          ColumnDefinitions="*,*"
+                          ColumnSpacing="10">
+                        <Border Grid.Column="0"
+                                StrokeThickness="0"
+                                Stroke="Transparent"
+                                StrokeShape="RoundRectangle 18"
+                                Padding="12,10"
+                                BackgroundColor="#22FFFFFF">
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="8">
+                                <Label Text="🍽️"
+                                       FontSize="16"
+                                       VerticalOptions="Center" />
+                                <VerticalStackLayout Grid.Column="1"
+                                                     Spacing="0">
+                                    <Label Text="{Binding RecipeCount}"
+                                           FontSize="18"
+                                           FontAttributes="Bold"
+                                           TextColor="White" />
+                                    <Label Text="{loc:Translate Resource=HomePageResources, Key=SavedRecipes}"
+                                           FontSize="11"
+                                           TextColor="#D9D0FF" />
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Column="1"
+                                StrokeThickness="0"
+                                Stroke="Transparent"
+                                StrokeShape="RoundRectangle 18"
+                                Padding="12,10"
+                                BackgroundColor="#22FFFFFF">
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="8">
+                                <Label Text="📅"
+                                       FontSize="16"
+                                       VerticalOptions="Center" />
+                                <VerticalStackLayout Grid.Column="1"
+                                                     Spacing="0">
+                                    <Label Text="{Binding PlanCount}"
+                                           FontSize="18"
+                                           FontAttributes="Bold"
+                                           TextColor="White" />
+                                    <Label Text="{loc:Translate Resource=HomePageResources, Key=ActiveLists}"
+                                           FontSize="11"
+                                           TextColor="#D9D0FF" />
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Grid>
             </Border>
 
-            <!-- Loading indicator -->
-            <ActivityIndicator IsVisible="{Binding IsLoading}" 
-                             IsRunning="{Binding IsLoading}" 
-                             Color="{DynamicResource Primary}"
-                             HorizontalOptions="Center"
-                             HeightRequest="60"
-                             WidthRequest="60"
-                             Margin="0,40" />
+            <ActivityIndicator IsVisible="{Binding IsLoading}"
+                               IsRunning="{Binding IsLoading}"
+                               Color="{DynamicResource Primary}"
+                               HorizontalOptions="Center"
+                               HeightRequest="56"
+                               WidthRequest="56"
+                               Margin="0,20,0,12" />
 
-            <!-- Dashboard Grid -->
-            <Grid IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
-                  ColumnDefinitions="*,*" 
-                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
-                  ColumnSpacing="0"
-                  RowSpacing="8">
+            <VerticalStackLayout IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+                                 Spacing="0">
 
-                <!-- Main Stats Card: Recipes and Plans -->
-                <Border Grid.Row="0" Grid.ColumnSpan="2" 
-                        BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
-                        StrokeShape="RoundRectangle 16"
-                        StrokeThickness="1"
-                        Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
-                        Padding="20"
-                        Margin="12,8">
-                    <Border.Shadow>
-                        <Shadow Brush="{AppThemeBinding Light=#10000000, Dark=#20000000}" Offset="0,2" Radius="4" Opacity="0.5" />
-                    </Border.Shadow>
-                    <Grid ColumnDefinitions="*,1,*" ColumnSpacing="20">
-                        <!-- Recipes -->
-                        <StackLayout Grid.Column="0">
-                            <Label Text="📖" Style="{StaticResource EmojiStyle}" />
-                            <Label Text="{loc:Translate Resource=HomePageResources, Key=Recipes}" Style="{StaticResource CardTitleStyle}" />
-                            <Label Text="{Binding RecipeCount}" Style="{StaticResource StatNumberStyle}" />
-                            <Label Text="{loc:Translate Resource=HomePageResources, Key=SavedRecipes}" Style="{StaticResource StatDescriptionStyle}" />
-                        </StackLayout>
-                        
-                        <!-- Separator Line -->
-                        <BoxView Grid.Column="1" 
-                                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" 
-                                 WidthRequest="1" 
-                                 HorizontalOptions="Center" />
-                        
-                        <!-- Plans -->
-                        <StackLayout Grid.Column="2">
-                            <Label Text="📋" Style="{StaticResource EmojiStyle}" />
-                            <Label Text="{loc:Translate Resource=HomePageResources, Key=Plans}" Style="{StaticResource CardTitleStyle}" />
-                            <Label Text="{Binding PlanCount}" Style="{StaticResource StatNumberStyle}" />
-                            <Label Text="{loc:Translate Resource=HomePageResources, Key=ActiveLists}" Style="{StaticResource StatDescriptionStyle}" />
-                        </StackLayout>
+                <Border Style="{StaticResource SectionCardStyle}"
+                        Padding="0"
+                        StrokeThickness="0">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnOpenProfileClicked" />
+                    </Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="5,Auto,*,Auto"
+                          ColumnSpacing="12"
+                          Padding="0">
+                        <BoxView Grid.Column="0"
+                                 CornerRadius="3"
+                                 Color="{DynamicResource Primary}"
+                                 VerticalOptions="Fill" />
+
+                        <Border Grid.Column="1"
+                                Margin="14,14,0,14"
+                                WidthRequest="46"
+                                HeightRequest="46"
+                                StrokeThickness="0"
+                                Stroke="Transparent"
+                                StrokeShape="RoundRectangle 23"
+                                BackgroundColor="{DynamicResource Secondary}">
+                            <Label Text="👤"
+                                   FontSize="22"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
+                        </Border>
+
+                        <VerticalStackLayout Grid.Column="2"
+                                             Padding="0,14"
+                                             Spacing="2"
+                                             VerticalOptions="Center">
+                            <Label Text="{loc:Translate Resource=HomePageResources, Key=Profile}"
+                                   Style="{StaticResource SectionTitleStyle}" />
+                            <Label Text="{loc:Translate Resource=HomePageResources, Key=ProfileSubtitle}"
+                                   Style="{StaticResource SectionSubtitleStyle}" />
+                        </VerticalStackLayout>
+
+                        <Border Grid.Column="3"
+                                Margin="0,14,14,14"
+                                WidthRequest="34"
+                                HeightRequest="34"
+                                StrokeThickness="0"
+                                Stroke="Transparent"
+                                StrokeShape="RoundRectangle 12"
+                                BackgroundColor="{DynamicResource Secondary}"
+                                VerticalOptions="Center">
+                            <Label Text="→"
+                                   FontSize="18"
+                                   FontAttributes="Bold"
+                                   TextColor="{DynamicResource Primary}"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
+                        </Border>
                     </Grid>
                 </Border>
 
-                <!-- Planned Meals History Card -->
-                <Border Grid.Row="1" Grid.ColumnSpan="2" 
-                        BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
-                        StrokeShape="RoundRectangle 16"
-                        StrokeThickness="1"
-                        Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
-                        Padding="20"
-                        Margin="12,8">
-                    <Border.Shadow>
-                        <Shadow Brush="{AppThemeBinding Light=#10000000, Dark=#20000000}" Offset="0,2" Radius="4" Opacity="0.5" />
-                    </Border.Shadow>
-                    <StackLayout>
-                        <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="8" Margin="0,0,0,16">
-                            <Label Text="📅" FontSize="24" />
-                            <!-- Override title color to be light in dark mode -->
-                            <Label Text="{loc:Translate Resource=HomePageResources, Key=PlannedMealsHeader}" Style="{StaticResource CardTitleStyle}" Margin="0" TextColor="{AppThemeBinding Light={DynamicResource Primary}, Dark=White}" />
-                        </StackLayout>
-                        
-                        <!-- Period Selection Button for Planned Meals -->
-                        <Button Text="{Binding PlannedMealsPeriodDisplay, StringFormat='📅 {0}'}"
-                                Command="{Binding ChangePlannedMealsPeriodCommand}"
-                                BackgroundColor="{DynamicResource Primary}"
-                                TextColor="White"
-                                FontSize="12"
-                                FontAttributes="Bold"
-                                HeightRequest="30"
-                                CornerRadius="6"
-                                Margin="0,0,0,12"
-                                HorizontalOptions="Center" />
-                        
-                        <Label FontSize="12"
-                               HorizontalTextAlignment="Center"
-                               TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
-                               Margin="0,0,0,8"
-                               Text="{loc:Translate Resource=HomePageResources, Key=ClickRecipeHint}" />
+                <Border Style="{StaticResource SectionCardStyle}">
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="12">
+                            <HorizontalStackLayout Spacing="8"
+                                                   VerticalOptions="Center">
+                                <Label Text="📅"
+                                       FontSize="20"
+                                       VerticalOptions="Center" />
+                                <Label Text="{loc:Translate Resource=HomePageResources, Key=PlannedMealsHeader}"
+                                       Style="{StaticResource SectionTitleStyle}"
+                                       VerticalOptions="Center" />
+                            </HorizontalStackLayout>
 
-                        <!-- Empty state info when no meals -->
-                        <Label IsVisible="{Binding HasPlannedMeals, Converter={StaticResource InvertedBoolConverter}}"
+                            <Button Grid.Column="1"
+                                    Style="{StaticResource PeriodButtonStyle}"
+                                    Text="{Binding PlannedMealsPeriodDisplay}"
+                                    Command="{Binding ChangePlannedMealsPeriodCommand}" />
+                        </Grid>
+
+                        <Label Text="{loc:Translate Resource=HomePageResources, Key=ClickRecipeHint}"
                                FontSize="12"
-                               HorizontalTextAlignment="Center"
-                               TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
-                               Margin="0,0,0,8"
-                               Text="{loc:Translate Resource=HomePageResources, Key=NoPlannedMealsMessage}" />
-                        
-                        <!-- Scrollable CollectionView with limited height (expands on Today) -->
+                               TextColor="{DynamicResource SecondaryText}" />
+
+                        <Label IsVisible="{Binding HasPlannedMeals, Converter={StaticResource InvertedBoolConverter}}"
+                               Text="{loc:Translate Resource=HomePageResources, Key=NoPlannedMealsMessage}"
+                               FontSize="12"
+                               TextColor="{DynamicResource SecondaryText}" />
+
                         <ScrollView MaximumHeightRequest="{Binding PlannedMealsMaxHeight}"
-                                    VerticalScrollBarVisibility="Always">
+                                    VerticalScrollBarVisibility="Never">
                             <CollectionView ItemsSource="{Binding PlannedMealHistory}"
+                                            SelectionMode="None"
                                             ItemSizingStrategy="MeasureAllItems">
                                 <CollectionView.ItemTemplate>
                                     <DataTemplate x:DataType="vm:PlannedMealGroup">
-                                        <StackLayout Margin="0,4">
-                                            <!-- Date Header -->
-                                            <Label Text="{Binding DateLabel}" 
-                                                   Style="{StaticResource DateHeaderStyle}" />
-                                            
-                                            <!-- Meals for this date -->
+                                        <VerticalStackLayout Spacing="8"
+                                                             Margin="0,4,0,10">
+                                            <Label Text="{Binding DateLabel}"
+                                                   FontSize="12"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{DynamicResource Primary}" />
+
                                             <CollectionView ItemsSource="{Binding Meals}"
+                                                            SelectionMode="None"
                                                             ItemSizingStrategy="MeasureAllItems">
                                                 <CollectionView.ItemTemplate>
-                                                    <DataTemplate x:DataType="{x:Type models:PlannedMeal}">
-                                                        <Frame Style="{StaticResource ClickableMealItemStyle}">
-                                                            <Frame.GestureRecognizers>
-                                                                <TapGestureRecognizer Command="{Binding Source={x:Reference Name=HomePageView}, Path=BindingContext.ShowMealDetailsPopupCommand}" CommandParameter="{Binding .}" />
-                                                            </Frame.GestureRecognizers>
-                                                            <StackLayout Orientation="Horizontal">
-                                                                <Label Text="•" 
-                                                                       FontSize="16"
+                                                    <DataTemplate x:DataType="models:PlannedMeal">
+                                                        <Border StrokeThickness="0"
+                                                                Stroke="Transparent"
+                                                                StrokeShape="RoundRectangle 14"
+                                                                BackgroundColor="{AppThemeBinding Light=#F7F5FC, Dark={StaticResource Gray700}}"
+                                                                Padding="12,10"
+                                                                Margin="0,0,0,8">
+                                                            <Border.GestureRecognizers>
+                                                                <TapGestureRecognizer Command="{Binding Source={x:Reference HomePageView}, Path=BindingContext.ShowMealDetailsPopupCommand}"
+                                                                                      CommandParameter="{Binding .}" />
+                                                            </Border.GestureRecognizers>
+                                                            <Grid ColumnDefinitions="Auto,*,Auto"
+                                                                  ColumnSpacing="10">
+                                                                <Label Text="•"
+                                                                       FontSize="18"
                                                                        TextColor="{DynamicResource Primary}"
+                                                                       VerticalOptions="Center" />
+                                                                <Label Grid.Column="1"
+                                                                       Text="{Binding Recipe.Name}"
+                                                                       FontSize="15"
+                                                                       TextColor="{DynamicResource PrimaryText}"
                                                                        VerticalOptions="Center"
-                                                                       Margin="0,0,8,0" />
-                                                                <Label Text="{Binding Recipe.Name}" 
-                                                                       FontSize="16"
-                                                                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"
-                                                                       VerticalOptions="Center"
-                                                                       LineBreakMode="TailTruncation"
-                                                                       HorizontalOptions="FillAndExpand" />
-                                                                <Label Text="{Binding Portions, Converter={StaticResource FormatWithResourceConverter}, ConverterParameter=PortionsFormat}"
-                                                                       FontSize="12"
-                                                                       TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
-                                                                       VerticalOptions="Center"
-                                                                       Margin="8,0,0,0" />
-                                                            </StackLayout>
-                                                        </Frame>
+                                                                       LineBreakMode="TailTruncation" />
+                                                                <Label Grid.Column="2"
+                                                                       Text="{Binding Portions, Converter={StaticResource FormatWithResourceConverter}, ConverterParameter=PortionsFormat}"
+                                                                       FontSize="11"
+                                                                       TextColor="{DynamicResource SecondaryText}"
+                                                                       VerticalOptions="Center" />
+                                                            </Grid>
+                                                        </Border>
                                                     </DataTemplate>
                                                 </CollectionView.ItemTemplate>
                                             </CollectionView>
-                                        </StackLayout>
+                                        </VerticalStackLayout>
                                     </DataTemplate>
                                 </CollectionView.ItemTemplate>
                             </CollectionView>
                         </ScrollView>
-                    </StackLayout>
+                    </VerticalStackLayout>
                 </Border>
 
-                <!-- Nutrition Stats Card -->
-                <Border Grid.Row="2" Grid.ColumnSpan="2" 
-                        BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
-                        StrokeShape="RoundRectangle 16"
-                        StrokeThickness="1"
-                        Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
-                        Padding="20"
-                        Margin="12,8">
-                    <Border.Shadow>
-                        <Shadow Brush="{AppThemeBinding Light=#10000000, Dark=#20000000}" Offset="0,2" Radius="4" Opacity="0.5" />
-                    </Border.Shadow>
-                    <StackLayout>
-                        <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="8" Margin="0,0,0,16">
-                            <Label Text="📊" FontSize="24" />
-                            <Label Text="{loc:Translate Resource=HomePageResources, Key=NutritionStatsHeader}" Style="{StaticResource CardTitleStyle}" Margin="0" />
-                        </StackLayout>
+                <Border Style="{StaticResource SectionCardStyle}">
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="12">
+                            <HorizontalStackLayout Spacing="8"
+                                                   VerticalOptions="Center">
+                                <Label Text="📊"
+                                       FontSize="20"
+                                       VerticalOptions="Center" />
+                                <Label Text="{loc:Translate Resource=HomePageResources, Key=NutritionStatsHeader}"
+                                       Style="{StaticResource SectionTitleStyle}"
+                                       VerticalOptions="Center" />
+                            </HorizontalStackLayout>
 
-                        <!-- Period Selection Button -->
-                        <Button Text="{Binding NutritionPeriodDisplay, StringFormat='📅 {0}'}"
-                                Command="{Binding ChangeNutritionPeriodCommand}"
-                                BackgroundColor="{DynamicResource Primary}"
-                                TextColor="White"
-                                FontSize="14"
-                                FontAttributes="Bold"
-                                HeightRequest="35"
-                                CornerRadius="8"
-                                Margin="0,0,0,16"
-                                HorizontalOptions="Center" />
+                            <Button Grid.Column="1"
+                                    Style="{StaticResource PeriodButtonStyle}"
+                                    Text="{Binding NutritionPeriodDisplay}"
+                                    Command="{Binding ChangeNutritionPeriodCommand}" />
+                        </Grid>
 
-                        <!-- Top row - Calories (full width) -->
-                        <Border BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
-                               StrokeShape="RoundRectangle 12"
-                               StrokeThickness="0"
-                               Stroke="Transparent"
-                               Padding="16,20" 
-                               Margin="0,0,0,12">
-                            <StackLayout>
-                                <Label Text="🔥" FontSize="28" HorizontalTextAlignment="Center" />
-                                <Label Text="{loc:Translate Resource=HomePageResources, Key=Calories}"
-                                       FontSize="16"
-                                       FontAttributes="Bold"
-                                       HorizontalTextAlignment="Center"
-                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" 
-                                       Margin="0,8,0,12" />
-                                <Label Text="{Binding CaloriesDisplay}" 
-                                       FontSize="28"
-                                       FontAttributes="Bold"
-                                       HorizontalTextAlignment="Center"
-                                       TextColor="{DynamicResource Primary}" />
-                            </StackLayout>
-                        </Border>
+                        <Grid ColumnDefinitions="*,*,*"
+                              RowDefinitions="Auto,Auto"
+                              ColumnSpacing="10"
+                              RowSpacing="10">
+                            <Border Grid.Row="0"
+                                    Grid.ColumnSpan="3"
+                                    StrokeThickness="0"
+                                    Stroke="Transparent"
+                                    StrokeShape="RoundRectangle 18"
+                                    BackgroundColor="{AppThemeBinding Light=#FFF3EE, Dark=#4A2B1F}"
+                                    Padding="14,12">
+                                <HorizontalStackLayout Spacing="10"
+                                                       VerticalOptions="Center">
+                                    <Label Text="🔥"
+                                           FontSize="20"
+                                           VerticalOptions="Center" />
+                                    <VerticalStackLayout Spacing="1">
+                                        <Label Text="{loc:Translate Resource=HomePageResources, Key=Calories}"
+                                               FontSize="12"
+                                               FontAttributes="Bold"
+                                               TextColor="{AppThemeBinding Light=#8E4B28, Dark=#FFBC9A}" />
+                                        <Label Text="{Binding CaloriesDisplay, StringFormat='{}{0} kcal'}"
+                                               FontSize="24"
+                                               FontAttributes="Bold"
+                                               TextColor="{AppThemeBinding Light=#FF6B35, Dark=#FFBC9A}" />
+                                    </VerticalStackLayout>
+                                </HorizontalStackLayout>
+                            </Border>
 
-                        <!-- Bottom row - Protein, Carbs, Fats -->
-                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
-                            <Border Grid.Column="0" 
-                                   BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
-                                   StrokeShape="RoundRectangle 12"
-                                   StrokeThickness="0"
-                                   Stroke="Transparent"
-                                   Padding="12,16">
-                                <StackLayout>
-                                    <Label Text="🥩" FontSize="20" HorizontalTextAlignment="Center" />
+                            <Border Grid.Row="1"
+                                    Grid.Column="0"
+                                    StrokeThickness="0"
+                                    Stroke="Transparent"
+                                    StrokeShape="RoundRectangle 16"
+                                    BackgroundColor="{AppThemeBinding Light=#EFF6FF, Dark=#1F3550}"
+                                    Padding="12,12">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="🥩"
+                                           FontSize="18" />
                                     <Label Text="{loc:Translate Resource=HomePageResources, Key=Protein}"
-                                           FontSize="12"
+                                           FontSize="11"
                                            FontAttributes="Bold"
-                                           HorizontalTextAlignment="Center"
-                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" 
-                                           Margin="0,4,0,8" />
-                                    <Label Text="{Binding ProteinDisplay}" Style="{StaticResource MicroStatStyle}" />
-                                </StackLayout>
+                                           TextColor="{AppThemeBinding Light=#4D6582, Dark=#A9CCFF}" />
+                                    <Label Text="{Binding ProteinDisplay}"
+                                           Style="{StaticResource MacroValueStyle}"
+                                           TextColor="{AppThemeBinding Light=#3B82F6, Dark=#A9CCFF}" />
+                                    <BoxView HeightRequest="4"
+                                             CornerRadius="2"
+                                             Color="{AppThemeBinding Light=#3B82F6, Dark=#A9CCFF}"
+                                             HorizontalOptions="Fill" />
+                                </VerticalStackLayout>
                             </Border>
 
-                            <Border Grid.Column="1" 
-                                   BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
-                                   StrokeShape="RoundRectangle 12"
-                                   StrokeThickness="0"
-                                   Stroke="Transparent"
-                                   Padding="12,16">
-                                <StackLayout>
-                                    <Label Text="🌾" FontSize="20" HorizontalTextAlignment="Center" />
+                            <Border Grid.Row="1"
+                                    Grid.Column="1"
+                                    StrokeThickness="0"
+                                    Stroke="Transparent"
+                                    StrokeShape="RoundRectangle 16"
+                                    BackgroundColor="{AppThemeBinding Light=#ECFDF5, Dark=#1D3B2F}"
+                                    Padding="12,12">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="🌾"
+                                           FontSize="18" />
                                     <Label Text="{loc:Translate Resource=HomePageResources, Key=Carbs}"
-                                           FontSize="12"
+                                           FontSize="11"
                                            FontAttributes="Bold"
-                                           HorizontalTextAlignment="Center"
-                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" 
-                                           Margin="0,4,0,8" />
-                                    <Label Text="{Binding CarbsDisplay}" Style="{StaticResource MicroStatStyle}" />
-                                </StackLayout>
+                                           TextColor="{AppThemeBinding Light=#477A65, Dark=#9DE3C1}" />
+                                    <Label Text="{Binding CarbsDisplay}"
+                                           Style="{StaticResource MacroValueStyle}"
+                                           TextColor="{AppThemeBinding Light=#10B981, Dark=#9DE3C1}" />
+                                    <BoxView HeightRequest="4"
+                                             CornerRadius="2"
+                                             Color="{AppThemeBinding Light=#10B981, Dark=#9DE3C1}"
+                                             HorizontalOptions="Fill" />
+                                </VerticalStackLayout>
                             </Border>
 
-                            <Border Grid.Column="2" 
-                                   BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" 
-                                   StrokeShape="RoundRectangle 12"
-                                   StrokeThickness="0"
-                                   Stroke="Transparent"
-                                   Padding="12,16">
-                                <StackLayout>
-                                    <Label Text="🧈" FontSize="20" HorizontalTextAlignment="Center" />
+                            <Border Grid.Row="1"
+                                    Grid.Column="2"
+                                    StrokeThickness="0"
+                                    Stroke="Transparent"
+                                    StrokeShape="RoundRectangle 16"
+                                    BackgroundColor="{AppThemeBinding Light=#FFFBEB, Dark=#47391C}"
+                                    Padding="12,12">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="🧈"
+                                           FontSize="18" />
                                     <Label Text="{loc:Translate Resource=HomePageResources, Key=Fats}"
-                                           FontSize="12"
+                                           FontSize="11"
                                            FontAttributes="Bold"
-                                           HorizontalTextAlignment="Center"
-                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" 
-                                           Margin="0,4,0,8" />
-                                    <Label Text="{Binding FatDisplay}" Style="{StaticResource MicroStatStyle}" />
-                                </StackLayout>
+                                           TextColor="{AppThemeBinding Light=#886D1A, Dark=#F6D588}" />
+                                    <Label Text="{Binding FatDisplay}"
+                                           Style="{StaticResource MacroValueStyle}"
+                                           TextColor="{AppThemeBinding Light=#F59E0B, Dark=#F6D588}" />
+                                    <BoxView HeightRequest="4"
+                                             CornerRadius="2"
+                                             Color="{AppThemeBinding Light=#F59E0B, Dark=#F6D588}"
+                                             HorizontalOptions="Fill" />
+                                </VerticalStackLayout>
                             </Border>
                         </Grid>
 
                         <Label IsVisible="{Binding HasNutritionData, Converter={StaticResource InvertedBoolConverter}}"
+                               Text="{loc:Translate Resource=HomePageResources, Key=NoNutritionData}"
                                FontSize="12"
-                               HorizontalTextAlignment="Center"
-                               TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
-                               Margin="0,16,0,0"
-                               Text="{loc:Translate Resource=HomePageResources, Key=NoNutritionData}" />
-                    </StackLayout>
+                               TextColor="{DynamicResource SecondaryText}" />
+                    </VerticalStackLayout>
                 </Border>
 
-                <!-- Profile Card (navigates to ProfilePage) -->
-                <Border Grid.Row="3" Grid.ColumnSpan="2" 
-                        BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
-                        StrokeShape="RoundRectangle 16"
-                        StrokeThickness="1"
-                        Stroke="{DynamicResource Primary}"
-                        Padding="20"
-                        Margin="12,8">
-                    <Border.Shadow>
-                        <Shadow Brush="{AppThemeBinding Light=#10000000, Dark=#20000000}" Offset="0,2" Radius="4" Opacity="0.5" />
-                    </Border.Shadow>
-                    <StackLayout Orientation="Horizontal" Spacing="12" VerticalOptions="Center" Padding="8">
-                        <Label Text="👤" FontSize="28" VerticalOptions="Center" />
-                        <StackLayout HorizontalOptions="FillAndExpand">
-                            <Label Text="{loc:Translate Resource=HomePageResources, Key=Profile}" Style="{StaticResource CardTitleStyle}" Margin="0" />
-                            <Label Text="{loc:Translate Resource=HomePageResources, Key=ProfileSubtitle}" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
-                        </StackLayout>
-                        <Button Text="{loc:Translate Resource=HomePageResources, Key=GoToProfile}"
-                                BackgroundColor="{DynamicResource Primary}"
-                                TextColor="White"
-                                CornerRadius="8"
-                                HeightRequest="40"
-                                Clicked="OnOpenProfileClicked" />
-                    </StackLayout>
-                </Border>
+                <Grid ColumnDefinitions="*,*"
+                      ColumnSpacing="12"
+                      Margin="0,0,0,6">
+                    <Border Grid.Column="0"
+                            Style="{StaticResource SectionCardStyle}"
+                            Padding="14">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnArchiveClicked" />
+                        </Border.GestureRecognizers>
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="📁"
+                                   FontSize="22" />
+                            <Label Text="{loc:Translate Resource=HomePageResources, Key=Archive}"
+                                   Style="{StaticResource SectionTitleStyle}" />
+                            <Label Text="{Binding ArchivedPlanCount, StringFormat='{}{0}'}"
+                                   FontSize="22"
+                                   FontAttributes="Bold"
+                                   TextColor="{DynamicResource Primary}" />
+                            <HorizontalStackLayout Spacing="8"
+                                                     VerticalOptions="Center">
+                                <Label Text="{loc:Translate Resource=HomePageResources, Key=InArchive}"
+                                       Style="{StaticResource SectionSubtitleStyle}" />
+                                <Border StrokeThickness="0"
+                                        Stroke="Transparent"
+                                        StrokeShape="RoundRectangle 10"
+                                        BackgroundColor="{DynamicResource Secondary}"
+                                        Padding="8,5"
+                                        VerticalOptions="Center">
+                                    <Label Text="{loc:Translate Resource=HomePageResources, Key=GoToArchive}"
+                                           FontSize="11"
+                                           FontAttributes="Bold"
+                                           TextColor="{DynamicResource Primary}" />
+                                </Border>
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+                    </Border>
 
-                <!-- Archive Card -->
-                <Border Grid.Row="4" Grid.Column="0" 
-                        BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
-                        StrokeShape="RoundRectangle 16"
-                        StrokeThickness="1"
-                        Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
-                        Padding="20"
-                        Margin="12,8">
-                    <Border.Shadow>
-                        <Shadow Brush="{AppThemeBinding Light=#10000000, Dark=#20000000}" Offset="0,2" Radius="4" Opacity="0.5" />
-                    </Border.Shadow>
-                    <StackLayout>
-                        <Label Text="📁" Style="{StaticResource EmojiStyle}" />
-                        <Label Text="{loc:Translate Resource=HomePageResources, Key=Archive}" Style="{StaticResource CardTitleStyle}" />
-                        <Label Text="{Binding ArchivedPlanCount}" Style="{StaticResource StatNumberStyle}" />
-                        <Label Text="{loc:Translate Resource=HomePageResources, Key=InArchive}" Style="{StaticResource StatDescriptionStyle}" />
-                        <Button Clicked="OnArchiveClicked"
-                                Style="{StaticResource CardButtonStyle}"
-                                Text="{loc:Translate Resource=HomePageResources, Key=GoToArchive}" />
-                    </StackLayout>
-                </Border>
-
-                <!-- Settings Card -->
-                <Border Grid.Row="4" Grid.Column="1" 
-                        BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
-                        StrokeShape="RoundRectangle 16"
-                        StrokeThickness="1"
-                        Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
-                        Padding="20"
-                        Margin="12,8">
-                    <Border.Shadow>
-                        <Shadow Brush="{AppThemeBinding Light=#10000000, Dark=#20000000}" Offset="0,2" Radius="4" Opacity="0.5" />
-                    </Border.Shadow>
-                    <StackLayout>
-                        <Label Text="⚙️" Style="{StaticResource EmojiStyle}" />
-                        <Label Text="{loc:Translate Resource=HomePageResources, Key=Settings}" Style="{StaticResource CardTitleStyle}" />
-                        <Label Text="🛠️" Style="{StaticResource StatNumberStyle}" />
-                        <Label Text="{loc:Translate Resource=HomePageResources, Key=Customize}" Style="{StaticResource StatDescriptionStyle}" />
-                        <Button Style="{StaticResource CardButtonStyle}"
-                                Text="{loc:Translate Resource=HomePageResources, Key=GoToSettings}"
-                                Clicked="OnSettingsClicked" />
-                    </StackLayout>
-                </Border>
-
-            </Grid>
-        </StackLayout>
+                    <Border Grid.Column="1"
+                            Style="{StaticResource SectionCardStyle}"
+                            Padding="14">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnSettingsClicked" />
+                        </Border.GestureRecognizers>
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="⚙️"
+                                   FontSize="22" />
+                            <Label Text="{loc:Translate Resource=HomePageResources, Key=Settings}"
+                                   Style="{StaticResource SectionTitleStyle}" />
+                            <Label Text="🛠️"
+                                   FontSize="22"
+                                   TextColor="{DynamicResource Primary}" />
+                            <HorizontalStackLayout Spacing="8"
+                                                     VerticalOptions="Center">
+                                <Label Text="{loc:Translate Resource=HomePageResources, Key=Customize}"
+                                       Style="{StaticResource SectionSubtitleStyle}" />
+                                <Border StrokeThickness="0"
+                                        Stroke="Transparent"
+                                        StrokeShape="RoundRectangle 10"
+                                        BackgroundColor="{DynamicResource Secondary}"
+                                        Padding="8,5"
+                                        VerticalOptions="Center">
+                                    <Label Text="{loc:Translate Resource=HomePageResources, Key=GoToSettings}"
+                                           FontSize="11"
+                                           FontAttributes="Bold"
+                                           TextColor="{DynamicResource Primary}" />
+                                </Border>
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

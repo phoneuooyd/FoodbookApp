@@ -3,211 +3,291 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:Foodbook.Services"
              xmlns:models="clr-namespace:Foodbook.Models"
-             xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:converters="clr-namespace:Foodbook.Converters"
              xmlns:components="clr-namespace:Foodbook.Views.Components"
-             xmlns:resources="clr-namespace:FoodbookApp.Localization"
              x:Class="Foodbook.Views.PlannerPage"
              x:Name="ThisPage"
-             Title="{loc:Translate Resource=PlannerPageResources, Key=Title}"
+             NavigationPage.HasNavigationBar="False"
              BackgroundColor="{DynamicResource PageBackgroundColor}">
+
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
-        <converters:RecipeSelectedToStrokeConverter x:Key="RecipeSelectedToStrokeConverter" />
-        <converters:RecipeSelectedToStrokeThicknessConverter x:Key="RecipeSelectedToStrokeThicknessConverter" />
-        <!-- Local styles to render cards using Border instead of deprecated Frame -->
-        <Style x:Key="PlannerCardBorder" TargetType="Border">
-            <Setter Property="Padding" Value="10,6" />
-            <Setter Property="Margin" Value="0" />
-            <Setter Property="BackgroundColor" Value="{DynamicResource FrameBackgroundColor}" />
-            <Setter Property="Stroke" Value="{AppThemeBinding Light=LightGray, Dark=#555555}" />
-            <Setter Property="StrokeThickness" Value="1" />
-            <Setter Property="StrokeShape" Value="RoundRectangle 8" />
-        </Style>
-        <Style x:Key="PlannerDatePicker" TargetType="DatePicker">
-            <Setter Property="TextColor" Value="{DynamicResource FrameTextColor}" />
-            <Setter Property="BackgroundColor" Value="Transparent" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="HorizontalOptions" Value="FillAndExpand" />
-        </Style>
-        <!-- Style for recipe picker border - with selected state -->
-        <Style x:Key="RecipePickerBorder" TargetType="Border">
+        <converters:MealIndexConverter x:Key="MealIndexConverter" />
+        <converters:IsNotNullConverter x:Key="IsNotNullConverter" />
+
+        <Style x:Key="TopStripStepperBtn" TargetType="Button">
+            <Setter Property="WidthRequest" Value="30" />
+            <Setter Property="HeightRequest" Value="30" />
+            <Setter Property="MinimumWidthRequest" Value="30" />
+            <Setter Property="MinimumHeightRequest" Value="30" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="BorderWidth" Value="0" />
             <Setter Property="Padding" Value="0" />
-            <Setter Property="Margin" Value="0" />
-            <Setter Property="StrokeShape" Value="RoundRectangle 8" />
-            <Setter Property="StrokeThickness" Value="1" />
-            <Setter Property="Stroke" Value="{AppThemeBinding Light=LightGray, Dark=#555555}" />
+        </Style>
+
+        <Style x:Key="MealActionBtn" TargetType="Button">
+            <Setter Property="WidthRequest" Value="34" />
+            <Setter Property="HeightRequest" Value="34" />
+            <Setter Property="MinimumWidthRequest" Value="34" />
+            <Setter Property="MinimumHeightRequest" Value="34" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="BorderWidth" Value="0" />
+            <Setter Property="Padding" Value="0" />
         </Style>
     </ContentPage.Resources>
-    <Grid RowDefinitions="*">
-        <!-- Loading -->
-        <Grid Grid.Row="0" IsVisible="{Binding IsLoading}" VerticalOptions="Center" HorizontalOptions="Center" Padding="40" 
-              RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="20">
-            <ActivityIndicator Grid.Row="0" IsRunning="{Binding IsLoading}" Color="{DynamicResource Primary}" WidthRequest="60" HeightRequest="60" />
-            <Label Grid.Row="1" Text="{Binding LoadingStatus}" FontSize="16" FontAttributes="Bold" HorizontalTextAlignment="Center" TextColor="{DynamicResource Primary}" />
-            <ProgressBar Grid.Row="2" Progress="{Binding LoadingProgress}" ProgressColor="{DynamicResource Primary}" BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" HeightRequest="6" WidthRequest="300" HorizontalOptions="Center" />
-            <Label Grid.Row="3" FontSize="14" HorizontalTextAlignment="Center" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}">
-                <Label.Text>
-                    <MultiBinding StringFormat="{}{0:P0}">
-                        <Binding Path="LoadingProgress" />
-                    </MultiBinding>
-                </Label.Text>
-            </Label>
-            <Label Grid.Row="4" FontSize="12" HorizontalTextAlignment="Center" TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}" Margin="0,10,0,0" Text="{loc:Translate Resource=PlannerPageResources, Key=LoadingTip}" />
-        </Grid>
-        <!-- Content -->
-        <ScrollView Grid.Row="0" IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
-            <Grid Padding="10" RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="15">
-                <!-- Row 0: Date pickers -->
-                <Grid Grid.Row="0" ColumnDefinitions="*,*" ColumnSpacing="15" Margin="0,5">
-                    <Grid Grid.Column="0" RowDefinitions="Auto,Auto" HorizontalOptions="Start">
-                        <Label Grid.Row="0" Text="{loc:Translate Resource=PlannerPageResources, Key=DateFrom}" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource Primary}" Margin="0,0,0,5" />
-                        <!-- Date From card -->
-                        <Border Grid.Row="1" Style="{StaticResource PlannerCardBorder}">
-                            <DatePicker x:Name="StartDatePicker" Date="{Binding StartDate}" Format="dd.MM.yyyy" Style="{StaticResource PlannerDatePicker}" />
-                        </Border>
-                    </Grid>
-                    <Grid Grid.Column="1" RowDefinitions="Auto,Auto" HorizontalOptions="End">
-                        <Label Grid.Row="0" Text="{loc:Translate Resource=PlannerPageResources, Key=DateTo}" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource Primary}" Margin="0,0,0,5" />
-                        <!-- Date To card -->
-                        <Border Grid.Row="1" Style="{StaticResource PlannerCardBorder}">
-                            <DatePicker x:Name="EndDatePicker" Date="{Binding EndDate}" Format="dd.MM.yyyy" Style="{StaticResource PlannerDatePicker}" />
-                        </Border>
-                    </Grid>
-                </Grid>
 
-                <!-- Row 1: Meals per day card -->
-                <Border Grid.Row="1" Style="{StaticResource PlannerCardBorder}" Margin="0,0,0,0">
-                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="10" HorizontalOptions="Center">
-                        <Label Grid.Column="0" Text="{loc:Translate Resource=PlannerPageResources, Key=MealsPerDay}" VerticalOptions="Center" FontSize="14" FontAttributes="Bold" TextColor="{DynamicResource Primary}" />
-                        <Entry Grid.Column="1" Text="{Binding MealsPerDay}" Keyboard="Numeric" WidthRequest="50" FontSize="14" HorizontalTextAlignment="Center" />
+    <Grid RowDefinitions="Auto,*">
+        <!-- App bar (themed) -->
+        <Grid Grid.Row="0" Padding="16,12,16,14" BackgroundColor="{DynamicResource Primary}">
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Grid.Column="0"
+                       Text="{loc:Translate Resource=PlannerPageResources, Key=Title}"
+                       TextColor="White"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center" />
+
+                <Border Grid.Column="1"
+                        WidthRequest="34"
+                        HeightRequest="34"
+                        BackgroundColor="#26FFFFFF"
+                        StrokeThickness="0"
+                        VerticalOptions="Center">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="10" />
+                    </Border.StrokeShape>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding CancelCommand}" />
+                    </Border.GestureRecognizers>
+                    <Label Text="✕"
+                           TextColor="White"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center" />
+                </Border>
+            </Grid>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <!-- Loading -->
+            <Grid IsVisible="{Binding IsLoading}" VerticalOptions="Center" HorizontalOptions="Center" Padding="40"
+                  RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="20">
+                <ActivityIndicator Grid.Row="0" IsRunning="{Binding IsLoading}" Color="{DynamicResource Primary}" WidthRequest="60" HeightRequest="60" />
+                <Label Grid.Row="1" Text="{Binding LoadingStatus}" FontSize="16" FontAttributes="Bold" HorizontalTextAlignment="Center" TextColor="{DynamicResource Primary}" />
+                <ProgressBar Grid.Row="2" Progress="{Binding LoadingProgress}" ProgressColor="{DynamicResource Primary}" BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" HeightRequest="6" WidthRequest="300" HorizontalOptions="Center" />
+                <Label Grid.Row="3" FontSize="14" HorizontalTextAlignment="Center" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}">
+                    <Label.Text>
+                        <MultiBinding StringFormat="{}{0:P0}">
+                            <Binding Path="LoadingProgress" />
+                        </MultiBinding>
+                    </Label.Text>
+                </Label>
+                <Label Grid.Row="4" FontSize="12" HorizontalTextAlignment="Center" TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}" Margin="0,10,0,0" Text="{loc:Translate Resource=PlannerPageResources, Key=LoadingTip}" />
+            </Grid>
+
+            <!-- Content -->
+            <Grid IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+                  RowDefinitions="Auto,Auto,*,Auto">
+
+                <!-- Date strip (smaller fields) -->
+                <Border Grid.Row="0" BackgroundColor="{DynamicResource FrameBackgroundColor}" StrokeThickness="0" Padding="12,8">
+                    <Grid ColumnDefinitions="*,18,*">
+                        <StackLayout Grid.Column="0" Spacing="2">
+                            <Label Text="{loc:Translate Resource=PlannerPageResources, Key=DateFrom}" FontSize="10" FontAttributes="Bold" CharacterSpacing="0.8" TextColor="{DynamicResource Primary}" />
+                            <Border StrokeThickness="1" Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" BackgroundColor="{DynamicResource PageBackgroundColor}" Padding="8,4">
+                                <Border.StrokeShape><RoundRectangle CornerRadius="9" /></Border.StrokeShape>
+                                <DatePicker x:Name="StartDatePicker" Date="{Binding StartDate}" Format="dd.MM.yyyy" FontSize="12" TextColor="{DynamicResource FrameTextColor}" BackgroundColor="Transparent" HeightRequest="30" />
+                            </Border>
+                        </StackLayout>
+
+                        <BoxView Grid.Column="1" HeightRequest="1" BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" VerticalOptions="End" Margin="0,0,0,10" />
+
+                        <StackLayout Grid.Column="2" Spacing="2">
+                            <Label Text="{loc:Translate Resource=PlannerPageResources, Key=DateTo}" FontSize="10" FontAttributes="Bold" CharacterSpacing="0.8" HorizontalOptions="End" TextColor="{DynamicResource Primary}" />
+                            <Border StrokeThickness="1" Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" BackgroundColor="{DynamicResource PageBackgroundColor}" Padding="8,4">
+                                <Border.StrokeShape><RoundRectangle CornerRadius="9" /></Border.StrokeShape>
+                                <DatePicker x:Name="EndDatePicker" Date="{Binding EndDate}" Format="dd.MM.yyyy" FontSize="12" TextColor="{DynamicResource FrameTextColor}" BackgroundColor="Transparent" HeightRequest="30" />
+                            </Border>
+                        </StackLayout>
                     </Grid>
                 </Border>
 
-                <!-- Row 2: Days list -->
-                <VerticalStackLayout Grid.Row="3" BindableLayout.ItemsSource="{Binding Days}">
-                    <BindableLayout.ItemTemplate>
-                        <DataTemplate x:DataType="models:PlannerDay">
-                            <Border Stroke="LightGray"
-                                    StrokeThickness="1"
-                                    StrokeShape="RoundRectangle 8"
-                                    Padding="8"
-                                    Margin="0,3"
-                                    BackgroundColor="{DynamicResource FrameBackgroundColor}">
-                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="0">
-                                    <!-- Row 0: Date label -->
-                                    <Label Grid.Row="0" 
-                                           Text="{Binding DateLabel}" 
-                                           FontAttributes="Bold" 
-                                           FontSize="14" 
-                                           TextColor="{DynamicResource FrameTextColor}" />
+                <!-- Meals per day strip -->
+                <Border Grid.Row="1" BackgroundColor="{DynamicResource FrameBackgroundColor}" StrokeThickness="0" Padding="12,7,12,8" Margin="0,1,0,0">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="{loc:Translate Resource=PlannerPageResources, Key=MealsPerDay}" FontSize="13" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" VerticalOptions="Center" />
+                        <HorizontalStackLayout Grid.Column="1" Spacing="8">
+                            <Button Text="−" Style="{StaticResource TopStripStepperBtn}" BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" TextColor="{DynamicResource FrameTextColor}" Clicked="OnDecreaseMealsPerDayClicked" />
+                            <Label Text="{Binding MealsPerDay}" WidthRequest="22" HorizontalTextAlignment="Center" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" VerticalOptions="Center" />
+                            <Button Text="+" Style="{StaticResource TopStripStepperBtn}" BackgroundColor="{DynamicResource Primary}" TextColor="{DynamicResource ButtonPrimaryText}" Clicked="OnIncreaseMealsPerDayClicked" />
+                        </HorizontalStackLayout>
+                    </Grid>
+                </Border>
 
-                                    <!-- Row 1: Meals list -->
-                                    <StackLayout Grid.Row="1" BindableLayout.ItemsSource="{Binding Meals}">
-                                        <BindableLayout.ItemTemplate>
-                                            <DataTemplate x:DataType="models:PlannedMeal">
-                                                <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="4" Margin="0,1">
-                                                    <!-- Recipe Picker wrapped in Border -->
-                                                    <Border Grid.Column="0" 
-                                                            x:Name="RecipeBorder"
-                                                            Style="{StaticResource RecipePickerBorder}"
-                                                            BackgroundColor="{DynamicResource FrameBackgroundColor}"
-                                                            Stroke="{Binding Recipe, Converter={StaticResource RecipeSelectedToStrokeConverter}}"
-                                                            StrokeThickness="{Binding Recipe, Converter={StaticResource RecipeSelectedToStrokeThicknessConverter}}">
-                                                        <components:FolderAwarePickerComponent SelectedRecipe="{Binding Recipe}" 
-                                                                                              PlaceholderText="{loc:Translate Resource=PlannerPageResources, Key=SelectRecipePlaceholder}" />
-                                                    </Border>
-                                                    <Button Grid.Column="1" Text="➖" 
-                                                            Clicked="OnDecreasePortionsClicked"
-                                                            WidthRequest="35" HeightRequest="35" MinimumWidthRequest="18" MinimumHeightRequest="18"
-                                                            CornerRadius="9" FontSize="14" FontAttributes="Bold" BorderWidth="0" Padding="0"
-                                                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" 
-                                                            TextColor="{AppThemeBinding Light=Black, Dark=White}">
-                                                        <Button.Triggers>
-                                                            <DataTrigger TargetType="Button" Binding="{Binding Portions}" Value="1">
-                                                                <Setter Property="IsEnabled" Value="False" />
-                                                                <Setter Property="BackgroundColor" Value="LightGray" />
-                                                            </DataTrigger>
-                                                        </Button.Triggers>
-                                                    </Button>
-                                                    <Label Grid.Column="2" 
-                                                           Text="{Binding Portions}" 
-                                                           VerticalOptions="Center" 
-                                                           HorizontalOptions="Center" 
-                                                           FontSize="18" 
-                                                           FontAttributes="Bold" 
-                                                           TextColor="{DynamicResource FrameTextColor}" 
-                                                           WidthRequest="36" 
-                                                           HorizontalTextAlignment="Center" />
-                                                    <Button Grid.Column="3" Text="➕" 
-                                                            Clicked="OnIncreasePortionsClicked"
-                                                            WidthRequest="35" HeightRequest="35" MinimumWidthRequest="18" MinimumHeightRequest="18"
-                                                            CornerRadius="9" FontSize="14" FontAttributes="Bold" BorderWidth="0" Padding="0"
-                                                            BackgroundColor="{DynamicResource Primary}" 
-                                                            TextColor="{DynamicResource ButtonPrimaryText}">
-                                                        <Button.Triggers>
-                                                            <DataTrigger TargetType="Button" Binding="{Binding Portions}" Value="20">
-                                                                <Setter Property="IsEnabled" Value="False" />
-                                                                <Setter Property="BackgroundColor" Value="LightGray" />
-                                                            </DataTrigger>
-                                                        </Button.Triggers>
-                                                    </Button>
-                                                    <Button Grid.Column="4" Text="✕"  
-                                                            Clicked="OnRemoveMealClicked"
-                                                            MinimumWidthRequest="18" MinimumHeightRequest="18" 
-                                                            WidthRequest="35" HeightRequest="35" 
-                                                            BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}" 
-                                                            TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}" 
-                                                            FontSize="14" 
-                                                            CornerRadius="9" 
-                                                            BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}" 
-                                                            BorderWidth="1" 
-                                                            Padding="0" />
-                                                </Grid>
-                                            </DataTemplate>
-                                        </BindableLayout.ItemTemplate>
-                                    </StackLayout>
+                <!-- Days -->
+                <ScrollView Grid.Row="2">
+                    <VerticalStackLayout Padding="10,10,10,0" Spacing="10" BindableLayout.ItemsSource="{Binding Days}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="models:PlannerDay">
+                                <Border StrokeThickness="0" BackgroundColor="{DynamicResource FrameBackgroundColor}">
+                                    <Border.StrokeShape><RoundRectangle CornerRadius="14" /></Border.StrokeShape>
+                                    <Border.Shadow>
+                                        <Shadow Brush="#10000000" Offset="0,2" Radius="10" Opacity="0.08" />
+                                    </Border.Shadow>
 
-                                    <!-- Row 2: Nutritional summary for the day - Grid with Auto columns -->
-                                    <Grid Grid.Row="2" ColumnDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="15" Margin="0,8,0,4">
-                                        <Label Grid.Column="0" Text="{Binding TotalCalories, StringFormat='⚡ {0:F1} kcal'}" FontSize="11" TextColor="Gray" />
-                                        <Label Grid.Column="1" Text="{Binding TotalProtein, StringFormat='🥩 {0:F1}g'}" FontSize="11" TextColor="Gray" />
-                                        <Label Grid.Column="2" Text="{Binding TotalFat, StringFormat='🧈 {0:F1}g'}" FontSize="11" TextColor="Gray" />
-                                        <Label Grid.Column="3" Text="{Binding TotalCarbs, StringFormat='🌾 {0:F1}g'}" FontSize="11" TextColor="Gray" />
+                                    <Grid RowDefinitions="Auto,Auto,Auto,Auto">
+                                        <!-- Header (bigger) -->
+                                        <Grid Grid.Row="0" ColumnDefinitions="4,*,Auto" Padding="0,0,12,0" MinimumHeightRequest="56">
+                                            <BoxView Grid.Column="0" BackgroundColor="{Binding DayAccentColor}" />
+                                            <StackLayout Grid.Column="1" Spacing="0" Padding="10,10,0,10" VerticalOptions="Center">
+                                                <Label Text="{Binding DayName}" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" />
+                                                <Label Text="{Binding Date, StringFormat='{0:dd.MM.yyyy}'}" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                            </StackLayout>
+
+                                            <Border Grid.Column="2" BackgroundColor="{DynamicResource Secondary}" StrokeThickness="0" Padding="8,4" VerticalOptions="Center">
+                                                <Border.StrokeShape><RoundRectangle CornerRadius="7" /></Border.StrokeShape>
+                                                <Label FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource Primary}">
+                                                    <Label.Text>
+                                                        <MultiBinding StringFormat="{}{0:F0} {1}">
+                                                            <Binding Path="TotalCalories" />
+                                                            <Binding Source="{loc:Translate Resource=PlannerPageResources, Key=CalorieAbbreviation}" />
+                                                        </MultiBinding>
+                                                    </Label.Text>
+                                                </Label>
+                                            </Border>
+                                        </Grid>
+
+                                        <!-- Meals -->
+                                        <VerticalStackLayout Grid.Row="1" BindableLayout.ItemsSource="{Binding Meals}" Spacing="0">
+                                            <BindableLayout.ItemTemplate>
+                                                <DataTemplate x:DataType="models:PlannedMeal">
+                                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto" ColumnSpacing="6" Padding="12,7">
+                                                        <!-- Bigger meal index badge -->
+                                                        <Border Grid.Column="0" WidthRequest="28" HeightRequest="28" BackgroundColor="{DynamicResource Secondary}" StrokeThickness="0" VerticalOptions="Center">
+                                                            <Border.StrokeShape><RoundRectangle CornerRadius="8" /></Border.StrokeShape>
+                                                            <Label FontSize="13" FontAttributes="Bold" TextColor="{DynamicResource Primary}" HorizontalOptions="Center" VerticalOptions="Center">
+                                                                <Label.Text>
+                                                                    <MultiBinding Converter="{StaticResource MealIndexConverter}">
+                                                                        <Binding Path="." />
+                                                                        <Binding Path="BindingContext.Meals" Source="{RelativeSource AncestorType={x:Type VerticalStackLayout}}" />
+                                                                    </MultiBinding>
+                                                                </Label.Text>
+                                                            </Label>
+                                                        </Border>
+
+                                                        <!-- Slightly smaller picker -->
+                                                        <Border Grid.Column="1" Padding="0" HeightRequest="38" StrokeShape="RoundRectangle 10" StrokeThickness="1.5" BackgroundColor="{DynamicResource PageBackgroundColor}">
+                                                            <Border.Triggers>
+                                                                <DataTrigger TargetType="Border" Binding="{Binding Recipe}" Value="{x:Null}">
+                                                                    <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+                                                                    <Setter Property="BackgroundColor" Value="{DynamicResource PageBackgroundColor}" />
+                                                                </DataTrigger>
+                                                                <DataTrigger TargetType="Border" Binding="{Binding Recipe}" Value="{x:Null}" />
+                                                                <DataTrigger TargetType="Border" Binding="{Binding Recipe, Converter={StaticResource IsNotNullConverter}}" Value="True">
+                                                                    <Setter Property="Stroke" Value="{DynamicResource Primary}" />
+                                                                    <Setter Property="BackgroundColor" Value="{DynamicResource Secondary}" />
+                                                                </DataTrigger>
+                                                            </Border.Triggers>
+                                                            <components:FolderAwarePickerComponent SelectedRecipe="{Binding Recipe}" PlaceholderText="{loc:Translate Resource=PlannerPageResources, Key=SelectRecipePlaceholder}" />
+                                                        </Border>
+
+                                                        <Button Grid.Column="2" Text="−" Style="{StaticResource MealActionBtn}" BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" TextColor="{DynamicResource FrameTextColor}" Clicked="OnDecreasePortionsClicked">
+                                                            <Button.Triggers>
+                                                                <DataTrigger TargetType="Button" Binding="{Binding Portions}" Value="1">
+                                                                    <Setter Property="IsEnabled" Value="False" />
+                                                                    <Setter Property="Opacity" Value="0.4" />
+                                                                </DataTrigger>
+                                                            </Button.Triggers>
+                                                        </Button>
+
+                                                        <Label Grid.Column="3" Text="{Binding Portions}" WidthRequest="20" HorizontalTextAlignment="Center" VerticalOptions="Center" FontSize="14" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" />
+
+                                                        <Button Grid.Column="4" Text="+" Style="{StaticResource MealActionBtn}" BackgroundColor="{DynamicResource Primary}" TextColor="{DynamicResource ButtonPrimaryText}" Clicked="OnIncreasePortionsClicked">
+                                                            <Button.Triggers>
+                                                                <DataTrigger TargetType="Button" Binding="{Binding Portions}" Value="20">
+                                                                    <Setter Property="IsEnabled" Value="False" />
+                                                                    <Setter Property="Opacity" Value="0.4" />
+                                                                </DataTrigger>
+                                                            </Button.Triggers>
+                                                        </Button>
+
+                                                        <Button Grid.Column="5" Text="✕" Clicked="OnRemoveMealClicked" Style="{StaticResource MealActionBtn}" FontSize="14" CornerRadius="17" BackgroundColor="#1AF43F5E" TextColor="#F43F5E" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </BindableLayout.ItemTemplate>
+                                        </VerticalStackLayout>
+
+                                        <!-- Macro footer -->
+                                        <Grid Grid.Row="2" ColumnDefinitions="*,*,*,*" Padding="12,7" BackgroundColor="{DynamicResource PageBackgroundColor}">
+                                            <Label Grid.Column="0" FontSize="10" FontAttributes="Bold" TextColor="{DynamicResource Primary}">
+                                                <Label.Text>
+                                                    <MultiBinding StringFormat="{}⚡ {0:F0} {1}">
+                                                        <Binding Path="TotalCalories" />
+                                                        <Binding Source="{loc:Translate Resource=PlannerPageResources, Key=CalorieAbbreviation}" />
+                                                    </MultiBinding>
+                                                </Label.Text>
+                                            </Label>
+                                            <Label Grid.Column="1" FontSize="10" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}">
+                                                <Label.Text>
+                                                    <MultiBinding StringFormat="{}{0} {1:F1}g">
+                                                        <Binding Source="{loc:Translate Resource=PlannerPageResources, Key=ProteinAbbreviation}" />
+                                                        <Binding Path="TotalProtein" />
+                                                    </MultiBinding>
+                                                </Label.Text>
+                                            </Label>
+                                            <Label Grid.Column="2" FontSize="10" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}">
+                                                <Label.Text>
+                                                    <MultiBinding StringFormat="{}{0} {1:F1}g">
+                                                        <Binding Source="{loc:Translate Resource=PlannerPageResources, Key=FatAbbreviation}" />
+                                                        <Binding Path="TotalFat" />
+                                                    </MultiBinding>
+                                                </Label.Text>
+                                            </Label>
+                                            <Label Grid.Column="3" FontSize="10" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}">
+                                                <Label.Text>
+                                                    <MultiBinding StringFormat="{}{0} {1:F1}g">
+                                                        <Binding Source="{loc:Translate Resource=PlannerPageResources, Key=CarbsAbbreviation}" />
+                                                        <Binding Path="TotalCarbs" />
+                                                    </MultiBinding>
+                                                </Label.Text>
+                                            </Label>
+                                        </Grid>
+
+                                        <!-- Dashed add meal -->
+                                        <Border Grid.Row="3" Margin="12,6,12,10" HeightRequest="40" BackgroundColor="{DynamicResource Secondary}" Stroke="{DynamicResource Primary}" StrokeThickness="1.5" StrokeDashArray="4,3">
+                                            <Border.StrokeShape><RoundRectangle CornerRadius="11" /></Border.StrokeShape>
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.AddMealCommand}" CommandParameter="{Binding .}" />
+                                            </Border.GestureRecognizers>
+                                            <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="6">
+                                                <Label Text="+" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource Primary}" />
+                                                <Label Text="{loc:Translate Resource=PlannerPageResources, Key=AddMeal}" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource Primary}" />
+                                            </HorizontalStackLayout>
+                                        </Border>
                                     </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </ScrollView>
 
-                                    <!-- Row 3: Add meal button -->
-                                    <Button Grid.Row="3" 
-                                            Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.AddMealCommand}" 
-                                            CommandParameter="{Binding .}" 
-                                            StyleClass="Secondary"
-                                            FontSize="12" 
-                                            FontAttributes="Bold" 
-                                            CornerRadius="6" 
-                                            Padding="12,6" 
-                                            WidthRequest="120" 
-                                            HeightRequest="32"
-                                            HorizontalOptions="Center"
-                                            Margin="0,4,0,0"
-                                            Text="{loc:Translate Resource=PlannerPageResources, Key=AddMeal}" />
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </BindableLayout.ItemTemplate>
-                </VerticalStackLayout>
-
-                <!-- Row 3: Save button -->
-                <Grid Grid.Row="4" Padding="20,10" BackgroundColor="{DynamicResource PageBackgroundColor}">
-                    <Button Command="{Binding SaveCommand}" 
-                            StyleClass="Primary"
-                            HeightRequest="50" 
-                            HorizontalOptions="FillAndExpand">
-                        <Button.ImageSource>
-                            <FileImageSource File="save.png" />
-                        </Button.ImageSource>
-                    </Button>
-                </Grid>
+                <!-- Save CTA -->
+                <Border Grid.Row="3" Margin="12,8,12,12" HeightRequest="50" StrokeThickness="0" BackgroundColor="{DynamicResource Primary}">
+                    <Border.StrokeShape><RoundRectangle CornerRadius="14" /></Border.StrokeShape>
+                    <Border.Shadow>
+                        <Shadow Brush="{DynamicResource Primary}" Offset="0,4" Radius="16" Opacity="0.35" />
+                    </Border.Shadow>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SaveCommand}" />
+                    </Border.GestureRecognizers>
+                    <Label Text="{loc:Translate Resource=PlannerPageResources, Key=SavePlan}" TextColor="{DynamicResource ButtonPrimaryText}" FontSize="14" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
             </Grid>
-        </ScrollView>
+        </Grid>
     </Grid>
 </ContentPage>

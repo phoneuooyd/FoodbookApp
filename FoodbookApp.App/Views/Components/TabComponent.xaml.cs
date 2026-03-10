@@ -6,8 +6,18 @@ using Foodbook.Converters;
 using Foodbook.Services;
 using Foodbook.Models;
 
-
 namespace Foodbook.Views.Components;
+
+/// <summary>
+/// Controls the height of the tab header bar.
+/// Small = 44px (default), Mid = 88px (2×), Big = 132px (3×).
+/// </summary>
+public enum TabHeaderSize
+{
+    Small = 44,
+    Mid = 88,
+    Big = 132
+}
 
 /// <summary>
 /// Reusable tab component that provides a consistent tab interface across the application.
@@ -29,8 +39,19 @@ public class TabComponent : ContentView, INotifyPropertyChanged
         BindableProperty.Create(nameof(SelectTabCommand), typeof(System.Windows.Input.ICommand), typeof(TabComponent), null);
 
     /// <summary>
-    /// Gets or sets the currently selected tab index.
+    /// Gets or sets the size of the tab header bar.
+    /// Small (44px, default), Mid (88px), Big (132px).
+    /// Changing this value at runtime rebuilds the header.
     /// </summary>
+    public static readonly BindableProperty TabSizeProperty =
+        BindableProperty.Create(
+            nameof(TabSize),
+            typeof(TabHeaderSize),
+            typeof(TabComponent),
+            TabHeaderSize.Small,
+            propertyChanged: OnTabSizeChanged);
+
+    /// <summary>Gets or sets the currently selected tab index.</summary>
     public int SelectedIndex
     {
         get => (int)GetValue(SelectedIndexProperty);
@@ -47,10 +68,35 @@ public class TabComponent : ContentView, INotifyPropertyChanged
         set => SetValue(SelectTabCommandProperty, value);
     }
 
-    /// <summary>
-    /// Gets the collection of tabs in this component.
-    /// </summary>
+    /// <summary>Gets or sets the visual size of the tab header.</summary>
+    public TabHeaderSize TabSize
+    {
+        get => (TabHeaderSize)GetValue(TabSizeProperty);
+        set => SetValue(TabSizeProperty, value);
+    }
+
+    /// <summary>Gets the collection of tabs in this component.</summary>
     public ObservableCollection<TabItem> Tabs => _tabs;
+
+    // ?? Derived metrics from TabSize ????????????????????????????????????????
+    /// <summary>Header height in device-independent pixels (44 / 88 / 132).</summary>
+    private double HeaderHeight => (double)(int)TabSize;
+
+    /// <summary>Font size for tab button labels, scales with header height.</summary>
+    private double ButtonFontSize => TabSize switch
+    {
+        TabHeaderSize.Mid  => 16,
+        TabHeaderSize.Big  => 20,
+        _                  => 13   // Small
+    };
+
+    /// <summary>Vertical padding inside each tab button, scales with header height.</summary>
+    private Thickness ButtonPadding => TabSize switch
+    {
+        TabHeaderSize.Mid  => new Thickness(0, 8),
+        TabHeaderSize.Big  => new Thickness(0, 20),
+        _                  => new Thickness(0)   // Small
+    };
 
     public TabComponent()
     {
@@ -63,15 +109,15 @@ public class TabComponent : ContentView, INotifyPropertyChanged
         //get primary color from ThemeService to the _iconColor field
         _iconColor = (Color)Application.Current.Resources["Primary"];
 
-        // Create header grid
+        // Create header grid – two rows: label row + thin underline row
         _tabHeaderGrid = new Grid
         {
             RowDefinitions = new RowDefinitionCollection
             {
                 new RowDefinition { Height = new GridLength(1, GridUnitType.Star) },
-                new RowDefinition { Height = new GridLength(3, GridUnitType.Absolute) }
+                new RowDefinition { Height = new GridLength(2, GridUnitType.Absolute) }
             },
-            HeightRequest = DeviceInfo.Platform == DevicePlatform.iOS ? 70 : 60
+            HeightRequest = HeaderHeight
         };
         _tabHeaderGrid.SetAppThemeColor(Grid.BackgroundColorProperty, Colors.White, Color.FromArgb("#2D2D30"));
 
@@ -109,6 +155,15 @@ public class TabComponent : ContentView, INotifyPropertyChanged
         }
     }
 
+    private static void OnTabSizeChanged(BindableObject bindable, object oldValue, object newValue)
+    {
+        if (bindable is TabComponent tc && tc._tabHeaderGrid != null)
+        {
+            tc._tabHeaderGrid.HeightRequest = tc.HeaderHeight;
+            tc.RebuildTabHeaders();
+        }
+    }
+
     /// <summary>
     /// Rebuilds the tab header buttons based on the current tabs collection.
     /// </summary>
@@ -136,14 +191,13 @@ public class TabComponent : ContentView, INotifyPropertyChanged
             var tab = _tabs[i];
             var tabIndex = i;
 
-            // Create tab button
+            // Create tab button – compact, no border, transparent bg
             var button = new Button
             {
-                // Text is bound so that updates to TabItem.Name (e.g., from localization) update automatically
-                FontSize = 14,
+                FontSize  = ButtonFontSize,
                 CornerRadius = 0,
-                BorderWidth = 0,
-                Padding = new Thickness(0)
+                BorderWidth  = 0,
+                Padding      = ButtonPadding
             };
 
             // Bind the button text to the TabItem.Name property so translated names update dynamically
@@ -177,11 +231,23 @@ public class TabComponent : ContentView, INotifyPropertyChanged
             Grid.SetColumn(button, i);
             _tabHeaderGrid.Children.Add(button);
 
-            // Create bottom border indicator
+            // Underline indicator: a narrow pill centered under the tab,
+            // occupying ~60% of the column width and centered horizontally.
+            var indicatorContainer = new Grid
+            {
+                Padding = new Thickness(0),
+                ColumnDefinitions = new ColumnDefinitionCollection
+                {
+                    new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) },
+                    new ColumnDefinition { Width = new GridLength(6, GridUnitType.Star) },
+                    new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
+                }
+            };
+
             var borderBox = new BoxView
             {
-                HeightRequest = 3,
-                HorizontalOptions = LayoutOptions.FillAndExpand
+                HeightRequest = 2,
+                CornerRadius = 1
             };
 
             borderBox.SetBinding(BoxView.BackgroundColorProperty, new Binding(
@@ -191,12 +257,15 @@ public class TabComponent : ContentView, INotifyPropertyChanged
                 converterParameter: "TabBorder"
             ));
 
-            Grid.SetRow(borderBox, 1);
-            Grid.SetColumn(borderBox, i);
-            _tabHeaderGrid.Children.Add(borderBox);
+            Grid.SetColumn(borderBox, 1);
+            indicatorContainer.Children.Add(borderBox);
+
+            Grid.SetRow(indicatorContainer, 1);
+            Grid.SetColumn(indicatorContainer, i);
+            _tabHeaderGrid.Children.Add(indicatorContainer);
         }
 
-        // Add bottom separator line
+        // Bottom separator line
         var separatorBox = new BoxView
         {
             HeightRequest = 1,

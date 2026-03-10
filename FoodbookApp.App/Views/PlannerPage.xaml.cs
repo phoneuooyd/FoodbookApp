@@ -387,6 +387,48 @@ namespace Foodbook.Views
             }
         }
 
+        private void OnDecreaseMealsPerDayClicked(object? sender, EventArgs e)
+        {
+            try
+            {
+                if (_viewModel is PlannerViewModel newVm)
+                {
+                    if (newVm.MealsPerDay > 1)
+                        newVm.MealsPerDay--;
+                }
+                else if (_viewModel is PlannerEditViewModel editVm)
+                {
+                    if (editVm.MealsPerDay > 1)
+                        editVm.MealsPerDay--;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PlannerPage] OnDecreaseMealsPerDayClicked error: {ex.Message}");
+            }
+        }
+
+        private void OnIncreaseMealsPerDayClicked(object? sender, EventArgs e)
+        {
+            try
+            {
+                if (_viewModel is PlannerViewModel newVm)
+                {
+                    if (newVm.MealsPerDay < 20)
+                        newVm.MealsPerDay++;
+                }
+                else if (_viewModel is PlannerEditViewModel editVm)
+                {
+                    if (editVm.MealsPerDay < 20)
+                        editVm.MealsPerDay++;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PlannerPage] OnIncreaseMealsPerDayClicked error: {ex.Message}");
+            }
+        }
+
         protected override void OnDisappearing()
         {
             base.OnDisappearing();

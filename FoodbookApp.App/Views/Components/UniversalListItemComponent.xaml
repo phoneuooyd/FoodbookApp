@@ -5,6 +5,10 @@
              x:Class="Foodbook.Views.Components.UniversalListItemComponent"
              x:Name="ItemComponent">
 
+    <ContentView.Resources>
+        <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+    </ContentView.Resources>
+
     <!-- Wrapper grid adds top/bottom drop zones for precise reordering -->
     <Grid RowDefinitions="Auto,Auto,Auto">
         <!-- Top insert zone (shows a separator and triggers Before drop) -->
@@ -38,9 +42,10 @@
                     <DropGestureRecognizer AllowDrop="True" DragOver="OnDragOver" DragLeave="OnDragLeave" Drop="OnDrop" />
                 </Frame.GestureRecognizers>
 
-                <!-- Layout: narrow left ribbon column + content -->
-                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
-                    <!-- Ribbon shown only for folders; collapses when not a folder -->
+                <!-- Layout: narrow left ribbon | optional icon tile | content | action buttons -->
+                <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto">
+
+                    <!-- Ribbon for folders -->
                     <BoxView Grid.Column="0"
                              WidthRequest="6"
                              BackgroundColor="{DynamicResource Primary}"
@@ -52,17 +57,40 @@
                         </BoxView.Triggers>
                     </BoxView>
 
-                    <!-- Content area (keeps inner spacing) -->
-                    <Grid Grid.Column="1" Margin="12" Style="{StaticResource ListItemContentGrid}" ColumnDefinitions="*,Auto,Auto,Auto">
+                    <!-- Plan icon tile (visible only when ShowPlanLayout=True) -->
+                    <Border Grid.Column="1"
+                            IsVisible="{Binding ShowPlanLayout, Source={x:Reference ItemComponent}}"
+                            WidthRequest="40"
+                            HeightRequest="40"
+                            Margin="10,0,0,0"
+                            VerticalOptions="Center"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=#EDE9FF, Dark=#2C2650}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12" />
+                        </Border.StrokeShape>
+                        <!-- Calendar SVG icon using Path -->
+                        <Path Data="M3 4 C3 2.895 3.895 2 5 2 L19 2 C20.105 2 21 2.895 21 4 L21 22 C21 23.105 20.105 24 19 24 L5 24 C3.895 24 3 23.105 3 22 Z M3 9 L21 9 M8 2 L8 6 M16 2 L16 6"
+                              Stroke="{DynamicResource Primary}"
+                              StrokeThickness="1.6"
+                              StrokeLineCap="Round"
+                              StrokeLineJoin="Round"
+                              Aspect="Uniform"
+                              WidthRequest="20"
+                              HeightRequest="20"
+                              HorizontalOptions="Center"
+                              VerticalOptions="Center" />
+                    </Border>
+
+                    <!-- Content area -->
+                    <Grid Grid.Column="2" Margin="12" Style="{StaticResource ListItemContentGrid}" ColumnDefinitions="*,Auto,Auto,Auto">
                         <StackLayout Grid.Column="0" Spacing="2">
-                            <!-- Title for Recipe/Ingredient, Label for Plan -->
+                            <!-- Title label -->
                             <Label x:Name="TitleLabel" Text="{Binding Name}" Style="{StaticResource ItemTitleLabel}">
                                 <Label.Triggers>
-                                    <!-- Plan: show Name (custom title) instead of generic Label -->
                                     <DataTrigger TargetType="Label" Binding="{Binding ., Converter={StaticResource IsPlanConverter}}" Value="True">
                                         <Setter Property="Text" Value="{Binding Name}" />
                                     </DataTrigger>
-                                    <!-- Folder: increase font size and use themed text color -->
                                     <DataTrigger TargetType="Label" Binding="{Binding ., Converter={StaticResource IsFolderConverter}}" Value="True">
                                         <Setter Property="FontSize" Value="22" />
                                         <Setter Property="TextColor" Value="{DynamicResource FolderCardTextColor}" />
@@ -85,7 +113,7 @@
                             <Label Style="{StaticResource PlanDateLabel}"
                                    IsVisible="{Binding ShowPlanLayout, Source={x:Reference ItemComponent}}">
                                 <Label.Text>
-                                    <MultiBinding StringFormat="{}{0:dd.MM.yyyy} – {1:dd.MM.yyyy}">
+                                    <MultiBinding StringFormat="{}{0:dd.MM} – {1:dd.MM.yyyy}">
                                         <Binding Path="StartDate" />
                                         <Binding Path="EndDate" />
                                     </MultiBinding>

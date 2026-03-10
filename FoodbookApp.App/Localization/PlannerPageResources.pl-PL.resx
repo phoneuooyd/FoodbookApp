@@ -36,4 +36,43 @@
   <data name="SelectRecipePlaceholder" xml:space="preserve">
     <value>Wybierz przepis...</value>
   </data>
+  <data name="SavePlan" xml:space="preserve">
+    <value>Zapisz plan</value>
+  </data>
+  <data name="KcalShort" xml:space="preserve">
+    <value>kcal</value>
+  </data>
+  <data name="ProteinShort" xml:space="preserve">
+    <value>B</value>
+  </data>
+  <data name="FatShort" xml:space="preserve">
+    <value>T</value>
+  </data>
+  <data name="CarbsShort" xml:space="preserve">
+    <value>W</value>
+  </data>
+  <data name="Kcal" xml:space="preserve">
+    <value>kcal</value>
+  </data>
+  <data name="ProteinLabel" xml:space="preserve">
+    <value>🥩 Białko</value>
+  </data>
+  <data name="FatLabel" xml:space="preserve">
+    <value>🧈 Tłuszcz</value>
+  </data>
+  <data name="CarbsLabel" xml:space="preserve">
+    <value>🌾 Węgle</value>
+  </data>
+  <data name="CalorieAbbreviation" xml:space="preserve">
+    <value>kcal</value>
+  </data>
+  <data name="ProteinAbbreviation" xml:space="preserve">
+    <value>b</value>
+  </data>
+  <data name="FatAbbreviation" xml:space="preserve">
+    <value>g</value>
+  </data>
+  <data name="CarbsAbbreviation" xml:space="preserve">
+    <value>w</value>
+  </data>
 </root>

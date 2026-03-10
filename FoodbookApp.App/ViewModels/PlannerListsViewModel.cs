@@ -12,8 +12,15 @@ namespace Foodbook.ViewModels;
 public class PlannerListsViewModel
 {
     private readonly IPlanService _planService;
+    private int _selectedTabIndex;
 
     public ObservableCollection<Plan> Plans { get; } = new();
+
+    public int SelectedTabIndex
+    {
+        get => _selectedTabIndex;
+        set => _selectedTabIndex = value;
+    }
 
     public ICommand LoadCommand { get; }
     public ICommand CreatePlanCommand { get; }

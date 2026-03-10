@@ -126,4 +126,16 @@
   <data name="PlannerTitle" xml:space="preserve">
     <value>기획자</value>
   </data>
+  <data name="PlansTabTitle" xml:space="preserve">
+    <value>플랜</value>
+  </data>
+  <data name="FoodbooksTabTitle" xml:space="preserve">
+    <value>Foodbooks</value>
+  </data>
+  <data name="FoodbooksEmptyTitle" xml:space="preserve">
+    <value>Foodbook 없음</value>
+  </data>
+  <data name="FoodbooksEmptyHint" xml:space="preserve">
+    <value>+ 버튼으로 새 Foodbook을 만드세요</value>
+  </data>
 </root>

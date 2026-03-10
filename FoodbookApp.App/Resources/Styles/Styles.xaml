@@ -744,7 +744,7 @@
 
     <!-- Main Content Styles -->
     <Style x:Key="ItemTitleLabel" TargetType="Label">
-        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontSize" Value="14" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
         <Setter Property="VerticalOptions" Value="Start" />
@@ -766,8 +766,8 @@
 
     <!-- Plan Date Label -->
     <Style x:Key="PlanDateLabel" TargetType="Label">
-        <Setter Property="FontSize" Value="13" />
-        <Setter Property="TextColor" Value="{DynamicResource Primary}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light=#6E6A85, Dark=#ABA8C0}" />
         <Setter Property="VerticalOptions" Value="Start" />
         <Setter Property="FontAttributes" Value="None" />
     </Style>

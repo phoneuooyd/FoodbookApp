@@ -126,4 +126,16 @@
   <data name="PlannerTitle" xml:space="preserve">
     <value>Planificadores</value>
   </data>
+  <data name="PlansTabTitle" xml:space="preserve">
+    <value>Planes</value>
+  </data>
+  <data name="FoodbooksTabTitle" xml:space="preserve">
+    <value>Foodbooks</value>
+  </data>
+  <data name="FoodbooksEmptyTitle" xml:space="preserve">
+    <value>Sin Foodbooks</value>
+  </data>
+  <data name="FoodbooksEmptyHint" xml:space="preserve">
+    <value>Crea un nuevo Foodbook con el botón +</value>
+  </data>
 </root>
