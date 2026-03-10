@@ -181,7 +181,7 @@
                                                         </Border>
 
                                                         <!-- Slightly smaller picker -->
-                                                        <Border Grid.Column="1" Padding="0" HeightRequest="38" StrokeShape="RoundRectangle 10" StrokeThickness="1.5" BackgroundColor="{DynamicResource PageBackgroundColor}">
+                                                        <Border Grid.Column="1" Padding="0" MinimumHeightRequest="40" StrokeShape="RoundRectangle 10" StrokeThickness="1.5" BackgroundColor="{DynamicResource PageBackgroundColor}">
                                                             <Border.Triggers>
                                                                 <DataTrigger TargetType="Border" Binding="{Binding Recipe}" Value="{x:Null}">
                                                                     <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
@@ -193,7 +193,7 @@
                                                                     <Setter Property="BackgroundColor" Value="{DynamicResource Secondary}" />
                                                                 </DataTrigger>
                                                             </Border.Triggers>
-                                                            <components:FolderAwarePickerComponent SelectedRecipe="{Binding Recipe}" PlaceholderText="{loc:Translate Resource=PlannerPageResources, Key=SelectRecipePlaceholder}" />
+                                                            <components:FolderAwarePickerComponent SelectedRecipe="{Binding Recipe}" PlaceholderText="{loc:Translate Resource=PlannerPageResources, Key=SelectRecipePlaceholder}" TextFontSize="12" />
                                                         </Border>
 
                                                         <Button Grid.Column="2" Text="−" Style="{StaticResource MealActionBtn}" BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" TextColor="{DynamicResource FrameTextColor}" Clicked="OnDecreasePortionsClicked">

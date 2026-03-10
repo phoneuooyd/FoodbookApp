@@ -20,7 +20,7 @@
     </ContentPage.Resources>
     
     <Grid RowDefinitions="*,Auto">
-        <controls:TabComponent Grid.Row="0" SelectedIndex="{Binding SelectedTabIndex}" SelectTabCommand="{Binding SelectTabCommand}">
+        <controls:TabComponent Grid.Row="0" SelectedIndex="{Binding SelectedTabIndex}" SelectTabCommand="{Binding SelectTabCommand}" TabSize="Mid">
             <controls:TabComponent.Tabs>
                 <!-- Basic Info Tab -->
                 <controls:TabItem Name="{loc:Translate Resource=IngredientFormPageResources, Key=BasicInfoTab}">

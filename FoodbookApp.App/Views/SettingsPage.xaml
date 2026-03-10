@@ -105,7 +105,7 @@
         </Style>
     </ContentPage.Resources>
 
-    <controls:TabComponent SelectedIndex="{Binding SelectedTabIndex}" SelectTabCommand="{Binding SelectTabCommand}">
+    <controls:TabComponent SelectedIndex="{Binding SelectedTabIndex}" SelectTabCommand="{Binding SelectTabCommand}" TabSize="Mid">
         <controls:TabComponent.Tabs>
             <!-- LANGUAGE TAB -->
             <controls:TabItem Name="{loc:Translate Resource=SettingsPageResources, Key=TabLanguage}">

@@ -31,11 +31,10 @@
             
             <!-- Display text -->
             <Label Grid.Column="0" 
-                   FontSize="14" 
+                   FontSize="{Binding TextFontSize, Source={x:Reference ThisComponent}}" 
                    VerticalOptions="Center" 
                    LineBreakMode="WordWrap" 
                    HorizontalOptions="FillAndExpand"
-                   MaxLines="5"
                    Text="{Binding DisplayText, Source={x:Reference ThisComponent}}" 
                    TextColor="{Binding SelectedRecipe, Source={x:Reference ThisComponent}, Converter={StaticResource IsNotNullToColorConverter}}" />
         </Grid>
