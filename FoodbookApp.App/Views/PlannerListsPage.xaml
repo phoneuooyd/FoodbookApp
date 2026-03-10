@@ -17,6 +17,17 @@
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
 
+        <LinearGradientBrush x:Key="HeroGradientBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="{DynamicResource Primary}" Offset="0.0" />
+            <GradientStop Color="{DynamicResource Tertiary}" Offset="1.0" />
+        </LinearGradientBrush>
+
+        <Style x:Key="HeroTitleStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="28" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="White" />
+        </Style>
+
         <!-- Plans tab list row template -->
         <DataTemplate x:Key="PlanRowTemplate" x:DataType="models:Plan">
             <components:UniversalListItemComponent 
@@ -32,19 +43,40 @@
 
     <Grid RowDefinitions="Auto,*">
 
-        <!-- App bar header -->
         <Grid Grid.Row="0"
-              BackgroundColor="{DynamicResource Primary}"
-              Padding="16,12,16,14">
-            <Label
-                Text="{loc:Translate Resource=PlannerListsPageResources, Key=PlannerTitle}"
-                FontSize="20"
-                FontAttributes="Bold"
-                TextColor="White"
-                VerticalOptions="Center" />
+              MinimumHeightRequest="88"
+              MaximumHeightRequest="88"
+              Padding="20,16,20,14"
+              Background="{StaticResource HeroGradientBrush}">
+            <Border WidthRequest="104"
+                    HeightRequest="104"
+                    StrokeThickness="0"
+                    Stroke="Transparent"
+                    BackgroundColor="#14FFFFFF"
+                    StrokeShape="RoundRectangle 52"
+                    HorizontalOptions="End"
+                    VerticalOptions="Start"
+                    TranslationX="22"
+                    TranslationY="-28" />
+            <Border WidthRequest="72"
+                    HeightRequest="72"
+                    StrokeThickness="0"
+                    Stroke="Transparent"
+                    BackgroundColor="#10FFFFFF"
+                    StrokeShape="RoundRectangle 36"
+                    HorizontalOptions="Start"
+                    VerticalOptions="End"
+                    TranslationX="-10"
+                    TranslationY="14" />
+
+            <VerticalStackLayout Spacing="0"
+                                 VerticalOptions="End"
+                                 ZIndex="1">
+                <Label Text="{loc:Translate Resource=PlannerListsPageResources, Key=PlannerTitle}"
+                       Style="{StaticResource HeroTitleStyle}" />
+            </VerticalStackLayout>
         </Grid>
 
-        <!-- Tab component fills the rest -->
         <components:TabComponent
             Grid.Row="1"
             x:Name="MainTabComponent"
@@ -82,11 +114,13 @@
                         <Label
                             Text="{loc:Translate Resource=PlannerListsPageResources, Key=FoodbooksEmptyTitle}"
                             FontSize="18"
+                            FontAttributes="Bold"
                             HorizontalOptions="Center"
                             TextColor="{DynamicResource FrameTextColor}" />
                         <Label
                             Text="{loc:Translate Resource=PlannerListsPageResources, Key=FoodbooksEmptyHint}"
                             FontSize="14"
+                            FontAttributes="Bold"
                             HorizontalOptions="Center"
                             TextColor="{DynamicResource FrameTextColor}" />
                     </StackLayout>

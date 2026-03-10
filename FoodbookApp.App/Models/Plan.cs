@@ -45,10 +45,10 @@ namespace Foodbook.Models
         [NotMapped]
         public string Name => !string.IsNullOrWhiteSpace(Title)
             ? Title!
-            : (Type == PlanType.Planner ? "Planner" : "Lista zakupów");
+            : (Type == PlanType.Planner ? "Planer" : "Lista zakupów");
 
         // Label used for display - reflect the current type
         [NotMapped]
-        public string Label => Type == PlanType.Planner ? "Planner" : "Lista zakupów";
+        public string Label => Type == PlanType.Planner ? "Planer" : "Lista zakupów";
     }
 }

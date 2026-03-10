@@ -20,6 +20,24 @@
             <GradientStop Color="{DynamicResource Tertiary}" Offset="1.0" />
         </LinearGradientBrush>
 
+        <Style x:Key="HeroEyebrowStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="#C7BCFF" />
+        </Style>
+
+        <Style x:Key="HeroTitleStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="30" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="White" />
+        </Style>
+
+        <Style x:Key="HeroSubtitleStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="#DED6FF" />
+        </Style>
+
         <Style x:Key="SectionCardStyle" TargetType="Border">
             <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}" />
             <Setter Property="StrokeShape" Value="RoundRectangle 22" />
@@ -71,27 +89,41 @@
                              Spacing="0"
                              BackgroundColor="{DynamicResource PageBackgroundColor}">
 
-            <Border StrokeThickness="0"
-                    Stroke="Transparent"
-                    StrokeShape="RoundRectangle 28"
-                    Margin="0,0,0,18"
-                    Padding="18,16,18,18"
-                    MinimumHeightRequest="170"
-                    Background="{StaticResource HeroGradientBrush}">
+            <Grid Margin="-16,-12,-16,18"
+                  Padding="24,28,24,24"
+                  MinimumHeightRequest="170"
+                  Background="{StaticResource HeroGradientBrush}">
+                <Border WidthRequest="120"
+                        HeightRequest="120"
+                        StrokeThickness="0"
+                        Stroke="Transparent"
+                        BackgroundColor="#14FFFFFF"
+                        StrokeShape="RoundRectangle 60"
+                        HorizontalOptions="End"
+                        VerticalOptions="Start"
+                        TranslationX="26"
+                        TranslationY="-34" />
+                <Border WidthRequest="88"
+                        HeightRequest="88"
+                        StrokeThickness="0"
+                        Stroke="Transparent"
+                        BackgroundColor="#10FFFFFF"
+                        StrokeShape="RoundRectangle 44"
+                        HorizontalOptions="Start"
+                        VerticalOptions="End"
+                        TranslationX="8"
+                        TranslationY="28" />
+
                 <Grid RowDefinitions="Auto,Auto"
-                      RowSpacing="16">
-                    <VerticalStackLayout Spacing="3">
+                      RowSpacing="18"
+                      ZIndex="1">
+                    <VerticalStackLayout Spacing="4">
                         <Label Text="{loc:Translate Resource=HomePageResources, Key=Title}"
-                               FontSize="11"
-                               FontAttributes="Bold"
-                               TextColor="#B9AAFF" />
+                               Style="{StaticResource HeroEyebrowStyle}" />
                         <Label Text="{loc:Translate Resource=HomePageResources, Key=Welcome}"
-                               FontSize="26"
-                               FontAttributes="Bold"
-                               TextColor="White" />
+                               Style="{StaticResource HeroTitleStyle}" />
                         <Label Text="{loc:Translate Resource=HomePageResources, Key=Subtitle}"
-                               FontSize="13"
-                               TextColor="#D9D0FF" />
+                               Style="{StaticResource HeroSubtitleStyle}" />
                     </VerticalStackLayout>
 
                     <Grid Grid.Row="1"
@@ -111,11 +143,12 @@
                                 <VerticalStackLayout Grid.Column="1"
                                                      Spacing="0">
                                     <Label Text="{Binding RecipeCount}"
-                                           FontSize="18"
+                                           FontSize="20"
                                            FontAttributes="Bold"
                                            TextColor="White" />
                                     <Label Text="{loc:Translate Resource=HomePageResources, Key=SavedRecipes}"
                                            FontSize="11"
+                                           FontAttributes="Bold"
                                            TextColor="#D9D0FF" />
                                 </VerticalStackLayout>
                             </Grid>
@@ -135,18 +168,19 @@
                                 <VerticalStackLayout Grid.Column="1"
                                                      Spacing="0">
                                     <Label Text="{Binding PlanCount}"
-                                           FontSize="18"
+                                           FontSize="20"
                                            FontAttributes="Bold"
                                            TextColor="White" />
                                     <Label Text="{loc:Translate Resource=HomePageResources, Key=ActiveLists}"
                                            FontSize="11"
+                                           FontAttributes="Bold"
                                            TextColor="#D9D0FF" />
                                 </VerticalStackLayout>
                             </Grid>
                         </Border>
                     </Grid>
                 </Grid>
-            </Border>
+            </Grid>
 
             <ActivityIndicator IsVisible="{Binding IsLoading}"
                                IsRunning="{Binding IsLoading}"
