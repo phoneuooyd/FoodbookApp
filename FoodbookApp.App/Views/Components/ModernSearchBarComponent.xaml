@@ -11,7 +11,7 @@
     </ContentView.Resources>
 
     <Frame Style="{StaticResource ModernSearchBarFrame}"
-           Margin="15,10"
+           Margin="{Binding SearchBarMargin, Source={x:Reference SearchBarComponent}}"
            IsVisible="{Binding IsVisible, Source={x:Reference SearchBarComponent}}">
         <Grid ColumnDefinitions="50,*,Auto" VerticalOptions="Center">
             <!-- Search Icon -->

@@ -7,7 +7,8 @@ namespace Foodbook.Models
     public enum PlanType
     {
         Planner,
-        ShoppingList
+        ShoppingList,
+        Foodbook
     }
 
     public class Plan
@@ -17,7 +18,7 @@ namespace Foodbook.Models
         public DateTime EndDate { get; set; }
         public bool IsArchived { get; set; } = false;
 
-        // Type of plan - determines if it's a planner or shopping list
+        // Type of plan - determines if it's a planner, shopping list, or foodbook
         // Default kept as ShoppingList for backward compatibility with tests that expect the label
         public PlanType Type { get; set; } = PlanType.ShoppingList;
 
@@ -28,6 +29,14 @@ namespace Foodbook.Models
         // Persisted title/name for the plan (user-defined)
         [MaxLength(200)]
         public string? Title { get; set; }
+
+        [MaxLength(100)]
+        public string? AccentColor { get; set; }
+
+        [MaxLength(8)]
+        public string? Emoji { get; set; }
+
+        public int DurationDays { get; set; } = 7;
 
         // Timestamps
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -41,14 +50,33 @@ namespace Foodbook.Models
             set => Title = value;
         }
 
+        [NotMapped]
+        public bool IsFoodbook => Type == PlanType.Foodbook;
+
+        [NotMapped]
+        public string DisplayEmoji => string.IsNullOrWhiteSpace(Emoji) ? "??" : Emoji;
+
+        [NotMapped]
+        public string DisplayColor => string.IsNullOrWhiteSpace(AccentColor) ? "#5B3FE8" : AccentColor;
+
         // Display name for UI - shows custom title or default based on type
         [NotMapped]
         public string Name => !string.IsNullOrWhiteSpace(Title)
             ? Title!
-            : (Type == PlanType.Planner ? "Planer" : "Lista zakupów");
+            : Type switch
+            {
+                PlanType.Planner => "Planer",
+                PlanType.Foodbook => "Foodbook",
+                _ => "Lista zakupów"
+            };
 
         // Label used for display - reflect the current type
         [NotMapped]
-        public string Label => Type == PlanType.Planner ? "Planer" : "Lista zakupów";
+        public string Label => Type switch
+        {
+            PlanType.Planner => "Planer",
+            PlanType.Foodbook => "Foodbook",
+            _ => "Lista zakupów"
+        };
     }
 }

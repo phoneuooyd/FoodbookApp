@@ -45,6 +45,12 @@
                 <!-- Layout: narrow left ribbon | optional icon tile | content | action buttons -->
                 <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto">
 
+                    <!-- Accent strip for foodbook/planner cards -->
+                    <BoxView Grid.Column="0"
+                             WidthRequest="4"
+                             Color="{Binding AccentStripColor, Source={x:Reference ItemComponent}}"
+                             IsVisible="{Binding ShowAccentStrip, Source={x:Reference ItemComponent}}" />
+
                     <!-- Ribbon for folders -->
                     <BoxView Grid.Column="0"
                              WidthRequest="6"
@@ -83,7 +89,7 @@
                     </Border>
 
                     <!-- Content area -->
-                    <Grid Grid.Column="2" Margin="12" Style="{StaticResource ListItemContentGrid}" ColumnDefinitions="*,Auto,Auto,Auto">
+                    <Grid Grid.Column="2" Margin="12" Style="{StaticResource ListItemContentGrid}" ColumnDefinitions="*,Auto,Auto,Auto,Auto">
                         <StackLayout Grid.Column="0" Spacing="2">
                             <!-- Title label -->
                             <Label x:Name="TitleLabel" Text="{Binding Name}" Style="{StaticResource ItemTitleLabel}">
@@ -160,8 +166,22 @@
                             </StackLayout>
                         </StackLayout>
 
+                        <!-- Transparent apply button for foodbooks -->
+                        <Button Grid.Column="1"
+                                Text="{Binding ApplyButtonText, Source={x:Reference ItemComponent}}"
+                                Command="{Binding ApplyCommand, Source={x:Reference ItemComponent}}"
+                                CommandParameter="{Binding .}"
+                                IsVisible="{Binding ShowApplyButton, Source={x:Reference ItemComponent}}"
+                                FontSize="12"
+                                FontAttributes="Bold"
+                                BackgroundColor="Transparent"
+                                BorderWidth="0"
+                                TextColor="{DynamicResource Primary}"
+                                Padding="6,0"
+                                VerticalOptions="Center" />
+
                         <!-- Archive button for plans -->
-                        <ImageButton Grid.Column="1"
+                        <ImageButton Grid.Column="2"
                                      x:Name="ArchiveImageButton"
                                      Source="save.png"
                                      WidthRequest="36"
@@ -178,7 +198,7 @@
                         </ImageButton>
 
                         <!-- Restore button with redo icon -->
-                        <ImageButton Grid.Column="2"
+                        <ImageButton Grid.Column="3"
                                      x:Name="RestoreImageButton"
                                      Source="redo.png"
                                      WidthRequest="36"
@@ -195,7 +215,7 @@
                         </ImageButton>
 
                         <!-- Delete button -->
-                        <Button Grid.Column="3"
+                        <Button Grid.Column="4"
                                 Style="{StaticResource DeleteButton}"
                                 Command="{Binding DeleteCommand, Source={x:Reference ItemComponent}}"
                                 CommandParameter="{Binding .}"

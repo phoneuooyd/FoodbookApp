@@ -80,6 +80,10 @@ namespace Foodbook.Data
                 .HasConversion<int>()
                 .HasDefaultValue(PlanType.Planner);
 
+            modelBuilder.Entity<Plan>()
+                .Property(p => p.DurationDays)
+                .HasDefaultValue(7);
+
             modelBuilder.Entity<ShoppingListItem>()
                 .HasOne(sli => sli.Plan)
                 .WithMany()

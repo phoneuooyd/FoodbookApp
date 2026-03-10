@@ -71,13 +71,7 @@ namespace Foodbook.Services
             using var scope = _services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            var pending = (await db.Database.GetPendingMigrationsAsync().ConfigureAwait(false)).ToList();
-            if (pending.Count > 0)
-            {
-                Log($"Applying {pending.Count} pending migration(s)...");
-                await db.Database.MigrateAsync().ConfigureAwait(false);
-                Log("Migrations applied");
-            }
+            await db.Database.MigrateAsync().ConfigureAwait(false);
 
             // Ensure WAL mode is enabled (recommended by Microsoft docs for concurrent read/write)
             try

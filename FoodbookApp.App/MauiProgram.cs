@@ -165,6 +165,7 @@ namespace FoodbookApp
             builder.Services.AddTransient<SetupWizardViewModel>();
             // New: Planner lists VM
             builder.Services.AddTransient<PlannerListsViewModel>();
+            builder.Services.AddTransient<FoodbookViewModel>();
 
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering pages");
             builder.Services.AddTransient<HomePage>();
@@ -184,7 +185,8 @@ namespace FoodbookApp
             builder.Services.AddTransient<SetupPlanSelectionPage>();
             builder.Services.AddScoped<DataArchivizationPage>();
             builder.Services.AddScoped<ProfilePage>();
-            
+            builder.Services.AddTransient<FoodbookPage>();
+
             // NEW: MainPage with custom TabBarComponent
             builder.Services.AddScoped<MainPage>();
 
@@ -207,6 +209,7 @@ namespace FoodbookApp
             Routing.RegisterRoute(nameof(SettingsPage), typeof(SettingsPage));
             Routing.RegisterRoute(nameof(SetupWizardPage), typeof(SetupWizardPage));
             Routing.RegisterRoute(nameof(DataArchivizationPage), typeof(DataArchivizationPage));
+            Routing.RegisterRoute(nameof(FoodbookPage), typeof(FoodbookPage));
 
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Building app");
             var app = builder.Build();

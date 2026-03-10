@@ -148,10 +148,23 @@ namespace FoodbookApp.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("AccentColor")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("DurationDays")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(7);
+
                     b.Property<DateTime>("EndDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Emoji")
+                        .HasMaxLength(8)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsArchived")

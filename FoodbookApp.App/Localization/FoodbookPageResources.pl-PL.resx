@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="TabIdentity" xml:space="preserve"><value>Tozsamosc</value></data>
+  <data name="TabMeals" xml:space="preserve"><value>Dania</value></data>
+  <data name="SubtitleFormat" xml:space="preserve"><value>{0} Foodbook</value></data>
+  <data name="Preview" xml:space="preserve"><value>Podglad</value></data>
+  <data name="EmojiLabel" xml:space="preserve"><value>EMOJI</value></data>
+  <data name="NameLabel" xml:space="preserve"><value>NAZWA</value></data>
+  <data name="NamePlaceholder" xml:space="preserve"><value>Moj Foodbook</value></data>
+  <data name="AccentColorLabel" xml:space="preserve"><value>KOLOR AKCENTU</value></data>
+  <data name="DurationLabel" xml:space="preserve"><value>DLUGOSC FOODBOOKA</value></data>
+  <data name="DayCountLabel" xml:space="preserve"><value>Liczba dni</value></data>
+  <data name="DayRangeHint" xml:space="preserve"><value>Dni 1-30</value></data>
+  <data name="MealsPerDay" xml:space="preserve"><value>Posilki dziennie</value></data>
+  <data name="SelectRecipePlaceholder" xml:space="preserve"><value>Wybierz przepis...</value></data>
+  <data name="AddMeal" xml:space="preserve"><value>Dodaj posilek</value></data>
+  <data name="CtaNextToDishes" xml:space="preserve"><value>Przejdz do Dan &#x2192;</value></data>
+  <data name="CtaSave" xml:space="preserve"><value>Zapisz Foodbook</value></data>
+  <data name="MissingNameTitle" xml:space="preserve"><value>Brak nazwy</value></data>
+  <data name="MissingNameMessage" xml:space="preserve"><value>Podaj nazwe Foodbooka.</value></data>
+  <data name="SaveSuccessTitle" xml:space="preserve"><value>Zapisano</value></data>
+  <data name="SaveSuccessMessageFormat" xml:space="preserve"><value>Foodbook "{0}" zostal zapisany.</value></data>
+  <data name="SaveErrorTitle" xml:space="preserve"><value>Blad</value></data>
+  <data name="SaveErrorMessage" xml:space="preserve"><value>Nie udalo sie zapisac Foodbooka.</value></data>
+</root>

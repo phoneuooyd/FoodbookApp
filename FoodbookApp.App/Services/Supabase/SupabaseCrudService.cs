@@ -918,6 +918,9 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         Type = (PlanType)(r.Type ?? 0),
         LinkedShoppingListPlanId = r.LinkedShoppingListPlanId,
         Title = r.PlannerName,
+        AccentColor = r.AccentColor,
+        Emoji = r.Emoji,
+        DurationDays = r.DurationDays.GetValueOrDefault(7),
         CreatedAt = r.CreatedAt ?? DateTime.UtcNow,
         UpdatedAt = r.UpdatedAt
     };
@@ -930,6 +933,9 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         IsArchived = p.IsArchived,
         Type = (int)p.Type,
         PlannerName = p.Title,
+        AccentColor = p.AccentColor,
+        Emoji = p.Emoji,
+        DurationDays = p.DurationDays,
         LinkedShoppingListPlanId = p.LinkedShoppingListPlanId,
         CreatedAt = p.CreatedAt,
         UpdatedAt = p.UpdatedAt
