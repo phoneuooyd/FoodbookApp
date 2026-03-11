@@ -354,37 +354,113 @@ namespace Foodbook.Services
                 app.Resources["FrameBackgroundColor"] = frameBackgroundColor;
                 app.Resources["FrameTextColor"] = frameTextColor;
 
+                // Shared visual tokens (Home/Foodbook/Planner/Settings/Setup/AddRecipe/IngredientForm)
+                var heroGradientBrush = new LinearGradientBrush(
+                    new GradientStopCollection
+                    {
+                        new GradientStop(primary, 0f),
+                        new GradientStop(tertiary, 1f)
+                    },
+                    new Point(0, 0),
+                    new Point(1, 1));
+
+                var dashboardCardBackground = isDark ? Color.FromArgb("#1F1F1F") : Colors.White;
+                var dashboardCardStroke = isDark ? Color.FromArgb("#3A3A3A") : Color.FromArgb("#ECEAF6");
+                var dashboardCardShadowBrush = isDark ? Color.FromArgb("#24000000") : Color.FromArgb("#12000000");
+
+                var heroReadable = ChooseReadableEnhanced(primary, Colors.White, Color.FromArgb("#000000"));
+                var heroEyebrow = Color.FromRgba(heroReadable.Red, heroReadable.Green, heroReadable.Blue, 0.78f);
+                var heroSubtitle = Color.FromRgba(heroReadable.Red, heroReadable.Green, heroReadable.Blue, 0.86f);
+                var heroMuted = Color.FromRgba(heroReadable.Red, heroReadable.Green, heroReadable.Blue, 0.72f);
+                var heroHint = Color.FromRgba(heroReadable.Red, heroReadable.Green, heroReadable.Blue, 0.56f);
+
+                app.Resources["AppHeroGradientBrush"] = heroGradientBrush;
+                app.Resources["AppHeroBubbleColorStrong"] = Color.FromArgb("#14FFFFFF");
+                app.Resources["AppHeroBubbleColorMedium"] = Color.FromArgb("#10FFFFFF");
+                app.Resources["AppHeroTileOverlayColor"] = Color.FromArgb("#22FFFFFF");
+                app.Resources["AppHeroActionOverlayColor"] = Color.FromArgb("#26FFFFFF");
+                app.Resources["AppHeroEyebrowTextColor"] = heroEyebrow;
+                app.Resources["AppHeroSubtitleTextColor"] = heroSubtitle;
+                app.Resources["AppHeroMutedTextColor"] = heroMuted;
+                app.Resources["AppHeroHintTextColor"] = heroHint;
+
+                app.Resources["DashboardCardBackgroundColor"] = dashboardCardBackground;
+                app.Resources["DashboardCardStrokeColor"] = dashboardCardStroke;
+                app.Resources["DashboardCardShadowBrush"] = dashboardCardShadowBrush;
+
+                var wizardHeaderStart = isDark ? Lighten(primary, 0.10) : Lighten(primary, 0.22);
+                var wizardHeaderEnd = isDark ? Lighten(tertiary, 0.08) : Lighten(tertiary, 0.16);
+                var wizardHeaderBrush = new LinearGradientBrush(
+                    new GradientStopCollection
+                    {
+                        new GradientStop(wizardHeaderStart, 0f),
+                        new GradientStop(wizardHeaderEnd, 1f)
+                    },
+                    new Point(0, 0),
+                    new Point(1, 1));
+
+                app.Resources["WizardHeaderGradientBrush"] = wizardHeaderBrush;
+                app.Resources["WizardHeaderEyebrowColor"] = Color.FromArgb("#EADFFF");
+                app.Resources["WizardHeaderSubtitleColor"] = Color.FromArgb("#EEE6FF");
+                app.Resources["WizardTrackInactiveColor"] = Color.FromArgb("#FFFFFF");
+                app.Resources["WizardSelectionBackgroundColor"] = isDark ? Color.FromArgb("#332A4A") : Color.FromArgb("#F4F0FF");
+                app.Resources["WizardOptionSurfaceColor"] = isDark ? Color.FromArgb("#27273A") : Colors.White;
+                app.Resources["WizardOptionSelectedSurfaceColor"] = isDark ? Color.FromArgb("#3A2D55") : Color.FromArgb("#F0EAFF");
+                app.Resources["WizardToggleContainerColor"] = isDark ? Color.FromArgb("#2A2A40") : Color.FromArgb("#F7F7FB");
+                app.Resources["WizardToggleSelectedColor"] = isDark ? Color.FromArgb("#282840") : Colors.White;
+                app.Resources["SelectionAccentStrongBackgroundColor"] = isDark ? Color.FromArgb("#553A2D55") : Color.FromArgb("#22512BD4");
+                app.Resources["BadgeAccentBackgroundColor"] = isDark ? Color.FromArgb("#4A3A70") : Color.FromArgb("#ECE5FF");
+                app.Resources["BadgeNeutralBackgroundColor"] = isDark ? Color.FromArgb("#3A3A4D") : Color.FromArgb("#F3F3F7");
+                app.Resources["DisabledCardBackgroundColor"] = isDark ? Color.FromArgb("#4A4A4A") : Color.FromArgb("#F1F1F1");
+
+                // Overhaul page visual tokens (AddRecipe / IngredientForm)
+                var overhaulCardBackground = isDark ? Color.FromArgb("#282840") : Colors.White;
+                var overhaulCardStroke = isDark ? Color.FromArgb("#20FFFFFF") : Color.FromArgb("#22000000");
+                var overhaulSectionCaption = isDark ? Color.FromArgb("#80FFFFFF") : Color.FromArgb("#6B7280");
+                var overhaulFooterSurface = isDark ? Color.FromArgb("#232336") : Color.FromArgb("#F6F5FA");
+                var overhaulAccentSoft = Color.FromRgba(secondary.Red, secondary.Green, secondary.Blue, isDark ? 0.42f : 0.55f);
+                var overhaulInfoBannerBackground = isDark ? Color.FromArgb("#1F3A33") : Color.FromArgb("#E9FFF5");
+                var overhaulInfoBannerStroke = isDark ? Color.FromArgb("#3D7C67") : Color.FromArgb("#7DD3B0");
+
+                app.Resources["OverhaulCardBackgroundColor"] = overhaulCardBackground;
+                app.Resources["OverhaulCardStrokeColor"] = overhaulCardStroke;
+                app.Resources["OverhaulSectionCaptionColor"] = overhaulSectionCaption;
+                app.Resources["OverhaulFooterSurfaceColor"] = overhaulFooterSurface;
+                app.Resources["OverhaulAccentSoftColor"] = overhaulAccentSoft;
+                app.Resources["OverhaulInfoBannerBackgroundColor"] = overhaulInfoBannerBackground;
+                app.Resources["OverhaulInfoBannerStrokeColor"] = overhaulInfoBannerStroke;
+
                 // Folder card colors (use translucent accents so the card feels subtle over page background)
                 // Restore translucency specifically for folder cards while page background remains opaque.
                 var folderBg = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 0.12);
                 var folderStroke = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 0.32);
-                 Color folderTextColor = frameTextColor;
+                Color folderTextColor = frameTextColor;
 
-                 if (wallpaperEnabled)
-                 {
-                     // Opaque Secondary background for folder cards
-                     var opaqueSecondary = Color.FromRgb(secondary.Red, secondary.Green, secondary.Blue);
-                     folderBg = opaqueSecondary;
-                     folderStroke = isDark ? Lighten(opaqueSecondary, 0.18) : Darken(opaqueSecondary, 0.18);
-                     var candidateText = ChooseReadableEnhanced(opaqueSecondary, Colors.White, Color.FromArgb("#000000"));
-                     folderTextColor = EnsureContrastEnhanced(candidateText, opaqueSecondary, RelativeLuminance(opaqueSecondary) > 0.45 ? Colors.Black : Colors.White);
-                 }
-                 else
-                 {
-                     if (isDark && _isColorfulBackgroundEnabled)
-                     {
-                         folderStroke = Color.FromArgb("#2A2A2A");
-                         folderTextColor = Color.FromArgb("#000000");
-                     }
-                     else if (!isDark)
-                     {
-                         folderStroke = Color.FromArgb("#424242");
-                     }
-                 }
+                if (wallpaperEnabled)
+                {
+                    // Opaque Secondary background for folder cards
+                    var opaqueSecondary = Color.FromRgb(secondary.Red, secondary.Green, secondary.Blue);
+                    folderBg = opaqueSecondary;
+                    folderStroke = isDark ? Lighten(opaqueSecondary, 0.18) : Darken(opaqueSecondary, 0.18);
+                    var candidateText = ChooseReadableEnhanced(opaqueSecondary, Colors.White, Color.FromArgb("#000000"));
+                    folderTextColor = EnsureContrastEnhanced(candidateText, opaqueSecondary, RelativeLuminance(opaqueSecondary) > 0.45 ? Colors.Black : Colors.White);
+                }
+                else
+                {
+                    if (isDark && _isColorfulBackgroundEnabled)
+                    {
+                        folderStroke = Color.FromArgb("#2A2A2A");
+                        folderTextColor = Color.FromArgb("#000000");
+                    }
+                    else if (!isDark)
+                    {
+                        folderStroke = Color.FromArgb("#424242");
+                    }
+                }
 
-                 app.Resources["FolderCardBackgroundColor"] = folderBg;
-                 app.Resources["FolderCardStrokeColor"] = folderStroke;
-                 app.Resources["FolderCardTextColor"] = folderTextColor;
+                app.Resources["FolderCardBackgroundColor"] = folderBg;
+                app.Resources["FolderCardStrokeColor"] = folderStroke;
+                app.Resources["FolderCardTextColor"] = folderTextColor;
 
                 // Buttons & TabBar & Shell
                 var buttonPrimaryText = ChooseReadableEnhanced(primary, Colors.White, Color.FromArgb("#000000"));
@@ -405,14 +481,14 @@ namespace Foodbook.Services
                 var shellTitleBg = primary;
                 var shellTitleColor = ChooseReadableEnhanced(shellTitleBg, Colors.White, Color.FromArgb("#000000"));
                 shellTitleColor = EnsureContrastEnhanced(shellTitleColor, shellTitleBg, RelativeLuminance(shellTitleBg) > 0.45 ? Colors.Black : Colors.White);
-                
+
                 // Darken TabBarBackground for pressed state
                 var tabBarBackgroundDarken = Darken(tabBarBg, 0.05);
-                
+
                 // TabBar icon tint and pressed background adjustments for dark mode
                 Color tabBarIconTint;
                 Color tabBarPressedBackground;
-                
+
                 if (isDark)
                 {
                     // Dark mode: Lighten pressed background, Darken icon tint
@@ -425,7 +501,7 @@ namespace Foodbook.Services
                     tabBarPressedBackground = tabBarBackgroundDarken;
                     tabBarIconTint = primary;
                 }
-                
+
                 app.Resources["TabBarBackground"] = tabBarBg;
                 app.Resources["TabBarBackgroundDarken"] = tabBarPressedBackground;
                 app.Resources["TabBarIconTint"] = tabBarIconTint;

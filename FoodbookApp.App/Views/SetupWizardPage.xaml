@@ -21,29 +21,23 @@
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,Auto,*" RowSpacing="0">
-        <Border Grid.Row="0" StrokeThickness="0" Padding="24,56,24,24">
+        <Border Grid.Row="0" StrokeThickness="0" Padding="24,56,24,24" Background="{DynamicResource WizardHeaderGradientBrush}">
             <Border.StrokeShape>
                 <RoundRectangle CornerRadius="0,0,24,24" />
             </Border.StrokeShape>
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="#9B84FF" Offset="0.0" />
-                    <GradientStop Color="#7B61FF" Offset="1.0" />
-                </LinearGradientBrush>
-            </Border.Background>
             <VerticalStackLayout Spacing="6">
-                <Label Text="{Binding CurrentStepLabel}" FontSize="12" FontAttributes="Bold" TextColor="#EADFFF" />
+                <Label Text="{Binding CurrentStepLabel}" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource WizardHeaderEyebrowColor}" />
                 <Label Text="{Binding CurrentStepTitle}" FontSize="30" FontAttributes="Bold" TextColor="White" />
-                <Label Text="{Binding CurrentStepSubtitle}" FontSize="14" TextColor="#EEE6FF" />
+                <Label Text="{Binding CurrentStepSubtitle}" FontSize="14" TextColor="{DynamicResource WizardHeaderSubtitleColor}" />
             </VerticalStackLayout>
         </Border>
 
         <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,*" Padding="20,14,20,8" ColumnSpacing="6">
-            <Border Grid.Column="0" HeightRequest="6" StrokeThickness="0" BackgroundColor="#FFFFFF" Opacity="0.22"><Border.StrokeShape><RoundRectangle CornerRadius="3" /></Border.StrokeShape><Border.Triggers><DataTrigger TargetType="Border" Binding="{Binding IsStep1Completed}" Value="True"><Setter Property="BackgroundColor" Value="{DynamicResource Primary}" /><Setter Property="Opacity" Value="1" /></DataTrigger><DataTrigger TargetType="Border" Binding="{Binding IsStep1Active}" Value="True"><Setter Property="BackgroundColor" Value="White" /><Setter Property="Opacity" Value="1" /></DataTrigger></Border.Triggers></Border>
-            <Border Grid.Column="1" HeightRequest="6" StrokeThickness="0" BackgroundColor="#FFFFFF" Opacity="0.22"><Border.StrokeShape><RoundRectangle CornerRadius="3" /></Border.StrokeShape><Border.Triggers><DataTrigger TargetType="Border" Binding="{Binding IsStep2Completed}" Value="True"><Setter Property="BackgroundColor" Value="{DynamicResource Primary}" /><Setter Property="Opacity" Value="1" /></DataTrigger><DataTrigger TargetType="Border" Binding="{Binding IsStep2Active}" Value="True"><Setter Property="BackgroundColor" Value="White" /><Setter Property="Opacity" Value="1" /></DataTrigger></Border.Triggers></Border>
-            <Border Grid.Column="2" HeightRequest="6" StrokeThickness="0" BackgroundColor="#FFFFFF" Opacity="0.22"><Border.StrokeShape><RoundRectangle CornerRadius="3" /></Border.StrokeShape><Border.Triggers><DataTrigger TargetType="Border" Binding="{Binding IsStep3Completed}" Value="True"><Setter Property="BackgroundColor" Value="{DynamicResource Primary}" /><Setter Property="Opacity" Value="1" /></DataTrigger><DataTrigger TargetType="Border" Binding="{Binding IsStep3Active}" Value="True"><Setter Property="BackgroundColor" Value="White" /><Setter Property="Opacity" Value="1" /></DataTrigger></Border.Triggers></Border>
-            <Border Grid.Column="3" HeightRequest="6" StrokeThickness="0" BackgroundColor="#FFFFFF" Opacity="0.22"><Border.StrokeShape><RoundRectangle CornerRadius="3" /></Border.StrokeShape><Border.Triggers><DataTrigger TargetType="Border" Binding="{Binding IsStep4Completed}" Value="True"><Setter Property="BackgroundColor" Value="{DynamicResource Primary}" /><Setter Property="Opacity" Value="1" /></DataTrigger><DataTrigger TargetType="Border" Binding="{Binding IsStep4Active}" Value="True"><Setter Property="BackgroundColor" Value="White" /><Setter Property="Opacity" Value="1" /></DataTrigger></Border.Triggers></Border>
-            <Border Grid.Column="4" HeightRequest="6" StrokeThickness="0" BackgroundColor="#FFFFFF" Opacity="0.22"><Border.StrokeShape><RoundRectangle CornerRadius="3" /></Border.StrokeShape><Border.Triggers><DataTrigger TargetType="Border" Binding="{Binding IsStep5Completed}" Value="True"><Setter Property="BackgroundColor" Value="{DynamicResource Primary}" /><Setter Property="Opacity" Value="1" /></DataTrigger><DataTrigger TargetType="Border" Binding="{Binding IsStep5Active}" Value="True"><Setter Property="BackgroundColor" Value="White" /><Setter Property="Opacity" Value="1" /></DataTrigger></Border.Triggers></Border>
+            <Border Grid.Column="0" HeightRequest="6" StrokeThickness="0" BackgroundColor="{DynamicResource WizardTrackInactiveColor}" Opacity="0.22"><Border.StrokeShape><RoundRectangle CornerRadius="3" /></Border.StrokeShape><Border.Triggers><DataTrigger TargetType="Border" Binding="{Binding IsStep1Completed}" Value="True"><Setter Property="BackgroundColor" Value="{DynamicResource Primary}" /><Setter Property="Opacity" Value="1" /></DataTrigger><DataTrigger TargetType="Border" Binding="{Binding IsStep1Active}" Value="True"><Setter Property="BackgroundColor" Value="White" /><Setter Property="Opacity" Value="1" /></DataTrigger></Border.Triggers></Border>
+            <Border Grid.Column="1" HeightRequest="6" StrokeThickness="0" BackgroundColor="{DynamicResource WizardTrackInactiveColor}" Opacity="0.22"><Border.StrokeShape><RoundRectangle CornerRadius="3" /></Border.StrokeShape><Border.Triggers><DataTrigger TargetType="Border" Binding="{Binding IsStep2Completed}" Value="True"><Setter Property="BackgroundColor" Value="{DynamicResource Primary}" /><Setter Property="Opacity" Value="1" /></DataTrigger><DataTrigger TargetType="Border" Binding="{Binding IsStep2Active}" Value="True"><Setter Property="BackgroundColor" Value="White" /><Setter Property="Opacity" Value="1" /></DataTrigger></Border.Triggers></Border>
+            <Border Grid.Column="2" HeightRequest="6" StrokeThickness="0" BackgroundColor="{DynamicResource WizardTrackInactiveColor}" Opacity="0.22"><Border.StrokeShape><RoundRectangle CornerRadius="3" /></Border.StrokeShape><Border.Triggers><DataTrigger TargetType="Border" Binding="{Binding IsStep3Completed}" Value="True"><Setter Property="BackgroundColor" Value="{DynamicResource Primary}" /><Setter Property="Opacity" Value="1" /></DataTrigger><DataTrigger TargetType="Border" Binding="{Binding IsStep3Active}" Value="True"><Setter Property="BackgroundColor" Value="White" /><Setter Property="Opacity" Value="1" /></DataTrigger></Border.Triggers></Border>
+            <Border Grid.Column="3" HeightRequest="6" StrokeThickness="0" BackgroundColor="{DynamicResource WizardTrackInactiveColor}" Opacity="0.22"><Border.StrokeShape><RoundRectangle CornerRadius="3" /></Border.StrokeShape><Border.Triggers><DataTrigger TargetType="Border" Binding="{Binding IsStep4Completed}" Value="True"><Setter Property="BackgroundColor" Value="{DynamicResource Primary}" /><Setter Property="Opacity" Value="1" /></DataTrigger><DataTrigger TargetType="Border" Binding="{Binding IsStep4Active}" Value="True"><Setter Property="BackgroundColor" Value="White" /><Setter Property="Opacity" Value="1" /></DataTrigger></Border.Triggers></Border>
+            <Border Grid.Column="4" HeightRequest="6" StrokeThickness="0" BackgroundColor="{DynamicResource WizardTrackInactiveColor}" Opacity="0.22"><Border.StrokeShape><RoundRectangle CornerRadius="3" /></Border.StrokeShape><Border.Triggers><DataTrigger TargetType="Border" Binding="{Binding IsStep5Completed}" Value="True"><Setter Property="BackgroundColor" Value="{DynamicResource Primary}" /><Setter Property="Opacity" Value="1" /></DataTrigger><DataTrigger TargetType="Border" Binding="{Binding IsStep5Active}" Value="True"><Setter Property="BackgroundColor" Value="White" /><Setter Property="Opacity" Value="1" /></DataTrigger></Border.Triggers></Border>
         </Grid>
 
         <Grid Grid.Row="2" Padding="20,12,20,20" RowDefinitions="*,Auto" RowSpacing="14">
@@ -64,7 +58,7 @@
                                         <Frame.Triggers>
                                             <DataTrigger TargetType="Frame" Binding="{Binding IsSelected}" Value="True">
                                                 <Setter Property="BorderColor" Value="{DynamicResource Primary}" />
-                                                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#F4F0FF, Dark=#332A4A}" />
+                                                <Setter Property="BackgroundColor" Value="{DynamicResource WizardSelectionBackgroundColor}" />
                                             </DataTrigger>
                                         </Frame.Triggers>
                                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
@@ -89,17 +83,17 @@
                                CornerRadius="20"
                                HasShadow="False"
                                BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
-                               BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}">
+                               BackgroundColor="{DynamicResource WizardOptionSurfaceColor}">
                             <VerticalStackLayout Spacing="12">
                                 <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=IngredientsSectionQuestion}" FontSize="16" FontAttributes="Bold" />
 
                                 <Frame Padding="14" CornerRadius="16" HasShadow="False"
                                        BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
-                                       BackgroundColor="{AppThemeBinding Light=White, Dark=#27273A}">
+                                       BackgroundColor="{DynamicResource WizardOptionSurfaceColor}">
                                     <Frame.Triggers>
                                         <DataTrigger TargetType="Frame" Binding="{Binding InstallBasicIngredients}" Value="True">
                                             <Setter Property="BorderColor" Value="{DynamicResource Primary}" />
-                                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#F0EAFF, Dark=#3A2D55}" />
+                                            <Setter Property="BackgroundColor" Value="{DynamicResource WizardOptionSelectedSurfaceColor}" />
                                             <Setter Property="HasShadow" Value="True" />
                                         </DataTrigger>
                                     </Frame.Triggers>
@@ -114,11 +108,11 @@
 
                                 <Frame Padding="14" CornerRadius="16" HasShadow="False"
                                        BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
-                                       BackgroundColor="{AppThemeBinding Light=White, Dark=#27273A}">
+                                       BackgroundColor="{DynamicResource WizardOptionSurfaceColor}">
                                     <Frame.Triggers>
                                         <DataTrigger TargetType="Frame" Binding="{Binding InstallBasicIngredients, Converter={StaticResource InvertedBoolConverter}}" Value="True">
                                             <Setter Property="BorderColor" Value="{DynamicResource Primary}" />
-                                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#F0EAFF, Dark=#3A2D55}" />
+                                            <Setter Property="BackgroundColor" Value="{DynamicResource WizardOptionSelectedSurfaceColor}" />
                                             <Setter Property="HasShadow" Value="True" />
                                         </DataTrigger>
                                     </Frame.Triggers>
@@ -141,13 +135,13 @@
                             <VerticalStackLayout Spacing="14">
                                 <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=AppearanceSectionTitle}" FontSize="20" FontAttributes="Bold" TextColor="{DynamicResource Primary}" />
 
-                                <Border Padding="5" StrokeThickness="1" Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" BackgroundColor="{AppThemeBinding Light=#F7F7FB, Dark=#2A2A40}">
+                                <Border Padding="5" StrokeThickness="1" Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" BackgroundColor="{DynamicResource WizardToggleContainerColor}">
                                     <Border.StrokeShape><RoundRectangle CornerRadius="12" /></Border.StrokeShape>
                                     <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                                         <Button Grid.Column="0" Text="{loc:Translate Resource=SetupWizardPageResources, Key=DarkModeOption}" Command="{Binding SelectDarkThemeCommand}" CornerRadius="9" Padding="10,11" BackgroundColor="Transparent" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}">
                                             <Button.Triggers>
                                                 <DataTrigger TargetType="Button" Binding="{Binding IsDarkThemeSelected}" Value="True">
-                                                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=White, Dark=#282840}" />
+                                                    <Setter Property="BackgroundColor" Value="{DynamicResource WizardToggleSelectedColor}" />
                                                     <Setter Property="TextColor" Value="{AppThemeBinding Light=Black, Dark=White}" />
                                                 </DataTrigger>
                                             </Button.Triggers>
@@ -155,7 +149,7 @@
                                         <Button Grid.Column="1" Text="{loc:Translate Resource=SetupWizardPageResources, Key=LightModeOption}" Command="{Binding SelectLightThemeCommand}" CornerRadius="9" Padding="10,11" BackgroundColor="Transparent" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}">
                                             <Button.Triggers>
                                                 <DataTrigger TargetType="Button" Binding="{Binding IsLightThemeSelected}" Value="True">
-                                                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=White, Dark=#282840}" />
+                                                    <Setter Property="BackgroundColor" Value="{DynamicResource WizardToggleSelectedColor}" />
                                                     <Setter Property="TextColor" Value="{AppThemeBinding Light=Black, Dark=White}" />
                                                 </DataTrigger>
                                             </Button.Triggers>

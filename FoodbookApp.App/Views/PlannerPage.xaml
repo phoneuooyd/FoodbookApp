@@ -54,7 +54,7 @@
                 <Border Grid.Column="1"
                         WidthRequest="34"
                         HeightRequest="34"
-                        BackgroundColor="#26FFFFFF"
+                        BackgroundColor="{DynamicResource AppHeroActionOverlayColor}"
                         StrokeThickness="0"
                         VerticalOptions="Center">
                     <Border.StrokeShape>

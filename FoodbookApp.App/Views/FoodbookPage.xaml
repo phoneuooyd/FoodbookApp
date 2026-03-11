@@ -64,14 +64,14 @@
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*,Auto">
-        <Grid Grid.Row="0" Background="{StaticResource HeroGradientBrush}">
+        <Grid Grid.Row="0" Background="{DynamicResource AppHeroGradientBrush}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <Border WidthRequest="104" HeightRequest="104"
                     StrokeThickness="0" Stroke="Transparent"
-                    BackgroundColor="#14FFFFFF"
+                    BackgroundColor="{DynamicResource AppHeroBubbleColorStrong}"
                     StrokeShape="RoundRectangle 52"
                     HorizontalOptions="End" VerticalOptions="Start"
                     TranslationX="22" TranslationY="-28"
@@ -82,12 +82,12 @@
                     <Label Text="{Binding DisplayName}"
                            TextColor="White" FontSize="20" FontAttributes="Bold" />
                     <Label Text="{Binding Emoji, StringFormat='{0} Foodbook'}"
-                           FontSize="12" TextColor="#90FFFFFF" />
+                           FontSize="12" TextColor="{DynamicResource AppHeroHintTextColor}" />
                 </VerticalStackLayout>
 
                 <Border Grid.Column="1"
                         WidthRequest="34" HeightRequest="34"
-                        BackgroundColor="#26FFFFFF"
+                        BackgroundColor="{DynamicResource AppHeroActionOverlayColor}"
                         StrokeThickness="0" StrokeShape="RoundRectangle 10"
                         VerticalOptions="Center">
                     <Border.GestureRecognizers>

@@ -15,15 +15,10 @@
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         <converters:FormatWithResourceConverter x:Key="FormatWithResourceConverter" />
 
-        <LinearGradientBrush x:Key="HeroGradientBrush" StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="{DynamicResource Primary}" Offset="0.0" />
-            <GradientStop Color="{DynamicResource Tertiary}" Offset="1.0" />
-        </LinearGradientBrush>
-
         <Style x:Key="HeroEyebrowStyle" TargetType="Label">
             <Setter Property="FontSize" Value="12" />
             <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="TextColor" Value="#C7BCFF" />
+            <Setter Property="TextColor" Value="{DynamicResource AppHeroEyebrowTextColor}" />
         </Style>
 
         <Style x:Key="HeroTitleStyle" TargetType="Label">
@@ -35,19 +30,19 @@
         <Style x:Key="HeroSubtitleStyle" TargetType="Label">
             <Setter Property="FontSize" Value="14" />
             <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="TextColor" Value="#DED6FF" />
+            <Setter Property="TextColor" Value="{DynamicResource AppHeroSubtitleTextColor}" />
         </Style>
 
         <Style x:Key="SectionCardStyle" TargetType="Border">
-            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}" />
+            <Setter Property="BackgroundColor" Value="{DynamicResource DashboardCardBackgroundColor}" />
             <Setter Property="StrokeShape" Value="RoundRectangle 22" />
             <Setter Property="StrokeThickness" Value="1" />
-            <Setter Property="Stroke" Value="{AppThemeBinding Light=#ECEAF6, Dark={StaticResource Gray700}}" />
+            <Setter Property="Stroke" Value="{DynamicResource DashboardCardStrokeColor}" />
             <Setter Property="Padding" Value="16" />
             <Setter Property="Margin" Value="0,0,0,14" />
             <Setter Property="Shadow">
                 <Setter.Value>
-                    <Shadow Brush="{AppThemeBinding Light=#12000000, Dark=#24000000}"
+                    <Shadow Brush="{DynamicResource DashboardCardShadowBrush}"
                             Offset="0,6"
                             Radius="16"
                             Opacity="0.8" />
@@ -92,12 +87,12 @@
             <Grid Margin="-16,-12,-16,18"
                   Padding="24,28,24,24"
                   MinimumHeightRequest="170"
-                  Background="{StaticResource HeroGradientBrush}">
+                  Background="{DynamicResource AppHeroGradientBrush}">
                 <Border WidthRequest="120"
                         HeightRequest="120"
                         StrokeThickness="0"
                         Stroke="Transparent"
-                        BackgroundColor="#14FFFFFF"
+                        BackgroundColor="{DynamicResource AppHeroBubbleColorStrong}"
                         StrokeShape="RoundRectangle 60"
                         HorizontalOptions="End"
                         VerticalOptions="Start"
@@ -107,7 +102,7 @@
                         HeightRequest="88"
                         StrokeThickness="0"
                         Stroke="Transparent"
-                        BackgroundColor="#10FFFFFF"
+                        BackgroundColor="{DynamicResource AppHeroBubbleColorMedium}"
                         StrokeShape="RoundRectangle 44"
                         HorizontalOptions="Start"
                         VerticalOptions="End"
@@ -134,7 +129,7 @@
                                 Stroke="Transparent"
                                 StrokeShape="RoundRectangle 18"
                                 Padding="12,10"
-                                BackgroundColor="#22FFFFFF">
+                                BackgroundColor="{DynamicResource AppHeroTileOverlayColor}">
                             <Grid ColumnDefinitions="Auto,*"
                                   ColumnSpacing="8">
                                 <Label Text="🍽️"
@@ -149,7 +144,7 @@
                                     <Label Text="{loc:Translate Resource=HomePageResources, Key=SavedRecipes}"
                                            FontSize="11"
                                            FontAttributes="Bold"
-                                           TextColor="#D9D0FF" />
+                                           TextColor="{DynamicResource AppHeroMutedTextColor}" />
                                 </VerticalStackLayout>
                             </Grid>
                         </Border>
@@ -159,7 +154,7 @@
                                 Stroke="Transparent"
                                 StrokeShape="RoundRectangle 18"
                                 Padding="12,10"
-                                BackgroundColor="#22FFFFFF">
+                                BackgroundColor="{DynamicResource AppHeroTileOverlayColor}">
                             <Grid ColumnDefinitions="Auto,*"
                                   ColumnSpacing="8">
                                 <Label Text="📅"
@@ -174,7 +169,7 @@
                                     <Label Text="{loc:Translate Resource=HomePageResources, Key=ActiveLists}"
                                            FontSize="11"
                                            FontAttributes="Bold"
-                                           TextColor="#D9D0FF" />
+                                           TextColor="{DynamicResource AppHeroMutedTextColor}" />
                                 </VerticalStackLayout>
                             </Grid>
                         </Border>
