@@ -67,7 +67,7 @@
     <value>This will add common ingredients like eggs, milk, flour, etc. with nutritional information. You can always add your own ingredients later.</value>
   </data>
   <data name="IngredientsYes" xml:space="preserve">
-    <value>Yes, install basic ingredients</value>
+    <value>Yes, install ~250 basic ingredients</value>
   </data>
   <data name="IngredientsNo" xml:space="preserve">
     <value>No, I'll add my own</value>
@@ -164,5 +164,98 @@
   </data>
   <data name="GuestPlanLockedInfo" xml:space="preserve">
     <value>Guest mode selected: Free plan is preselected and Premium is unavailable without an account.</value>
+  </data>
+  <data name="Step1Label" xml:space="preserve">
+    <value>Setup · Step 1 of 5</value>
+  </data>
+  <data name="Step1Title" xml:space="preserve">
+    <value>Choose language</value>
+  </data>
+  <data name="Step1Subtitle" xml:space="preserve">
+    <value>Select app language</value>
+  </data>
+  <data name="Step2Label" xml:space="preserve">
+    <value>Setup · Step 2 of 5</value>
+  </data>
+  <data name="Step2Title" xml:space="preserve">
+    <value>Starter ingredients</value>
+  </data>
+  <data name="Step2Subtitle" xml:space="preserve">
+    <value>Choose how to start your ingredients database</value>
+  </data>
+  <data name="Step3Label" xml:space="preserve">
+    <value>Setup · Step 3 of 5</value>
+  </data>
+  <data name="Step3Title" xml:space="preserve">
+    <value>App appearance</value>
+  </data>
+  <data name="Step3Subtitle" xml:space="preserve">
+    <value>Choose dark/light mode and your preferred font</value>
+  </data>
+  <data name="Step4Label" xml:space="preserve">
+    <value>Setup · Step 4 of 5</value>
+  </data>
+  <data name="Step4Title" xml:space="preserve">
+    <value>Your account</value>
+  </data>
+  <data name="Step4Subtitle" xml:space="preserve">
+    <value>Sign in or continue without an account</value>
+  </data>
+  <data name="Step5Label" xml:space="preserve">
+    <value>Setup · Step 5 of 5</value>
+  </data>
+  <data name="Step5Title" xml:space="preserve">
+    <value>Choose plan</value>
+  </data>
+  <data name="Step5Subtitle" xml:space="preserve">
+    <value>You can change your plan later at any time</value>
+  </data>
+  <data name="DarkModeOption" xml:space="preserve">
+    <value>🌙 Dark</value>
+  </data>
+  <data name="LightModeOption" xml:space="preserve">
+    <value>☀️ Light</value>
+  </data>
+  <data name="FreePlanBadge" xml:space="preserve">
+    <value>Free</value>
+  </data>
+  <data name="PremiumPlanBadge" xml:space="preserve">
+    <value>✨ Recommended</value>
+  </data>
+  <data name="FreePlanPrice" xml:space="preserve">
+    <value>0 zł / forever</value>
+  </data>
+  <data name="PremiumPlanPrice" xml:space="preserve">
+    <value>9,99 zł / month</value>
+  </data>
+  <data name="FreeFeature1" xml:space="preserve">
+    <value>✓ Unlimited recipes</value>
+  </data>
+  <data name="FreeFeature2" xml:space="preserve">
+    <value>✓ Meal planner (3 active)</value>
+  </data>
+  <data name="FreeFeature3" xml:space="preserve">
+    <value>✓ Shopping list</value>
+  </data>
+  <data name="FreeFeature4" xml:space="preserve">
+    <value>✓ Recipe import from web</value>
+  </data>
+  <data name="PremiumFeature1" xml:space="preserve">
+    <value>✓ Everything from Free</value>
+  </data>
+  <data name="PremiumFeature2" xml:space="preserve">
+    <value>✓ AI meal planner</value>
+  </data>
+  <data name="PremiumFeature3" xml:space="preserve">
+    <value>✓ AI recipe assistant</value>
+  </data>
+  <data name="PremiumFeature4" xml:space="preserve">
+    <value>✓ Weekly and monthly templates</value>
+  </data>
+  <data name="PremiumFeature5" xml:space="preserve">
+    <value>✓ Unlimited plan archive</value>
+  </data>
+  <data name="PremiumFeature6" xml:space="preserve">
+    <value>✓ Premium recipe packs</value>
   </data>
 </root>

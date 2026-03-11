@@ -139,7 +139,7 @@
                                             BackgroundColor="{DynamicResource Secondary}"
                                             VerticalOptions="Center">
                                         <Label Text="{loc:Translate Resource=FoodbookPageResources, Key=Preview}" FontSize="13" FontAttributes="Bold"
-                                               TextColor="{DynamicResource Primary}" />
+                                               TextColor="{DynamicResource FrameTextColor}" />
                                     </Border>
                                 </Grid>
                             </Border>
@@ -259,8 +259,10 @@
                                                 </StackLayout>
                                                 <Border Grid.Column="2" BackgroundColor="{DynamicResource Secondary}" StrokeThickness="0" Padding="8,4" VerticalOptions="Center">
                                                     <Border.StrokeShape><RoundRectangle CornerRadius="7" /></Border.StrokeShape>
-                                                    <Label FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource Primary}"
-                                                           Text="{Binding TotalCalories, StringFormat='{0:F0} kcal'}" />
+                                                    <HorizontalStackLayout Spacing="3">
+                                                        <Label FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" Text="{Binding TotalCalories, StringFormat='{0:F0}'}" />
+                                                        <Label FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" Text="{loc:Translate Resource=PlannerPageResources, Key=CalorieShort}" />
+                                                    </HorizontalStackLayout>
                                                 </Border>
                                             </Grid>
 
@@ -270,7 +272,7 @@
                                                         <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto" ColumnSpacing="6" Padding="12,7">
                                                             <Border Grid.Column="0" WidthRequest="28" HeightRequest="28" BackgroundColor="{DynamicResource Secondary}" StrokeThickness="0" VerticalOptions="Center">
                                                                 <Border.StrokeShape><RoundRectangle CornerRadius="8" /></Border.StrokeShape>
-                                                                <Label FontSize="13" FontAttributes="Bold" TextColor="{DynamicResource Primary}" HorizontalOptions="Center" VerticalOptions="Center">
+                                                                <Label FontSize="13" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" HorizontalOptions="Center" VerticalOptions="Center">
                                                                     <Label.Text>
                                                                         <MultiBinding Converter="{StaticResource MealIndexConverter}">
                                                                             <Binding Path="." />
@@ -304,10 +306,22 @@
                                             </VerticalStackLayout>
 
                                             <Grid Grid.Row="2" ColumnDefinitions="*,*,*,*" Padding="12,7" BackgroundColor="{DynamicResource PageBackgroundColor}">
-                                                <Label Grid.Column="0" FontSize="10" FontAttributes="Bold" TextColor="{DynamicResource Primary}" Text="{Binding TotalCalories, StringFormat='{0:F0} kcal'}" />
-                                                <Label Grid.Column="1" FontSize="10" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" Text="{Binding TotalProtein, StringFormat='B {0:F1}g'}" />
-                                                <Label Grid.Column="2" FontSize="10" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" Text="{Binding TotalFat, StringFormat='T {0:F1}g'}" />
-                                                <Label Grid.Column="3" FontSize="10" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" Text="{Binding TotalCarbs, StringFormat='W {0:F1}g'}" />
+                                                <HorizontalStackLayout Grid.Column="0" Spacing="3">
+                                                    <Label FontSize="10" FontAttributes="Bold" TextColor="{DynamicResource Primary}" Text="{Binding TotalCalories, StringFormat='{0:F0}'}" />
+                                                    <Label FontSize="10" FontAttributes="Bold" TextColor="{DynamicResource Primary}" Text="{loc:Translate Resource=PlannerPageResources, Key=CalorieShort}" />
+                                                </HorizontalStackLayout>
+                                                <HorizontalStackLayout Grid.Column="1" Spacing="3">
+                                                    <Label FontSize="10" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" Text="{loc:Translate Resource=PlannerPageResources, Key=ProteinShort}" />
+                                                    <Label FontSize="10" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" Text="{Binding TotalProtein, StringFormat='{0:F1}g'}" />
+                                                </HorizontalStackLayout>
+                                                <HorizontalStackLayout Grid.Column="2" Spacing="3">
+                                                    <Label FontSize="10" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" Text="{loc:Translate Resource=PlannerPageResources, Key=FatShort}" />
+                                                    <Label FontSize="10" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" Text="{Binding TotalFat, StringFormat='{0:F1}g'}" />
+                                                </HorizontalStackLayout>
+                                                <HorizontalStackLayout Grid.Column="3" Spacing="3">
+                                                    <Label FontSize="10" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" Text="{loc:Translate Resource=PlannerPageResources, Key=CarbsShort}" />
+                                                    <Label FontSize="10" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" Text="{Binding TotalCarbs, StringFormat='{0:F1}g'}" />
+                                                </HorizontalStackLayout>
                                             </Grid>
 
                                             <Border Grid.Row="3" Margin="12,6,12,10" HeightRequest="40" BackgroundColor="{DynamicResource Secondary}" Stroke="{DynamicResource Primary}" StrokeThickness="1.5" StrokeDashArray="4,3">

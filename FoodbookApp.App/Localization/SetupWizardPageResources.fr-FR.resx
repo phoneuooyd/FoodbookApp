@@ -12,7 +12,46 @@
   <data name="IngredientsSectionTitle" xml:space="preserve"><value>Ingredients de base</value></data>
   <data name="IngredientsSectionQuestion" xml:space="preserve"><value>Installer un set d ingredients de base ?</value></data>
   <data name="IngredientsSectionInfo" xml:space="preserve"><value>Ajoute des ingredients courants avec infos nutritionnelles.</value></data>
-  <data name="IngredientsYes" xml:space="preserve"><value>Oui, installer</value></data>
-  <data name="IngredientsNo" xml:space="preserve"><value>Non, plus tard</value></data>
+  <data name="IngredientsYes" xml:space="preserve"><value>Oui, installer ~250 ingredients de base</value></data>
+  <data name="IngredientsNo" xml:space="preserve"><value>Non, je les ajouterai plus tard</value></data>
   <data name="CompleteSetupButton" xml:space="preserve"><value>Terminer la configuration</value></data>
+  <data name="Step1Label" xml:space="preserve"><value>Configuration · Etape 1 sur 5</value></data>
+  <data name="Step1Title" xml:space="preserve"><value>Choisir la langue</value></data>
+  <data name="Step1Subtitle" xml:space="preserve"><value>Selectionnez la langue de l application</value></data>
+  <data name="Step2Label" xml:space="preserve"><value>Configuration · Etape 2 sur 5</value></data>
+  <data name="Step2Title" xml:space="preserve"><value>Ingredients de depart</value></data>
+  <data name="Step2Subtitle" xml:space="preserve"><value>Choisissez comment demarrer votre base d ingredients</value></data>
+  <data name="Step3Label" xml:space="preserve"><value>Configuration · Etape 3 sur 5</value></data>
+  <data name="Step3Title" xml:space="preserve"><value>Apparence de l application</value></data>
+  <data name="Step3Subtitle" xml:space="preserve"><value>Choisissez le mode clair/sombre et votre police preferée</value></data>
+  <data name="Step4Label" xml:space="preserve"><value>Configuration · Etape 4 sur 5</value></data>
+  <data name="Step4Title" xml:space="preserve"><value>Votre compte</value></data>
+  <data name="Step4Subtitle" xml:space="preserve"><value>Connectez-vous ou continuez sans compte</value></data>
+  <data name="Step5Label" xml:space="preserve"><value>Configuration · Etape 5 sur 5</value></data>
+  <data name="Step5Title" xml:space="preserve"><value>Choisir un plan</value></data>
+  <data name="Step5Subtitle" xml:space="preserve"><value>Vous pouvez changer de plan à tout moment</value></data>
+  <data name="DarkModeOption" xml:space="preserve"><value>🌙 Sombre</value></data>
+  <data name="LightModeOption" xml:space="preserve"><value>☀️ Clair</value></data>
+  <data name="FreePlanBadge" xml:space="preserve"><value>Gratuit</value></data>
+  <data name="PremiumPlanBadge" xml:space="preserve"><value>✨ Recommandé</value></data>
+  <data name="FreePlanPrice" xml:space="preserve"><value>0 zł / à vie</value></data>
+  <data name="PremiumPlanPrice" xml:space="preserve"><value>9,99 zł / mois</value></data>
+  <data name="FreeFeature1" xml:space="preserve"><value>✓ Recettes illimitées</value></data>
+  <data name="FreeFeature2" xml:space="preserve"><value>✓ Planificateur de repas (3 actifs)</value></data>
+  <data name="FreeFeature3" xml:space="preserve"><value>✓ Liste de courses</value></data>
+  <data name="FreeFeature4" xml:space="preserve"><value>✓ Importation de recettes depuis le web</value></data>
+  <data name="PremiumFeature1" xml:space="preserve"><value>✓ Tout ce qui est dans Gratuit</value></data>
+  <data name="PremiumFeature2" xml:space="preserve"><value>✓ Planificateur de repas IA</value></data>
+  <data name="PremiumFeature3" xml:space="preserve"><value>✓ Assistant de recettes IA</value></data>
+  <data name="PremiumFeature4" xml:space="preserve"><value>✓ Modèles hebdomadaires et mensuels</value></data>
+  <data name="PremiumFeature5" xml:space="preserve"><value>✓ Archive de plan illimitée</value></data>
+  <data name="PremiumFeature6" xml:space="preserve"><value>✓ Packs de recettes premium</value></data>
+  <data name="BackButton" xml:space="preserve"><value>Retour</value></data>
+  <data name="NextButton" xml:space="preserve"><value>Suivant</value></data>
+  <data name="ChooseFreePlanButton" xml:space="preserve"><value>Choisir Free</value></data>
+  <data name="ChoosePremiumPlanButton" xml:space="preserve"><value>Choisir Premium</value></data>
+  <data name="LoginSubmitButton" xml:space="preserve"><value>Se connecter</value></data>
+  <data name="RegisterSubmitButton" xml:space="preserve"><value>Creer un compte</value></data>
+  <data name="ToggleModeButton" xml:space="preserve"><value>Basculer connexion/inscription</value></data>
+  <data name="ContinueWithoutAccountButton" xml:space="preserve"><value>Continuer sans compte</value></data>
 </root>

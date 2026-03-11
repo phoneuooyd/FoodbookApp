@@ -83,7 +83,7 @@
     <value>Zostanie dodane kilkaset popularnych skladnikow jak jajka, mleko, maka, etc. z informacjami odzywczymi. Zawsze mozesz dodac wlasne skladniki pozniej.</value>
   </data>
   <data name="IngredientsYes" xml:space="preserve">
-    <value>Tak, zainstaluj podstawowe skladniki</value>
+    <value>Tak, zainstaluj ~250 podstawowych skladnikow</value>
   </data>
   <data name="IngredientsNo" xml:space="preserve">
     <value>Nie, dodam wlasne</value>
@@ -181,4 +181,77 @@
   <data name="GuestPlanLockedInfo" xml:space="preserve">
     <value>Wybrano tryb goscia: plan Free jest ustawiony automatycznie, a Premium jest niedostepny bez konta.</value>
   </data>
+  <data name="Step1Label" xml:space="preserve">
+    <value>Konfigurator · Krok 1 z 5</value>
+  </data>
+  <data name="Step1Title" xml:space="preserve">
+    <value>Wybierz jezyk</value>
+  </data>
+  <data name="Step1Subtitle" xml:space="preserve">
+    <value>W jakim jezyku chcesz korzystac z FoodBook?</value>
+  </data>
+  <data name="Step2Label" xml:space="preserve">
+    <value>Konfigurator · Krok 2 z 5</value>
+  </data>
+  <data name="Step2Title" xml:space="preserve">
+    <value>Zestaw startowy</value>
+  </data>
+  <data name="Step2Subtitle" xml:space="preserve">
+    <value>Czy zainstalowac podstawowe skladniki?</value>
+  </data>
+  <data name="Step3Label" xml:space="preserve">
+    <value>Konfigurator · Krok 3 z 5</value>
+  </data>
+  <data name="Step3Title" xml:space="preserve">
+    <value>Wyglad aplikacji</value>
+  </data>
+  <data name="Step3Subtitle" xml:space="preserve">
+    <value>Wybierz tryb jasny/ciemny i czcionke</value>
+  </data>
+  <data name="Step4Label" xml:space="preserve">
+    <value>Konfigurator · Krok 4 z 5</value>
+  </data>
+  <data name="Step4Title" xml:space="preserve">
+    <value>Twoje konto</value>
+  </data>
+  <data name="Step4Subtitle" xml:space="preserve">
+    <value>Zaloguj sie lub kontynuuj bez konta</value>
+  </data>
+  <data name="Step5Label" xml:space="preserve">
+    <value>Konfigurator · Krok 5 z 5</value>
+  </data>
+  <data name="Step5Title" xml:space="preserve">
+    <value>Wybierz plan</value>
+  </data>
+  <data name="Step5Subtitle" xml:space="preserve">
+    <value>Plan mozesz zmienic w dowolnym momencie</value>
+  </data>
+  <data name="DarkModeOption" xml:space="preserve">
+    <value>🌙 Ciemny</value>
+  </data>
+  <data name="LightModeOption" xml:space="preserve">
+    <value>☀️ Jasny</value>
+  </data>
+  <data name="FreePlanBadge" xml:space="preserve">
+    <value>Bezplatny</value>
+  </data>
+  <data name="PremiumPlanBadge" xml:space="preserve">
+    <value>✨ Polecany</value>
+  </data>
+  <data name="FreePlanPrice" xml:space="preserve">
+    <value>0 zl / zawsze</value>
+  </data>
+  <data name="PremiumPlanPrice" xml:space="preserve">
+    <value>9,99 zl / miesiac</value>
+  </data>
+  <data name="FreeFeature1" xml:space="preserve"><value>✓ Przepisy bez limitu</value></data>
+  <data name="FreeFeature2" xml:space="preserve"><value>✓ Planer posilkow (3 aktywne)</value></data>
+  <data name="FreeFeature3" xml:space="preserve"><value>✓ Lista zakupow</value></data>
+  <data name="FreeFeature4" xml:space="preserve"><value>✓ Import przepisow z internetu</value></data>
+  <data name="PremiumFeature1" xml:space="preserve"><value>✓ Wszystko z planu Free</value></data>
+  <data name="PremiumFeature2" xml:space="preserve"><value>✓ AI planer posilkow</value></data>
+  <data name="PremiumFeature3" xml:space="preserve"><value>✓ AI agent przepisow</value></data>
+  <data name="PremiumFeature4" xml:space="preserve"><value>✓ Szablony tygodniowe i miesieczne</value></data>
+  <data name="PremiumFeature5" xml:space="preserve"><value>✓ Archiwum planow bez limitu</value></data>
+  <data name="PremiumFeature6" xml:space="preserve"><value>✓ Premium paczki przepisow</value></data>
 </root>
