@@ -22,6 +22,7 @@ public partial class ProfilePage : ContentPage
     private CancellationTokenSource? _syncStatusRefreshCts;
     private bool _isLoggedIn;
     private bool _suppressCloudSyncToggled = false;
+    private string _currentUserEmail = string.Empty;
 
     public ProfilePage()
     {
@@ -121,7 +122,7 @@ public partial class ProfilePage : ContentPage
             {
                 System.Diagnostics.Debug.WriteLine($"[ProfilePage] ? Active session found in auth service for user: {auth.CurrentSession.User?.Email}");
                 _isLoggedIn = true;
-                LoggedInUserLabel.Text = auth.CurrentSession.User?.Email ?? string.Empty;
+                _currentUserEmail = auth.CurrentSession.User?.Email ?? string.Empty;
                 UpdateUiState();
 
                 // Ensure we apply saved cloud sync choice (if any) after a restored session
@@ -162,7 +163,7 @@ public partial class ProfilePage : ContentPage
                         // Get updated session info
                         var currentAuth = GetSupabaseAuth();
                         var currentSession = currentAuth?.CurrentSession;
-                        LoggedInUserLabel.Text = currentSession?.User?.Email ?? activeAccount.Email ?? string.Empty;
+                        _currentUserEmail = currentSession?.User?.Email ?? activeAccount.Email ?? string.Empty;
                         
                         UpdateUiState();
 
@@ -241,7 +242,7 @@ public partial class ProfilePage : ContentPage
                 try
                 {
                     _suppressCloudSyncToggled = true;
-                    CloudSyncCheckBox.IsChecked = isEnabled;
+                    CloudSyncSwitch.IsToggled = isEnabled;
                 }
                 finally
                 {
@@ -277,7 +278,7 @@ public partial class ProfilePage : ContentPage
 
         if (!_isLoggedIn)
         {
-            LoggedInUserLabel.Text = string.Empty;
+            _currentUserEmail = string.Empty;
             SyncStatusLabel.IsVisible = false;
         }
 
@@ -289,7 +290,7 @@ public partial class ProfilePage : ContentPage
         if (_isLoggedIn)
         {
             HeroUserNameLabel.Text = "FoodBook User";
-            HeroUserEmailLabel.Text = LoggedInUserLabel.Text ?? string.Empty;
+            HeroUserEmailLabel.Text = _currentUserEmail;
             return;
         }
 
@@ -414,12 +415,12 @@ public partial class ProfilePage : ContentPage
         }
     }
 
-    private void SetCloudSyncCheckBox(bool isChecked)
+    private void SetCloudSyncSwitch(bool isChecked)
     {
         try
         {
             _suppressCloudSyncToggled = true;
-            CloudSyncCheckBox.IsChecked = isChecked;
+            CloudSyncSwitch.IsToggled = isChecked;
         }
         finally
         {
@@ -435,7 +436,7 @@ public partial class ProfilePage : ContentPage
                 SyncStatusLabel.IsVisible = true;
                 SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "EnablingSync", "Enabling sync...");
                 await syncService.EnableCloudSyncAsync(Foodbook.Models.SyncPriority.Cloud);
-                SetCloudSyncCheckBox(true);
+                SetCloudSyncSwitch(true);
                 SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncEnabled", "Cloud sync enabled. Syncing data...");
                 break;
 
@@ -443,13 +444,13 @@ public partial class ProfilePage : ContentPage
                 SyncStatusLabel.IsVisible = true;
                 SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "EnablingSync", "Enabling sync...");
                 await syncService.EnableCloudSyncAsync(Foodbook.Models.SyncPriority.Local);
-                SetCloudSyncCheckBox(true);
+                SetCloudSyncSwitch(true);
                 SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncEnabled", "Cloud sync enabled. Syncing data...");
                 break;
 
             case CloudSyncChoiceDisabled:
                 await syncService.DisableCloudSyncAsync();
-                SetCloudSyncCheckBox(false);
+                SetCloudSyncSwitch(false);
                 SyncStatusLabel.IsVisible = false;
                 System.Diagnostics.Debug.WriteLine("[ProfilePage] Cloud sync explicitly disabled for this account (saved)");
                 break;
@@ -511,7 +512,7 @@ public partial class ProfilePage : ContentPage
         if (isEnabled)
         {
             System.Diagnostics.Debug.WriteLine("[ProfilePage] Cloud sync is already enabled for current account - skipping prompt");
-            SetCloudSyncCheckBox(true);
+            SetCloudSyncSwitch(true);
             return true;
         }
 
@@ -526,7 +527,7 @@ public partial class ProfilePage : ContentPage
         await SaveCloudSyncChoiceAsync(priority.Value);
         await RunPostEnableSyncPreferencesAsync(syncService, priority.Value);
 
-        SetCloudSyncCheckBox(true);
+        SetCloudSyncSwitch(true);
         SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncEnabled", "Cloud sync enabled. Syncing data...");
         return true;
     }
@@ -587,7 +588,7 @@ public partial class ProfilePage : ContentPage
             }
 
             _isLoggedIn = true;
-            LoggedInUserLabel.Text = session.User?.Email ?? email;
+            _currentUserEmail = session.User?.Email ?? email;
             StatusLabel.Text = string.Empty;
 
             // Clear sensitive input after success
@@ -635,7 +636,7 @@ public partial class ProfilePage : ContentPage
             if (session != null && !string.IsNullOrWhiteSpace(session.AccessToken))
             {
                 _isLoggedIn = true;
-                LoggedInUserLabel.Text = session.User?.Email ?? string.Empty;
+                _currentUserEmail = session.User?.Email ?? string.Empty;
                 UpdateUiState();
                 await LoadSyncStatusAsync();
             }
@@ -652,7 +653,7 @@ public partial class ProfilePage : ContentPage
         }
     }
 
-    private async void OnCloudSyncToggled(object sender, CheckedChangedEventArgs e)
+    private async void OnCloudSyncToggled(object sender, ToggledEventArgs e)
     {
         if (_suppressCloudSyncToggled)
         {
@@ -669,7 +670,7 @@ public partial class ProfilePage : ContentPage
                     GetLocalizedText("ProfilePageResources", "SyncServiceUnavailable", "Sync service not available"),
                     GetLocalizedText("ProfilePageResources", "OK", "OK")
                 );
-                CloudSyncCheckBox.IsChecked = !e.Value;
+                SetCloudSyncSwitch(!e.Value);
                 return;
             }
 
@@ -681,7 +682,7 @@ public partial class ProfilePage : ContentPage
 
                 if (!priority.HasValue)
                 {
-                    CloudSyncCheckBox.IsChecked = false;
+                    SetCloudSyncSwitch(false);
                     SyncStatusLabel.IsVisible = false;
                     return;
                 }
@@ -719,7 +720,7 @@ public partial class ProfilePage : ContentPage
                 ex.Message,
                 GetLocalizedText("ProfilePageResources", "OK", "OK")
             );
-            CloudSyncCheckBox.IsChecked = !e.Value;
+            SetCloudSyncSwitch(!e.Value);
             SyncStatusLabel.IsVisible = false;
         }
     }
@@ -868,6 +869,7 @@ public partial class ProfilePage : ContentPage
             }
 
             _isLoggedIn = false;
+            _currentUserEmail = string.Empty;
             UpdateUiState();
             
             EmailEntry.Text = string.Empty;
@@ -902,8 +904,7 @@ public partial class ProfilePage : ContentPage
             SyncOverlayLabel.Text = message;
             SyncActivityIndicator.IsRunning = true;
             SyncingOverlay.IsVisible = true;
-            ForceSyncButton.IsEnabled = false;
-            CloudSyncCheckBox.IsEnabled = false;
+            CloudSyncSwitch.IsEnabled = false;
         });
     }
 
@@ -913,8 +914,7 @@ public partial class ProfilePage : ContentPage
         {
             SyncingOverlay.IsVisible = false;
             SyncActivityIndicator.IsRunning = false;
-            ForceSyncButton.IsEnabled = true;
-            CloudSyncCheckBox.IsEnabled = true;
+            CloudSyncSwitch.IsEnabled = true;
         });
     }
 

@@ -9,6 +9,10 @@ namespace Foodbook.Views;
 public partial class IngredientFormPage : ContentPage
 {
     private IngredientFormViewModel ViewModel => BindingContext as IngredientFormViewModel ?? throw new InvalidOperationException("ViewModel not set");
+    private const double KeyboardLiftOffset = 213;
+    private bool _isKeyboardLiftApplied;
+    private double _lastAllocatedHeight;
+    private bool _keyboardWasVisible;
     
     // ? CRITICAL: Track whether we're awaiting load to prevent race conditions
     private Task? _loadTask;
@@ -123,10 +127,121 @@ public partial class IngredientFormPage : ContentPage
         }
     }
 
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+
+        try
+        {
+            _isKeyboardLiftApplied = false;
+            ContentHost.TranslationY = 0;
+        }
+        catch { }
+    }
+
     protected override bool OnBackButtonPressed()
     {
         if (ViewModel?.CancelCommand?.CanExecute(null) == true)
             ViewModel.CancelCommand.Execute(null);
         return true;
+    }
+
+    private void OnInputFocused(object sender, FocusEventArgs e)
+    {
+        _ = EnsureKeyboardSafeOffsetAsync(sender as Element);
+    }
+
+    private void OnInputUnfocused(object sender, FocusEventArgs e)
+    {
+        _ = ResetKeyboardSafeOffsetAsync();
+    }
+
+    private async Task EnsureKeyboardSafeOffsetAsync(Element? source)
+    {
+        try
+        {
+            await Task.Delay(80);
+
+            var sourceY = GetElementYRelativeToPage(source);
+            var pageHeight = Height;
+            if (pageHeight <= 0 || sourceY <= 0)
+                return;
+
+            var isNearBottom = sourceY > pageHeight * 0.62;
+            if (!isNearBottom || _isKeyboardLiftApplied)
+                return;
+
+            _isKeyboardLiftApplied = true;
+            await ContentHost.TranslateTo(0, -KeyboardLiftOffset, 180, Easing.CubicOut);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] EnsureKeyboardSafeOffsetAsync error: {ex.Message}");
+        }
+    }
+
+    private async Task ResetKeyboardSafeOffsetAsync()
+    {
+        try
+        {
+            if (!_isKeyboardLiftApplied)
+                return;
+
+            _isKeyboardLiftApplied = false;
+            await ContentHost.TranslateTo(0, 0, 140, Easing.CubicOut);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] ResetKeyboardSafeOffsetAsync error: {ex.Message}");
+        }
+    }
+
+    private static double GetElementYRelativeToPage(Element? element)
+    {
+        double y = 0;
+        Element? current = element;
+        while (current != null)
+        {
+            if (current is VisualElement ve)
+                y += ve.Y;
+            current = current.Parent;
+        }
+        return y;
+    }
+
+    protected override void OnSizeAllocated(double width, double height)
+    {
+        base.OnSizeAllocated(width, height);
+
+        try
+        {
+            if (height <= 0)
+                return;
+
+            if (_lastAllocatedHeight <= 0)
+            {
+                _lastAllocatedHeight = height;
+                return;
+            }
+
+            var delta = height - _lastAllocatedHeight;
+
+            if (delta < -80)
+            {
+                _keyboardWasVisible = true;
+            }
+            else if (delta > 80 && _keyboardWasVisible)
+            {
+                _keyboardWasVisible = false;
+                if (_isKeyboardLiftApplied)
+                    _ = ResetKeyboardSafeOffsetAsync();
+            }
+
+            _lastAllocatedHeight = height;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] OnSizeAllocated keyboard detection error: {ex.Message}");
+        }
     }
 }

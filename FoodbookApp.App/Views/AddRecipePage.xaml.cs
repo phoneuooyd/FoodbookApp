@@ -23,7 +23,11 @@ namespace Foodbook.Views
     {
         private AddRecipeViewModel? ViewModel => BindingContext as AddRecipeViewModel;
         private readonly PageThemeHelper _themeHelper;
-        
+        private const double KeyboardLiftOffset = 213;
+        private bool _isKeyboardLiftApplied;
+        private double _lastAllocatedHeight;
+        private bool _keyboardWasVisible;
+
         private IDispatcherTimer? _valueChangeTimer;
         private bool _isInitialized;
         private bool _hasEverLoaded;
@@ -772,8 +776,71 @@ namespace Foodbook.Views
             }
         }
 
-        private async void OnIngredientNameChanged(object sender, EventArgs e)
+        private void OnInputFocused(object sender, FocusEventArgs e)
         {
+            _ = EnsureKeyboardSafeOffsetAsync(sender as Element);
+        }
+
+        private void OnInputUnfocused(object sender, FocusEventArgs e)
+        {
+            _ = ResetKeyboardSafeOffsetAsync();
+        }
+
+        private async Task EnsureKeyboardSafeOffsetAsync(Element? source)
+        {
+            try
+            {
+                await Task.Delay(80);
+
+                var sourceY = GetElementYRelativeToPage(source);
+                var pageHeight = Height;
+                if (pageHeight <= 0 || sourceY <= 0)
+                    return;
+
+                var isNearBottom = sourceY > pageHeight * 0.62;
+                if (!isNearBottom || _isKeyboardLiftApplied)
+                    return;
+
+                _isKeyboardLiftApplied = true;
+                await ContentHost.TranslateTo(0, -KeyboardLiftOffset, 180, Easing.CubicOut);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] EnsureKeyboardSafeOffsetAsync error: {ex.Message}");
+            }
+        }
+
+        private async Task ResetKeyboardSafeOffsetAsync()
+        {
+            try
+            {
+                if (!_isKeyboardLiftApplied)
+                    return;
+
+                _isKeyboardLiftApplied = false;
+                await ContentHost.TranslateTo(0, 0, 140, Easing.CubicOut);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] ResetKeyboardSafeOffsetAsync error: {ex.Message}");
+            }
+        }
+
+        private static double GetElementYRelativeToPage(Element? element)
+        {
+            double y = 0;
+            Element? current = element;
+            while (current != null)
+            {
+                if (current is VisualElement ve)
+                    y += ve.Y;
+                current = current.Parent;
+            }
+            return y;
+        }
+ 
+         private async void OnIngredientNameChanged(object sender, EventArgs e)
+         {
             try
             {
                 // Support both native Picker and custom SearchablePickerComponent

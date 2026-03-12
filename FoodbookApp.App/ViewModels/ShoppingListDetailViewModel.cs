@@ -845,9 +845,9 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
             };
             
             newItem.PropertyChanged += OnItemPropertyChanged;
-            UncheckedItems.Add(newItem);
+            UncheckedItems.Insert(0, newItem);
             
-            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] New item added with Order={currentIngredientCount}");
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] New item added at top of unchecked section");
             
             // Add item to FlatItems incrementally
             if (_toBuyHeader == null)
@@ -880,15 +880,8 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
                 System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] Added ToBuy header to FlatItems");
             }
 
-            // Find end of unchecked section
-            int insertIndex = toBuyHeaderIndex + 1;
-            for (int i = toBuyHeaderIndex + 1; i < FlatItems.Count; i++)
-            {
-                if (FlatItems[i] is ShoppingListHeader h && h.IsCheckedSection)
-                    break;
-                insertIndex = i + 1;
-            }
-
+            // Insert right after ToBuy header (top of unchecked items)
+            var insertIndex = toBuyHeaderIndex + 1;
             FlatItems.Insert(insertIndex, newItem);
             System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] New item inserted into FlatItems at index {insertIndex}");
             

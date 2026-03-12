@@ -239,9 +239,17 @@ public partial class IngredientsPage : ContentPage, ITabLoadable
     {
         try
         {
-            var popup = new FilterSortPopup(showLabels: false, labels: null, preselectedLabelIds: null, sortOrder: _viewModel.SortOrder, showApplyButton: false);
-            var hostPage = Application.Current?.MainPage ?? this;
-            hostPage.ShowPopup(popup);
+            System.Diagnostics.Debug.WriteLine("[IngredientsPage] OnIngredientSortClicked invoked");
+            var popup = new FilterSortPopup(showLabels: false, labels: null, preselectedLabelIds: null, sortOrder: _viewModel.SortOrder, showApplyButton: true, useFullScreenSheet: true);
+
+            var nav = Application.Current?.MainPage?.Navigation ?? Navigation;
+            if (nav == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[IngredientsPage] OnIngredientSortClicked: Navigation is null");
+                return;
+            }
+
+            await nav.PushModalAsync(popup, true);
             var result = await popup.ResultTask;
             if (result != null)
             {

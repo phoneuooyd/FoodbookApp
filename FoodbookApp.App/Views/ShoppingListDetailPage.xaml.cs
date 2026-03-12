@@ -15,6 +15,10 @@ public partial class ShoppingListDetailPage : ContentPage
 {
     private readonly ShoppingListDetailViewModel _viewModel;
     private readonly PageThemeHelper _themeHelper;
+    private const double KeyboardLiftOffset = 213;
+    private bool _isKeyboardLiftApplied;
+    private double _lastAllocatedHeight;
+    private bool _keyboardWasVisible;
 
     // Page lifecycle cancellation token
     private CancellationTokenSource? _pageCts;
@@ -214,6 +218,15 @@ public partial class ShoppingListDetailPage : ContentPage
     {
         base.OnDisappearing();
 
+        try
+        {
+            _isKeyboardLiftApplied = false;
+            _keyboardWasVisible = false;
+            _lastAllocatedHeight = 0;
+            ContentHost.TranslationY = 0;
+        }
+        catch { }
+
         _pageCts?.Cancel();
         _pageCts?.Dispose();
         _pageCts = null;
@@ -232,6 +245,42 @@ public partial class ShoppingListDetailPage : ContentPage
         catch { }
 
         UnsubscribeFromPopupStateChanged();
+    }
+
+    protected override void OnSizeAllocated(double width, double height)
+    {
+        base.OnSizeAllocated(width, height);
+
+        try
+        {
+            if (height <= 0)
+                return;
+
+            if (_lastAllocatedHeight <= 0)
+            {
+                _lastAllocatedHeight = height;
+                return;
+            }
+
+            var delta = height - _lastAllocatedHeight;
+
+            if (delta < -80)
+            {
+                _keyboardWasVisible = true;
+            }
+            else if (delta > 80 && _keyboardWasVisible)
+            {
+                _keyboardWasVisible = false;
+                if (_isKeyboardLiftApplied)
+                    _ = ResetKeyboardSafeOffsetAsync();
+            }
+
+            _lastAllocatedHeight = height;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] OnSizeAllocated keyboard detection error: {ex.Message}");
+        }
     }
 
     protected override bool OnBackButtonPressed()
@@ -339,11 +388,70 @@ public partial class ShoppingListDetailPage : ContentPage
     private void OnEntryFocused(object sender, EventArgs e)
     {
         _viewModel.IsEditing = true;
+        _ = EnsureKeyboardSafeOffsetAsync(sender as Element);
     }
 
     private void OnEntryUnfocused(object sender, EventArgs e)
     {
         _viewModel.IsEditing = false;
+        _ = ResetKeyboardSafeOffsetAsync();
+    }
+    
+    private async Task EnsureKeyboardSafeOffsetAsync(Element? source)
+    {
+        try
+        {
+            await Task.Delay(80);
+
+            var sourceY = GetElementYRelativeToPage(source);
+            var pageHeight = Height;
+            if (pageHeight <= 0 || sourceY <= 0)
+                return;
+
+            // Lift only when focus target is near bottom area.
+            var isNearBottom = sourceY > pageHeight * 0.62;
+            if (!isNearBottom)
+                return;
+
+            if (_isKeyboardLiftApplied)
+                return;
+
+            _isKeyboardLiftApplied = true;
+            await ContentHost.TranslateTo(0, -KeyboardLiftOffset, 180, Easing.CubicOut);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] EnsureKeyboardSafeOffsetAsync error: {ex.Message}");
+        }
+    }
+
+    private async Task ResetKeyboardSafeOffsetAsync()
+    {
+        try
+        {
+            if (!_isKeyboardLiftApplied)
+                return;
+
+            _isKeyboardLiftApplied = false;
+            await ContentHost.TranslateTo(0, 0, 140, Easing.CubicOut);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] ResetKeyboardSafeOffsetAsync error: {ex.Message}");
+        }
+    }
+
+    private static double GetElementYRelativeToPage(Element? element)
+    {
+        double y = 0;
+        Element? current = element;
+        while (current != null)
+        {
+            if (current is VisualElement ve)
+                y += ve.Y;
+            current = current.Parent;
+        }
+        return y;
     }
 
     private void OnUnitPickerSelectionChanged(object? sender, EventArgs e)

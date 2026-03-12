@@ -54,7 +54,7 @@
             </Grid>
         </Grid>
 
-        <controls:TabComponent Grid.Row="1" SelectedIndex="{Binding SelectedTabIndex}" SelectTabCommand="{Binding SelectTabCommand}" TabSize="Small">
+        <controls:TabComponent x:Name="ContentHost" Grid.Row="1" SelectedIndex="{Binding SelectedTabIndex}" SelectTabCommand="{Binding SelectTabCommand}" TabSize="Small">
             <controls:TabComponent.Tabs>
                 <controls:TabItem Name="{loc:Translate Resource=AddRecipePageResources, Key=BasicInfoTab}">
                     <controls:TabItem.Content>
@@ -75,7 +75,7 @@
                                     <Border Style="{StaticResource OverhaulCard}">
                                         <VerticalStackLayout Spacing="6">
                                             <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=UrlLabel}" Style="{StaticResource FieldLabel}" />
-                                            <Entry Placeholder="{loc:Translate Resource=AddRecipePageResources, Key=UrlPlaceholder}" Text="{Binding ImportUrl}" Keyboard="Url" Style="{StaticResource ModernEntry}" />
+                                            <Entry Placeholder="{loc:Translate Resource=AddRecipePageResources, Key=UrlPlaceholder}" Text="{Binding ImportUrl}" Keyboard="Url" Focused="OnInputFocused" Unfocused="OnInputUnfocused" Style="{StaticResource ModernEntry}" />
                                         </VerticalStackLayout>
                                     </Border>
                                     <Button Command="{Binding ImportRecipeCommand}" Text="{loc:Translate Resource=AddRecipePageResources, Key=ImportButton}" HeightRequest="44" CornerRadius="12" BackgroundColor="{DynamicResource Primary}" TextColor="{DynamicResource ButtonPrimaryText}" />
@@ -87,13 +87,13 @@
                                     <Border Style="{StaticResource OverhaulCard}">
                                         <VerticalStackLayout Spacing="6">
                                             <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=NameLabel}" Style="{StaticResource FieldLabel}" />
-                                            <Entry Placeholder="{loc:Translate Resource=AddRecipePageResources, Key=NamePlaceholder}" Text="{Binding Name}" Style="{StaticResource ModernEntry}" />
+                                            <Entry Placeholder="{loc:Translate Resource=AddRecipePageResources, Key=NamePlaceholder}" Text="{Binding Name}" Focused="OnInputFocused" Unfocused="OnInputUnfocused" Style="{StaticResource ModernEntry}" />
                                         </VerticalStackLayout>
                                     </Border>
                                     <Border Style="{StaticResource OverhaulCard}">
                                         <VerticalStackLayout Spacing="6">
                                             <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=DescriptionLabel}" Style="{StaticResource FieldLabel}" />
-                                            <Editor Placeholder="{loc:Translate Resource=AddRecipePageResources, Key=DescriptionPlaceholder}" Text="{Binding Description}" AutoSize="TextChanges" MinimumHeightRequest="120" BackgroundColor="Transparent" TextColor="{DynamicResource FrameTextColor}" />
+                                            <Editor Placeholder="{loc:Translate Resource=AddRecipePageResources, Key=DescriptionPlaceholder}" Text="{Binding Description}" Focused="OnInputFocused" Unfocused="OnInputUnfocused" AutoSize="TextChanges" MinimumHeightRequest="120" BackgroundColor="Transparent" TextColor="{DynamicResource FrameTextColor}" />
                                         </VerticalStackLayout>
                                     </Border>
                                 </VerticalStackLayout>
@@ -156,7 +156,7 @@
                                                         <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="3">
                                                             <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=QuantityLabelShort}" Style="{StaticResource FieldLabel}" />
                                                             <Border Style="{StaticResource ModernBorder}">
-                                                                <Entry Placeholder="100" Keyboard="Numeric" Text="{Binding Quantity}" HorizontalTextAlignment="Center" TextChanged="OnIngredientValueChanged" Style="{StaticResource ModernEntry}" />
+                                                                <Entry Placeholder="100" Keyboard="Numeric" Text="{Binding Quantity}" HorizontalTextAlignment="Center" Focused="OnInputFocused" Unfocused="OnInputUnfocused" TextChanged="OnIngredientValueChanged" Style="{StaticResource ModernEntry}" />
                                                             </Border>
                                                         </VerticalStackLayout>
                                                         <VerticalStackLayout Grid.Row="0" Grid.Column="2" Spacing="3">
@@ -221,10 +221,10 @@
                                         <Button Grid.Column="1" Command="{Binding CopyCalculatedValuesCommand}" Text="{loc:Translate Resource=AddRecipePageResources, Key=CopyCalculated}" HeightRequest="32" CornerRadius="8" BackgroundColor="{DynamicResource Primary}" TextColor="{DynamicResource ButtonPrimaryText}" FontSize="12" />
                                     </Grid>
                                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
-                                        <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource OverhaulCard}"><VerticalStackLayout Spacing="6"><Label Text="{loc:Translate Resource=AddRecipePageResources, Key=CaloriesLabel}" Style="{StaticResource FieldLabel}" /><Entry Placeholder="0.0" Keyboard="Numeric" Text="{Binding Calories}" Style="{StaticResource ModernEntry}" /></VerticalStackLayout></Border>
-                                        <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource OverhaulCard}"><VerticalStackLayout Spacing="6"><Label Text="{loc:Translate Resource=AddRecipePageResources, Key=ProteinLabel}" Style="{StaticResource FieldLabel}" /><Entry Placeholder="0.0" Keyboard="Numeric" Text="{Binding Protein}" Style="{StaticResource ModernEntry}" /></VerticalStackLayout></Border>
-                                        <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource OverhaulCard}"><VerticalStackLayout Spacing="6"><Label Text="{loc:Translate Resource=AddRecipePageResources, Key=FatLabel}" Style="{StaticResource FieldLabel}" /><Entry Placeholder="0.0" Keyboard="Numeric" Text="{Binding Fat}" Style="{StaticResource ModernEntry}" /></VerticalStackLayout></Border>
-                                        <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource OverhaulCard}"><VerticalStackLayout Spacing="6"><Label Text="{loc:Translate Resource=AddRecipePageResources, Key=CarbsLabel}" Style="{StaticResource FieldLabel}" /><Entry Placeholder="0.0" Keyboard="Numeric" Text="{Binding Carbs}" Style="{StaticResource ModernEntry}" /></VerticalStackLayout></Border>
+                                        <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource OverhaulCard}"><VerticalStackLayout Spacing="6"><Label Text="{loc:Translate Resource=AddRecipePageResources, Key=CaloriesLabel}" Style="{StaticResource FieldLabel}" /><Entry Placeholder="0.0" Keyboard="Numeric" Text="{Binding Calories}" Focused="OnInputFocused" Unfocused="OnInputUnfocused" Style="{StaticResource ModernEntry}" /></VerticalStackLayout></Border>
+                                        <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource OverhaulCard}"><VerticalStackLayout Spacing="6"><Label Text="{loc:Translate Resource=AddRecipePageResources, Key=ProteinLabel}" Style="{StaticResource FieldLabel}" /><Entry Placeholder="0.0" Keyboard="Numeric" Text="{Binding Protein}" Focused="OnInputFocused" Unfocused="OnInputUnfocused" Style="{StaticResource ModernEntry}" /></VerticalStackLayout></Border>
+                                        <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource OverhaulCard}"><VerticalStackLayout Spacing="6"><Label Text="{loc:Translate Resource=AddRecipePageResources, Key=FatLabel}" Style="{StaticResource FieldLabel}" /><Entry Placeholder="0.0" Keyboard="Numeric" Text="{Binding Fat}" Focused="OnInputFocused" Unfocused="OnInputUnfocused" Style="{StaticResource ModernEntry}" /></VerticalStackLayout></Border>
+                                        <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource OverhaulCard}"><VerticalStackLayout Spacing="6"><Label Text="{loc:Translate Resource=AddRecipePageResources, Key=CarbsLabel}" Style="{StaticResource FieldLabel}" /><Entry Placeholder="0.0" Keyboard="Numeric" Text="{Binding Carbs}" Focused="OnInputFocused" Unfocused="OnInputUnfocused" Style="{StaticResource ModernEntry}" /></VerticalStackLayout></Border>
                                     </Grid>
                                 </VerticalStackLayout>
 

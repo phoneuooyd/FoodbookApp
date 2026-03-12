@@ -11,10 +11,14 @@
              x:Name="ThisPage"
              x:DataType="vm:ShoppingListDetailViewModel"
              Title="{loc:Translate Resource=ShoppingListDetailPageResources, Key=Title}"
-             BackgroundColor="{DynamicResource PageBackgroundColor}"
-             >
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+
+        <LinearGradientBrush x:Key="HeroGradientBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="{DynamicResource Primary}" Offset="0.0" />
+            <GradientStop Color="{DynamicResource Tertiary}" Offset="1.0" />
+        </LinearGradientBrush>
         
         <!-- Header template for group sections (To Buy / Collected) -->
         <DataTemplate x:Key="ShoppingHeaderTemplate" x:DataType="vm:ShoppingListHeader" >
@@ -56,66 +60,98 @@
             ItemTemplate="{StaticResource ShoppingItemTemplate}" />
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto,*" Padding="0">
-        <!-- Header with save and add buttons only -->
-        <Grid Row="0" Padding="10" ColumnDefinitions="*,Auto,Auto" BackgroundColor="Transparent">
-            <Button Grid.Column="1" 
-                    x:Name="SaveButton" 
-                    Command="{Binding SaveAllCommand}" 
-                    WidthRequest="44" 
-                    HeightRequest="44" 
-                    CornerRadius="22" 
-                    Padding="0" 
-                    Margin="8,0,0,0" 
-                    VerticalOptions="Center" 
-                    HorizontalOptions="End" 
-                    StyleClass="Secondary" 
-                    VisualElement.ZIndex="10">
-                <Button.ImageSource>
-                    <FileImageSource File="save.png" />
-                </Button.ImageSource>
-                <Button.Triggers>
-                    <DataTrigger TargetType="Button" Binding="{Binding HasUnsavedChanges}" Value="True">
-                        <Setter Property="BackgroundColor" Value="{DynamicResource Primary}" />
-                        <Setter Property="Opacity" Value="1" />
-                    </DataTrigger>
-                    <DataTrigger TargetType="Button" Binding="{Binding HasUnsavedChanges}" Value="False">
-                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#E0E0E0, Dark=#303030}" />
-                        <Setter Property="Opacity" Value="0.55" />
-                    </DataTrigger>
-                </Button.Triggers>
-            </Button>
-            
-            <Button Grid.Column="2" 
-                    Command="{Binding AddItemCommand}" 
-                    WidthRequest="44" 
-                    HeightRequest="44" 
-                    CornerRadius="22" 
-                    Padding="0" 
-                    Margin="8,0,0,0" 
-                    Text="+" 
-                    VerticalOptions="Center" 
-                    HorizontalOptions="End" 
-                    StyleClass="Secondary" 
-                    VisualElement.ZIndex="10" />
+    <Grid x:Name="PageRoot" RowDefinitions="Auto,*" Padding="0">
+        <Grid Grid.Row="0"
+              Background="{StaticResource HeroGradientBrush}">
+            <Border WidthRequest="108"
+                    HeightRequest="108"
+                    StrokeThickness="0"
+                    Stroke="Transparent"
+                    BackgroundColor="#14FFFFFF"
+                    StrokeShape="RoundRectangle 54"
+                    HorizontalOptions="End"
+                    VerticalOptions="Start"
+                    Margin="0,-28,-20,0" />
+            <Border WidthRequest="76"
+                    HeightRequest="76"
+                    StrokeThickness="0"
+                    Stroke="Transparent"
+                    BackgroundColor="#10FFFFFF"
+                    StrokeShape="RoundRectangle 38"
+                    HorizontalOptions="Start"
+                    VerticalOptions="End"
+                    Margin="-12,0,0,10" />
+
+            <VerticalStackLayout Padding="20,18,12,12"
+                                 Spacing="8"
+                                 ZIndex="1">
+                <Label Text="{loc:Translate Resource=ShoppingListDetailPageResources, Key=Title}"
+                       FontSize="28"
+                       FontAttributes="Bold"
+                       TextColor="White" />
+            </VerticalStackLayout>
         </Grid>
 
-        <!-- Sharpnado CollectionView with drag-and-drop and vertical layout -->
-        <sho:CollectionView Grid.Row="1"
-            x:Name="ShoppingCollectionView"
-            CollectionLayout="Vertical"
-            ItemsSource="{Binding FlatItems}"
-            ItemTemplate="{StaticResource ShoppingListTemplateSelector}"
-            ItemHeight="115"
-            CollectionPadding="0,4,0,80"
-            ItemSpacing="2"
-            EnableDragAndDrop="True"
-            DragAndDropTrigger="LongTap"
-            DragAndDropDirection="VerticalOnly"
-            DragAndDropStartedCommand="{Binding DragStartedCommand}"
-            DragAndDropEndedCommand="{Binding DragEndedCommand}"
-            TapCommand="{Binding ItemTappedCommand}" 
-            ScrollSpeed="Slower"
-            />
+        <Grid x:Name="ContentHost" Grid.Row="1" RowDefinitions="Auto,*" Padding="0">
+            <!-- Header with save and add buttons only -->
+            <Grid Grid.Row="0" Padding="10" ColumnDefinitions="*,Auto,Auto" BackgroundColor="Transparent">
+                <Button Grid.Column="1" 
+                        x:Name="SaveButton" 
+                        Command="{Binding SaveAllCommand}" 
+                        WidthRequest="44" 
+                        HeightRequest="44" 
+                        CornerRadius="22" 
+                        Padding="0" 
+                        Margin="8,0,0,0" 
+                        VerticalOptions="Center" 
+                        HorizontalOptions="End" 
+                        StyleClass="Secondary" 
+                        VisualElement.ZIndex="10">
+                    <Button.ImageSource>
+                        <FileImageSource File="save.png" />
+                    </Button.ImageSource>
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding HasUnsavedChanges}" Value="True">
+                            <Setter Property="BackgroundColor" Value="{DynamicResource Primary}" />
+                            <Setter Property="Opacity" Value="1" />
+                        </DataTrigger>
+                        <DataTrigger TargetType="Button" Binding="{Binding HasUnsavedChanges}" Value="False">
+                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#E0E0E0, Dark=#303030}" />
+                            <Setter Property="Opacity" Value="0.55" />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+                
+                <Button Grid.Column="2" 
+                        Command="{Binding AddItemCommand}" 
+                        WidthRequest="44" 
+                        HeightRequest="44" 
+                        CornerRadius="22" 
+                        Padding="0" 
+                        Margin="8,0,0,0" 
+                        Text="+" 
+                        VerticalOptions="Center" 
+                        HorizontalOptions="End" 
+                        StyleClass="Secondary" 
+                        VisualElement.ZIndex="10" />
+            </Grid>
+
+            <!-- Sharpnado CollectionView with drag-and-drop and vertical layout -->
+            <sho:CollectionView Grid.Row="1"
+                x:Name="ShoppingCollectionView"
+                CollectionLayout="Vertical"
+                ItemsSource="{Binding FlatItems}"
+                ItemTemplate="{StaticResource ShoppingListTemplateSelector}"
+                ItemHeight="115"
+                CollectionPadding="0,4,0,80"
+                ItemSpacing="2"
+                EnableDragAndDrop="True"
+                DragAndDropTrigger="LongTap"
+                DragAndDropDirection="VerticalOnly"
+                DragAndDropStartedCommand="{Binding DragStartedCommand}"
+                DragAndDropEndedCommand="{Binding DragEndedCommand}"
+                TapCommand="{Binding ItemTappedCommand}" 
+                ScrollSpeed="Slower" />
+        </Grid>
     </Grid>
 </ContentPage>
