@@ -61,12 +61,14 @@
                         <ScrollView>
                             <VerticalStackLayout Padding="16" Spacing="10">
                                 <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=ModeSelection}" Style="{StaticResource SectionCaption}" />
-                                <Border Style="{StaticResource OverhaulCard}" Padding="6">
-                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="6">
-                                        <Button Grid.Column="0" Command="{Binding SetManualModeCommand}" Text="{loc:Translate Resource=AddRecipePageResources, Key=Manual}" BackgroundColor="{Binding IsManualMode, Converter={StaticResource BoolToColorConverter}, ConverterParameter=SegmentSelectedBg}" TextColor="{Binding IsManualMode, Converter={StaticResource BoolToColorConverter}, ConverterParameter=SegmentText}" CornerRadius="10" HeightRequest="42" />
-                                        <Button Grid.Column="1" Command="{Binding SetImportModeCommand}" Text="{loc:Translate Resource=AddRecipePageResources, Key=FromLink}" BackgroundColor="{Binding IsImportMode, Converter={StaticResource BoolToColorConverter}, ConverterParameter=SegmentSelectedBg}" TextColor="{Binding IsImportMode, Converter={StaticResource BoolToColorConverter}, ConverterParameter=SegmentText}" CornerRadius="10" HeightRequest="42" />
-                                    </Grid>
-                                </Border>
+                                <controls:SegmentedPickerComponent
+                                    Option1Text="{loc:Translate Resource=AddRecipePageResources, Key=Manual}"
+                                    Option1Command="{Binding SetManualModeCommand}"
+                                    IsOption1Selected="{Binding IsManualMode}"
+                                    Option2Text="{loc:Translate Resource=AddRecipePageResources, Key=FromLink}"
+                                    Option2Command="{Binding SetImportModeCommand}"
+                                    IsOption2Selected="{Binding IsImportMode}"
+                                    ShowOption3="False" />
 
                                 <VerticalStackLayout IsVisible="{Binding IsImportMode}" Spacing="8">
                                     <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=ImportHeader}" Style="{StaticResource SectionCaption}" />

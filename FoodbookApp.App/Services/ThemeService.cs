@@ -408,6 +408,8 @@ namespace Foodbook.Services
                 app.Resources["WizardOptionSelectedSurfaceColor"] = isDark ? Color.FromArgb("#3A2D55") : Color.FromArgb("#F0EAFF");
                 app.Resources["WizardToggleContainerColor"] = isDark ? Color.FromArgb("#2A2A40") : Color.FromArgb("#F7F7FB");
                 app.Resources["WizardToggleSelectedColor"] = isDark ? Color.FromArgb("#282840") : Colors.White;
+                app.Resources["SegmentedContainerColor"] = app.Resources["WizardToggleContainerColor"];
+                app.Resources["SegmentedSelectedColor"] = app.Resources["WizardToggleSelectedColor"];
                 app.Resources["SelectionAccentStrongBackgroundColor"] = isDark ? Color.FromArgb("#553A2D55") : Color.FromArgb("#22512BD4");
                 app.Resources["BadgeAccentBackgroundColor"] = isDark ? Color.FromArgb("#4A3A70") : Color.FromArgb("#ECE5FF");
                 app.Resources["BadgeNeutralBackgroundColor"] = isDark ? Color.FromArgb("#3A3A4D") : Color.FromArgb("#F3F3F7");
@@ -468,6 +470,11 @@ namespace Foodbook.Services
                 buttonPrimaryText = EnsureContrastEnhanced(buttonPrimaryText, primary, alt);
                 if (colorTheme == AppColorTheme.Monochrome && isDark) buttonPrimaryText = Color.FromArgb("#000000");
                 app.Resources["ButtonPrimaryText"] = buttonPrimaryText;
+
+                var onSecondaryText = ChooseReadableEnhanced(secondary, Colors.White, Color.FromArgb("#000000"));
+                var onSecondaryFallback = RelativeLuminance(secondary) > 0.45 ? Colors.Black : Colors.White;
+                onSecondaryText = EnsureContrastEnhanced(onSecondaryText, secondary, onSecondaryFallback);
+                app.Resources["OnSecondaryText"] = onSecondaryText;
 
                 var disabledBg = isDark ? Color.FromArgb("#404040") : Color.FromArgb("#C8C8C8");
                 var disabledText = ChooseReadableEnhanced(disabledBg, Colors.White, Color.FromArgb("#000000"));

@@ -152,8 +152,8 @@
                                             <Border Grid.Column="2" BackgroundColor="{DynamicResource Secondary}" StrokeThickness="0" Padding="8,4" VerticalOptions="Center">
                                                 <Border.StrokeShape><RoundRectangle CornerRadius="7" /></Border.StrokeShape>
                                                 <HorizontalStackLayout Spacing="3">
-                                                    <Label FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" Text="{Binding TotalCalories, StringFormat='{0:F0}'}" />
-                                                    <Label FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" Text="{loc:Translate Resource=PlannerPageResources, Key=CalorieShort}" />
+                                                    <Label FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource OnSecondaryText}" Text="{Binding TotalCalories, StringFormat='{0:F0}'}" />
+                                                    <Label FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource OnSecondaryText}" Text="{loc:Translate Resource=PlannerPageResources, Key=CalorieShort}" />
                                                 </HorizontalStackLayout>
                                             </Border>
                                         </Grid>
@@ -166,7 +166,7 @@
                                                         <!-- Bigger meal index badge -->
                                                         <Border Grid.Column="0" WidthRequest="28" HeightRequest="28" BackgroundColor="{DynamicResource Secondary}" StrokeThickness="0" VerticalOptions="Center">
                                                             <Border.StrokeShape><RoundRectangle CornerRadius="8" /></Border.StrokeShape>
-                                                            <Label FontSize="13" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" HorizontalOptions="Center" VerticalOptions="Center">
+                                                            <Label FontSize="13" FontAttributes="Bold" TextColor="{DynamicResource OnSecondaryText}" HorizontalOptions="Center" VerticalOptions="Center">
                                                                 <Label.Text>
                                                                     <MultiBinding Converter="{StaticResource MealIndexConverter}">
                                                                         <Binding Path="." />
@@ -245,8 +245,8 @@
                                                 <TapGestureRecognizer Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.AddMealCommand}" CommandParameter="{Binding .}" />
                                             </Border.GestureRecognizers>
                                             <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="6">
-                                                <Label Text="+" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource Primary}" />
-                                                <Label Text="{loc:Translate Resource=PlannerPageResources, Key=AddMeal}" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource Primary}" />
+                                                <Label Text="+" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource OnSecondaryText}" />
+                                                <Label Text="{loc:Translate Resource=PlannerPageResources, Key=AddMeal}" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource OnSecondaryText}" />
                                             </HorizontalStackLayout>
                                         </Border>
                                     </Grid>

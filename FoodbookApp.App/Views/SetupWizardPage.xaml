@@ -5,6 +5,7 @@
              xmlns:loc="clr-namespace:Foodbook.Services"
              xmlns:views="clr-namespace:Foodbook.Views"
              xmlns:converters="clr-namespace:Foodbook.Converters"
+             xmlns:controls="clr-namespace:Foodbook.Views.Components"
              x:Class="Foodbook.Views.SetupWizardPage"
              x:Name="SetupWizardRoot"
              x:DataType="vm:SetupWizardViewModel"
@@ -135,37 +136,14 @@
                             <VerticalStackLayout Spacing="14">
                                 <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=AppearanceSectionTitle}" FontSize="20" FontAttributes="Bold" TextColor="{DynamicResource Primary}" />
 
-                                <Border Padding="5" StrokeThickness="1" Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" BackgroundColor="{DynamicResource WizardToggleContainerColor}">
-                                    <Border.StrokeShape><RoundRectangle CornerRadius="12" /></Border.StrokeShape>
-                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                                        <Button Grid.Column="0" Text="{loc:Translate Resource=SetupWizardPageResources, Key=DarkModeOption}" Command="{Binding SelectDarkThemeCommand}" CornerRadius="9" Padding="10,11" BackgroundColor="Transparent" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}">
-                                            <Button.Triggers>
-                                                <DataTrigger TargetType="Button" Binding="{Binding IsDarkThemeSelected}" Value="True">
-                                                    <Setter Property="BackgroundColor" Value="{DynamicResource WizardToggleSelectedColor}" />
-                                                    <Setter Property="TextColor" Value="{AppThemeBinding Light=Black, Dark=White}" />
-                                                </DataTrigger>
-                                            </Button.Triggers>
-                                        </Button>
-                                        <Button Grid.Column="1" Text="{loc:Translate Resource=SetupWizardPageResources, Key=LightModeOption}" Command="{Binding SelectLightThemeCommand}" CornerRadius="9" Padding="10,11" BackgroundColor="Transparent" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}">
-                                            <Button.Triggers>
-                                                <DataTrigger TargetType="Button" Binding="{Binding IsLightThemeSelected}" Value="True">
-                                                    <Setter Property="BackgroundColor" Value="{DynamicResource WizardToggleSelectedColor}" />
-                                                    <Setter Property="TextColor" Value="{AppThemeBinding Light=Black, Dark=White}" />
-                                                </DataTrigger>
-                                            </Button.Triggers>
-                                        </Button>
-                                    </Grid>
-                                </Border>
-
-                                <Border Padding="14" StrokeThickness="1" Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" BackgroundColor="{AppThemeBinding Light=#FAFAFD, Dark=#2C2C3D}">
-                                    <Border.StrokeShape><RoundRectangle CornerRadius="16" /></Border.StrokeShape>
-                                    <VerticalStackLayout Spacing="8">
-                                        <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=FontSectionTitle}" FontSize="13" FontAttributes="Bold" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
-                                        <Picker ItemsSource="{Binding AvailableFontFamilies}"
-                                                SelectedItem="{Binding SelectedFontFamily}"
-                                                ItemDisplayBinding="{Binding ., Converter={StaticResource FontFamilyToLocalizedStringConverter}}" />
-                                    </VerticalStackLayout>
-                                </Border>
+                                <controls:SegmentedPickerComponent
+                                    Option1Text="{loc:Translate Resource=SetupWizardPageResources, Key=DarkModeOption}"
+                                    Option1Command="{Binding SelectDarkThemeCommand}"
+                                    IsOption1Selected="{Binding IsDarkThemeSelected}"
+                                    Option2Text="{loc:Translate Resource=SetupWizardPageResources, Key=LightModeOption}"
+                                    Option2Command="{Binding SelectLightThemeCommand}"
+                                    IsOption2Selected="{Binding IsLightThemeSelected}"
+                                    ShowOption3="False" />
                             </VerticalStackLayout>
                         </Frame>
                     </VerticalStackLayout>
