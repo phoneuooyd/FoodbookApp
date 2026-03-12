@@ -432,6 +432,30 @@ namespace Foodbook.Services
                 app.Resources["OverhaulInfoBannerBackgroundColor"] = overhaulInfoBannerBackground;
                 app.Resources["OverhaulInfoBannerStrokeColor"] = overhaulInfoBannerStroke;
 
+                // Profile page visual tokens
+                var profileCardSurface = isDark ? Color.FromArgb("#282840") : Colors.White;
+                var profileCardStroke = isDark ? Color.FromArgb("#20FFFFFF") : Color.FromArgb("#22000000");
+                var profileSectionLabel = isDark ? Color.FromArgb("#80FFFFFF") : Color.FromArgb("#6B7280");
+                var profilePlanRowBrush = new LinearGradientBrush(
+                    new GradientStopCollection
+                    {
+                        new GradientStop(isDark ? Lighten(primary, 0.06) : Lighten(primary, 0.18), 0f),
+                        new GradientStop(isDark ? Lighten(tertiary, 0.04) : Lighten(tertiary, 0.14), 1f)
+                    },
+                    new Point(0, 0),
+                    new Point(1, 1));
+                var profilePlanRowBorder = Color.FromRgba(primary.Red, primary.Green, primary.Blue, isDark ? 0.40f : 0.32f);
+                var profilePlanActiveBg = Color.FromRgba(primary.Red, primary.Green, primary.Blue, isDark ? 0.30f : 0.20f);
+                var profilePlanActiveText = EnsureContrastEnhanced(ChooseReadableEnhanced(profilePlanActiveBg, Colors.White, Colors.Black), profilePlanActiveBg, RelativeLuminance(profilePlanActiveBg) > 0.45 ? Colors.Black : Colors.White);
+
+                app.Resources["ProfileCardSurfaceColor"] = profileCardSurface;
+                app.Resources["ProfileCardStrokeColor"] = profileCardStroke;
+                app.Resources["ProfileSectionLabelColor"] = profileSectionLabel;
+                app.Resources["ProfilePlanRowBrush"] = profilePlanRowBrush;
+                app.Resources["ProfilePlanRowBorderColor"] = profilePlanRowBorder;
+                app.Resources["ProfilePlanActiveBadgeBackgroundColor"] = profilePlanActiveBg;
+                app.Resources["ProfilePlanActiveBadgeTextColor"] = profilePlanActiveText;
+
                 // Folder card colors (use translucent accents so the card feels subtle over page background)
                 // Restore translucency specifically for folder cards while page background remains opaque.
                 var folderBg = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 0.12);
@@ -484,7 +508,18 @@ namespace Foodbook.Services
 
                 var tabBarBg = secondary;
                 var (activeColor, unselectedColor) = GetOptimalTabBarColors(tabBarBg, isDark, colorTheme);
-                if (!isDark) { activeColor = Color.FromArgb("#000000"); unselectedColor = Color.FromArgb("#424242"); }
+                if (!isDark)
+                {
+                    // Light mode unchanged
+                    activeColor = Color.FromArgb("#000000");
+                    unselectedColor = Color.FromArgb("#424242");
+                }
+                else
+                {
+                    // Dark mode: use dark icon/text colors for better contrast on colorful tab tiles
+                    activeColor = Color.FromArgb("#111111");
+                    unselectedColor = Color.FromArgb("#3A3A3A");
+                }
                 var shellTitleBg = primary;
                 var shellTitleColor = ChooseReadableEnhanced(shellTitleBg, Colors.White, Color.FromArgb("#000000"));
                 shellTitleColor = EnsureContrastEnhanced(shellTitleColor, shellTitleBg, RelativeLuminance(shellTitleBg) > 0.45 ? Colors.Black : Colors.White);
@@ -498,13 +533,13 @@ namespace Foodbook.Services
 
                 if (isDark)
                 {
-                    // Dark mode: Lighten pressed background, Darken icon tint
-                    tabBarPressedBackground = Lighten(tabBarBg, 0.05);
-                    tabBarIconTint = Darken(primary, 0.05);
+                    // Dark mode: keep selected box visible while using dark icon/text tint
+                    tabBarPressedBackground = Darken(tabBarBg, 0.10);
+                    tabBarIconTint = Color.FromArgb("#1A1A1A");
                 }
                 else
                 {
-                    // Light mode: use existing behavior
+                    // Light mode unchanged
                     tabBarPressedBackground = tabBarBackgroundDarken;
                     tabBarIconTint = primary;
                 }

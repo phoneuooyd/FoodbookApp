@@ -618,9 +618,11 @@ private void UpdateContent(TabItemModel tab)
 
                 app.Resources.TryGetValue("Primary", out var primaryObj);
                 app.Resources.TryGetValue("TabBarBackgroundDarken", out var darkenObj);
+                app.Resources.TryGetValue("TabBarForeground", out var foregroundObj);
 
                 var primaryColor = TryGetColor(primaryObj);
                 var darkenColor = TryGetColor(darkenObj);
+                var foregroundColor = TryGetColor(foregroundObj);
 
                 foreach (var child in TabBarContainer.Children)
                 {
@@ -669,6 +671,18 @@ private void UpdateContent(TabItemModel tab)
                                 Opacity = 0.9f,
                                 Offset = new Point(0, 1)
                             };
+                        }
+
+                        // Keep selected marker crisp across themes
+                        if (isSelected && foregroundColor != null)
+                        {
+                            innerBorder.Stroke = Color.FromRgba(foregroundColor.Red, foregroundColor.Green, foregroundColor.Blue, 0.32f);
+                            innerBorder.StrokeThickness = 1;
+                        }
+                        else
+                        {
+                            innerBorder.Stroke = Colors.Transparent;
+                            innerBorder.StrokeThickness = 0;
                         }
                     }
                 }

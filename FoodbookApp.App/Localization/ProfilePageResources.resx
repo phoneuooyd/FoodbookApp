@@ -16,6 +16,7 @@
 	<data name="Title" xml:space="preserve"><value>Profile</value></data>
 	<data name="HeaderTitle" xml:space="preserve"><value>Profile</value></data>
 	<data name="HeaderSubtitle" xml:space="preserve"><value>Sign in to Supabase</value></data>
+	<data name="HeroGuestInstruction" xml:space="preserve"><value>Sign in or create an account to configure your profile</value></data>
 
 	<data name="LoginPanelTitle" xml:space="preserve"><value>Sign in</value></data>
 	<data name="EmailLabel" xml:space="preserve"><value>Email</value></data>

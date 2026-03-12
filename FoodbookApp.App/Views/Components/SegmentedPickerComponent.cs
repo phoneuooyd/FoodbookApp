@@ -119,7 +119,7 @@ public class SegmentedPickerComponent : ContentView
 
         button.BackgroundColor = Colors.Transparent;
         button.TextColor = Application.Current?.RequestedTheme == AppTheme.Dark
-            ? Color.FromArgb("#ACACAC")
+            ? Color.FromArgb("#F1F1F1")
             : Color.FromArgb("#404040");
         button.FontAttributes = FontAttributes.None;
         button.Opacity = 0.86;

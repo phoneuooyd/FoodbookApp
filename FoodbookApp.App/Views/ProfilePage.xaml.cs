@@ -267,14 +267,37 @@ public partial class ProfilePage : ContentPage
 
     private void UpdateUiState()
     {
-        LoginPanel.IsVisible = !_isLoggedIn;
+        // Requested behavior:
+        // - when not logged in: hide HeroBar and logged-in sections, show LoginPanel
+        // - after login: show HeroBar + Plan/Account/Sync sections, hide LoginPanel
+        HeroBar.IsVisible = true;
+        AccountContentSection.IsVisible = _isLoggedIn;
         LoggedInPanel.IsVisible = _isLoggedIn;
+        LoginPanel.IsVisible = !_isLoggedIn;
 
         if (!_isLoggedIn)
         {
             LoggedInUserLabel.Text = string.Empty;
             SyncStatusLabel.IsVisible = false;
         }
+
+        UpdateHeroIdentity();
+    }
+
+    private void UpdateHeroIdentity()
+    {
+        if (_isLoggedIn)
+        {
+            HeroUserNameLabel.Text = "FoodBook User";
+            HeroUserEmailLabel.Text = LoggedInUserLabel.Text ?? string.Empty;
+            return;
+        }
+
+        HeroUserNameLabel.Text = GetLocalizedText("ProfilePageResources", "HeaderTitle", "Profile");
+        HeroUserEmailLabel.Text = GetLocalizedText(
+            "ProfilePageResources",
+            "HeroGuestInstruction",
+            "Sign in or create an account to configure your profile");
     }
 
     private string GetLocalizedText(string resource, string key, string defaultText)
@@ -896,4 +919,16 @@ public partial class ProfilePage : ContentPage
     }
 
     #endregion
+
+    private void OnOpenPlanDetailsTapped(object? sender, TappedEventArgs e)
+    {
+        ProfileMainView.IsVisible = false;
+        PlanDetailsView.IsVisible = true;
+    }
+
+    private void OnClosePlanDetailsTapped(object? sender, TappedEventArgs e)
+    {
+        PlanDetailsView.IsVisible = false;
+        ProfileMainView.IsVisible = true;
+    }
 }

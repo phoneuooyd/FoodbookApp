@@ -4,142 +4,243 @@
              xmlns:loc="clr-namespace:FoodbookApp.Localization"
              x:Class="Foodbook.Views.ProfilePage"
              Title="{x:Static loc:ProfilePageResources.Title}"
+             Shell.NavBarIsVisible="False"
              BackgroundColor="{DynamicResource PageBackgroundColor}">
 
+    <ContentPage.Resources>
+        <Style x:Key="ProfileCard" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{DynamicResource ProfileCardSurfaceColor}" />
+            <Setter Property="Stroke" Value="{DynamicResource ProfileCardStrokeColor}" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 18" />
+        </Style>
+
+        <Style x:Key="ProfileSectionLabel" TargetType="Label">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="CharacterSpacing" Value="1.2" />
+            <Setter Property="TextColor" Value="{DynamicResource ProfileSectionLabelColor}" />
+        </Style>
+    </ContentPage.Resources>
+
     <Grid>
-        <!-- Main content -->
-        <ScrollView>
-            <VerticalStackLayout Padding="16" Spacing="16">
+        <!-- Main profile view -->
+        <Grid x:Name="ProfileMainView" RowDefinitions="Auto,*">
+            <Grid x:Name="HeroBar" Grid.Row="0" Background="{DynamicResource AppHeroGradientBrush}" Padding="20,46,20,18">
+                <Border WidthRequest="128" HeightRequest="128" HorizontalOptions="End" VerticalOptions="Start" TranslationX="22" TranslationY="-36" BackgroundColor="{DynamicResource AppHeroBubbleColorStrong}" StrokeThickness="0" StrokeShape="RoundRectangle 64" />
+                <Border WidthRequest="74" HeightRequest="74" HorizontalOptions="End" VerticalOptions="Start" TranslationX="-2" TranslationY="14" BackgroundColor="{DynamicResource AppHeroBubbleColorMedium}" StrokeThickness="0" StrokeShape="RoundRectangle 37" />
 
-                <!-- Header card -->
-                <Border Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
-                        StrokeThickness="1"
-                        StrokeShape="RoundRectangle 16"
-                        BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
-                        Padding="16">
-                    <VerticalStackLayout Spacing="6">
-                        <Label Text="{x:Static loc:ProfilePageResources.HeaderTitle}"
-                               FontSize="22"
-                               FontAttributes="Bold"
-                               TextColor="{DynamicResource Primary}"
-                               HorizontalOptions="Center" />
-                        <Label Text="{x:Static loc:ProfilePageResources.HeaderSubtitle}"
-                               FontSize="12"
-                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}"
-                               HorizontalOptions="Center" />
-                    </VerticalStackLayout>
-                </Border>
+                <VerticalStackLayout Spacing="10" ZIndex="2">
+                    <Label Text="{x:Static loc:ProfilePageResources.HeaderTitle}" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource AppHeroHintTextColor}" />
 
-                <!-- LOGIN PANEL -->
-                <Border x:Name="LoginPanel"
-                        Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
-                        StrokeThickness="1"
-                        StrokeShape="RoundRectangle 16"
-                        BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
-                        Padding="16">
-                    <VerticalStackLayout Spacing="12">
-                        <Label Text="{x:Static loc:ProfilePageResources.LoginPanelTitle}" FontAttributes="Bold" FontSize="18" TextColor="{DynamicResource Primary}" />
-
-                        <VerticalStackLayout Spacing="6">
-                            <Label Text="{x:Static loc:ProfilePageResources.EmailLabel}" FontSize="12" FontAttributes="Bold" />
-                            <Border Style="{StaticResource ModernBorder}">
-                                <Entry x:Name="EmailEntry"
-                                       Style="{StaticResource ModernEntry}"
-                                       Placeholder="{x:Static loc:ProfilePageResources.EmailPlaceholder}"
-                                       Keyboard="Email" />
-                            </Border>
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout Spacing="6">
-                            <Label Text="{x:Static loc:ProfilePageResources.PasswordLabel}" FontSize="12" FontAttributes="Bold" />
-                            <Border Style="{StaticResource ModernBorder}">
-                                <Entry x:Name="PasswordEntry"
-                                       Style="{StaticResource ModernEntry}"
-                                       Placeholder="{x:Static loc:ProfilePageResources.PasswordPlaceholder}"
-                                       IsPassword="True" />
-                            </Border>
-                        </VerticalStackLayout>
-
-                        <Label x:Name="StatusLabel"
-                               FontSize="12"
-                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
-
-                        <Button Text="{x:Static loc:ProfilePageResources.LoginButton}"
-                                StyleClass="Primary"
-                                Clicked="OnProfileFetchJwtClicked" />
-
-                        <Button Text="{x:Static loc:ProfilePageResources.RegisterButton}"
-                                StyleClass="Secondary"
-                                Clicked="OnRegisterClicked" />
-                    </VerticalStackLayout>
-                </Border>
-
-                <!-- LOGGED-IN PANEL -->
-                <Border x:Name="LoggedInPanel"
-                        IsVisible="False"
-                        Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
-                        StrokeThickness="1"
-                        StrokeShape="RoundRectangle 16"
-                        BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
-                        Padding="16">
-                    <VerticalStackLayout Spacing="12">
-                        <Label Text="{x:Static loc:ProfilePageResources.LoggedInTitle}"
-                               FontAttributes="Bold"
-                               FontSize="18"
-                               TextColor="{DynamicResource Primary}"
-                               HorizontalOptions="Center" />
-
-                        <Label x:Name="LoggedInUserLabel"
-                               FontSize="12"
-                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}"
-                               HorizontalOptions="Center" />
-
-                        <!-- Cloud Sync Section -->
-                        <Border Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
-                                StrokeThickness="1"
-                                StrokeShape="RoundRectangle 12"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}"
-                                Padding="12"
-                                Margin="0,8,0,0">
-                            <VerticalStackLayout Spacing="8">
-                                <Label Text="{x:Static loc:ProfilePageResources.CloudSyncHeader}"
-                                       FontSize="14"
-                                       FontAttributes="Bold"
-                                       TextColor="{DynamicResource Primary}" />
-
-                                <HorizontalStackLayout Spacing="12">
-                                    <CheckBox x:Name="CloudSyncCheckBox"
-                                              IsChecked="False"
-                                              Color="{DynamicResource Primary}"
-                                              CheckedChanged="OnCloudSyncToggled" />
-                                    <Label Text="{x:Static loc:ProfilePageResources.EnableCloudSync}"
-                                           FontSize="14"
-                                           VerticalOptions="Center"
-                                           TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray200}}" />
-                                </HorizontalStackLayout>
-
-                                <Label x:Name="SyncStatusLabel"
-                                       FontSize="12"
-                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
-                                       IsVisible="False" />
-
-                                <!-- Force Sync button -->
-                                <Button x:Name="ForceSyncButton"
-                                        Text="{x:Static loc:ProfilePageResources.ForceSyncButton}"
-                                        StyleClass="Primary"
-                                        Clicked="OnForceSyncClicked" />
-
-                            </VerticalStackLayout>
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                        <Border WidthRequest="58" HeightRequest="58" BackgroundColor="{DynamicResource AppHeroActionOverlayColor}" StrokeThickness="0" StrokeShape="RoundRectangle 29">
+                            <Label Text="👤" FontSize="26" HorizontalOptions="Center" VerticalOptions="Center" />
                         </Border>
 
-                        <Button Text="{x:Static loc:ProfilePageResources.LogoutButton}"
-                                StyleClass="Secondary"
-                                Clicked="OnLogoutClicked" />
-                    </VerticalStackLayout>
-                </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label x:Name="HeroUserNameLabel" Text="FoodBook User" FontSize="20" FontAttributes="Bold" TextColor="White" />
+                            <Label x:Name="HeroUserEmailLabel" Text="" FontSize="12" TextColor="{DynamicResource AppHeroSubtitleTextColor}" />
+                        </VerticalStackLayout>
+                    </Grid>
 
-            </VerticalStackLayout>
-        </ScrollView>
+                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                        <Border Grid.Column="0" BackgroundColor="{DynamicResource AppHeroTileOverlayColor}" StrokeThickness="0" Padding="8,7" StrokeShape="RoundRectangle 12">
+                            <VerticalStackLayout Spacing="0">
+                                <Label Text="0" FontSize="16" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="Center" />
+                                <Label Text="Przepisy" FontSize="10" TextColor="{DynamicResource AppHeroHintTextColor}" HorizontalTextAlignment="Center" />
+                            </VerticalStackLayout>
+                        </Border>
+                        <Border Grid.Column="1" BackgroundColor="{DynamicResource AppHeroTileOverlayColor}" StrokeThickness="0" Padding="8,7" StrokeShape="RoundRectangle 12">
+                            <VerticalStackLayout Spacing="0">
+                                <Label Text="0" FontSize="16" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="Center" />
+                                <Label Text="Plany" FontSize="10" TextColor="{DynamicResource AppHeroHintTextColor}" HorizontalTextAlignment="Center" />
+                            </VerticalStackLayout>
+                        </Border>
+                        <Border Grid.Column="2" BackgroundColor="{DynamicResource AppHeroTileOverlayColor}" StrokeThickness="0" Padding="8,7" StrokeShape="RoundRectangle 12">
+                            <VerticalStackLayout Spacing="0">
+                                <Label Text="0" FontSize="16" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="Center" />
+                                <Label Text="Listy" FontSize="10" TextColor="{DynamicResource AppHeroHintTextColor}" HorizontalTextAlignment="Center" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+            </Grid>
+
+            <ScrollView Grid.Row="1">
+                <VerticalStackLayout Padding="16" Spacing="10">
+                    <VerticalStackLayout x:Name="AccountContentSection" Spacing="10">
+                        <Label Text="Ustawienia konta" Style="{StaticResource ProfileSectionLabel}" />
+
+                        <Border Style="{StaticResource ProfileCard}" Background="{DynamicResource ProfilePlanRowBrush}" Stroke="{DynamicResource ProfilePlanRowBorderColor}" Padding="16,14">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnOpenPlanDetailsTapped" />
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                                <Label Text="✨" FontSize="22" VerticalOptions="Center" />
+                                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                    <Label Text="Premium" FontSize="16" FontAttributes="Bold" TextColor="White" />
+                                    <Label Text="Aktywny · odnowienie 15.04.2026" FontSize="12" TextColor="{DynamicResource AppHeroSubtitleTextColor}" />
+                                </VerticalStackLayout>
+                                <Border Grid.Column="2" BackgroundColor="{DynamicResource ProfilePlanActiveBadgeBackgroundColor}" StrokeThickness="0" Padding="8,4" StrokeShape="RoundRectangle 10" VerticalOptions="Center">
+                                    <Label Text="Aktywny" FontSize="10" FontAttributes="Bold" TextColor="{DynamicResource ProfilePlanActiveBadgeTextColor}" />
+                                </Border>
+                                <Label Grid.Column="3" Text="›" FontSize="18" TextColor="{DynamicResource AppHeroHintTextColor}" VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource ProfileCard}" Padding="0">
+                            <VerticalStackLayout Spacing="0">
+                                <Grid Padding="14,12" ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                    <Border WidthRequest="36" HeightRequest="36" BackgroundColor="{DynamicResource SegmentedContainerColor}" StrokeThickness="0" StrokeShape="RoundRectangle 10" VerticalOptions="Center">
+                                        <Label Text="👤" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </Border>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                        <Label Text="Dane konta" FontSize="14" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" />
+                                        <Label Text="Zmień e-mail lub hasło" FontSize="11" TextColor="{DynamicResource SecondaryText}" />
+                                    </VerticalStackLayout>
+                                </Grid>
+                                <BoxView HeightRequest="1" BackgroundColor="{DynamicResource ProfileCardStrokeColor}" />
+                                <Grid Padding="14,12" ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                    <Border WidthRequest="36" HeightRequest="36" BackgroundColor="{DynamicResource SegmentedContainerColor}" StrokeThickness="0" StrokeShape="RoundRectangle 10" VerticalOptions="Center">
+                                        <Label Text="🔄" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </Border>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                        <Label Text="{x:Static loc:ProfilePageResources.CloudSyncHeader}" FontSize="14" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" />
+                                        <Label Text="Supabase" FontSize="11" TextColor="{DynamicResource SecondaryText}" />
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <Border x:Name="LoginPanel" Style="{StaticResource ProfileCard}" Padding="16">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="{x:Static loc:ProfilePageResources.LoginPanelTitle}" FontAttributes="Bold" FontSize="18" TextColor="{DynamicResource Primary}" />
+
+                            <VerticalStackLayout Spacing="5">
+                                <Label Text="{x:Static loc:ProfilePageResources.EmailLabel}" FontSize="12" FontAttributes="Bold" />
+                                <Border Style="{StaticResource ModernBorder}">
+                                    <Entry x:Name="EmailEntry" Style="{StaticResource ModernEntry}" Placeholder="{x:Static loc:ProfilePageResources.EmailPlaceholder}" Keyboard="Email" />
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Spacing="5">
+                                <Label Text="{x:Static loc:ProfilePageResources.PasswordLabel}" FontSize="12" FontAttributes="Bold" />
+                                <Border Style="{StaticResource ModernBorder}">
+                                    <Entry x:Name="PasswordEntry" Style="{StaticResource ModernEntry}" Placeholder="{x:Static loc:ProfilePageResources.PasswordPlaceholder}" IsPassword="True" />
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <Label x:Name="StatusLabel" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+
+                            <Button Text="{x:Static loc:ProfilePageResources.LoginButton}" StyleClass="Primary" Clicked="OnProfileFetchJwtClicked" />
+                            <Button Text="{x:Static loc:ProfilePageResources.RegisterButton}" StyleClass="Secondary" Clicked="OnRegisterClicked" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border x:Name="LoggedInPanel" IsVisible="False" Style="{StaticResource ProfileCard}" Padding="16">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="{x:Static loc:ProfilePageResources.LoggedInTitle}" FontAttributes="Bold" FontSize="18" TextColor="{DynamicResource Primary}" HorizontalOptions="Center" />
+                            <Label x:Name="LoggedInUserLabel" FontSize="12" TextColor="{DynamicResource SecondaryText}" HorizontalOptions="Center" />
+
+                            <Border Style="{StaticResource ProfileCard}" Padding="12" BackgroundColor="{DynamicResource SegmentedContainerColor}">
+                                <VerticalStackLayout Spacing="8">
+                                    <HorizontalStackLayout Spacing="10">
+                                        <Label Text="{x:Static loc:ProfilePageResources.EnableCloudSync}" FontSize="13" VerticalOptions="Center" TextColor="{DynamicResource FrameTextColor}" HorizontalOptions="StartAndExpand" />
+                                        <CheckBox x:Name="CloudSyncCheckBox" Color="{DynamicResource Primary}" CheckedChanged="OnCloudSyncToggled" />
+                                    </HorizontalStackLayout>
+
+                                    <Label x:Name="SyncStatusLabel" FontSize="12" TextColor="{DynamicResource SecondaryText}" IsVisible="False" />
+
+                                    <Button x:Name="ForceSyncButton" Text="{x:Static loc:ProfilePageResources.ForceSyncButton}" StyleClass="Primary" Clicked="OnForceSyncClicked" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <Button Text="{x:Static loc:ProfilePageResources.LogoutButton}" StyleClass="Secondary" Clicked="OnLogoutClicked" />
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+            </ScrollView>
+        </Grid>
+
+        <!-- Plan details view -->
+        <Grid x:Name="PlanDetailsView" IsVisible="False" RowDefinitions="Auto,*">
+            <Grid Grid.Row="0" Background="{DynamicResource AppHeroGradientBrush}" Padding="16,46,16,16" ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                <Border WidthRequest="34" HeightRequest="34" BackgroundColor="{DynamicResource AppHeroActionOverlayColor}" StrokeThickness="0" StrokeShape="RoundRectangle 17" VerticalOptions="Center">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnClosePlanDetailsTapped" />
+                    </Border.GestureRecognizers>
+                    <Label Text="‹" FontSize="18" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                    <Label Text="Subskrypcja" FontSize="20" FontAttributes="Bold" TextColor="White" />
+                    <Label Text="Zarządzaj swoim planem" FontSize="13" TextColor="{DynamicResource AppHeroSubtitleTextColor}" />
+                </VerticalStackLayout>
+            </Grid>
+
+            <ScrollView Grid.Row="1">
+                <VerticalStackLayout Padding="16" Spacing="10">
+                    <Label Text="Twój aktualny plan" Style="{StaticResource ProfileSectionLabel}" />
+                    <Border Style="{StaticResource ProfileCard}" Background="{DynamicResource ProfilePlanRowBrush}" Stroke="{DynamicResource ProfilePlanRowBorderColor}" Padding="16">
+                        <VerticalStackLayout Spacing="8">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                <Label Text="✨" FontSize="24" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="Premium" FontSize="20" FontAttributes="Bold" TextColor="White" VerticalOptions="Center" />
+                                <Border Grid.Column="2" BackgroundColor="{DynamicResource ProfilePlanActiveBadgeBackgroundColor}" StrokeThickness="0" Padding="9,4" StrokeShape="RoundRectangle 12" VerticalOptions="Center">
+                                    <Label Text="Aktywny" FontSize="10" FontAttributes="Bold" TextColor="{DynamicResource ProfilePlanActiveBadgeTextColor}" />
+                                </Border>
+                            </Grid>
+
+                            <Label Text="9,99 zł / miesiąc" FontSize="24" FontAttributes="Bold" TextColor="White" />
+
+                            <VerticalStackLayout Spacing="3">
+                                <Label Text="✓ AI Planer posiłków" FontSize="12" TextColor="{DynamicResource AppHeroSubtitleTextColor}" />
+                                <Label Text="✓ AI Agent przepisów (JSON)" FontSize="12" TextColor="{DynamicResource AppHeroSubtitleTextColor}" />
+                                <Label Text="✓ Szablony tygodniowe i miesięczne" FontSize="12" TextColor="{DynamicResource AppHeroSubtitleTextColor}" />
+                                <Label Text="✓ Archiwum planów bez limitu" FontSize="12" TextColor="{DynamicResource AppHeroSubtitleTextColor}" />
+                                <Label Text="✓ Premium paczki przepisów" FontSize="12" TextColor="{DynamicResource AppHeroSubtitleTextColor}" />
+                            </VerticalStackLayout>
+
+                            <Label Text="Następne odnowienie: 15 kwietnia 2026" FontSize="11" TextColor="{DynamicResource AppHeroHintTextColor}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Label Text="Inne plany" Style="{StaticResource ProfileSectionLabel}" />
+
+                    <Border Style="{StaticResource ProfileCard}" Padding="16">
+                        <VerticalStackLayout Spacing="8">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                <Label Text="🔓" FontSize="18" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="Free" FontSize="16" FontAttributes="Bold" VerticalOptions="Center" TextColor="{DynamicResource FrameTextColor}" />
+                                <Label Grid.Column="2" Text="0 zł / zawsze" FontSize="13" TextColor="{DynamicResource SecondaryText}" VerticalOptions="Center" />
+                            </Grid>
+                            <Label Text="• Przepisy bez limitu" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                            <Label Text="• Planer posiłków (3 aktywne)" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                            <Label Text="• Lista zakupów" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                            <Label Text="• Import przepisów z internetu" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                            <Button Text="Przejdź na Free" BackgroundColor="{DynamicResource SegmentedContainerColor}" TextColor="{DynamicResource SecondaryText}" BorderColor="{DynamicResource ProfileCardStrokeColor}" BorderWidth="1" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Style="{StaticResource ProfileCard}" Padding="16" Stroke="{DynamicResource ProfilePlanRowBorderColor}">
+                        <VerticalStackLayout Spacing="8">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                <Label Text="🌟" FontSize="18" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="Premium Roczny" FontSize="16" FontAttributes="Bold" VerticalOptions="Center" TextColor="{DynamicResource FrameTextColor}" />
+                                <Label Grid.Column="2" Text="95,99 zł / rok" FontSize="13" TextColor="{DynamicResource SecondaryText}" VerticalOptions="Center" />
+                            </Grid>
+                            <Label Text="• Wszystko z planu Premium" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                            <Label Text="• Płatność raz w roku" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                            <Label Text="• Niższa cena: 7,99 zł / mies." FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                            <Button Text="Przejdź na roczny" StyleClass="Primary" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Label Text="Anuluj subskrypcję" HorizontalTextAlignment="Center" FontSize="12" FontAttributes="Bold" TextColor="#FF5F6D" />
+                </VerticalStackLayout>
+            </ScrollView>
+        </Grid>
 
         <!-- Syncing overlay with spinner -->
         <Grid x:Name="SyncingOverlay"
@@ -150,8 +251,8 @@
                     VerticalOptions="Center"
                     StrokeShape="RoundRectangle 16"
                     StrokeThickness="1"
-                    Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
-                    BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                    Stroke="{DynamicResource ProfileCardStrokeColor}"
+                    BackgroundColor="{DynamicResource ProfileCardSurfaceColor}"
                     Padding="32,24">
                 <VerticalStackLayout Spacing="16" HorizontalOptions="Center">
                     <ActivityIndicator x:Name="SyncActivityIndicator"
@@ -165,7 +266,7 @@
                            HorizontalOptions="Center"
                            HorizontalTextAlignment="Center"
                            MaximumWidthRequest="220"
-                           TextColor="{AppThemeBinding Light={StaticResource Gray700}, Dark={StaticResource Gray200}}" />
+                           TextColor="{DynamicResource FrameTextColor}" />
                     <Button x:Name="BackgroundSyncButton"
                             Text="Synchronizacja w tle"
                             StyleClass="Secondary"
