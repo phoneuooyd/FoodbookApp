@@ -24,7 +24,7 @@
         <Style x:Key="HeroTitleStyle" TargetType="Label">
             <Setter Property="FontSize" Value="28" />
             <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="TextColor" Value="White" />
+            <Setter Property="TextColor" Value="{DynamicResource AppHeroTitleTextColor}" />
         </Style>
 
         <DataTemplate x:Key="RecipeItemTemplate">

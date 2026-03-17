@@ -12,6 +12,7 @@ public partial class IngredientFormPage : ContentPage
     private const double KeyboardLiftOffset = 213;
     private bool _isKeyboardLiftApplied;
     private double _lastAllocatedHeight;
+    private double _maxAllocatedHeight;
     private bool _keyboardWasVisible;
     
     // ? CRITICAL: Track whether we're awaiting load to prevent race conditions
@@ -134,6 +135,9 @@ public partial class IngredientFormPage : ContentPage
         try
         {
             _isKeyboardLiftApplied = false;
+            _keyboardWasVisible = false;
+            _lastAllocatedHeight = 0;
+            _maxAllocatedHeight = 0;
             ContentHost.TranslationY = 0;
         }
         catch { }
@@ -153,14 +157,30 @@ public partial class IngredientFormPage : ContentPage
 
     private void OnInputUnfocused(object sender, FocusEventArgs e)
     {
-        _ = ResetKeyboardSafeOffsetAsync();
+        _ = ResetKeyboardSafeOffsetDeferredAsync();
     }
 
+    private async Task ResetKeyboardSafeOffsetDeferredAsync()
+    {
+        try
+        {
+            await Task.Delay(120);
+            await ResetKeyboardSafeOffsetAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] ResetKeyboardSafeOffsetDeferredAsync error: {ex.Message}");
+        }
+    }
+ 
     private async Task EnsureKeyboardSafeOffsetAsync(Element? source)
     {
         try
         {
             await Task.Delay(80);
+
+            if (source is VisualElement focusedElement && !focusedElement.IsFocused)
+                return;
 
             var sourceY = GetElementYRelativeToPage(source);
             var pageHeight = Height;
@@ -168,7 +188,14 @@ public partial class IngredientFormPage : ContentPage
                 return;
 
             var isNearBottom = sourceY > pageHeight * 0.62;
-            if (!isNearBottom || _isKeyboardLiftApplied)
+            if (!isNearBottom)
+            {
+                if (_isKeyboardLiftApplied)
+                    await ResetKeyboardSafeOffsetAsync();
+                return;
+            }
+
+            if (_isKeyboardLiftApplied && ContentHost.TranslationY <= -(KeyboardLiftOffset - 2))
                 return;
 
             _isKeyboardLiftApplied = true;
@@ -185,15 +212,29 @@ public partial class IngredientFormPage : ContentPage
         try
         {
             if (!_isKeyboardLiftApplied)
+            {
+                ContentHost.TranslationY = 0;
                 return;
+            }
 
             _isKeyboardLiftApplied = false;
             await ContentHost.TranslateTo(0, 0, 140, Easing.CubicOut);
+            ContentHost.TranslationY = 0;
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[IngredientFormPage] ResetKeyboardSafeOffsetAsync error: {ex.Message}");
+            try { ContentHost.TranslationY = 0; } catch { }
         }
+    }
+
+    private void ReleaseInputFocus()
+    {
+        try
+        {
+            MainThread.BeginInvokeOnMainThread(Unfocus);
+        }
+        catch { }
     }
 
     private static double GetElementYRelativeToPage(Element? element)
@@ -221,22 +262,37 @@ public partial class IngredientFormPage : ContentPage
             if (_lastAllocatedHeight <= 0)
             {
                 _lastAllocatedHeight = height;
+                _maxAllocatedHeight = height;
                 return;
             }
 
-            var delta = height - _lastAllocatedHeight;
+            if (height > _maxAllocatedHeight)
+                _maxAllocatedHeight = height;
 
-            if (delta < -80)
+            // Strong safety: when available height is back near max, keyboard is effectively closed.
+            if (_isKeyboardLiftApplied && height >= (_maxAllocatedHeight - 20))
+            {
+                _keyboardWasVisible = false;
+                ReleaseInputFocus();
+                _ = ResetKeyboardSafeOffsetAsync();
+                _lastAllocatedHeight = height;
+                return;
+            }
+ 
+            var delta = height - _lastAllocatedHeight;
+ 
+            if (delta < -30)
             {
                 _keyboardWasVisible = true;
             }
-            else if (delta > 80 && _keyboardWasVisible)
+            else if (delta > 30 && _keyboardWasVisible)
             {
                 _keyboardWasVisible = false;
+                ReleaseInputFocus();
                 if (_isKeyboardLiftApplied)
                     _ = ResetKeyboardSafeOffsetAsync();
             }
-
+ 
             _lastAllocatedHeight = height;
         }
         catch (Exception ex)

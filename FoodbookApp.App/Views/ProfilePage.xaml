@@ -39,8 +39,7 @@
                         </Border>
 
                         <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                            <Label x:Name="HeroUserNameLabel" Text="FoodBook User" FontSize="20" FontAttributes="Bold" TextColor="White" />
-                            <Label x:Name="HeroUserEmailLabel" Text="" FontSize="12" TextColor="{DynamicResource AppHeroSubtitleTextColor}" />
+                            <Label x:Name="HeroUserEmailLabel" Text="" FontSize="20" FontAttributes="Bold" TextColor="White" />
                         </VerticalStackLayout>
                     </Grid>
 

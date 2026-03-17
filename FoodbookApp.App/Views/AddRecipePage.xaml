@@ -12,6 +12,7 @@
              x:DataType="vm:AddRecipeViewModel"
              Title="{Binding Title}"
              Shell.NavBarIsVisible="False"
+             HideSoftInputOnTapped="True"
              BackgroundColor="{DynamicResource PageBackgroundColor}">
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />

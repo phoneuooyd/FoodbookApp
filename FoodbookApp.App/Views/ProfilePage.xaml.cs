@@ -289,16 +289,11 @@ public partial class ProfilePage : ContentPage
     {
         if (_isLoggedIn)
         {
-            HeroUserNameLabel.Text = "FoodBook User";
-            HeroUserEmailLabel.Text = _currentUserEmail;
-            return;
+             HeroUserEmailLabel.Text = _currentUserEmail;
+             return;
         }
 
-        HeroUserNameLabel.Text = GetLocalizedText("ProfilePageResources", "HeaderTitle", "Profile");
-        HeroUserEmailLabel.Text = GetLocalizedText(
-            "ProfilePageResources",
-            "HeroGuestInstruction",
-            "Sign in or create an account to configure your profile");
+        HeroUserEmailLabel.Text = string.Empty;
     }
 
     private string GetLocalizedText(string resource, string key, string defaultText)
