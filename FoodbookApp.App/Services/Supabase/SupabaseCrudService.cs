@@ -169,16 +169,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
     public async Task DeleteFolderAsync(Guid id, CancellationToken ct = default)
     {
         await EnsureAuthenticatedAsync();
-
-        var patch = new FolderDto
-        {
-            Id = id,
-            IsDeleted = true,
-            DeletedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        await _client.From<FolderDto>().Where(x => x.Id == id).Update(patch);
+        await _restClient.SoftDeleteAsync("folders", id, ct);
     }
 
     #endregion
@@ -227,16 +218,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
     public async Task DeleteRecipeAsync(Guid id, CancellationToken ct = default)
     {
         await EnsureAuthenticatedAsync();
-
-        var patch = new RecipeDto
-        {
-            Id = id,
-            IsDeleted = true,
-            DeletedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        await _client.From<RecipeDto>().Where(x => x.Id == id).Update(patch);
+        await _restClient.SoftDeleteAsync("recipes", id, ct);
     }
 
     #endregion
@@ -287,16 +269,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
     public async Task DeleteIngredientAsync(Guid id, CancellationToken ct = default)
     {
         await EnsureAuthenticatedAsync();
-
-        var patch = new IngredientDto
-        {
-            Id = id,
-            IsDeleted = true,
-            DeletedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        await _client.From<IngredientDto>().Where(x => x.Id == id).Update(patch);
+        await _restClient.SoftDeleteAsync("ingredients", id, ct);
     }
 
     #endregion
@@ -345,16 +318,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
     public async Task DeletePlanAsync(Guid id, CancellationToken ct = default)
     {
         await EnsureAuthenticatedAsync();
-
-        var patch = new PlanDto
-        {
-            Id = id,
-            IsDeleted = true,
-            DeletedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        await _client.From<PlanDto>().Where(x => x.Id == id).Update(patch);
+        await _restClient.SoftDeleteAsync("plans", id, ct);
     }
 
     #endregion
@@ -413,16 +377,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
     public async Task DeletePlannedMealAsync(Guid id, CancellationToken ct = default)
     {
         await EnsureAuthenticatedAsync();
-
-        var patch = new PlannedMealDto
-        {
-            Id = id,
-            IsDeleted = true,
-            DeletedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        await _client.From<PlannedMealDto>().Where(x => x.Id == id).Update(patch);
+        await _restClient.SoftDeleteAsync("planned_meals", id, ct);
     }
 
     #endregion
@@ -471,16 +426,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
     public async Task DeleteShoppingListItemAsync(Guid id, CancellationToken ct = default)
     {
         await EnsureAuthenticatedAsync();
-
-        var patch = new ShoppingListItemDto
-        {
-            Id = id,
-            IsDeleted = true,
-            DeletedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        await _client.From<ShoppingListItemDto>().Where(x => x.Id == id).Update(patch);
+        await _restClient.SoftDeleteAsync("shopping_list_items", id, ct);
     }
 
     #endregion
@@ -529,16 +475,7 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
     public async Task DeleteRecipeLabelAsync(Guid id, CancellationToken ct = default)
     {
         await EnsureAuthenticatedAsync();
-
-        var patch = new RecipeLabelDto
-        {
-            Id = id,
-            IsDeleted = true,
-            DeletedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        await _client.From<RecipeLabelDto>().Where(x => x.Id == id).Update(patch);
+        await _restClient.SoftDeleteAsync("recipe_labels", id, ct);
     }
 
     #endregion
