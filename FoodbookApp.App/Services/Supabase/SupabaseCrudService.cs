@@ -659,6 +659,96 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         return results.Select(ToDomain).ToList();
     }
 
+    public async Task<List<Folder>> UpsertFoldersBatchAsync(IEnumerable<Folder> folders, CancellationToken ct = default)
+    {
+        var ownerId = await GetCurrentUserIdAsync();
+        var now = DateTime.UtcNow;
+        var dtos = folders.Select(f =>
+        {
+            if (f.Id == Guid.Empty) f.Id = Guid.NewGuid();
+            var dto = ToDto(f);
+            dto.OwnerId = ownerId;
+            dto.CreatedAt ??= now;
+            dto.UpdatedAt ??= now;
+            return dto;
+        }).ToList();
+
+        var results = await _restClient.UpsertAsync("folders", dtos, ct);
+        return results.Select(ToDomain).ToList();
+    }
+
+    public async Task<List<RecipeLabel>> UpsertRecipeLabelsBatchAsync(IEnumerable<RecipeLabel> labels, CancellationToken ct = default)
+    {
+        var ownerId = await GetCurrentUserIdAsync();
+        var now = DateTime.UtcNow;
+        var dtos = labels.Select(l =>
+        {
+            if (l.Id == Guid.Empty) l.Id = Guid.NewGuid();
+            var dto = ToDto(l);
+            dto.OwnerId = ownerId;
+            dto.CreatedAt ??= now;
+            dto.UpdatedAt ??= now;
+            return dto;
+        }).ToList();
+
+        var results = await _restClient.UpsertAsync("recipe_labels", dtos, ct);
+        return results.Select(ToDomain).ToList();
+    }
+
+    public async Task<List<Plan>> UpsertPlansBatchAsync(IEnumerable<Plan> plans, CancellationToken ct = default)
+    {
+        var ownerId = await GetCurrentUserIdAsync();
+        var now = DateTime.UtcNow;
+        var dtos = plans.Select(p =>
+        {
+            if (p.Id == Guid.Empty) p.Id = Guid.NewGuid();
+            var dto = ToDto(p);
+            dto.OwnerId = ownerId;
+            dto.CreatedAt ??= now;
+            dto.UpdatedAt ??= now;
+            return dto;
+        }).ToList();
+
+        var results = await _restClient.UpsertAsync("plans", dtos, ct);
+        return results.Select(ToDomain).ToList();
+    }
+
+    public async Task<List<PlannedMeal>> UpsertPlannedMealsBatchAsync(IEnumerable<PlannedMeal> meals, CancellationToken ct = default)
+    {
+        var ownerId = await GetCurrentUserIdAsync();
+        var now = DateTime.UtcNow;
+        var dtos = meals.Select(pm =>
+        {
+            if (pm.Id == Guid.Empty) pm.Id = Guid.NewGuid();
+            var dto = ToDto(pm);
+            dto.OwnerId = ownerId;
+            dto.CreatedAt ??= now;
+            dto.UpdatedAt ??= now;
+            return dto;
+        }).ToList();
+
+        var results = await _restClient.UpsertAsync("planned_meals", dtos, ct);
+        return results.Select(ToDomain).ToList();
+    }
+
+    public async Task<List<ShoppingListItem>> UpsertShoppingListItemsBatchAsync(IEnumerable<ShoppingListItem> items, CancellationToken ct = default)
+    {
+        var ownerId = await GetCurrentUserIdAsync();
+        var now = DateTime.UtcNow;
+        var dtos = items.Select(s =>
+        {
+            if (s.Id == Guid.Empty) s.Id = Guid.NewGuid();
+            var dto = ToDto(s);
+            dto.OwnerId = ownerId;
+            dto.CreatedAt ??= now;
+            dto.UpdatedAt ??= now;
+            return dto;
+        }).ToList();
+
+        var results = await _restClient.UpsertAsync("shopping_list_items", dtos, ct);
+        return results.Select(ToDomain).ToList();
+    }
+
     #endregion
 
     #region UserPreferences (ORM)

@@ -791,12 +791,12 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         switch (entityType)
         {
             case "Folder":
-                await crud.AddFoldersBatchAsync(
+                await crud.UpsertFoldersBatchAsync(
                     entries.Select(e => DeserializeEntity<Folder>(e.Payload!)), ct);
                 return (entries.Count, null);
 
             case "RecipeLabel":
-                await crud.AddRecipeLabelsBatchAsync(
+                await crud.UpsertRecipeLabelsBatchAsync(
                     entries.Select(e => DeserializeEntity<RecipeLabel>(e.Payload!)), ct);
                 return (entries.Count, null);
 
@@ -811,17 +811,17 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 return (entries.Count, null);
 
             case "Plan":
-                await crud.AddPlansBatchAsync(
+                await crud.UpsertPlansBatchAsync(
                     entries.Select(e => DeserializeEntity<Plan>(e.Payload!)), ct);
                 return (entries.Count, null);
 
             case "PlannedMeal":
-                await crud.AddPlannedMealsBatchAsync(
+                await crud.UpsertPlannedMealsBatchAsync(
                     entries.Select(e => DeserializeEntity<PlannedMeal>(e.Payload!)), ct);
                 return (entries.Count, null);
 
             case "ShoppingListItem":
-                await crud.AddShoppingListItemsBatchAsync(
+                await crud.UpsertShoppingListItemsBatchAsync(
                     entries.Select(e => DeserializeEntity<ShoppingListItem>(e.Payload!)), ct);
                 return (entries.Count, null);
 
