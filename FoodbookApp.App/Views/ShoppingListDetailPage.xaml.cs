@@ -23,6 +23,9 @@ public partial class ShoppingListDetailPage : ContentPage
     // Page lifecycle cancellation token
     private CancellationTokenSource? _pageCts;
 
+    // Cancellation token for pending keyboard-lift operations
+    private CancellationTokenSource? _liftCts;
+
     private Guid _planIdGuid;
 
     public string? PlanId
@@ -399,9 +402,19 @@ public partial class ShoppingListDetailPage : ContentPage
     
     private async Task EnsureKeyboardSafeOffsetAsync(Element? source)
     {
+        // Cancel any prior pending lift so only the latest focused element drives the animation.
+        var prevCts = _liftCts;
+        _liftCts = new CancellationTokenSource();
+        prevCts?.Cancel();
+        prevCts?.Dispose();
+
         try
         {
-            await Task.Delay(80);
+            await Task.Delay(80, _liftCts.Token);
+
+            // If focus moved away during the delay, abort the lift.
+            if ((source as VisualElement)?.IsFocused != true)
+                return;
 
             var sourceY = GetElementYRelativeToPage(source);
             var pageHeight = Height;
@@ -418,6 +431,10 @@ public partial class ShoppingListDetailPage : ContentPage
 
             _isKeyboardLiftApplied = true;
             await ContentHost.TranslateTo(0, -KeyboardLiftOffset, 180, Easing.CubicOut);
+        }
+        catch (OperationCanceledException)
+        {
+            // A newer focus event superseded this one; nothing to do.
         }
         catch (Exception ex)
         {
