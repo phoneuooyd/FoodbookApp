@@ -1,47 +1,39 @@
 using Foodbook.Models;
+using Foodbook.Models.DTOs;
 
 namespace FoodbookApp.Interfaces;
 
-/// <summary>
-/// Service for synchronizing local data with Supabase cloud.
-/// Manages the sync queue, handles initial synchronization, and processes incremental changes.
-/// </summary>
-public interface ISupabaseSyncService
+public interface ISupabaseSyncService : IDisposable
 {
-    Task<SyncState?> GetSyncStateAsync(CancellationToken ct = default);
-    Task EnableCloudSyncAsync(SyncPriority priority = SyncPriority.Local, CancellationToken ct = default);
-    Task DisableCloudSyncAsync(CancellationToken ct = default);
-    Task<bool> IsCloudSyncEnabledAsync(CancellationToken ct = default);
-    Task QueueForSyncAsync<T>(T entity, SyncOperationType operation, CancellationToken ct = default) where T : class;
-    Task QueueBatchForSyncAsync<T>(IEnumerable<T> entities, SyncOperationType operation, CancellationToken ct = default) where T : class;
-    Task<bool> StartInitialSyncAsync(CancellationToken ct = default);
-    Task<SyncResult> ProcessQueueAsync(CancellationToken ct = default);
-    Task<SyncResult> ForceSyncAsync(CancellationToken ct = default);
-    Task<SyncResult> ForceSyncAllAsync(CancellationToken ct = default);
-    
-    /// <summary>
-    /// Forces immediate download of all cloud data to local database.
-    /// Designed for Cloud-First priority - overwrites local data with cloud data.
-    /// Returns count of imported entities.
-    /// </summary>
-    Task<SyncResult> ForceDownloadFromCloudAsync(CancellationToken ct = default);
-    
-    Task<int> GetPendingCountAsync(CancellationToken ct = default);
-    Task ClearFailedEntriesAsync(CancellationToken ct = default);
-    Task RetryFailedEntriesAsync(CancellationToken ct = default);
     event EventHandler<SyncStatusChangedEventArgs>? SyncStatusChanged;
     event EventHandler<SyncProgressEventArgs>? SyncProgressChanged;
-    
-    // User Preferences Sync
+
+    Task<SyncState?> GetSyncStateAsync(CancellationToken ct = default);
+    Task<bool> IsCloudSyncEnabledAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Enables cloud sync. First call performs smart merge (no user dialog needed).
+    /// Subsequent calls resume queue processing.
+    /// </summary>
+    Task EnableCloudSyncAsync(CancellationToken ct = default);
+    Task DisableCloudSyncAsync(CancellationToken ct = default);
+
+    Task QueueForSyncAsync<T>(T entity, SyncOperationType operation, CancellationToken ct = default) where T : class;
+    Task QueueBatchForSyncAsync<T>(IEnumerable<T> entities, SyncOperationType operation, CancellationToken ct = default) where T : class;
+
+    Task<SyncResult> ProcessQueueAsync(CancellationToken ct = default);
+    Task<SyncResult> ForceSyncAllAsync(CancellationToken ct = default);
+    Task<SyncResult> ForceDownloadFromCloudAsync(CancellationToken ct = default);
+
+    Task<int> GetPendingCountAsync(CancellationToken ct = default);
+    Task RetryFailedEntriesAsync(CancellationToken ct = default);
+    Task ClearFailedEntriesAsync(CancellationToken ct = default);
+
     Task<bool> LoadUserPreferencesFromCloudAsync(Guid userId, CancellationToken ct = default);
     Task SaveUserPreferencesToCloudAsync(Guid userId, CancellationToken ct = default);
-    Task CreateInitialUserPreferencesAsync(Guid userId, CancellationToken ct = default);
-    Task<bool> HasCloudPreferencesAsync(Guid userId, CancellationToken ct = default);
+    bool ApplyUserPreferencesFromSnapshot(UserPreferencesDto cloudPrefs);
 }
 
-/// <summary>
-/// Result of a sync operation
-/// </summary>
 public record SyncResult
 {
     public bool Success { get; init; }
@@ -67,9 +59,6 @@ public record SyncResult
     };
 }
 
-/// <summary>
-/// Event args for sync status changes
-/// </summary>
 public class SyncStatusChangedEventArgs : EventArgs
 {
     public SyncStatus OldStatus { get; init; }
@@ -77,9 +66,6 @@ public class SyncStatusChangedEventArgs : EventArgs
     public string? Message { get; init; }
 }
 
-/// <summary>
-/// Event args for sync progress updates
-/// </summary>
 public class SyncProgressEventArgs : EventArgs
 {
     public int TotalItems { get; init; }

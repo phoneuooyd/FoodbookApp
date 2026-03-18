@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:FoodbookApp.Localization"
              x:Class="Foodbook.Views.ProfilePage"
+             x:Name="RootPage"
              Title="{x:Static loc:ProfilePageResources.Title}"
              Shell.NavBarIsVisible="False"
              BackgroundColor="{DynamicResource PageBackgroundColor}">
@@ -101,6 +102,9 @@
                                 </Grid>
                                 <BoxView HeightRequest="1" BackgroundColor="{DynamicResource ProfileCardStrokeColor}" />
                                 <Grid Padding="14,12" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnOpenSyncQueueTapped" />
+                                    </Grid.GestureRecognizers>
                                     <Border WidthRequest="36" HeightRequest="36" BackgroundColor="{DynamicResource SegmentedContainerColor}" StrokeThickness="0" StrokeShape="RoundRectangle 10" VerticalOptions="Center">
                                         <Label Text="🔄" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center" />
                                     </Border>
@@ -231,6 +235,61 @@
                     </Border>
 
                     <Label Text="Anuluj subskrypcję" HorizontalTextAlignment="Center" FontSize="12" FontAttributes="Bold" TextColor="#FF5F6D" />
+                </VerticalStackLayout>
+            </ScrollView>
+        </Grid>
+
+        <!-- Sync queue details view -->
+        <Grid x:Name="SyncQueueDetailsView" IsVisible="False" RowDefinitions="Auto,*">
+            <Grid Grid.Row="0" Background="{DynamicResource AppHeroGradientBrush}" Padding="16,46,16,16" ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                <Border WidthRequest="34" HeightRequest="34" BackgroundColor="{DynamicResource AppHeroActionOverlayColor}" StrokeThickness="0" StrokeShape="RoundRectangle 17" VerticalOptions="Center">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnCloseSyncQueueTapped" />
+                    </Border.GestureRecognizers>
+                    <Label Text="‹" FontSize="18" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                    <Label Text="{x:Static loc:ProfilePageResources.SyncQueueTitle}" FontSize="20" FontAttributes="Bold" TextColor="White" />
+                    <Label Text="{x:Static loc:ProfilePageResources.SyncQueueSubtitle}" FontSize="13" TextColor="{DynamicResource AppHeroSubtitleTextColor}" />
+                </VerticalStackLayout>
+            </Grid>
+
+            <ScrollView Grid.Row="1">
+                <VerticalStackLayout Padding="16" Spacing="10">
+                    <Label Text="{x:Static loc:ProfilePageResources.SyncQueueRecentOperations}" Style="{StaticResource ProfileSectionLabel}" />
+
+                    <Border Style="{StaticResource ProfileCard}" Padding="14,12">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <Label x:Name="SyncQueueSummaryLabel"
+                                   Text="{x:Static loc:ProfilePageResources.SyncQueueLoading}"
+                                   FontSize="12"
+                                   TextColor="{DynamicResource SecondaryText}" />
+                            <Button Grid.Column="1"
+                                    Text="{x:Static loc:ProfilePageResources.SyncQueueRefresh}"
+                                    Clicked="OnRefreshSyncQueueClicked"
+                                    FontSize="12"
+                                    Padding="10,4"
+                                    BackgroundColor="{DynamicResource SegmentedContainerColor}"
+                                    TextColor="{DynamicResource FrameTextColor}" />
+                        </Grid>
+                    </Border>
+
+                    <CollectionView ItemsSource="{Binding Source={x:Reference RootPage}, Path=SyncQueueItems}"
+                                    SelectionMode="None"
+                                    EmptyView="{x:Static loc:ProfilePageResources.SyncQueueEmpty}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource ProfileCard}" Padding="12,10" Margin="0,0,0,8">
+                                    <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="4" ColumnSpacing="8">
+                                        <Label Text="{Binding Title}" FontSize="13" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" />
+                                        <Label Grid.Column="1" Text="{Binding StatusText}" FontSize="12" FontAttributes="Bold" TextColor="{Binding StatusColor}" HorizontalOptions="End" />
+                                        <Label Grid.Row="1" Text="{Binding Detail}" FontSize="11" TextColor="{Binding DetailColor}" LineBreakMode="WordWrap" />
+                                        <Label Grid.Row="1" Grid.Column="1" Text="{Binding CreatedText}" FontSize="10" TextColor="{DynamicResource SecondaryText}" HorizontalOptions="End" VerticalOptions="Start" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
                 </VerticalStackLayout>
             </ScrollView>
         </Grid>

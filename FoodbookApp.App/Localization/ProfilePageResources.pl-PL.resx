@@ -67,4 +67,26 @@
 	<data name="SyncOverlaySyncing" xml:space="preserve"><value>Synchronizacja danych...</value></data>
 	<data name="SyncOverlayDeduplicating" xml:space="preserve"><value>Usuwanie duplikatów...</value></data>
 	<data name="SyncOverlayFetching" xml:space="preserve"><value>Pobieranie danych z chmury...</value></data>
+
+	<data name="SyncQueueTitle" xml:space="preserve"><value>Kolejka synchronizacji</value></data>
+	<data name="SyncQueueSubtitle" xml:space="preserve"><value>Status operacji SyncQueue</value></data>
+	<data name="SyncQueueRecentOperations" xml:space="preserve"><value>Ostatnie operacje</value></data>
+	<data name="SyncQueueLoading" xml:space="preserve"><value>Ładowanie...</value></data>
+	<data name="SyncQueueRefresh" xml:space="preserve"><value>Odśwież</value></data>
+	<data name="SyncQueueEmpty" xml:space="preserve"><value>Brak wpisów w kolejce synchronizacji.</value></data>
+	<data name="SyncQueueLoginRequired" xml:space="preserve"><value>Zaloguj się, aby wyświetlić kolejkę synchronizacji.</value></data>
+	<data name="SyncQueueServiceUnavailable" xml:space="preserve"><value>Brak dostępu do usług aplikacji.</value></data>
+	<data name="SyncQueueAccountUnavailable" xml:space="preserve"><value>Brak dostępu do konta użytkownika.</value></data>
+	<data name="SyncQueueNoActiveAccount" xml:space="preserve"><value>Brak aktywnego konta.</value></data>
+	<data name="SyncQueueLoadError" xml:space="preserve"><value>Nie udało się pobrać kolejki synchronizacji.</value></data>
+	<data name="SyncQueueSummaryFormat" xml:space="preserve"><value>Łącznie: {0} · ⬆️ {1} · ⬇️ {2} · Sukces: {3} · Błędy: {4} · Oczekujące: {5}</value></data>
+	<data name="SyncQueueDetailErrorNoMessage" xml:space="preserve"><value>Operacja zakończona błędem</value></data>
+	<data name="SyncQueueDetailErrorFormat" xml:space="preserve"><value>Błąd: {0}</value></data>
+	<data name="SyncQueueDetailCompletedFormat" xml:space="preserve"><value>ID: {0}</value></data>
+	<data name="SyncQueueDetailInProgress" xml:space="preserve"><value>Operacja w trakcie synchronizacji</value></data>
+	<data name="SyncQueueDetailPending" xml:space="preserve"><value>Operacja oczekuje w kolejce</value></data>
+	<data name="SyncQueueStatusSuccess" xml:space="preserve"><value>Sukces</value></data>
+	<data name="SyncQueueStatusError" xml:space="preserve"><value>Błąd</value></data>
+	<data name="SyncQueueStatusInProgress" xml:space="preserve"><value>W trakcie</value></data>
+	<data name="SyncQueueStatusPending" xml:space="preserve"><value>Oczekuje</value></data>
 </root>

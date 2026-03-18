@@ -98,25 +98,30 @@ public class PlanService : IPlanService
     public async Task RemovePlanAsync(Guid id)
     {
         var plan = await _context.Plans.FindAsync(id);
-        if (plan != null)
-        {
-            _context.Plans.Remove(plan);
-            await _context.SaveChangesAsync();
+        if (plan == null) return;
 
-            // Queue for sync (Delete) - only for cleanup
-            // NOTE: In practice, plans are archived not deleted
-            if (_syncService != null)
+        var meals = await _context.PlannedMeals.Where(m => m.PlanId == id).ToListAsync();
+        var shoppingItems = await _context.ShoppingListItems.Where(i => i.PlanId == id).ToListAsync();
+
+        _context.PlannedMeals.RemoveRange(meals);
+        _context.ShoppingListItems.RemoveRange(shoppingItems);
+        _context.Plans.Remove(plan);
+        await _context.SaveChangesAsync();
+
+        if (_syncService != null)
+        {
+            try
             {
-                try
-                {
-                    var deleteEntity = new Plan { Id = id, Title = plan.Title };
-                    await _syncService.QueueForSyncAsync(deleteEntity, SyncOperationType.Delete);
-                    System.Diagnostics.Debug.WriteLine($"[PlanService] Queued plan {id} for Delete sync");
-                }
-                catch (Exception syncEx)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[PlanService] Failed to queue sync: {syncEx.Message}");
-                }
+                await _syncService.QueueForSyncAsync(new Plan { Id = id, Title = plan.Title }, SyncOperationType.Delete);
+                foreach (var meal in meals)
+                    await _syncService.QueueForSyncAsync(new PlannedMeal { Id = meal.Id }, SyncOperationType.Delete);
+                foreach (var item in shoppingItems)
+                    await _syncService.QueueForSyncAsync(new ShoppingListItem { Id = item.Id }, SyncOperationType.Delete);
+                System.Diagnostics.Debug.WriteLine($"[PlanService] Queued plan {id}, {meals.Count} meals and {shoppingItems.Count} shopping items for Delete sync");
+            }
+            catch (Exception syncEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PlanService] Failed to queue sync: {syncEx.Message}");
             }
         }
     }
