@@ -198,7 +198,7 @@ public class IngredientService : IIngredientService
                     InvalidateCache();
                     System.Diagnostics.Debug.WriteLine($"? Updated standalone ingredient: {ingredient.Name}, ID: {ingredient.Id}");
                     
-                    // ? KRYTYCZNE FIX: Wywo³aj event aby poinformowaæ subskrybentów
+                    // ? KRYTYCZNE FIX: Wywołaj event, aby poinformować subskrybentów
                     AppEvents.RaiseIngredientSaved(ingredient.Id);
                     System.Diagnostics.Debug.WriteLine($"[IngredientService] Raised IngredientSaved event for ID: {ingredient.Id}");
                     
