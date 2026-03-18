@@ -272,6 +272,11 @@
             <AutoGen>True</AutoGen>
             <DependentUpon>RecipesPageResources.resx</DependentUpon>
           </Compile>
+          <Compile Update="Localization\\PlannerListsPageResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>PlannerListsPageResources.resx</DependentUpon>
+          </Compile>
           <Compile Update="Localization\\ShoppingListDetailPageResources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
@@ -313,6 +318,10 @@
           <EmbeddedResource Update="Localization\\MealFormPageResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>MealFormPageResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
+          <EmbeddedResource Update="Localization\\PlannerListsPageResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>PlannerListsPageResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
           <EmbeddedResource Update="Localization\\PlannerPageResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
