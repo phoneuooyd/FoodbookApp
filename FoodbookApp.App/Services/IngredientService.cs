@@ -76,7 +76,7 @@ public class IngredientService : IIngredientService
     }
 
     /// <summary>
-    /// ? NOWA METODA: Szybkie pobieranie tylko nazw sk³adników (lightweight)
+    /// ? NOWA METODA: Szybkie pobieranie tylko nazw składników (lightweight)
     /// </summary>
     public async Task<List<string>> GetIngredientNamesAsync()
     {
@@ -93,7 +93,7 @@ public class IngredientService : IIngredientService
 
             System.Diagnostics.Debug.WriteLine("?? [IngredientService] Loading ingredient names from database...");
 
-            // ? KRYTYCZNA OPTYMALIZACJA: Pobierz TYLKO nazwy bez ca³ych obiektów
+            // ? KRYTYCZNA OPTYMALIZACJA: Pobierz TYLKO nazwy bez całych obiektów
             var names = await _context.Ingredients
                 .AsNoTracking()
                 .Where(i => i.RecipeId == null)
@@ -155,7 +155,7 @@ public class IngredientService : IIngredientService
                 InvalidateCache();
                 System.Diagnostics.Debug.WriteLine($"? Added standalone ingredient: {ingredient.Name}, ID: {ingredient.Id}");
                 
-                // ? KRYTYCZNE FIX: Wywo³aj event aby poinformowaæ subskrybentów (IngredientsPage, AddRecipePage)
+                // ? KRYTYCZNE FIX: Wywołaj event, aby poinformować subskrybentów (IngredientsPage, AddRecipePage)
                 AppEvents.RaiseIngredientSaved(ingredient.Id);
                 System.Diagnostics.Debug.WriteLine($"[IngredientService] Raised IngredientSaved event for ID: {ingredient.Id}");
             }
@@ -198,7 +198,7 @@ public class IngredientService : IIngredientService
                     InvalidateCache();
                     System.Diagnostics.Debug.WriteLine($"? Updated standalone ingredient: {ingredient.Name}, ID: {ingredient.Id}");
                     
-                    // ? KRYTYCZNE FIX: Wywo³aj event aby poinformowaæ subskrybentów
+                    // ? KRYTYCZNE FIX: Wywołaj event, aby poinformować subskrybentów
                     AppEvents.RaiseIngredientSaved(ingredient.Id);
                     System.Diagnostics.Debug.WriteLine($"[IngredientService] Raised IngredientSaved event for ID: {ingredient.Id}");
                     

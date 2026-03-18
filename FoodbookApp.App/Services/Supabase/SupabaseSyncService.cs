@@ -7,6 +7,7 @@ using Foodbook.Services;
 using FoodbookApp.Interfaces;
 using FoodbookApp.Services.Auth;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FoodbookApp.Services.Supabase;
 
@@ -681,9 +682,16 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
     {
         int processed = 0, failed = 0;
 
+        // Group only INSERT operations for batch upsert processing.
         var upsertGroups = batch
-            .Where(e => e.OperationType != SyncOperationType.Delete && !string.IsNullOrEmpty(e.Payload))
+            .Where(e => e.OperationType == SyncOperationType.Insert && !string.IsNullOrEmpty(e.Payload))
             .GroupBy(e => e.EntityType)
+            .ToList();
+
+        // Process UPDATE operations individually to preserve correct semantics and
+        // avoid sending updates through insert-only batch endpoints.
+        var updateEntries = batch
+            .Where(e => e.OperationType == SyncOperationType.Update && !string.IsNullOrEmpty(e.Payload))
             .ToList();
 
         var deleteGroups = batch
@@ -749,6 +757,33 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                         failed++;
                     }
                 }
+            }
+        }
+
+        // ── UPDATES (per-entry) ────────────────────────────────────────────────
+        foreach (var entry in updateEntries)
+        {
+            ct.ThrowIfCancellationRequested();
+            try
+            {
+                await ProcessSingleEntryAsync(crud, entry, ct);
+                entry.Status = SyncEntryStatus.Completed;
+                entry.SyncedUtc = DateTime.UtcNow;
+                entry.LastError = null;
+                processed++;
+            }
+            catch (Exception ex)
+            {
+                entry.RetryCount++;
+                entry.LastError = ex.Message;
+                entry.Status = entry.RetryCount >= MaxRetryCount
+                    ? SyncEntryStatus.Abandoned
+                    : SyncEntryStatus.Failed;
+                failed++;
+                Log($"Update {entry.EntityType} {entry.EntityId} failed: {ex.Message}");
+
+                if (IsFatalError(ex.Message))
+                    return (processed, failed, ex.Message);
             }
         }
 
