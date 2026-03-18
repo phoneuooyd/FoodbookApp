@@ -27,6 +27,9 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
     public static readonly BindableProperty PlaceholderTextProperty = 
         BindableProperty.Create(nameof(PlaceholderText), typeof(string), typeof(FolderAwarePickerComponent), "Select recipe...", propertyChanged: OnPlaceholderChanged);
 
+    public static readonly BindableProperty TextFontSizeProperty =
+        BindableProperty.Create(nameof(TextFontSize), typeof(double), typeof(FolderAwarePickerComponent), 14d);
+
     public ICommand OpenSelectionDialogCommand { get; }
     public ICommand ShowRecipeDetailsCommand { get; }
 
@@ -43,6 +46,12 @@ public partial class FolderAwarePickerComponent : ContentView, INotifyPropertyCh
     {
         get => (string)GetValue(PlaceholderTextProperty);
         set => SetValue(PlaceholderTextProperty, value);
+    }
+
+    public double TextFontSize
+    {
+        get => (double)GetValue(TextFontSizeProperty);
+        set => SetValue(TextFontSizeProperty, value);
     }
 
     public string DisplayText => SelectedRecipe?.Name ?? PlaceholderText;

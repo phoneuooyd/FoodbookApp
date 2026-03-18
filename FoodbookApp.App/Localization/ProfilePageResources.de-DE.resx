@@ -8,6 +8,7 @@
   <data name="Title" xml:space="preserve"><value>Profil</value></data>
   <data name="HeaderTitle" xml:space="preserve"><value>Profil</value></data>
   <data name="HeaderSubtitle" xml:space="preserve"><value>Melden Sie sich bei Supabase an</value></data>
+  <data name="HeroGuestInstruction" xml:space="preserve"><value>Melden Sie sich an oder erstellen Sie ein Konto, um Ihr Profil zu konfigurieren</value></data>
 
   <data name="LoginPanelTitle" xml:space="preserve"><value>Anmelden</value></data>
   <data name="EmailLabel" xml:space="preserve"><value>E-Mail</value></data>
@@ -47,4 +48,25 @@
   <data name="GenericErrorTitle" xml:space="preserve"><value>Fehler</value></data>
 
   <data name="SyncStatusFormat" xml:space="preserve"><value>Status: {0}, Ausstehend: {1}</value></data>
+  <data name="SyncQueueTitle" xml:space="preserve"><value>Synchronisierungswarteschlange</value></data>
+  <data name="SyncQueueSubtitle" xml:space="preserve"><value>Status der SyncQueue-Vorgänge</value></data>
+  <data name="SyncQueueRecentOperations" xml:space="preserve"><value>Letzte Vorgänge</value></data>
+  <data name="SyncQueueLoading" xml:space="preserve"><value>Wird geladen...</value></data>
+  <data name="SyncQueueRefresh" xml:space="preserve"><value>Aktualisieren</value></data>
+  <data name="SyncQueueEmpty" xml:space="preserve"><value>Keine Einträge in der Synchronisierungswarteschlange.</value></data>
+  <data name="SyncQueueLoginRequired" xml:space="preserve"><value>Melden Sie sich an, um die Synchronisierungswarteschlange anzuzeigen.</value></data>
+  <data name="SyncQueueServiceUnavailable" xml:space="preserve"><value>Anwendungsdienste sind nicht verfügbar.</value></data>
+  <data name="SyncQueueAccountUnavailable" xml:space="preserve"><value>Kontodienst ist nicht verfügbar.</value></data>
+  <data name="SyncQueueNoActiveAccount" xml:space="preserve"><value>Kein aktives Konto.</value></data>
+  <data name="SyncQueueLoadError" xml:space="preserve"><value>Synchronisierungswarteschlange konnte nicht geladen werden.</value></data>
+  <data name="SyncQueueSummaryFormat" xml:space="preserve"><value>Insgesamt: {0} · ⬆️ {1} · ⬇️ {2} · Erfolg: {3} · Fehler: {4} · Ausstehend: {5}</value></data>
+  <data name="SyncQueueDetailErrorNoMessage" xml:space="preserve"><value>Vorgang fehlgeschlagen</value></data>
+  <data name="SyncQueueDetailErrorFormat" xml:space="preserve"><value>Fehler: {0}</value></data>
+  <data name="SyncQueueDetailCompletedFormat" xml:space="preserve"><value>ID: {0}</value></data>
+  <data name="SyncQueueDetailInProgress" xml:space="preserve"><value>Vorgang läuft</value></data>
+  <data name="SyncQueueDetailPending" xml:space="preserve"><value>Vorgang wartet in der Warteschlange</value></data>
+  <data name="SyncQueueStatusSuccess" xml:space="preserve"><value>Erfolg</value></data>
+  <data name="SyncQueueStatusError" xml:space="preserve"><value>Fehler</value></data>
+  <data name="SyncQueueStatusInProgress" xml:space="preserve"><value>In Bearbeitung</value></data>
+  <data name="SyncQueueStatusPending" xml:space="preserve"><value>Ausstehend</value></data>
 </root>

@@ -17,6 +17,9 @@ namespace Foodbook.Views.Components
         public static readonly BindableProperty IsVisibleProperty =
             BindableProperty.Create(nameof(IsVisible), typeof(bool), typeof(ModernSearchBarComponent), true);
 
+        public static readonly BindableProperty SearchBarMarginProperty =
+            BindableProperty.Create(nameof(SearchBarMargin), typeof(Thickness), typeof(ModernSearchBarComponent), new Thickness(15, 10));
+
         private readonly PageThemeHelper _themeHelper;
 
         public string SearchText
@@ -41,6 +44,12 @@ namespace Foodbook.Views.Components
         {
             get => (bool)GetValue(IsVisibleProperty);
             set => SetValue(IsVisibleProperty, value);
+        }
+
+        public Thickness SearchBarMargin
+        {
+            get => (Thickness)GetValue(SearchBarMarginProperty);
+            set => SetValue(SearchBarMarginProperty, value);
         }
 
         public ModernSearchBarComponent()

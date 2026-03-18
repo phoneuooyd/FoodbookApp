@@ -105,25 +105,17 @@ public sealed class AccountService : IAccountService
             try
             {
                 // Apply saved cloud sync preference if present
-                var storageKey = $"cloudsync.choice:{account.Id:N}";
+                var storageKey = $"cloudsync.enabled:{account.Id:N}";
                 var saved = await SecureStorage.GetAsync(storageKey);
-                if (!string.IsNullOrWhiteSpace(saved))
+                if (saved == "true")
                 {
-                    if (saved == "cloud")
-                    {
-                        System.Diagnostics.Debug.WriteLine("[AccountService] Applying saved sync preference: cloud-first");
-                        await _syncService.EnableCloudSyncAsync(Foodbook.Models.SyncPriority.Cloud, ct);
-                    }
-                    else if (saved == "local")
-                    {
-                        System.Diagnostics.Debug.WriteLine("[AccountService] Applying saved sync preference: local-first");
-                        await _syncService.EnableCloudSyncAsync(Foodbook.Models.SyncPriority.Local, ct);
-                    }
-                    else if (saved == "disabled")
-                    {
-                        System.Diagnostics.Debug.WriteLine("[AccountService] Saved sync preference: disabled - ensuring cloud sync is disabled");
-                        await _syncService.DisableCloudSyncAsync(ct);
-                    }
+                    System.Diagnostics.Debug.WriteLine("[AccountService] Applying saved sync preference: enabled");
+                    await _syncService.EnableCloudSyncAsync(ct);
+                }
+                else if (saved == "false")
+                {
+                    System.Diagnostics.Debug.WriteLine("[AccountService] Applying saved sync preference: disabled");
+                    await _syncService.DisableCloudSyncAsync(ct);
                 }
                 else
                 {

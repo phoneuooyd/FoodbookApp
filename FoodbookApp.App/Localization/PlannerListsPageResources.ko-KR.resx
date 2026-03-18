@@ -126,4 +126,64 @@
   <data name="PlannerTitle" xml:space="preserve">
     <value>기획자</value>
   </data>
+  <data name="PlansTabTitle" xml:space="preserve">
+    <value>플랜</value>
+  </data>
+  <data name="FoodbooksTabTitle" xml:space="preserve">
+    <value>Foodbooks</value>
+  </data>
+  <data name="FoodbooksEmptyTitle" xml:space="preserve">
+    <value>Foodbook 없음</value>
+  </data>
+  <data name="FoodbooksEmptyHint" xml:space="preserve">
+    <value>+ 버튼으로 새 Foodbook을 만드세요</value>
+  </data>
+  <data name="ArchiveDialogTitle" xml:space="preserve">
+    <value>보관</value>
+  </data>
+  <data name="ArchiveFoodbookConfirmMessage" xml:space="preserve">
+    <value>이 Foodbook을 정말 보관하시겠습니까?</value>
+  </data>
+  <data name="ArchivePlanConfirmMessage" xml:space="preserve">
+    <value>이 플래너를 정말 보관하시겠습니까?</value>
+  </data>
+  <data name="ApplyFoodbookPromptTitle" xml:space="preserve">
+    <value>Foodbook 적용</value>
+  </data>
+  <data name="ApplyFoodbookPromptMessage" xml:space="preserve">
+    <value>시작 날짜를 입력하세요 (yyyy-MM-dd)</value>
+  </data>
+  <data name="Apply" xml:space="preserve">
+    <value>적용</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>취소</value>
+  </data>
+  <data name="ErrorTitle" xml:space="preserve">
+    <value>오류</value>
+  </data>
+  <data name="InvalidDateFormatMessage" xml:space="preserve">
+    <value>잘못된 날짜 형식입니다.</value>
+  </data>
+  <data name="OverlapDialogTitle" xml:space="preserve">
+    <value>일정 겹침</value>
+  </data>
+  <data name="OverlapDialogMessage" xml:space="preserve">
+    <value>선택한 기간에 이미 플래너가 있습니다. 계속하시겠습니까?</value>
+  </data>
+  <data name="DoneTitle" xml:space="preserve">
+    <value>완료</value>
+  </data>
+  <data name="ApplyFoodbookSuccessMessage" xml:space="preserve">
+    <value>Foodbook이 새 플래너로 적용되었습니다.</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>예</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>아니요</value>
+  </data>
+  <data name="OK" xml:space="preserve">
+    <value>확인</value>
+  </data>
 </root>

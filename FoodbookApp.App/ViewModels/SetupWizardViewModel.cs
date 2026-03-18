@@ -24,7 +24,7 @@ public class SetupWizardViewModel : INotifyPropertyChanged
     private bool _installBasicIngredients = true;
     private bool _isCompleting;
     private string _statusMessage = string.Empty;
-    private SetupWizardStep _currentStep = SetupWizardStep.LanguageAndIngredients;
+    private SetupWizardStep _currentStep = SetupWizardStep.Language;
     private bool _isGuestMode;
     private string _selectedPlanChoice = string.Empty;
     private AppTheme _selectedTheme;
@@ -62,6 +62,12 @@ public class SetupWizardViewModel : INotifyPropertyChanged
         InitializeAppearanceSettings();
         InstallBasicIngredients = _preferencesService.GetInstallBasicIngredients();
 
+        SelectInstallBasicIngredientsCommand = new Command(() => InstallBasicIngredients = true);
+        SelectSkipBasicIngredientsCommand = new Command(() => InstallBasicIngredients = false);
+        SelectLanguageCommand = new Command<LanguageOption>(SelectLanguage);
+        SelectDarkThemeCommand = new Command(() => SelectedTheme = AppTheme.Dark);
+        SelectLightThemeCommand = new Command(() => SelectedTheme = AppTheme.Light);
+
         NextStepCommand = new Command(MoveToNextStep, () => !IsCompleting && CanMoveToNextStep);
         PreviousStepCommand = new Command(MoveToPreviousStep, () => CanGoBack);
         SelectFreePlanCommand = new Command(() => SelectPlan("Free"), () => !IsCompleting);
@@ -82,24 +88,95 @@ public class SetupWizardViewModel : INotifyPropertyChanged
             if (_currentStep == value) return;
             _currentStep = value;
             OnPropertyChanged();
-            OnPropertyChanged(nameof(IsLanguageIngredientsStep));
+            OnPropertyChanged(nameof(IsLanguageStep));
+            OnPropertyChanged(nameof(IsIngredientsStep));
             OnPropertyChanged(nameof(IsAppearanceStep));
             OnPropertyChanged(nameof(IsLoginStep));
             OnPropertyChanged(nameof(IsPlanSelectionStep));
             OnPropertyChanged(nameof(CanGoBack));
             OnPropertyChanged(nameof(CanMoveToNextStep));
+            OnPropertyChanged(nameof(CurrentStepIndex));
+            OnPropertyChanged(nameof(CurrentStepLabel));
+            OnPropertyChanged(nameof(CurrentStepTitle));
+            OnPropertyChanged(nameof(CurrentStepSubtitle));
+            OnPropertyChanged(nameof(IsStep1Active));
+            OnPropertyChanged(nameof(IsStep2Active));
+            OnPropertyChanged(nameof(IsStep3Active));
+            OnPropertyChanged(nameof(IsStep4Active));
+            OnPropertyChanged(nameof(IsStep5Active));
+            OnPropertyChanged(nameof(IsStep1Completed));
+            OnPropertyChanged(nameof(IsStep2Completed));
+            OnPropertyChanged(nameof(IsStep3Completed));
+            OnPropertyChanged(nameof(IsStep4Completed));
+            OnPropertyChanged(nameof(IsStep5Completed));
             ((Command)PreviousStepCommand).ChangeCanExecute();
             ((Command)NextStepCommand).ChangeCanExecute();
         }
     }
 
-    public bool IsLanguageIngredientsStep => CurrentStep == SetupWizardStep.LanguageAndIngredients;
+    public int CurrentStepIndex => CurrentStep switch
+    {
+        SetupWizardStep.Language => 0,
+        SetupWizardStep.Ingredients => 1,
+        SetupWizardStep.Appearance => 2,
+        SetupWizardStep.Login => 3,
+        SetupWizardStep.PlanSelection => 4,
+        _ => 0
+    };
+
+    public string CurrentStepLabel => CurrentStep switch
+    {
+        SetupWizardStep.Language => _localizationService.GetString("SetupWizardPageResources", "Step1Label"),
+        SetupWizardStep.Ingredients => _localizationService.GetString("SetupWizardPageResources", "Step2Label"),
+        SetupWizardStep.Appearance => _localizationService.GetString("SetupWizardPageResources", "Step3Label"),
+        SetupWizardStep.Login => _localizationService.GetString("SetupWizardPageResources", "Step4Label"),
+        SetupWizardStep.PlanSelection => _localizationService.GetString("SetupWizardPageResources", "Step5Label"),
+        _ => string.Empty
+    };
+
+    public string CurrentStepTitle => CurrentStep switch
+    {
+        SetupWizardStep.Language => _localizationService.GetString("SetupWizardPageResources", "Step1Title"),
+        SetupWizardStep.Ingredients => _localizationService.GetString("SetupWizardPageResources", "Step2Title"),
+        SetupWizardStep.Appearance => _localizationService.GetString("SetupWizardPageResources", "Step3Title"),
+        SetupWizardStep.Login => _localizationService.GetString("SetupWizardPageResources", "Step4Title"),
+        SetupWizardStep.PlanSelection => _localizationService.GetString("SetupWizardPageResources", "Step5Title"),
+        _ => string.Empty
+    };
+
+    public string CurrentStepSubtitle => CurrentStep switch
+    {
+        SetupWizardStep.Language => _localizationService.GetString("SetupWizardPageResources", "Step1Subtitle"),
+        SetupWizardStep.Ingredients => _localizationService.GetString("SetupWizardPageResources", "Step2Subtitle"),
+        SetupWizardStep.Appearance => _localizationService.GetString("SetupWizardPageResources", "Step3Subtitle"),
+        SetupWizardStep.Login => _localizationService.GetString("SetupWizardPageResources", "Step4Subtitle"),
+        SetupWizardStep.PlanSelection => _localizationService.GetString("SetupWizardPageResources", "Step5Subtitle"),
+        _ => string.Empty
+    };
+
+    public bool IsStep1Active => CurrentStepIndex == 0;
+    public bool IsStep2Active => CurrentStepIndex == 1;
+    public bool IsStep3Active => CurrentStepIndex == 2;
+    public bool IsStep4Active => CurrentStepIndex == 3;
+    public bool IsStep5Active => CurrentStepIndex == 4;
+
+    public bool IsStep1Completed => CurrentStepIndex > 0;
+    public bool IsStep2Completed => CurrentStepIndex > 1;
+    public bool IsStep3Completed => CurrentStepIndex > 2;
+    public bool IsStep4Completed => CurrentStepIndex > 3;
+    public bool IsStep5Completed => CurrentStepIndex > 4;
+
+    public bool IsLanguageStep => CurrentStep == SetupWizardStep.Language;
+    public bool IsIngredientsStep => CurrentStep == SetupWizardStep.Ingredients;
     public bool IsAppearanceStep => CurrentStep == SetupWizardStep.Appearance;
     public bool IsLoginStep => CurrentStep == SetupWizardStep.Login;
     public bool IsPlanSelectionStep => CurrentStep == SetupWizardStep.PlanSelection;
-    public bool CanGoBack => !IsCompleting && CurrentStep != SetupWizardStep.LanguageAndIngredients;
-    public bool CanMoveToNextStep => CurrentStep is SetupWizardStep.LanguageAndIngredients or SetupWizardStep.Appearance;
+    public bool CanGoBack => !IsCompleting && CurrentStep != SetupWizardStep.Language;
+    public bool CanMoveToNextStep => CurrentStep is SetupWizardStep.Language or SetupWizardStep.Ingredients or SetupWizardStep.Appearance;
     public bool CanCompleteSetup => !IsCompleting && !string.IsNullOrWhiteSpace(SelectedPlanChoice);
+
+    public bool IsDarkThemeSelected => SelectedTheme == AppTheme.Dark;
+    public bool IsLightThemeSelected => SelectedTheme == AppTheme.Light;
 
     public bool IsGuestMode
     {
@@ -148,6 +225,7 @@ public class SetupWizardViewModel : INotifyPropertyChanged
             {
                 _selectedLanguage = value;
                 OnPropertyChanged();
+                ApplyLanguageSelection(_selectedLanguage);
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
                     try
@@ -171,6 +249,8 @@ public class SetupWizardViewModel : INotifyPropertyChanged
             if (_selectedTheme == value) return;
             _selectedTheme = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(IsDarkThemeSelected));
+            OnPropertyChanged(nameof(IsLightThemeSelected));
             _themeService.SetTheme(_selectedTheme);
         }
     }
@@ -227,6 +307,11 @@ public class SetupWizardViewModel : INotifyPropertyChanged
         }
     }
 
+    public ICommand SelectInstallBasicIngredientsCommand { get; }
+    public ICommand SelectSkipBasicIngredientsCommand { get; }
+    public ICommand SelectLanguageCommand { get; }
+    public ICommand SelectDarkThemeCommand { get; }
+    public ICommand SelectLightThemeCommand { get; }
     public ICommand NextStepCommand { get; }
     public ICommand PreviousStepCommand { get; }
     public ICommand SelectFreePlanCommand { get; }
@@ -234,17 +319,39 @@ public class SetupWizardViewModel : INotifyPropertyChanged
     public ICommand CompleteSetupCommand { get; }
 
     private void OnLocalizationManagerPropertyChanged(object? sender, PropertyChangedEventArgs e)
-        => OnPropertyChanged(string.Empty);
+    {
+        OnPropertyChanged(string.Empty);
+        OnPropertyChanged(nameof(CurrentStepLabel));
+        OnPropertyChanged(nameof(CurrentStepTitle));
+        OnPropertyChanged(nameof(CurrentStepSubtitle));
+    }
 
     private void MoveToNextStep()
     {
         CurrentStep = CurrentStep switch
         {
-            SetupWizardStep.LanguageAndIngredients => SetupWizardStep.Appearance,
+            SetupWizardStep.Language => SetupWizardStep.Ingredients,
+            SetupWizardStep.Ingredients => SetupWizardStep.Appearance,
             SetupWizardStep.Appearance => SetupWizardStep.Login,
             SetupWizardStep.Login => SetupWizardStep.PlanSelection,
             _ => SetupWizardStep.PlanSelection
         };
+    }
+
+    private void SelectLanguage(LanguageOption? option)
+    {
+        if (option == null)
+            return;
+
+        SelectedLanguage = option;
+    }
+
+    private void ApplyLanguageSelection(LanguageOption selected)
+    {
+        foreach (var language in AvailableLanguages)
+        {
+            language.IsSelected = ReferenceEquals(language, selected);
+        }
     }
 
     public void MoveToPreviousStep()
@@ -254,10 +361,11 @@ public class SetupWizardViewModel : INotifyPropertyChanged
 
         CurrentStep = CurrentStep switch
         {
-            SetupWizardStep.Appearance => SetupWizardStep.LanguageAndIngredients,
+            SetupWizardStep.Ingredients => SetupWizardStep.Language,
+            SetupWizardStep.Appearance => SetupWizardStep.Ingredients,
             SetupWizardStep.Login => SetupWizardStep.Appearance,
             SetupWizardStep.PlanSelection => SetupWizardStep.Login,
-            _ => SetupWizardStep.LanguageAndIngredients
+            _ => SetupWizardStep.Language
         };
     }
 
@@ -278,13 +386,13 @@ public class SetupWizardViewModel : INotifyPropertyChanged
             {
                 var languageOption = culture switch
                 {
-                    "en" => new LanguageOption { CultureCode = "en", DisplayName = "English", NativeName = "English" },
-                    "pl-PL" => new LanguageOption { CultureCode = "pl-PL", DisplayName = "Polish", NativeName = "Polski" },
-                    "de-DE" => new LanguageOption { CultureCode = "de-DE", DisplayName = "German", NativeName = "Deutsch" },
-                    "es-ES" => new LanguageOption { CultureCode = "es-ES", DisplayName = "Spanish", NativeName = "Español" },
-                    "fr-FR" => new LanguageOption { CultureCode = "fr-FR", DisplayName = "French", NativeName = "Français" },
-                    "ko-KR" => new LanguageOption { CultureCode = "ko-KR", DisplayName = "Korean", NativeName = "한국어" },
-                    _ => new LanguageOption { CultureCode = culture, DisplayName = culture, NativeName = culture }
+                    "en" => new LanguageOption { CultureCode = "en", DisplayName = "English", NativeName = "English", CountryName = "United Kingdom", FlagEmoji = "🇬🇧" },
+                    "pl-PL" => new LanguageOption { CultureCode = "pl-PL", DisplayName = "Polish", NativeName = "Polski", CountryName = "Polska", FlagEmoji = "🇵🇱" },
+                    "de-DE" => new LanguageOption { CultureCode = "de-DE", DisplayName = "German", NativeName = "Deutsch", CountryName = "Deutschland", FlagEmoji = "🇩🇪" },
+                    "es-ES" => new LanguageOption { CultureCode = "es-ES", DisplayName = "Spanish", NativeName = "Español", CountryName = "España", FlagEmoji = "🇪🇸" },
+                    "fr-FR" => new LanguageOption { CultureCode = "fr-FR", DisplayName = "French", NativeName = "Français", CountryName = "France", FlagEmoji = "🇫🇷" },
+                    "ko-KR" => new LanguageOption { CultureCode = "ko-KR", DisplayName = "Korean", NativeName = "한국어", CountryName = "대한민국", FlagEmoji = "🇰🇷" },
+                    _ => new LanguageOption { CultureCode = culture, DisplayName = culture, NativeName = culture, CountryName = culture, FlagEmoji = "🌐" }
                 };
 
                 AvailableLanguages.Add(languageOption);
@@ -305,7 +413,7 @@ public class SetupWizardViewModel : INotifyPropertyChanged
         {
             if (!AvailableLanguages.Any())
             {
-                AvailableLanguages.Add(new LanguageOption { CultureCode = "en", DisplayName = "English", NativeName = "English" });
+                AvailableLanguages.Add(new LanguageOption { CultureCode = "en", DisplayName = "English", NativeName = "English", CountryName = "United Kingdom", FlagEmoji = "🇬🇧", IsSelected = true });
                 SelectedLanguage = AvailableLanguages.First();
             }
         }
@@ -313,17 +421,19 @@ public class SetupWizardViewModel : INotifyPropertyChanged
 
     private void InitializeAppearanceSettings()
     {
-        foreach (var theme in Enum.GetValues<AppTheme>())
-        {
-            AvailableThemes.Add(theme);
-        }
+        AvailableThemes.Add(AppTheme.Dark);
+        AvailableThemes.Add(AppTheme.Light);
 
         foreach (var fontFamily in _fontService.GetAvailableFontFamilies())
         {
             AvailableFontFamilies.Add(fontFamily);
         }
 
-        SelectedTheme = _preferencesService.GetSavedTheme();
+        var savedTheme = _preferencesService.GetSavedTheme();
+        SelectedTheme = savedTheme is AppTheme.Dark or AppTheme.Light
+            ? savedTheme
+            : AppTheme.Dark;
+
         SelectedFontFamily = _preferencesService.GetSavedFontFamily();
     }
 
@@ -407,17 +517,34 @@ public class SetupWizardViewModel : INotifyPropertyChanged
 
 public enum SetupWizardStep
 {
-    LanguageAndIngredients,
+    Language,
+    Ingredients,
     Appearance,
     Login,
     PlanSelection
 }
 
-public class LanguageOption
+public class LanguageOption : INotifyPropertyChanged
 {
     public string CultureCode { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public string NativeName { get; set; } = string.Empty;
+    public string CountryName { get; set; } = string.Empty;
+    public string FlagEmoji { get; set; } = "🌐";
+
+    private bool _isSelected;
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            if (_isSelected == value) return;
+            _isSelected = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
+        }
+    }
 
     public override string ToString() => NativeName;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
 }

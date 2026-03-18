@@ -5,6 +5,7 @@
              xmlns:loc="clr-namespace:Foodbook.Services"
              xmlns:views="clr-namespace:Foodbook.Views"
              xmlns:converters="clr-namespace:Foodbook.Converters"
+             xmlns:controls="clr-namespace:Foodbook.Views.Components"
              x:Class="Foodbook.Views.SetupWizardPage"
              x:Name="SetupWizardRoot"
              x:DataType="vm:SetupWizardViewModel"
@@ -14,120 +15,158 @@
 
     <ContentPage.Resources>
         <ResourceDictionary>
-            <converters:CultureCodeToNativeNameConverter x:Key="CultureCodeToNativeNameConverter" />
             <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <converters:StringIsNotNullOrEmptyConverter x:Key="StringIsNotNullOrEmptyConverter" />
-            <converters:AppThemeToLocalizedStringConverter x:Key="AppThemeToLocalizedStringConverter" />
             <converters:FontFamilyToLocalizedStringConverter x:Key="FontFamilyToLocalizedStringConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <ScrollView Padding="20">
-        <VerticalStackLayout Spacing="20">
-            <VerticalStackLayout Spacing="8" Margin="0,4,0,0">
-                <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=HeaderTitle}"
-                       FontSize="30"
-                       FontAttributes="Bold"
-                       HorizontalOptions="Center"
-                       HorizontalTextAlignment="Center"
-                       TextColor="{DynamicResource Primary}" />
-                <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=HeaderSubtitle}"
-                       HorizontalOptions="Center"
-                       HorizontalTextAlignment="Center" />
+    <Grid RowDefinitions="Auto,Auto,*" RowSpacing="0">
+        <Border Grid.Row="0" StrokeThickness="0" Padding="24,56,24,24" Background="{DynamicResource WizardHeaderGradientBrush}">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="0,0,24,24" />
+            </Border.StrokeShape>
+            <VerticalStackLayout Spacing="6">
+                <Label Text="{Binding CurrentStepLabel}" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource WizardHeaderEyebrowColor}" />
+                <Label Text="{Binding CurrentStepTitle}" FontSize="30" FontAttributes="Bold" TextColor="White" />
+                <Label Text="{Binding CurrentStepSubtitle}" FontSize="14" TextColor="{DynamicResource WizardHeaderSubtitleColor}" />
             </VerticalStackLayout>
+        </Border>
 
-            <VerticalStackLayout IsVisible="{Binding IsLanguageIngredientsStep}"
-                                 Spacing="12">
-                <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
-                       BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
-                       CornerRadius="10"
-                       Padding="20">
-                    <VerticalStackLayout Spacing="15">
-                        <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=LanguageSectionTitle}"
-                               FontSize="20"
-                               FontAttributes="Bold"
-                               TextColor="{DynamicResource Primary}" />
-                        <Picker ItemsSource="{Binding AvailableLanguages}"
-                                SelectedItem="{Binding SelectedLanguage}"
-                                ItemDisplayBinding="{Binding CultureCode, Converter={StaticResource CultureCodeToNativeNameConverter}}" />
+        <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,*" Padding="20,14,20,8" ColumnSpacing="6">
+            <Border Grid.Column="0" HeightRequest="6" StrokeThickness="0" BackgroundColor="{DynamicResource WizardTrackInactiveColor}" Opacity="0.22"><Border.StrokeShape><RoundRectangle CornerRadius="3" /></Border.StrokeShape><Border.Triggers><DataTrigger TargetType="Border" Binding="{Binding IsStep1Completed}" Value="True"><Setter Property="BackgroundColor" Value="{DynamicResource Primary}" /><Setter Property="Opacity" Value="1" /></DataTrigger><DataTrigger TargetType="Border" Binding="{Binding IsStep1Active}" Value="True"><Setter Property="BackgroundColor" Value="White" /><Setter Property="Opacity" Value="1" /></DataTrigger></Border.Triggers></Border>
+            <Border Grid.Column="1" HeightRequest="6" StrokeThickness="0" BackgroundColor="{DynamicResource WizardTrackInactiveColor}" Opacity="0.22"><Border.StrokeShape><RoundRectangle CornerRadius="3" /></Border.StrokeShape><Border.Triggers><DataTrigger TargetType="Border" Binding="{Binding IsStep2Completed}" Value="True"><Setter Property="BackgroundColor" Value="{DynamicResource Primary}" /><Setter Property="Opacity" Value="1" /></DataTrigger><DataTrigger TargetType="Border" Binding="{Binding IsStep2Active}" Value="True"><Setter Property="BackgroundColor" Value="White" /><Setter Property="Opacity" Value="1" /></DataTrigger></Border.Triggers></Border>
+            <Border Grid.Column="2" HeightRequest="6" StrokeThickness="0" BackgroundColor="{DynamicResource WizardTrackInactiveColor}" Opacity="0.22"><Border.StrokeShape><RoundRectangle CornerRadius="3" /></Border.StrokeShape><Border.Triggers><DataTrigger TargetType="Border" Binding="{Binding IsStep3Completed}" Value="True"><Setter Property="BackgroundColor" Value="{DynamicResource Primary}" /><Setter Property="Opacity" Value="1" /></DataTrigger><DataTrigger TargetType="Border" Binding="{Binding IsStep3Active}" Value="True"><Setter Property="BackgroundColor" Value="White" /><Setter Property="Opacity" Value="1" /></DataTrigger></Border.Triggers></Border>
+            <Border Grid.Column="3" HeightRequest="6" StrokeThickness="0" BackgroundColor="{DynamicResource WizardTrackInactiveColor}" Opacity="0.22"><Border.StrokeShape><RoundRectangle CornerRadius="3" /></Border.StrokeShape><Border.Triggers><DataTrigger TargetType="Border" Binding="{Binding IsStep4Completed}" Value="True"><Setter Property="BackgroundColor" Value="{DynamicResource Primary}" /><Setter Property="Opacity" Value="1" /></DataTrigger><DataTrigger TargetType="Border" Binding="{Binding IsStep4Active}" Value="True"><Setter Property="BackgroundColor" Value="White" /><Setter Property="Opacity" Value="1" /></DataTrigger></Border.Triggers></Border>
+            <Border Grid.Column="4" HeightRequest="6" StrokeThickness="0" BackgroundColor="{DynamicResource WizardTrackInactiveColor}" Opacity="0.22"><Border.StrokeShape><RoundRectangle CornerRadius="3" /></Border.StrokeShape><Border.Triggers><DataTrigger TargetType="Border" Binding="{Binding IsStep5Completed}" Value="True"><Setter Property="BackgroundColor" Value="{DynamicResource Primary}" /><Setter Property="Opacity" Value="1" /></DataTrigger><DataTrigger TargetType="Border" Binding="{Binding IsStep5Active}" Value="True"><Setter Property="BackgroundColor" Value="White" /><Setter Property="Opacity" Value="1" /></DataTrigger></Border.Triggers></Border>
+        </Grid>
 
-                        <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=IngredientsSectionQuestion}" />
-                        <VerticalStackLayout Spacing="8">
-                            <RadioButton Content="{loc:Translate Resource=SetupWizardPageResources, Key=IngredientsYes}"
-                                         IsChecked="{Binding InstallBasicIngredients}" />
-                            <RadioButton Content="{loc:Translate Resource=SetupWizardPageResources, Key=IngredientsNo}"
-                                         IsChecked="{Binding InstallBasicIngredients, Converter={StaticResource InvertedBoolConverter}}" />
-                        </VerticalStackLayout>
+        <Grid Grid.Row="2" Padding="20,12,20,20" RowDefinitions="*,Auto" RowSpacing="14">
+            <ScrollView Grid.Row="0">
+                <VerticalStackLayout Spacing="16">
+                    <VerticalStackLayout IsVisible="{Binding IsLanguageStep}" Spacing="10">
+                        <CollectionView ItemsSource="{Binding AvailableLanguages}" SelectionMode="None">
+                            <CollectionView.ItemsLayout>
+                                <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+                            </CollectionView.ItemsLayout>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="vm:LanguageOption">
+                                    <Frame Padding="16"
+                                           CornerRadius="20"
+                                           HasShadow="False"
+                                           BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                                           BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}">
+                                        <Frame.Triggers>
+                                            <DataTrigger TargetType="Frame" Binding="{Binding IsSelected}" Value="True">
+                                                <Setter Property="BorderColor" Value="{DynamicResource Primary}" />
+                                                <Setter Property="BackgroundColor" Value="{DynamicResource WizardSelectionBackgroundColor}" />
+                                            </DataTrigger>
+                                        </Frame.Triggers>
+                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                            <Label Grid.Column="0" Text="{Binding FlagEmoji}" FontSize="26" VerticalOptions="Center" />
+                                            <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                                <Label Text="{Binding NativeName}" FontSize="16" FontAttributes="Bold" />
+                                                <Label Text="{Binding CountryName}" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+                                            </VerticalStackLayout>
+                                            <Label Grid.Column="2" Text="✓" FontAttributes="Bold" TextColor="{DynamicResource Primary}" VerticalOptions="Center" IsVisible="{Binding IsSelected}" />
+                                        </Grid>
+                                        <Frame.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding Source={x:Reference SetupWizardRoot}, Path=BindingContext.SelectLanguageCommand}" CommandParameter="{Binding .}" />
+                                        </Frame.GestureRecognizers>
+                                    </Frame>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
                     </VerticalStackLayout>
-                </Frame>
-            </VerticalStackLayout>
 
-            <VerticalStackLayout IsVisible="{Binding IsAppearanceStep}"
-                                 Spacing="12">
-                <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
-                       BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
-                       CornerRadius="10"
-                       Padding="20">
-                    <VerticalStackLayout Spacing="15">
-                        <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=AppearanceSectionTitle}"
-                               FontSize="20"
-                               FontAttributes="Bold"
-                               TextColor="{DynamicResource Primary}" />
+                    <VerticalStackLayout IsVisible="{Binding IsIngredientsStep}" Spacing="12">
+                        <Frame Padding="18"
+                               CornerRadius="20"
+                               HasShadow="False"
+                               BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                               BackgroundColor="{DynamicResource WizardOptionSurfaceColor}">
+                            <VerticalStackLayout Spacing="12">
+                                <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=IngredientsSectionQuestion}" FontSize="16" FontAttributes="Bold" />
 
-                        <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=ThemeSectionTitle}" />
-                        <Picker ItemsSource="{Binding AvailableThemes}"
-                                SelectedItem="{Binding SelectedTheme}"
-                                ItemDisplayBinding="{Binding ., Converter={StaticResource AppThemeToLocalizedStringConverter}}" />
+                                <Frame Padding="14" CornerRadius="16" HasShadow="False"
+                                       BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                                       BackgroundColor="{DynamicResource WizardOptionSurfaceColor}">
+                                    <Frame.Triggers>
+                                        <DataTrigger TargetType="Frame" Binding="{Binding InstallBasicIngredients}" Value="True">
+                                            <Setter Property="BorderColor" Value="{DynamicResource Primary}" />
+                                            <Setter Property="BackgroundColor" Value="{DynamicResource WizardOptionSelectedSurfaceColor}" />
+                                            <Setter Property="HasShadow" Value="True" />
+                                        </DataTrigger>
+                                    </Frame.Triggers>
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                        <Label Grid.Column="0" Text="📦" FontSize="24" VerticalOptions="Center" />
+                                        <Label Grid.Column="1" Text="{loc:Translate Resource=SetupWizardPageResources, Key=IngredientsYes}" VerticalOptions="Center" />
+                                    </Grid>
+                                    <Frame.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={x:Reference SetupWizardRoot}, Path=BindingContext.SelectInstallBasicIngredientsCommand}" />
+                                    </Frame.GestureRecognizers>
+                                </Frame>
 
-                        <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=FontSectionTitle}" />
-                        <Picker ItemsSource="{Binding AvailableFontFamilies}"
-                                SelectedItem="{Binding SelectedFontFamily}"
-                                ItemDisplayBinding="{Binding ., Converter={StaticResource FontFamilyToLocalizedStringConverter}}" />
+                                <Frame Padding="14" CornerRadius="16" HasShadow="False"
+                                       BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                                       BackgroundColor="{DynamicResource WizardOptionSurfaceColor}">
+                                    <Frame.Triggers>
+                                        <DataTrigger TargetType="Frame" Binding="{Binding InstallBasicIngredients, Converter={StaticResource InvertedBoolConverter}}" Value="True">
+                                            <Setter Property="BorderColor" Value="{DynamicResource Primary}" />
+                                            <Setter Property="BackgroundColor" Value="{DynamicResource WizardOptionSelectedSurfaceColor}" />
+                                            <Setter Property="HasShadow" Value="True" />
+                                        </DataTrigger>
+                                    </Frame.Triggers>
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                        <Label Grid.Column="0" Text="✏️" FontSize="24" VerticalOptions="Center" />
+                                        <Label Grid.Column="1" Text="{loc:Translate Resource=SetupWizardPageResources, Key=IngredientsNo}" VerticalOptions="Center" />
+                                    </Grid>
+                                    <Frame.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={x:Reference SetupWizardRoot}, Path=BindingContext.SelectSkipBasicIngredientsCommand}" />
+                                    </Frame.GestureRecognizers>
+                                </Frame>
+                            </VerticalStackLayout>
+                        </Frame>
                     </VerticalStackLayout>
-                </Frame>
-            </VerticalStackLayout>
 
-            <VerticalStackLayout IsVisible="{Binding Source={x:Reference SetupWizardRoot}, Path=BindingContext.IsLoginStep}"
-                                 Spacing="12">
-                <views:SetupLoginPage>
-                    <views:SetupLoginPage.BindingContext>
-                        <Binding Path="BindingContext.LoginViewModel" Source="{x:Reference SetupWizardRoot}" />
-                    </views:SetupLoginPage.BindingContext>
-                </views:SetupLoginPage>
-            </VerticalStackLayout>
+                    <VerticalStackLayout IsVisible="{Binding IsAppearanceStep}" Spacing="12">
+                        <Frame Padding="18" CornerRadius="20" HasShadow="False"
+                               BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                               BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}">
+                            <VerticalStackLayout Spacing="14">
+                                <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=AppearanceSectionTitle}" FontSize="20" FontAttributes="Bold" TextColor="{DynamicResource Primary}" />
 
-            <views:SetupPlanSelectionPage IsVisible="{Binding Source={x:Reference SetupWizardRoot}, Path=BindingContext.IsPlanSelectionStep}" />
+                                <controls:SegmentedPickerComponent
+                                    Option1Text="{loc:Translate Resource=SetupWizardPageResources, Key=DarkModeOption}"
+                                    Option1Command="{Binding SelectDarkThemeCommand}"
+                                    IsOption1Selected="{Binding IsDarkThemeSelected}"
+                                    Option2Text="{loc:Translate Resource=SetupWizardPageResources, Key=LightModeOption}"
+                                    Option2Command="{Binding SelectLightThemeCommand}"
+                                    IsOption2Selected="{Binding IsLightThemeSelected}"
+                                    ShowOption3="False" />
+                            </VerticalStackLayout>
+                        </Frame>
+                    </VerticalStackLayout>
 
-            <Label Text="{Binding StatusMessage}"
-                   FontSize="14"
-                   HorizontalOptions="Center"
-                   IsVisible="{Binding StatusMessage, Converter={StaticResource StringIsNotNullOrEmptyConverter}}" />
+                    <VerticalStackLayout IsVisible="{Binding Source={x:Reference SetupWizardRoot}, Path=BindingContext.IsLoginStep}" Spacing="12">
+                        <views:SetupLoginPage>
+                            <views:SetupLoginPage.BindingContext>
+                                <Binding Path="BindingContext.LoginViewModel" Source="{x:Reference SetupWizardRoot}" />
+                            </views:SetupLoginPage.BindingContext>
+                        </views:SetupLoginPage>
+                    </VerticalStackLayout>
 
-            <Grid ColumnDefinitions="*,*"
-                  ColumnSpacing="12"
-                  Margin="0,8,0,0">
-                <Button Grid.Column="0"
-                        Text="{loc:Translate Resource=SetupWizardPageResources, Key=BackButton}"
-                        Command="{Binding PreviousStepCommand}"
-                        IsVisible="{Binding CanGoBack}"
-                        BackgroundColor="Transparent"
-                        BorderColor="{DynamicResource Primary}"
-                        BorderWidth="1"
-                        TextColor="{DynamicResource Primary}" />
-                <Button Grid.Column="1"
-                        Text="{loc:Translate Resource=SetupWizardPageResources, Key=NextButton}"
-                        Command="{Binding NextStepCommand}"
-                        IsVisible="{Binding CanMoveToNextStep}"
-                        BackgroundColor="{DynamicResource Primary}"
-                        TextColor="{DynamicResource ButtonPrimaryText}" />
-                <Button Grid.Column="1"
-                        Text="{loc:Translate Resource=SetupWizardPageResources, Key=CompleteSetupButton}"
-                        Command="{Binding CompleteSetupCommand}"
-                        IsVisible="{Binding IsPlanSelectionStep}"
-                        IsEnabled="{Binding CanCompleteSetup}"
-                        BackgroundColor="{DynamicResource Primary}"
-                        TextColor="{DynamicResource ButtonPrimaryText}" />
+                    <views:SetupPlanSelectionPage IsVisible="{Binding Source={x:Reference SetupWizardRoot}, Path=BindingContext.IsPlanSelectionStep}" />
+
+                    <Label Text="{Binding StatusMessage}" FontSize="14" HorizontalOptions="Center" IsVisible="{Binding StatusMessage, Converter={StaticResource StringIsNotNullOrEmptyConverter}}" />
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Button Grid.Column="0" Text="{loc:Translate Resource=SetupWizardPageResources, Key=BackButton}" Command="{Binding PreviousStepCommand}" IsVisible="{Binding CanGoBack}" BackgroundColor="{AppThemeBinding Light=White, Dark=#2E2E42}" BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" BorderWidth="1" CornerRadius="12" TextColor="{DynamicResource Primary}" />
+                <Button Grid.Column="1" Text="{loc:Translate Resource=SetupWizardPageResources, Key=NextButton}" Command="{Binding NextStepCommand}" IsVisible="{Binding CanMoveToNextStep}" BackgroundColor="{DynamicResource Primary}" CornerRadius="12" TextColor="{DynamicResource ButtonPrimaryText}" />
+                <Button Grid.Column="1" Text="{loc:Translate Resource=SetupWizardPageResources, Key=CompleteSetupButton}" Command="{Binding CompleteSetupCommand}" IsVisible="{Binding IsPlanSelectionStep}" IsEnabled="{Binding CanCompleteSetup}" BackgroundColor="{DynamicResource Primary}" CornerRadius="12" TextColor="{DynamicResource ButtonPrimaryText}" />
             </Grid>
-        </VerticalStackLayout>
-    </ScrollView>
+        </Grid>
+    </Grid>
 </ContentPage>

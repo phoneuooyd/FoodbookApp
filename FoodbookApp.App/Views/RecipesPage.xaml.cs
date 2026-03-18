@@ -300,8 +300,9 @@ public partial class RecipesPage : ContentPage, ITabLoadable
 
         try
         {
-            var settingsVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<SettingsViewModel>();
-            var allLabels = settingsVm?.Labels?.ToList() ?? new List<RecipeLabel>();
+            System.Diagnostics.Debug.WriteLine("[RecipesPage] OnFilterSortClicked invoked");
+             var settingsVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<SettingsViewModel>();
+             var allLabels = settingsVm?.Labels?.ToList() ?? new List<RecipeLabel>();
 
             var ingredientService = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IIngredientService>();
             var allIngredients = ingredientService != null ? await ingredientService.GetIngredientsAsync() : new List<Ingredient>();
@@ -315,15 +316,21 @@ public partial class RecipesPage : ContentPage, ITabLoadable
                 ingredients: allIngredients,
                 preselectedIngredientNames: _viewModel.SelectedIngredientNames,
                 sortBy: _viewModel.CurrentSortBy,
-                showApplyButton: false);
+                showApplyButton: true);
 
-            var hostPage = Application.Current?.MainPage ?? this;
-            hostPage.ShowPopup(popup);
-            var result = await popup.ResultTask;
-            if (result != null)
+            var nav = Application.Current?.MainPage?.Navigation ?? Navigation;
+            if (nav == null)
             {
-                _viewModel.ApplySortingLabelAndIngredientFilter(result.SortBy, result.SelectedLabelIds, result.SelectedIngredientNames);
+                System.Diagnostics.Debug.WriteLine("[RecipesPage] OnFilterSortClicked: Navigation is null");
+                return;
             }
+
+            await nav.PushModalAsync(popup, true);
+              var result = await popup.ResultTask;
+              if (result != null)
+              {
+                  _viewModel.ApplySortingLabelAndIngredientFilter(result.SortBy, result.SelectedLabelIds, result.SelectedIngredientNames);
+              }
         }
         catch (Exception ex)
         {

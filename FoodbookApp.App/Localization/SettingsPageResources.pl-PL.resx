@@ -135,8 +135,14 @@
   <data name="ColorfulBackgroundOption" xml:space="preserve">
     <value>Tło</value>
   </data>
+  <data name="ColorfulBackgroundDescription" xml:space="preserve">
+    <value>Przełącz kolorowe tło i efekty wizualne</value>
+  </data>
   <data name="WallpaperBackgroundOption" xml:space="preserve">
     <value>Tapeta</value>
+  </data>
+  <data name="WallpaperBackgroundDescription" xml:space="preserve">
+    <value>Własny obraz w tle aplikacji</value>
   </data>
   <data name="ColorThemeDefault" xml:space="preserve">
     <value>Domyślny</value>

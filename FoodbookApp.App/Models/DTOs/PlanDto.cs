@@ -3,10 +3,11 @@ using System.Text.Json.Serialization;
 using Supabase.Postgrest.Models;
 using Supabase.Postgrest.Attributes;
 using Newtonsoft.Json;
+using FoodbookApp.Services.Supabase;
 
 namespace Foodbook.Models.DTOs
 {
-    [Table("plans")]
+    [Table(SupabaseTableResolver.TEST_ENDPOINTS ? "plans_test" : "plans")]
     public class PlanDto : BaseModel
     {
         [PrimaryKey("id", true)]
@@ -17,6 +18,9 @@ namespace Foodbook.Models.DTOs
         [JsonPropertyName("is_archived"), JsonProperty("is_archived")] public bool? IsArchived { get; set; }
         [JsonPropertyName("type"), JsonProperty("type")] public int? Type { get; set; }
         [JsonPropertyName("planner_name"), JsonProperty("planner_name")] public string? PlannerName { get; set; }
+        [JsonPropertyName("accent_color"), JsonProperty("accent_color")] public string? AccentColor { get; set; }
+        [JsonPropertyName("emoji"), JsonProperty("emoji")] public string? Emoji { get; set; }
+        [JsonPropertyName("duration_days"), JsonProperty("duration_days")] public int? DurationDays { get; set; }
         [JsonPropertyName("linked_shopping_list_plan_id"), JsonProperty("linked_shopping_list_plan_id")] public Guid? LinkedShoppingListPlanId { get; set; }
         [JsonPropertyName("created_at"), JsonProperty("created_at")] public DateTime? CreatedAt { get; set; }
         [JsonPropertyName("updated_at"), JsonProperty("updated_at")] public DateTime? UpdatedAt { get; set; }

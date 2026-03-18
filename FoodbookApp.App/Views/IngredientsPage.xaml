@@ -17,6 +17,18 @@
 
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+
+        <LinearGradientBrush x:Key="HeroGradientBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="{DynamicResource Primary}" Offset="0.0" />
+            <GradientStop Color="{DynamicResource Tertiary}" Offset="1.0" />
+        </LinearGradientBrush>
+
+        <Style x:Key="HeroTitleStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="28" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="White" />
+        </Style>
+
         <DataTemplate x:Key="IngredientItemTemplate" x:DataType="models:Ingredient">
             <components:UniversalListItemComponent 
                 EditCommand="{Binding BindingContext.EditCommand, Source={x:Reference ThisPage}}"
@@ -29,43 +41,71 @@
         </DataTemplate>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto,Auto,*">
-        
-        <!-- Modern Search Bar Component -->
-        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" VerticalOptions="Center" Padding="0,0,6,0">
-            <components:ModernSearchBarComponent Grid.Column="0"
-                                               SearchText="{Binding SearchText}"
-                                               PlaceholderText="{loc:Translate Resource=IngredientsPageResources, Key=SearchPlaceholder}"
-                                               ClearCommand="{Binding ClearSearchCommand}"
-                                               IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
-            <ImageButton Grid.Column="1"
-                         x:Name="FilterButton"
-                         WidthRequest="28"
-                         HeightRequest="28"
-                         BackgroundColor="Transparent"
-                         HorizontalOptions="End"
-                         Source="Resources/Images/filter.png"
-                         
-                         Clicked="OnIngredientSortClicked"
-                         AutomationId="IngredientsFilterButton">
-                <ImageButton.Behaviors>
-                    <!-- Use Primary so the icon is colored based on theme -->
-                    <toolkit:IconTintColorBehavior TintColor="{DynamicResource Primary}" />
-                </ImageButton.Behaviors>
-            </ImageButton>
+    <Grid RowDefinitions="Auto,*">
+
+        <Grid Grid.Row="0"
+              Background="{StaticResource HeroGradientBrush}">
+            <Border WidthRequest="108"
+                    HeightRequest="108"
+                    StrokeThickness="0"
+                    Stroke="Transparent"
+                    BackgroundColor="#14FFFFFF"
+                    StrokeShape="RoundRectangle 54"
+                    HorizontalOptions="End"
+                    VerticalOptions="Start"
+                    Margin="0,-28,-20,0" />
+            <Border WidthRequest="76"
+                    HeightRequest="76"
+                    StrokeThickness="0"
+                    Stroke="Transparent"
+                    BackgroundColor="#10FFFFFF"
+                    StrokeShape="RoundRectangle 38"
+                    HorizontalOptions="Start"
+                    VerticalOptions="End"
+                    Margin="-12,0,0,10" />
+
+            <VerticalStackLayout Padding="20,18,12,12"
+                                 Spacing="2"
+                                 ZIndex="1">
+                <Label Text="{loc:Translate Resource=IngredientsPageResources, Key=Title}"
+                       Style="{StaticResource HeroTitleStyle}" />
+
+                <Grid ColumnDefinitions="*,46"
+                      ColumnSpacing="6">
+                    <components:ModernSearchBarComponent Grid.Column="0"
+                                                         SearchText="{Binding SearchText}"
+                                                         PlaceholderText="{loc:Translate Resource=IngredientsPageResources, Key=SearchPlaceholder}"
+                                                         ClearCommand="{Binding ClearSearchCommand}"
+                                                         SearchBarMargin="0"
+                                                         IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+                    <ImageButton Grid.Column="1"
+                                 x:Name="FilterButton"
+                                 WidthRequest="40"
+                                 HeightRequest="40"
+                                 BackgroundColor="#22FFFFFF"
+                                 CornerRadius="10"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Padding="6"
+                                 Source="Resources/Images/filter.png"
+                                 Clicked="OnIngredientSortClicked"
+                                 AutomationId="IngredientsFilterButton">
+                        <ImageButton.Behaviors>
+                            <toolkit:IconTintColorBehavior TintColor="White" />
+                        </ImageButton.Behaviors>
+                    </ImageButton>
+                </Grid>
+            </VerticalStackLayout>
         </Grid>
 
-        <!-- Content -->
-        <Grid Grid.Row="2">
-            <!-- Generic List Component -->
+        <Grid Grid.Row="1">
             <components:GenericListComponent x:Name="ListComponent"
                 ItemsSource="{Binding Ingredients}"
                 ItemTemplate="{StaticResource IngredientItemTemplate}"
                 EmptyTitle="{loc:Translate Resource=IngredientsPageResources, Key=EmptyTitle}"
                 EmptyHint="{loc:Translate Resource=IngredientsPageResources, Key=EmptyHint}"
                 IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
-            
-            <!-- Floating Action Button Component -->
+
             <components:FloatingActionButtonComponent 
                 Command="{Binding AddCommand}"
                 IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />

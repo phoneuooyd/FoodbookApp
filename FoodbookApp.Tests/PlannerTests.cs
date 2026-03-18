@@ -162,7 +162,7 @@ namespace FoodbookApp.Tests
             Assert.Equal(DateTime.MinValue, plan.StartDate);
             Assert.Equal(DateTime.MinValue, plan.EndDate);
             Assert.False(plan.IsArchived); // Default value is false
-            Assert.Equal("Lista zakupów", plan.Label);
+            Assert.Equal("ShoppingList", plan.Label);
         }
 
         [Fact]
@@ -185,7 +185,7 @@ namespace FoodbookApp.Tests
             Assert.Equal(startDate, plan.StartDate);
             Assert.Equal(endDate, plan.EndDate);
             Assert.True(plan.IsArchived);
-            Assert.Equal("Lista zakupów", plan.Label);
+            Assert.Equal("ShoppingList", plan.Label);
         }
 
         [Fact]

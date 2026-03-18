@@ -1,27 +1,35 @@
-using FoodbookApp.Interfaces;
-using Microsoft.Maui.Controls;
-using Microsoft.Extensions.DependencyInjection;
-using FoodbookApp.Services.Auth;
-using System.Text;
-using CommunityToolkit.Maui.Views;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using CommunityToolkit.Maui.Extensions;
+using Foodbook.Data;
+using Foodbook.Models;
 using Foodbook.Views.Components;
+using FoodbookApp.Interfaces;
+using FoodbookApp.Localization;
+using FoodbookApp.Services.Auth;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Storage;
 
 namespace Foodbook.Views;
 
 public partial class ProfilePage : ContentPage
 {
-    private const string CloudSyncChoiceDisabled = "disabled";
-    private const string CloudSyncChoiceCloud = "cloud";
-    private const string CloudSyncChoiceLocal = "local";
-
     private ISupabaseAuthService? _supabaseAuth;
     private ISupabaseSyncService? _syncService;
     private IAccountService? _accountService;
-    private CancellationTokenSource? _syncStatusRefreshCts;
+    private CancellationTokenSource? _syncRefreshCts;
     private bool _isLoggedIn;
-    private bool _suppressCloudSyncToggled = false;
+    private bool _suppressToggle;
+    private string _currentUserEmail = string.Empty;
+
+    private const string SyncChoiceKeyPrefix = "cloudsync.enabled:";
+    private static readonly Color SyncSuccessColor = Color.FromArgb("#2E7D32");
+    private static readonly Color SyncErrorColor = Color.FromArgb("#C62828");
+    private static readonly Color SyncNeutralColor = Color.FromArgb("#6B7280");
+
+    public ObservableCollection<SyncQueueDisplayItem> SyncQueueItems { get; } = new();
 
     public ProfilePage()
     {
@@ -33,14 +41,9 @@ public partial class ProfilePage : ContentPage
     {
         base.OnAppearing();
         StartSyncStatusRefresh();
-        
-        // Always check session state on appearing (handles auto-login and app restarts)
         await CheckAndRestoreSessionAsync();
-        
         if (_isLoggedIn)
-        {
             await LoadSyncStatusAsync();
-        }
     }
 
     protected override void OnDisappearing()
@@ -49,49 +52,435 @@ public partial class ProfilePage : ContentPage
         base.OnDisappearing();
     }
 
+    #region Session
+
+    private async Task CheckAndRestoreSessionAsync()
+    {
+        try
+        {
+            var auth = GetSupabaseAuth();
+            if (!string.IsNullOrWhiteSpace(auth?.CurrentSession?.AccessToken))
+            {
+                _isLoggedIn = true;
+                _currentUserEmail = auth.CurrentSession.User?.Email ?? string.Empty;
+                UpdateUiState();
+                await AutoEnableSyncIfSavedAsync();
+                return;
+            }
+
+            var accountService = GetAccountService();
+            if (accountService != null)
+            {
+                var account = await accountService.GetActiveAccountAsync();
+                if (account != null && await accountService.TryAutoLoginAsync())
+                {
+                    _isLoggedIn = true;
+                    _currentUserEmail = GetSupabaseAuth()?.CurrentSession?.User?.Email
+                        ?? account.Email ?? string.Empty;
+                    UpdateUiState();
+                    await AutoEnableSyncIfSavedAsync();
+                    return;
+                }
+            }
+
+            _isLoggedIn = false;
+            UpdateUiState();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ProfilePage] Session check error: {ex.Message}");
+            _isLoggedIn = false;
+            UpdateUiState();
+        }
+    }
+
+    /// <summary>
+    /// Re-enables sync silently after auto-login if user had it enabled previously.
+    /// </summary>
+    private async Task AutoEnableSyncIfSavedAsync()
+    {
+        try
+        {
+            var syncService = GetSyncService();
+            if (syncService == null) return;
+
+            var key = await GetSyncChoiceKeyAsync();
+            if (string.IsNullOrEmpty(key)) return;
+
+            var saved = await SecureStorage.GetAsync(key);
+            if (saved == "true" && !await syncService.IsCloudSyncEnabledAsync())
+            {
+                ShowSpinner("Wznawianie synchronizacji...");
+                await syncService.EnableCloudSyncAsync();
+                HideSpinner();
+            }
+        }
+        catch (Exception ex)
+        {
+            HideSpinner();
+            Debug.WriteLine($"[ProfilePage] AutoEnableSync error: {ex.Message}");
+        }
+    }
+
+    #endregion
+
+    #region Sync Status Loop
+
     private void StartSyncStatusRefresh()
     {
         StopSyncStatusRefresh();
-        _syncStatusRefreshCts = new CancellationTokenSource();
-        _ = RefreshSyncStatusLoopAsync(_syncStatusRefreshCts.Token);
+        _syncRefreshCts = new CancellationTokenSource();
+        _ = RefreshSyncStatusLoopAsync(_syncRefreshCts.Token);
     }
 
     private void StopSyncStatusRefresh()
     {
-        _syncStatusRefreshCts?.Cancel();
-        _syncStatusRefreshCts?.Dispose();
-        _syncStatusRefreshCts = null;
+        _syncRefreshCts?.Cancel();
+        _syncRefreshCts?.Dispose();
+        _syncRefreshCts = null;
     }
 
     private async Task RefreshSyncStatusLoopAsync(CancellationToken ct)
     {
         try
         {
-            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(2));
             while (await timer.WaitForNextTickAsync(ct))
             {
-                if (!_isLoggedIn)
-                    continue;
-
-                try
-                {
+                if (_isLoggedIn)
                     await LoadSyncStatusAsync();
-                }
-                catch (OperationCanceledException)
-                {
-                    throw;
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[ProfilePage] Sync status refresh error: {ex.Message}");
-                }
             }
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) { }
+    }
+
+    private async Task LoadSyncStatusAsync()
+    {
+        try
         {
-            System.Diagnostics.Debug.WriteLine("[ProfilePage] Sync status refresh stopped");
+            var syncService = GetSyncService();
+            if (syncService == null) return;
+
+            var isEnabled = await syncService.IsCloudSyncEnabledAsync();
+            var pending = isEnabled ? await syncService.GetPendingCountAsync() : 0;
+            Foodbook.Models.SyncState? state = isEnabled ? await syncService.GetSyncStateAsync() : null;
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                _suppressToggle = true;
+                try { CloudSyncSwitch.IsToggled = isEnabled; }
+                finally { _suppressToggle = false; }
+
+                if (isEnabled && state != null)
+                {
+                    string lastSyncText;
+                    if (state.LastSyncUtc.HasValue)
+                    {
+                        lastSyncText = $"Zsynchronizowano • {state.LastSyncUtc.Value.ToLocalTime():HH:mm}";
+                    }
+                    else
+                    {
+                        lastSyncText = "Zsynchronizowano";
+                    }
+
+                    SyncStatusLabel.Text = pending > 0
+                        ? $"Synchronizacja: {pending} oczekujących"
+                        : lastSyncText;
+                    SyncStatusLabel.IsVisible = true;
+                }
+                else
+                {
+                    SyncStatusLabel.IsVisible = false;
+                }
+            });
+        }
+        catch (Exception ex) { Debug.WriteLine($"[ProfilePage] LoadSyncStatus: {ex.Message}"); }
+    }
+
+    #endregion
+
+    #region Sync Toggle
+
+    private async void OnCloudSyncToggled(object sender, ToggledEventArgs e)
+    {
+        if (_suppressToggle) return;
+
+        var syncService = GetSyncService();
+        if (syncService == null)
+        {
+            SetToggle(!e.Value);
+            await DisplayAlert("Błąd", "Usługa synchronizacji jest niedostępna.", "OK");
+            return;
+        }
+
+        try
+        {
+            if (e.Value)
+            {
+                ShowSpinner("Włączanie synchronizacji...");
+                await syncService.EnableCloudSyncAsync();
+                await SaveSyncChoiceAsync(true);
+                HideSpinner();
+                SyncStatusLabel.Text = "Synchronizacja włączona";
+                SyncStatusLabel.IsVisible = true;
+            }
+            else
+            {
+                ShowSpinner("Wyłączanie synchronizacji...");
+                await syncService.DisableCloudSyncAsync();
+                await SaveSyncChoiceAsync(false);
+                HideSpinner();
+                SyncStatusLabel.IsVisible = false;
+            }
+
+            await Task.Delay(1500);
+            await LoadSyncStatusAsync();
+        }
+        catch (Exception ex)
+        {
+            HideSpinner();
+            SetToggle(!e.Value);
+            await DisplayAlert("Błąd synchronizacji", ex.Message, "OK");
         }
     }
+
+    private void SetToggle(bool value)
+    {
+        _suppressToggle = true;
+        try { CloudSyncSwitch.IsToggled = value; }
+        finally { _suppressToggle = false; }
+    }
+
+    #endregion
+
+    #region Login / Logout
+
+    private async void OnProfileFetchJwtClicked(object sender, EventArgs e)
+    {
+        var auth = GetSupabaseAuth();
+        if (auth == null) { await DisplayAlert("Błąd", "Usługa autoryzacji niedostępna.", "OK"); return; }
+
+        var email = EmailEntry.Text?.Trim();
+        var password = PasswordEntry.Text;
+
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+        {
+            await DisplayAlert("Logowanie", "Wypełnij e-mail i hasło.", "OK");
+            return;
+        }
+
+        StatusLabel.Text = "Logowanie...";
+        ShowSpinner("Logowanie...");
+
+        try
+        {
+            var session = await auth.SignInAsync(email, password);
+
+            if (session == null || string.IsNullOrWhiteSpace(session.AccessToken))
+            {
+                HideSpinner();
+                StatusLabel.Text = string.Empty;
+                await DisplayAlert("Błąd logowania", "Nieprawidłowe dane logowania.", "OK");
+                return;
+            }
+
+            _isLoggedIn = true;
+            _currentUserEmail = session.User?.Email ?? email;
+            PasswordEntry.Text = string.Empty;
+            StatusLabel.Text = string.Empty;
+            HideSpinner();
+            UpdateUiState();
+
+            // Single, simple question — no local/cloud priority dialog
+            var enableSync = await DisplayAlert(
+                "Synchronizacja z chmurą",
+                "Czy chcesz włączyć synchronizację danych? Twoje dane będą automatycznie synchronizowane z chmurą.",
+                "Tak, włącz",
+                "Nie teraz");
+
+            if (enableSync)
+            {
+                ShowSpinner("Synchronizacja danych...");
+                var syncService = GetSyncService();
+                if (syncService != null)
+                {
+                    await syncService.EnableCloudSyncAsync();
+                    await SaveSyncChoiceAsync(true);
+                }
+                HideSpinner();
+            }
+            else
+            {
+                await SaveSyncChoiceAsync(false);
+            }
+
+            await LoadSyncStatusAsync();
+        }
+        catch (Exception ex)
+        {
+            HideSpinner();
+            StatusLabel.Text = string.Empty;
+            await DisplayAlert("Błąd", ex.InnerException?.Message ?? ex.Message, "OK");
+        }
+    }
+
+    private async void OnRegisterClicked(object sender, EventArgs e)
+    {
+        try
+        {
+            var popup = FoodbookApp.MauiProgram.ServiceProvider?.GetService<RegisterPopup>() ?? new RegisterPopup();
+            var hostPage = Application.Current?.Windows.FirstOrDefault()?.Page ?? this;
+            await hostPage.ShowPopupAsync(popup);
+
+            var registered = popup.ResultTask.IsCompleted && await popup.ResultTask;
+            if (!registered) return;
+
+            var session = GetSupabaseAuth()?.CurrentSession;
+            if (session != null && !string.IsNullOrWhiteSpace(session.AccessToken))
+            {
+                _isLoggedIn = true;
+                _currentUserEmail = session.User?.Email ?? string.Empty;
+                UpdateUiState();
+                await LoadSyncStatusAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Błąd", ex.InnerException?.Message ?? ex.Message, "OK");
+        }
+    }
+
+    private async void OnLogoutClicked(object sender, EventArgs e)
+    {
+        try
+        {
+            var accountService = GetAccountService();
+            if (accountService != null)
+                await accountService.SignOutAsync(clearAutoLogin: true);
+            else
+                await (GetSupabaseAuth()?.SignOutAsync() ?? Task.CompletedTask);
+
+            var syncService = GetSyncService();
+            if (syncService != null)
+                await syncService.DisableCloudSyncAsync();
+
+            await ClearSyncChoiceAsync();
+
+            _isLoggedIn = false;
+            _currentUserEmail = string.Empty;
+            EmailEntry.Text = string.Empty;
+            PasswordEntry.Text = string.Empty;
+            StatusLabel.Text = string.Empty;
+            UpdateUiState();
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Błąd wylogowania", ex.Message, "OK");
+        }
+    }
+
+    #endregion
+
+    #region Force Sync
+
+    private async void OnForceSyncClicked(object sender, EventArgs e)
+    {
+        var sync = GetSyncService();
+        if (sync == null) { await DisplayAlert("Błąd", "Usługa synchronizacji niedostępna.", "OK"); return; }
+
+        ShowSpinner("Synchronizacja...");
+        try
+        {
+            var result = await sync.ForceSyncAllAsync();
+            HideSpinner();
+
+            var msg = $"Zsynchronizowano: {result.ItemsProcessed}";
+            if (result.ItemsRemaining > 0) msg += $"\nOczekujące: {result.ItemsRemaining}";
+            if (result.ItemsFailed > 0) msg += $"\nBłędy: {result.ItemsFailed}";
+            msg += $"\nCzas: {result.Duration.TotalSeconds:F1}s";
+
+            await DisplayAlert("Synchronizacja zakończona", msg, "OK");
+        }
+        catch (Exception ex)
+        {
+            HideSpinner();
+            await DisplayAlert("Błąd synchronizacji", ex.Message, "OK");
+        }
+        finally
+        {
+            await LoadSyncStatusAsync();
+        }
+    }
+
+    #endregion
+
+    #region UI Helpers
+
+    private void UpdateUiState()
+    {
+        HeroBar.IsVisible = true;
+        AccountContentSection.IsVisible = _isLoggedIn;
+        LoggedInPanel.IsVisible = _isLoggedIn;
+        LoginPanel.IsVisible = !_isLoggedIn;
+
+        if (!_isLoggedIn) SyncStatusLabel.IsVisible = false;
+
+        HeroUserEmailLabel.Text = _isLoggedIn ? _currentUserEmail : string.Empty;
+    }
+
+    private void ShowSpinner(string message)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            SyncOverlayLabel.Text = message;
+            SyncActivityIndicator.IsRunning = true;
+            SyncingOverlay.IsVisible = true;
+            CloudSyncSwitch.IsEnabled = false;
+        });
+    }
+
+    private void HideSpinner()
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            SyncingOverlay.IsVisible = false;
+            SyncActivityIndicator.IsRunning = false;
+            CloudSyncSwitch.IsEnabled = true;
+        });
+    }
+
+    #endregion
+
+    #region SecureStorage Helpers
+
+    private async Task<string?> GetSyncChoiceKeyAsync()
+    {
+        try
+        {
+            var tokenStore = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IAuthTokenStore>();
+            if (tokenStore == null) return null;
+            var id = await tokenStore.GetActiveAccountIdAsync();
+            return id.HasValue ? $"{SyncChoiceKeyPrefix}{id.Value:N}" : null;
+        }
+        catch { return null; }
+    }
+
+    private async Task SaveSyncChoiceAsync(bool enabled)
+    {
+        var key = await GetSyncChoiceKeyAsync();
+        if (key != null)
+            await SecureStorage.SetAsync(key, enabled ? "true" : "false");
+    }
+
+    private async Task ClearSyncChoiceAsync()
+    {
+        var key = await GetSyncChoiceKeyAsync();
+        if (key != null) SecureStorage.Remove(key);
+    }
+
+    #endregion
+
+    #region Service Locators
 
     private ISupabaseAuthService? GetSupabaseAuth()
         => _supabaseAuth ??= FoodbookApp.MauiProgram.ServiceProvider?.GetService<ISupabaseAuthService>();
@@ -102,798 +491,182 @@ public partial class ProfilePage : ContentPage
     private IAccountService? GetAccountService()
         => _accountService ??= FoodbookApp.MauiProgram.ServiceProvider?.GetService<IAccountService>();
 
-    /// <summary>
-    /// Checks for existing session and restores UI state accordingly.
-    /// This handles both auto-login on app restart and returning to the page.
-    /// </summary>
-    private async Task CheckAndRestoreSessionAsync()
+    #endregion
+
+    private void OnBackgroundSyncClicked(object sender, EventArgs e) => HideSpinner();
+
+    private void OnOpenPlanDetailsTapped(object? sender, TappedEventArgs e)
     {
-        try
-        {
-            System.Diagnostics.Debug.WriteLine("[ProfilePage] === CheckAndRestoreSessionAsync START ===");
-            
-            var auth = GetSupabaseAuth();
-            var accountService = GetAccountService();
-            
-            // First, check if there's an active session in the auth service (from Supabase client)
-            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Step 1: Checking auth.CurrentSession...");
-            if (auth?.CurrentSession != null && !string.IsNullOrWhiteSpace(auth.CurrentSession.AccessToken))
-            {
-                System.Diagnostics.Debug.WriteLine($"[ProfilePage] ? Active session found in auth service for user: {auth.CurrentSession.User?.Email}");
-                _isLoggedIn = true;
-                LoggedInUserLabel.Text = auth.CurrentSession.User?.Email ?? string.Empty;
-                UpdateUiState();
-
-                // Ensure we apply saved cloud sync choice (if any) after a restored session
-                try
-                {
-                    System.Diagnostics.Debug.WriteLine("[ProfilePage] Applying saved cloud sync choice after in-memory session restore...");
-                    await PromptAndEnableSyncAfterLoginAsync();
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[ProfilePage] Error applying saved cloud sync after session restore: {ex.Message}");
-                }
-
-                System.Diagnostics.Debug.WriteLine("[ProfilePage] === CheckAndRestoreSessionAsync COMPLETE (session found in memory) ===");
-                return;
-            }
-            
-            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Step 2: No active session in memory - checking for stored account...");
-            
-            // No active session in memory - check if we can restore from stored tokens
-            if (accountService != null)
-            {
-                var activeAccount = await accountService.GetActiveAccountAsync();
-                if (activeAccount != null)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[ProfilePage] Found active account: {activeAccount.Email}");
-                    
-                    // Try to restore the session using TryAutoLoginAsync
-                    System.Diagnostics.Debug.WriteLine($"[ProfilePage] Step 3: Calling TryAutoLoginAsync...");
-                    var restored = await accountService.TryAutoLoginAsync();
-                    System.Diagnostics.Debug.WriteLine($"[ProfilePage] TryAutoLoginAsync returned: {restored}");
-                    
-                    if (restored)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[ProfilePage] ? Session restored successfully!");
-                        _isLoggedIn = true;
-                        
-                        // Get updated session info
-                        var currentAuth = GetSupabaseAuth();
-                        var currentSession = currentAuth?.CurrentSession;
-                        LoggedInUserLabel.Text = currentSession?.User?.Email ?? activeAccount.Email ?? string.Empty;
-                        
-                        UpdateUiState();
-
-                        // Apply saved cloud sync choice (if present) after auto-login
-                        try
-                        {
-                            System.Diagnostics.Debug.WriteLine("[ProfilePage] Applying saved cloud sync choice after auto-login...");
-                            await PromptAndEnableSyncAfterLoginAsync();
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Error applying saved cloud sync after auto-login: {ex.Message}");
-                        }
-
-                        System.Diagnostics.Debug.WriteLine("[ProfilePage] === CheckAndRestoreSessionAsync COMPLETE (session restored) ===");
-                        return;
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[ProfilePage] ? Session restore failed - tokens may be expired or invalid");
-                    }
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"[ProfilePage] No active account found in database");
-                }
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine($"[ProfilePage] AccountService is not available");
-            }
-            
-            // No valid session - show login UI
-            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Step 4: No valid session found - showing login UI");
-            if (_isLoggedIn)
-            {
-                System.Diagnostics.Debug.WriteLine("[ProfilePage] Resetting to logged out state");
-                _isLoggedIn = false;
-                UpdateUiState();
-            }
-            System.Diagnostics.Debug.WriteLine("[ProfilePage] === CheckAndRestoreSessionAsync COMPLETE (no session) ===");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[ProfilePage] ? Error checking session: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Exception details: {ex}");
-            // On error, assume logged out
-            _isLoggedIn = false;
-            UpdateUiState();
-        }
+        ProfileMainView.IsVisible = false;
+        PlanDetailsView.IsVisible = true;
     }
 
-    private async Task LoadSyncStatusAsync()
+    private void OnClosePlanDetailsTapped(object? sender, TappedEventArgs e)
+    {
+        PlanDetailsView.IsVisible = false;
+        ProfileMainView.IsVisible = true;
+    }
+
+    private async void OnOpenSyncQueueTapped(object? sender, TappedEventArgs e)
+    {
+        ProfileMainView.IsVisible = false;
+        SyncQueueDetailsView.IsVisible = true;
+        await LoadSyncQueueAsync();
+    }
+
+    private void OnCloseSyncQueueTapped(object? sender, TappedEventArgs e)
+    {
+        SyncQueueDetailsView.IsVisible = false;
+        ProfileMainView.IsVisible = true;
+    }
+
+    private async void OnRefreshSyncQueueClicked(object sender, EventArgs e)
+    {
+        await LoadSyncQueueAsync();
+    }
+
+    private async Task LoadSyncQueueAsync()
     {
         try
         {
-            var syncService = GetSyncService();
-            if (syncService == null)
-                return;
-
-            var isEnabled = await syncService.IsCloudSyncEnabledAsync();
-            Foodbook.Models.SyncState? state = null;
-            var pendingCount = 0;
-
-            if (isEnabled)
+            if (!_isLoggedIn)
             {
-                state = await syncService.GetSyncStateAsync();
-                if (state != null)
-                {
-                    pendingCount = await syncService.GetPendingCountAsync();
-                }
+                SyncQueueItems.Clear();
+                SyncQueueSummaryLabel.Text = ProfilePageResources.SyncQueueLoginRequired;
+                return;
             }
+
+            var serviceProvider = FoodbookApp.MauiProgram.ServiceProvider;
+            if (serviceProvider == null)
+            {
+                SyncQueueItems.Clear();
+                SyncQueueSummaryLabel.Text = ProfilePageResources.SyncQueueServiceUnavailable;
+                return;
+            }
+
+            var tokenStore = serviceProvider.GetService<IAuthTokenStore>();
+            if (tokenStore == null)
+            {
+                SyncQueueItems.Clear();
+                SyncQueueSummaryLabel.Text = ProfilePageResources.SyncQueueAccountUnavailable;
+                return;
+            }
+
+            var accountId = await tokenStore.GetActiveAccountIdAsync();
+            if (!accountId.HasValue)
+            {
+                SyncQueueItems.Clear();
+                SyncQueueSummaryLabel.Text = ProfilePageResources.SyncQueueNoActiveAccount;
+                return;
+            }
+
+            using var scope = serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            var queue = await db.SyncQueue
+                .Where(e => e.AccountId == accountId.Value)
+                .OrderByDescending(e => e.CreatedUtc)
+                .Take(300)
+                .ToListAsync();
+
+            var mapped = queue.Select(e =>
+            {
+                var isDownload = IsDownloadEntry(e);
+                var directionEmoji = isDownload ? "⬇️" : "⬆️";
+                var statusText = GetStatusText(e.Status);
+                var statusColor = GetStatusColor(e.Status);
+                var detail = BuildDetailText(e);
+
+                return new SyncQueueDisplayItem
+                {
+                    Title = $"{directionEmoji} {e.EntityType} · {e.OperationType}",
+                    StatusText = statusText,
+                    StatusColor = statusColor,
+                    Detail = detail,
+                    DetailColor = e.Status is SyncEntryStatus.Failed or SyncEntryStatus.Abandoned
+                        ? SyncErrorColor
+                        : SyncNeutralColor,
+                    CreatedText = e.CreatedUtc.ToLocalTime().ToString("dd.MM HH:mm")
+                };
+            }).ToList();
 
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
-                try
-                {
-                    _suppressCloudSyncToggled = true;
-                    CloudSyncCheckBox.IsChecked = isEnabled;
-                }
-                finally
-                {
-                    _suppressCloudSyncToggled = false;
-                }
+                SyncQueueItems.Clear();
+                foreach (var item in mapped)
+                    SyncQueueItems.Add(item);
 
-                if (isEnabled && state != null)
-                {
-                    SyncStatusLabel.Text = $"Status: {state.Status}, Pending: {pendingCount}";
-                    SyncStatusLabel.IsVisible = true;
-                }
-                else
-                {
-                    SyncStatusLabel.IsVisible = false;
-                }
+                var success = queue.Count(e => e.Status == SyncEntryStatus.Completed);
+                var failed = queue.Count(e => e.Status is SyncEntryStatus.Failed or SyncEntryStatus.Abandoned);
+                var pending = queue.Count(e => e.Status is SyncEntryStatus.Pending or SyncEntryStatus.InProgress);
+                var downloaded = queue.Count(IsDownloadEntry);
+                var uploaded = queue.Count - downloaded;
+
+                SyncQueueSummaryLabel.Text = string.Format(
+                    ProfilePageResources.SyncQueueSummaryFormat,
+                    queue.Count,
+                    uploaded,
+                    downloaded,
+                    success,
+                    failed,
+                    pending);
             });
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Failed to load sync status: {ex.Message}");
+            Debug.WriteLine($"[ProfilePage] LoadSyncQueueAsync error: {ex.Message}");
+            SyncQueueSummaryLabel.Text = ProfilePageResources.SyncQueueLoadError;
         }
     }
 
-    private void UpdateUiState()
+    private static string BuildDetailText(SyncQueueEntry entry)
     {
-        LoginPanel.IsVisible = !_isLoggedIn;
-        LoggedInPanel.IsVisible = _isLoggedIn;
+        if (entry.Status is SyncEntryStatus.Failed or SyncEntryStatus.Abandoned)
+            return string.IsNullOrWhiteSpace(entry.LastError)
+                ? ProfilePageResources.SyncQueueDetailErrorNoMessage
+                : string.Format(ProfilePageResources.SyncQueueDetailErrorFormat, entry.LastError);
 
-        if (!_isLoggedIn)
-        {
-            LoggedInUserLabel.Text = string.Empty;
-            SyncStatusLabel.IsVisible = false;
-        }
+        if (entry.Status == SyncEntryStatus.Completed)
+            return string.Format(ProfilePageResources.SyncQueueDetailCompletedFormat, entry.EntityId);
+
+        if (entry.Status == SyncEntryStatus.InProgress)
+            return ProfilePageResources.SyncQueueDetailInProgress;
+
+        return ProfilePageResources.SyncQueueDetailPending;
     }
 
-    private string GetLocalizedText(string resource, string key, string defaultText)
+    private static string GetStatusText(SyncEntryStatus status) => status switch
     {
-        try
-        {
-            var loc = FoodbookApp.MauiProgram.ServiceProvider?.GetService(typeof(ILocalizationService)) as ILocalizationService;
-            return loc?.GetString(resource, key) ?? defaultText;
-        }
-        catch { return defaultText; }
-    }
+        SyncEntryStatus.Completed => ProfilePageResources.SyncQueueStatusSuccess,
+        SyncEntryStatus.Failed => ProfilePageResources.SyncQueueStatusError,
+        SyncEntryStatus.Abandoned => ProfilePageResources.SyncQueueStatusError,
+        SyncEntryStatus.InProgress => ProfilePageResources.SyncQueueStatusInProgress,
+        _ => ProfilePageResources.SyncQueueStatusPending
+    };
 
-    private string GetLocalizedTextSafe(string resource, string key, string defaultText)
+    private static Color GetStatusColor(SyncEntryStatus status) => status switch
     {
-        var text = GetLocalizedText(resource, key, defaultText);
-        return string.IsNullOrWhiteSpace(text) ? defaultText : text;
-    }
+        SyncEntryStatus.Completed => SyncSuccessColor,
+        SyncEntryStatus.Failed => SyncErrorColor,
+        SyncEntryStatus.Abandoned => SyncErrorColor,
+        _ => SyncNeutralColor
+    };
 
-    private async Task<Guid?> GetCurrentSupabaseUserIdAsync()
+    private static bool IsDownloadEntry(SyncQueueEntry entry)
     {
-        try
-        {
-            var serviceProvider = FoodbookApp.MauiProgram.ServiceProvider;
-            if (serviceProvider == null) return null;
-
-            var tokenStore = serviceProvider.GetService<IAuthTokenStore>();
-            if (tokenStore == null) return null;
-
-            var accountId = await tokenStore.GetActiveAccountIdAsync();
-            if (!accountId.HasValue) return null;
-
-            var db = serviceProvider.GetService<Foodbook.Data.AppDbContext>();
-            if (db == null) return null;
-
-            var acc = await db.AuthAccounts.FindAsync(accountId.Value);
-            if (acc == null || string.IsNullOrWhiteSpace(acc.SupabaseUserId)) return null;
-
-            return Guid.TryParse(acc.SupabaseUserId, out var userGuid) ? userGuid : null;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    private async Task<string?> GetCloudSyncStorageKeyAsync()
-    {
-        try
-        {
-            var tokenStore = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IAuthTokenStore>();
-            if (tokenStore == null) return null;
-            var activeAccountId = await tokenStore.GetActiveAccountIdAsync();
-            if (!activeAccountId.HasValue) return null;
-            return $"cloudsync.choice:{activeAccountId.Value:N}";
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[ProfilePage] GetCloudSyncStorageKeyAsync failed: {ex.Message}");
-            return null;
-        }
-    }
-
-    private async Task<string?> GetSavedCloudSyncChoiceAsync()
-    {
-        var storageKey = await GetCloudSyncStorageKeyAsync();
-        if (string.IsNullOrWhiteSpace(storageKey))
-            return null;
-
-        try
-        {
-            var saved = await SecureStorage.GetAsync(storageKey);
-            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Retrieved saved cloud sync value: '{saved}' for key {storageKey}");
-            return string.IsNullOrWhiteSpace(saved) ? null : saved;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Failed to read cloud sync choice: {ex.Message}");
-            return null;
-        }
-    }
-
-    private async Task SaveCloudSyncChoiceAsync(Foodbook.Models.SyncPriority priority)
-    {
-        var storageKey = await GetCloudSyncStorageKeyAsync();
-        if (string.IsNullOrWhiteSpace(storageKey))
-            return;
-
-        try
-        {
-            var value = priority == Foodbook.Models.SyncPriority.Cloud ? CloudSyncChoiceCloud : CloudSyncChoiceLocal;
-            await SecureStorage.SetAsync(storageKey, value);
-            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Saved cloud sync choice to SecureStorage: {storageKey}={value}");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Failed to save cloud sync choice: {ex.Message}");
-        }
-    }
-
-    private async Task SaveCloudSyncDisabledChoiceAsync()
-    {
-        var storageKey = await GetCloudSyncStorageKeyAsync();
-        if (string.IsNullOrWhiteSpace(storageKey))
-            return;
-
-        try
-        {
-            await SecureStorage.SetAsync(storageKey, CloudSyncChoiceDisabled);
-            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Saved cloud sync disabled flag to SecureStorage: {storageKey}={CloudSyncChoiceDisabled}");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Failed to save cloud sync disabled flag: {ex.Message}");
-        }
-    }
-
-    private void SetCloudSyncCheckBox(bool isChecked)
-    {
-        try
-        {
-            _suppressCloudSyncToggled = true;
-            CloudSyncCheckBox.IsChecked = isChecked;
-        }
-        finally
-        {
-            _suppressCloudSyncToggled = false;
-        }
-    }
-
-    private async Task ApplySyncChoiceAsync(ISupabaseSyncService syncService, string savedChoice)
-    {
-        switch (savedChoice)
-        {
-            case CloudSyncChoiceCloud:
-                SyncStatusLabel.IsVisible = true;
-                SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "EnablingSync", "Enabling sync...");
-                await syncService.EnableCloudSyncAsync(Foodbook.Models.SyncPriority.Cloud);
-                SetCloudSyncCheckBox(true);
-                SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncEnabled", "Cloud sync enabled. Syncing data...");
-                break;
-
-            case CloudSyncChoiceLocal:
-                SyncStatusLabel.IsVisible = true;
-                SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "EnablingSync", "Enabling sync...");
-                await syncService.EnableCloudSyncAsync(Foodbook.Models.SyncPriority.Local);
-                SetCloudSyncCheckBox(true);
-                SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncEnabled", "Cloud sync enabled. Syncing data...");
-                break;
-
-            case CloudSyncChoiceDisabled:
-                await syncService.DisableCloudSyncAsync();
-                SetCloudSyncCheckBox(false);
-                SyncStatusLabel.IsVisible = false;
-                System.Diagnostics.Debug.WriteLine("[ProfilePage] Cloud sync explicitly disabled for this account (saved)");
-                break;
-        }
-    }
-
-    private async Task<Foodbook.Models.SyncPriority?> PromptForSyncPriorityAsync()
-    {
-        var title = GetLocalizedTextSafe("ProfilePageResources", "CloudSyncHeader", "Cloud sync");
-        var cancel = GetLocalizedTextSafe("ButtonResources", "Cancel", "Cancel");
-        var cloud = GetLocalizedTextSafe("ProfilePageResources", "CloudFirstOption", "Cloud first (download from cloud first)");
-        var local = GetLocalizedTextSafe("ProfilePageResources", "LocalFirstOption", "Local first (upload local data first)");
-
-        var action = await MainThread.InvokeOnMainThreadAsync(() => DisplayActionSheet(title, cancel, null, cloud, local));
-
-        if (action == cancel || action == null)
-            return null;
-
-        return action == cloud ? Foodbook.Models.SyncPriority.Cloud : Foodbook.Models.SyncPriority.Local;
-    }
-
-    private async Task RunPostEnableSyncPreferencesAsync(ISupabaseSyncService syncService, Foodbook.Models.SyncPriority priority)
-    {
-        var userId = await GetCurrentSupabaseUserIdAsync();
-        if (!userId.HasValue)
-            return;
-
-        try
-        {
-            if (priority == Foodbook.Models.SyncPriority.Cloud)
-            {
-                await syncService.LoadUserPreferencesFromCloudAsync(userId.Value);
-            }
-            else
-            {
-                await syncService.SaveUserPreferencesToCloudAsync(userId.Value);
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Post-login preferences sync failed (non-fatal): {ex.Message}");
-        }
-    }
-
-    private async Task<bool> PromptAndEnableSyncAfterLoginAsync()
-    {
-        var syncService = GetSyncService();
-        if (syncService == null)
+        if (string.IsNullOrWhiteSpace(entry.Payload))
             return false;
 
-        var savedChoice = await GetSavedCloudSyncChoiceAsync();
-        if (!string.IsNullOrWhiteSpace(savedChoice))
-        {
-            await ApplySyncChoiceAsync(syncService, savedChoice);
-            return true;
-        }
-
-        var isEnabled = await syncService.IsCloudSyncEnabledAsync();
-        if (isEnabled)
-        {
-            System.Diagnostics.Debug.WriteLine("[ProfilePage] Cloud sync is already enabled for current account - skipping prompt");
-            SetCloudSyncCheckBox(true);
-            return true;
-        }
-
-        var priority = await PromptForSyncPriorityAsync();
-        if (!priority.HasValue)
-            return false;
-
-        SyncStatusLabel.IsVisible = true;
-        SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "EnablingSync", "Enabling sync...");
-
-        await syncService.EnableCloudSyncAsync(priority.Value);
-        await SaveCloudSyncChoiceAsync(priority.Value);
-        await RunPostEnableSyncPreferencesAsync(syncService, priority.Value);
-
-        SetCloudSyncCheckBox(true);
-        SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncEnabled", "Cloud sync enabled. Syncing data...");
-        return true;
+        return entry.Payload.Contains("\"syncDirection\":\"download\"", StringComparison.OrdinalIgnoreCase);
     }
 
-    private async void OnProfileFetchJwtClicked(object sender, EventArgs e)
+    public sealed class SyncQueueDisplayItem
     {
-        System.Diagnostics.Debug.WriteLine("[ProfilePage] Login button clicked");
-
-        try
-        {
-            var auth = GetSupabaseAuth();
-            if (auth == null)
-            {
-                await DisplayAlert(
-                    GetLocalizedText("ProfilePageResources", "ServiceMissingTitle", "Service unavailable"),
-                    GetLocalizedText("ProfilePageResources", "ServiceMissingMessage", "Authentication service not found."),
-                    GetLocalizedText("ProfilePageResources", "OK", "OK")
-                );
-                return;
-            }
-
-            var email = EmailEntry.Text?.Trim();
-            var password = PasswordEntry.Text;
-
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                await DisplayAlert(
-                    GetLocalizedText("ProfilePageResources", "LoginTitle", "Login"),
-                    GetLocalizedText("ProfilePageResources", "EmailRequired", "Email cannot be empty."),
-                    GetLocalizedText("ProfilePageResources", "OK", "OK")
-                );
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(password))
-            {
-                await DisplayAlert(
-                    GetLocalizedText("ProfilePageResources", "LoginTitle", "Login"),
-                    GetLocalizedText("ProfilePageResources", "PasswordRequired", "Password cannot be empty."),
-                    GetLocalizedText("ProfilePageResources", "OK", "OK")
-                );
-                return;
-            }
-
-            StatusLabel.Text = GetLocalizedText("ProfilePageResources", "LoggingIn", "Signing in...");
-
-            var session = await auth.SignInAsync(email, password);
-
-            if (session == null || string.IsNullOrWhiteSpace(session.AccessToken))
-            {
-                StatusLabel.Text = string.Empty;
-                await DisplayAlert(
-                    GetLocalizedText("ProfilePageResources", "LoginErrorTitle", "Login Error"),
-                    GetLocalizedText("ProfilePageResources", "LoginErrorMessage", "Login failed. Please check your credentials."),
-                    GetLocalizedText("ProfilePageResources", "OK", "OK")
-                );
-                return;
-            }
-
-            _isLoggedIn = true;
-            LoggedInUserLabel.Text = session.User?.Email ?? email;
-            StatusLabel.Text = string.Empty;
-
-            // Clear sensitive input after success
-            PasswordEntry.Text = string.Empty;
-
-            UpdateUiState();
-
-            await LoadSyncStatusAsync();
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Exception: {ex}");
-            StatusLabel.Text = string.Empty;
-
-            var msg = ex.InnerException?.Message is { Length: > 0 } inner ? inner : ex.Message;
-            await DisplayAlert(
-                GetLocalizedText("ProfilePageResources", "GenericErrorTitle", "Error"),
-                msg,
-                GetLocalizedText("ProfilePageResources", "OK", "OK")
-            );
-        }
+        public string Title { get; set; } = string.Empty;
+        public string StatusText { get; set; } = string.Empty;
+        public Color StatusColor { get; set; } = SyncNeutralColor;
+        public string Detail { get; set; } = string.Empty;
+        public Color DetailColor { get; set; } = SyncNeutralColor;
+        public string CreatedText { get; set; } = string.Empty;
     }
-
-    private async void OnRegisterClicked(object sender, EventArgs e)
-    {
-        try
-        {
-            var popup = FoodbookApp.MauiProgram.ServiceProvider?.GetService<RegisterPopup>() ?? new RegisterPopup();
-
-            var hostPage = Application.Current?.Windows.FirstOrDefault()?.Page
-                           ?? Application.Current?.MainPage
-                           ?? this;
-
-            var showTask = hostPage.ShowPopupAsync(popup);
-            var resultTask = popup.ResultTask;
-
-            await Task.WhenAny(showTask, resultTask);
-
-            var registered = resultTask.IsCompleted && await resultTask;
-            if (!registered)
-                return;
-
-            var auth = GetSupabaseAuth();
-            var session = auth?.CurrentSession;
-            if (session != null && !string.IsNullOrWhiteSpace(session.AccessToken))
-            {
-                _isLoggedIn = true;
-                LoggedInUserLabel.Text = session.User?.Email ?? string.Empty;
-                UpdateUiState();
-                await LoadSyncStatusAsync();
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Register popup error: {ex}");
-            var msg = ex.InnerException?.Message is { Length: > 0 } inner ? inner : ex.Message;
-            await DisplayAlert(
-                GetLocalizedText("ProfilePageResources", "GenericErrorTitle", "Error"),
-                msg,
-                GetLocalizedText("ProfilePageResources", "OK", "OK")
-            );
-        }
-    }
-
-    private async void OnCloudSyncToggled(object sender, CheckedChangedEventArgs e)
-    {
-        if (_suppressCloudSyncToggled)
-        {
-            System.Diagnostics.Debug.WriteLine("[ProfilePage] OnCloudSyncToggled suppressed (programmatic change)");
-            return;
-        }
-        try
-        {
-            var syncService = GetSyncService();
-            if (syncService == null)
-            {
-                await DisplayAlert(
-                    GetLocalizedText("ProfilePageResources", "SyncErrorTitle", "Sync Error"),
-                    GetLocalizedText("ProfilePageResources", "SyncServiceUnavailable", "Sync service not available"),
-                    GetLocalizedText("ProfilePageResources", "OK", "OK")
-                );
-                CloudSyncCheckBox.IsChecked = !e.Value;
-                return;
-            }
-
-            SyncStatusLabel.IsVisible = true;
-
-            if (e.Value)
-            {
-                var priority = await PromptForSyncPriorityAsync();
-
-                if (!priority.HasValue)
-                {
-                    CloudSyncCheckBox.IsChecked = false;
-                    SyncStatusLabel.IsVisible = false;
-                    return;
-                }
-
-                SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "EnablingSync", "Enabling sync...");
-                ShowSpinner(GetLocalizedText("ProfilePageResources", "EnablingSync", "Enabling sync..."));
-
-                await syncService.EnableCloudSyncAsync(priority.Value);
-                await SaveCloudSyncChoiceAsync(priority.Value);
-
-                HideSpinner();
-                SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncEnabled", "Cloud sync enabled. Syncing data...");
-            }
-            else
-            {
-                SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "DisablingSync", "Disabling sync...");
-                ShowSpinner(GetLocalizedText("ProfilePageResources", "DisablingSync", "Disabling sync..."));
-
-                await syncService.DisableCloudSyncAsync();
-
-                HideSpinner();
-                SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "SyncDisabled", "Cloud sync disabled");
-                await SaveCloudSyncDisabledChoiceAsync();
-            }
-
-            await Task.Delay(2000);
-            await LoadSyncStatusAsync();
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Sync toggle error: {ex.Message}");
-            HideSpinner();
-            await DisplayAlert(
-                GetLocalizedText("ProfilePageResources", "SyncErrorTitle", "Sync Error"),
-                ex.Message,
-                GetLocalizedText("ProfilePageResources", "OK", "OK")
-            );
-            CloudSyncCheckBox.IsChecked = !e.Value;
-            SyncStatusLabel.IsVisible = false;
-        }
-    }
-
-    private async void OnForceSyncClicked(object sender, EventArgs e)
-    {
-        var sync = GetSyncService();
-        if (sync == null)
-        {
-            await DisplayAlert(
-                GetLocalizedText("ProfilePageResources", "SyncErrorTitle", "Sync Error"),
-                GetLocalizedText("ProfilePageResources", "SyncServiceUnavailable", "Sync service not available"),
-                GetLocalizedText("ProfilePageResources", "OK", "OK")
-            );
-            return;
-        }
-
-        SyncStatusLabel.IsVisible = true;
-        SyncStatusLabel.Text = GetLocalizedText("ProfilePageResources", "ForcingSync", "Forcing sync of ALL items...");
-        ShowSpinner(GetLocalizedText("ProfilePageResources", "SyncOverlaySyncing", "Syncing data..."));
-
-        try
-        {
-            // Run deduplication first so we can report stats
-            int dedupRemoved = 0;
-            int dedupSkipped = 0;
-
-            var deduplicationService = FoodbookApp.MauiProgram.ServiceProvider?
-                .GetService(typeof(IDeduplicationService)) as IDeduplicationService;
-
-            if (deduplicationService != null)
-            {
-                try
-                {
-                    ShowSpinner(GetLocalizedText("ProfilePageResources", "SyncOverlayDeduplicating", "Removing duplicates..."));
-
-                    if (!deduplicationService.IsCachePopulated)
-                    {
-                        ShowSpinner(GetLocalizedText("ProfilePageResources", "SyncOverlayFetching", "Fetching cloud data..."));
-                        await deduplicationService.FetchCloudDataAsync();
-                    }
-
-                    using var scope = FoodbookApp.MauiProgram.ServiceProvider!.CreateScope();
-                    var db = scope.ServiceProvider.GetRequiredService<Foodbook.Data.AppDbContext>();
-
-                    // Get pending count BEFORE dedup so we can calculate skipped
-                    var pendingBefore = await sync.GetPendingCountAsync();
-                    dedupRemoved = await deduplicationService.DeduplicateSyncQueueAsync();
-                    var pendingAfter = await sync.GetPendingCountAsync();
-                    dedupSkipped = Math.Max(0, pendingBefore - pendingAfter - dedupRemoved);
-                }
-                catch (Exception dedupEx)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[ProfilePage] ForceSync dedup error (non-fatal): {dedupEx.Message}");
-                }
-            }
-
-            ShowSpinner(GetLocalizedText("ProfilePageResources", "SyncOverlaySyncing", "Syncing data..."));
-            var result = await sync.ForceSyncAllAsync();
-
-            var sb = new StringBuilder();
-            sb.AppendLine(string.Format(
-                GetLocalizedText("ProfilePageResources", "ForceSyncSynced", "Synced: {0}"),
-                result.ItemsProcessed));
-
-            if (result.ItemsRemaining > 0)
-                sb.AppendLine(string.Format(
-                    GetLocalizedText("ProfilePageResources", "ForceSyncRemaining", "Remaining: {0}"),
-                    result.ItemsRemaining));
-
-            if (result.ItemsFailed > 0)
-                sb.AppendLine(string.Format(
-                    GetLocalizedText("ProfilePageResources", "ForceSyncFailed", "Failed: {0}"),
-                    result.ItemsFailed));
-
-            if (dedupRemoved > 0)
-                sb.AppendLine(string.Format(
-                    GetLocalizedText("ProfilePageResources", "ForceSyncDuplicatesRemoved", "Cloud duplicates removed: {0}"),
-                    dedupRemoved));
-
-            if (dedupSkipped > 0)
-                sb.AppendLine(string.Format(
-                    GetLocalizedText("ProfilePageResources", "ForceSyncSkipped", "Skipped (already in cloud): {0}"),
-                    dedupSkipped));
-
-            sb.AppendLine(string.Format(
-                GetLocalizedText("ProfilePageResources", "ForceSyncDuration", "Duration: {0}s"),
-                result.Duration.TotalSeconds.ToString("F1")));
-
-            if (!string.IsNullOrEmpty(result.ErrorMessage))
-                sb.AppendLine(string.Format(
-                    GetLocalizedText("ProfilePageResources", "ForceSyncError", "Error: {0}"),
-                    result.ErrorMessage));
-
-            HideSpinner();
-            await DisplayAlert(
-                GetLocalizedText("ProfilePageResources", "ForceSyncCompletedTitle", "Force sync completed"),
-                sb.ToString().TrimEnd(),
-                GetLocalizedText("ProfilePageResources", "OK", "OK")
-            );
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[ProfilePage] ForceSync error: {ex}");
-            HideSpinner();
-            await DisplayAlert(
-                GetLocalizedText("ProfilePageResources", "ForceSyncErrorTitle", "Force sync error"),
-                ex.Message,
-                GetLocalizedText("ProfilePageResources", "OK", "OK")
-            );
-        }
-        finally
-        {
-            HideSpinner();
-            await LoadSyncStatusAsync();
-        }
-    }
-
-    private async void OnLogoutClicked(object sender, EventArgs e)
-    {
-        try
-        {
-            System.Diagnostics.Debug.WriteLine("[ProfilePage] OnLogoutClicked: Starting logout process");
-            
-            var accountService = GetAccountService();
-            if (accountService != null)
-            {
-                // ? CRITICAL: Clear auto-login flag when user explicitly logs out
-                System.Diagnostics.Debug.WriteLine("[ProfilePage] Calling SignOutAsync with clearAutoLogin=true");
-                await accountService.SignOutAsync(clearAutoLogin: true);
-            }
-            else
-            {
-                // Fallback to direct auth service if account service unavailable
-                var auth = GetSupabaseAuth();
-                if (auth != null)
-                {
-                    await auth.SignOutAsync();
-                }
-            }
-
-            var syncService = GetSyncService();
-            if (syncService != null)
-            {
-                await syncService.DisableCloudSyncAsync();
-            }
-
-            _isLoggedIn = false;
-            UpdateUiState();
-            
-            EmailEntry.Text = string.Empty;
-            PasswordEntry.Text = string.Empty;
-            StatusLabel.Text = string.Empty;
-            SyncStatusLabel.IsVisible = false;
-            
-            System.Diagnostics.Debug.WriteLine("[ProfilePage] OnLogoutClicked: Logout completed successfully");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[ProfilePage] Logout error: {ex.Message}");
-            await DisplayAlert(
-                GetLocalizedText("ProfilePageResources", "LogoutErrorTitle", "Logout Error"),
-                ex.Message,
-                GetLocalizedText("ProfilePageResources", "OK", "OK")
-            );
-        }
-    }
-
-    private void OnBackgroundSyncClicked(object sender, EventArgs e)
-    {
-        HideSpinner();
-    }
-
-    #region Spinner helpers
-
-    private void ShowSpinner(string message)
-    {
-        MainThread.BeginInvokeOnMainThread(() =>
-        {
-            SyncOverlayLabel.Text = message;
-            SyncActivityIndicator.IsRunning = true;
-            SyncingOverlay.IsVisible = true;
-            ForceSyncButton.IsEnabled = false;
-            CloudSyncCheckBox.IsEnabled = false;
-        });
-    }
-
-    private void HideSpinner()
-    {
-        MainThread.BeginInvokeOnMainThread(() =>
-        {
-            SyncingOverlay.IsVisible = false;
-            SyncActivityIndicator.IsRunning = false;
-            ForceSyncButton.IsEnabled = true;
-            CloudSyncCheckBox.IsEnabled = true;
-        });
-    }
-
-    #endregion
 }

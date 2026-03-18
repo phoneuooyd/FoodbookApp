@@ -126,4 +126,64 @@
   <data name="PlannerTitle" xml:space="preserve">
     <value>Planificateurs</value>
   </data>
+  <data name="PlansTabTitle" xml:space="preserve">
+    <value>Plans</value>
+  </data>
+  <data name="FoodbooksTabTitle" xml:space="preserve">
+    <value>Foodbooks</value>
+  </data>
+  <data name="FoodbooksEmptyTitle" xml:space="preserve">
+    <value>Pas de Foodbooks</value>
+  </data>
+  <data name="FoodbooksEmptyHint" xml:space="preserve">
+    <value>Créez un nouveau Foodbook avec le bouton +</value>
+  </data>
+  <data name="ArchiveDialogTitle" xml:space="preserve">
+    <value>Archivage</value>
+  </data>
+  <data name="ArchiveFoodbookConfirmMessage" xml:space="preserve">
+    <value>Voulez-vous vraiment archiver ce Foodbook ?</value>
+  </data>
+  <data name="ArchivePlanConfirmMessage" xml:space="preserve">
+    <value>Voulez-vous vraiment archiver ce planificateur ?</value>
+  </data>
+  <data name="ApplyFoodbookPromptTitle" xml:space="preserve">
+    <value>Appliquer le Foodbook</value>
+  </data>
+  <data name="ApplyFoodbookPromptMessage" xml:space="preserve">
+    <value>Entrez la date de début (aaaa-MM-jj)</value>
+  </data>
+  <data name="Apply" xml:space="preserve">
+    <value>Appliquer</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Annuler</value>
+  </data>
+  <data name="ErrorTitle" xml:space="preserve">
+    <value>Erreur</value>
+  </data>
+  <data name="InvalidDateFormatMessage" xml:space="preserve">
+    <value>Format de date invalide.</value>
+  </data>
+  <data name="OverlapDialogTitle" xml:space="preserve">
+    <value>Chevauchement de plans</value>
+  </data>
+  <data name="OverlapDialogMessage" xml:space="preserve">
+    <value>Un planificateur existe déjà pour cette période. Continuer quand même ?</value>
+  </data>
+  <data name="DoneTitle" xml:space="preserve">
+    <value>Terminé</value>
+  </data>
+  <data name="ApplyFoodbookSuccessMessage" xml:space="preserve">
+    <value>Le Foodbook a été appliqué comme nouveau planificateur.</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>Oui</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>Non</value>
+  </data>
+  <data name="OK" xml:space="preserve">
+    <value>OK</value>
+  </data>
 </root>

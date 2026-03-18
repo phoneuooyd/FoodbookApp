@@ -28,7 +28,9 @@ namespace Foodbook.Services
         {
             return await _context.PlannedMeals
                 .Include(pm => pm.Recipe)
+                .Include(pm => pm.Plan)
                 .Where(pm => pm.Date >= from && pm.Date <= to)
+                .Where(pm => pm.Plan != null && pm.Plan.Type == PlanType.Planner)
                 .ToListAsync();
         }
 

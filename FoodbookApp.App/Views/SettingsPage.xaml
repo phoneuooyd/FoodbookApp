@@ -6,11 +6,12 @@
              xmlns:converters="clr-namespace:Foodbook.Converters"
              xmlns:controls="clr-namespace:Foodbook.Views.Components"
              x:Class="Foodbook.Views.SettingsPage"
+             x:Name="SettingsPageRoot"
              x:DataType="vm:SettingsViewModel"
              Title="{loc:Translate Resource=SettingsPageResources, Key=Title}"
+             Shell.NavBarIsVisible="False"
              BackgroundColor="{DynamicResource PageBackgroundColor}">
     <ContentPage.Resources>
-        <!-- Converters -->
         <converters:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter" />
         <converters:CultureCodeToLocalizedNameConverter x:Key="CultureCodeToLocalizedNameConverter" />
         <converters:AppThemeToLocalizedStringConverter x:Key="AppThemeToLocalizedStringConverter" />
@@ -19,251 +20,223 @@
         <converters:FontFamilyToLocalizedStringConverter x:Key="FontFamilyToLocalizedStringConverter" />
         <converters:FontSizeToLocalizedStringConverter x:Key="FontSizeToLocalizedStringConverter" />
         <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
-        
-        <!-- Enhanced Card Style with better separation -->
-        <Style x:Key="DashboardCardStyle" TargetType="Frame">
-            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}" />
-            <Setter Property="HasShadow" Value="True" />
-            <Setter Property="CornerRadius" Value="16" />
-            <Setter Property="Padding" Value="20" />
-            <Setter Property="Margin" Value="12,8" />
-            <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+
+        <Style x:Key="SettingsCard" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{DynamicResource DashboardCardBackgroundColor}" />
+            <Setter Property="Stroke" Value="{DynamicResource DashboardCardStrokeColor}" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="Padding" Value="16" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 20" />
         </Style>
-        
-        <!-- Card Title Style -->
-        <Style x:Key="CardTitleStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="{DynamicResource AppFontSize}" />
-            <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
+
+        <Style x:Key="SettingsSectionLabel" TargetType="Label">
+            <Setter Property="FontSize" Value="10" />
             <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={DynamicResource Primary}, Dark={DynamicResource Primary}}" />
-            <Setter Property="Margin" Value="0,0,0,12" />
-            <Setter Property="HorizontalTextAlignment" Value="Center"/>
+            <Setter Property="CharacterSpacing" Value="1.2" />
+            <Setter Property="TextColor" Value="{DynamicResource SecondaryText}" />
         </Style>
-        
-        <!-- Card Button Style -->
-        <Style x:Key="CardButtonStyle" TargetType="Button">
-            <Setter Property="TextColor" Value="White" />
-            <Setter Property="FontSize" Value="{DynamicResource AppFontSize}" />
-            <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
+
+        <Style x:Key="PrimaryActionButton" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="{DynamicResource Primary}" />
+            <Setter Property="TextColor" Value="{DynamicResource ButtonPrimaryText}" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="HeightRequest" Value="44" />
             <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="HeightRequest" Value="40" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Margin" Value="0,12,0,0" />
-        </Style>
-        
-        <!-- Migration Button Style -->
-        <Style x:Key="MigrationButtonStyle" TargetType="Button">
-            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={DynamicResource Primary}, Dark={DynamicResource Primary}}" />
-            <Setter Property="TextColor" Value="White" />
-            <Setter Property="FontSize" Value="{DynamicResource AppFontSize}" />
-            <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
-            <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="HeightRequest" Value="40" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Margin" Value="0,8,0,0" />
-        </Style>
-        
-        <!-- Danger Button Style -->
-        <Style x:Key="DangerButtonStyle" TargetType="Button">
-            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#DC3545, Dark=#C62D3A}" />
-            <Setter Property="TextColor" Value="White" />
-            <Setter Property="FontSize" Value="{DynamicResource AppFontSize}" />
-            <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
-            <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="HeightRequest" Value="40" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Margin" Value="0,8,0,0" />
-        </Style>
-        
-        <!-- Status Label Style -->
-        <Style x:Key="StatusLabelStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="{DynamicResource AppSmallFontSize}" />
-            <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
-            <Setter Property="HorizontalTextAlignment" Value="Center" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={DynamicResource Primary}, Dark={DynamicResource Primary}}" />
-            <Setter Property="FontAttributes" Value="Italic" />
-            <Setter Property="Margin" Value="0,8,0,0" />
-        </Style>
-        
-        <!-- Description style for consistent text blocks -->
-        <Style x:Key="DescriptionStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="{DynamicResource AppSmallFontSize}" />
-            <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
-            <Setter Property="HorizontalTextAlignment" Value="Center" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
-            <Setter Property="Margin" Value="0,0,0,8" />
-        </Style>
-        
-        <!-- Info text style for additional information -->
-        <Style x:Key="InfoTextStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="{DynamicResource AppSmallFontSize}" />
-            <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
-            <Setter Property="HorizontalTextAlignment" Value="Center" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}" />
-            <Setter Property="Margin" Value="0,4" />
+            <Setter Property="FontSize" Value="14" />
         </Style>
     </ContentPage.Resources>
 
-    <controls:TabComponent SelectedIndex="{Binding SelectedTabIndex}" SelectTabCommand="{Binding SelectTabCommand}">
-        <controls:TabComponent.Tabs>
-            <!-- LANGUAGE TAB -->
-            <controls:TabItem Name="{loc:Translate Resource=SettingsPageResources, Key=TabLanguage}">
-                <controls:TabItem.Content>
-                    <ScrollView>
-                        <VerticalStackLayout Padding="16" Spacing="8" BackgroundColor="{DynamicResource PageBackgroundColor}">
-                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="0" RowSpacing="8">
-                                <!-- Language Settings Card -->
-                                <Frame Grid.Row="0" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
-                                    <StackLayout>
-                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=LanguageTitle}" Style="{StaticResource CardTitleStyle}" />
-                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=LanguageDescription}" Style="{StaticResource DescriptionStyle}" />
-                                        <Picker ItemsSource="{Binding SupportedCultures}" SelectedItem="{Binding SelectedCulture}"
-                                                FontSize="{DynamicResource AppFontSize}" FontFamily="{DynamicResource AppFontFamily}"
-                                                ItemDisplayBinding="{Binding ., Converter={StaticResource CultureCodeToLocalizedNameConverter}}" />
-                                    </StackLayout>
-                                </Frame>
+    <Grid RowDefinitions="Auto,*">
+        <Grid Grid.Row="0" Background="{DynamicResource AppHeroGradientBrush}" Padding="20,42,20,14" MinimumHeightRequest="128">
+            <Border WidthRequest="108" HeightRequest="108" HorizontalOptions="End" VerticalOptions="Start" TranslationX="20" TranslationY="-34" BackgroundColor="{DynamicResource AppHeroBubbleColorStrong}" StrokeThickness="0" StrokeShape="RoundRectangle 54" />
+            <Border WidthRequest="62" HeightRequest="62" HorizontalOptions="End" VerticalOptions="Start" TranslationX="-2" TranslationY="8" BackgroundColor="{DynamicResource AppHeroBubbleColorMedium}" StrokeThickness="0" StrokeShape="RoundRectangle 31" />
+            <VerticalStackLayout Spacing="2" ZIndex="2">
+                <Label Text="{loc:Translate Resource=SettingsPageResources, Key=HeaderPanelLabel}" FontSize="11" FontAttributes="Bold" TextColor="{DynamicResource AppHeroHintTextColor}" />
+                <Label Text="{loc:Translate Resource=SettingsPageResources, Key=Title}" FontSize="24" FontAttributes="Bold" TextColor="White" />
+            </VerticalStackLayout>
+        </Grid>
 
-                                <!-- Version Info Card -->
-                                <Frame Grid.Row="0" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
-                                    <StackLayout>
-                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=VersionInfoTitle}" Style="{StaticResource CardTitleStyle}" />
-                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=VersionNumber}" FontAttributes="Bold" HorizontalTextAlignment="Center" />
-                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=AuthorLabel}" Style="{StaticResource InfoTextStyle}" />
-                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=RightsLabel}" Style="{StaticResource InfoTextStyle}" />
-                                    </StackLayout>
-                                </Frame>
+        <controls:TabComponent Grid.Row="1" SelectedIndex="{Binding SelectedTabIndex}" SelectTabCommand="{Binding SelectTabCommand}" TabSize="Small">
+            <controls:TabComponent.Tabs>
+                <controls:TabItem Name="{loc:Translate Resource=SettingsPageResources, Key=TabLanguage}">
+                    <controls:TabItem.Content>
+                        <ScrollView>
+                            <VerticalStackLayout Padding="16" Spacing="10" BackgroundColor="{DynamicResource PageBackgroundColor}">
+                                <Border Style="{StaticResource SettingsCard}">
+                                    <VerticalStackLayout Spacing="10">
+                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=LanguageTitle}" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource Primary}" />
+                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=LanguageDescription}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                                        <Border Style="{StaticResource ModernBorder}" Padding="10,2">
+                                            <Picker ItemsSource="{Binding SupportedCultures}" SelectedItem="{Binding SelectedCulture}" ItemDisplayBinding="{Binding ., Converter={StaticResource CultureCodeToLocalizedNameConverter}}" />
+                                        </Border>
+                                    </VerticalStackLayout>
+                                </Border>
 
-                                <!-- Font Family Settings Card -->
-                                <Frame Grid.Row="1" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
-                                    <StackLayout>
-                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FontFamilyTitle}" Style="{StaticResource CardTitleStyle}" />
-                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FontFamilyDescription}" Style="{StaticResource DescriptionStyle}" />
-                                        <Picker ItemsSource="{Binding SupportedFontFamilies}" SelectedItem="{Binding SelectedFontFamily}"
-                                                FontSize="{DynamicResource AppFontSize}" FontFamily="{DynamicResource AppFontFamily}"
-                                                ItemDisplayBinding="{Binding ., Converter={StaticResource FontFamilyToLocalizedStringConverter}}" />
-                                    </StackLayout>
-                                </Frame>
+                                <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FontFamilyTitle}" Style="{StaticResource SettingsSectionLabel}" />
+                                <Border Style="{StaticResource SettingsCard}">
+                                    <VerticalStackLayout Spacing="10">
+                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FontFamilyDescription}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                                        <Border Style="{StaticResource ModernBorder}" Padding="10,2">
+                                            <Picker ItemsSource="{Binding SupportedFontFamilies}" SelectedItem="{Binding SelectedFontFamily}" ItemDisplayBinding="{Binding ., Converter={StaticResource FontFamilyToLocalizedStringConverter}}" />
+                                        </Border>
+                                    </VerticalStackLayout>
+                                </Border>
 
-                                <!-- Font Size Settings Card -->
-                                <Frame Grid.Row="1" Grid.Column="1" Style="{StaticResource DashboardCardStyle}">
-                                    <StackLayout>
-                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FontSizeTitle}" Style="{StaticResource CardTitleStyle}" />
-                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FontSizeDescription}" Style="{StaticResource DescriptionStyle}" />
-                                        <Picker ItemsSource="{Binding SupportedFontSizes}" SelectedItem="{Binding SelectedFontSize}"
-                                                FontSize="{DynamicResource AppFontSize}" FontFamily="{DynamicResource AppFontFamily}"
-                                                ItemDisplayBinding="{Binding ., Converter={StaticResource FontSizeToLocalizedStringConverter}}" />
-                                    </StackLayout>
-                                </Frame>
-                            </Grid>
-                        </VerticalStackLayout>
-                    </ScrollView>
-                </controls:TabItem.Content>
-            </controls:TabItem>
+                                <Border Style="{StaticResource SettingsCard}">
+                                    <VerticalStackLayout Spacing="10">
+                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FontSizeTitle}" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource Primary}" />
+                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FontSizeDescription}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                                        <Border Style="{StaticResource ModernBorder}" Padding="10,2">
+                                            <Picker ItemsSource="{Binding SupportedFontSizes}" SelectedItem="{Binding SelectedFontSize}" ItemDisplayBinding="{Binding ., Converter={StaticResource FontSizeToLocalizedStringConverter}}" />
+                                        </Border>
+                                    </VerticalStackLayout>
+                                </Border>
 
-            <!-- APPEARANCE TAB -->
-            <controls:TabItem Name="{loc:Translate Resource=SettingsPageResources, Key=TabAppearance}">
-                <controls:TabItem.Content>
-                    <ScrollView>
-                        <VerticalStackLayout Padding="16" Spacing="8" BackgroundColor="{DynamicResource PageBackgroundColor}">
-                            <Grid ColumnDefinitions="*" RowDefinitions="Auto,Auto" ColumnSpacing="0" RowSpacing="8">
-                                <!-- Color Theme Settings Card -->
-                                <Frame Grid.Row="0" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
-                                    <StackLayout>
-                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ColorThemeTitle}" Style="{StaticResource CardTitleStyle}" />
-                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ColorThemeDescription}" Style="{StaticResource DescriptionStyle}" />
-                                        <Picker ItemsSource="{Binding SupportedColorThemes}" SelectedItem="{Binding SelectedColorTheme}"
-                                                FontSize="{DynamicResource AppFontSize}" FontFamily="{DynamicResource AppFontFamily}"
-                                                ItemDisplayBinding="{Binding ., Converter={StaticResource AppColorThemeToLocalizedStringConverter}}" />
-                                        
-                                        <!-- Background options -->
-                                        <Grid Margin="0,12,0,0" HorizontalOptions="Start" ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8">
-                                            <CheckBox Grid.Row="0" Grid.Column="0" IsChecked="{Binding IsColorfulBackgroundEnabled}" Color="{DynamicResource Primary}" VerticalOptions="Center" />
-                                            <Label Grid.Row="0" Grid.Column="1" Text="{loc:Translate Resource=SettingsPageResources, Key=ColorfulBackgroundOption}" FontSize="{DynamicResource AppSmallFontSize}" FontFamily="{DynamicResource AppFontFamily}" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" VerticalOptions="Center" />
+                                <Border Style="{StaticResource SettingsCard}">
+                                    <HorizontalStackLayout Spacing="12">
+                                        <Border WidthRequest="44" HeightRequest="44" Background="{DynamicResource AppHeroGradientBrush}" StrokeThickness="0" StrokeShape="RoundRectangle 12">
+                                            <Label Text="🍽️" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" />
+                                        </Border>
+                                        <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                                            <Label Text="{loc:Translate Resource=SettingsPageResources, Key=VersionInfoTitle}" FontSize="15" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" />
+                                            <Label Text="{loc:Translate Resource=SettingsPageResources, Key=VersionNumber}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                                            <Label Text="{loc:Translate Resource=SettingsPageResources, Key=AuthorLabel}" FontSize="11" TextColor="{DynamicResource SecondaryText}" />
+                                        </VerticalStackLayout>
+                                    </HorizontalStackLayout>
+                                </Border>
+                            </VerticalStackLayout>
+                        </ScrollView>
+                    </controls:TabItem.Content>
+                </controls:TabItem>
 
-                                            <CheckBox Grid.Row="1" Grid.Column="0" IsChecked="{Binding IsWallpaperBackgroundEnabled}" IsEnabled="{Binding IsWallpaperAvailable}" Color="{DynamicResource Primary}" VerticalOptions="Center" />
-                                            <Label Grid.Row="1" Grid.Column="1" Text="{loc:Translate Resource=SettingsPageResources, Key=WallpaperBackgroundOption}" FontSize="{DynamicResource AppSmallFontSize}" FontFamily="{DynamicResource AppFontFamily}" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" VerticalOptions="Center" />
+                <controls:TabItem Name="{loc:Translate Resource=SettingsPageResources, Key=TabAppearance}">
+                    <controls:TabItem.Content>
+                        <ScrollView>
+                            <VerticalStackLayout Padding="16" Spacing="10" BackgroundColor="{DynamicResource PageBackgroundColor}">
+                                <Border Style="{StaticResource SettingsCard}">
+                                    <VerticalStackLayout Spacing="10">
+                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ThemeTitle}" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource Primary}" />
+                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ThemeDescription}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                                        <controls:SegmentedPickerComponent
+                                            Option1Text="{loc:Translate Resource=SetupWizardPageResources, Key=DarkModeOption}"
+                                            Option1Command="{Binding SelectDarkThemeCommand}"
+                                            IsOption1Selected="{Binding IsDarkThemeSelected}"
+                                            Option2Text="{loc:Translate Resource=SetupWizardPageResources, Key=LightModeOption}"
+                                            Option2Command="{Binding SelectLightThemeCommand}"
+                                            IsOption2Selected="{Binding IsLightThemeSelected}"
+                                            Option3Text="{loc:Translate Resource=SettingsPageResources, Key=ThemeSystem}"
+                                            Option3Command="{Binding SelectSystemThemeCommand}"
+                                            IsOption3Selected="{Binding IsSystemThemeSelected}"
+                                            ShowOption3="True" />
+                                    </VerticalStackLayout>
+                                </Border>
+
+                                <Border Style="{StaticResource SettingsCard}">
+                                    <VerticalStackLayout Spacing="10">
+                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ColorThemeTitle}" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource Primary}" />
+                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ColorThemeDescription}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                                        <Border Style="{StaticResource ModernBorder}" Padding="10,2">
+                                            <Picker ItemsSource="{Binding SupportedColorThemes}" SelectedItem="{Binding SelectedColorTheme}" ItemDisplayBinding="{Binding ., Converter={StaticResource AppColorThemeToLocalizedStringConverter}}" />
+                                        </Border>
+
+                                        <Border Style="{StaticResource SettingsCard}" Padding="0" Margin="0,2,0,0">
+                                            <VerticalStackLayout Spacing="0">
+                                                <Grid Padding="14,12" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                                    <Border WidthRequest="38" HeightRequest="38" BackgroundColor="{DynamicResource SegmentedContainerColor}" StrokeThickness="0" StrokeShape="RoundRectangle 10" VerticalOptions="Center">
+                                                        <Label Text="🖼️" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+                                                    </Border>
+                                                    <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=WallpaperBackgroundOption}" FontSize="15" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" />
+                                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=WallpaperBackgroundDescription}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                                                    </VerticalStackLayout>
+                                                    <Switch Grid.Column="2"
+                                                            VerticalOptions="Center"
+                                                            IsToggled="{Binding IsWallpaperBackgroundEnabled}"
+                                                            IsEnabled="{Binding IsWallpaperAvailable}"
+                                                            OnColor="{DynamicResource Primary}" />
+                                                </Grid>
+
+                                                <BoxView HeightRequest="1" BackgroundColor="{DynamicResource DashboardCardStrokeColor}" />
+
+                                                <Grid Padding="14,12" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                                    <Border WidthRequest="38" HeightRequest="38" BackgroundColor="{DynamicResource SegmentedContainerColor}" StrokeThickness="0" StrokeShape="RoundRectangle 10" VerticalOptions="Center">
+                                                        <Label Text="✨" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+                                                    </Border>
+                                                    <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ColorfulBackgroundOption}" FontSize="15" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" />
+                                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ColorfulBackgroundDescription}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                                                    </VerticalStackLayout>
+                                                    <Switch Grid.Column="2"
+                                                            VerticalOptions="Center"
+                                                            IsToggled="{Binding IsColorfulBackgroundEnabled}"
+                                                            OnColor="{DynamicResource Primary}" />
+                                                </Grid>
+                                            </VerticalStackLayout>
+                                        </Border>
+
+                                        <Grid HeightRequest="38" ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="10" HorizontalOptions="Center">
+                                            <Ellipse Grid.Column="0" Fill="{Binding SelectedColorTheme, Converter={StaticResource ThemeToColorConverter}, ConverterParameter=Primary}" WidthRequest="30" HeightRequest="30" />
+                                            <Ellipse Grid.Column="1" Fill="{Binding SelectedColorTheme, Converter={StaticResource ThemeToColorConverter}, ConverterParameter=Secondary}" WidthRequest="30" HeightRequest="30" />
+                                            <Ellipse Grid.Column="2" Fill="{Binding SelectedColorTheme, Converter={StaticResource ThemeToColorConverter}, ConverterParameter=Tertiary}" WidthRequest="30" HeightRequest="30" />
                                         </Grid>
-                                        
-                                        <!-- Theme Preview -->
-                                        <Grid Margin="0,12,0,0" HeightRequest="40" ColumnDefinitions="*,*,*">
-                                            <Ellipse Grid.Column="0" Fill="{Binding SelectedColorTheme, Converter={StaticResource ThemeToColorConverter}, ConverterParameter=Primary}" WidthRequest="32" HeightRequest="32" />
-                                            <Ellipse Grid.Column="1" Fill="{Binding SelectedColorTheme, Converter={StaticResource ThemeToColorConverter}, ConverterParameter=Secondary}" WidthRequest="32" HeightRequest="32" />
-                                            <Ellipse Grid.Column="2" Fill="{Binding SelectedColorTheme, Converter={StaticResource ThemeToColorConverter}, ConverterParameter=Tertiary}" WidthRequest="32" HeightRequest="32" />
-                                        </Grid>
-                                    </StackLayout>
-                                </Frame>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </VerticalStackLayout>
+                        </ScrollView>
+                    </controls:TabItem.Content>
+                </controls:TabItem>
 
-                                <!-- Theme Settings Card -->
-                                <Frame Grid.Row="1" Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
-                                    <StackLayout>
-                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ThemeTitle}" Style="{StaticResource CardTitleStyle}" />
-                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=ThemeDescription}" Style="{StaticResource DescriptionStyle}" />
-                                        <Picker ItemsSource="{Binding SupportedThemes}" SelectedItem="{Binding SelectedTheme}"
-                                                FontSize="{DynamicResource AppFontSize}" FontFamily="{DynamicResource AppFontFamily}"
-                                                ItemDisplayBinding="{Binding ., Converter={StaticResource AppThemeToLocalizedStringConverter}}" />
-                                    </StackLayout>
-                                </Frame>
-                            </Grid>
-                        </VerticalStackLayout>
-                    </ScrollView>
-                </controls:TabItem.Content>
-            </controls:TabItem>
+                <controls:TabItem Name="{loc:Translate Resource=SettingsPageResources, Key=TabData}">
+                    <controls:TabItem.Content>
+                        <ScrollView>
+                            <VerticalStackLayout Padding="16" Spacing="10" BackgroundColor="{DynamicResource PageBackgroundColor}">
+                                <Border Style="{StaticResource SettingsCard}">
+                                    <VerticalStackLayout Spacing="10">
+                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=UpdateIngredientsTitle}" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource Primary}" />
+                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=UpdateIngredientsDescription}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                                        <Button Text="{loc:Translate Resource=SettingsPageResources, Key=UpdateIngredientsButton}" Clicked="OnUpdateIngredientsClicked" Style="{StaticResource PrimaryActionButton}" />
+                                    </VerticalStackLayout>
+                                </Border>
 
-            <!-- DATA TAB -->
-            <controls:TabItem Name="{loc:Translate Resource=SettingsPageResources, Key=TabData}">
-                <controls:TabItem.Content>
-                    <ScrollView>
-                        <VerticalStackLayout Padding="16" Spacing="8" BackgroundColor="{DynamicResource PageBackgroundColor}">
-                            <!-- NEW: Update Ingredients Card at the very top of Data section -->
-                            <Frame Style="{StaticResource DashboardCardStyle}">
-                                <StackLayout>
-                                    <Label Text="{loc:Translate Resource=SettingsPageResources, Key=UpdateIngredientsTitle}" Style="{StaticResource CardTitleStyle}" />
-                                    <Label Text="{loc:Translate Resource=SettingsPageResources, Key=UpdateIngredientsDescription}" Style="{StaticResource DescriptionStyle}" />
-                                    <Button Text="{loc:Translate Resource=SettingsPageResources, Key=UpdateIngredientsButton}" Style="{StaticResource MigrationButtonStyle}" Clicked="OnUpdateIngredientsClicked" />
-                                </StackLayout>
-                            </Frame>
+                                <Border Style="{StaticResource SettingsCard}" IsVisible="{Binding Source={x:Reference SettingsPageRoot}, Path=IsDiagnosticMode}">
+                                    <VerticalStackLayout Spacing="10">
+                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DeduplicateIngredientsTitle}" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource Primary}" />
+                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DeduplicateIngredientsDescription}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                                        <Button Text="{loc:Translate Resource=SettingsPageResources, Key=DeduplicateIngredientsButton}" Command="{Binding DeduplicateIngredientsCommand}" IsEnabled="{Binding CanExecuteMigration}" Style="{StaticResource PrimaryActionButton}" />
+                                    </VerticalStackLayout>
+                                </Border>
 
-                            <!-- NEW: Deduplicate Ingredients Card -->
-                            <Frame Style="{StaticResource DashboardCardStyle}">
-                                <StackLayout>
-                                    <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DeduplicateIngredientsTitle}" Style="{StaticResource CardTitleStyle}" />
-                                    <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DeduplicateIngredientsDescription}" Style="{StaticResource DescriptionStyle}" />
-                                    <Button Text="{loc:Translate Resource=SettingsPageResources, Key=DeduplicateIngredientsButton}" Style="{StaticResource MigrationButtonStyle}" Command="{Binding DeduplicateIngredientsCommand}" IsEnabled="{Binding CanExecuteMigration}" />
-                                </StackLayout>
-                            </Frame>
+                                <Border Style="{StaticResource SettingsCard}">
+                                    <VerticalStackLayout Spacing="10">
+                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DataExportTitle}" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource Primary}" />
+                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DataExportDescription}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                                        <Button Text="{loc:Translate Resource=SettingsPageResources, Key=DataExportButton}" Clicked="OnOpenArchivizationClicked" Style="{StaticResource PrimaryActionButton}" />
+                                    </VerticalStackLayout>
+                                </Border>
 
-                            <!-- Data Export Card -->
-                            <Frame Style="{StaticResource DashboardCardStyle}">
-                                <StackLayout>
-                                    <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DataExportTitle}" Style="{StaticResource CardTitleStyle}" />
-                                    <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DataExportDescription}" Style="{StaticResource DescriptionStyle}" />
-                                    <Button Text="{loc:Translate Resource=SettingsPageResources, Key=DataExportButton}" Style="{StaticResource MigrationButtonStyle}" Clicked="OnOpenArchivizationClicked" />
-                                </StackLayout>
-                            </Frame>
+                                <Border Style="{StaticResource SettingsCard}" IsVisible="{Binding Source={x:Reference SettingsPageRoot}, Path=IsDiagnosticMode}">
+                                    <VerticalStackLayout Spacing="10">
+                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseMigrationTitle}" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource Primary}" />
+                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseMigrationDescription}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                                        <Button Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseMigrationButton}" Command="{Binding MigrateDatabaseCommand}" IsEnabled="{Binding CanExecuteMigration}" Style="{StaticResource PrimaryActionButton}" />
+                                        <Label Text="{Binding MigrationStatus}" IsVisible="{Binding MigrationStatus, Converter={StaticResource IsNotNullOrEmptyConverter}}" FontSize="12" HorizontalTextAlignment="Center" TextColor="{DynamicResource Primary}" />
+                                    </VerticalStackLayout>
+                                </Border>
 
-                            <!-- Database Migration Card -->
-                            <Frame Style="{StaticResource DashboardCardStyle}">
-                                <StackLayout>
-                                    <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseMigrationTitle}" Style="{StaticResource CardTitleStyle}" />
-                                    <Label Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseMigrationDescription}" Style="{StaticResource DescriptionStyle}" />
-                                    <Button Text="{loc:Translate Resource=SettingsPageResources, Key=DatabaseMigrationButton}" Style="{StaticResource MigrationButtonStyle}" Command="{Binding MigrateDatabaseCommand}" IsEnabled="{Binding CanExecuteMigration}" />
-                                    <Label Text="{Binding MigrationStatus}" Style="{StaticResource StatusLabelStyle}" IsVisible="{Binding MigrationStatus, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
-                                </StackLayout>
-                            </Frame>
-
-                            <!-- Factory Reset Card -->
-                            <Frame Style="{StaticResource DashboardCardStyle}">
-                                <StackLayout>
-                                    <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FactoryResetTitle}" Style="{StaticResource CardTitleStyle}" />
-                                    <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FactoryResetDescription}" Style="{StaticResource DescriptionStyle}" />
-                                    <Button Text="{loc:Translate Resource=SettingsPageResources, Key=FactoryResetButton}" Style="{StaticResource DangerButtonStyle}" Command="{Binding FactoryResetCommand}" IsEnabled="{Binding CanExecuteMigration}" />
-                                    <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FactoryResetWarning}" FontSize="{DynamicResource AppSmallFontSize}" HorizontalTextAlignment="Center" TextColor="{AppThemeBinding Light=#DC3545, Dark=#C62D3A}" FontAttributes="Bold" Margin="0,4,0,0" />
-                                </StackLayout>
-                            </Frame>
-                        </VerticalStackLayout>
-                    </ScrollView>
-                </controls:TabItem.Content>
-            </controls:TabItem>
-        </controls:TabComponent.Tabs>
-    </controls:TabComponent>
+                                <Border Style="{StaticResource SettingsCard}" Stroke="{AppThemeBinding Light=#44DC3545, Dark=#66C62D3A}">
+                                    <VerticalStackLayout Spacing="10">
+                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FactoryResetTitle}" FontSize="16" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#DC3545, Dark=#FF8080}" />
+                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FactoryResetDescription}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                                        <Button Text="{loc:Translate Resource=SettingsPageResources, Key=FactoryResetButton}" Command="{Binding FactoryResetCommand}" IsEnabled="{Binding CanExecuteMigration}" BackgroundColor="{AppThemeBinding Light=#DC3545, Dark=#C62D3A}" TextColor="White" CornerRadius="12" HeightRequest="44" FontAttributes="Bold" />
+                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FactoryResetWarning}" FontSize="11" HorizontalTextAlignment="Center" TextColor="{AppThemeBinding Light=#DC3545, Dark=#FF8080}" FontAttributes="Bold" />
+                                    </VerticalStackLayout>
+                                </Border>
+                            </VerticalStackLayout>
+                        </ScrollView>
+                    </controls:TabItem.Content>
+                </controls:TabItem>
+            </controls:TabComponent.Tabs>
+        </controls:TabComponent>
+    </Grid>
 </ContentPage>

@@ -66,7 +66,7 @@ namespace Foodbook.Data
                 .HasForeignKey(pm => pm.RecipeId);
 
             modelBuilder.Entity<PlannedMeal>()
-                .HasOne<Plan>()
+                .HasOne(pm => pm.Plan)
                 .WithMany()
                 .HasForeignKey(pm => pm.PlanId)
                 .OnDelete(DeleteBehavior.Cascade);
@@ -79,6 +79,10 @@ namespace Foodbook.Data
                 .Property(p => p.Type)
                 .HasConversion<int>()
                 .HasDefaultValue(PlanType.Planner);
+
+            modelBuilder.Entity<Plan>()
+                .Property(p => p.DurationDays)
+                .HasDefaultValue(7);
 
             modelBuilder.Entity<ShoppingListItem>()
                 .HasOne(sli => sli.Plan)

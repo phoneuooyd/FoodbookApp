@@ -7,7 +7,8 @@ namespace Foodbook.Models
     public enum PlanType
     {
         Planner,
-        ShoppingList
+        ShoppingList,
+        Foodbook
     }
 
     public class Plan
@@ -17,8 +18,7 @@ namespace Foodbook.Models
         public DateTime EndDate { get; set; }
         public bool IsArchived { get; set; } = false;
 
-        // Type of plan - determines if it's a planner or shopping list
-        // Default kept as ShoppingList for backward compatibility with tests that expect the label
+        // Type of plan - determines if it's a planner, shopping list, or foodbook
         public PlanType Type { get; set; } = PlanType.ShoppingList;
 
         // Link to associated shopping list plan (for Planner type)
@@ -28,6 +28,14 @@ namespace Foodbook.Models
         // Persisted title/name for the plan (user-defined)
         [MaxLength(200)]
         public string? Title { get; set; }
+
+        [MaxLength(100)]
+        public string? AccentColor { get; set; }
+
+        [MaxLength(8)]
+        public string? Emoji { get; set; }
+
+        public int DurationDays { get; set; } = 7;
 
         // Timestamps
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -41,14 +49,21 @@ namespace Foodbook.Models
             set => Title = value;
         }
 
-        // Display name for UI - shows custom title or default based on type
         [NotMapped]
-        public string Name => !string.IsNullOrWhiteSpace(Title)
-            ? Title!
-            : (Type == PlanType.Planner ? "Planner" : "Lista zakupów");
+        public bool IsFoodbook => Type == PlanType.Foodbook;
 
-        // Label used for display - reflect the current type
         [NotMapped]
-        public string Label => Type == PlanType.Planner ? "Planner" : "Lista zakupów";
+        public string DisplayEmoji => string.IsNullOrWhiteSpace(Emoji) ? "??" : Emoji;
+
+        [NotMapped]
+        public string DisplayColor => string.IsNullOrWhiteSpace(AccentColor) ? "#5B3FE8" : AccentColor;
+
+        // Display name for UI - shows custom title or type key; localization is handled by the UI layer
+        [NotMapped]
+        public string Name => !string.IsNullOrWhiteSpace(Title) ? Title! : Type.ToString();
+
+        // Label used for display - returns the PlanType key; localization is handled by the UI layer
+        [NotMapped]
+        public string Label => Type.ToString();
     }
 }

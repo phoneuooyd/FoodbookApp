@@ -744,7 +744,7 @@
 
     <!-- Main Content Styles -->
     <Style x:Key="ItemTitleLabel" TargetType="Label">
-        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontSize" Value="14" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
         <Setter Property="VerticalOptions" Value="Start" />
@@ -766,8 +766,8 @@
 
     <!-- Plan Date Label -->
     <Style x:Key="PlanDateLabel" TargetType="Label">
-        <Setter Property="FontSize" Value="13" />
-        <Setter Property="TextColor" Value="{DynamicResource Primary}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light=#6E6A85, Dark=#ABA8C0}" />
         <Setter Property="VerticalOptions" Value="Start" />
         <Setter Property="FontAttributes" Value="None" />
     </Style>
@@ -824,6 +824,26 @@
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="TextColor" Value="{AppThemeBinding Light=Black, Dark=White}" />
         <Setter Property="Margin" Value="0,0,0,3" />
+    </Style>
+
+    <!-- Reusable segmented picker styles -->
+    <Style x:Key="SegmentedPickerContainerBorder" TargetType="Border">
+        <Setter Property="Padding" Value="5" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource SegmentedContainerColor}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+    </Style>
+
+    <Style x:Key="SegmentedPickerOptionButton" TargetType="Button">
+        <Setter Property="CornerRadius" Value="9" />
+        <Setter Property="Padding" Value="10,11" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="BorderWidth" Value="0" />
+        <Setter Property="MinimumHeightRequest" Value="40" />
     </Style>
 
 </ResourceDictionary>

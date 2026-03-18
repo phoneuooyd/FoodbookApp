@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Foodbook.Services"
+             xmlns:models="clr-namespace:Foodbook.Models"
+             xmlns:vm="clr-namespace:Foodbook.ViewModels"
+             xmlns:converters="clr-namespace:Foodbook.Converters"
+             xmlns:components="clr-namespace:Foodbook.Views.Components"
+             x:Class="Foodbook.Views.FoodbookPage"
+             x:Name="ThisPage"
+             x:DataType="vm:FoodbookViewModel"
+             NavigationPage.HasNavigationBar="False"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
+
+    <ContentPage.Resources>
+        <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        <converters:MealIndexConverter x:Key="MealIndexConverter" />
+        <converters:IsNotNullConverter x:Key="IsNotNullConverter" />
+
+        <LinearGradientBrush x:Key="HeroGradientBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="{DynamicResource Primary}" Offset="0.0" />
+            <GradientStop Color="{DynamicResource Tertiary}" Offset="1.0" />
+        </LinearGradientBrush>
+
+        <Style x:Key="StepperBtn" TargetType="Button">
+            <Setter Property="WidthRequest" Value="30" />
+            <Setter Property="HeightRequest" Value="30" />
+            <Setter Property="MinimumWidthRequest" Value="30" />
+            <Setter Property="MinimumHeightRequest" Value="30" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="BorderWidth" Value="0" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+
+        <Style x:Key="MealActionBtn" TargetType="Button">
+            <Setter Property="WidthRequest" Value="34" />
+            <Setter Property="HeightRequest" Value="34" />
+            <Setter Property="MinimumWidthRequest" Value="34" />
+            <Setter Property="MinimumHeightRequest" Value="34" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="BorderWidth" Value="0" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+
+        <Style x:Key="EmojiBtn" TargetType="Border">
+            <Setter Property="WidthRequest" Value="44" />
+            <Setter Property="HeightRequest" Value="44" />
+            <Setter Property="StrokeThickness" Value="2" />
+            <Setter Property="Stroke" Value="Transparent" />
+            <Setter Property="BackgroundColor" Value="{DynamicResource FrameBackgroundColor}" />
+        </Style>
+
+        <Style x:Key="SwatchBtn" TargetType="Border">
+            <Setter Property="WidthRequest" Value="34" />
+            <Setter Property="HeightRequest" Value="34" />
+            <Setter Property="StrokeThickness" Value="2.5" />
+            <Setter Property="Stroke" Value="Transparent" />
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <Grid Grid.Row="0" Background="{DynamicResource AppHeroGradientBrush}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Border WidthRequest="104" HeightRequest="104"
+                    StrokeThickness="0" Stroke="Transparent"
+                    BackgroundColor="{DynamicResource AppHeroBubbleColorStrong}"
+                    StrokeShape="RoundRectangle 52"
+                    HorizontalOptions="End" VerticalOptions="Start"
+                    TranslationX="22" TranslationY="-28"
+                    InputTransparent="True" />
+
+            <Grid Padding="16,14,16,10" ColumnDefinitions="*,Auto">
+                <VerticalStackLayout Grid.Column="0" Spacing="0" VerticalOptions="Center">
+                    <Label Text="{Binding DisplayName}"
+                           TextColor="White" FontSize="20" FontAttributes="Bold" />
+                    <Label Text="{Binding Emoji, StringFormat='{0} Foodbook'}"
+                           FontSize="12" TextColor="{DynamicResource AppHeroHintTextColor}" />
+                </VerticalStackLayout>
+
+                <Border Grid.Column="1"
+                        WidthRequest="34" HeightRequest="34"
+                        BackgroundColor="{DynamicResource AppHeroActionOverlayColor}"
+                        StrokeThickness="0" StrokeShape="RoundRectangle 10"
+                        VerticalOptions="Center">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding CancelCommand}" />
+                    </Border.GestureRecognizers>
+                    <Label Text="&#x2715;" TextColor="White" FontSize="14" FontAttributes="Bold"
+                           HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+            </Grid>
+        </Grid>
+
+        <components:TabComponent
+            Grid.Row="1"
+            x:Name="MainTabComponent"
+            SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}">
+
+            <components:TabItem Name="{loc:Translate Resource=FoodbookPageResources, Key=TabIdentity}">
+                <Grid BackgroundColor="{DynamicResource PageBackgroundColor}">
+                    <ScrollView>
+                        <VerticalStackLayout Padding="17" Spacing="17">
+                            <Border StrokeShape="RoundRectangle 16"
+                                    StrokeThickness="1.8"
+                                    Stroke="{DynamicResource Gray200}"
+                                    BackgroundColor="{DynamicResource FrameBackgroundColor}"
+                                    Padding="12,12,14,12">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Grid.Column="0"
+                                            WidthRequest="50" HeightRequest="50"
+                                            StrokeThickness="1.2"
+                                            Stroke="{DynamicResource Primary}"
+                                            StrokeShape="RoundRectangle 15"
+                                            BackgroundColor="{AppThemeBinding Light=#1A000000, Dark=#33000000}">
+                                        <Label Text="{Binding Emoji}"
+                                               FontSize="26"
+                                               HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </Border>
+
+                                    <VerticalStackLayout Grid.Column="1" Padding="12,0,0,0" Spacing="2" VerticalOptions="Center">
+                                        <Label Text="{Binding DisplayName}"
+                                               FontSize="17" FontAttributes="Bold"
+                                               TextColor="{DynamicResource FrameTextColor}" />
+                                        <Label FontSize="13" TextColor="{DynamicResource Gray500}"
+                                               Text="{Binding DurationDays, StringFormat='{0} dni'}" />
+                                    </VerticalStackLayout>
+
+                                    <Border Grid.Column="2"
+                                            Padding="8,4" StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 8"
+                                            BackgroundColor="{DynamicResource Secondary}"
+                                            VerticalOptions="Center">
+                                        <Label Text="{loc:Translate Resource=FoodbookPageResources, Key=Preview}" FontSize="13" FontAttributes="Bold"
+                                               TextColor="{DynamicResource OnSecondaryText}" />
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <VerticalStackLayout Spacing="5">
+                                <Label Text="{loc:Translate Resource=FoodbookPageResources, Key=EmojiLabel}" FontSize="12" FontAttributes="Bold"
+                                       TextColor="{DynamicResource Primary}" CharacterSpacing="0.9" />
+                                <HorizontalStackLayout Spacing="9" x:Name="EmojiRow" />
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Spacing="5">
+                                <Label Text="{loc:Translate Resource=FoodbookPageResources, Key=NameLabel}" FontSize="12" FontAttributes="Bold"
+                                       TextColor="{DynamicResource Primary}" CharacterSpacing="0.9" />
+                                <Border StrokeShape="RoundRectangle 13"
+                                        StrokeThickness="1.8"
+                                        Stroke="{DynamicResource Gray200}"
+                                        BackgroundColor="{DynamicResource FrameBackgroundColor}"
+                                        Padding="14,0">
+                                    <Entry Text="{Binding Name}"
+                                           Placeholder="{loc:Translate Resource=FoodbookPageResources, Key=NamePlaceholder}"
+                                           FontSize="17" FontAttributes="Bold"
+                                           TextColor="{DynamicResource FrameTextColor}"
+                                           PlaceholderColor="{DynamicResource Gray400}"
+                                           BackgroundColor="Transparent"
+                                           HeightRequest="50" />
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Spacing="5">
+                                <Label Text="{loc:Translate Resource=FoodbookPageResources, Key=AccentColorLabel}" FontSize="12" FontAttributes="Bold"
+                                       TextColor="{DynamicResource Primary}" CharacterSpacing="0.9" />
+                                <HorizontalStackLayout Spacing="9" x:Name="SwatchRow" />
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Spacing="5">
+                                <Label Text="{loc:Translate Resource=FoodbookPageResources, Key=DurationLabel}" FontSize="12" FontAttributes="Bold"
+                                       TextColor="{DynamicResource Primary}" CharacterSpacing="0.9" />
+                                <Border StrokeShape="RoundRectangle 13"
+                                        StrokeThickness="1.8"
+                                        Stroke="{DynamicResource Gray200}"
+                                        BackgroundColor="{DynamicResource FrameBackgroundColor}"
+                                        Padding="14,11">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                                            <Label Text="{loc:Translate Resource=FoodbookPageResources, Key=DayCountLabel}" FontSize="16" FontAttributes="Bold"
+                                                   TextColor="{DynamicResource FrameTextColor}" />
+                                            <Label Text="{loc:Translate Resource=FoodbookPageResources, Key=DayRangeHint}" FontSize="12" TextColor="{DynamicResource Gray500}" />
+                                        </VerticalStackLayout>
+                                        <HorizontalStackLayout Grid.Column="1" Spacing="10" VerticalOptions="Center">
+                                            <Button Text="&#x2212;" Style="{StaticResource StepperBtn}"
+                                                    WidthRequest="36" HeightRequest="36" MinimumWidthRequest="36" MinimumHeightRequest="36"
+                                                    FontSize="18" CornerRadius="11"
+                                                    Command="{Binding DecreaseDurationCommand}"
+                                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                                                    TextColor="{DynamicResource FrameTextColor}" />
+                                            <Label Text="{Binding DurationDays}"
+                                                   WidthRequest="26" HorizontalTextAlignment="Center"
+                                                   FontSize="19" FontAttributes="Bold"
+                                                   TextColor="{DynamicResource FrameTextColor}"
+                                                   VerticalOptions="Center" />
+                                            <Button Text="+" Style="{StaticResource StepperBtn}"
+                                                    WidthRequest="36" HeightRequest="36" MinimumWidthRequest="36" MinimumHeightRequest="36"
+                                                    FontSize="18" CornerRadius="11"
+                                                    Command="{Binding IncreaseDurationCommand}"
+                                                    BackgroundColor="{DynamicResource Primary}"
+                                                    TextColor="{DynamicResource ButtonPrimaryText}" />
+                                        </HorizontalStackLayout>
+                                    </Grid>
+                                </Border>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </ScrollView>
+                </Grid>
+            </components:TabItem>
+
+            <components:TabItem Name="{loc:Translate Resource=FoodbookPageResources, Key=TabMeals}">
+                <Grid RowDefinitions="Auto,*" BackgroundColor="{DynamicResource PageBackgroundColor}">
+                    <Border Grid.Row="0" BackgroundColor="{DynamicResource FrameBackgroundColor}"
+                            StrokeThickness="0" Padding="12,7,12,8" Margin="0,4,0,0">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Grid.Column="0" Text="{loc:Translate Resource=FoodbookPageResources, Key=MealsPerDay}"
+                                   FontSize="13" FontAttributes="Bold"
+                                   TextColor="{DynamicResource FrameTextColor}" VerticalOptions="Center" />
+                            <HorizontalStackLayout Grid.Column="1" Spacing="8">
+                                <Button Text="&#x2212;" Style="{StaticResource StepperBtn}"
+                                        Command="{Binding DecreaseMealsPerDayCommand}"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                                        TextColor="{DynamicResource FrameTextColor}" />
+                                <Label Text="{Binding MealsPerDay}"
+                                       WidthRequest="22" HorizontalTextAlignment="Center"
+                                       FontSize="16" FontAttributes="Bold"
+                                       TextColor="{DynamicResource FrameTextColor}" VerticalOptions="Center" />
+                                <Button Text="+" Style="{StaticResource StepperBtn}"
+                                        Command="{Binding IncreaseMealsPerDayCommand}"
+                                        BackgroundColor="{DynamicResource Primary}"
+                                        TextColor="{DynamicResource ButtonPrimaryText}" />
+                            </HorizontalStackLayout>
+                        </Grid>
+                    </Border>
+
+                    <ScrollView Grid.Row="1">
+                        <VerticalStackLayout Padding="10,10,10,0" Spacing="10"
+                                             BindableLayout.ItemsSource="{Binding Days}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="models:PlannerDay">
+                                    <Border StrokeThickness="0" BackgroundColor="{DynamicResource FrameBackgroundColor}">
+                                        <Border.StrokeShape><RoundRectangle CornerRadius="14" /></Border.StrokeShape>
+                                        <Border.Shadow>
+                                            <Shadow Brush="#10000000" Offset="0,2" Radius="10" Opacity="0.08" />
+                                        </Border.Shadow>
+                                        <Grid RowDefinitions="Auto,Auto,Auto,Auto">
+                                            <Grid Grid.Row="0" ColumnDefinitions="4,*,Auto" Padding="0,0,12,0" MinimumHeightRequest="56">
+                                                <BoxView Grid.Column="0" BackgroundColor="{Binding DayAccentColor}" />
+                                                <StackLayout Grid.Column="1" Spacing="0" Padding="10,10,0,10" VerticalOptions="Center">
+                                                    <Label Text="{Binding DayName}" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" />
+                                                    <Label Text="{Binding Date, StringFormat='{0:dd.MM.yyyy}'}" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                                </StackLayout>
+                                                <Border Grid.Column="2" BackgroundColor="{DynamicResource Secondary}" StrokeThickness="0" Padding="8,4" VerticalOptions="Center">
+                                                    <Border.StrokeShape><RoundRectangle CornerRadius="7" /></Border.StrokeShape>
+                                                    <HorizontalStackLayout Spacing="3">
+                                                        <Label FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource OnSecondaryText}" Text="{Binding TotalCalories, StringFormat='{0:F0}'}" />
+                                                        <Label FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource OnSecondaryText}" Text="{loc:Translate Resource=PlannerPageResources, Key=CalorieShort}" />
+                                                    </HorizontalStackLayout>
+                                                </Border>
+                                            </Grid>
+
+                                            <VerticalStackLayout Grid.Row="1" BindableLayout.ItemsSource="{Binding Meals}" Spacing="0">
+                                                <BindableLayout.ItemTemplate>
+                                                    <DataTemplate x:DataType="models:PlannedMeal">
+                                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto" ColumnSpacing="6" Padding="12,7">
+                                                            <Border Grid.Column="0" WidthRequest="28" HeightRequest="28" BackgroundColor="{DynamicResource Secondary}" StrokeThickness="0" VerticalOptions="Center">
+                                                                <Border.StrokeShape><RoundRectangle CornerRadius="8" /></Border.StrokeShape>
+                                                                <Label FontSize="13" FontAttributes="Bold" TextColor="{DynamicResource OnSecondaryText}" HorizontalOptions="Center" VerticalOptions="Center">
+                                                                    <Label.Text>
+                                                                        <MultiBinding Converter="{StaticResource MealIndexConverter}">
+                                                                            <Binding Path="." />
+                                                                            <Binding Path="BindingContext.Meals" Source="{RelativeSource AncestorType={x:Type VerticalStackLayout}}" />
+                                                                        </MultiBinding>
+                                                                    </Label.Text>
+                                                                </Label>
+                                                            </Border>
+
+                                                            <Border Grid.Column="1" Padding="0" HeightRequest="38" StrokeShape="RoundRectangle 10" StrokeThickness="1.5" BackgroundColor="{DynamicResource PageBackgroundColor}">
+                                                                <Border.Triggers>
+                                                                    <DataTrigger TargetType="Border" Binding="{Binding Recipe}" Value="{x:Null}">
+                                                                        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+                                                                        <Setter Property="BackgroundColor" Value="{DynamicResource PageBackgroundColor}" />
+                                                                    </DataTrigger>
+                                                                    <DataTrigger TargetType="Border" Binding="{Binding Recipe, Converter={StaticResource IsNotNullConverter}}" Value="True">
+                                                                        <Setter Property="Stroke" Value="{DynamicResource Primary}" />
+                                                                        <Setter Property="BackgroundColor" Value="{DynamicResource Secondary}" />
+                                                                    </DataTrigger>
+                                                                </Border.Triggers>
+                                                                <components:FolderAwarePickerComponent SelectedRecipe="{Binding Recipe}" PlaceholderText="{loc:Translate Resource=FoodbookPageResources, Key=SelectRecipePlaceholder}" />
+                                                            </Border>
+
+                                                            <Button Grid.Column="2" Text="&#x2212;" Style="{StaticResource MealActionBtn}" BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" TextColor="{DynamicResource FrameTextColor}" Clicked="OnDecreasePortionsClicked" />
+                                                            <Label Grid.Column="3" Text="{Binding Portions}" WidthRequest="20" HorizontalTextAlignment="Center" VerticalOptions="Center" FontSize="14" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" />
+                                                            <Button Grid.Column="4" Text="+" Style="{StaticResource MealActionBtn}" BackgroundColor="{DynamicResource Primary}" TextColor="{DynamicResource ButtonPrimaryText}" Clicked="OnIncreasePortionsClicked" />
+                                                            <Button Grid.Column="5" Text="&#x2715;" Clicked="OnRemoveMealClicked" Style="{StaticResource MealActionBtn}" FontSize="14" CornerRadius="17" BackgroundColor="#1AF43F5E" TextColor="#F43F5E" />
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </BindableLayout.ItemTemplate>
+                                            </VerticalStackLayout>
+
+                                            <Grid Grid.Row="2" ColumnDefinitions="*,*,*,*" Padding="12,7" BackgroundColor="{DynamicResource PageBackgroundColor}">
+                                                <HorizontalStackLayout Grid.Column="0" Spacing="3">
+                                                    <Label FontSize="10" FontAttributes="Bold" TextColor="{DynamicResource Primary}" Text="{Binding TotalCalories, StringFormat='{0:F0}'}" />
+                                                    <Label FontSize="10" FontAttributes="Bold" TextColor="{DynamicResource Primary}" Text="{loc:Translate Resource=PlannerPageResources, Key=CalorieShort}" />
+                                                </HorizontalStackLayout>
+                                                <HorizontalStackLayout Grid.Column="1" Spacing="3">
+                                                    <Label FontSize="10" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" Text="{loc:Translate Resource=PlannerPageResources, Key=ProteinShort}" />
+                                                    <Label FontSize="10" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" Text="{Binding TotalProtein, StringFormat='{0:F1}g'}" />
+                                                </HorizontalStackLayout>
+                                                <HorizontalStackLayout Grid.Column="2" Spacing="3">
+                                                    <Label FontSize="10" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" Text="{loc:Translate Resource=PlannerPageResources, Key=FatShort}" />
+                                                    <Label FontSize="10" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" Text="{Binding TotalFat, StringFormat='{0:F1}g'}" />
+                                                </HorizontalStackLayout>
+                                                <HorizontalStackLayout Grid.Column="3" Spacing="3">
+                                                    <Label FontSize="10" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" Text="{loc:Translate Resource=PlannerPageResources, Key=CarbsShort}" />
+                                                    <Label FontSize="10" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" Text="{Binding TotalCarbs, StringFormat='{0:F1}g'}" />
+                                                </HorizontalStackLayout>
+                                            </Grid>
+
+                                            <Border Grid.Row="3" Margin="12,6,12,10" HeightRequest="40" BackgroundColor="{DynamicResource Secondary}" Stroke="{DynamicResource Primary}" StrokeThickness="1.5" StrokeDashArray="4,3">
+                                                <Border.StrokeShape><RoundRectangle CornerRadius="11" /></Border.StrokeShape>
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.AddMealCommand}" CommandParameter="{Binding .}" />
+                                                </Border.GestureRecognizers>
+                                                <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="6">
+                                                    <Label Text="+" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource OnSecondaryText}" />
+                                                    <Label Text="{loc:Translate Resource=FoodbookPageResources, Key=AddMeal}" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource OnSecondaryText}" />
+                                                </HorizontalStackLayout>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </ScrollView>
+                </Grid>
+            </components:TabItem>
+        </components:TabComponent>
+
+        <Border Grid.Row="2" Margin="12,8,12,12" HeightRequest="50"
+                StrokeThickness="0"
+                BackgroundColor="{DynamicResource Primary}"
+                StrokeShape="RoundRectangle 14">
+            <Border.Shadow>
+                <Shadow Brush="{DynamicResource Primary}" Offset="0,4" Radius="16" Opacity="0.35" />
+            </Border.Shadow>
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding CtaCommand}" />
+            </Border.GestureRecognizers>
+            <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="8">
+                <Label Text="{Binding CtaButtonText}" TextColor="{DynamicResource ButtonPrimaryText}"
+                       FontSize="14" FontAttributes="Bold" />
+            </HorizontalStackLayout>
+        </Border>
+    </Grid>
+</ContentPage>

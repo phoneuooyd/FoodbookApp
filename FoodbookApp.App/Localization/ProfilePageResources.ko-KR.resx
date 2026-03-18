@@ -8,6 +8,7 @@
   <data name="Title" xml:space="preserve"><value>프로필</value></data>
   <data name="HeaderTitle" xml:space="preserve"><value>프로필</value></data>
   <data name="HeaderSubtitle" xml:space="preserve"><value>Supabase에 로그인하세요</value></data>
+  <data name="HeroGuestInstruction" xml:space="preserve"><value>프로필을 설정하려면 로그인하거나 계정을 만드세요</value></data>
 
   <data name="LoginPanelTitle" xml:space="preserve"><value>로그인</value></data>
   <data name="EmailLabel" xml:space="preserve"><value>이메일</value></data>
@@ -47,4 +48,26 @@
   <data name="GenericErrorTitle" xml:space="preserve"><value>오류</value></data>
 
   <data name="SyncStatusFormat" xml:space="preserve"><value>상태: {0}, 대기 중: {1}</value></data>
+
+  <data name="SyncQueueTitle" xml:space="preserve"><value>동기화 대기열</value></data>
+  <data name="SyncQueueSubtitle" xml:space="preserve"><value>SyncQueue 작업 상태</value></data>
+  <data name="SyncQueueRecentOperations" xml:space="preserve"><value>최근 작업</value></data>
+  <data name="SyncQueueLoading" xml:space="preserve"><value>불러오는 중...</value></data>
+  <data name="SyncQueueRefresh" xml:space="preserve"><value>새로고침</value></data>
+  <data name="SyncQueueEmpty" xml:space="preserve"><value>동기화 대기열 항목이 없습니다.</value></data>
+  <data name="SyncQueueLoginRequired" xml:space="preserve"><value>동기화 대기열을 보려면 로그인하세요.</value></data>
+  <data name="SyncQueueServiceUnavailable" xml:space="preserve"><value>앱 서비스를 사용할 수 없습니다.</value></data>
+  <data name="SyncQueueAccountUnavailable" xml:space="preserve"><value>계정 서비스를 사용할 수 없습니다.</value></data>
+  <data name="SyncQueueNoActiveAccount" xml:space="preserve"><value>활성 계정이 없습니다.</value></data>
+  <data name="SyncQueueLoadError" xml:space="preserve"><value>동기화 대기열을 불러오지 못했습니다.</value></data>
+  <data name="SyncQueueSummaryFormat" xml:space="preserve"><value>전체: {0} · ⬆️ {1} · ⬇️ {2} · 성공: {3} · 오류: {4} · 대기 중: {5}</value></data>
+  <data name="SyncQueueDetailErrorNoMessage" xml:space="preserve"><value>작업이 실패했습니다</value></data>
+  <data name="SyncQueueDetailErrorFormat" xml:space="preserve"><value>오류: {0}</value></data>
+  <data name="SyncQueueDetailCompletedFormat" xml:space="preserve"><value>ID: {0}</value></data>
+  <data name="SyncQueueDetailInProgress" xml:space="preserve"><value>작업 진행 중</value></data>
+  <data name="SyncQueueDetailPending" xml:space="preserve"><value>대기열에서 작업 대기 중</value></data>
+  <data name="SyncQueueStatusSuccess" xml:space="preserve"><value>성공</value></data>
+  <data name="SyncQueueStatusError" xml:space="preserve"><value>오류</value></data>
+  <data name="SyncQueueStatusInProgress" xml:space="preserve"><value>진행 중</value></data>
+  <data name="SyncQueueStatusPending" xml:space="preserve"><value>대기 중</value></data>
 </root>

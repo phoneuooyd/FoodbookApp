@@ -126,4 +126,64 @@
   <data name="PlannerTitle" xml:space="preserve">
     <value>Plans</value>
   </data>
+  <data name="PlansTabTitle" xml:space="preserve">
+    <value>Plans</value>
+  </data>
+  <data name="FoodbooksTabTitle" xml:space="preserve">
+    <value>Foodbooks</value>
+  </data>
+  <data name="FoodbooksEmptyTitle" xml:space="preserve">
+    <value>No Foodbooks</value>
+  </data>
+  <data name="FoodbooksEmptyHint" xml:space="preserve">
+    <value>Create a new Foodbook with the + button</value>
+  </data>
+  <data name="ArchiveDialogTitle" xml:space="preserve">
+    <value>Archive</value>
+  </data>
+  <data name="ArchiveFoodbookConfirmMessage" xml:space="preserve">
+    <value>Are you sure you want to archive this Foodbook?</value>
+  </data>
+  <data name="ArchivePlanConfirmMessage" xml:space="preserve">
+    <value>Are you sure you want to archive this planner?</value>
+  </data>
+  <data name="ApplyFoodbookPromptTitle" xml:space="preserve">
+    <value>Apply Foodbook</value>
+  </data>
+  <data name="ApplyFoodbookPromptMessage" xml:space="preserve">
+    <value>Enter start date (yyyy-MM-dd)</value>
+  </data>
+  <data name="Apply" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="ErrorTitle" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="InvalidDateFormatMessage" xml:space="preserve">
+    <value>Invalid date format.</value>
+  </data>
+  <data name="OverlapDialogTitle" xml:space="preserve">
+    <value>Plan overlap</value>
+  </data>
+  <data name="OverlapDialogMessage" xml:space="preserve">
+    <value>A planner already exists in the selected date range. Continue anyway?</value>
+  </data>
+  <data name="DoneTitle" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="ApplyFoodbookSuccessMessage" xml:space="preserve">
+    <value>Foodbook has been applied as a new planner.</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="OK" xml:space="preserve">
+    <value>OK</value>
+  </data>
 </root>

@@ -396,3 +396,8 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+FoodbookApp.App/DOCS/OverhaulProfilePage.html
+FoodbookApp.App/DOCS/OverhaulAddRecipePage.html
+FoodbookApp.App/DOCS/OverhaulIngredientFormPage.html
+FoodbookApp.App/DOCS/OverhaulSettingsPage.html
+FoodbookApp.App/DOCS/OverhaulSetupWizard.html

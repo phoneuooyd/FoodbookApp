@@ -16,6 +16,19 @@
 
     <ContentPage.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+
+        <LinearGradientBrush x:Key="HeroGradientBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="{DynamicResource Primary}" Offset="0.0" />
+            <GradientStop Color="{DynamicResource Tertiary}" Offset="1.0" />
+        </LinearGradientBrush>
+
+        <Style x:Key="HeroTitleStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="28" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="White" />
+        </Style>
+
+        <!-- Plans tab list row template -->
         <DataTemplate x:Key="PlanRowTemplate" x:DataType="models:Plan">
             <components:UniversalListItemComponent 
                 EditCommand="{Binding BindingContext.EditPlanCommand, Source={x:Reference ThisPage}}"
@@ -26,28 +39,105 @@
                 ShowArchiveButton="True"
                 ShowSubtitle="False" />
         </DataTemplate>
+
+        <DataTemplate x:Key="FoodbookRowTemplate" x:DataType="models:Plan">
+            <components:UniversalListItemComponent
+                EditCommand="{Binding BindingContext.EditFoodbookCommand, Source={x:Reference ThisPage}}"
+                ApplyCommand="{Binding BindingContext.ApplyFoodbookCommand, Source={x:Reference ThisPage}}"
+                ApplyButtonText="Zastosuj"
+                ArchiveCommand="{Binding BindingContext.ArchiveFoodbookCommand, Source={x:Reference ThisPage}}"
+                ShowApplyButton="True"
+                ShowAccentStrip="True"
+                AccentStripColor="{Binding DisplayColor}"
+                ShowNutritionLayout="False"
+                ShowPlanLayout="True"
+                ShowDeleteButton="False"
+                ShowArchiveButton="True"
+                ShowSubtitle="False" />
+        </DataTemplate>
     </ContentPage.Resources>
 
-    <Grid>
-        <Label
-            Text="{loc:Translate Resource=PlannerListsPageResources, Key=PlannerTitle}"
-            FontSize="20"
-            FontAttributes="Bold"
-            TextColor="{DynamicResource Primary}"
-            Margin="10,5,5,5" />
+    <Grid RowDefinitions="Auto,*">
 
-        <components:GenericListComponent
-            x:Name="PlannerList"
-            ItemsSource="{Binding Plans}"
-            ItemTemplate="{StaticResource PlanRowTemplate}"
-            EmptyTitle="{loc:Translate Resource=PlannerListsPageResources, Key=EmptyTitle}"
-            EmptyHint="{loc:Translate Resource=PlannerListsPageResources, Key=EmptyHint}"
-            IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+        <Grid Grid.Row="0"
+              MinimumHeightRequest="88"
+              MaximumHeightRequest="88"
+              Padding="20,16,20,14"
+              Background="{StaticResource HeroGradientBrush}">
+            <Border WidthRequest="104"
+                    HeightRequest="104"
+                    StrokeThickness="0"
+                    Stroke="Transparent"
+                    BackgroundColor="#14FFFFFF"
+                    StrokeShape="RoundRectangle 52"
+                    HorizontalOptions="End"
+                    VerticalOptions="Start"
+                    TranslationX="22"
+                    TranslationY="-28" />
+            <Border WidthRequest="72"
+                    HeightRequest="72"
+                    StrokeThickness="0"
+                    Stroke="Transparent"
+                    BackgroundColor="#10FFFFFF"
+                    StrokeShape="RoundRectangle 36"
+                    HorizontalOptions="Start"
+                    VerticalOptions="End"
+                    TranslationX="-10"
+                    TranslationY="14" />
 
-        <components:FloatingActionButtonComponent
-            Command="{Binding CreatePlanCommand}"
-            IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
-            ButtonText="+"
-            IsExpandable="False" />
+            <VerticalStackLayout Spacing="0"
+                                 VerticalOptions="End"
+                                 ZIndex="1">
+                <Label Text="{loc:Translate Resource=PlannerListsPageResources, Key=PlannerTitle}"
+                       Style="{StaticResource HeroTitleStyle}" />
+            </VerticalStackLayout>
+        </Grid>
+
+        <components:TabComponent
+            Grid.Row="1"
+            x:Name="MainTabComponent"
+            SelectedIndex="{Binding SelectedTabIndex}">
+
+            <!-- Tab 0: Plans -->
+            <components:TabItem
+                Name="{loc:Translate Resource=PlannerListsPageResources, Key=PlansTabTitle}">
+                <Grid>
+                    <components:GenericListComponent
+                        x:Name="PlannerList"
+                        ItemsSource="{Binding Plans}"
+                        ItemTemplate="{StaticResource PlanRowTemplate}"
+                        EmptyTitle="{loc:Translate Resource=PlannerListsPageResources, Key=EmptyTitle}"
+                        EmptyHint="{loc:Translate Resource=PlannerListsPageResources, Key=EmptyHint}"
+                        IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+
+                    <components:FloatingActionButtonComponent
+                        Command="{Binding CreatePlanCommand}"
+                        IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+                        ButtonText="+"
+                        IsExpandable="False" />
+                </Grid>
+            </components:TabItem>
+
+            <!-- Tab 1: Foodbooks (functional list) -->
+            <components:TabItem
+                Name="{loc:Translate Resource=PlannerListsPageResources, Key=FoodbooksTabTitle}">
+                <Grid>
+                    <components:GenericListComponent
+                        ItemsSource="{Binding Foodbooks}"
+                        ItemTemplate="{StaticResource FoodbookRowTemplate}"
+                        EmptyTitle="{loc:Translate Resource=PlannerListsPageResources, Key=FoodbooksEmptyTitle}"
+                        EmptyHint="{loc:Translate Resource=PlannerListsPageResources, Key=FoodbooksEmptyHint}"
+                        IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+
+                    <components:FloatingActionButtonComponent
+                        Command="{Binding CreateFoodbookCommand}"
+                        IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+                        ButtonText="+"
+                        IsExpandable="False" />
+                </Grid>
+            </components:TabItem>
+
+        </components:TabComponent>
+
     </Grid>
 </ContentPage>

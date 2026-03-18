@@ -16,6 +16,7 @@
 	<data name="Title" xml:space="preserve"><value>Profile</value></data>
 	<data name="HeaderTitle" xml:space="preserve"><value>Profile</value></data>
 	<data name="HeaderSubtitle" xml:space="preserve"><value>Sign in to Supabase</value></data>
+	<data name="HeroGuestInstruction" xml:space="preserve"><value>Sign in or create an account to configure your profile</value></data>
 
 	<data name="LoginPanelTitle" xml:space="preserve"><value>Sign in</value></data>
 	<data name="EmailLabel" xml:space="preserve"><value>Email</value></data>
@@ -65,4 +66,26 @@
 	<data name="SyncOverlaySyncing" xml:space="preserve"><value>Syncing data...</value></data>
 	<data name="SyncOverlayDeduplicating" xml:space="preserve"><value>Removing duplicates...</value></data>
 	<data name="SyncOverlayFetching" xml:space="preserve"><value>Fetching cloud data...</value></data>
+
+	<data name="SyncQueueTitle" xml:space="preserve"><value>Sync queue</value></data>
+	<data name="SyncQueueSubtitle" xml:space="preserve"><value>SyncQueue operation status</value></data>
+	<data name="SyncQueueRecentOperations" xml:space="preserve"><value>Recent operations</value></data>
+	<data name="SyncQueueLoading" xml:space="preserve"><value>Loading...</value></data>
+	<data name="SyncQueueRefresh" xml:space="preserve"><value>Refresh</value></data>
+	<data name="SyncQueueEmpty" xml:space="preserve"><value>No entries in sync queue.</value></data>
+	<data name="SyncQueueLoginRequired" xml:space="preserve"><value>Sign in to view sync queue.</value></data>
+	<data name="SyncQueueServiceUnavailable" xml:space="preserve"><value>Application services are unavailable.</value></data>
+	<data name="SyncQueueAccountUnavailable" xml:space="preserve"><value>Account service is unavailable.</value></data>
+	<data name="SyncQueueNoActiveAccount" xml:space="preserve"><value>No active account.</value></data>
+	<data name="SyncQueueLoadError" xml:space="preserve"><value>Could not load sync queue.</value></data>
+	<data name="SyncQueueSummaryFormat" xml:space="preserve"><value>Total: {0} · ⬆️ {1} · ⬇️ {2} · Success: {3} · Errors: {4} · Pending: {5}</value></data>
+	<data name="SyncQueueDetailErrorNoMessage" xml:space="preserve"><value>Operation failed</value></data>
+	<data name="SyncQueueDetailErrorFormat" xml:space="preserve"><value>Error: {0}</value></data>
+	<data name="SyncQueueDetailCompletedFormat" xml:space="preserve"><value>ID: {0}</value></data>
+	<data name="SyncQueueDetailInProgress" xml:space="preserve"><value>Operation in progress</value></data>
+	<data name="SyncQueueDetailPending" xml:space="preserve"><value>Operation pending in queue</value></data>
+	<data name="SyncQueueStatusSuccess" xml:space="preserve"><value>Success</value></data>
+	<data name="SyncQueueStatusError" xml:space="preserve"><value>Error</value></data>
+	<data name="SyncQueueStatusInProgress" xml:space="preserve"><value>In progress</value></data>
+	<data name="SyncQueueStatusPending" xml:space="preserve"><value>Pending</value></data>
 </root>

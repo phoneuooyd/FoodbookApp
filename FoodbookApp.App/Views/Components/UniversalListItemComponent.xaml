@@ -5,6 +5,10 @@
              x:Class="Foodbook.Views.Components.UniversalListItemComponent"
              x:Name="ItemComponent">
 
+    <ContentView.Resources>
+        <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+    </ContentView.Resources>
+
     <!-- Wrapper grid adds top/bottom drop zones for precise reordering -->
     <Grid RowDefinitions="Auto,Auto,Auto">
         <!-- Top insert zone (shows a separator and triggers Before drop) -->
@@ -38,9 +42,16 @@
                     <DropGestureRecognizer AllowDrop="True" DragOver="OnDragOver" DragLeave="OnDragLeave" Drop="OnDrop" />
                 </Frame.GestureRecognizers>
 
-                <!-- Layout: narrow left ribbon column + content -->
-                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
-                    <!-- Ribbon shown only for folders; collapses when not a folder -->
+                <!-- Layout: narrow left ribbon | optional icon tile | content | action buttons -->
+                <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto">
+
+                    <!-- Accent strip for foodbook/planner cards -->
+                    <BoxView Grid.Column="0"
+                             WidthRequest="4"
+                             Color="{Binding AccentStripColor, Source={x:Reference ItemComponent}}"
+                             IsVisible="{Binding ShowAccentStrip, Source={x:Reference ItemComponent}}" />
+
+                    <!-- Ribbon for folders -->
                     <BoxView Grid.Column="0"
                              WidthRequest="6"
                              BackgroundColor="{DynamicResource Primary}"
@@ -52,17 +63,57 @@
                         </BoxView.Triggers>
                     </BoxView>
 
-                    <!-- Content area (keeps inner spacing) -->
-                    <Grid Grid.Column="1" Margin="12" Style="{StaticResource ListItemContentGrid}" ColumnDefinitions="*,Auto,Auto,Auto">
+                    <!-- Plan icon tile (visible only when ShowPlanLayout=True) -->
+                    <Border Grid.Column="1"
+                             IsVisible="{Binding ShowPlanLayout, Source={x:Reference ItemComponent}}"
+                             WidthRequest="40"
+                             HeightRequest="40"
+                             Margin="10,0,0,0"
+                             VerticalOptions="Center"
+                             StrokeThickness="0"
+                             BackgroundColor="{DynamicResource PlannerIconBackgroundColor}"
+                             x:Name="PlanIconBorder">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12" />
+                        </Border.StrokeShape>
+                        <Grid>
+                            <Path x:Name="PlanIconPath"
+                                  Data="M3 4 C3 2.895 3.895 2 5 2 L19 2 C20.105 2 21 2.895 21 4 L21 22 C21 23.105 20.105 24 19 24 L5 24 C3.895 24 3 23.105 3 22 Z M3 9 L21 9 M8 2 L8 6 M16 2 L16 6"
+                                  Stroke="{DynamicResource PlannerIconStrokeColor}"
+                                  StrokeThickness="1.6"
+                                  StrokeLineCap="Round"
+                                  StrokeLineJoin="Round"
+                                  Aspect="Uniform"
+                                  WidthRequest="20"
+                                  HeightRequest="20"
+                                  HorizontalOptions="Center"
+                                  VerticalOptions="Center" />
+                            <Label x:Name="FoodbookEmojiLabel"
+                                   Text="{Binding DisplayEmoji}"
+                                   FontSize="26"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"
+                                   IsVisible="False" />
+                        </Grid>
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border"
+                                         Binding="{Binding IsFoodbook}"
+                                         Value="True">
+                                <Setter TargetName="PlanIconPath" Property="IsVisible" Value="False" />
+                                <Setter TargetName="FoodbookEmojiLabel" Property="IsVisible" Value="True" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                    </Border>
+
+                    <!-- Content area -->
+                    <Grid Grid.Column="2" Margin="12" Style="{StaticResource ListItemContentGrid}" ColumnDefinitions="*,Auto,Auto,Auto,Auto">
                         <StackLayout Grid.Column="0" Spacing="2">
-                            <!-- Title for Recipe/Ingredient, Label for Plan -->
+                            <!-- Title label -->
                             <Label x:Name="TitleLabel" Text="{Binding Name}" Style="{StaticResource ItemTitleLabel}">
                                 <Label.Triggers>
-                                    <!-- Plan: show Name (custom title) instead of generic Label -->
                                     <DataTrigger TargetType="Label" Binding="{Binding ., Converter={StaticResource IsPlanConverter}}" Value="True">
                                         <Setter Property="Text" Value="{Binding Name}" />
                                     </DataTrigger>
-                                    <!-- Folder: increase font size and use themed text color -->
                                     <DataTrigger TargetType="Label" Binding="{Binding ., Converter={StaticResource IsFolderConverter}}" Value="True">
                                         <Setter Property="FontSize" Value="22" />
                                         <Setter Property="TextColor" Value="{DynamicResource FolderCardTextColor}" />
@@ -85,7 +136,7 @@
                             <Label Style="{StaticResource PlanDateLabel}"
                                    IsVisible="{Binding ShowPlanLayout, Source={x:Reference ItemComponent}}">
                                 <Label.Text>
-                                    <MultiBinding StringFormat="{}{0:dd.MM.yyyy} – {1:dd.MM.yyyy}">
+                                    <MultiBinding StringFormat="{}{0:dd.MM} – {1:dd.MM.yyyy}">
                                         <Binding Path="StartDate" />
                                         <Binding Path="EndDate" />
                                     </MultiBinding>
@@ -132,8 +183,25 @@
                             </StackLayout>
                         </StackLayout>
 
+                        <!-- Transparent apply button for foodbooks -->
+                        <Button Grid.Column="1"
+                                Text="{Binding ApplyButtonText, Source={x:Reference ItemComponent}}"
+                                Command="{Binding ApplyCommand, Source={x:Reference ItemComponent}}"
+                                CommandParameter="{Binding .}"
+                                IsVisible="{Binding ShowApplyButton, Source={x:Reference ItemComponent}}"
+                                FontSize="12"
+                                FontAttributes="Bold"
+                                HeightRequest="36"
+                                CornerRadius="18"
+                                BackgroundColor="{AppThemeBinding Light=#1A5B3FE8, Dark=#334A90E2}"
+                                BorderColor="{AppThemeBinding Light=#335B3FE8, Dark=#557AB2FF}"
+                                BorderWidth="1"
+                                TextColor="{DynamicResource Primary}"
+                                Padding="12,0"
+                                VerticalOptions="Center" />
+
                         <!-- Archive button for plans -->
-                        <ImageButton Grid.Column="1"
+                        <ImageButton Grid.Column="2"
                                      x:Name="ArchiveImageButton"
                                      Source="save.png"
                                      WidthRequest="36"
@@ -150,7 +218,7 @@
                         </ImageButton>
 
                         <!-- Restore button with redo icon -->
-                        <ImageButton Grid.Column="2"
+                        <ImageButton Grid.Column="3"
                                      x:Name="RestoreImageButton"
                                      Source="redo.png"
                                      WidthRequest="36"
@@ -167,7 +235,7 @@
                         </ImageButton>
 
                         <!-- Delete button -->
-                        <Button Grid.Column="3"
+                        <Button Grid.Column="4"
                                 Style="{StaticResource DeleteButton}"
                                 Command="{Binding DeleteCommand, Source={x:Reference ItemComponent}}"
                                 CommandParameter="{Binding .}"

@@ -542,14 +542,15 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
                 ingredients: allIngredients,
                 preselectedIngredientNames: _selectedIngredientNames);
 
-            var hostPage = Application.Current?.MainPage ?? (Page?)this.Parent;
-            hostPage?.ShowPopup(popup);
-            var result = await popup.ResultTask;
-            if (result != null)
-            {
-                _sortOrder = result.SortOrder;
-                _selectedLabelIds.Clear();
-                foreach (var id in result.SelectedLabelIds.Distinct()) _selectedLabelIds.Add(id);
+            var nav = Application.Current?.MainPage?.Navigation;
+            if (nav == null) return;
+            await nav.PushModalAsync(popup, true);
+             var result = await popup.ResultTask;
+             if (result != null)
+             {
+                 _sortOrder = result.SortOrder;
+                 _selectedLabelIds.Clear();
+                 foreach (var id in result.SelectedLabelIds.Distinct()) _selectedLabelIds.Add(id);
 
                 _selectedIngredientNames.Clear();
                 foreach (var name in result.SelectedIngredientNames.Distinct(StringComparer.OrdinalIgnoreCase))
@@ -560,7 +561,7 @@ public partial class FolderAwarePickerPopup : Popup, INotifyPropertyChanged
                     LoadCurrentFolderContents();
                 else
                     ApplySearch();
-            }
+             }
         }
         catch (Exception ex)
         {

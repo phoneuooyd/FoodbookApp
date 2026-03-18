@@ -2,8 +2,9 @@ using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Linq;
 using System.Globalization;
+using System.Linq;
+using Microsoft.Maui.Graphics;
 
 namespace Foodbook.Models
 {
@@ -17,79 +18,65 @@ namespace Foodbook.Models
             Date = date;
             Meals.CollectionChanged += OnMealsCollectionChanged;
 
-            // Subscribe to localization changes so DateLabel updates when app culture changes.
             try
             {
                 var provider = global::FoodbookApp.MauiProgram.ServiceProvider;
                 if (provider != null)
                 {
-                    // Prefer LocalizationResourceManager if available (it raises PropertyChanged)
                     var mgr = provider.GetService(typeof(Foodbook.Services.LocalizationResourceManager)) as INotifyPropertyChanged;
                     if (mgr != null)
                     {
-                        mgr.PropertyChanged += (_, __) => OnPropertyChanged(nameof(DateLabel));
+                        mgr.PropertyChanged += (_, __) =>
+                        {
+                            OnPropertyChanged(nameof(DateLabel));
+                            OnPropertyChanged(nameof(DayName));
+                        };
                     }
 
-                    // Also subscribe to ILocalizationService.CultureChanged as a fallback
                     var locSvc = provider.GetService(typeof(FoodbookApp.Interfaces.ILocalizationService));
                     if (locSvc != null)
                     {
-                        // Use dynamic invocation to avoid adding a project reference here
                         try
                         {
                             var evt = locSvc.GetType().GetEvent("CultureChanged");
                             if (evt != null)
                             {
-                                // attach a simple handler that raises property changed
-                                void Handler(object? s, EventArgs e) => OnPropertyChanged(nameof(DateLabel));
+                                void Handler(object? s, EventArgs e)
+                                {
+                                    OnPropertyChanged(nameof(DateLabel));
+                                    OnPropertyChanged(nameof(DayName));
+                                }
                                 evt.AddEventHandler(locSvc, (EventHandler)Handler);
                             }
                         }
-                        catch
-                        {
-                            // ignore if reflection subscription fails
-                        }
+                        catch { }
                     }
                 }
             }
-            catch
-            {
-                // Ignore when DI not available (e.g., unit tests)
-            }
+            catch { }
         }
 
         private void OnMealsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
-            // Unsubscribe from old items
             if (e.OldItems != null)
             {
                 foreach (PlannedMeal meal in e.OldItems)
-                {
                     meal.PropertyChanged -= OnMealPropertyChanged;
-                }
             }
 
-            // Subscribe to new items
             if (e.NewItems != null)
             {
                 foreach (PlannedMeal meal in e.NewItems)
-                {
                     meal.PropertyChanged += OnMealPropertyChanged;
-                }
             }
 
-            // Recalculate totals
             RaiseNutritionalTotalsChanged();
         }
 
         private void OnMealPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            // Recalculate when meal recipe or portions change
-            if (e.PropertyName == nameof(PlannedMeal.Recipe) || 
-                e.PropertyName == nameof(PlannedMeal.Portions))
-            {
+            if (e.PropertyName == nameof(PlannedMeal.Recipe) || e.PropertyName == nameof(PlannedMeal.Portions))
                 RaiseNutritionalTotalsChanged();
-            }
         }
 
         private void RaiseNutritionalTotalsChanged()
@@ -100,24 +87,11 @@ namespace Foodbook.Models
             OnPropertyChanged(nameof(TotalCarbs));
         }
 
-        // Computed totals for the day - values are reported per 1 portion (do NOT multiply by meal.Portions)
-        public double TotalCalories => Meals
-            .Where(m => m.Recipe != null)
-            .Sum(m => m.Recipe!.Calories);
+        public double TotalCalories => Meals.Where(m => m.Recipe != null).Sum(m => m.Recipe!.Calories);
+        public double TotalProtein => Meals.Where(m => m.Recipe != null).Sum(m => m.Recipe!.Protein);
+        public double TotalFat => Meals.Where(m => m.Recipe != null).Sum(m => m.Recipe!.Fat);
+        public double TotalCarbs => Meals.Where(m => m.Recipe != null).Sum(m => m.Recipe!.Carbs);
 
-        public double TotalProtein => Meals
-            .Where(m => m.Recipe != null)
-            .Sum(m => m.Recipe!.Protein);
-
-        public double TotalFat => Meals
-            .Where(m => m.Recipe != null)
-            .Sum(m => m.Recipe!.Fat);
-
-        public double TotalCarbs => Meals
-            .Where(m => m.Recipe != null)
-            .Sum(m => m.Recipe!.Carbs);
-
-        // Localized label for the day, e.g. "Pi¹tek 21.12.2025". Uses current UI culture and capitalizes day name.
         public string DateLabel
         {
             get
@@ -126,12 +100,9 @@ namespace Foodbook.Models
                 {
                     var culture = CultureInfo.CurrentUICulture ?? CultureInfo.CurrentCulture;
                     var dayName = Date.ToString("dddd", culture);
-
-                    // Capitalize using culture-specific TextInfo
-                    var textInfo = culture.TextInfo;
                     var dayNameCapitalized = string.IsNullOrWhiteSpace(dayName)
                         ? dayName
-                        : textInfo.ToTitleCase(dayName);
+                        : culture.TextInfo.ToTitleCase(dayName);
 
                     var datePart = Date.ToString("dd.MM.yyyy", culture);
                     return $"{dayNameCapitalized} {datePart}";
@@ -140,6 +111,50 @@ namespace Foodbook.Models
                 {
                     return Date.ToString("dd.MM.yyyy");
                 }
+            }
+        }
+
+        public string DayName
+        {
+            get
+            {
+                try
+                {
+                    var culture = CultureInfo.CurrentUICulture ?? CultureInfo.CurrentCulture;
+                    var dayName = Date.ToString("dddd", culture);
+                    return string.IsNullOrWhiteSpace(dayName) ? dayName : culture.TextInfo.ToTitleCase(dayName);
+                }
+                catch
+                {
+                    return Date.DayOfWeek.ToString();
+                }
+            }
+        }
+
+        private static Color GetAppColor(string key, Color fallback)
+        {
+            if (Application.Current?.Resources.TryGetValue(key, out var val) == true && val is Color c)
+                return c;
+            return fallback;
+        }
+
+        public Color DayAccentColor
+        {
+            get
+            {
+                var idx = ((int)Date.DayOfWeek + 6) % 7; // Mon=0..Sun=6
+                var primary = GetAppColor("Primary", Color.FromArgb("#5B3FE8"));
+
+                return idx switch
+                {
+                    0 => primary,
+                    1 => Color.FromArgb("#10B981"),
+                    2 => Color.FromArgb("#F59E0B"),
+                    3 => Color.FromArgb("#F43F5E"),
+                    4 => Color.FromArgb("#8B5CF6"),
+                    5 => Color.FromArgb("#3B82F6"),
+                    _ => Color.FromArgb("#EC4899")
+                };
             }
         }
 

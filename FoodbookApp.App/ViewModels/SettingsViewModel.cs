@@ -127,6 +127,9 @@ public partial class SettingsViewModel : INotifyPropertyChanged
             if (_selectedTheme == value) return;
             _selectedTheme = value;
             OnPropertyChanged(nameof(SelectedTheme));
+            OnPropertyChanged(nameof(IsSystemThemeSelected));
+            OnPropertyChanged(nameof(IsLightThemeSelected));
+            OnPropertyChanged(nameof(IsDarkThemeSelected));
             
             // Apply the theme immediately
             _themeService.SetTheme(value);
@@ -135,6 +138,14 @@ public partial class SettingsViewModel : INotifyPropertyChanged
             _preferencesService.SaveTheme(value);
         }
     }
+
+    public bool IsSystemThemeSelected => SelectedTheme == Foodbook.Models.AppTheme.System;
+    public bool IsLightThemeSelected => SelectedTheme == Foodbook.Models.AppTheme.Light;
+    public bool IsDarkThemeSelected => SelectedTheme == Foodbook.Models.AppTheme.Dark;
+
+    public ICommand SelectSystemThemeCommand { get; }
+    public ICommand SelectLightThemeCommand { get; }
+    public ICommand SelectDarkThemeCommand { get; }
 
     private AppColorTheme _selectedColorTheme;
     public AppColorTheme SelectedColorTheme
@@ -425,6 +436,10 @@ public partial class SettingsViewModel : INotifyPropertyChanged
         ResetDatabaseCommand = new Command(async () => await ResetDatabaseAsync(), () => CanExecuteMigration);
         FactoryResetCommand = new Command(async () => await FactoryResetAsync(), () => CanExecuteMigration);
         DeduplicateIngredientsCommand = new Command(async () => await DeduplicateIngredientsAsync(), () => CanExecuteMigration);
+
+        SelectSystemThemeCommand = new Command(() => SelectedTheme = Foodbook.Models.AppTheme.System);
+        SelectLightThemeCommand = new Command(() => SelectedTheme = Foodbook.Models.AppTheme.Light);
+        SelectDarkThemeCommand = new Command(() => SelectedTheme = Foodbook.Models.AppTheme.Dark);
         
         System.Diagnostics.Debug.WriteLine("[SettingsViewModel] Initialized with color theme and colorful/wallpaper background support");
 

@@ -14,6 +14,21 @@ namespace Foodbook.Views.Components
         public static readonly BindableProperty EditCommandProperty =
             BindableProperty.Create(nameof(EditCommand), typeof(ICommand), typeof(UniversalListItemComponent));
 
+        public static readonly BindableProperty ApplyCommandProperty =
+            BindableProperty.Create(nameof(ApplyCommand), typeof(ICommand), typeof(UniversalListItemComponent));
+
+        public static readonly BindableProperty ApplyButtonTextProperty =
+            BindableProperty.Create(nameof(ApplyButtonText), typeof(string), typeof(UniversalListItemComponent), "Zastosuj");
+
+        public static readonly BindableProperty ShowApplyButtonProperty =
+            BindableProperty.Create(nameof(ShowApplyButton), typeof(bool), typeof(UniversalListItemComponent), false);
+
+        public static readonly BindableProperty ShowAccentStripProperty =
+            BindableProperty.Create(nameof(ShowAccentStrip), typeof(bool), typeof(UniversalListItemComponent), false);
+
+        public static readonly BindableProperty AccentStripColorProperty =
+            BindableProperty.Create(nameof(AccentStripColor), typeof(Color), typeof(UniversalListItemComponent), Color.FromArgb("#5B3FE8"));
+
         public static readonly BindableProperty DeleteCommandProperty =
             BindableProperty.Create(nameof(DeleteCommand), typeof(ICommand), typeof(UniversalListItemComponent));
 
@@ -70,6 +85,36 @@ namespace Foodbook.Views.Components
         {
             get => (ICommand)GetValue(EditCommandProperty);
             set => SetValue(EditCommandProperty, value);
+        }
+
+        public ICommand ApplyCommand
+        {
+            get => (ICommand)GetValue(ApplyCommandProperty);
+            set => SetValue(ApplyCommandProperty, value);
+        }
+
+        public string ApplyButtonText
+        {
+            get => (string)GetValue(ApplyButtonTextProperty);
+            set => SetValue(ApplyButtonTextProperty, value);
+        }
+
+        public bool ShowApplyButton
+        {
+            get => (bool)GetValue(ShowApplyButtonProperty);
+            set => SetValue(ShowApplyButtonProperty, value);
+        }
+
+        public bool ShowAccentStrip
+        {
+            get => (bool)GetValue(ShowAccentStripProperty);
+            set => SetValue(ShowAccentStripProperty, value);
+        }
+
+        public Color AccentStripColor
+        {
+            get => (Color)GetValue(AccentStripColorProperty);
+            set => SetValue(AccentStripColorProperty, value);
         }
 
         public ICommand DeleteCommand

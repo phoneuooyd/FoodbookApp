@@ -12,7 +12,46 @@
   <data name="IngredientsSectionTitle" xml:space="preserve"><value>Grundzutaten</value></data>
   <data name="IngredientsSectionQuestion" xml:space="preserve"><value>Moechten Sie ein Basis-Set an Zutaten installieren?</value></data>
   <data name="IngredientsSectionInfo" xml:space="preserve"><value>Fuegt gaengige Zutaten mit Nahrwertinformationen hinzu.</value></data>
-  <data name="IngredientsYes" xml:space="preserve"><value>Ja, installieren</value></data>
-  <data name="IngredientsNo" xml:space="preserve"><value>Nein, spaeter</value></data>
+  <data name="IngredientsYes" xml:space="preserve"><value>Ja, ~250 Basiszutaten installieren</value></data>
+  <data name="IngredientsNo" xml:space="preserve"><value>Nein, spaeter selbst hinzufuegen</value></data>
   <data name="CompleteSetupButton" xml:space="preserve"><value>Einrichtung abschliessen</value></data>
+  <data name="Step1Label" xml:space="preserve"><value>Konfigurator · Schritt 1 von 5</value></data>
+  <data name="Step1Title" xml:space="preserve"><value>Sprache waehlen</value></data>
+  <data name="Step1Subtitle" xml:space="preserve"><value>Waehlen Sie Ihre App-Sprache</value></data>
+  <data name="Step2Label" xml:space="preserve"><value>Konfigurator · Schritt 2 von 5</value></data>
+  <data name="Step2Title" xml:space="preserve"><value>Starter-Zutaten</value></data>
+  <data name="Step2Subtitle" xml:space="preserve"><value>Waehlen Sie, wie Ihre Zutaten-Datenbank startet</value></data>
+  <data name="Step3Label" xml:space="preserve"><value>Konfigurator · Schritt 3 von 5</value></data>
+  <data name="Step3Title" xml:space="preserve"><value>App-Erscheinungsbild</value></data>
+  <data name="Step3Subtitle" xml:space="preserve"><value>Waehlen Sie Hell-/Dunkelmodus und Schriftart</value></data>
+  <data name="Step4Label" xml:space="preserve"><value>Konfigurator · Schritt 4 von 5</value></data>
+  <data name="Step4Title" xml:space="preserve"><value>Ihr Konto</value></data>
+  <data name="Step4Subtitle" xml:space="preserve"><value>Anmelden oder ohne Konto fortfahren</value></data>
+  <data name="Step5Label" xml:space="preserve"><value>Konfigurator · Schritt 5 von 5</value></data>
+  <data name="Step5Title" xml:space="preserve"><value>Plan auswaehlen</value></data>
+  <data name="Step5Subtitle" xml:space="preserve"><value>Sie koennen den Plan jederzeit spaeter aendern</value></data>
+  <data name="DarkModeOption" xml:space="preserve"><value>🌙 Dunkel</value></data>
+  <data name="LightModeOption" xml:space="preserve"><value>☀️ Hell</value></data>
+  <data name="BackButton" xml:space="preserve"><value>Zurueck</value></data>
+  <data name="NextButton" xml:space="preserve"><value>Weiter</value></data>
+  <data name="ChooseFreePlanButton" xml:space="preserve"><value>Free waehlen</value></data>
+  <data name="ChoosePremiumPlanButton" xml:space="preserve"><value>Premium waehlen</value></data>
+  <data name="LoginSubmitButton" xml:space="preserve"><value>Anmelden</value></data>
+  <data name="RegisterSubmitButton" xml:space="preserve"><value>Konto erstellen</value></data>
+  <data name="ToggleModeButton" xml:space="preserve"><value>Zwischen Anmeldung/Registrierung wechseln</value></data>
+  <data name="ContinueWithoutAccountButton" xml:space="preserve"><value>Ohne Konto fortfahren</value></data>
+  <data name="FreePlanBadge" xml:space="preserve"><value>Kostenlos</value></data>
+  <data name="PremiumPlanBadge" xml:space="preserve"><value>✨ Empfohlen</value></data>
+  <data name="FreePlanPrice" xml:space="preserve"><value>0 zl / fuer immer</value></data>
+  <data name="PremiumPlanPrice" xml:space="preserve"><value>9,99 zl / Monat</value></data>
+  <data name="FreeFeature1" xml:space="preserve"><value>✓ Unbegrenzte Rezepte</value></data>
+  <data name="FreeFeature2" xml:space="preserve"><value>✓ Mahlzeitenplaner (3 aktiv)</value></data>
+  <data name="FreeFeature3" xml:space="preserve"><value>✓ Einkaufsliste</value></data>
+  <data name="FreeFeature4" xml:space="preserve"><value>✓ Rezeptimport aus dem Web</value></data>
+  <data name="PremiumFeature1" xml:space="preserve"><value>✓ Alles aus Free</value></data>
+  <data name="PremiumFeature2" xml:space="preserve"><value>✓ KI-Mahlzeitenplaner</value></data>
+  <data name="PremiumFeature3" xml:space="preserve"><value>✓ KI-Rezeptassistent</value></data>
+  <data name="PremiumFeature4" xml:space="preserve"><value>✓ Wochen- und Monatsvorlagen</value></data>
+  <data name="PremiumFeature5" xml:space="preserve"><value>✓ Unbegrenztes Planarchiv</value></data>
+  <data name="PremiumFeature6" xml:space="preserve"><value>✓ Premium-Rezeptpakete</value></data>
 </root>

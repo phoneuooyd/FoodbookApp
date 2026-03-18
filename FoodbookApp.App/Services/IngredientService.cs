@@ -60,7 +60,7 @@ public class IngredientService : IIngredientService
                 _cachedIngredientsStatic = fresh;
                 _lastCacheTimeStatic = DateTime.Now;
                 
-                // ? OPTYMALIZACJA: Aktualizuj te¿ cache nazw
+                // ? OPTYMALIZACJA: Aktualizuj teÅ¼ cache nazw
                 _cachedIngredientNamesStatic = fresh.Select(i => i.Name).ToList();
                 _lastNamesCacheTimeStatic = DateTime.Now;
             }
@@ -76,7 +76,7 @@ public class IngredientService : IIngredientService
     }
 
     /// <summary>
-    /// ? NOWA METODA: Szybkie pobieranie tylko nazw sk³adników (lightweight)
+    /// ? NOWA METODA: Szybkie pobieranie tylko nazw skÅ‚adnikÃ³w (lightweight)
     /// </summary>
     public async Task<List<string>> GetIngredientNamesAsync()
     {
@@ -93,7 +93,7 @@ public class IngredientService : IIngredientService
 
             System.Diagnostics.Debug.WriteLine("?? [IngredientService] Loading ingredient names from database...");
 
-            // ? KRYTYCZNA OPTYMALIZACJA: Pobierz TYLKO nazwy bez ca³ych obiektów
+            // ? KRYTYCZNA OPTYMALIZACJA: Pobierz TYLKO nazwy bez caÅ‚ych obiektÃ³w
             var names = await _context.Ingredients
                 .AsNoTracking()
                 .Where(i => i.RecipeId == null)
@@ -155,7 +155,7 @@ public class IngredientService : IIngredientService
                 InvalidateCache();
                 System.Diagnostics.Debug.WriteLine($"? Added standalone ingredient: {ingredient.Name}, ID: {ingredient.Id}");
                 
-                // ? KRYTYCZNE FIX: Wywo³aj event aby poinformowaæ subskrybentów (IngredientsPage, AddRecipePage)
+                // ? KRYTYCZNE FIX: WywoÅ‚aj event, aby poinformowaÄ‡ subskrybentÃ³w (IngredientsPage, AddRecipePage)
                 AppEvents.RaiseIngredientSaved(ingredient.Id);
                 System.Diagnostics.Debug.WriteLine($"[IngredientService] Raised IngredientSaved event for ID: {ingredient.Id}");
             }
@@ -198,7 +198,7 @@ public class IngredientService : IIngredientService
                     InvalidateCache();
                     System.Diagnostics.Debug.WriteLine($"? Updated standalone ingredient: {ingredient.Name}, ID: {ingredient.Id}");
                     
-                    // ? KRYTYCZNE FIX: Wywo³aj event aby poinformowaæ subskrybentów
+                    // ? KRYTYCZNE FIX: WywoÅ‚aj event, aby poinformowaÄ‡ subskrybentÃ³w
                     AppEvents.RaiseIngredientSaved(ingredient.Id);
                     System.Diagnostics.Debug.WriteLine($"[IngredientService] Raised IngredientSaved event for ID: {ingredient.Id}");
                     
@@ -238,79 +238,31 @@ public class IngredientService : IIngredientService
         try
         {
             var ingredient = await _context.Ingredients.FindAsync(id);
-            bool wasStandalone = ingredient?.RecipeId == null;
-            
-            if (ingredient != null)
+            if (ingredient == null) return;
+
+            _context.Ingredients.Remove(ingredient);
+            await _context.SaveChangesAsync();
+
+            if (ingredient.RecipeId == null)
+                InvalidateCache();
+
+            if (_syncService != null)
             {
-                _context.Ingredients.Remove(ingredient);
-                await _context.SaveChangesAsync();
-                
-                if (wasStandalone)
+                try
                 {
-                    InvalidateCache();
-                    System.Diagnostics.Debug.WriteLine($"? Deleted standalone ingredient ID: {id}");
-                    
-                    // Queue for cloud sync (Delete operation)
-                    if (_syncService != null)
-                    {
-                        try
-                        {
-                            var deleteEntity = new Ingredient { Id = id, Name = ingredient.Name };
-                            await _syncService.QueueForSyncAsync(deleteEntity, SyncOperationType.Delete);
-                            System.Diagnostics.Debug.WriteLine($"[IngredientService] Queued ingredient {id} for Delete sync");
-                        }
-                        catch (Exception syncEx)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"[IngredientService] Failed to queue sync: {syncEx.Message}");
-                        }
-                    }
+                    await _syncService.QueueForSyncAsync(new Ingredient { Id = id }, SyncOperationType.Delete);
+                    System.Diagnostics.Debug.WriteLine($"[IngredientService] Queued ingredient {id} for Delete sync");
                 }
-                else
+                catch (Exception syncEx)
                 {
-                    System.Diagnostics.Debug.WriteLine($"? Deleted recipe ingredient ID: {id}");
+                    System.Diagnostics.Debug.WriteLine($"[IngredientService] Failed to queue sync: {syncEx.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"? Error deleting ingredient: {ex.Message}");
-            
-            try
-            {
-                var ing = await _context.Ingredients.FindAsync(id);
-                if (ing != null)
-                {
-                    bool wasStandalone = ing.RecipeId == null;
-                    _context.Ingredients.Remove(ing);
-                    await _context.SaveChangesAsync();
-                    
-                    if (wasStandalone)
-                    {
-                        InvalidateCache();
-                        
-                        // Queue for cloud sync (Delete operation) in fallback
-                        if (_syncService != null)
-                        {
-                            try
-                            {
-                                var deleteEntity = new Ingredient { Id = id, Name = ing.Name };
-                                await _syncService.QueueForSyncAsync(deleteEntity, SyncOperationType.Delete);
-                                System.Diagnostics.Debug.WriteLine($"[IngredientService] Queued ingredient {id} for Delete sync (fallback)");
-                            }
-                            catch (Exception syncEx)
-                            {
-                                System.Diagnostics.Debug.WriteLine($"[IngredientService] Failed to queue sync (fallback): {syncEx.Message}");
-                            }
-                        }
-                    }
-                    System.Diagnostics.Debug.WriteLine($"? Deleted ingredient ID: {id} (fallback method)");
-                }
-            }
-            catch (Exception fallbackEx)
-            {
-                System.Diagnostics.Debug.WriteLine($"? Error in fallback delete: {fallbackEx.Message}");
-                throw;
-            }
+            throw;
         }
     }
 

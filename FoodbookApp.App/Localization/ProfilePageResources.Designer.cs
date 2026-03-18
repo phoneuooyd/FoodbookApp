@@ -464,5 +464,194 @@ namespace FoodbookApp.Localization {
                 return ResourceManager.GetString("Title", resourceCulture);
             }
         }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Account service is unavailable..
+        /// </summary>
+        internal static string SyncQueueAccountUnavailable {
+            get {
+                return ResourceManager.GetString("SyncQueueAccountUnavailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu ID: {0}.
+        /// </summary>
+        internal static string SyncQueueDetailCompletedFormat {
+            get {
+                return ResourceManager.GetString("SyncQueueDetailCompletedFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Error: {0}.
+        /// </summary>
+        internal static string SyncQueueDetailErrorFormat {
+            get {
+                return ResourceManager.GetString("SyncQueueDetailErrorFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Operation failed.
+        /// </summary>
+        internal static string SyncQueueDetailErrorNoMessage {
+            get {
+                return ResourceManager.GetString("SyncQueueDetailErrorNoMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Operation in progress.
+        /// </summary>
+        internal static string SyncQueueDetailInProgress {
+            get {
+                return ResourceManager.GetString("SyncQueueDetailInProgress", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Operation pending in queue.
+        /// </summary>
+        internal static string SyncQueueDetailPending {
+            get {
+                return ResourceManager.GetString("SyncQueueDetailPending", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu No entries in sync queue..
+        /// </summary>
+        internal static string SyncQueueEmpty {
+            get {
+                return ResourceManager.GetString("SyncQueueEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Sign in to view sync queue..
+        /// </summary>
+        internal static string SyncQueueLoginRequired {
+            get {
+                return ResourceManager.GetString("SyncQueueLoginRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Loading....
+        /// </summary>
+        internal static string SyncQueueLoading {
+            get {
+                return ResourceManager.GetString("SyncQueueLoading", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Could not load sync queue..
+        /// </summary>
+        internal static string SyncQueueLoadError {
+            get {
+                return ResourceManager.GetString("SyncQueueLoadError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu No active account..
+        /// </summary>
+        internal static string SyncQueueNoActiveAccount {
+            get {
+                return ResourceManager.GetString("SyncQueueNoActiveAccount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Recent operations.
+        /// </summary>
+        internal static string SyncQueueRecentOperations {
+            get {
+                return ResourceManager.GetString("SyncQueueRecentOperations", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Refresh.
+        /// </summary>
+        internal static string SyncQueueRefresh {
+            get {
+                return ResourceManager.GetString("SyncQueueRefresh", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Application services are unavailable..
+        /// </summary>
+        internal static string SyncQueueServiceUnavailable {
+            get {
+                return ResourceManager.GetString("SyncQueueServiceUnavailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Error.
+        /// </summary>
+        internal static string SyncQueueStatusError {
+            get {
+                return ResourceManager.GetString("SyncQueueStatusError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu In progress.
+        /// </summary>
+        internal static string SyncQueueStatusInProgress {
+            get {
+                return ResourceManager.GetString("SyncQueueStatusInProgress", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Pending.
+        /// </summary>
+        internal static string SyncQueueStatusPending {
+            get {
+                return ResourceManager.GetString("SyncQueueStatusPending", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Success.
+        /// </summary>
+        internal static string SyncQueueStatusSuccess {
+            get {
+                return ResourceManager.GetString("SyncQueueStatusSuccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Status operacji SyncQueue.
+        /// </summary>
+        internal static string SyncQueueSubtitle {
+            get {
+                return ResourceManager.GetString("SyncQueueSubtitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Total: {0} · ⬆️ {1} · ⬇️ {2} · Success: {3} · Errors: {4} · Pending: {5}.
+        /// </summary>
+        internal static string SyncQueueSummaryFormat {
+            get {
+                return ResourceManager.GetString("SyncQueueSummaryFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Sync queue.
+        /// </summary>
+        internal static string SyncQueueTitle {
+            get {
+                return ResourceManager.GetString("SyncQueueTitle", resourceCulture);
+            }
+        }
     }
 }

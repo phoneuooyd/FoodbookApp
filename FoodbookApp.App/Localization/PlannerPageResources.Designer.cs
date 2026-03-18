@@ -70,6 +70,42 @@ namespace FoodbookApp.Localization {
         }
         
         /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu kcal.
+        /// </summary>
+        internal static string CalorieAbbreviation {
+            get {
+                return ResourceManager.GetString("CalorieAbbreviation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu w.
+        /// </summary>
+        internal static string CarbsAbbreviation {
+            get {
+                return ResourceManager.GetString("CarbsAbbreviation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu 🌾 Carbs.
+        /// </summary>
+        internal static string CarbsLabel {
+            get {
+                return ResourceManager.GetString("CarbsLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu C.
+        /// </summary>
+        internal static string CarbsShort {
+            get {
+                return ResourceManager.GetString("CarbsShort", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         /// Wyszukuje zlokalizowany ciąg podobny do ciągu From date:.
         /// </summary>
         internal static string DateFrom {
@@ -84,6 +120,51 @@ namespace FoodbookApp.Localization {
         internal static string DateTo {
             get {
                 return ResourceManager.GetString("DateTo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu 🧈 F.
+        /// </summary>
+        internal static string FatAbbreviation {
+            get {
+                return ResourceManager.GetString("FatAbbreviation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu 🧈 Fat.
+        /// </summary>
+        internal static string FatLabel {
+            get {
+                return ResourceManager.GetString("FatLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu F.
+        /// </summary>
+        internal static string FatShort {
+            get {
+                return ResourceManager.GetString("FatShort", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu kcal.
+        /// </summary>
+        internal static string Kcal {
+            get {
+                return ResourceManager.GetString("Kcal", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu kcal.
+        /// </summary>
+        internal static string KcalShort {
+            get {
+                return ResourceManager.GetString("KcalShort", resourceCulture);
             }
         }
         
@@ -106,11 +187,56 @@ namespace FoodbookApp.Localization {
         }
         
         /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu b.
+        /// </summary>
+        internal static string ProteinAbbreviation {
+            get {
+                return ResourceManager.GetString("ProteinAbbreviation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu 🥩 Protein.
+        /// </summary>
+        internal static string ProteinLabel {
+            get {
+                return ResourceManager.GetString("ProteinLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu P.
+        /// </summary>
+        internal static string ProteinShort {
+            get {
+                return ResourceManager.GetString("ProteinShort", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         /// Wyszukuje zlokalizowany ciąg podobny do ciągu Save.
         /// </summary>
         internal static string Save {
             get {
                 return ResourceManager.GetString("Save", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Save plan.
+        /// </summary>
+        internal static string SavePlan {
+            get {
+                return ResourceManager.GetString("SavePlan", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Select recipe....
+        /// </summary>
+        internal static string SelectRecipePlaceholder {
+            get {
+                return ResourceManager.GetString("SelectRecipePlaceholder", resourceCulture);
             }
         }
         

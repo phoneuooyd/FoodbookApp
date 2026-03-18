@@ -23,7 +23,12 @@ namespace Foodbook.Views
     {
         private AddRecipeViewModel? ViewModel => BindingContext as AddRecipeViewModel;
         private readonly PageThemeHelper _themeHelper;
-        
+        private const double KeyboardLiftOffset = 213;
+        private bool _isKeyboardLiftApplied;
+        private double _lastAllocatedHeight;
+        private double _maxAllocatedHeight;
+        private bool _keyboardWasVisible;
+
         private IDispatcherTimer? _valueChangeTimer;
         private bool _isInitialized;
         private bool _hasEverLoaded;
@@ -217,6 +222,16 @@ namespace Foodbook.Views
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
+
+            try
+            {
+                _isKeyboardLiftApplied = false;
+                _keyboardWasVisible = false;
+                _lastAllocatedHeight = 0;
+                _maxAllocatedHeight = 0;
+                ContentHost.TranslationY = 0;
+            }
+            catch { }
 
             // Restore underlying content visibility
             try { RestoreUnderlyingContent(); } catch { }
@@ -772,8 +787,95 @@ namespace Foodbook.Views
             }
         }
 
-        private async void OnIngredientNameChanged(object sender, EventArgs e)
+        private void OnInputFocused(object sender, FocusEventArgs e)
         {
+            _ = EnsureKeyboardSafeOffsetAsync(sender as Element);
+        }
+
+        private void OnInputUnfocused(object sender, FocusEventArgs e)
+        {
+            _ = ResetKeyboardSafeOffsetDeferredAsync();
+        }
+
+        private async Task ResetKeyboardSafeOffsetDeferredAsync()
+        {
+            try
+            {
+                await Task.Delay(120);
+                await ResetKeyboardSafeOffsetAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] ResetKeyboardSafeOffsetDeferredAsync error: {ex.Message}");
+            }
+        }
+
+        private async Task EnsureKeyboardSafeOffsetAsync(Element? source)
+        {
+            try
+            {
+                await Task.Delay(80);
+
+                if (source is VisualElement focusedElement && !focusedElement.IsFocused)
+                    return;
+
+                var sourceY = GetElementYRelativeToPage(source);
+                var pageHeight = Height;
+                if (pageHeight <= 0 || sourceY <= 0)
+                    return;
+
+                var isNearBottom = sourceY > pageHeight * 0.62;
+                if (!isNearBottom)
+                {
+                    if (_isKeyboardLiftApplied)
+                        await ResetKeyboardSafeOffsetAsync();
+                    return;
+                }
+
+                if (_isKeyboardLiftApplied && ContentHost.TranslationY <= -(KeyboardLiftOffset - 2))
+                    return;
+
+                _isKeyboardLiftApplied = true;
+                await ContentHost.TranslateTo(0, -KeyboardLiftOffset, 180, Easing.CubicOut);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] EnsureKeyboardSafeOffsetAsync error: {ex.Message}");
+            }
+        }
+
+        private async Task ResetKeyboardSafeOffsetAsync()
+        {
+            try
+            {
+                if (!_isKeyboardLiftApplied)
+                {
+                    ContentHost.TranslationY = 0;
+                    return;
+                }
+
+                _isKeyboardLiftApplied = false;
+                await ContentHost.TranslateTo(0, 0, 140, Easing.CubicOut);
+                ContentHost.TranslationY = 0;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] ResetKeyboardSafeOffsetAsync error: {ex.Message}");
+                try { ContentHost.TranslationY = 0; } catch { }
+            }
+        }
+
+       private void ReleaseInputFocus()
+       {
+           try
+           {
+               MainThread.BeginInvokeOnMainThread(Unfocus);
+           }
+           catch { }
+       }
+ 
+         private async void OnIngredientNameChanged(object sender, EventArgs e)
+         {
             try
             {
                 // Support both native Picker and custom SearchablePickerComponent
@@ -974,5 +1076,68 @@ namespace Foodbook.Views
                 _isModalOpen = false;
             }
         }
+
+        private static double GetElementYRelativeToPage(Element? element)
+        {
+            double y = 0;
+            Element? current = element;
+            while (current != null)
+            {
+                if (current is VisualElement ve)
+                    y += ve.Y;
+                current = current.Parent;
+            }
+            return y;
+        }
+
+       protected override void OnSizeAllocated(double width, double height)
+       {
+           base.OnSizeAllocated(width, height);
+
+           try
+           {
+               if (height <= 0)
+                   return;
+
+               if (_lastAllocatedHeight <= 0)
+               {
+                   _lastAllocatedHeight = height;
+                   _maxAllocatedHeight = height;
+                   return;
+               }
+
+               if (height > _maxAllocatedHeight)
+                   _maxAllocatedHeight = height;
+
+               if (_isKeyboardLiftApplied && height >= (_maxAllocatedHeight - 20))
+               {
+                   _keyboardWasVisible = false;
+                   ReleaseInputFocus();
+                   _ = ResetKeyboardSafeOffsetAsync();
+                   _lastAllocatedHeight = height;
+                   return;
+               }
+
+               var delta = height - _lastAllocatedHeight;
+
+               if (delta < -30)
+               {
+                   _keyboardWasVisible = true;
+               }
+               else if (delta > 30 && _keyboardWasVisible)
+               {
+                   _keyboardWasVisible = false;
+                   ReleaseInputFocus();
+                   if (_isKeyboardLiftApplied)
+                       _ = ResetKeyboardSafeOffsetAsync();
+               }
+
+               _lastAllocatedHeight = height;
+           }
+           catch (Exception ex)
+           {
+               System.Diagnostics.Debug.WriteLine($"[AddRecipePage] OnSizeAllocated keyboard detection error: {ex.Message}");
+           }
+       }
     }
 }

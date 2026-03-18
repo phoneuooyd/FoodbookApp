@@ -134,4 +134,33 @@ namespace Foodbook.Converters
             return Unit.Gram;
         }
     }
+
+    public class MealIndexConverter : IMultiValueConverter
+    {
+        public object? Convert(object[]? values, Type targetType, object? parameter, CultureInfo culture)
+        {
+            if (values == null || values.Length < 2)
+                return string.Empty;
+
+            var meal = values[0];
+            if (meal == null)
+                return string.Empty;
+
+            if (values[1] is System.Collections.IEnumerable list)
+            {
+                var i = 0;
+                foreach (var item in list)
+                {
+                    i++;
+                    if (ReferenceEquals(item, meal))
+                        return i.ToString();
+                }
+            }
+
+            return string.Empty;
+        }
+
+        public object[] ConvertBack(object? value, Type[] targetTypes, object? parameter, CultureInfo culture)
+            => throw new NotImplementedException();
+    }
 }

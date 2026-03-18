@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="TabIdentity" xml:space="preserve"><value>Identitaet</value></data>
+  <data name="TabMeals" xml:space="preserve"><value>Gerichte</value></data>
+  <data name="SubtitleFormat" xml:space="preserve"><value>{0} Foodbook</value></data>
+  <data name="Preview" xml:space="preserve"><value>Vorschau</value></data>
+  <data name="EmojiLabel" xml:space="preserve"><value>EMOJI</value></data>
+  <data name="NameLabel" xml:space="preserve"><value>NAME</value></data>
+  <data name="NamePlaceholder" xml:space="preserve"><value>Mein Foodbook</value></data>
+  <data name="AccentColorLabel" xml:space="preserve"><value>AKZENTFARBE</value></data>
+  <data name="DurationLabel" xml:space="preserve"><value>FOODBOOK-DAUER</value></data>
+  <data name="DayCountLabel" xml:space="preserve"><value>Anzahl der Tage</value></data>
+  <data name="DayRangeHint" xml:space="preserve"><value>Tage 1-30</value></data>
+  <data name="MealsPerDay" xml:space="preserve"><value>Mahlzeiten pro Tag</value></data>
+  <data name="SelectRecipePlaceholder" xml:space="preserve"><value>Rezept auswaehlen...</value></data>
+  <data name="AddMeal" xml:space="preserve"><value>Mahlzeit hinzufuegen</value></data>
+  <data name="CtaNextToDishes" xml:space="preserve"><value>Zu Gerichten &#x2192;</value></data>
+  <data name="CtaSave" xml:space="preserve"><value>Foodbook speichern</value></data>
+  <data name="MissingNameTitle" xml:space="preserve"><value>Name fehlt</value></data>
+  <data name="MissingNameMessage" xml:space="preserve"><value>Geben Sie einen Foodbook-Namen ein.</value></data>
+  <data name="SaveSuccessTitle" xml:space="preserve"><value>Gespeichert</value></data>
+  <data name="SaveSuccessMessageFormat" xml:space="preserve"><value>Foodbook "{0}" wurde gespeichert.</value></data>
+  <data name="SaveErrorTitle" xml:space="preserve"><value>Fehler</value></data>
+  <data name="SaveErrorMessage" xml:space="preserve"><value>Foodbook konnte nicht gespeichert werden.</value></data>
+</root>

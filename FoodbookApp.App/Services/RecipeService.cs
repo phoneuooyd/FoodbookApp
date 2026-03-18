@@ -389,20 +389,23 @@ namespace Foodbook.Services
 
                 if (recipe != null)
                 {
+                    var ingredientIds = recipe.Ingredients.Select(i => i.Id).ToList();
+
                     _context.Recipes.Remove(recipe);
                     await _context.SaveChangesAsync();
 
                     System.Diagnostics.Debug.WriteLine($"? Deleted recipe: {recipe.Name}");
 
-                    // Queue for cloud sync (Delete operation)
                     if (_syncService != null)
                     {
                         try
                         {
-                            // Create minimal entity for delete operation
-                            var deleteEntity = new Recipe { Id = id, Name = recipe.Name };
-                            await _syncService.QueueForSyncAsync(deleteEntity, SyncOperationType.Delete);
-                            System.Diagnostics.Debug.WriteLine($"[RecipeService] Queued recipe {id} for Delete sync");
+                            await _syncService.QueueForSyncAsync(new Recipe { Id = id, Name = recipe.Name }, SyncOperationType.Delete);
+                            foreach (var ingredientId in ingredientIds)
+                            {
+                                await _syncService.QueueForSyncAsync(new Ingredient { Id = ingredientId }, SyncOperationType.Delete);
+                            }
+                            System.Diagnostics.Debug.WriteLine($"[RecipeService] Queued recipe {id} and {ingredientIds.Count} ingredients for Delete sync");
                         }
                         catch (Exception syncEx)
                         {

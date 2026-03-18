@@ -10,7 +10,9 @@
   <data name="ColorThemeTitle" xml:space="preserve"><value>Tema de color</value></data>
   <data name="ColorThemeDescription" xml:space="preserve"><value>Paleta de la app</value></data>
   <data name="ColorfulBackgroundOption" xml:space="preserve"><value>Fondo</value></data>
+  <data name="ColorfulBackgroundDescription" xml:space="preserve"><value>Activa el fondo colorido y los efectos visuales</value></data>
   <data name="WallpaperBackgroundOption" xml:space="preserve"><value>Papel tapiz</value></data>
+  <data name="WallpaperBackgroundDescription" xml:space="preserve"><value>Usa una imagen personalizada como fondo de la app</value></data>
   <data name="ColorThemeDefault" xml:space="preserve"><value>Predeterminado</value></data>
   <data name="ColorThemeNature" xml:space="preserve"><value>Naturaleza</value></data>
   <data name="ColorThemeWarm" xml:space="preserve"><value>Cálido</value></data>

@@ -3,10 +3,11 @@ using System.Text.Json.Serialization;
 using Supabase.Postgrest.Models;
 using Supabase.Postgrest.Attributes;
 using Newtonsoft.Json;
+using FoodbookApp.Services.Supabase;
 
 namespace Foodbook.Models.DTOs
 {
-    [Table("recipe_labels")]
+    [Table(SupabaseTableResolver.TEST_ENDPOINTS ? "recipe_labels_test" : "recipe_labels")]
     public class RecipeLabelDto : BaseModel
     {
         [PrimaryKey("id", true)]

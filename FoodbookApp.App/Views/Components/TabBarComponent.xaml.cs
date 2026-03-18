@@ -16,6 +16,7 @@ namespace Foodbook.Views.Components
         private TabItemModel? _selectedTab;
         private bool _isNavigating;
         private readonly Dictionary<string, ContentPage> _pageCache = new();
+        private readonly Dictionary<ContentPage, View> _pageViewCache = new();
         private ILocalizationService? _localizationService;
         private Color _iconTintColor = Colors.Black;
         
@@ -245,7 +246,6 @@ private void UpdateContent(TabItemModel tab)
     {
         if (ContentContainer == null) return;
 
-        // Fire Disappearing for previous embedded page (since ContentPage.OnDisappearing is not called when only its Content is rendered)
         try
         {
             _currentPageInstance?.SendDisappearing();
@@ -254,13 +254,11 @@ private void UpdateContent(TabItemModel tab)
 
         ContentPage? pageInstance = null;
 
-        // Use cached page instance
         if (!string.IsNullOrEmpty(tab.Route) && _pageCache.TryGetValue(tab.Route, out var cachedPage))
         {
             pageInstance = cachedPage;
             System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Using cached page for route: {tab.Route}");
         }
-        // Resolve page from DI
         else if (tab.PageType != null)
         {
             pageInstance = MauiProgram.ServiceProvider?.GetService(tab.PageType) as ContentPage;
@@ -271,7 +269,6 @@ private void UpdateContent(TabItemModel tab)
                 System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Created new page from DI for route: {tab.Route}, VM: {pageInstance.BindingContext?.GetType().Name ?? "null"}");
             }
         }
-        // Use ContentTemplate if provided
         else if (tab.ContentTemplate != null)
         {
             var created = tab.ContentTemplate.CreateContent();
@@ -281,26 +278,44 @@ private void UpdateContent(TabItemModel tab)
             }
         }
 
-        if (pageInstance != null)
+        if (pageInstance == null)
+            return;
+
+        if (!_pageViewCache.TryGetValue(pageInstance, out var viewToRender))
         {
-            var viewToRender = pageInstance.Content;
-            if (viewToRender != null)
-            {
-                viewToRender.BindingContext = pageInstance.BindingContext;
-                ContentContainer.Content = viewToRender;
-                _currentPageInstance = pageInstance;
+            viewToRender = pageInstance.Content;
+            if (viewToRender == null)
+                return;
 
-                // Fire Appearing for the embedded page so its OnAppearing logic runs
-                try
-                {
-                    pageInstance.SendAppearing();
-                }
-                catch { }
-
-                System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Rendered content with BindingContext: {viewToRender.BindingContext?.GetType().Name ?? "null"}");
-                _ = TriggerInitialLoadAsync(pageInstance);
-            }
+            pageInstance.Content = null;
+            _pageViewCache[pageInstance] = viewToRender;
         }
+
+        if (viewToRender.Parent is ContentView contentViewParent)
+        {
+            contentViewParent.Content = null;
+        }
+        else if (viewToRender.Parent is ContentPage contentPageParent)
+        {
+            contentPageParent.Content = null;
+        }
+        else if (viewToRender.Parent is Border borderParent)
+        {
+            borderParent.Content = null;
+        }
+
+        viewToRender.BindingContext = pageInstance.BindingContext;
+        ContentContainer.Content = viewToRender;
+        _currentPageInstance = pageInstance;
+
+        try
+        {
+            pageInstance.SendAppearing();
+        }
+        catch { }
+
+        System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Rendered content with BindingContext: {viewToRender.BindingContext?.GetType().Name ?? "null"}");
+        _ = TriggerInitialLoadAsync(pageInstance);
     }
     catch (Exception ex)
     {
@@ -603,9 +618,11 @@ private void UpdateContent(TabItemModel tab)
 
                 app.Resources.TryGetValue("Primary", out var primaryObj);
                 app.Resources.TryGetValue("TabBarBackgroundDarken", out var darkenObj);
+                app.Resources.TryGetValue("TabBarForeground", out var foregroundObj);
 
                 var primaryColor = TryGetColor(primaryObj);
                 var darkenColor = TryGetColor(darkenObj);
+                var foregroundColor = TryGetColor(foregroundObj);
 
                 foreach (var child in TabBarContainer.Children)
                 {
@@ -654,6 +671,18 @@ private void UpdateContent(TabItemModel tab)
                                 Opacity = 0.9f,
                                 Offset = new Point(0, 1)
                             };
+                        }
+
+                        // Keep selected marker crisp across themes
+                        if (isSelected && foregroundColor != null)
+                        {
+                            innerBorder.Stroke = Color.FromRgba(foregroundColor.Red, foregroundColor.Green, foregroundColor.Blue, 0.32f);
+                            innerBorder.StrokeThickness = 1;
+                        }
+                        else
+                        {
+                            innerBorder.Stroke = Colors.Transparent;
+                            innerBorder.StrokeThickness = 0;
                         }
                     }
                 }
