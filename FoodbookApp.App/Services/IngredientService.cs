@@ -76,7 +76,7 @@ public class IngredientService : IIngredientService
     }
 
     /// <summary>
-    /// ? NOWA METODA: Szybkie pobieranie tylko nazw sk³adników (lightweight)
+    /// ? NOWA METODA: Szybkie pobieranie tylko nazw składników (lightweight)
     /// </summary>
     public async Task<List<string>> GetIngredientNamesAsync()
     {
@@ -93,7 +93,7 @@ public class IngredientService : IIngredientService
 
             System.Diagnostics.Debug.WriteLine("?? [IngredientService] Loading ingredient names from database...");
 
-            // ? KRYTYCZNA OPTYMALIZACJA: Pobierz TYLKO nazwy bez ca³ych obiektów
+            // ? KRYTYCZNA OPTYMALIZACJA: Pobierz TYLKO nazwy bez całych obiektów
             var names = await _context.Ingredients
                 .AsNoTracking()
                 .Where(i => i.RecipeId == null)
