@@ -1,9 +1,15 @@
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using CommunityToolkit.Maui.Extensions;
+using Foodbook.Data;
+using Foodbook.Models;
 using Foodbook.Views.Components;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Localization;
 using FoodbookApp.Services.Auth;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Storage;
 
 namespace Foodbook.Views;
@@ -19,6 +25,11 @@ public partial class ProfilePage : ContentPage
     private string _currentUserEmail = string.Empty;
 
     private const string SyncChoiceKeyPrefix = "cloudsync.enabled:";
+    private static readonly Color SyncSuccessColor = Color.FromArgb("#2E7D32");
+    private static readonly Color SyncErrorColor = Color.FromArgb("#C62828");
+    private static readonly Color SyncNeutralColor = Color.FromArgb("#6B7280");
+
+    public ObservableCollection<SyncQueueDisplayItem> SyncQueueItems { get; } = new();
 
     public ProfilePage()
     {
@@ -494,5 +505,168 @@ public partial class ProfilePage : ContentPage
     {
         PlanDetailsView.IsVisible = false;
         ProfileMainView.IsVisible = true;
+    }
+
+    private async void OnOpenSyncQueueTapped(object? sender, TappedEventArgs e)
+    {
+        ProfileMainView.IsVisible = false;
+        SyncQueueDetailsView.IsVisible = true;
+        await LoadSyncQueueAsync();
+    }
+
+    private void OnCloseSyncQueueTapped(object? sender, TappedEventArgs e)
+    {
+        SyncQueueDetailsView.IsVisible = false;
+        ProfileMainView.IsVisible = true;
+    }
+
+    private async void OnRefreshSyncQueueClicked(object sender, EventArgs e)
+    {
+        await LoadSyncQueueAsync();
+    }
+
+    private async Task LoadSyncQueueAsync()
+    {
+        try
+        {
+            if (!_isLoggedIn)
+            {
+                SyncQueueItems.Clear();
+                SyncQueueSummaryLabel.Text = ProfilePageResources.SyncQueueLoginRequired;
+                return;
+            }
+
+            var serviceProvider = FoodbookApp.MauiProgram.ServiceProvider;
+            if (serviceProvider == null)
+            {
+                SyncQueueItems.Clear();
+                SyncQueueSummaryLabel.Text = ProfilePageResources.SyncQueueServiceUnavailable;
+                return;
+            }
+
+            var tokenStore = serviceProvider.GetService<IAuthTokenStore>();
+            if (tokenStore == null)
+            {
+                SyncQueueItems.Clear();
+                SyncQueueSummaryLabel.Text = ProfilePageResources.SyncQueueAccountUnavailable;
+                return;
+            }
+
+            var accountId = await tokenStore.GetActiveAccountIdAsync();
+            if (!accountId.HasValue)
+            {
+                SyncQueueItems.Clear();
+                SyncQueueSummaryLabel.Text = ProfilePageResources.SyncQueueNoActiveAccount;
+                return;
+            }
+
+            using var scope = serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            var queue = await db.SyncQueue
+                .Where(e => e.AccountId == accountId.Value)
+                .OrderByDescending(e => e.CreatedUtc)
+                .Take(300)
+                .ToListAsync();
+
+            var mapped = queue.Select(e =>
+            {
+                var isDownload = IsDownloadEntry(e);
+                var directionEmoji = isDownload ? "⬇️" : "⬆️";
+                var statusText = GetStatusText(e.Status);
+                var statusColor = GetStatusColor(e.Status);
+                var detail = BuildDetailText(e);
+
+                return new SyncQueueDisplayItem
+                {
+                    Title = $"{directionEmoji} {e.EntityType} · {e.OperationType}",
+                    StatusText = statusText,
+                    StatusColor = statusColor,
+                    Detail = detail,
+                    DetailColor = e.Status is SyncEntryStatus.Failed or SyncEntryStatus.Abandoned
+                        ? SyncErrorColor
+                        : SyncNeutralColor,
+                    CreatedText = e.CreatedUtc.ToLocalTime().ToString("dd.MM HH:mm")
+                };
+            }).ToList();
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                SyncQueueItems.Clear();
+                foreach (var item in mapped)
+                    SyncQueueItems.Add(item);
+
+                var success = queue.Count(e => e.Status == SyncEntryStatus.Completed);
+                var failed = queue.Count(e => e.Status is SyncEntryStatus.Failed or SyncEntryStatus.Abandoned);
+                var pending = queue.Count(e => e.Status is SyncEntryStatus.Pending or SyncEntryStatus.InProgress);
+                var downloaded = queue.Count(IsDownloadEntry);
+                var uploaded = queue.Count - downloaded;
+
+                SyncQueueSummaryLabel.Text = string.Format(
+                    ProfilePageResources.SyncQueueSummaryFormat,
+                    queue.Count,
+                    uploaded,
+                    downloaded,
+                    success,
+                    failed,
+                    pending);
+            });
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ProfilePage] LoadSyncQueueAsync error: {ex.Message}");
+            SyncQueueSummaryLabel.Text = ProfilePageResources.SyncQueueLoadError;
+        }
+    }
+
+    private static string BuildDetailText(SyncQueueEntry entry)
+    {
+        if (entry.Status is SyncEntryStatus.Failed or SyncEntryStatus.Abandoned)
+            return string.IsNullOrWhiteSpace(entry.LastError)
+                ? ProfilePageResources.SyncQueueDetailErrorNoMessage
+                : string.Format(ProfilePageResources.SyncQueueDetailErrorFormat, entry.LastError);
+
+        if (entry.Status == SyncEntryStatus.Completed)
+            return string.Format(ProfilePageResources.SyncQueueDetailCompletedFormat, entry.EntityId);
+
+        if (entry.Status == SyncEntryStatus.InProgress)
+            return ProfilePageResources.SyncQueueDetailInProgress;
+
+        return ProfilePageResources.SyncQueueDetailPending;
+    }
+
+    private static string GetStatusText(SyncEntryStatus status) => status switch
+    {
+        SyncEntryStatus.Completed => ProfilePageResources.SyncQueueStatusSuccess,
+        SyncEntryStatus.Failed => ProfilePageResources.SyncQueueStatusError,
+        SyncEntryStatus.Abandoned => ProfilePageResources.SyncQueueStatusError,
+        SyncEntryStatus.InProgress => ProfilePageResources.SyncQueueStatusInProgress,
+        _ => ProfilePageResources.SyncQueueStatusPending
+    };
+
+    private static Color GetStatusColor(SyncEntryStatus status) => status switch
+    {
+        SyncEntryStatus.Completed => SyncSuccessColor,
+        SyncEntryStatus.Failed => SyncErrorColor,
+        SyncEntryStatus.Abandoned => SyncErrorColor,
+        _ => SyncNeutralColor
+    };
+
+    private static bool IsDownloadEntry(SyncQueueEntry entry)
+    {
+        if (string.IsNullOrWhiteSpace(entry.Payload))
+            return false;
+
+        return entry.Payload.Contains("\"syncDirection\":\"download\"", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public sealed class SyncQueueDisplayItem
+    {
+        public string Title { get; set; } = string.Empty;
+        public string StatusText { get; set; } = string.Empty;
+        public Color StatusColor { get; set; } = SyncNeutralColor;
+        public string Detail { get; set; } = string.Empty;
+        public Color DetailColor { get; set; } = SyncNeutralColor;
+        public string CreatedText { get; set; } = string.Empty;
     }
 }

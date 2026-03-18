@@ -48,4 +48,25 @@
   <data name="GenericErrorTitle" xml:space="preserve"><value>Erreur</value></data>
 
   <data name="SyncStatusFormat" xml:space="preserve"><value>Statut : {0}, En attente : {1}</value></data>
+  <data name="SyncQueueTitle" xml:space="preserve"><value>File de synchronisation</value></data>
+  <data name="SyncQueueSubtitle" xml:space="preserve"><value>Statut des opérations SyncQueue</value></data>
+  <data name="SyncQueueRecentOperations" xml:space="preserve"><value>Opérations récentes</value></data>
+  <data name="SyncQueueLoading" xml:space="preserve"><value>Chargement...</value></data>
+  <data name="SyncQueueRefresh" xml:space="preserve"><value>Actualiser</value></data>
+  <data name="SyncQueueEmpty" xml:space="preserve"><value>Aucune entrée dans la file de synchronisation.</value></data>
+  <data name="SyncQueueLoginRequired" xml:space="preserve"><value>Connectez-vous pour afficher la file de synchronisation.</value></data>
+  <data name="SyncQueueServiceUnavailable" xml:space="preserve"><value>Les services de l’application sont indisponibles.</value></data>
+  <data name="SyncQueueAccountUnavailable" xml:space="preserve"><value>Le service de compte est indisponible.</value></data>
+  <data name="SyncQueueNoActiveAccount" xml:space="preserve"><value>Aucun compte actif.</value></data>
+  <data name="SyncQueueLoadError" xml:space="preserve"><value>Impossible de charger la file de synchronisation.</value></data>
+  <data name="SyncQueueSummaryFormat" xml:space="preserve"><value>Total : {0} · ⬆️ {1} · ⬇️ {2} · Succès : {3} · Erreurs : {4} · En attente : {5}</value></data>
+  <data name="SyncQueueDetailErrorNoMessage" xml:space="preserve"><value>Échec de l’opération</value></data>
+  <data name="SyncQueueDetailErrorFormat" xml:space="preserve"><value>Erreur : {0}</value></data>
+  <data name="SyncQueueDetailCompletedFormat" xml:space="preserve"><value>ID : {0}</value></data>
+  <data name="SyncQueueDetailInProgress" xml:space="preserve"><value>Opération en cours</value></data>
+  <data name="SyncQueueDetailPending" xml:space="preserve"><value>Opération en attente dans la file</value></data>
+  <data name="SyncQueueStatusSuccess" xml:space="preserve"><value>Succès</value></data>
+  <data name="SyncQueueStatusError" xml:space="preserve"><value>Erreur</value></data>
+  <data name="SyncQueueStatusInProgress" xml:space="preserve"><value>En cours</value></data>
+  <data name="SyncQueueStatusPending" xml:space="preserve"><value>En attente</value></data>
 </root>

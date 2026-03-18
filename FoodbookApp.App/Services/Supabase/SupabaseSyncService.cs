@@ -193,7 +193,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
 
             // 3. Import cloud entities — newer UpdatedAt wins
             RaiseSyncProgress(100, 30, 0, "Importowanie danych z chmury");
-            var imported = await ImportCloudDataSmartAsync(db, cloudData, ct);
+            var imported = await ImportCloudDataSmartAsync(db, accountId.Value, cloudData, ct);
             Log($"Imported {imported} entities from cloud");
 
             // 4. Apply cloud user preferences if present
@@ -261,7 +261,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
     /// Does NOT overwrite local data that is newer than cloud.
     /// FK order: Folders → Labels → Recipes → Ingredients → Plans → PlannedMeals → ShoppingItems
     /// </summary>
-    private async Task<int> ImportCloudDataSmartAsync(AppDbContext db, CloudDataSnapshot cloudData, CancellationToken ct)
+    private async Task<int> ImportCloudDataSmartAsync(AppDbContext db, Guid accountId, CloudDataSnapshot cloudData, CancellationToken ct)
     {
         int imported = 0;
 
@@ -273,6 +273,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             {
                 db.Folders.Add(folder);
                 imported++;
+                LogDownloadedEntry(db, accountId, "Folder", folder.Id, SyncOperationType.Insert);
             }
             else if (IsCloudNewer(folder.UpdatedAt, existing.UpdatedAt))
             {
@@ -282,6 +283,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 existing.Order = folder.Order;
                 existing.UpdatedAt = folder.UpdatedAt;
                 imported++;
+                LogDownloadedEntry(db, accountId, "Folder", folder.Id, SyncOperationType.Update);
             }
         }
         await db.SaveChangesAsync(ct);
@@ -294,6 +296,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             {
                 db.RecipeLabels.Add(label);
                 imported++;
+                LogDownloadedEntry(db, accountId, "RecipeLabel", label.Id, SyncOperationType.Insert);
             }
             else if (IsCloudNewer(label.UpdatedAt, existing.UpdatedAt))
             {
@@ -301,6 +304,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 existing.ColorHex = label.ColorHex;
                 existing.UpdatedAt = label.UpdatedAt;
                 imported++;
+                LogDownloadedEntry(db, accountId, "RecipeLabel", label.Id, SyncOperationType.Update);
             }
         }
         await db.SaveChangesAsync(ct);
@@ -326,6 +330,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                     UpdatedAt = recipe.UpdatedAt
                 });
                 imported++;
+                LogDownloadedEntry(db, accountId, "Recipe", recipe.Id, SyncOperationType.Insert);
             }
             else if (IsCloudNewer(recipe.UpdatedAt, existing.UpdatedAt))
             {
@@ -339,6 +344,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 existing.FolderId = recipe.FolderId;
                 existing.UpdatedAt = recipe.UpdatedAt;
                 imported++;
+                LogDownloadedEntry(db, accountId, "Recipe", recipe.Id, SyncOperationType.Update);
             }
         }
         await db.SaveChangesAsync(ct);
@@ -365,6 +371,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                     UpdatedAt = ing.UpdatedAt
                 });
                 imported++;
+                LogDownloadedEntry(db, accountId, "Ingredient", ing.Id, SyncOperationType.Insert);
             }
             else if (IsCloudNewer(ing.UpdatedAt, existing.UpdatedAt))
             {
@@ -379,6 +386,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 existing.RecipeId = ing.RecipeId;
                 existing.UpdatedAt = ing.UpdatedAt;
                 imported++;
+                LogDownloadedEntry(db, accountId, "Ingredient", ing.Id, SyncOperationType.Update);
             }
         }
         await db.SaveChangesAsync(ct);
@@ -391,6 +399,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             {
                 db.Plans.Add(plan);
                 imported++;
+                LogDownloadedEntry(db, accountId, "Plan", plan.Id, SyncOperationType.Insert);
             }
             else if (IsCloudNewer(plan.UpdatedAt, existing.UpdatedAt))
             {
@@ -405,6 +414,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 existing.DurationDays = plan.DurationDays;
                 existing.UpdatedAt = plan.UpdatedAt;
                 imported++;
+                LogDownloadedEntry(db, accountId, "Plan", plan.Id, SyncOperationType.Update);
             }
         }
         await db.SaveChangesAsync(ct);
@@ -417,6 +427,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             {
                 db.PlannedMeals.Add(meal);
                 imported++;
+                LogDownloadedEntry(db, accountId, "PlannedMeal", meal.Id, SyncOperationType.Insert);
             }
             else if (IsCloudNewer(meal.UpdatedAt, existing.UpdatedAt))
             {
@@ -426,6 +437,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 existing.Portions = meal.Portions;
                 existing.UpdatedAt = meal.UpdatedAt;
                 imported++;
+                LogDownloadedEntry(db, accountId, "PlannedMeal", meal.Id, SyncOperationType.Update);
             }
         }
         await db.SaveChangesAsync(ct);
@@ -438,6 +450,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             {
                 db.ShoppingListItems.Add(item);
                 imported++;
+                LogDownloadedEntry(db, accountId, "ShoppingListItem", item.Id, SyncOperationType.Insert);
             }
             else if (IsCloudNewer(item.UpdatedAt, existing.UpdatedAt))
             {
@@ -449,6 +462,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 existing.Order = item.Order;
                 existing.UpdatedAt = item.UpdatedAt;
                 imported++;
+                LogDownloadedEntry(db, accountId, "ShoppingListItem", item.Id, SyncOperationType.Update);
             }
         }
         await db.SaveChangesAsync(ct);
@@ -475,6 +489,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
 
             var entityId = GetEntityId(entity);
             var entityType = typeof(T).Name;
+            var priority = GetEntityPriority(entityType);
 
             // Coalesce: update existing pending entry for same entity (Delete supersedes everything)
             var existing = await db.SyncQueue
@@ -496,6 +511,8 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                     existing.OperationType = operation;
                     existing.Payload = SerializeEntity(entity);
                 }
+
+                existing.Priority = priority;
                 existing.CreatedUtc = DateTime.UtcNow;
             }
             else
@@ -507,7 +524,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                     EntityId = entityId,
                     OperationType = operation,
                     Payload = operation != SyncOperationType.Delete ? SerializeEntity(entity) : null,
-                    Priority = 10
+                    Priority = priority
                 });
             }
 
@@ -539,6 +556,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
 
             var batchId = Guid.NewGuid();
             var entityType = typeof(T).Name;
+            var priority = GetEntityPriority(entityType);
 
             foreach (var entity in list)
             {
@@ -549,7 +567,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                     EntityId = GetEntityId(entity),
                     OperationType = operation,
                     Payload = operation != SyncOperationType.Delete ? SerializeEntity(entity) : null,
-                    Priority = 10,
+                    Priority = priority,
                     BatchId = batchId
                 });
             }
@@ -998,7 +1016,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             }
             catch (Exception ex) { Log($"Dedup warning: {ex.Message}"); }
 
-            var imported = await ImportCloudDataSmartAsync(db, cloudData, ct);
+            var imported = await ImportCloudDataSmartAsync(db, accountId.Value, cloudData, ct);
             await RefreshImportedDataAsync(imported, ct);
 
             if (cloudData.UserPreferences != null)
@@ -1192,6 +1210,55 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
 
     private static string SerializeEntity<T>(T entity)
     {
+        if (entity is Plan plan)
+        {
+            return JsonSerializer.Serialize(new PlanQueuePayload
+            {
+                Id = plan.Id,
+                StartDate = plan.StartDate,
+                EndDate = plan.EndDate,
+                IsArchived = plan.IsArchived,
+                Type = plan.Type,
+                Title = plan.Title,
+                AccentColor = plan.AccentColor,
+                Emoji = plan.Emoji,
+                DurationDays = plan.DurationDays,
+                LinkedShoppingListPlanId = plan.LinkedShoppingListPlanId,
+                CreatedAt = plan.CreatedAt,
+                UpdatedAt = plan.UpdatedAt
+            }, JsonOptions);
+        }
+
+        if (entity is PlannedMeal meal)
+        {
+            return JsonSerializer.Serialize(new PlannedMealQueuePayload
+            {
+                Id = meal.Id,
+                RecipeId = meal.RecipeId,
+                PlanId = meal.PlanId,
+                Date = meal.Date,
+                Portions = meal.Portions,
+                CreatedAt = meal.CreatedAt,
+                UpdatedAt = meal.UpdatedAt
+            }, JsonOptions);
+        }
+
+        if (entity is ShoppingListItem item)
+        {
+            return JsonSerializer.Serialize(new ShoppingListItemQueuePayload
+            {
+                Id = item.Id,
+                PlanId = item.PlanId,
+                IngredientName = item.IngredientName,
+                Unit = item.Unit,
+                IsChecked = item.IsChecked,
+                Quantity = item.Quantity,
+                Order = item.Order,
+                CreatedAt = item.CreatedAt,
+                UpdatedAt = item.UpdatedAt
+            }, JsonOptions);
+        }
+
         if (entity is UserPreferencesDto prefs)
         {
             return JsonSerializer.Serialize(new
@@ -1221,8 +1288,101 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
             json = StripMetadataKeys(json);
         }
 
+        if (typeof(T) == typeof(Plan))
+        {
+            var payload = JsonSerializer.Deserialize<PlanQueuePayload>(json, JsonOptions)
+                ?? throw new InvalidOperationException("Failed to deserialize plan queue payload");
+
+            return (T)(object)new Plan
+            {
+                Id = payload.Id,
+                StartDate = payload.StartDate,
+                EndDate = payload.EndDate,
+                IsArchived = payload.IsArchived,
+                Type = payload.Type,
+                Title = payload.Title,
+                AccentColor = payload.AccentColor,
+                Emoji = payload.Emoji,
+                DurationDays = payload.DurationDays,
+                LinkedShoppingListPlanId = payload.LinkedShoppingListPlanId,
+                CreatedAt = payload.CreatedAt,
+                UpdatedAt = payload.UpdatedAt
+            };
+        }
+
+        if (typeof(T) == typeof(PlannedMeal))
+        {
+            var payload = JsonSerializer.Deserialize<PlannedMealQueuePayload>(json, JsonOptions)
+                ?? throw new InvalidOperationException("Failed to deserialize planned meal queue payload");
+
+            return (T)(object)new PlannedMeal
+            {
+                Id = payload.Id,
+                RecipeId = payload.RecipeId,
+                PlanId = payload.PlanId,
+                Date = payload.Date,
+                Portions = payload.Portions,
+                CreatedAt = payload.CreatedAt,
+                UpdatedAt = payload.UpdatedAt
+            };
+        }
+
+        if (typeof(T) == typeof(ShoppingListItem))
+        {
+            var payload = JsonSerializer.Deserialize<ShoppingListItemQueuePayload>(json, JsonOptions)
+                ?? throw new InvalidOperationException("Failed to deserialize shopping list item queue payload");
+
+            return (T)(object)new ShoppingListItem
+            {
+                Id = payload.Id,
+                PlanId = payload.PlanId,
+                IngredientName = payload.IngredientName,
+                Unit = payload.Unit,
+                IsChecked = payload.IsChecked,
+                Quantity = payload.Quantity,
+                Order = payload.Order,
+                CreatedAt = payload.CreatedAt,
+                UpdatedAt = payload.UpdatedAt
+            };
+        }
+
         return JsonSerializer.Deserialize<T>(json, JsonOptions)
             ?? throw new InvalidOperationException($"Failed to deserialize {typeof(T).Name}");
+    }
+
+    private static int GetEntityPriority(string entityType) => entityType switch
+    {
+        "Folder" => 5,
+        "RecipeLabel" => 6,
+        "Recipe" => 7,
+        "Ingredient" => 8,
+        "Plan" => 10,
+        "PlannedMeal" => 20,
+        "ShoppingListItem" => 30,
+        "UserPreferencesDto" => 40,
+        _ => 50
+    };
+
+    private static string BuildDownloadAuditPayload()
+        => "{\"syncDirection\":\"download\"}";
+
+    private static void LogDownloadedEntry(AppDbContext db, Guid accountId, string entityType, Guid entityId, SyncOperationType operation)
+    {
+        var now = DateTime.UtcNow;
+        db.SyncQueue.Add(new SyncQueueEntry
+        {
+            AccountId = accountId,
+            EntityType = entityType,
+            EntityId = entityId,
+            OperationType = operation,
+            Payload = BuildDownloadAuditPayload(),
+            Status = SyncEntryStatus.Completed,
+            SyncedUtc = now,
+            CreatedUtc = now,
+            Priority = 0,
+            LastError = null,
+            RetryCount = 0
+        });
     }
 
     private static string StripMetadataKeys(string json)
@@ -1354,5 +1514,45 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
         _syncLock.Dispose();
         _queueLock.Dispose();
         _disposed = true;
+    }
+
+    private sealed class PlanQueuePayload
+    {
+        public Guid Id { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public bool IsArchived { get; set; }
+        public PlanType Type { get; set; }
+        public string? Title { get; set; }
+        public string? AccentColor { get; set; }
+        public string? Emoji { get; set; }
+        public int DurationDays { get; set; }
+        public Guid? LinkedShoppingListPlanId { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+    }
+
+    private sealed class PlannedMealQueuePayload
+    {
+        public Guid Id { get; set; }
+        public Guid RecipeId { get; set; }
+        public Guid? PlanId { get; set; }
+        public DateTime Date { get; set; }
+        public int Portions { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+    }
+
+    private sealed class ShoppingListItemQueuePayload
+    {
+        public Guid Id { get; set; }
+        public Guid PlanId { get; set; }
+        public string IngredientName { get; set; } = string.Empty;
+        public Unit Unit { get; set; }
+        public bool IsChecked { get; set; }
+        public double Quantity { get; set; }
+        public int Order { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
     }
 }

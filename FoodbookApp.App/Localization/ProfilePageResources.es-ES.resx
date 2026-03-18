@@ -48,4 +48,26 @@
   <data name="GenericErrorTitle" xml:space="preserve"><value>Error</value></data>
 
   <data name="SyncStatusFormat" xml:space="preserve"><value>Estado: {0}, Pendientes: {1}</value></data>
+
+  <data name="SyncQueueTitle" xml:space="preserve"><value>Cola de sincronización</value></data>
+  <data name="SyncQueueSubtitle" xml:space="preserve"><value>Estado de operaciones de SyncQueue</value></data>
+  <data name="SyncQueueRecentOperations" xml:space="preserve"><value>Operaciones recientes</value></data>
+  <data name="SyncQueueLoading" xml:space="preserve"><value>Cargando...</value></data>
+  <data name="SyncQueueRefresh" xml:space="preserve"><value>Actualizar</value></data>
+  <data name="SyncQueueEmpty" xml:space="preserve"><value>No hay entradas en la cola de sincronización.</value></data>
+  <data name="SyncQueueLoginRequired" xml:space="preserve"><value>Inicia sesión para ver la cola de sincronización.</value></data>
+  <data name="SyncQueueServiceUnavailable" xml:space="preserve"><value>Los servicios de la aplicación no están disponibles.</value></data>
+  <data name="SyncQueueAccountUnavailable" xml:space="preserve"><value>El servicio de cuenta no está disponible.</value></data>
+  <data name="SyncQueueNoActiveAccount" xml:space="preserve"><value>No hay una cuenta activa.</value></data>
+  <data name="SyncQueueLoadError" xml:space="preserve"><value>No se pudo cargar la cola de sincronización.</value></data>
+  <data name="SyncQueueSummaryFormat" xml:space="preserve"><value>Total: {0} · ⬆️ {1} · ⬇️ {2} · Éxitos: {3} · Errores: {4} · Pendientes: {5}</value></data>
+  <data name="SyncQueueDetailErrorNoMessage" xml:space="preserve"><value>La operación falló</value></data>
+  <data name="SyncQueueDetailErrorFormat" xml:space="preserve"><value>Error: {0}</value></data>
+  <data name="SyncQueueDetailCompletedFormat" xml:space="preserve"><value>ID: {0}</value></data>
+  <data name="SyncQueueDetailInProgress" xml:space="preserve"><value>Operación en curso</value></data>
+  <data name="SyncQueueDetailPending" xml:space="preserve"><value>Operación pendiente en la cola</value></data>
+  <data name="SyncQueueStatusSuccess" xml:space="preserve"><value>Éxito</value></data>
+  <data name="SyncQueueStatusError" xml:space="preserve"><value>Error</value></data>
+  <data name="SyncQueueStatusInProgress" xml:space="preserve"><value>En curso</value></data>
+  <data name="SyncQueueStatusPending" xml:space="preserve"><value>Pendiente</value></data>
 </root>
