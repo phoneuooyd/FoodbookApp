@@ -7,6 +7,7 @@ using Foodbook.Services;
 using FoodbookApp.Interfaces;
 using FoodbookApp.Services.Auth;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FoodbookApp.Services.Supabase;
 
