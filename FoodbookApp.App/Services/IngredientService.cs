@@ -60,7 +60,7 @@ public class IngredientService : IIngredientService
                 _cachedIngredientsStatic = fresh;
                 _lastCacheTimeStatic = DateTime.Now;
                 
-                // ? OPTYMALIZACJA: Aktualizuj te¿ cache nazw
+                // ? OPTYMALIZACJA: Aktualizuj też cache nazw
                 _cachedIngredientNamesStatic = fresh.Select(i => i.Name).ToList();
                 _lastNamesCacheTimeStatic = DateTime.Now;
             }
