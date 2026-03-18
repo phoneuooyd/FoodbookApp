@@ -138,14 +138,11 @@
   <data name="FoodbooksEmptyHint" xml:space="preserve">
     <value>Utwórz nowy Foodbook przyciskiem +</value>
   </data>
-  <data name="ArchiveTitle" xml:space="preserve">
+  <data name="ArchiveFoodbookTitle" xml:space="preserve">
     <value>Archiwizacja</value>
   </data>
   <data name="ArchiveFoodbookMessage" xml:space="preserve">
     <value>Czy na pewno chcesz zarchiwizować ten Foodbook?</value>
-  </data>
-  <data name="ArchivePlanMessage" xml:space="preserve">
-    <value>Czy na pewno chcesz zarchiwizować ten planner?</value>
   </data>
   <data name="ApplyFoodbookTitle" xml:space="preserve">
     <value>Zastosuj Foodbook</value>
@@ -153,22 +150,13 @@
   <data name="ApplyFoodbookPrompt" xml:space="preserve">
     <value>Podaj datę startu (rrrr-MM-dd)</value>
   </data>
-  <data name="ApplyButton" xml:space="preserve">
+  <data name="ApplyFoodbookAccept" xml:space="preserve">
     <value>Zastosuj</value>
-  </data>
-  <data name="CancelButton" xml:space="preserve">
-    <value>Anuluj</value>
-  </data>
-  <data name="YesButton" xml:space="preserve">
-    <value>Tak</value>
-  </data>
-  <data name="NoButton" xml:space="preserve">
-    <value>Nie</value>
   </data>
   <data name="ErrorTitle" xml:space="preserve">
     <value>Błąd</value>
   </data>
-  <data name="InvalidDateFormatMessage" xml:space="preserve">
+  <data name="InvalidDateMessage" xml:space="preserve">
     <value>Nieprawidłowy format daty.</value>
   </data>
   <data name="OverlapTitle" xml:space="preserve">
@@ -177,10 +165,16 @@
   <data name="OverlapMessage" xml:space="preserve">
     <value>W wybranym terminie istnieje już planer. Kontynuować mimo to?</value>
   </data>
-  <data name="DoneTitle" xml:space="preserve">
+  <data name="ApplySuccessTitle" xml:space="preserve">
     <value>Gotowe</value>
   </data>
-  <data name="FoodbookAppliedMessage" xml:space="preserve">
+  <data name="ApplySuccessMessage" xml:space="preserve">
     <value>Foodbook został zastosowany jako nowy planer.</value>
+  </data>
+  <data name="ArchivePlanTitle" xml:space="preserve">
+    <value>Archiwizacja</value>
+  </data>
+  <data name="ArchivePlanMessage" xml:space="preserve">
+    <value>Czy na pewno chcesz zarchiwizować ten planer?</value>
   </data>
 </root>

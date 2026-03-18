@@ -187,10 +187,10 @@ public class PlannerListsViewModel : INotifyPropertyChanged
         if (foodbook == null) return;
 
         var confirm = await Shell.Current.DisplayAlert(
-            PlannerListsPageResources.ArchiveTitle,
+            PlannerListsPageResources.ArchiveFoodbookTitle,
             PlannerListsPageResources.ArchiveFoodbookMessage,
-            PlannerListsPageResources.YesButton,
-            PlannerListsPageResources.NoButton);
+            ButtonResources.Yes,
+            ButtonResources.No);
 
         if (!confirm) return;
 
@@ -207,8 +207,8 @@ public class PlannerListsViewModel : INotifyPropertyChanged
         var startDateInput = await Shell.Current.DisplayPromptAsync(
             PlannerListsPageResources.ApplyFoodbookTitle,
             PlannerListsPageResources.ApplyFoodbookPrompt,
-            accept: PlannerListsPageResources.ApplyButton,
-            cancel: PlannerListsPageResources.CancelButton,
+            accept: PlannerListsPageResources.ApplyFoodbookAccept,
+            cancel: ButtonResources.Cancel,
             initialValue: DateTime.Today.ToString("yyyy-MM-dd"));
 
         if (startDateInput == null)
@@ -216,10 +216,7 @@ public class PlannerListsViewModel : INotifyPropertyChanged
 
         if (!DateTime.TryParse(startDateInput, out var startDate))
         {
-            await Shell.Current.DisplayAlert(
-                PlannerListsPageResources.ErrorTitle,
-                PlannerListsPageResources.InvalidDateFormatMessage,
-                "OK");
+            await Shell.Current.DisplayAlert(PlannerListsPageResources.ErrorTitle, PlannerListsPageResources.InvalidDateMessage, ButtonResources.OK);
             return;
         }
 
@@ -230,8 +227,8 @@ public class PlannerListsViewModel : INotifyPropertyChanged
             var proceed = await Shell.Current.DisplayAlert(
                 PlannerListsPageResources.OverlapTitle,
                 PlannerListsPageResources.OverlapMessage,
-                PlannerListsPageResources.YesButton,
-                PlannerListsPageResources.NoButton);
+                ButtonResources.Yes,
+                ButtonResources.No);
 
             if (!proceed) return;
         }
@@ -240,10 +237,7 @@ public class PlannerListsViewModel : INotifyPropertyChanged
         await LoadPlansAsync();
         AppEvents.RaisePlanChanged();
 
-        await Shell.Current.DisplayAlert(
-            PlannerListsPageResources.DoneTitle,
-            PlannerListsPageResources.FoodbookAppliedMessage,
-            "OK");
+        await Shell.Current.DisplayAlert(PlannerListsPageResources.ApplySuccessTitle, PlannerListsPageResources.ApplySuccessMessage, ButtonResources.OK);
     }
 
     private async Task ArchivePlanAsync(Plan? plan)
@@ -251,10 +245,10 @@ public class PlannerListsViewModel : INotifyPropertyChanged
         if (plan == null) return;
 
         bool confirm = await Shell.Current.DisplayAlert(
-            PlannerListsPageResources.ArchiveTitle,
+            PlannerListsPageResources.ArchivePlanTitle,
             PlannerListsPageResources.ArchivePlanMessage,
-            PlannerListsPageResources.YesButton,
-            PlannerListsPageResources.NoButton);
+            ButtonResources.Yes,
+            ButtonResources.No);
 
         if (confirm)
         {

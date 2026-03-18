@@ -319,13 +319,13 @@
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>MealFormPageResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
-          <EmbeddedResource Update="Localization\\PlannerPageResources.resx">
-            <Generator>ResXFileCodeGenerator</Generator>
-            <LastGenOutput>PlannerPageResources.Designer.cs</LastGenOutput>
-          </EmbeddedResource>
           <EmbeddedResource Update="Localization\\PlannerListsPageResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>PlannerListsPageResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
+          <EmbeddedResource Update="Localization\\PlannerPageResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>PlannerPageResources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
           <EmbeddedResource Update="Localization\\RecipesPageResources.resx">
             <Generator>ResXFileCodeGenerator</Generator>
