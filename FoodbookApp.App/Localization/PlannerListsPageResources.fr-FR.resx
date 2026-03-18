@@ -138,4 +138,49 @@
   <data name="FoodbooksEmptyHint" xml:space="preserve">
     <value>Créez un nouveau Foodbook avec le bouton +</value>
   </data>
+  <data name="ArchiveTitle" xml:space="preserve">
+    <value>Archiver</value>
+  </data>
+  <data name="ArchiveFoodbookMessage" xml:space="preserve">
+    <value>Voulez-vous vraiment archiver ce Foodbook ?</value>
+  </data>
+  <data name="ArchivePlanMessage" xml:space="preserve">
+    <value>Voulez-vous vraiment archiver ce plan ?</value>
+  </data>
+  <data name="ApplyFoodbookTitle" xml:space="preserve">
+    <value>Appliquer le Foodbook</value>
+  </data>
+  <data name="ApplyFoodbookPrompt" xml:space="preserve">
+    <value>Entrez la date de début (aaaa-MM-jj)</value>
+  </data>
+  <data name="ApplyButton" xml:space="preserve">
+    <value>Appliquer</value>
+  </data>
+  <data name="CancelButton" xml:space="preserve">
+    <value>Annuler</value>
+  </data>
+  <data name="YesButton" xml:space="preserve">
+    <value>Oui</value>
+  </data>
+  <data name="NoButton" xml:space="preserve">
+    <value>Non</value>
+  </data>
+  <data name="ErrorTitle" xml:space="preserve">
+    <value>Erreur</value>
+  </data>
+  <data name="InvalidDateFormatMessage" xml:space="preserve">
+    <value>Format de date invalide.</value>
+  </data>
+  <data name="OverlapTitle" xml:space="preserve">
+    <value>Plans qui se chevauchent</value>
+  </data>
+  <data name="OverlapMessage" xml:space="preserve">
+    <value>Un planificateur existe déjà pour la période sélectionnée. Continuer quand même ?</value>
+  </data>
+  <data name="DoneTitle" xml:space="preserve">
+    <value>Terminé</value>
+  </data>
+  <data name="FoodbookAppliedMessage" xml:space="preserve">
+    <value>Le Foodbook a été appliqué comme nouveau planificateur.</value>
+  </data>
 </root>

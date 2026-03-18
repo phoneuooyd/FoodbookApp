@@ -6,6 +6,7 @@ using Foodbook.Models;
 using Foodbook.Services;
 using Foodbook.Views;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Localization;
 using Microsoft.Maui.Controls;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -186,10 +187,10 @@ public class PlannerListsViewModel : INotifyPropertyChanged
         if (foodbook == null) return;
 
         var confirm = await Shell.Current.DisplayAlert(
-            "Archiwizacja",
-            "Czy na pewno chcesz zarchiwizowaæ ten Foodbook?",
-            "Tak",
-            "Nie");
+            PlannerListsPageResources.ArchiveTitle,
+            PlannerListsPageResources.ArchiveFoodbookMessage,
+            PlannerListsPageResources.YesButton,
+            PlannerListsPageResources.NoButton);
 
         if (!confirm) return;
 
@@ -204,10 +205,10 @@ public class PlannerListsViewModel : INotifyPropertyChanged
         if (foodbook == null) return;
 
         var startDateInput = await Shell.Current.DisplayPromptAsync(
-            "Zastosuj Foodbook",
-            "Podaj datê startu (rrrr-MM-dd)",
-            accept: "Zastosuj",
-            cancel: "Anuluj",
+            PlannerListsPageResources.ApplyFoodbookTitle,
+            PlannerListsPageResources.ApplyFoodbookPrompt,
+            accept: PlannerListsPageResources.ApplyButton,
+            cancel: PlannerListsPageResources.CancelButton,
             initialValue: DateTime.Today.ToString("yyyy-MM-dd"));
 
         if (startDateInput == null)
@@ -215,7 +216,10 @@ public class PlannerListsViewModel : INotifyPropertyChanged
 
         if (!DateTime.TryParse(startDateInput, out var startDate))
         {
-            await Shell.Current.DisplayAlert("B³¹d", "Nieprawid³owy format daty.", "OK");
+            await Shell.Current.DisplayAlert(
+                PlannerListsPageResources.ErrorTitle,
+                PlannerListsPageResources.InvalidDateFormatMessage,
+                "OK");
             return;
         }
 
@@ -224,10 +228,10 @@ public class PlannerListsViewModel : INotifyPropertyChanged
         if (hasOverlap)
         {
             var proceed = await Shell.Current.DisplayAlert(
-                "Nak³adanie planów",
-                "W wybranym terminie istnieje ju¿ planer. Kontynuowaæ mimo to?",
-                "Tak",
-                "Nie");
+                PlannerListsPageResources.OverlapTitle,
+                PlannerListsPageResources.OverlapMessage,
+                PlannerListsPageResources.YesButton,
+                PlannerListsPageResources.NoButton);
 
             if (!proceed) return;
         }
@@ -236,7 +240,10 @@ public class PlannerListsViewModel : INotifyPropertyChanged
         await LoadPlansAsync();
         AppEvents.RaisePlanChanged();
 
-        await Shell.Current.DisplayAlert("Gotowe", "Foodbook zosta³ zastosowany jako nowy planer.", "OK");
+        await Shell.Current.DisplayAlert(
+            PlannerListsPageResources.DoneTitle,
+            PlannerListsPageResources.FoodbookAppliedMessage,
+            "OK");
     }
 
     private async Task ArchivePlanAsync(Plan? plan)
@@ -244,10 +251,10 @@ public class PlannerListsViewModel : INotifyPropertyChanged
         if (plan == null) return;
 
         bool confirm = await Shell.Current.DisplayAlert(
-            "Archiwizacja",
-            "Czy na pewno chcesz zarchiwizowaæ ten planner?",
-            "Tak",
-            "Nie");
+            PlannerListsPageResources.ArchiveTitle,
+            PlannerListsPageResources.ArchivePlanMessage,
+            PlannerListsPageResources.YesButton,
+            PlannerListsPageResources.NoButton);
 
         if (confirm)
         {
