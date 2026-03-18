@@ -19,7 +19,6 @@ namespace Foodbook.Models
         public bool IsArchived { get; set; } = false;
 
         // Type of plan - determines if it's a planner, shopping list, or foodbook
-        // Default kept as ShoppingList for backward compatibility with tests that expect the label
         public PlanType Type { get; set; } = PlanType.ShoppingList;
 
         // Link to associated shopping list plan (for Planner type)
@@ -59,24 +58,12 @@ namespace Foodbook.Models
         [NotMapped]
         public string DisplayColor => string.IsNullOrWhiteSpace(AccentColor) ? "#5B3FE8" : AccentColor;
 
-        // Display name for UI - shows custom title or default based on type
+        // Display name for UI - shows custom title or type key; localization is handled by the UI layer
         [NotMapped]
-        public string Name => !string.IsNullOrWhiteSpace(Title)
-            ? Title!
-            : Type switch
-            {
-                PlanType.Planner => "Planer",
-                PlanType.Foodbook => "Foodbook",
-                _ => "Lista zakupów"
-            };
+        public string Name => !string.IsNullOrWhiteSpace(Title) ? Title! : Type.ToString();
 
-        // Label used for display - reflect the current type
+        // Label used for display - returns the PlanType key; localization is handled by the UI layer
         [NotMapped]
-        public string Label => Type switch
-        {
-            PlanType.Planner => "Planer",
-            PlanType.Foodbook => "Foodbook",
-            _ => "Lista zakupów"
-        };
+        public string Label => Type.ToString();
     }
 }
