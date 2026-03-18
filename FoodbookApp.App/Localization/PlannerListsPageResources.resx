@@ -138,43 +138,52 @@
   <data name="FoodbooksEmptyHint" xml:space="preserve">
     <value>Create a new Foodbook with the + button</value>
   </data>
-  <data name="ArchiveFoodbookTitle" xml:space="preserve">
-    <value>Archivisation</value>
+  <data name="ArchiveDialogTitle" xml:space="preserve">
+    <value>Archive</value>
   </data>
-  <data name="ArchiveFoodbookMessage" xml:space="preserve">
+  <data name="ArchiveFoodbookConfirmMessage" xml:space="preserve">
     <value>Are you sure you want to archive this Foodbook?</value>
   </data>
-  <data name="ApplyFoodbookTitle" xml:space="preserve">
+  <data name="ArchivePlanConfirmMessage" xml:space="preserve">
+    <value>Are you sure you want to archive this planner?</value>
+  </data>
+  <data name="ApplyFoodbookPromptTitle" xml:space="preserve">
     <value>Apply Foodbook</value>
   </data>
-  <data name="ApplyFoodbookPrompt" xml:space="preserve">
+  <data name="ApplyFoodbookPromptMessage" xml:space="preserve">
     <value>Enter start date (yyyy-MM-dd)</value>
   </data>
-  <data name="ApplyFoodbookAccept" xml:space="preserve">
+  <data name="Apply" xml:space="preserve">
     <value>Apply</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
   </data>
   <data name="ErrorTitle" xml:space="preserve">
     <value>Error</value>
   </data>
-  <data name="InvalidDateMessage" xml:space="preserve">
+  <data name="InvalidDateFormatMessage" xml:space="preserve">
     <value>Invalid date format.</value>
   </data>
-  <data name="OverlapTitle" xml:space="preserve">
-    <value>Overlapping plans</value>
+  <data name="OverlapDialogTitle" xml:space="preserve">
+    <value>Plan overlap</value>
   </data>
-  <data name="OverlapMessage" xml:space="preserve">
-    <value>A planner already exists for the selected period. Continue anyway?</value>
+  <data name="OverlapDialogMessage" xml:space="preserve">
+    <value>A planner already exists in the selected date range. Continue anyway?</value>
   </data>
-  <data name="ApplySuccessTitle" xml:space="preserve">
+  <data name="DoneTitle" xml:space="preserve">
     <value>Done</value>
   </data>
-  <data name="ApplySuccessMessage" xml:space="preserve">
-    <value>The Foodbook has been applied as a new planner.</value>
+  <data name="ApplyFoodbookSuccessMessage" xml:space="preserve">
+    <value>Foodbook has been applied as a new planner.</value>
   </data>
-  <data name="ArchivePlanTitle" xml:space="preserve">
-    <value>Archivisation</value>
+  <data name="Yes" xml:space="preserve">
+    <value>Yes</value>
   </data>
-  <data name="ArchivePlanMessage" xml:space="preserve">
-    <value>Are you sure you want to archive this plan?</value>
+  <data name="No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="OK" xml:space="preserve">
+    <value>OK</value>
   </data>
 </root>

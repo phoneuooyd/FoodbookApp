@@ -138,43 +138,52 @@
   <data name="FoodbooksEmptyHint" xml:space="preserve">
     <value>Erstellen Sie ein neues Foodbook mit der + Schaltfläche</value>
   </data>
-  <data name="ArchiveFoodbookTitle" xml:space="preserve">
-    <value>Archivieren</value>
+  <data name="ArchiveDialogTitle" xml:space="preserve">
+    <value>Archivierung</value>
   </data>
-  <data name="ArchiveFoodbookMessage" xml:space="preserve">
+  <data name="ArchiveFoodbookConfirmMessage" xml:space="preserve">
     <value>Möchten Sie dieses Foodbook wirklich archivieren?</value>
   </data>
-  <data name="ArchivePlanTitle" xml:space="preserve">
-    <value>Archivieren</value>
+  <data name="ArchivePlanConfirmMessage" xml:space="preserve">
+    <value>Möchten Sie diesen Planer wirklich archivieren?</value>
   </data>
-  <data name="ArchivePlanMessage" xml:space="preserve">
-    <value>Möchten Sie diesen Plan wirklich archivieren?</value>
-  </data>
-  <data name="ApplyFoodbookTitle" xml:space="preserve">
+  <data name="ApplyFoodbookPromptTitle" xml:space="preserve">
     <value>Foodbook anwenden</value>
   </data>
-  <data name="ApplyFoodbookPrompt" xml:space="preserve">
-    <value>Startdatum eingeben (jjjj-MM-tt)</value>
+  <data name="ApplyFoodbookPromptMessage" xml:space="preserve">
+    <value>Startermin eingeben (JJJJ-MM-TT)</value>
   </data>
-  <data name="ApplyFoodbookAccept" xml:space="preserve">
+  <data name="Apply" xml:space="preserve">
     <value>Anwenden</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Abbrechen</value>
   </data>
   <data name="ErrorTitle" xml:space="preserve">
     <value>Fehler</value>
   </data>
-  <data name="InvalidDateMessage" xml:space="preserve">
+  <data name="InvalidDateFormatMessage" xml:space="preserve">
     <value>Ungültiges Datumsformat.</value>
   </data>
-  <data name="OverlapTitle" xml:space="preserve">
-    <value>Überlappende Pläne</value>
+  <data name="OverlapDialogTitle" xml:space="preserve">
+    <value>Planüberschneidung</value>
   </data>
-  <data name="OverlapMessage" xml:space="preserve">
-    <value>Für den gewählten Zeitraum existiert bereits ein Planer. Trotzdem fortfahren?</value>
+  <data name="OverlapDialogMessage" xml:space="preserve">
+    <value>Im ausgewählten Zeitraum existiert bereits ein Planer. Trotzdem fortfahren?</value>
   </data>
-  <data name="ApplySuccessTitle" xml:space="preserve">
+  <data name="DoneTitle" xml:space="preserve">
     <value>Fertig</value>
   </data>
-  <data name="ApplySuccessMessage" xml:space="preserve">
-    <value>Das Foodbook wurde als neuer Planer übernommen.</value>
+  <data name="ApplyFoodbookSuccessMessage" xml:space="preserve">
+    <value>Foodbook wurde als neuer Planer angewendet.</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>Ja</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>Nein</value>
+  </data>
+  <data name="OK" xml:space="preserve">
+    <value>OK</value>
   </data>
 </root>

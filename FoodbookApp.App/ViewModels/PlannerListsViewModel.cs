@@ -15,6 +15,7 @@ namespace Foodbook.ViewModels;
 public class PlannerListsViewModel : INotifyPropertyChanged
 {
     private readonly IPlanService _planService;
+    private readonly ILocalizationService? _localizationService;
     private int _selectedTabIndex;
     private bool _isLoading;
 
@@ -53,9 +54,10 @@ public class PlannerListsViewModel : INotifyPropertyChanged
     public ICommand ArchiveFoodbookCommand { get; }
     public ICommand ApplyFoodbookCommand { get; }
 
-    public PlannerListsViewModel(IPlanService planService)
+    public PlannerListsViewModel(IPlanService planService, ILocalizationService? localizationService = null)
     {
         _planService = planService;
+        _localizationService = localizationService;
 
         LoadCommand = new Command(async () => await LoadPlansAsync());
 
@@ -153,6 +155,9 @@ public class PlannerListsViewModel : INotifyPropertyChanged
         AppEvents.PlanChangedAsync += async () => await LoadPlansAsync();
     }
 
+    private string T(string key, string fallback)
+        => _localizationService?.GetString("PlannerListsPageResources", key) ?? fallback;
+
     public async Task LoadPlansAsync()
     {
         if (IsLoading) return;
@@ -187,10 +192,10 @@ public class PlannerListsViewModel : INotifyPropertyChanged
         if (foodbook == null) return;
 
         var confirm = await Shell.Current.DisplayAlert(
-            PlannerListsPageResources.ArchiveFoodbookTitle,
-            PlannerListsPageResources.ArchiveFoodbookMessage,
-            ButtonResources.Yes,
-            ButtonResources.No);
+            T("ArchiveDialogTitle", "Archive"),
+            T("ArchiveFoodbookConfirmMessage", "Are you sure you want to archive this Foodbook?"),
+            T("Yes", "Yes"),
+            T("No", "No"));
 
         if (!confirm) return;
 
@@ -205,10 +210,10 @@ public class PlannerListsViewModel : INotifyPropertyChanged
         if (foodbook == null) return;
 
         var startDateInput = await Shell.Current.DisplayPromptAsync(
-            PlannerListsPageResources.ApplyFoodbookTitle,
-            PlannerListsPageResources.ApplyFoodbookPrompt,
-            accept: PlannerListsPageResources.ApplyFoodbookAccept,
-            cancel: ButtonResources.Cancel,
+            T("ApplyFoodbookPromptTitle", "Apply Foodbook"),
+            T("ApplyFoodbookPromptMessage", "Enter start date (yyyy-MM-dd)"),
+            accept: T("Apply", "Apply"),
+            cancel: T("Cancel", "Cancel"),
             initialValue: DateTime.Today.ToString("yyyy-MM-dd"));
 
         if (startDateInput == null)
@@ -216,7 +221,10 @@ public class PlannerListsViewModel : INotifyPropertyChanged
 
         if (!DateTime.TryParse(startDateInput, out var startDate))
         {
-            await Shell.Current.DisplayAlert(PlannerListsPageResources.ErrorTitle, PlannerListsPageResources.InvalidDateMessage, ButtonResources.OK);
+            await Shell.Current.DisplayAlert(
+                T("ErrorTitle", "Error"),
+                T("InvalidDateFormatMessage", "Invalid date format."),
+                T("OK", "OK"));
             return;
         }
 
@@ -225,10 +233,10 @@ public class PlannerListsViewModel : INotifyPropertyChanged
         if (hasOverlap)
         {
             var proceed = await Shell.Current.DisplayAlert(
-                PlannerListsPageResources.OverlapTitle,
-                PlannerListsPageResources.OverlapMessage,
-                ButtonResources.Yes,
-                ButtonResources.No);
+                T("OverlapDialogTitle", "Plan overlap"),
+                T("OverlapDialogMessage", "A planner already exists in the selected date range. Continue anyway?"),
+                T("Yes", "Yes"),
+                T("No", "No"));
 
             if (!proceed) return;
         }
@@ -237,7 +245,10 @@ public class PlannerListsViewModel : INotifyPropertyChanged
         await LoadPlansAsync();
         AppEvents.RaisePlanChanged();
 
-        await Shell.Current.DisplayAlert(PlannerListsPageResources.ApplySuccessTitle, PlannerListsPageResources.ApplySuccessMessage, ButtonResources.OK);
+        await Shell.Current.DisplayAlert(
+            T("DoneTitle", "Done"),
+            T("ApplyFoodbookSuccessMessage", "Foodbook has been applied as a new planner."),
+            T("OK", "OK"));
     }
 
     private async Task ArchivePlanAsync(Plan? plan)
@@ -245,10 +256,10 @@ public class PlannerListsViewModel : INotifyPropertyChanged
         if (plan == null) return;
 
         bool confirm = await Shell.Current.DisplayAlert(
-            PlannerListsPageResources.ArchivePlanTitle,
-            PlannerListsPageResources.ArchivePlanMessage,
-            ButtonResources.Yes,
-            ButtonResources.No);
+            T("ArchiveDialogTitle", "Archive"),
+            T("ArchivePlanConfirmMessage", "Are you sure you want to archive this planner?"),
+            T("Yes", "Yes"),
+            T("No", "No"));
 
         if (confirm)
         {

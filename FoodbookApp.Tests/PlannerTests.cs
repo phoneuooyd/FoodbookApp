@@ -163,6 +163,10 @@ namespace FoodbookApp.Tests
             Assert.Equal(DateTime.MinValue, plan.EndDate);
             Assert.False(plan.IsArchived); // Default value is false
             Assert.Equal("ShoppingList", plan.Label);
+        }
+
+        [Fact]
+        public void Plan_SetBasicProperties_ShouldUpdateCorrectly()
         {
             // Arrange
             var plan = new Plan();
