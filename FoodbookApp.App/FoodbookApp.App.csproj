@@ -267,6 +267,11 @@
             <AutoGen>True</AutoGen>
             <DependentUpon>PlannerPageResources.resx</DependentUpon>
           </Compile>
+          <Compile Update="Localization\\PlannerListsPageResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>PlannerListsPageResources.resx</DependentUpon>
+          </Compile>
           <Compile Update="Localization\\RecipesPageResources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>

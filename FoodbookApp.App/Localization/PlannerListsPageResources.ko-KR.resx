@@ -138,4 +138,43 @@
   <data name="FoodbooksEmptyHint" xml:space="preserve">
     <value>+ 버튼으로 새 Foodbook을 만드세요</value>
   </data>
+  <data name="ArchiveFoodbookTitle" xml:space="preserve">
+    <value>보관</value>
+  </data>
+  <data name="ArchiveFoodbookMessage" xml:space="preserve">
+    <value>이 Foodbook을 보관하시겠습니까?</value>
+  </data>
+  <data name="ArchivePlanTitle" xml:space="preserve">
+    <value>보관</value>
+  </data>
+  <data name="ArchivePlanMessage" xml:space="preserve">
+    <value>이 플랜을 보관하시겠습니까?</value>
+  </data>
+  <data name="ApplyFoodbookTitle" xml:space="preserve">
+    <value>Foodbook 적용</value>
+  </data>
+  <data name="ApplyFoodbookPrompt" xml:space="preserve">
+    <value>시작 날짜를 입력하세요 (yyyy-MM-dd)</value>
+  </data>
+  <data name="ApplyFoodbookAccept" xml:space="preserve">
+    <value>적용</value>
+  </data>
+  <data name="ErrorTitle" xml:space="preserve">
+    <value>오류</value>
+  </data>
+  <data name="InvalidDateMessage" xml:space="preserve">
+    <value>잘못된 날짜 형식입니다.</value>
+  </data>
+  <data name="OverlapTitle" xml:space="preserve">
+    <value>플랜 겹침</value>
+  </data>
+  <data name="OverlapMessage" xml:space="preserve">
+    <value>선택한 기간에 이미 플래너가 있습니다. 계속하시겠습니까?</value>
+  </data>
+  <data name="ApplySuccessTitle" xml:space="preserve">
+    <value>완료</value>
+  </data>
+  <data name="ApplySuccessMessage" xml:space="preserve">
+    <value>Foodbook이 새 플래너로 적용되었습니다.</value>
+  </data>
 </root>
