@@ -167,5 +167,23 @@ namespace FoodbookApp.Localization {
                 return ResourceManager.GetString("Today", resourceCulture);
             }
         }
+        
+        internal static string OK {
+            get {
+                return ResourceManager.GetString("OK", resourceCulture);
+            }
+        }
+        
+        internal static string Yes {
+            get {
+                return ResourceManager.GetString("Yes", resourceCulture);
+            }
+        }
+        
+        internal static string No {
+            get {
+                return ResourceManager.GetString("No", resourceCulture);
+            }
+        }
     }
 }
