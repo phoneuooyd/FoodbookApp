@@ -162,9 +162,19 @@ public partial class ProfilePage : ContentPage
 
                 if (isEnabled && state != null)
                 {
+                    string lastSyncText;
+                    if (state.LastSyncUtc.HasValue)
+                    {
+                        lastSyncText = $"Zsynchronizowano • {state.LastSyncUtc.Value.ToLocalTime():HH:mm}";
+                    }
+                    else
+                    {
+                        lastSyncText = "Zsynchronizowano";
+                    }
+
                     SyncStatusLabel.Text = pending > 0
                         ? $"Synchronizacja: {pending} oczekujących"
-                        : $"Zsynchronizowano • {state.LastSyncUtc?.ToLocalTime():HH:mm}";
+                        : lastSyncText;
                     SyncStatusLabel.IsVisible = true;
                 }
                 else
