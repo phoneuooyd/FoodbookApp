@@ -1216,7 +1216,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 if (!string.IsNullOrWhiteSpace(cloudPrefs.Language))
                     _preferencesService.SaveLanguage(cloudPrefs.Language);
 
-                if (Enum.TryParse<AppTheme>(cloudPrefs.Theme, out var theme))
+                if (Enum.TryParse<Foodbook.Models.AppTheme>(cloudPrefs.Theme, out var theme))
                 {
                     _preferencesService.SaveTheme(theme);
                     _themeService.SetTheme(theme);

@@ -84,4 +84,8 @@ public interface ISupabaseCrudService
     Task<List<Plan>> AddPlansBatchAsync(IEnumerable<Plan> plans, CancellationToken ct = default);
     Task<List<PlannedMeal>> AddPlannedMealsBatchAsync(IEnumerable<PlannedMeal> meals, CancellationToken ct = default);
     Task<List<ShoppingListItem>> AddShoppingListItemsBatchAsync(IEnumerable<ShoppingListItem> items, CancellationToken ct = default);
+
+    // Batch upsert operations for mixed insert/update queue processing
+    Task<List<Recipe>> UpsertRecipesAsync(IEnumerable<Recipe> recipes, CancellationToken ct = default);
+    Task<List<Ingredient>> UpsertIngredientsAsync(IEnumerable<Ingredient> ingredients, CancellationToken ct = default);
 }
