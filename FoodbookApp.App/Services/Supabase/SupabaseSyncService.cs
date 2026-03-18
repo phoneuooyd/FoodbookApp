@@ -274,7 +274,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 db.Folders.Add(folder);
                 imported++;
             }
-            else if (folder.UpdatedAt > existing.UpdatedAt)
+            else if (IsCloudNewer(folder.UpdatedAt, existing.UpdatedAt))
             {
                 existing.Name = folder.Name;
                 existing.Description = folder.Description;
@@ -295,7 +295,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 db.RecipeLabels.Add(label);
                 imported++;
             }
-            else if (label.UpdatedAt > existing.UpdatedAt)
+            else if (IsCloudNewer(label.UpdatedAt, existing.UpdatedAt))
             {
                 existing.Name = label.Name;
                 existing.ColorHex = label.ColorHex;
@@ -327,7 +327,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 });
                 imported++;
             }
-            else if (recipe.UpdatedAt > existing.UpdatedAt)
+            else if (IsCloudNewer(recipe.UpdatedAt, existing.UpdatedAt))
             {
                 existing.Name = recipe.Name;
                 existing.Description = recipe.Description;
@@ -366,7 +366,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 });
                 imported++;
             }
-            else if (ing.UpdatedAt > existing.UpdatedAt)
+            else if (IsCloudNewer(ing.UpdatedAt, existing.UpdatedAt))
             {
                 existing.Name = ing.Name;
                 existing.Quantity = ing.Quantity;
@@ -392,7 +392,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 db.Plans.Add(plan);
                 imported++;
             }
-            else if (plan.UpdatedAt > existing.UpdatedAt)
+            else if (IsCloudNewer(plan.UpdatedAt, existing.UpdatedAt))
             {
                 existing.StartDate = plan.StartDate;
                 existing.EndDate = plan.EndDate;
@@ -418,7 +418,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 db.PlannedMeals.Add(meal);
                 imported++;
             }
-            else if (meal.UpdatedAt > existing.UpdatedAt)
+            else if (IsCloudNewer(meal.UpdatedAt, existing.UpdatedAt))
             {
                 existing.RecipeId = meal.RecipeId;
                 existing.PlanId = meal.PlanId;
@@ -439,7 +439,7 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 db.ShoppingListItems.Add(item);
                 imported++;
             }
-            else if (item.UpdatedAt > existing.UpdatedAt)
+            else if (IsCloudNewer(item.UpdatedAt, existing.UpdatedAt))
             {
                 existing.PlanId = item.PlanId;
                 existing.IngredientName = item.IngredientName;
@@ -634,6 +634,15 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
                 processed += result.Processed;
                 failed += result.Failed;
                 fatalError = result.FatalError;
+
+                if (fatalError != null)
+                {
+                    foreach (var entry in batch.Where(e => e.Status == SyncEntryStatus.InProgress))
+                    {
+                        entry.Status = SyncEntryStatus.Pending;
+                        entry.LastError = fatalError;
+                    }
+                }
 
                 await db.SaveChangesAsync(ct);
                 RaiseSyncProgress(totalPending, processed, failed, null);
@@ -1153,6 +1162,13 @@ public sealed class SupabaseSyncService : ISupabaseSyncService, IDisposable
 
     private static bool IsFatalError(string message)
         => FatalErrorCodes.Any(c => message.Contains(c, StringComparison.OrdinalIgnoreCase));
+
+    private static bool IsCloudNewer(DateTime? cloudUpdatedAt, DateTime? localUpdatedAt)
+    {
+        if (!cloudUpdatedAt.HasValue) return false;
+        if (!localUpdatedAt.HasValue) return true;
+        return cloudUpdatedAt.Value > localUpdatedAt.Value;
+    }
 
     private async Task<T> ExecuteWithCrudServiceAsync<T>(Func<ISupabaseCrudService, Task<T>> action)
     {
