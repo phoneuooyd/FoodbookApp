@@ -15,6 +15,7 @@ using Microsoft.IdentityModel.Tokens;
 using FoodbookApp.Services.Auth;
 using Foodbook.Views.Components;
 using FoodbookApp.Services.Supabase;
+using FoodbookApp.Services;
 
 namespace FoodbookApp
 {
@@ -76,6 +77,13 @@ namespace FoodbookApp
             builder.Services.AddSingleton<IFontService, FontService>();
             builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
 
+            // Rejestracja serwisu AI z wykorzystaniem nowego HttpClient
+            builder.Services.AddScoped<IAIService>(sp => 
+            {
+                var logger = sp.GetRequiredService<ILogger<AIService>>();
+                return new AIService(new HttpClient(), logger);
+            });
+
             // MAUI client-side JWT handling:
             // - store token in SecureStorage
             // - attach token to outgoing HttpClient requests
@@ -124,7 +132,8 @@ namespace FoodbookApp
             builder.Services.AddScoped<RecipeImporter>(sp =>
             {
                 var ingredientService = sp.GetRequiredService<IIngredientService>();
-                return new RecipeImporter(new HttpClient(), ingredientService);
+                var aiService = sp.GetService<IAIService>();
+                return new RecipeImporter(new HttpClient(), ingredientService, aiService);
             });
 
             // Register SupabaseRestClient BEFORE SupabaseCrudService - must have HttpClient available

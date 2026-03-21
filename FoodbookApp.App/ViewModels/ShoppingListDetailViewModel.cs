@@ -901,27 +901,18 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
     private async void RemoveItem(Ingredient? item)
     {
         if (item == null) return;
+
         item.PropertyChanged -= OnItemPropertyChanged;
+
         var removed = UncheckedItems.Remove(item) || CheckedItems.Remove(item);
-        if (removed)
-        {
-            // Remove from FlatItems
-            FlatItems.Remove(item);
-            
-            // Remove headers if sections are empty
-            if (UncheckedItems.Count == 0 && _toBuyHeader != null)
-                FlatItems.Remove(_toBuyHeader);
-            if (CheckedItems.Count == 0 && _collectedHeader != null)
-                FlatItems.Remove(_collectedHeader);
-            
-            MarkDirty();
-            if (item.Id != Guid.Empty)
-            {
-                try { await _shoppingListService.RemoveShoppingListItemByIdAsync(item.Id); }
-                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error removing item by Id: {ex.Message}"); }
-                item.Id = Guid.Empty;
-            }
-        }
+        if (!removed)
+            return;
+
+        // Rebuild the visible list from the in-memory collections only.
+        // The actual database delete is deferred until SaveAllStatesAsync().
+        RebuildFlatItems();
+        UpdateAllItemOrders();
+        MarkDirty();
     }
 
     public async Task MoveItemUpAsync(Ingredient? item)
