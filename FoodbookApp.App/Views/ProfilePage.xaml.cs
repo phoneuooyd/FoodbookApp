@@ -3,6 +3,7 @@ using System.Diagnostics;
 using CommunityToolkit.Maui.Extensions;
 using Foodbook.Data;
 using Foodbook.Models;
+using Foodbook.Services;
 using Foodbook.Views.Components;
 using FoodbookApp.Interfaces;
 using FoodbookApp.Localization;
@@ -19,9 +20,11 @@ public partial class ProfilePage : ContentPage
     private ISupabaseAuthService? _supabaseAuth;
     private ISupabaseSyncService? _syncService;
     private IAccountService? _accountService;
+    private IFeatureAccessService? _featureAccessService;
     private CancellationTokenSource? _syncRefreshCts;
     private bool _isLoggedIn;
     private bool _suppressToggle;
+    private bool _eventsSubscribed;
     private string _currentUserEmail = string.Empty;
 
     private const string SyncChoiceKeyPrefix = "cloudsync.enabled:";
@@ -40,14 +43,18 @@ public partial class ProfilePage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        SubscribeToAppEvents();
         StartSyncStatusRefresh();
         await CheckAndRestoreSessionAsync();
+        await LoadProfileStatsAsync();
+        await LoadCurrentSubscriptionUiAsync();
         if (_isLoggedIn)
             await LoadSyncStatusAsync();
     }
 
     protected override void OnDisappearing()
     {
+        UnsubscribeFromAppEvents();
         StopSyncStatusRefresh();
         base.OnDisappearing();
     }
@@ -249,6 +256,115 @@ public partial class ProfilePage : ContentPage
         _suppressToggle = true;
         try { CloudSyncSwitch.IsToggled = value; }
         finally { _suppressToggle = false; }
+    }
+
+    #endregion
+
+    #region Profile Stats & Subscription
+
+    private void SubscribeToAppEvents()
+    {
+        if (_eventsSubscribed)
+            return;
+
+        AppEvents.PlanChangedAsync += OnAppDataChangedAsync;
+        AppEvents.RecipesChangedAsync += OnAppDataChangedAsync;
+        _eventsSubscribed = true;
+    }
+
+    private void UnsubscribeFromAppEvents()
+    {
+        if (!_eventsSubscribed)
+            return;
+
+        AppEvents.PlanChangedAsync -= OnAppDataChangedAsync;
+        AppEvents.RecipesChangedAsync -= OnAppDataChangedAsync;
+        _eventsSubscribed = false;
+    }
+
+    private async Task OnAppDataChangedAsync()
+    {
+        await RefreshProfileDataAsync();
+    }
+
+    private async Task RefreshProfileDataAsync()
+    {
+        try
+        {
+            await LoadProfileStatsAsync();
+            await LoadCurrentSubscriptionUiAsync();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ProfilePage] RefreshProfileDataAsync error: {ex.Message}");
+        }
+    }
+
+    private async Task LoadProfileStatsAsync()
+    {
+        try
+        {
+            var serviceProvider = FoodbookApp.MauiProgram.ServiceProvider;
+            if (serviceProvider == null)
+                return;
+
+            using var scope = serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var utcNow = DateTime.UtcNow;
+
+            var recipesCount = await db.Recipes.CountAsync();
+            var plansCount = await db.Plans.CountAsync(p =>
+                p.Type == PlanType.Planner &&
+                !p.IsArchived &&
+                p.StartDate <= utcNow &&
+                p.EndDate >= utcNow);
+            var listsCount = await db.Plans.CountAsync(p =>
+                p.Type == PlanType.ShoppingList &&
+                !p.IsArchived);
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                RecipesCountLabel.Text = recipesCount.ToString();
+                PlansCountLabel.Text = plansCount.ToString();
+                ListsCountLabel.Text = listsCount.ToString();
+            });
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ProfilePage] LoadProfileStatsAsync error: {ex.Message}");
+        }
+    }
+
+    private async Task LoadCurrentSubscriptionUiAsync()
+    {
+        try
+        {
+            var featureAccess = GetFeatureAccessService();
+            if (featureAccess == null)
+                return;
+
+            var isPremium = await featureAccess.CanUsePremiumFeatureAsync(PremiumFeature.AutoPlanner);
+            var currentPlanName = isPremium ? "Premium" : "Free";
+            var currentPlanStatus = isPremium ? "Aktywny" : "Nieaktywny";
+            var renewalText = isPremium
+                ? "Dostęp premium aktywny"
+                : "Brak aktywnej subskrypcji";
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                CurrentPlanNameLabel.Text = currentPlanName;
+                CurrentPlanStatusLabel.Text = currentPlanStatus;
+                CurrentPlanRenewalLabel.Text = renewalText;
+
+                CurrentPlanNameDetailsLabel.Text = currentPlanName;
+                CurrentPlanStatusDetailsLabel.Text = currentPlanStatus;
+                CurrentPlanRenewalDetailsLabel.Text = renewalText;
+            });
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ProfilePage] LoadCurrentSubscriptionUiAsync error: {ex.Message}");
+        }
     }
 
     #endregion
@@ -490,6 +606,9 @@ public partial class ProfilePage : ContentPage
 
     private IAccountService? GetAccountService()
         => _accountService ??= FoodbookApp.MauiProgram.ServiceProvider?.GetService<IAccountService>();
+
+    private IFeatureAccessService? GetFeatureAccessService()
+        => _featureAccessService ??= FoodbookApp.MauiProgram.ServiceProvider?.GetService<IFeatureAccessService>();
 
     #endregion
 
