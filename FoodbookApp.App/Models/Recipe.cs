@@ -29,6 +29,12 @@ namespace Foodbook.Models
         [NotMapped]
         public bool IsBeingDraggedOver { get; set; }
 
+        [NotMapped]
+        public bool HasUnmatchedIngredients { get; set; }
+
+        [NotMapped]
+        public bool WasAiFallbackUsed { get; set; }
+
         public List<Ingredient> Ingredients { get; set; } = new List<Ingredient>();
 
         // Labels (many-to-many via join table RecipeRecipeLabel)
