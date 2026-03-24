@@ -200,13 +200,15 @@ namespace Foodbook.ViewModels
         private readonly IRecipeService _recipeService;
         private readonly IIngredientService _ingredientService;
         private readonly RecipeImporter _importer;
+        private readonly IFeatureAccessService _featureAccessService;
 
-        public AddRecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService, RecipeImporter importer, IFolderService folderService, IDatabaseService? databaseService = null, IRecipeLabelService? labelService = null)
+        public AddRecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService, RecipeImporter importer, IFolderService folderService, IDatabaseService? databaseService = null, IRecipeLabelService? labelService = null, IFeatureAccessService? featureAccessService = null)
         {
             _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
             _ingredientService = ingredientService ?? throw new ArgumentNullException(nameof(ingredientService));
             _importer = importer ?? throw new ArgumentNullException(nameof(importer));
             _folderService = folderService ?? throw new ArgumentNullException(nameof(folderService));
+            _featureAccessService = featureAccessService ?? ResolveFeatureAccessService() ?? new NullFeatureAccessService();
 
             _databaseService = databaseService ?? ResolveDatabaseService() ?? new NullDatabaseService();
             _labelService = labelService ?? ResolveLabelService() ?? new NullLabelService();
@@ -291,6 +293,18 @@ namespace Foodbook.ViewModels
             }
         }
 
+        private IFeatureAccessService? ResolveFeatureAccessService()
+        {
+            try
+            {
+                return Application.Current?.Handler?.MauiContext?.Services?.GetService<IFeatureAccessService>();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         private sealed class NullDatabaseService : IDatabaseService
         {
             public Task InitializeAsync() => Task.CompletedTask;
@@ -308,6 +322,17 @@ namespace Foodbook.ViewModels
             public Task<List<RecipeLabel>> GetAllAsync(CancellationToken ct = default) => Task.FromResult(new List<RecipeLabel>());
             public Task<RecipeLabel?> GetByIdAsync(Guid id, CancellationToken ct = default) => Task.FromResult<RecipeLabel?>(null);
             public Task<RecipeLabel> UpdateAsync(RecipeLabel label, CancellationToken ct = default) => Task.FromResult(label);
+        }
+
+        private sealed class NullFeatureAccessService : IFeatureAccessService
+        {
+            public Task<bool> CanCreatePlanAsync() => Task.FromResult(false);
+            public Task<PlanLimitDecision> CanCreatePlanAsync(PlanType type, DateTime nowUtc) => Task.FromResult(PlanLimitDecision.Denied(string.Empty));
+            public Task RegisterPlanCreationAsync(PlanType type, DateTime nowUtc) => Task.CompletedTask;
+            public Task<bool> CanUsePremiumFeatureAsync(PremiumFeature feature) => Task.FromResult(false);
+            public Task<AdUnlockResult> RequestAdUnlockAsync(PremiumFeature feature) => Task.FromResult(new AdUnlockResult { Success = false, Feature = feature });
+            public bool IsAdUnlockActive(PremiumFeature feature) => false;
+            public Task RefreshAccessAsync() => Task.CompletedTask;
         }
 
         public async Task LoadAvailableFoldersAsync()
@@ -772,7 +797,8 @@ namespace Foodbook.ViewModels
             try
             {
                 ImportStatus = "Importowanie...";
-                var recipe = await _importer.ImportFromUrlAsync(ImportUrl);
+                var allowAiFallback = await _featureAccessService.CanUsePremiumFeatureAsync(PremiumFeature.AiRecipeCreation);
+                var recipe = await _importer.ImportFromUrlAsync(ImportUrl, allowAiFallback);
                 Name = recipe.Name;
                 Description = recipe.Description ?? string.Empty;
                 
@@ -804,7 +830,18 @@ namespace Foodbook.ViewModels
                     Carbs = recipe.Carbs.ToString("F1");
                 }
                 
-                ImportStatus = "Zaimportowano!";
+                if (!allowAiFallback && recipe.HasUnmatchedIngredients)
+                {
+                    ImportStatus = "Import AI dostępny w Premium";
+                }
+                else if (allowAiFallback && recipe.WasAiFallbackUsed)
+                {
+                    ImportStatus = "Uruchomiono AI fallback";
+                }
+                else
+                {
+                    ImportStatus = "Zaimportowano!";
+                }
                 IsManualMode = true; // Przełącz na tryb ręczny po imporcie
             }
             catch (Exception ex)

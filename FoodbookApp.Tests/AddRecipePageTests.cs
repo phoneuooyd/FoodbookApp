@@ -3,9 +3,14 @@ using Foodbook.Models;
 using Foodbook.Services;
 using Foodbook.ViewModels;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Services;
 using Microsoft.Maui.Controls;
 using Moq;
 using System.Globalization;
+using System.Net;
+using System.Net.Http;
+using System.Reflection;
+using System.Text;
 
 namespace FoodbookApp.Tests
 {
@@ -119,6 +124,122 @@ namespace FoodbookApp.Tests
 
             // Assert
             _viewModel.Ingredients.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task ImportRecipeAsync_FreeWithUnmatchedIngredients_ShouldSkipAiAndShowPremiumMessage()
+        {
+            // Arrange
+            var aiServiceMock = new Mock<IAIService>(MockBehavior.Strict);
+            var ingredientServiceMock = new Mock<IIngredientService>();
+            ingredientServiceMock.Setup(s => s.GetIngredientsAsync()).ReturnsAsync(new List<Ingredient>());
+
+            var featureAccessMock = new Mock<IFeatureAccessService>();
+            featureAccessMock.Setup(s => s.CanUsePremiumFeatureAsync(PremiumFeature.AiRecipeCreation)).ReturnsAsync(false);
+
+            var importer = new RecipeImporter(
+                CreateHttpClientWithHtml("<html><body><h2>Składniki</h2><ul><li>1 marchewka</li></ul></body></html>"),
+                ingredientServiceMock.Object,
+                aiServiceMock.Object);
+            var viewModel = CreateViewModel(importer, ingredientServiceMock.Object, featureAccessMock.Object);
+            viewModel.ImportUrl = "https://example.com/free";
+
+            // Act
+            await InvokeImportRecipeAsync(viewModel);
+
+            // Assert
+            viewModel.ImportStatus.Should().Be("Import AI dostępny w Premium");
+            aiServiceMock.Verify(s => s.GetAIResponseAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task ImportRecipeAsync_PremiumWithFullLocalMatch_ShouldNotCallAiAndShowImportedStatus()
+        {
+            // Arrange
+            var aiServiceMock = new Mock<IAIService>(MockBehavior.Strict);
+            var ingredientServiceMock = new Mock<IIngredientService>();
+            ingredientServiceMock
+                .Setup(s => s.GetIngredientsAsync())
+                .ReturnsAsync(new List<Ingredient> { new() { Name = "mleko", Calories = 64 } });
+
+            var featureAccessMock = new Mock<IFeatureAccessService>();
+            featureAccessMock.Setup(s => s.CanUsePremiumFeatureAsync(PremiumFeature.AiRecipeCreation)).ReturnsAsync(true);
+
+            var importer = new RecipeImporter(
+                CreateHttpClientWithHtml("<html><body><h2>Składniki</h2><ul><li>200 ml mleko</li></ul></body></html>"),
+                ingredientServiceMock.Object,
+                aiServiceMock.Object);
+            var viewModel = CreateViewModel(importer, ingredientServiceMock.Object, featureAccessMock.Object);
+            viewModel.ImportUrl = "https://example.com/premium-local";
+
+            // Act
+            await InvokeImportRecipeAsync(viewModel);
+
+            // Assert
+            viewModel.ImportStatus.Should().Be("Zaimportowano!");
+            aiServiceMock.Verify(s => s.GetAIResponseAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task ImportRecipeAsync_PremiumWithUnmatchedIngredients_ShouldCallAiAndShowFallbackStatus()
+        {
+            // Arrange
+            var aiServiceMock = new Mock<IAIService>();
+            aiServiceMock
+                .Setup(s => s.GetAIResponseAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync("""{"title":"Test","calories":0,"protein":0,"fat":0,"carbs":0,"ingredients":[{"raw_name":"1 marchewka","quantity":1,"unit":"piece","matched_db_name":null}]}""");
+
+            var ingredientServiceMock = new Mock<IIngredientService>();
+            ingredientServiceMock.Setup(s => s.GetIngredientsAsync()).ReturnsAsync(new List<Ingredient>());
+
+            var featureAccessMock = new Mock<IFeatureAccessService>();
+            featureAccessMock.Setup(s => s.CanUsePremiumFeatureAsync(PremiumFeature.AiRecipeCreation)).ReturnsAsync(true);
+
+            var importer = new RecipeImporter(
+                CreateHttpClientWithHtml("<html><body><h2>Składniki</h2><ul><li>1 marchewka</li></ul></body></html>"),
+                ingredientServiceMock.Object,
+                aiServiceMock.Object);
+            var viewModel = CreateViewModel(importer, ingredientServiceMock.Object, featureAccessMock.Object);
+            viewModel.ImportUrl = "https://example.com/premium-ai";
+
+            // Act
+            await InvokeImportRecipeAsync(viewModel);
+
+            // Assert
+            viewModel.ImportStatus.Should().Be("Uruchomiono AI fallback");
+            aiServiceMock.Verify(s => s.GetAIResponseAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        private AddRecipeViewModel CreateViewModel(RecipeImporter importer, IIngredientService ingredientService, IFeatureAccessService featureAccessService)
+            => new(
+                _mockRecipeService.Object,
+                ingredientService,
+                importer,
+                _mockFolderService.Object,
+                featureAccessService: featureAccessService);
+
+        private static async Task InvokeImportRecipeAsync(AddRecipeViewModel viewModel)
+        {
+            var method = typeof(AddRecipeViewModel).GetMethod("ImportRecipeAsync", BindingFlags.Instance | BindingFlags.NonPublic);
+            method.Should().NotBeNull();
+            var task = method!.Invoke(viewModel, null) as Task;
+            task.Should().NotBeNull();
+            await task!;
+        }
+
+        private static HttpClient CreateHttpClientWithHtml(string html)
+            => new(new StubHttpMessageHandler(html))
+            {
+                BaseAddress = new Uri("https://example.com")
+            };
+
+        private sealed class StubHttpMessageHandler(string html) : HttpMessageHandler
+        {
+            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+                => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(html, Encoding.UTF8, "text/html")
+                });
         }
     }
 }

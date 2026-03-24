@@ -53,11 +53,12 @@ public class RecipeImporter
 
     // ─── Publiczne API ────────────────────────────────────────────────────────
 
-    public async Task<Recipe> ImportFromUrlAsync(string url)
+    public async Task<Recipe> ImportFromUrlAsync(string url, bool allowAiFallback)
     {
         Debug.WriteLine($"{Tag} ══════════════════════════════════════════");
         Debug.WriteLine($"{Tag} START import: {url}");
-        Debug.WriteLine($"{Tag} AI fallback dostępny: {(_aiService is not null ? "TAK" : "NIE")}");
+        Debug.WriteLine($"{Tag} AI fallback dozwolony: {(allowAiFallback ? "TAK" : "NIE")}");
+        Debug.WriteLine($"{Tag} AI fallback dostępny technicznie: {(_aiService is not null ? "TAK" : "NIE")}");
 
         var html = await _httpClient.GetStringAsync(url);
         Debug.WriteLine($"{Tag} HTML pobrany, rozmiar: {html.Length:N0} znaków");
@@ -149,6 +150,7 @@ public class RecipeImporter
         }
 
         Debug.WriteLine($"{Tag} Składniki po parsowaniu lokalnym: {parsedIngredients.Count} dopasowanych, {unmatchedLines.Count} niedopasowanych");
+        recipe.HasUnmatchedIngredients = unmatchedLines.Count > 0;
 
         // 2. WARTOŚCI ODŻYWCZE
         ExtractNutrition(doc, recipe);
@@ -156,8 +158,10 @@ public class RecipeImporter
 
         // 3. AI FALLBACK
         var aiSuccess = false;
-        if (unmatchedLines.Count > 0 && _aiService is not null)
+        var localParserWasInsufficient = unmatchedLines.Count > 0;
+        if (allowAiFallback && localParserWasInsufficient && _aiService is not null)
         {
+            recipe.WasAiFallbackUsed = true;
             Debug.WriteLine($"{Tag} ── AI FALLBACK ──────────────────────────────");
             Debug.WriteLine($"{Tag} Wywołuję AI dla {unmatchedLines.Count} niedopasowanych składników:");
             for (int i = 0; i < unmatchedLines.Count; i++)
@@ -231,7 +235,11 @@ public class RecipeImporter
                 Debug.WriteLine($"{Tag} AI WYJĄTEK: {ex.GetType().Name}: {ex.Message}");
             }
         }
-        else if (unmatchedLines.Count == 0)
+        else if (!allowAiFallback)
+        {
+            Debug.WriteLine($"{Tag} AI fallback: pominięty — brak uprawnień (allowAiFallback=false)");
+        }
+        else if (!localParserWasInsufficient)
         {
             Debug.WriteLine($"{Tag} AI fallback: pominięty — wszystkie składniki dopasowane lokalnie");
         }
