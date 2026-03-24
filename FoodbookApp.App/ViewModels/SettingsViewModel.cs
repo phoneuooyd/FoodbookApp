@@ -17,6 +17,7 @@ public partial class SettingsViewModel : INotifyPropertyChanged
     private readonly IFontService _fontService;
     private readonly IDatabaseService _databaseService;
     private readonly IDeduplicationService _deduplicationService;
+    private readonly IFeatureAccessService _featureAccessService;
 
     // Tabs management
     private int _selectedTabIndex;
@@ -198,6 +199,20 @@ public partial class SettingsViewModel : INotifyPropertyChanged
         }
     }
 
+    private bool _isPremiumUser;
+
+    private bool _canUseWallpaperBackground;
+    public bool CanUseWallpaperBackground
+    {
+        get => _canUseWallpaperBackground;
+        private set
+        {
+            if (_canUseWallpaperBackground == value) return;
+            _canUseWallpaperBackground = value;
+            OnPropertyChanged(nameof(CanUseWallpaperBackground));
+        }
+    }
+
     // NEW: Colorful background property
     private bool _isColorfulBackgroundEnabled;
     public bool IsColorfulBackgroundEnabled
@@ -242,6 +257,16 @@ public partial class SettingsViewModel : INotifyPropertyChanged
         set
         {
             if (_isWallpaperBackgroundEnabled == value) return;
+
+            if (value && !CanUseWallpaperBackground)
+            {
+                _isWallpaperBackgroundEnabled = false;
+                OnPropertyChanged(nameof(IsWallpaperBackgroundEnabled));
+                _themeService.EnableWallpaperBackground(false);
+                _preferencesService.SaveWallpaperEnabled(false);
+                ShowPremiumRequiredWallpaperMessage();
+                return;
+            }
 
             // Block enabling when not available for current color theme
             if (value && !_themeService.IsWallpaperAvailableFor(_selectedColorTheme))
@@ -343,7 +368,7 @@ public partial class SettingsViewModel : INotifyPropertyChanged
     public ICommand FactoryResetCommand { get; }
     public ICommand DeduplicateIngredientsCommand { get; }
 
-    public SettingsViewModel(LocalizationResourceManager locManager, IPreferencesService preferencesService, IThemeService themeService, IFontService fontService, IDatabaseService databaseService, IDeduplicationService deduplicationService)
+    public SettingsViewModel(LocalizationResourceManager locManager, IPreferencesService preferencesService, IThemeService themeService, IFontService fontService, IDatabaseService databaseService, IDeduplicationService deduplicationService, IFeatureAccessService featureAccessService)
     {
         _locManager = locManager;
         _preferencesService = preferencesService;
@@ -351,6 +376,9 @@ public partial class SettingsViewModel : INotifyPropertyChanged
         _fontService = fontService;
         _databaseService = databaseService;
         _deduplicationService = deduplicationService;
+        _featureAccessService = featureAccessService;
+        _isPremiumUser = string.Equals(_preferencesService.GetPlanChoice(), "Premium", StringComparison.OrdinalIgnoreCase);
+        _canUseWallpaperBackground = _isPremiumUser;
         
         // Tabs
         SelectTabCommand = new Command<object>(p =>
@@ -421,7 +449,7 @@ public partial class SettingsViewModel : INotifyPropertyChanged
         _themeService.SetColorTheme(_selectedColorTheme);
         _themeService.SetColorfulBackground(_isColorfulBackgroundEnabled);
         // If initial theme does not support wallpapers, ensure it's off
-        if (!_isWallpaperAvailable && _isWallpaperBackgroundEnabled)
+        if ((!_isWallpaperAvailable || !CanUseWallpaperBackground) && _isWallpaperBackgroundEnabled)
         {
             _isWallpaperBackgroundEnabled = false;
             _preferencesService.SaveWallpaperEnabled(false);
@@ -445,6 +473,8 @@ public partial class SettingsViewModel : INotifyPropertyChanged
 
         // Initialize labels feature (in partial)
         InitializeLabelsFeature();
+
+        _ = RefreshWallpaperPremiumAccessAsync();
     }
 
     private void RefreshCollectionsForLocalization()
@@ -507,12 +537,12 @@ public partial class SettingsViewModel : INotifyPropertyChanged
             var page = Application.Current?.MainPage;
             if (success)
             {
-                MigrationStatus = "Migracja zakoñczona pomyœlnie!";
+                MigrationStatus = "Migracja zakoÃ±czona pomyÂœlnie!";
                 if (page != null)
                 {
                     await page.DisplayAlert(
                         "Sukces", 
-                        "Migracja bazy danych zosta³a wykonana pomyœlnie.", 
+                        "Migracja bazy danych zostaÂ³a wykonana pomyÂœlnie.", 
                         "OK");
                 }
             }
@@ -522,8 +552,8 @@ public partial class SettingsViewModel : INotifyPropertyChanged
                 if (page != null)
                 {
                     await page.DisplayAlert(
-                        "B³¹d", 
-                        "Nie uda³o siê wykonaæ migracji bazy danych. SprawdŸ logi aplikacji.", 
+                        "BÂ³Â¹d", 
+                        "Nie udaÂ³o siÃª wykonaÃ¦ migracji bazy danych. SprawdÂŸ logi aplikacji.", 
                         "OK");
                 }
             }
@@ -531,13 +561,13 @@ public partial class SettingsViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Migration error: {ex.Message}");
-            MigrationStatus = $"B³¹d migracji: {ex.Message}";
+            MigrationStatus = $"BÂ³Â¹d migracji: {ex.Message}";
             var page = Application.Current?.MainPage;
             if (page != null)
             {
                 await page.DisplayAlert(
-                    "B³¹d", 
-                    $"Wyst¹pi³ b³¹d podczas migracji: {ex.Message}", 
+                    "BÂ³Â¹d", 
+                    $"WystÂ¹piÂ³ bÂ³Â¹d podczas migracji: {ex.Message}", 
                     "OK");
             }
         }
@@ -562,8 +592,8 @@ public partial class SettingsViewModel : INotifyPropertyChanged
             if (page == null) return;
 
             bool confirm = await page.DisplayAlert(
-                "Resetuj bazê danych", 
-                "Czy na pewno chcesz usun¹æ wszystkie dane? Ta operacja jest nieodwracalna.\n\nWszystkie przepisy, plany i listy zakupów zostan¹ utracone.", 
+                "Resetuj bazÃª danych", 
+                "Czy na pewno chcesz usunÂ¹Ã¦ wszystkie dane? Ta operacja jest nieodwracalna.\n\nWszystkie przepisy, plany i listy zakupÃ³w zostanÂ¹ utracone.", 
                 "Tak, resetuj", "Anuluj");
                 
             if (!confirm) return;
@@ -577,10 +607,10 @@ public partial class SettingsViewModel : INotifyPropertyChanged
             
             if (success)
             {
-                MigrationStatus = "Baza danych zosta³a zresetowana!";
+                MigrationStatus = "Baza danych zostaÂ³a zresetowana!";
                 await page.DisplayAlert(
                     "Sukces", 
-                    "Baza danych zosta³a zresetowana. Aplikacja zostanie zamkniêta - uruchom j¹ ponownie.", 
+                    "Baza danych zostaÂ³a zresetowana. Aplikacja zostanie zamkniÃªta - uruchom jÂ¹ ponownie.", 
                     "OK");
                 
                 // Close application after reset
@@ -590,21 +620,21 @@ public partial class SettingsViewModel : INotifyPropertyChanged
             {
                 MigrationStatus = "Reset nieudany.";
                 await page.DisplayAlert(
-                    "B³¹d", 
-                    "Nie uda³o siê zresetowaæ bazy danych. SprawdŸ logi aplikacji.", 
+                    "BÂ³Â¹d", 
+                    "Nie udaÂ³o siÃª zresetowaÃ¦ bazy danych. SprawdÂŸ logi aplikacji.", 
                     "OK");
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Reset error: {ex.Message}");
-            MigrationStatus = $"B³¹d resetu: {ex.Message}";
+            MigrationStatus = $"BÂ³Â¹d resetu: {ex.Message}";
             var page = Application.Current?.MainPage;
             if (page != null)
             {
                 await page.DisplayAlert(
-                    "B³¹d", 
-                    $"Wyst¹pi³ b³¹d podczas resetowania: {ex.Message}", 
+                    "BÂ³Â¹d", 
+                    $"WystÂ¹piÂ³ bÂ³Â¹d podczas resetowania: {ex.Message}", 
                     "OK");
             }
         }
@@ -634,24 +664,24 @@ public partial class SettingsViewModel : INotifyPropertyChanged
 
             bool confirm = await page.DisplayAlert(
                 L("FactoryResetConfirmTitle", "Ustawienia fabryczne"),
-                L("FactoryResetConfirmMessage", "Ta operacja przywróci aplikacjê do ustawieñ zerowych. Kontynuowaæ?"),
-                L("FactoryResetConfirmOk", "Tak, przywróæ"),
+                L("FactoryResetConfirmMessage", "Ta operacja przywrÃ³ci aplikacjÃª do ustawieÃ± zerowych. KontynuowaÃ¦?"),
+                L("FactoryResetConfirmOk", "Tak, przywrÃ³Ã¦"),
                 L("FactoryResetConfirmCancel", "Anuluj"));
 
             if (!confirm) return;
 
             IsMigrationInProgress = true;
-            MigrationStatus = L("FactoryResetInProgress", "Przywracanie ustawieñ fabrycznych...");
+            MigrationStatus = L("FactoryResetInProgress", "Przywracanie ustawieÃ± fabrycznych...");
 
             _preferencesService.ResetAllToDefaults();
             var dbOk = await _databaseService.ResetDatabaseAsync();
 
             if (dbOk)
             {
-                MigrationStatus = L("FactoryResetDone", "Ustawienia fabryczne przywrócone");
+                MigrationStatus = L("FactoryResetDone", "Ustawienia fabryczne przywrÃ³cone");
                 await page.DisplayAlert(
                     L("FactoryResetSuccessTitle", "Sukces"),
-                    L("FactoryResetSuccessMessage", "Przywrócono ustawienia fabryczne. Aplikacja zostanie zamkniêta. Uruchom ponownie, aby rozpocz¹æ kreator pocz¹tkowy."),
+                    L("FactoryResetSuccessMessage", "PrzywrÃ³cono ustawienia fabryczne. Aplikacja zostanie zamkniÃªta. Uruchom ponownie, aby rozpoczÂ¹Ã¦ kreator poczÂ¹tkowy."),
                     "OK");
 
                 Application.Current?.Quit();
@@ -660,8 +690,8 @@ public partial class SettingsViewModel : INotifyPropertyChanged
             {
                 MigrationStatus = L("FactoryResetFailedShort", "Ustawienia fabryczne nieudane");
                 await page.DisplayAlert(
-                    L("FactoryResetFailedTitle", "B³¹d"),
-                    L("FactoryResetFailedMessage", "Nie uda³o siê przywróciæ ustawieñ fabrycznych. SprawdŸ logi aplikacji."),
+                    L("FactoryResetFailedTitle", "BÂ³Â¹d"),
+                    L("FactoryResetFailedMessage", "Nie udaÂ³o siÃª przywrÃ³ciÃ¦ ustawieÃ± fabrycznych. SprawdÂŸ logi aplikacji."),
                     "OK");
             }
         }
@@ -671,13 +701,13 @@ public partial class SettingsViewModel : INotifyPropertyChanged
             var rm = SettingsPageResources.ResourceManager;
             string L(string key, string fallback) => rm.GetString(key) ?? fallback;
 
-            MigrationStatus = L("FactoryResetErrorShort", "B³¹d przywracania ustawieñ fabrycznych");
+            MigrationStatus = L("FactoryResetErrorShort", "BÂ³Â¹d przywracania ustawieÃ± fabrycznych");
             var page = Application.Current?.MainPage;
             if (page != null)
             {
                 await page.DisplayAlert(
-                    L("FactoryResetErrorTitle", "B³¹d"),
-                    string.Format(L("FactoryResetErrorMessage", "Wyst¹pi³ b³¹d podczas przywracania ustawieñ fabrycznych: {0}"), ex.Message),
+                    L("FactoryResetErrorTitle", "BÂ³Â¹d"),
+                    string.Format(L("FactoryResetErrorMessage", "WystÂ¹piÂ³ bÂ³Â¹d podczas przywracania ustawieÃ± fabrycznych: {0}"), ex.Message),
                     "OK");
             }
         }
@@ -700,21 +730,21 @@ public partial class SettingsViewModel : INotifyPropertyChanged
             if (page == null) return;
 
             bool confirm = await page.DisplayAlert(
-                "Usuñ duplikaty sk³adników",
-                "Czy na pewno chcesz usun¹æ zduplikowane sk³adniki bazowe? (porównanie: nazwa + makra).\n\nTa operacja jest nieodwracalna.",
-                "Tak, usuñ",
+                "UsuÃ± duplikaty skÂ³adnikÃ³w",
+                "Czy na pewno chcesz usunÂ¹Ã¦ zduplikowane skÂ³adniki bazowe? (porÃ³wnanie: nazwa + makra).\n\nTa operacja jest nieodwracalna.",
+                "Tak, usuÃ±",
                 "Anuluj");
 
             if (!confirm) return;
 
             IsMigrationInProgress = true;
-            MigrationStatus = "Usuwanie duplikatów sk³adników...";
+            MigrationStatus = "Usuwanie duplikatÃ³w skÂ³adnikÃ³w...";
 
             using var scope = FoodbookApp.MauiProgram.ServiceProvider?.CreateScope();
             var db = scope?.ServiceProvider.GetService<Foodbook.Data.AppDbContext>();
             if (db == null)
             {
-                MigrationStatus = "B³¹d: brak dostêpu do bazy danych";
+                MigrationStatus = "BÂ³Â¹d: brak dostÃªpu do bazy danych";
                 return;
             }
 
@@ -728,19 +758,19 @@ public partial class SettingsViewModel : INotifyPropertyChanged
             catch { }
 
             MigrationStatus = removed > 0
-                ? $"Usuniêto duplikaty: {removed}"
-                : "Brak duplikatów do usuniêcia";
+                ? $"UsuniÃªto duplikaty: {removed}"
+                : "Brak duplikatÃ³w do usuniÃªcia";
 
             await page.DisplayAlert("Gotowe", MigrationStatus, "OK");
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] DeduplicateIngredientsAsync error: {ex.Message}");
-            MigrationStatus = $"B³¹d: {ex.Message}";
+            MigrationStatus = $"BÂ³Â¹d: {ex.Message}";
 
             var page = Application.Current?.MainPage;
             if (page != null)
-                await page.DisplayAlert("B³¹d", MigrationStatus, "OK");
+                await page.DisplayAlert("BÂ³Â¹d", MigrationStatus, "OK");
         }
         finally
         {
@@ -853,6 +883,45 @@ public partial class SettingsViewModel : INotifyPropertyChanged
             _selectedFontFamily = AppFontFamily.Default;
             _selectedFontSize = AppFontSize.Default;
         }
+    }
+
+    private async Task RefreshWallpaperPremiumAccessAsync()
+    {
+        try
+        {
+            var canUsePremiumFeature = await _featureAccessService.CanUsePremiumFeatureAsync(PremiumFeature.AutoPlanner);
+            var isPremiumFromPreferences = string.Equals(_preferencesService.GetPlanChoice(), "Premium", StringComparison.OrdinalIgnoreCase);
+            _isPremiumUser = isPremiumFromPreferences || canUsePremiumFeature;
+            CanUseWallpaperBackground = canUsePremiumFeature || _isPremiumUser;
+
+            if (!CanUseWallpaperBackground && IsWallpaperBackgroundEnabled)
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    _isWallpaperBackgroundEnabled = false;
+                    OnPropertyChanged(nameof(IsWallpaperBackgroundEnabled));
+                    _themeService.EnableWallpaperBackground(false);
+                    _preferencesService.SaveWallpaperEnabled(false);
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] RefreshWallpaperPremiumAccessAsync error: {ex.Message}");
+            CanUseWallpaperBackground = _isPremiumUser;
+        }
+    }
+
+    private static void ShowPremiumRequiredWallpaperMessage()
+    {
+        MainThread.BeginInvokeOnMainThread(async () =>
+        {
+            var page = Application.Current?.MainPage;
+            if (page != null)
+            {
+                await page.DisplayAlert("Premium", "This option is available only for Premium users.", "OK");
+            }
+        });
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
