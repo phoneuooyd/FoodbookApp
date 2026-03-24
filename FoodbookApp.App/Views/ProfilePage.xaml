@@ -200,6 +200,7 @@
                             </VerticalStackLayout>
 
                             <Label x:Name="CurrentPlanRenewalDetailsLabel" Text="" FontSize="11" TextColor="{DynamicResource AppHeroHintTextColor}" />
+                            <Label x:Name="CurrentPlanLimitsDetailsLabel" Text="" FontSize="11" TextColor="{DynamicResource AppHeroHintTextColor}" />
                         </VerticalStackLayout>
                     </Border>
 
@@ -216,7 +217,12 @@
                             <Label Text="• Planer posiłków (3 aktywne)" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
                             <Label Text="• Lista zakupów" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
                             <Label Text="• Import przepisów z internetu" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
-                            <Button Text="Przejdź na Free" BackgroundColor="{DynamicResource SegmentedContainerColor}" TextColor="{DynamicResource SecondaryText}" BorderColor="{DynamicResource ProfileCardStrokeColor}" BorderWidth="1" />
+                            <Button Text="Przejdź na Free"
+                                    Clicked="OnSwitchToFreeClicked"
+                                    BackgroundColor="{DynamicResource SegmentedContainerColor}"
+                                    TextColor="{DynamicResource SecondaryText}"
+                                    BorderColor="{DynamicResource ProfileCardStrokeColor}"
+                                    BorderWidth="1" />
                         </VerticalStackLayout>
                     </Border>
 
@@ -230,11 +236,17 @@
                             <Label Text="• Wszystko z planu Premium" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
                             <Label Text="• Płatność raz w roku" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
                             <Label Text="• Niższa cena: 7,99 zł / mies." FontSize="12" TextColor="{DynamicResource SecondaryText}" />
-                            <Button Text="Przejdź na roczny" StyleClass="Primary" />
+                            <Button Text="Przejdź na roczny" StyleClass="Primary" Clicked="OnSwitchToYearlyClicked" />
                         </VerticalStackLayout>
                     </Border>
 
-                    <Label Text="Anuluj subskrypcję" HorizontalTextAlignment="Center" FontSize="12" FontAttributes="Bold" TextColor="#FF5F6D" />
+                    <Button Text="Anuluj subskrypcję"
+                            Clicked="OnCancelSubscriptionClicked"
+                            HorizontalOptions="Center"
+                            FontSize="12"
+                            FontAttributes="Bold"
+                            TextColor="#FF5F6D"
+                            BackgroundColor="Transparent" />
                 </VerticalStackLayout>
             </ScrollView>
         </Grid>

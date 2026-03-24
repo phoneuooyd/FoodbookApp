@@ -80,3 +80,12 @@ Przy każdej zmianie struktury katalogów (dodanie, usunięcie, przeniesienie mo
 
 ---
 **Ostatnio zweryfikowano strukturę:** 2026-03-06
+
+## 7) Subskrypcje (dodane 2026-03-24)
+
+Nowe elementy struktury:
+- `Interfaces/ISubscriptionManagementService.cs` — kontrakt zarządzania planem.
+- `Models/SubscriptionPlan.cs` i `Models/SubscriptionActionResult.cs` — model planu i wynik akcji UI.
+- `Services/Subscription/MockSubscriptionManagementService.cs` — domyślny mock provider.
+- `Services/Subscription/SupabaseEdgeSubscriptionManagementService.cs` — seam pod edge function.
+- `Services/Subscription/PaymentProviderSubscriptionManagementService.cs` — seam pod provider płatności.
