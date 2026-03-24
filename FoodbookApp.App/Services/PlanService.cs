@@ -9,12 +9,14 @@ public class PlanService : IPlanService
 {
     private readonly AppDbContext _context;
     private readonly IPlannerService _plannerService;
+    private readonly IFeatureAccessService _featureAccessService;
     private readonly ISupabaseSyncService? _syncService;
 
-    public PlanService(AppDbContext context, IPlannerService plannerService, IServiceProvider serviceProvider)
+    public PlanService(AppDbContext context, IPlannerService plannerService, IFeatureAccessService featureAccessService, IServiceProvider serviceProvider)
     {
         _context = context;
         _plannerService = plannerService;
+        _featureAccessService = featureAccessService;
 
         try
         {
@@ -57,8 +59,16 @@ public class PlanService : IPlanService
         if (plan.Id == Guid.Empty)
             plan.Id = Guid.NewGuid();
 
+        var nowUtc = DateTime.UtcNow;
+        var decision = await _featureAccessService.CanCreatePlanAsync(plan.Type, nowUtc);
+        if (!decision.IsAllowed)
+        {
+            throw new PlanLimitExceededException(decision.UserMessage);
+        }
+
         _context.Plans.Add(plan);
         await _context.SaveChangesAsync();
+        await _featureAccessService.RegisterPlanCreationAsync(plan.Type, nowUtc);
 
         if (_syncService != null)
         {

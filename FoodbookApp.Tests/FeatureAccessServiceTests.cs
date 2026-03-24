@@ -5,6 +5,8 @@ using Foodbook.Services;
 using FoodbookApp.Interfaces;
 using FoodbookApp.Services.Auth;
 using FoodbookApp.Services.Supabase;
+using Foodbook.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace FoodbookApp.Tests;
 
@@ -80,13 +82,150 @@ public class FeatureAccessServiceTests
         (await service.CanUsePremiumFeatureAsync(PremiumFeature.AutoPlanner)).Should().BeFalse();
     }
 
-    private static FeatureAccessService CreateService(ISecureStorageAdapter storage, IClock clock)
+    [Fact]
+    public async Task CanCreatePlanAsync_ForFoodbook_ShouldBlockFreeUserAtFiveActiveFoodbooks()
+    {
+        var fakeClock = new FakeClock(new DateTime(2026, 3, 24, 9, 0, 0, DateTimeKind.Utc));
+        var storage = new InMemorySecureStorage();
+        var context = CreateInMemoryContext(nameof(CanCreatePlanAsync_ForFoodbook_ShouldBlockFreeUserAtFiveActiveFoodbooks));
+
+        for (var i = 0; i < 5; i++)
+        {
+            context.Plans.Add(new Plan
+            {
+                Id = Guid.NewGuid(),
+                Type = PlanType.Foodbook,
+                IsArchived = false,
+                StartDate = fakeClock.UtcNow.Date,
+                EndDate = fakeClock.UtcNow.Date.AddDays(6)
+            });
+        }
+
+        await context.SaveChangesAsync();
+        await storage.SetAsync("feature_access_snapshot_v1", SerializeEnvelope(new FeatureAccessSnapshot { IsPremiumUser = false }, fakeClock.UtcNow.AddHours(2)));
+
+        var service = CreateService(storage, fakeClock, context);
+        var decision = await service.CanCreatePlanAsync(PlanType.Foodbook, fakeClock.UtcNow);
+
+        decision.IsAllowed.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task CanCreatePlanAsync_ForFoodbook_ShouldAllowPremiumUserEvenAboveLimit()
+    {
+        var fakeClock = new FakeClock(new DateTime(2026, 3, 24, 9, 0, 0, DateTimeKind.Utc));
+        var storage = new InMemorySecureStorage();
+        var context = CreateInMemoryContext(nameof(CanCreatePlanAsync_ForFoodbook_ShouldAllowPremiumUserEvenAboveLimit));
+
+        for (var i = 0; i < 7; i++)
+        {
+            context.Plans.Add(new Plan
+            {
+                Id = Guid.NewGuid(),
+                Type = PlanType.Foodbook,
+                IsArchived = false,
+                StartDate = fakeClock.UtcNow.Date,
+                EndDate = fakeClock.UtcNow.Date.AddDays(6)
+            });
+        }
+
+        await context.SaveChangesAsync();
+        await storage.SetAsync("feature_access_snapshot_v1", SerializeEnvelope(new FeatureAccessSnapshot { IsPremiumUser = true }, fakeClock.UtcNow.AddHours(2)));
+
+        var service = CreateService(storage, fakeClock, context);
+        var decision = await service.CanCreatePlanAsync(PlanType.Foodbook, fakeClock.UtcNow);
+
+        decision.IsAllowed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CanCreatePlanAsync_ForPlanner_ShouldBlockFreeUserAfterFourMonthlyCreations()
+    {
+        var fakeClock = new FakeClock(new DateTime(2026, 3, 24, 9, 0, 0, DateTimeKind.Utc));
+        var storage = new InMemorySecureStorage();
+        var context = CreateInMemoryContext(nameof(CanCreatePlanAsync_ForPlanner_ShouldBlockFreeUserAfterFourMonthlyCreations));
+
+        await storage.SetAsync("feature_access_snapshot_v1", SerializeEnvelope(new FeatureAccessSnapshot
+        {
+            IsPremiumUser = false,
+            Limits = new FeatureUsageLimits
+            {
+                MonthlyPlanCreationsUsed = 4,
+                LastPlannerCreationMonthUtc = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc)
+            }
+        }, fakeClock.UtcNow.AddHours(2)));
+
+        var service = CreateService(storage, fakeClock, context);
+        var decision = await service.CanCreatePlanAsync(PlanType.Planner, fakeClock.UtcNow);
+
+        decision.IsAllowed.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task CanCreatePlanAsync_ForPlanner_ShouldAllowPremiumUserAfterFourMonthlyCreations()
+    {
+        var fakeClock = new FakeClock(new DateTime(2026, 3, 24, 9, 0, 0, DateTimeKind.Utc));
+        var storage = new InMemorySecureStorage();
+        var context = CreateInMemoryContext(nameof(CanCreatePlanAsync_ForPlanner_ShouldAllowPremiumUserAfterFourMonthlyCreations));
+
+        await storage.SetAsync("feature_access_snapshot_v1", SerializeEnvelope(new FeatureAccessSnapshot
+        {
+            IsPremiumUser = true,
+            Limits = new FeatureUsageLimits
+            {
+                MonthlyPlanCreationsUsed = 4,
+                LastPlannerCreationMonthUtc = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc)
+            }
+        }, fakeClock.UtcNow.AddHours(2)));
+
+        var service = CreateService(storage, fakeClock, context);
+        var decision = await service.CanCreatePlanAsync(PlanType.Planner, fakeClock.UtcNow);
+
+        decision.IsAllowed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task RegisterPlanCreationAsync_ForPlanner_ShouldIncreaseMonthlyCounterForFreeUser()
+    {
+        var fakeClock = new FakeClock(new DateTime(2026, 3, 24, 9, 0, 0, DateTimeKind.Utc));
+        var storage = new InMemorySecureStorage();
+        var context = CreateInMemoryContext(nameof(RegisterPlanCreationAsync_ForPlanner_ShouldIncreaseMonthlyCounterForFreeUser));
+
+        await storage.SetAsync("feature_access_snapshot_v1", SerializeEnvelope(new FeatureAccessSnapshot
+        {
+            IsPremiumUser = false,
+            Limits = new FeatureUsageLimits
+            {
+                MonthlyPlanCreationsUsed = 1,
+                LastPlannerCreationMonthUtc = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc)
+            }
+        }, fakeClock.UtcNow.AddHours(2)));
+
+        var service = CreateService(storage, fakeClock, context);
+        await service.RegisterPlanCreationAsync(PlanType.Planner, fakeClock.UtcNow);
+
+        var decision = await service.CanCreatePlanAsync(PlanType.Planner, fakeClock.UtcNow);
+        decision.IsAllowed.Should().BeTrue();
+    }
+
+    private static AppDbContext CreateInMemoryContext(string dbName)
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(dbName)
+            .Options;
+
+        return new AppDbContext(options);
+    }
+
+    private static FeatureAccessService CreateService(ISecureStorageAdapter storage, IClock clock, AppDbContext? context = null)
     {
         var httpClient = new HttpClient(new HttpClientHandler());
         var tokenStore = new FakeTokenStore();
         var restClient = new SupabaseRestClient(httpClient, tokenStore, "https://example.supabase.co", "anon");
 
-        return new FeatureAccessService(restClient, new FakeAccountService(), storage, clock);
+        context ??= CreateInMemoryContext(Guid.NewGuid().ToString());
+
+        return new FeatureAccessService(restClient, new FakeAccountService(), context, storage, clock);
     }
 
     private static string SerializeEnvelope(FeatureAccessSnapshot snapshot, DateTime expiresAtUtc)
