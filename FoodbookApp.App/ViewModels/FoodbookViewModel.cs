@@ -415,7 +415,7 @@ public class FoodbookViewModel : INotifyPropertyChanged
                 SelectedTabIndex = 0;
                 await Shell.Current.DisplayAlert(
                     L("MissingNameTitle", "Brak nazwy"),
-                    L("MissingNameMessage", "Podaj nazwê Foodbooka."),
+                    L("MissingNameMessage", "Podaj nazwÃª Foodbooka."),
                     "OK");
                 return;
             }
@@ -478,7 +478,15 @@ public class FoodbookViewModel : INotifyPropertyChanged
 
             AppEvents.RaisePlanChanged();
 
-            var savedTemplate = L("SaveSuccessMessageFormat", "Foodbook \"{0}\" zosta³ zapisany.");
+        catch (PlanLimitExceededException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[FoodbookVM] SaveAsync plan limit: {ex.Message}");
+            await Shell.Current.DisplayAlert(
+                L("SaveErrorTitle", "Bd"),
+                ex.Message,
+                "OK");
+        }
+            var savedTemplate = L("SaveSuccessMessageFormat", "Foodbook \"{0}\" zostaÂ³ zapisany.");
             await Shell.Current.DisplayAlert(
                 L("SaveSuccessTitle", "Zapisano"),
                 string.Format(savedTemplate, plan.Title),
@@ -489,8 +497,8 @@ public class FoodbookViewModel : INotifyPropertyChanged
         {
             System.Diagnostics.Debug.WriteLine($"[FoodbookVM] SaveAsync error: {ex.Message}");
             await Shell.Current.DisplayAlert(
-                L("SaveErrorTitle", "B³¹d"),
-                L("SaveErrorMessage", "Nie uda³o siê zapisaæ Foodbooka."),
+                L("SaveErrorTitle", "BÂ³Â¹d"),
+                L("SaveErrorMessage", "Nie udaÂ³o siÃª zapisaÃ¦ Foodbooka."),
                 "OK");
         }
     }

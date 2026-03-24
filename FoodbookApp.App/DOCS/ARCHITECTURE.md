@@ -64,6 +64,7 @@ Relacje kluczowe: Recipe (1) — (N) Ingredient; Plan (N) — (N) PlannedMeal (p
 | IIngredientService / IngredientService | Operacje na składnikach globalnych i przypisanych do przepisu |
 | IPlannerService / PlannerService | Zarządzanie PlannedMeal (dodawanie/aktualizacja/usuwanie/pobieranie zakresu) |
 | IPlanService / PlanService | Operacje na Plan (archiwizacja, kolizje dat) |
+| IFeatureAccessService / FeatureAccessService | Dostęp premium + limity tworzenia planów (Free: Foodbook<=5 aktywnych, Planner<=4/mies.) |
 | IShoppingListService / ShoppingListService | Generowanie list zakupów na podstawie planu (agregacje składników) |
 | LocalizationService / LocalizationResourceManager | Lokalizacja tekstów (resx) i dynamiczne odświeżanie |
 | RecipeImporter | Import przepisu z URL (scraping i heurystyka) |

@@ -1,9 +1,11 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Foodbook.Models;
+using Foodbook.Data;
 using FoodbookApp.Interfaces;
 using FoodbookApp.Services.Supabase;
 using Microsoft.Maui.Storage;
+using Microsoft.EntityFrameworkCore;
 
 namespace Foodbook.Services;
 
@@ -17,6 +19,7 @@ public sealed class FeatureAccessService : IFeatureAccessService
     private readonly IAccountService _accountService;
     private readonly ISecureStorageAdapter _secureStorage;
     private readonly IClock _clock;
+    private readonly AppDbContext _context;
     private readonly SemaphoreSlim _syncLock = new(1, 1);
 
     private FeatureAccessSnapshot? _cachedSnapshot;
@@ -28,27 +31,95 @@ public sealed class FeatureAccessService : IFeatureAccessService
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public FeatureAccessService(SupabaseRestClient restClient, IAccountService accountService)
-        : this(restClient, accountService, new SecureStorageAdapter(), new SystemClock())
+    public FeatureAccessService(
+        SupabaseRestClient restClient,
+        IAccountService accountService,
+        AppDbContext context)
+        : this(restClient, accountService, context, new SecureStorageAdapter(), new SystemClock())
     {
     }
 
     public FeatureAccessService(
         SupabaseRestClient restClient,
         IAccountService accountService,
+        AppDbContext context,
         ISecureStorageAdapter secureStorage,
         IClock clock)
     {
         _restClient = restClient ?? throw new ArgumentNullException(nameof(restClient));
         _accountService = accountService ?? throw new ArgumentNullException(nameof(accountService));
+        _context = context ?? throw new ArgumentNullException(nameof(context));
         _secureStorage = secureStorage ?? throw new ArgumentNullException(nameof(secureStorage));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
 
     public async Task<bool> CanCreatePlanAsync()
     {
+        var decision = await CanCreatePlanAsync(PlanType.Planner, _clock.UtcNow);
+        return decision.IsAllowed;
+    }
+
+    public async Task<PlanLimitDecision> CanCreatePlanAsync(PlanType type, DateTime nowUtc)
+    {
         var snapshot = await GetSnapshotAsync(forceRefresh: false);
-        return snapshot.CanCreatePlan(_clock.UtcNow);
+        if (snapshot.IsPremiumUser)
+        {
+            return PlanLimitDecision.Allowed();
+        }
+
+        if (type == PlanType.Foodbook)
+        {
+            var activeFoodbooksCount = await _context.Plans
+                .CountAsync(p => p.Type == PlanType.Foodbook && !p.IsArchived);
+
+            if (activeFoodbooksCount >= 5)
+            {
+                return PlanLimitDecision.Denied("W planie Free możesz mieć maksymalnie 5 aktywnych Foodbooków.");
+            }
+        }
+
+        if (type == PlanType.Planner)
+        {
+            var monthStartUtc = new DateTime(nowUtc.Year, nowUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+            if (snapshot.Limits.LastPlannerCreationMonthUtc != monthStartUtc)
+            {
+                snapshot.Limits.LastPlannerCreationMonthUtc = monthStartUtc;
+                snapshot.Limits.MonthlyPlanCreationsUsed = 0;
+                await SaveSnapshotToCacheAsync(snapshot);
+            }
+
+            if (snapshot.Limits.MonthlyPlanCreationsUsed >= 4)
+            {
+                return PlanLimitDecision.Denied("W planie Free możesz utworzyć maksymalnie 4 nowe planery miesięcznie.");
+            }
+        }
+
+        return PlanLimitDecision.Allowed();
+    }
+
+    public async Task RegisterPlanCreationAsync(PlanType type, DateTime nowUtc)
+    {
+        if (type != PlanType.Planner)
+        {
+            return;
+        }
+
+        var snapshot = await GetSnapshotAsync(forceRefresh: false);
+        if (snapshot.IsPremiumUser)
+        {
+            return;
+        }
+
+        var monthStartUtc = new DateTime(nowUtc.Year, nowUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        if (snapshot.Limits.LastPlannerCreationMonthUtc != monthStartUtc)
+        {
+            snapshot.Limits.LastPlannerCreationMonthUtc = monthStartUtc;
+            snapshot.Limits.MonthlyPlanCreationsUsed = 0;
+        }
+
+        snapshot.Limits.MonthlyPlanCreationsUsed++;
+        snapshot.LastSyncedUtc = nowUtc;
+        await SaveSnapshotToCacheAsync(snapshot);
     }
 
     public async Task<bool> CanUsePremiumFeatureAsync(PremiumFeature feature)
@@ -180,8 +251,9 @@ public sealed class FeatureAccessService : IFeatureAccessService
             LastSyncedUtc = nowUtc,
             Limits = new FeatureUsageLimits
             {
-                MonthlyPlanCreationLimit = 10,
-                MonthlyPlanCreationsUsed = 0
+                MonthlyPlanCreationLimit = 4,
+                MonthlyPlanCreationsUsed = 0,
+                LastPlannerCreationMonthUtc = new DateTime(nowUtc.Year, nowUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc)
             }
         };
     }
@@ -238,6 +310,7 @@ public sealed class FeatureAccessService : IFeatureAccessService
         public bool IsPremium { get; set; }
         public int? MonthlyPlanCreationLimit { get; set; }
         public int MonthlyPlanCreationsUsed { get; set; }
+        public DateTime? LastPlannerCreationMonthUtc { get; set; }
         public bool AutoPlannerEnabled { get; set; }
         public bool PlanRecyclingEnabled { get; set; }
         public bool AiRecipeCreationEnabled { get; set; }
@@ -252,7 +325,8 @@ public sealed class FeatureAccessService : IFeatureAccessService
                 Limits = new FeatureUsageLimits
                 {
                     MonthlyPlanCreationLimit = MonthlyPlanCreationLimit,
-                    MonthlyPlanCreationsUsed = MonthlyPlanCreationsUsed
+                    MonthlyPlanCreationsUsed = MonthlyPlanCreationsUsed,
+                    LastPlannerCreationMonthUtc = null
                 },
                 Entitlements = new List<FeatureEntitlement>
                 {

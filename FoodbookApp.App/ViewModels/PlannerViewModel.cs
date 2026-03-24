@@ -173,6 +173,11 @@ public class PlannerViewModel : INotifyPropertyChanged
                     await Shell.Current.GoToAsync("..");
                 }
             }
+            catch (PlanLimitExceededException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Plan limit in SaveCommand: {ex.Message}");
+                await Shell.Current.DisplayAlert("Limit planu", ex.Message, "OK");
+            }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"❌ Error in SaveCommand: {ex.Message}");
@@ -824,6 +829,12 @@ public class PlannerViewModel : INotifyPropertyChanged
             
             return plan;
         }
+        catch (PlanLimitExceededException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Plan limit exceeded: {ex.Message}");
+            await Shell.Current.DisplayAlert("Limit planu", ex.Message, "OK");
+            return null;
+        }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] ❌ Error saving meal plan: {ex.Message}\n{ex.StackTrace}");
@@ -963,6 +974,11 @@ public class PlannerViewModel : INotifyPropertyChanged
             plan.LinkedShoppingListPlanId = newShoppingPlan.Id;
             await _planService.UpdatePlanAsync(plan);
             System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Linked shopping list {newShoppingPlan.Id} to planner {plan.Id}");
+        }
+        catch (PlanLimitExceededException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Shopping list limit exceeded: {ex.Message}");
+            await Shell.Current.DisplayAlert("Limit planu", ex.Message, "OK");
         }
         catch (Exception ex)
         {

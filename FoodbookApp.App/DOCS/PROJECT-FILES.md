@@ -59,7 +59,7 @@ FoodbookApp.Tests/
 ├── *Tests.cs             # Testy jednostkowe i komponentowe
 ```
 
-Przykładowe obszary pokryte testami: baza danych, składniki, przepisy, planner, archiwizacja, motywy oraz auth (Supabase).
+Przykładowe obszary pokryte testami: baza danych, składniki, przepisy, planner, limity planów (feature access), archiwizacja, motywy oraz auth (Supabase).
 
 ## 5) Nowe obszary funkcjonalne (istotne dla orientacji)
 
@@ -89,3 +89,10 @@ Nowe elementy struktury:
 - `Services/Subscription/MockSubscriptionManagementService.cs` — domyślny mock provider.
 - `Services/Subscription/SupabaseEdgeSubscriptionManagementService.cs` — seam pod edge function.
 - `Services/Subscription/PaymentProviderSubscriptionManagementService.cs` — seam pod provider płatności.
+
+## 8) Limity planów (dodane 2026-03-24)
+
+Nowe elementy struktury:
+- `Models/PlanLimitDecision.cs` — wynik walidacji limitu tworzenia planu.
+- `Models/PlanLimitExceededException.cs` — kontrolowany wyjątek domenowy dla przekroczonych limitów.
+- `Tests/FeatureAccessServiceTests.cs` — scenariusze limitów Free vs Premium (Foodbook/Planner).

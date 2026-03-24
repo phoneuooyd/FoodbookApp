@@ -28,6 +28,7 @@ Pozwala użytkownikowi:
 | Plan | Agregat dat (StartDate, EndDate) + IsArchived dla list zakupów |
 | IPlannerService | Interfejs operacji CRUD dla PlannedMeal |
 | IPlanService | Operacje na Plan (kolizje, zapis) |
+| IFeatureAccessService | Weryfikacja limitów tworzenia planów (Foodbook/Planner) |
 | IRecipeService | Dostarczanie listy przepisów |
 
 ### 2.3 Stany i właściwości (VM)
@@ -69,6 +70,7 @@ Inwalidacja: `Reset()` / zmiana zakresu / zmiana MealsPerDay.
 4. Iteracja po dniach i posiłkach: dla posiłków z wybranym `Recipe` ustawiany `RecipeId` i zapisywany `PlannedMeal`
 5. Reset stanu + czyszczenie cache
 6. Prezentacja alertu z potwierdzeniem (lista zakupów gotowa)
+7. Walidacja limitów przez `IFeatureAccessService` przed dodaniem encji `Plan` oraz kontrolowany wyjątek `PlanLimitExceededException` przy przekroczeniu limitu.
 
 Artefakty utworzone:
 - Encja `Plan` (wykorzystywana w module Listy Zakupów)
@@ -79,6 +81,8 @@ Artefakty utworzone:
 |-------|-----|
 | Porcje | 1 ≤ Portions ≤ 20 |
 | Kolizja planów | Brak nakładających się aktywnych planów (archiwizacja poza zakresem) |
+| Limit Foodbook (Free) | Maks. 5 aktywnych planów `PlanType.Foodbook` |
+| Limit Planner (Free) | Maks. 4 nowe utworzenia `PlanType.Planner` na miesiąc |
 | MealsPerDay | Dynamicznie wymusza liczbę slotów – brak mechanizmu różnej liczby posiłków między dniami |
 | Cache | Aktualny tylko jeśli nie zmieniono kluczowych parametrów (daty, MealsPerDay) |
 | Istniejące posiłki | Obecnie nie są renderowane (komentarz w kodzie) – docelowo przywrócić logikę / AI uzupełniania |
