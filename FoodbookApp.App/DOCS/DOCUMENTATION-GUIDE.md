@@ -588,3 +588,11 @@ Patrz dalsza część dokumentu (standardy dokumentowania kodu, lokalizacji, tes
 
 ---
 **Ostatnia aktualizacja**: 20.08.2025
+---
+## 17. Profil i zarządzanie subskrypcją (aktualizacja 2026-03-24)
+- UI profilu (`Views/ProfilePage.xaml`, `Views/ProfilePage.xaml.cs`) obsługuje teraz trzy akcje:
+  - przejście na plan Free,
+  - przejście na plan roczny,
+  - anulowanie subskrypcji.
+- Wszystkie akcje idą przez `ISubscriptionManagementService` i zwracają jednolity `SubscriptionActionResult` do prezentacji komunikatu UI (`DisplayAlert`).
+- Odświeżenie po akcji obejmuje sekcję aktualnego planu oraz tekst limitów.

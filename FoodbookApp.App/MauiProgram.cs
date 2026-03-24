@@ -16,6 +16,7 @@ using FoodbookApp.Services.Auth;
 using Foodbook.Views.Components;
 using FoodbookApp.Services.Supabase;
 using FoodbookApp.Services;
+using FoodbookApp.Services.Subscription;
 
 namespace FoodbookApp
 {
@@ -67,6 +68,9 @@ namespace FoodbookApp
             builder.Services.AddScoped<IShoppingListService, ShoppingListService>();
             builder.Services.AddScoped<IPlanService, PlanService>();
             builder.Services.AddScoped<IFeatureAccessService, FeatureAccessService>();
+            builder.Services.AddSingleton<ISecureStorageAdapter, SecureStorageAdapter>();
+            builder.Services.AddSingleton<IClock, SystemClock>();
+            builder.Services.AddScoped<ISubscriptionManagementService, MockSubscriptionManagementService>();
             builder.Services.AddScoped<IIngredientService, IngredientService>();
             builder.Services.AddScoped<IFolderService, FolderService>();
             builder.Services.AddScoped<IRecipeLabelService, RecipeLabelService>();

@@ -22,6 +22,7 @@ public partial class ProfilePage : ContentPage
     private ISupabaseSyncService? _syncService;
     private IAccountService? _accountService;
     private IFeatureAccessService? _featureAccessService;
+    private ISubscriptionManagementService? _subscriptionManagementService;
     private CancellationTokenSource? _syncRefreshCts;
     private bool _isLoggedIn;
     private bool _suppressToggle;
@@ -299,7 +300,7 @@ public partial class ProfilePage : ContentPage
         try
         {
             await LoadProfileStatsAsync();
-            await LoadCurrentSubscriptionUiAsync();
+            await RefreshSubscriptionSectionAsync();
         }
         catch (Exception ex)
         {
@@ -356,6 +357,7 @@ public partial class ProfilePage : ContentPage
             var renewalText = isPremium
                 ? "Dostęp premium aktywny"
                 : "Brak aktywnej subskrypcji";
+            var limitsText = await BuildPlanLimitsTextAsync(featureAccess, isPremium);
 
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
@@ -366,11 +368,83 @@ public partial class ProfilePage : ContentPage
                 CurrentPlanNameDetailsLabel.Text = currentPlanName;
                 CurrentPlanStatusDetailsLabel.Text = currentPlanStatus;
                 CurrentPlanRenewalDetailsLabel.Text = renewalText;
+                CurrentPlanLimitsDetailsLabel.Text = limitsText;
             });
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"[ProfilePage] LoadCurrentSubscriptionUiAsync error: {ex.Message}");
+        }
+    }
+
+    #endregion
+
+    #region Subscription management
+
+    private async Task RefreshSubscriptionSectionAsync()
+    {
+        await LoadCurrentSubscriptionUiAsync();
+    }
+
+    private async Task<string> BuildPlanLimitsTextAsync(IFeatureAccessService featureAccess, bool isPremium)
+    {
+        if (isPremium)
+        {
+            return "Limity: brak ograniczeń planu premium.";
+        }
+
+        var canCreatePlan = await featureAccess.CanCreatePlanAsync();
+        return canCreatePlan
+            ? "Limity: możesz tworzyć kolejne plany miesięczne."
+            : "Limity: osiągnięto miesięczny limit planów.";
+    }
+
+    private async void OnSwitchToFreeClicked(object sender, EventArgs e)
+    {
+        await ExecuteSubscriptionActionAsync(
+            action: service => service.ChangePlanAsync(SubscriptionPlan.Free, CancellationToken.None),
+            title: "Zmiana planu");
+    }
+
+    private async void OnSwitchToYearlyClicked(object sender, EventArgs e)
+    {
+        await ExecuteSubscriptionActionAsync(
+            action: service => service.ChangePlanAsync(SubscriptionPlan.PremiumYearly, CancellationToken.None),
+            title: "Zmiana planu");
+    }
+
+    private async void OnCancelSubscriptionClicked(object sender, EventArgs e)
+    {
+        await ExecuteSubscriptionActionAsync(
+            action: service => service.CancelSubscriptionAsync(CancellationToken.None),
+            title: "Subskrypcja");
+    }
+
+    private async Task ExecuteSubscriptionActionAsync(
+        Func<ISubscriptionManagementService, Task<SubscriptionActionResult>> action,
+        string title)
+    {
+        var service = GetSubscriptionManagementService();
+        if (service == null)
+        {
+            await DisplayAlert("Błąd", "Usługa subskrypcji jest niedostępna.", "OK");
+            return;
+        }
+
+        try
+        {
+            var result = await action(service);
+            var featureAccess = GetFeatureAccessService();
+            if (featureAccess != null)
+            {
+                await featureAccess.RefreshAccessAsync();
+            }
+            await RefreshSubscriptionSectionAsync();
+            await DisplayAlert(title, result.UiMessage, "OK");
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Błąd subskrypcji", ex.Message, "OK");
         }
     }
 
@@ -616,6 +690,9 @@ public partial class ProfilePage : ContentPage
 
     private IFeatureAccessService? GetFeatureAccessService()
         => _featureAccessService ??= FoodbookApp.MauiProgram.ServiceProvider?.GetService<IFeatureAccessService>();
+
+    private ISubscriptionManagementService? GetSubscriptionManagementService()
+        => _subscriptionManagementService ??= FoodbookApp.MauiProgram.ServiceProvider?.GetService<ISubscriptionManagementService>();
 
     #endregion
 
