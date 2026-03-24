@@ -26,8 +26,13 @@ public partial class ProfilePage : ContentPage
     private bool _suppressToggle;
     private bool _eventsSubscribed;
     private string _currentUserEmail = string.Empty;
+    private DateTime _lastManualSyncQueueRefreshUtc = DateTime.MinValue;
+    private bool _syncQueueHasMoreItems;
+    private int _syncQueueOffset;
 
     private const string SyncChoiceKeyPrefix = "cloudsync.enabled:";
+    private const int SyncQueuePageSize = 50;
+    private static readonly TimeSpan SyncQueueManualRefreshThrottle = TimeSpan.FromSeconds(7);
     private static readonly Color SyncSuccessColor = Color.FromArgb("#2E7D32");
     private static readonly Color SyncErrorColor = Color.FromArgb("#C62828");
     private static readonly Color SyncNeutralColor = Color.FromArgb("#6B7280");
@@ -630,7 +635,7 @@ public partial class ProfilePage : ContentPage
     {
         ProfileMainView.IsVisible = false;
         SyncQueueDetailsView.IsVisible = true;
-        await LoadSyncQueueAsync();
+        await LoadSyncQueueAsync(reset: true);
     }
 
     private void OnCloseSyncQueueTapped(object? sender, TappedEventArgs e)
@@ -641,16 +646,37 @@ public partial class ProfilePage : ContentPage
 
     private async void OnRefreshSyncQueueClicked(object sender, EventArgs e)
     {
+        var utcNow = DateTime.UtcNow;
+        var elapsed = utcNow - _lastManualSyncQueueRefreshUtc;
+        if (elapsed < SyncQueueManualRefreshThrottle)
+        {
+            var waitTime = Math.Ceiling((SyncQueueManualRefreshThrottle - elapsed).TotalSeconds);
+            await DisplayAlert("Odświeżanie", $"Odczekaj {waitTime:0} s przed kolejnym odświeżeniem.", "OK");
+            return;
+        }
+
+        _lastManualSyncQueueRefreshUtc = utcNow;
+        await LoadSyncQueueAsync(reset: true);
+    }
+
+    private async void OnLoadMoreSyncQueueClicked(object sender, EventArgs e)
+    {
+        if (!_syncQueueHasMoreItems)
+            return;
+
         await LoadSyncQueueAsync();
     }
 
-    private async Task LoadSyncQueueAsync()
+    private async Task LoadSyncQueueAsync(bool reset = false)
     {
         try
         {
             if (!_isLoggedIn)
             {
                 SyncQueueItems.Clear();
+                _syncQueueOffset = 0;
+                _syncQueueHasMoreItems = false;
+                SyncQueueLoadMoreButton.IsVisible = false;
                 SyncQueueSummaryLabel.Text = ProfilePageResources.SyncQueueLoginRequired;
                 return;
             }
@@ -659,6 +685,9 @@ public partial class ProfilePage : ContentPage
             if (serviceProvider == null)
             {
                 SyncQueueItems.Clear();
+                _syncQueueOffset = 0;
+                _syncQueueHasMoreItems = false;
+                SyncQueueLoadMoreButton.IsVisible = false;
                 SyncQueueSummaryLabel.Text = ProfilePageResources.SyncQueueServiceUnavailable;
                 return;
             }
@@ -667,6 +696,9 @@ public partial class ProfilePage : ContentPage
             if (tokenStore == null)
             {
                 SyncQueueItems.Clear();
+                _syncQueueOffset = 0;
+                _syncQueueHasMoreItems = false;
+                SyncQueueLoadMoreButton.IsVisible = false;
                 SyncQueueSummaryLabel.Text = ProfilePageResources.SyncQueueAccountUnavailable;
                 return;
             }
@@ -675,6 +707,9 @@ public partial class ProfilePage : ContentPage
             if (!accountId.HasValue)
             {
                 SyncQueueItems.Clear();
+                _syncQueueOffset = 0;
+                _syncQueueHasMoreItems = false;
+                SyncQueueLoadMoreButton.IsVisible = false;
                 SyncQueueSummaryLabel.Text = ProfilePageResources.SyncQueueNoActiveAccount;
                 return;
             }
@@ -682,15 +717,30 @@ public partial class ProfilePage : ContentPage
             using var scope = serviceProvider.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            var queue = await db.SyncQueue
+            if (reset)
+                _syncQueueOffset = 0;
+
+            var queuePage = await db.SyncQueue
+                .AsNoTracking()
                 .Where(e => e.AccountId == accountId.Value)
                 .OrderByDescending(e => e.CreatedUtc)
-                .Take(300)
+                .Skip(_syncQueueOffset)
+                .Take(SyncQueuePageSize)
+                .Select(e => new SyncQueueListEntry
+                {
+                    EntityType = e.EntityType,
+                    EntityId = e.EntityId,
+                    OperationType = e.OperationType,
+                    Payload = e.Payload,
+                    CreatedUtc = e.CreatedUtc,
+                    LastError = e.LastError,
+                    Status = e.Status
+                })
                 .ToListAsync();
 
-            var mapped = queue.Select(e =>
+            var mapped = queuePage.Select(e =>
             {
-                var isDownload = IsDownloadEntry(e);
+                var isDownload = IsDownloadEntry(e.Payload);
                 var directionEmoji = isDownload ? "⬇️" : "⬆️";
                 var statusText = GetStatusText(e.Status);
                 var statusColor = GetStatusColor(e.Status);
@@ -705,40 +755,76 @@ public partial class ProfilePage : ContentPage
                     DetailColor = e.Status is SyncEntryStatus.Failed or SyncEntryStatus.Abandoned
                         ? SyncErrorColor
                         : SyncNeutralColor,
-                    CreatedText = e.CreatedUtc.ToLocalTime().ToString("dd.MM HH:mm")
+                    CreatedText = e.CreatedUtc.ToLocalTime().ToString("dd.MM HH:mm"),
+                    IsDownload = isDownload,
+                    Status = e.Status
                 };
             }).ToList();
 
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
-                SyncQueueItems.Clear();
+                if (reset)
+                    SyncQueueItems.Clear();
+
                 foreach (var item in mapped)
                     SyncQueueItems.Add(item);
 
-                var success = queue.Count(e => e.Status == SyncEntryStatus.Completed);
-                var failed = queue.Count(e => e.Status is SyncEntryStatus.Failed or SyncEntryStatus.Abandoned);
-                var pending = queue.Count(e => e.Status is SyncEntryStatus.Pending or SyncEntryStatus.InProgress);
-                var downloaded = queue.Count(IsDownloadEntry);
-                var uploaded = queue.Count - downloaded;
-
-                SyncQueueSummaryLabel.Text = string.Format(
-                    ProfilePageResources.SyncQueueSummaryFormat,
-                    queue.Count,
-                    uploaded,
-                    downloaded,
-                    success,
-                    failed,
-                    pending);
+                _syncQueueOffset += queuePage.Count;
+                _syncQueueHasMoreItems = queuePage.Count == SyncQueuePageSize;
+                SyncQueueLoadMoreButton.IsVisible = _syncQueueHasMoreItems;
+                UpdateSyncQueueSummary();
             });
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"[ProfilePage] LoadSyncQueueAsync error: {ex.Message}");
             SyncQueueSummaryLabel.Text = ProfilePageResources.SyncQueueLoadError;
+            _syncQueueHasMoreItems = false;
+            SyncQueueLoadMoreButton.IsVisible = false;
         }
     }
 
-    private static string BuildDetailText(SyncQueueEntry entry)
+    private void UpdateSyncQueueSummary()
+    {
+        var success = 0;
+        var failed = 0;
+        var pending = 0;
+        var downloaded = 0;
+
+        foreach (var item in SyncQueueItems)
+        {
+            if (item.IsDownload)
+                downloaded++;
+
+            switch (item.Status)
+            {
+                case SyncEntryStatus.Completed:
+                    success++;
+                    break;
+                case SyncEntryStatus.Failed:
+                case SyncEntryStatus.Abandoned:
+                    failed++;
+                    break;
+                case SyncEntryStatus.Pending:
+                case SyncEntryStatus.InProgress:
+                    pending++;
+                    break;
+            }
+        }
+
+        var total = SyncQueueItems.Count;
+        var uploaded = total - downloaded;
+        SyncQueueSummaryLabel.Text = string.Format(
+            ProfilePageResources.SyncQueueSummaryFormat,
+            total,
+            uploaded,
+            downloaded,
+            success,
+            failed,
+            pending);
+    }
+
+    private static string BuildDetailText(SyncQueueListEntry entry)
     {
         if (entry.Status is SyncEntryStatus.Failed or SyncEntryStatus.Abandoned)
             return string.IsNullOrWhiteSpace(entry.LastError)
@@ -771,12 +857,23 @@ public partial class ProfilePage : ContentPage
         _ => SyncNeutralColor
     };
 
-    private static bool IsDownloadEntry(SyncQueueEntry entry)
+    private static bool IsDownloadEntry(string? payload)
     {
-        if (string.IsNullOrWhiteSpace(entry.Payload))
+        if (string.IsNullOrWhiteSpace(payload))
             return false;
 
-        return entry.Payload.Contains("\"syncDirection\":\"download\"", StringComparison.OrdinalIgnoreCase);
+        return payload.Contains("\"syncDirection\":\"download\"", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private sealed class SyncQueueListEntry
+    {
+        public string EntityType { get; init; } = string.Empty;
+        public Guid EntityId { get; init; }
+        public SyncOperationType OperationType { get; init; }
+        public string? Payload { get; init; }
+        public DateTime CreatedUtc { get; init; }
+        public string? LastError { get; init; }
+        public SyncEntryStatus Status { get; init; }
     }
 
     public sealed class SyncQueueDisplayItem
@@ -787,5 +884,7 @@ public partial class ProfilePage : ContentPage
         public string Detail { get; set; } = string.Empty;
         public Color DetailColor { get; set; } = SyncNeutralColor;
         public string CreatedText { get; set; } = string.Empty;
+        public bool IsDownload { get; set; }
+        public SyncEntryStatus Status { get; set; }
     }
 }

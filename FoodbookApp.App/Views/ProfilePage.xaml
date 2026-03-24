@@ -290,6 +290,16 @@
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                     </CollectionView>
+
+                    <Button x:Name="SyncQueueLoadMoreButton"
+                            Text="Pokaż więcej"
+                            Clicked="OnLoadMoreSyncQueueClicked"
+                            IsVisible="False"
+                            FontSize="12"
+                            Padding="10,6"
+                            HorizontalOptions="Center"
+                            BackgroundColor="{DynamicResource SegmentedContainerColor}"
+                            TextColor="{DynamicResource FrameTextColor}" />
                 </VerticalStackLayout>
             </ScrollView>
         </Grid>
