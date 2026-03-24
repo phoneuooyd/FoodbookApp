@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Text.Json;
 using CommunityToolkit.Maui.Extensions;
 using Foodbook.Data;
 using Foodbook.Models;
@@ -29,6 +30,7 @@ public partial class ProfilePage : ContentPage
     private DateTime _lastManualSyncQueueRefreshUtc = DateTime.MinValue;
     private bool _syncQueueHasMoreItems;
     private int _syncQueueOffset;
+    private SyncQueueSummaryState _syncQueueSummary = SyncQueueSummaryState.Empty;
 
     private const string SyncChoiceKeyPrefix = "cloudsync.enabled:";
     private const int SyncQueuePageSize = 50;
@@ -764,15 +766,21 @@ public partial class ProfilePage : ContentPage
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
                 if (reset)
+                {
                     SyncQueueItems.Clear();
+                    _syncQueueSummary = SyncQueueSummaryState.Empty;
+                }
 
                 foreach (var item in mapped)
+                {
                     SyncQueueItems.Add(item);
+                    _syncQueueSummary = _syncQueueSummary.Add(item);
+                }
 
                 _syncQueueOffset += queuePage.Count;
                 _syncQueueHasMoreItems = queuePage.Count == SyncQueuePageSize;
                 SyncQueueLoadMoreButton.IsVisible = _syncQueueHasMoreItems;
-                UpdateSyncQueueSummary();
+                UpdateSyncQueueSummary(_syncQueueSummary);
             });
         }
         catch (Exception ex)
@@ -784,44 +792,16 @@ public partial class ProfilePage : ContentPage
         }
     }
 
-    private void UpdateSyncQueueSummary()
+    private void UpdateSyncQueueSummary(SyncQueueSummaryState summary)
     {
-        var success = 0;
-        var failed = 0;
-        var pending = 0;
-        var downloaded = 0;
-
-        foreach (var item in SyncQueueItems)
-        {
-            if (item.IsDownload)
-                downloaded++;
-
-            switch (item.Status)
-            {
-                case SyncEntryStatus.Completed:
-                    success++;
-                    break;
-                case SyncEntryStatus.Failed:
-                case SyncEntryStatus.Abandoned:
-                    failed++;
-                    break;
-                case SyncEntryStatus.Pending:
-                case SyncEntryStatus.InProgress:
-                    pending++;
-                    break;
-            }
-        }
-
-        var total = SyncQueueItems.Count;
-        var uploaded = total - downloaded;
         SyncQueueSummaryLabel.Text = string.Format(
             ProfilePageResources.SyncQueueSummaryFormat,
-            total,
-            uploaded,
-            downloaded,
-            success,
-            failed,
-            pending);
+            summary.Total,
+            summary.Uploaded,
+            summary.Downloaded,
+            summary.Success,
+            summary.Failed,
+            summary.Pending);
     }
 
     private static string BuildDetailText(SyncQueueListEntry entry)
@@ -862,7 +842,19 @@ public partial class ProfilePage : ContentPage
         if (string.IsNullOrWhiteSpace(payload))
             return false;
 
-        return payload.Contains("\"syncDirection\":\"download\"", StringComparison.OrdinalIgnoreCase);
+        try
+        {
+            using var doc = JsonDocument.Parse(payload);
+            if (!doc.RootElement.TryGetProperty("syncDirection", out var directionElement))
+                return false;
+
+            var direction = directionElement.GetString();
+            return string.Equals(direction, "download", StringComparison.OrdinalIgnoreCase);
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
     }
 
     private sealed class SyncQueueListEntry
@@ -886,5 +878,42 @@ public partial class ProfilePage : ContentPage
         public string CreatedText { get; set; } = string.Empty;
         public bool IsDownload { get; set; }
         public SyncEntryStatus Status { get; set; }
+    }
+
+    private readonly record struct SyncQueueSummaryState(
+        int Total,
+        int Uploaded,
+        int Downloaded,
+        int Success,
+        int Failed,
+        int Pending)
+    {
+        public static readonly SyncQueueSummaryState Empty = new(0, 0, 0, 0, 0, 0);
+
+        public SyncQueueSummaryState Add(SyncQueueDisplayItem item)
+        {
+            var uploaded = Uploaded + (item.IsDownload ? 0 : 1);
+            var downloaded = Downloaded + (item.IsDownload ? 1 : 0);
+            var success = Success;
+            var failed = Failed;
+            var pending = Pending;
+
+            switch (item.Status)
+            {
+                case SyncEntryStatus.Completed:
+                    success++;
+                    break;
+                case SyncEntryStatus.Failed:
+                case SyncEntryStatus.Abandoned:
+                    failed++;
+                    break;
+                case SyncEntryStatus.Pending:
+                case SyncEntryStatus.InProgress:
+                    pending++;
+                    break;
+            }
+
+            return new SyncQueueSummaryState(Total + 1, uploaded, downloaded, success, failed, pending);
+        }
     }
 }
