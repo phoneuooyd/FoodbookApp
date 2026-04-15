@@ -478,6 +478,13 @@ public class FoodbookViewModel : INotifyPropertyChanged
 
             AppEvents.RaisePlanChanged();
 
+            var savedTemplate = L("SaveSuccessMessageFormat", "Foodbook \"{0}\" zosta³ zapisany.");
+            await Shell.Current.DisplayAlert(
+                L("SaveSuccessTitle", "Zapisano"),
+                string.Format(savedTemplate, plan.Title),
+                "OK");
+            await Shell.Current.GoToAsync("..");
+        }
         catch (PlanLimitExceededException ex)
         {
             System.Diagnostics.Debug.WriteLine($"[FoodbookVM] SaveAsync plan limit: {ex.Message}");
@@ -485,13 +492,6 @@ public class FoodbookViewModel : INotifyPropertyChanged
                 L("SaveErrorTitle", "Bd"),
                 ex.Message,
                 "OK");
-        }
-            var savedTemplate = L("SaveSuccessMessageFormat", "Foodbook \"{0}\" zosta³ zapisany.");
-            await Shell.Current.DisplayAlert(
-                L("SaveSuccessTitle", "Zapisano"),
-                string.Format(savedTemplate, plan.Title),
-                "OK");
-            await Shell.Current.GoToAsync("..");
         }
         catch (Exception ex)
         {

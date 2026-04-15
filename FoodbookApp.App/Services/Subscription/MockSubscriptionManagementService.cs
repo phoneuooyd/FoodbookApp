@@ -2,6 +2,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Foodbook.Models;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Services; // For ISecureStorageAdapter and IClock
+using Foodbook.Services; // Explicitly add the namespace for ISecureStorageAdapter and IClock
 
 namespace FoodbookApp.Services.Subscription;
 
