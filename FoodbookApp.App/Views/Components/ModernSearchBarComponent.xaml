@@ -10,7 +10,8 @@
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
     </ContentView.Resources>
 
-    <Frame Style="{StaticResource ModernSearchBarFrame}"
+        <Frame x:Name="SearchFrame"
+            Style="{StaticResource ModernSearchBarFrame}"
            Margin="{Binding SearchBarMargin, Source={x:Reference SearchBarComponent}}"
            IsVisible="{Binding IsVisible, Source={x:Reference SearchBarComponent}}">
         <Grid ColumnDefinitions="50,*,Auto" VerticalOptions="Center">
@@ -19,10 +20,13 @@
                    Style="{StaticResource SearchIconLabel}" />
             
             <!-- Search Entry -->
-            <Entry Grid.Column="1"
+                 <Entry x:Name="SearchEntry"
+                     Grid.Column="1"
                    Style="{StaticResource ModernSearchEntry}"
                    Text="{Binding SearchText, Source={x:Reference SearchBarComponent}}"
                    Placeholder="{Binding PlaceholderText, Source={x:Reference SearchBarComponent}}"
+                     Focused="OnSearchEntryFocused"
+                     Unfocused="OnSearchEntryUnfocused"
                    Margin="0,0,15,0" />
             
             <!-- Clear Button -->

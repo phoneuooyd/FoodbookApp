@@ -336,6 +336,14 @@ Po każdej zmianie w kodzie należy przeanalizować i w razie potrzeby zaktualiz
 - `FoodbookApp.App/DOCS/ARCHITECTURE.md`
 - `FoodbookApp.App/DOCS/PROJECT-FILES.md`
 
+## Lokalizacja Serwisów, modeli i komponentów/widoków/Vmów
+C:\Users\Takis\source\repos\FoodbookApp\FoodbookApp.App\Services\
+C:\Users\Takis\source\repos\FoodbookApp\FoodbookApp.App\Models\
+C:\Users\Takis\source\repos\FoodbookApp\FoodbookApp.App\Views\
+
+Jak KATEGORYCZNIE NIE ROBIĆ:
+Nie wstawiać do takiej lokalizacji (nie robić zbędnego folderu): "C:\Users\Takis\source\repos\FoodbookApp\FoodbookApp.App\FoodbookApp.App\Services\"
+
 ## Jakość kodu (Sonar)
 
 Każda zmiana w kodzie .NET musi być zgodna z zasadami jakości SonarLint/SonarQube.

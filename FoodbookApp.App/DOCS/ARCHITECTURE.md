@@ -85,6 +85,12 @@ Konwencje: minimalizacja logiki w code-behind (XAML.cs) – ograniczona do deleg
 - Dodatkowe widoki rejestrowane przez `Routing.RegisterRoute` w `MauiProgram.cs`
 - Nawigacja wywoływana poprzez `Shell.Current.GoToAsync()` z parametrami Query (np. `?id=`)
 
+Aktualizacja 2026-04-16 (animacje przejsc):
+- Przelaczanie glownych zakladek realizowane przez `Views/Components/TabBarComponent` korzysta z dedykowanego animatora `Utils/TabContentTransitionAnimator` (fade + lekki slide) i nie zalezy od animacji Shell.
+- Przejscia stron na poziomie Shell (np. `AddRecipePage`, `IngredientFormPage`, `SettingsPage`, `ArchivePage`, `FoodbookPage`) sa animowane globalnie przez `AppShell` (`Navigated`) i `Utils/PageTransitionAnimator`.
+- `AppShell` pomija animacje dla trasy `Main`, aby uniknac nakladania ruchu z `TabBarComponent` i ograniczyc zjawisko stutteringu.
+- Dla komponentow UI dodano wspolny helper `Utils/ComponentAnimationHelper`, wykorzystywany m.in. przez `UniversalListItemComponent`, `TabComponent`, `ModernSearchBarComponent`, `GenericListComponent`, `ShoppingListItemComponent` i `SegmentedPickerComponent`.
+
 ---
 ## 11. Dependency Injection (DI)
 Rejestracje w `MauiProgram.cs`:

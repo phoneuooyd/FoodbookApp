@@ -67,6 +67,9 @@ Przykładowe obszary pokryte testami: baza danych, składniki, przepisy, planner
 - Auth: `FoodbookApp.App/Services/Auth/`
 - Sync / integracje zewnętrzne: `FoodbookApp.App/Services/Supabase/`
 - Migracje EF Core: `FoodbookApp.App/Data/Migrations/`
+- Globalne animacje stron Shell: `FoodbookApp.App/Utils/PageTransitionAnimator.cs`
+- Globalne animacje podmiany tresci zakladek: `FoodbookApp.App/Utils/TabContentTransitionAnimator.cs`
+- Wspolne animacje komponentow UI: `FoodbookApp.App/Utils/ComponentAnimationHelper.cs`
 
 ## 6) Zasada utrzymania tego dokumentu
 

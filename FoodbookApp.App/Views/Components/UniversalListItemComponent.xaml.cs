@@ -1,4 +1,6 @@
 using System.Windows.Input;
+using Foodbook.Models;
+using Foodbook.Utils;
 using Foodbook.Views.Base;
 using Microsoft.Maui.Controls;
 using CommunityToolkit.Maui.Behaviors;
@@ -80,6 +82,7 @@ namespace Foodbook.Views.Components
             BindableProperty.Create(nameof(ShowFolderEditButton), typeof(bool), typeof(UniversalListItemComponent), false);
 
         private readonly PageThemeHelper _themeHelper;
+        private object? _lastAnimatedContext;
 
         public ICommand EditCommand
         {
@@ -217,6 +220,7 @@ namespace Foodbook.Views.Components
         {
             InitializeComponent();
             _themeHelper = new PageThemeHelper();
+            BindingContextChanged += OnBindingContextChanged;
             
             // Initialize theme handling when component is loaded
             Loaded += OnComponentLoaded;
@@ -230,6 +234,7 @@ namespace Foodbook.Views.Components
             
             // Apply initial tint color
             RefreshIconTintColors();
+            _ = TryAnimateEntryAsync();
         }
 
         private void OnComponentUnloaded(object? sender, EventArgs e)
@@ -241,6 +246,42 @@ namespace Foodbook.Views.Components
         private void OnThemeChanged(object? sender, EventArgs e)
         {
             MainThread.BeginInvokeOnMainThread(RefreshIconTintColors);
+        }
+
+        private void OnBindingContextChanged(object? sender, EventArgs e)
+        {
+            _ = TryAnimateEntryAsync();
+        }
+
+        private async Task TryAnimateEntryAsync()
+        {
+            var context = BindingContext;
+            if (ItemFrame == null || context == null)
+                return;
+
+            if (ReferenceEquals(_lastAnimatedContext, context))
+                return;
+
+            var delay = ResolveEntryDelay(context);
+            _lastAnimatedContext = context;
+
+            await ComponentAnimationHelper.AnimateEntranceAsync(ItemFrame, delay, offsetY: 10);
+
+            if (context is Folder folder)
+            {
+                folder.AnimateOnNextRender = false;
+            }
+        }
+
+        private static uint ResolveEntryDelay(object context)
+        {
+            if (context is not Folder folder)
+                return 0;
+
+            if (!folder.AnimateOnNextRender)
+                return 0;
+
+            return Math.Min(folder.EntryAnimationDelayMs, 220u);
         }
 
         private void RefreshIconTintColors()
@@ -300,6 +341,8 @@ namespace Foodbook.Views.Components
             e.Data.Properties["SourceItem"] = BindingContext;
             // RequestedOperation is not available in MAUI cross-platform DataPackage; skip
 
+            _ = ComponentAnimationHelper.AnimateEmphasisAsync(ItemFrame, true);
+
             if (DragStartingCommand?.CanExecute(BindingContext) == true)
             {
                 DragStartingCommand.Execute(BindingContext);
@@ -309,6 +352,7 @@ namespace Foodbook.Views.Components
         private void OnDragOver(object? sender, DragEventArgs e)
         {
             if (!ShowDragAndDrop) return;
+            _ = ComponentAnimationHelper.AnimateEmphasisAsync(ItemFrame, true);
             if (DragOverCommand?.CanExecute(BindingContext) == true)
             {
                 DragOverCommand.Execute(BindingContext);
@@ -318,6 +362,7 @@ namespace Foodbook.Views.Components
         private void OnDragLeave(object? sender, DragEventArgs e)
         {
             if (!ShowDragAndDrop) return;
+            _ = ComponentAnimationHelper.AnimateEmphasisAsync(ItemFrame, false);
             if (DragLeaveCommand?.CanExecute(BindingContext) == true)
             {
                 DragLeaveCommand.Execute(BindingContext);
@@ -327,6 +372,8 @@ namespace Foodbook.Views.Components
         private void OnDrop(object? sender, DropEventArgs e)
         {
             if (!ShowDragAndDrop) return;
+
+            _ = ComponentAnimationHelper.AnimateEmphasisAsync(ItemFrame, false);
 
             e.Data.Properties.TryGetValue("SourceItem", out var source);
             var payload = new DragDropInfo(source, BindingContext, DropIntent.On);
@@ -339,19 +386,19 @@ namespace Foodbook.Views.Components
         private void OnTopInsertDragOver(object? sender, DragEventArgs e)
         {
             if (!ShowDragAndDrop) return;
-            // Show the top indicator
-            if (TopInsertZone != null) TopInsertZone.Opacity = 0.6;
+            _ = ComponentAnimationHelper.AnimateDropZoneAsync(TopInsertZone, true);
         }
 
         private void OnTopInsertDragLeave(object? sender, DragEventArgs e)
         {
-            if (TopInsertZone != null) TopInsertZone.Opacity = 0;
+            _ = ComponentAnimationHelper.AnimateDropZoneAsync(TopInsertZone, false);
         }
 
         private void OnTopInsertDrop(object? sender, DropEventArgs e)
         {
             if (!ShowDragAndDrop) return;
-            if (TopInsertZone != null) TopInsertZone.Opacity = 0;
+
+            _ = ComponentAnimationHelper.AnimateDropZoneAsync(TopInsertZone, false);
 
             e.Data.Properties.TryGetValue("SourceItem", out var source);
             var payload = new DragDropInfo(source, BindingContext, DropIntent.Before);
@@ -364,18 +411,20 @@ namespace Foodbook.Views.Components
         private void OnBottomInsertDragOver(object? sender, DragEventArgs e)
         {
             if (!ShowDragAndDrop) return;
-            if (BottomInsertZone != null) BottomInsertZone.Opacity = 0.6;
+            _ = ComponentAnimationHelper.AnimateDropZoneAsync(BottomInsertZone, true);
         }
 
         private void OnBottomInsertDragLeave(object? sender, DragEventArgs e)
         {
-            if (BottomInsertZone != null) BottomInsertZone.Opacity = 0;
+            _ = ComponentAnimationHelper.AnimateDropZoneAsync(BottomInsertZone, false);
         }
 
         private void OnBottomInsertDrop(object? sender, DropEventArgs e)
         {
             if (!ShowDragAndDrop) return;
-            if (BottomInsertZone != null) BottomInsertZone.Opacity = 0;
+
+            _ = ComponentAnimationHelper.AnimateDropZoneAsync(BottomInsertZone, false);
+            _ = ComponentAnimationHelper.AnimateEmphasisAsync(ItemFrame, false);
 
             e.Data.Properties.TryGetValue("SourceItem", out var source);
             var payload = new DragDropInfo(source, BindingContext, DropIntent.After);

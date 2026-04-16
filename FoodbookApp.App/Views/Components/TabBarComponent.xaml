@@ -9,9 +9,14 @@
           BackgroundColor="{DynamicResource PageBackgroundColor}">
         
         <!-- Main content area -->
-        <ContentView x:Name="ContentContainer" 
-                     Grid.Row="0"
-                     BackgroundColor="Transparent" />
+        <Grid Grid.Row="0">
+            <ContentView x:Name="ContentContainer"
+                         BackgroundColor="Transparent" />
+            <ContentView x:Name="TransitionOverlay"
+                         BackgroundColor="Transparent"
+                         IsVisible="False"
+                         InputTransparent="True" />
+        </Grid>
         
         <!-- TabBar at bottom - matches Shell.TabBar styling -->
         <Grid Grid.Row="1"

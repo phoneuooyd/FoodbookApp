@@ -3,6 +3,14 @@
         "/^dotnet build \"c:\\\\Users\\\\Takis\\\\source\\\\repos\\\\FoodbookApp\\\\FoodbookApp\\.App\\\\FoodbookApp\\.App\\.csproj\" -c Debug -nologo$/": {
             "approve": true,
             "matchCommandLine": true
+        },
+        "/^\\$path = 'c:\\\\Users\\\\Takis\\\\AppData\\\\Roaming\\\\Code\\\\User\\\\workspaceStorage\\\\98b2669b4a4682902717ca8801133d90\\\\GitHub\\.copilot-chat\\\\chat-session-resources\\\\b69ec2c5-32cf-4e95-9935-68b4a4644611\\\\call_Pm5mcJ6MxsnleDZdq6BA7GeV__vscode-1776354526271\\\\content\\.txt'; Select-String -Path \\$path -Pattern 'error CS\\|error ' \\| ForEach-Object \\{ \\$_\\.Line \\}$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^\\$path = 'c:\\\\Users\\\\Takis\\\\AppData\\\\Roaming\\\\Code\\\\User\\\\workspaceStorage\\\\98b2669b4a4682902717ca8801133d90\\\\GitHub\\.copilot-chat\\\\chat-session-resources\\\\b69ec2c5-32cf-4e95-9935-68b4a4644611\\\\call_Pm5mcJ6MxsnleDZdq6BA7GeV__vscode-1776354526271\\\\content\\.txt'; Select-String -Path \\$path -Pattern 'b\\\\u0142\\\\u0105d\\|błąd\\|error\\|CS\\[0-9\\]\\{4\\}' \\| ForEach-Object \\{ \\$_\\.LineNumber\\.ToString\\(\\) \\+ ': ' \\+ \\$_\\.Line \\}$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }

@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using Foodbook.Utils;
 
 namespace Foodbook.Views.Components;
 
@@ -90,6 +91,14 @@ public class SegmentedPickerComponent : ContentView
         ApplySelectionState(_button1, IsOption1Selected);
         ApplySelectionState(_button2, IsOption2Selected);
         ApplySelectionState(_button3, IsOption3Selected);
+
+        _ = ComponentAnimationHelper.AnimateEmphasisAsync(_button1, IsOption1Selected);
+        _ = ComponentAnimationHelper.AnimateEmphasisAsync(_button2, IsOption2Selected);
+
+        if (ShowOption3)
+        {
+            _ = ComponentAnimationHelper.AnimateEmphasisAsync(_button3, IsOption3Selected);
+        }
     }
 
     private static void ApplySelectionState(Button button, bool isSelected)

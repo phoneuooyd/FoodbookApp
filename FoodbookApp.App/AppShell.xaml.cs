@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Foodbook.Utils;
 using FoodbookApp.Interfaces;
 using Foodbook.Views;
 
@@ -7,6 +8,8 @@ namespace FoodbookApp
     public partial class AppShell : Shell
     {
         private ILocalizationService? _localizationService;
+        private bool _hasSeenFirstNavigation;
+        private string _lastAnimatedLocation = string.Empty;
 
         public AppShell()
         {
@@ -14,6 +17,8 @@ namespace FoodbookApp
             
             // Get localization service
             _localizationService = MauiProgram.ServiceProvider?.GetService<ILocalizationService>();
+
+            Navigated += OnShellNavigatedAnimate;
             
             TryUpdateSystemBars();
             
@@ -31,6 +36,47 @@ namespace FoodbookApp
             {
                 System.Diagnostics.Debug.WriteLine($"[AppShell] TryUpdateSystemBars error: {ex.Message}");
             }
+        }
+
+        private async void OnShellNavigatedAnimate(object? sender, ShellNavigatedEventArgs e)
+        {
+            try
+            {
+                var location = e.Current?.Location?.ToString() ?? string.Empty;
+
+                if (!_hasSeenFirstNavigation)
+                {
+                    _hasSeenFirstNavigation = true;
+                    _lastAnimatedLocation = location;
+                    return;
+                }
+
+                if (string.Equals(location, _lastAnimatedLocation, StringComparison.Ordinal))
+                    return;
+
+                _lastAnimatedLocation = location;
+
+                // Do not animate the Main route because tab transitions are handled inside TabBarComponent.
+                if (IsMainLocation(location) || CurrentPage is MainPage)
+                    return;
+
+                var useVerticalLift = e.Source is not ShellNavigationSource.Pop and not ShellNavigationSource.PopToRoot;
+                await PageTransitionAnimator.AnimatePageEnterAsync(CurrentPage, useVerticalLift);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AppShell] Navigation animation error: {ex.Message}");
+            }
+        }
+
+        private static bool IsMainLocation(string location)
+        {
+            if (string.IsNullOrWhiteSpace(location))
+                return false;
+
+            return location.Contains("//Main", StringComparison.OrdinalIgnoreCase)
+                || location.EndsWith("/Main", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(location, "Main", StringComparison.OrdinalIgnoreCase);
         }
 
         protected override void OnAppearing()

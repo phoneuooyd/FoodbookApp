@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Windows.Input;
 using Foodbook.Models;
+using Foodbook.Utils;
 using Foodbook.Views.Base;
 
 namespace Foodbook.Views.Components;
@@ -62,6 +63,7 @@ public partial class ShoppingListItemComponent : ContentView
     private void OnComponentLoaded(object? sender, EventArgs e)
     {
         _themeHelper.Initialize();
+        _ = ComponentAnimationHelper.AnimateEntranceAsync(ItemFrame, offsetY: 8);
     }
 
     private void OnComponentUnloaded(object? sender, EventArgs e)
@@ -71,16 +73,19 @@ public partial class ShoppingListItemComponent : ContentView
 
     private void OnEntryFocused(object sender, FocusEventArgs e)
     {
+        _ = ComponentAnimationHelper.AnimateEmphasisAsync(ItemFrame, true);
         EntryFocused?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnEntryUnfocused(object sender, FocusEventArgs e)
     {
+        _ = ComponentAnimationHelper.AnimateEmphasisAsync(ItemFrame, false);
         EntryUnfocused?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnUnitPickerSelectionChanged(object? sender, EventArgs e)
     {
+        _ = ComponentAnimationHelper.AnimateSoftRefreshAsync(ItemFrame);
         UnitSelectionChanged?.Invoke(this, EventArgs.Empty);
     }
 }

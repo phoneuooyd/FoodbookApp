@@ -4,8 +4,10 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Foodbook.Utils;
 using FoodbookApp;
 using FoodbookApp.Interfaces;
 
@@ -17,6 +19,7 @@ namespace Foodbook.Views.Components
         private bool _isNavigating;
         private readonly Dictionary<string, ContentPage> _pageCache = new();
         private readonly Dictionary<ContentPage, View> _pageViewCache = new();
+        private readonly SemaphoreSlim _contentSwapGate = new(1, 1);
         private ILocalizationService? _localizationService;
         private Color _iconTintColor = Colors.Black;
         
@@ -151,7 +154,7 @@ namespace Foodbook.Views.Components
                         // Force initial render + lifecycle for embedded pages (ContentPage.OnAppearing isn't automatic)
                         if (ContentContainer?.Content == null && SelectedTab != null)
                         {
-                            UpdateContent(SelectedTab);
+                            await UpdateContentAsync(previousTab: null, tab: SelectedTab);
                         }
 
                         // Give UI a tick, then ensure Appearing fired for initial page
@@ -230,98 +233,166 @@ namespace Foodbook.Views.Components
         private void UpdateSelectedTab(TabItemModel? oldTab, TabItemModel? newTab)
         {
             if (oldTab != null) oldTab.IsSelected = false;
-            if (newTab != null)
-            {
-                newTab.IsSelected = true;
-                _selectedTab = newTab;
-                UpdateContent(newTab);
-            }
+            if (newTab == null) return;
+
+            newTab.IsSelected = true;
+            _selectedTab = newTab;
+            _ = UpdateContentAsync(oldTab, newTab);
         }
 
         private ContentPage? _currentPageInstance;
 
-private void UpdateContent(TabItemModel tab)
-{
-    try
-    {
-        if (ContentContainer == null) return;
-
-        try
+        private async Task UpdateContentAsync(TabItemModel? previousTab, TabItemModel tab)
         {
-            _currentPageInstance?.SendDisappearing();
-        }
-        catch { }
-
-        ContentPage? pageInstance = null;
-
-        if (!string.IsNullOrEmpty(tab.Route) && _pageCache.TryGetValue(tab.Route, out var cachedPage))
-        {
-            pageInstance = cachedPage;
-            System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Using cached page for route: {tab.Route}");
-        }
-        else if (tab.PageType != null)
-        {
-            pageInstance = MauiProgram.ServiceProvider?.GetService(tab.PageType) as ContentPage;
-            if (pageInstance != null)
+            await _contentSwapGate.WaitAsync();
+            try
             {
-                if (!string.IsNullOrEmpty(tab.Route))
-                    _pageCache[tab.Route] = pageInstance;
-                System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Created new page from DI for route: {tab.Route}, VM: {pageInstance.BindingContext?.GetType().Name ?? "null"}");
+                if (ContentContainer == null) return;
+
+                try
+                {
+                    _currentPageInstance?.SendDisappearing();
+                }
+                catch { }
+
+                var previousView = ContentContainer.Content as View;
+                var direction = ResolveTransitionDirection(previousTab, tab);
+
+                var pageInstance = ResolvePageInstance(tab);
+                if (pageInstance == null)
+                    return;
+
+                var viewToRender = ResolveViewForPage(pageInstance);
+                if (viewToRender == null)
+                    return;
+
+                if (ReferenceEquals(previousView, viewToRender))
+                {
+                    _currentPageInstance = pageInstance;
+                    try { pageInstance.SendAppearing(); } catch { }
+                    _ = TriggerInitialLoadAsync(pageInstance);
+                    return;
+                }
+
+                DetachViewFromParent(viewToRender);
+
+                if (previousView != null)
+                {
+                    ContentContainer.Content = null;
+                    if (TransitionOverlay != null)
+                    {
+                        TransitionOverlay.Content = previousView;
+                        TransitionOverlay.IsVisible = true;
+                    }
+                }
+                else if (TransitionOverlay != null)
+                {
+                    TransitionOverlay.Content = null;
+                    TransitionOverlay.IsVisible = false;
+                }
+
+                viewToRender.BindingContext = pageInstance.BindingContext;
+                ContentContainer.Content = viewToRender;
+                _currentPageInstance = pageInstance;
+
+                try
+                {
+                    pageInstance.SendAppearing();
+                }
+                catch { }
+
+                await TabContentTransitionAnimator.AnimateContentSwapAsync(
+                    TransitionOverlay,
+                    previousView,
+                    viewToRender,
+                    direction);
+
+                System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Rendered content with BindingContext: {viewToRender.BindingContext?.GetType().Name ?? "null"}");
+                _ = TriggerInitialLoadAsync(pageInstance);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Error updating content: {ex.Message}");
+            }
+            finally
+            {
+                _contentSwapGate.Release();
             }
         }
-        else if (tab.ContentTemplate != null)
+
+        private ContentPage? ResolvePageInstance(TabItemModel tab)
         {
-            var created = tab.ContentTemplate.CreateContent();
-            if (created is ContentPage cp)
+            ContentPage? pageInstance = null;
+
+            if (!string.IsNullOrEmpty(tab.Route) && _pageCache.TryGetValue(tab.Route, out var cachedPage))
             {
-                pageInstance = cp;
+                pageInstance = cachedPage;
+                System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Using cached page for route: {tab.Route}");
             }
+            else if (tab.PageType != null)
+            {
+                pageInstance = MauiProgram.ServiceProvider?.GetService(tab.PageType) as ContentPage;
+                if (pageInstance != null)
+                {
+                    if (!string.IsNullOrEmpty(tab.Route))
+                        _pageCache[tab.Route] = pageInstance;
+                    System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Created new page from DI for route: {tab.Route}, VM: {pageInstance.BindingContext?.GetType().Name ?? "null"}");
+                }
+            }
+            else if (tab.ContentTemplate != null)
+            {
+                var created = tab.ContentTemplate.CreateContent();
+                if (created is ContentPage cp)
+                {
+                    pageInstance = cp;
+                }
+            }
+
+            return pageInstance;
         }
 
-        if (pageInstance == null)
-            return;
-
-        if (!_pageViewCache.TryGetValue(pageInstance, out var viewToRender))
+        private View? ResolveViewForPage(ContentPage pageInstance)
         {
-            viewToRender = pageInstance.Content;
+            if (_pageViewCache.TryGetValue(pageInstance, out var cachedView))
+                return cachedView;
+
+            var viewToRender = pageInstance.Content;
             if (viewToRender == null)
-                return;
+                return null;
 
             pageInstance.Content = null;
             _pageViewCache[pageInstance] = viewToRender;
+            return viewToRender;
         }
 
-        if (viewToRender.Parent is ContentView contentViewParent)
+        private static void DetachViewFromParent(View view)
         {
-            contentViewParent.Content = null;
-        }
-        else if (viewToRender.Parent is ContentPage contentPageParent)
-        {
-            contentPageParent.Content = null;
-        }
-        else if (viewToRender.Parent is Border borderParent)
-        {
-            borderParent.Content = null;
+            if (view.Parent is ContentView contentViewParent)
+            {
+                contentViewParent.Content = null;
+            }
+            else if (view.Parent is ContentPage contentPageParent)
+            {
+                contentPageParent.Content = null;
+            }
+            else if (view.Parent is Border borderParent)
+            {
+                borderParent.Content = null;
+            }
         }
 
-        viewToRender.BindingContext = pageInstance.BindingContext;
-        ContentContainer.Content = viewToRender;
-        _currentPageInstance = pageInstance;
-
-        try
+        private int ResolveTransitionDirection(TabItemModel? previousTab, TabItemModel currentTab)
         {
-            pageInstance.SendAppearing();
-        }
-        catch { }
+            if (TabItems == null || previousTab == null)
+                return 1;
 
-        System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Rendered content with BindingContext: {viewToRender.BindingContext?.GetType().Name ?? "null"}");
-        _ = TriggerInitialLoadAsync(pageInstance);
-    }
-    catch (Exception ex)
-    {
-        System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Error updating content: {ex.Message}");
-    }
-}
+            var previousIndex = TabItems.IndexOf(previousTab);
+            var currentIndex = TabItems.IndexOf(currentTab);
+            if (previousIndex < 0 || currentIndex < 0 || previousIndex == currentIndex)
+                return 1;
+
+            return currentIndex > previousIndex ? 1 : -1;
+        }
 
         /// <summary>
         /// Handles tab selection with navigation stack management and unsaved changes detection
@@ -424,8 +495,8 @@ private void UpdateContent(TabItemModel tab)
                 // SCENARIO 3: We're on HomePage - show exit confirmation
                 System.Diagnostics.Debug.WriteLine($"[TabBarComponent] On HomePage, showing exit confirmation");
                 
-                var title = _localizationService?.GetString("HomePageResources", "ExitAppTitle") ?? "Wyjœcie";
-                var message = _localizationService?.GetString("HomePageResources", "ExitAppConfirmation") ?? "Czy chcesz wyjœæ z aplikacji?";
+                var title = _localizationService?.GetString("HomePageResources", "ExitAppTitle") ?? "Wyjï¿½cie";
+                var message = _localizationService?.GetString("HomePageResources", "ExitAppConfirmation") ?? "Czy chcesz wyjï¿½ï¿½ z aplikacji?";
                 
                 bool result = await Application.Current!.MainPage!.DisplayAlert(title, message, "Tak", "Nie");
                 
@@ -501,8 +572,8 @@ private void UpdateContent(TabItemModel tab)
             try
             {
                 var title = _localizationService?.GetString("CommonResources", "UnsavedChangesTitle") ?? "Niezapisane zmiany";
-                var message = _localizationService?.GetString("CommonResources", "UnsavedChangesMessage") ?? "Masz niezapisane zmiany. Czy na pewno chcesz opuœciæ tê stronê?";
-                var leave = _localizationService?.GetString("CommonResources", "LeaveButton") ?? "Opuœæ";
+                var message = _localizationService?.GetString("CommonResources", "UnsavedChangesMessage") ?? "Masz niezapisane zmiany. Czy na pewno chcesz opuï¿½ciï¿½ tï¿½ stronï¿½?";
+                var leave = _localizationService?.GetString("CommonResources", "LeaveButton") ?? "Opuï¿½ï¿½";
                 var cancel = _localizationService?.GetString("CommonResources", "CancelButton") ?? "Anuluj";
 
                 var result = await Application.Current!.MainPage!.DisplayAlert(title, message, leave, cancel);
@@ -532,7 +603,7 @@ private void UpdateContent(TabItemModel tab)
             {
                 System.Diagnostics.Debug.WriteLine($"[TabBarComponent] TriggerInitialLoadAsync for {page.GetType().Name}");
 
-                // Initialize theme/font handling if present (still via reflection — low risk, private method)
+                // Initialize theme/font handling if present (still via reflection ï¿½ low risk, private method)
                 var initThemeMethod = page.GetType().GetMethod("InitializeThemeAndFontHandling", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 initThemeMethod?.Invoke(page, null);
 

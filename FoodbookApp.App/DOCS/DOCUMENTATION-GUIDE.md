@@ -615,3 +615,18 @@ Aktualizacja 2026-04-15:
 - Po wejściu do profilu wykonywana jest automatyczna pojedyncza próba wznowienia operacji pending.
 - Użytkownik ma również ręczne wznowienie przez przycisk „Wznów operację”.
 - Wynik akcji subskrypcji rozróżnia stany `Completed`, `Pending`, `Failed`.
+
+## 18. Globalne animacje nawigacji i komponentów (aktualizacja 2026-04-16)
+- Rozdzielono logikę ruchu na dwa niezależne poziomy:
+   - `Utils/PageTransitionAnimator.cs` odpowiada wyłącznie za przejścia stron Shell.
+   - `Utils/TabContentTransitionAnimator.cs` odpowiada wyłącznie za przejścia treści zakładek.
+- `AppShell.xaml.cs` animuje strony detail po `Navigated`, ale pomija trasę `Main`, aby nie nakładać animacji na `TabBarComponent`.
+- `Views/Components/TabBarComponent` zachowuje dotychczasowy efekt przełączania zakładek (fade/slide z `TransitionOverlay`) bez zależności od animatora stron.
+- `Views/Components/TabComponent` otrzymał analogiczny, lekki swap treści (fade/slide) w obrębie własnego kontenera.
+- Dodano `Utils/ComponentAnimationHelper.cs` i zastosowano go w komponentach:
+   - `UniversalListItemComponent` (wejście + drag/drop emphasis),
+   - `ModernSearchBarComponent` (wejście + focus emphasis),
+   - `GenericListComponent` (wejście/refresh),
+   - `ShoppingListItemComponent` (wejście/focus),
+   - `SegmentedPickerComponent` (podkreślenie wybranej opcji).
+- Dla `Models/Folder.cs` dodano pola UI-only (`AnimateOnNextRender`, `EntryAnimationDelayMs`) do kontrolowania jednorazowego i opóźnionego wejścia elementów folderów.

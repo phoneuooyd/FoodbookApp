@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using Foodbook.Utils;
 using Foodbook.Views.Base;
 
 namespace Foodbook.Views.Components
@@ -65,11 +66,22 @@ namespace Foodbook.Views.Components
         private void OnComponentLoaded(object? sender, EventArgs e)
         {
             _themeHelper.Initialize();
+            _ = ComponentAnimationHelper.AnimateEntranceAsync(SearchFrame, offsetY: 6);
         }
 
         private void OnComponentUnloaded(object? sender, EventArgs e)
         {
             _themeHelper.Cleanup();
+        }
+
+        private void OnSearchEntryFocused(object? sender, FocusEventArgs e)
+        {
+            _ = ComponentAnimationHelper.AnimateEmphasisAsync(SearchFrame, true);
+        }
+
+        private void OnSearchEntryUnfocused(object? sender, FocusEventArgs e)
+        {
+            _ = ComponentAnimationHelper.AnimateEmphasisAsync(SearchFrame, false);
         }
     }
 }

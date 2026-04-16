@@ -33,7 +33,7 @@
 
         <ContentView Grid.Row="1" Style="{StaticResource ListItemContainer}">
             <!-- Frame as the outer card; ribbon moved INSIDE and flush with the card's left edge -->
-            <Frame Style="{StaticResource ListItemFrame}" Padding="0">
+            <Frame x:Name="ItemFrame" Style="{StaticResource ListItemFrame}" Padding="0">
                 <Frame.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding EditCommand, Source={x:Reference ItemComponent}}"
                                           CommandParameter="{Binding .}" />
