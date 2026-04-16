@@ -207,6 +207,17 @@ Propozycje optymalizacji:
 - `ProfilePage` korzysta wyłącznie z kontraktu i reaguje jednolicie na wynik akcji (`SubscriptionActionResult`).
 - Brak logiki biznesowej w code-behind – tylko routing/UI glue
 
+Aktualizacja 2026-04-15:
+- Kontrakt subskrypcji rozszerzono o odczyt i wznowienie operacji oczekujących (`GetPendingOperationAsync`, `ResumePendingOperationAsync`).
+- Wprowadzono lokalną trwałą kolejkę operacji subskrypcji (`SubscriptionOperations` w SQLite) z retry i recovery po crashu.
+- `MockSubscriptionManagementService` zapisuje zmiany premium do tabeli `users` w Supabase (source-of-truth):
+  - `is_premium`,
+  - `premium_from`,
+  - `premium_to`,
+  - `user_type`.
+- Odczyt uprawnień premium w `FeatureAccessService` został przełączony z `feature_access_snapshot` na `users`.
+- UI profilu otrzymał obsługę planu miesięcznego oraz kartę operacji oczekującej z ręcznym wznowieniem.
+
 ---
 ## 25. Dalsze rekomendacje
 - Rozważyć wprowadzenie CommunityToolkit.Mvvm (atrybuty `[ObservableProperty]`, `[RelayCommand]`) dla redukcji boilerplate

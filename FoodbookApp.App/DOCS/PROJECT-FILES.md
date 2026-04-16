@@ -90,6 +90,14 @@ Nowe elementy struktury:
 - `Services/Subscription/SupabaseEdgeSubscriptionManagementService.cs` — seam pod edge function.
 - `Services/Subscription/PaymentProviderSubscriptionManagementService.cs` — seam pod provider płatności.
 
+Aktualizacja 2026-04-15:
+- `Models/SubscriptionActionState.cs` — status wyniku akcji (`Completed`, `Pending`, `Failed`).
+- `Models/SubscriptionPendingOperation.cs` — model UI dla oczekującej operacji subskrypcji.
+- `Models/SubscriptionOperationEntry.cs` — lokalna encja SQLite do trwałego pending/resume.
+- `Data/Migrations/20260415130000_AddSubscriptionOperations.cs` — migracja dodająca tabelę `SubscriptionOperations`.
+- `Tests/MockSubscriptionManagementServiceTests.cs` — testy retry/pending/resume dla mock provider.
+- `Services/FeatureAccessService.cs` — odczyt source-of-truth premium z tabeli `users` (Supabase).
+
 ## 8) Limity planów (dodane 2026-03-24)
 
 Nowe elementy struktury:

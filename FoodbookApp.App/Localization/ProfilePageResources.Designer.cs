@@ -653,5 +653,122 @@ namespace FoodbookApp.Localization {
                 return ResourceManager.GetString("SyncQueueTitle", resourceCulture);
             }
         }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Free.
+        /// </summary>
+        internal static string PlanNameFree {
+            get {
+                return ResourceManager.GetString("PlanNameFree", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Premium Monthly.
+        /// </summary>
+        internal static string PlanNamePremiumMonthly {
+            get {
+                return ResourceManager.GetString("PlanNamePremiumMonthly", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Premium Yearly.
+        /// </summary>
+        internal static string PlanNamePremiumYearly {
+            get {
+                return ResourceManager.GetString("PlanNamePremiumYearly", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Error: {0}.
+        /// </summary>
+        internal static string SubscriptionPendingErrorFormat {
+            get {
+                return ResourceManager.GetString("SubscriptionPendingErrorFormat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Last attempt: {0}.
+        /// </summary>
+        internal static string SubscriptionPendingLastAttemptFormat {
+            get {
+                return ResourceManager.GetString("SubscriptionPendingLastAttemptFormat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu No attempt yet..
+        /// </summary>
+        internal static string SubscriptionPendingNoAttempt {
+            get {
+                return ResourceManager.GetString("SubscriptionPendingNoAttempt", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Target plan: {0}.
+        /// </summary>
+        internal static string SubscriptionPendingPlanFormat {
+            get {
+                return ResourceManager.GetString("SubscriptionPendingPlanFormat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Resume operation.
+        /// </summary>
+        internal static string SubscriptionPendingResume {
+            get {
+                return ResourceManager.GetString("SubscriptionPendingResume", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Status: cancelled.
+        /// </summary>
+        internal static string SubscriptionPendingStatusCancelled {
+            get {
+                return ResourceManager.GetString("SubscriptionPendingStatusCancelled", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Status: requires manual retry.
+        /// </summary>
+        internal static string SubscriptionPendingStatusFailed {
+            get {
+                return ResourceManager.GetString("SubscriptionPendingStatusFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Status: waiting to continue.
+        /// </summary>
+        internal static string SubscriptionPendingStatusPending {
+            get {
+                return ResourceManager.GetString("SubscriptionPendingStatusPending", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Status: processing.
+        /// </summary>
+        internal static string SubscriptionPendingStatusProcessing {
+            get {
+                return ResourceManager.GetString("SubscriptionPendingStatusProcessing", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Wyszukuje zlokalizowany ciąg podobny do ciągu Pending subscription operation.
+        /// </summary>
+        internal static string SubscriptionPendingTitle {
+            get {
+                return ResourceManager.GetString("SubscriptionPendingTitle", resourceCulture);
+            }
+        }
     }
 }

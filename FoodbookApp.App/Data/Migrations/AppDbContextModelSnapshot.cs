@@ -343,6 +343,63 @@ namespace FoodbookApp.Migrations
                     b.ToTable("ShoppingListItems");
                 });
 
+            modelBuilder.Entity("Foodbook.Models.SubscriptionOperationEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("CompletedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IdempotencyKey")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastAttemptUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("TargetPlan")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("UpdatedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId")
+                        .HasDatabaseName("IX_SubscriptionOperations_AccountId");
+
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique()
+                        .HasDatabaseName("IX_SubscriptionOperations_IdempotencyKey");
+
+                    b.HasIndex("AccountId", "Status")
+                        .HasDatabaseName("IX_SubscriptionOperations_AccountId_Status");
+
+                    b.HasIndex("Status", "UpdatedUtc")
+                        .HasDatabaseName("IX_SubscriptionOperations_Processing");
+
+                    b.ToTable("SubscriptionOperations");
+                });
+
             modelBuilder.Entity("Foodbook.Models.SyncQueueEntry", b =>
                 {
                     b.Property<Guid>("Id")

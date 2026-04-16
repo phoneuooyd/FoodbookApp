@@ -170,6 +170,7 @@ Umożliwić zarządzanie katalogiem składników z wartościami odżywczymi wyko
 | Lista | Ingredients (ObservableCollection) | Bieżąca (filtrowana) lista wyświetlana w UI |
 | Lista | _allIngredients (prywatne) | Pełna lista do filtracji |
 | Lista | SearchText | Tekst filtrowania (case-insensitive Contains) |
+| Lista | SortOrder / CurrentSortBy | Stan sortowania (Name/Calories/Protein/Carbs/Fat, asc/desc) |
 | Lista | IsLoading / IsRefreshing | Flagi stanu ładowania / odświeżania |
 | Lista | IsBulkVerifying / BulkVerificationStatus | Stan i status masowej weryfikacji |
 | Formularz | Name, Quantity, SelectedUnit | Dane podstawowe składnika (Quantity jako string dla walidacji) |
@@ -196,7 +197,7 @@ Umożliwić zarządzanie katalogiem składników z wartościami odżywczymi wyko
    - Pobranie pełnej listy z serwisu
    - Batch insert do `Ingredients` (domyślnie paczki 50) z krótkimi `Task.Delay(1)` dla płynności UI
    - Ustawienie `_allIngredients` i zastosowanie filtra (SearchText)
-2. Filtrowanie: Ustawienie `SearchText` => FilterIngredients() podmienia kolekcję na dopasowania
+2. Filtrowanie i sortowanie: `SearchText` zawęża listę, a `SortOrder/CurrentSortBy` ustawia kolejność (nazwa lub makro, rosnąco/malejąco)
 3. Dodanie / Edycja:
    - Formularz waliduje każde pole on-change (`ValidateInput`) i steruje `CanSave`
    - `SaveAsync` tworzy lub aktualizuje encję przez `IIngredientService`
@@ -228,6 +229,7 @@ Umożliwić zarządzanie katalogiem składników z wartościami odżywczymi wyko
 |--------|--------|-----------|
 | IngredientsPage | Lista (CollectionView/ListView) | ItemsSource = `Ingredients` |
 | IngredientsPage | Pole wyszukiwania | Text = `SearchText` (on-change filtr) |
+| IngredientsPage | Popup filtr/sort | `FilterSortPopup` -> `ApplySorting(SortBy)` |
 | IngredientsPage | Pull-to-refresh | Command = `RefreshCommand`, IsRefreshing = `IsRefreshing` |
 | IngredientsPage | Dodaj przycisk FAB / toolbar | `AddCommand` |
 | IngredientsPage | Akcje elementu (edit/delete) | `EditCommand` / `DeleteCommand` |
@@ -336,9 +338,12 @@ Zapewnić pełny cykl życia przepisów kulinarnych wraz z automatycznym lub rę
 ### 4.4 Stany i właściwości (RecipeViewModel)
 | Właściwość | Opis |
 |-----------|------|
-| Recipes (ObservableCollection) | Aktualnie wyświetlane przepisy |
+| Items (ObservableCollection<object>) | Aktualnie wyświetlane elementy (foldery + przepisy) |
+| Recipes (ObservableCollection) | Kolekcja kompatybilności / źródło pomocnicze |
 | _allRecipes (prywatne) | Pełny zbiór do filtracji |
 | SearchText | Tekst filtrowania (nazwa / opis) |
+| SortOrder / CurrentSortBy | Stan sortowania (nazwa lub makro, asc/desc) |
+| SelectedLabelIds / SelectedIngredientNames | Aktywne filtry etykiet i składników |
 | IsLoading / IsRefreshing | Flagi operacji asynchronicznych |
 
 ### 4.5 Komendy / Akcje
@@ -358,15 +363,16 @@ Zapewnić pełny cykl życia przepisów kulinarnych wraz z automatycznym lub rę
 
 ### 4.6 Główne przepływy
 1. Ładowanie listy przepisów (LoadRecipesAsync): Batch loading (paczkami 50) + filtracja
-2. Filtrowanie: SearchText => FilterRecipes() (nazwa lub opis Contains Insensitive)
-3. Dodawanie nowego przepisu: Reset() → uzupełnienie danych → dynamiczna walidacja → SaveRecipeAsync
-4. Edycja przepisu: LoadRecipeAsync(id) ładuje entity + kopie składników → przeliczenie makro → zapis aktualizuje
-5. Dodanie składnika: AddIngredientCommand → domyślne wartości 0 → recalculacja + walidacja
-6. Aktualizacja wartości odżywczych: Ingredients.CollectionChanged oraz zmiany nazw (OnIngredientNameChanged) wyzwalają recalculację (async) + odczyt bazy
-7. Kalkulacje makro: Suma (wartośćSkładnika * współczynnik jednostki) gdzie Gram/Milliliter = qty/100, Piece = qty
-8. Tryb automatyczny vs manualny: UseCalculatedValues=true nadpisuje główne pola obliczonymi; wyłączenie pozwala ręcznie edytować
-9. Import: ImportRecipeAsync → pobranie danych → ustawienie Name/Description/Ingredients → przeliczenie makro → decyzja o trybie (auto jeśli brak makro w imporcie)
-10. Zapis: Walidacja; w trybie dodawania reset formularza po sukcesie; w edycji powrót bez resetu Name itd.
+2. Filtrowanie: SearchText => FilterItems() (nazwa lub opis Contains Insensitive)
+3. Sortowanie i filtry z popupa: `FilterSortPopup` zwraca `SortBy`, etykiety i składniki; `RecipeViewModel.ApplySortingLabelAndIngredientFilter(...)` aktualizuje listę
+4. Dodawanie nowego przepisu: Reset() → uzupełnienie danych → dynamiczna walidacja → SaveRecipeAsync
+5. Edycja przepisu: LoadRecipeAsync(id) ładuje entity + kopie składników → przeliczenie makro → zapis aktualizuje
+6. Dodanie składnika: AddIngredientCommand → domyślne wartości 0 → recalculacja + walidacja
+7. Aktualizacja wartości odżywczych: Ingredients.CollectionChanged oraz zmiany nazw (OnIngredientNameChanged) wyzwalają recalculację (async) + odczyt bazy
+8. Kalkulacje makro: Suma (wartośćSkładnika * współczynnik jednostki) gdzie Gram/Milliliter = qty/100, Piece = qty
+9. Tryb automatyczny vs manualny: UseCalculatedValues=true nadpisuje główne pola obliczonymi; wyłączenie pozwala ręcznie edytować
+10. Import: ImportRecipeAsync → pobranie danych → ustawienie Name/Description/Ingredients → przeliczenie makro → decyzja o trybie (auto jeśli brak makro w imporcie)
+11. Zapis: Walidacja; w trybie dodawania reset formularza po sukcesie; w edycji powrót bez resetu Name itd.
 
 ### 4.7 Reguły biznesowe / Walidacje
 | Reguła | Opis |
@@ -382,8 +388,9 @@ Zapewnić pełny cykl życia przepisów kulinarnych wraz z automatycznym lub rę
 ### 4.8 Elementy UI + Binding (wnioskowane)
 | Strona | Element | Powiązanie |
 |--------|--------|-----------|
-| RecipesPage | Lista przepisów | ItemsSource = `Recipes` |
+| RecipesPage | Lista elementów | ItemsSource = `Items` (foldery + przepisy) |
 | RecipesPage | Wyszukiwanie | Text = `SearchText` |
+| RecipesPage | Popup filtr/sort | `FilterSortPopup` -> `ApplySortingLabelAndIngredientFilter(SortBy, labels, ingredients)` |
 | RecipesPage | Pull-to-refresh | Command = `RefreshCommand`, IsRefreshing = `IsRefreshing` |
 | AddRecipePage | Pola tekstowe | `Name`, `Description`, `IloscPorcji` |
 | AddRecipePage | Pola makro | `Calories`, `Protein`, `Fat`, `Carbs` (edytowalne zależnie od UseCalculatedValues) |
@@ -600,3 +607,11 @@ Patrz dalsza część dokumentu (standardy dokumentowania kodu, lokalizacji, tes
   - anulowanie subskrypcji.
 - Wszystkie akcje idą przez `ISubscriptionManagementService` i zwracają jednolity `SubscriptionActionResult` do prezentacji komunikatu UI (`DisplayAlert`).
 - Odświeżenie po akcji obejmuje sekcję aktualnego planu oraz tekst limitów.
+
+Aktualizacja 2026-04-15:
+- Dodano czwartą akcję: przejście na plan Premium miesięczny.
+- Dodano zabezpieczenie anty-mash w `ProfilePage`: pojedyncza operacja subskrypcji naraz i blokada przycisków na czas przetwarzania.
+- Dodano kartę operacji oczekującej (pending) w widoku subskrypcji z informacją o statusie, błędzie i ostatniej próbie.
+- Po wejściu do profilu wykonywana jest automatyczna pojedyncza próba wznowienia operacji pending.
+- Użytkownik ma również ręczne wznowienie przez przycisk „Wznów operację”.
+- Wynik akcji subskrypcji rozróżnia stany `Completed`, `Pending`, `Failed`.

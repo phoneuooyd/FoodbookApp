@@ -53,7 +53,7 @@ Kompleksowa aplikacja mobilna do:
 - **Framework**: xUnit
 - **Mocking**: Moq
 - **Assertions**: FluentAssertions
-- **Coverage**: Minimum 80% dla business logic
+- **Coverage**: Po 5 przypadków pozytywnych dla każdej wlaściwości/funkcji metody oraz 2 negatywne (true = pozytyw, false negatyw)
 
 ---
 
@@ -61,7 +61,7 @@ Kompleksowa aplikacja mobilna do:
 
 ### Design System
 - **Material Design**: Zgodność z wytycznymi Google/Microsoft
-- **Light/Dark Mode**: Automatyczne przełączanie na podstawie ustawień systemu. Należy zawsze dodawać opcje motywowe z ThemeService
+- **Light/Dark Mode**: Automatyczne przełączanie na podstawie ustawień systemu. - **Themes** Należy zawsze dodawać opcje motywowe z ThemeService
 - **Zawsze dodawać tłumaczenia z użyciem plików zasobów .resx**
 - **Responsive Layout**: Adaptacja do różnych rozmiarów ekranów
 - **Touch-First**: Minimalna wielkość przycisków 44x44 px
@@ -78,6 +78,10 @@ Kompleksowa aplikacja mobilna do:
 - **ActivityIndicator**: Dla krótkich operacji
 - **Skeleton Screens**: Dla ładowania list
 - **batch loading**: Ładowanie danych w partiach dla dużych zestawów danych
+
+### Performance tips
+- **Preferowane używanie** elementów UI z wbudowaną wirtualizacją i jak największą wydajnością (CollectionView)
+- **MultiThreading** - Używanie ThreadPool/Task.Start(), Task.WhenAll(), używanie semaforów i locków i asynchronicznych tasków. ThreadPool dla dlugich operacji I/o oraz dla nieblokowania wątku UI.
 
 ---
 

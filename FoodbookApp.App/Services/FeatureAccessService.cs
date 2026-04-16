@@ -231,10 +231,10 @@ public sealed class FeatureAccessService : IFeatureAccessService
                 return null;
             }
 
-            var filter = $"user_id=eq.{account.SupabaseUserId}&order=updated_at.desc&limit=1";
-            var rows = await _restClient.GetAsync<FeatureAccessSnapshotRow>("feature_access_snapshot", filter);
+            var filter = $"id=eq.{account.SupabaseUserId}&limit=1";
+            var rows = await _restClient.GetAsync<SupabaseUserRow>("users", filter);
             var row = rows.FirstOrDefault();
-            return row?.ToSnapshot() ?? null;
+            return row?.ToSnapshot(_clock.UtcNow);
         }
         catch (Exception ex)
         {
@@ -305,38 +305,148 @@ public sealed class FeatureAccessService : IFeatureAccessService
         public FeatureAccessSnapshot? Snapshot { get; set; }
     }
 
-    private sealed class FeatureAccessSnapshotRow
+    private sealed class SupabaseUserRow
     {
+        public Guid Id { get; set; }
         public bool IsPremium { get; set; }
-        public int? MonthlyPlanCreationLimit { get; set; }
-        public int MonthlyPlanCreationsUsed { get; set; }
-        public DateTime? LastPlannerCreationMonthUtc { get; set; }
-        public bool AutoPlannerEnabled { get; set; }
-        public bool PlanRecyclingEnabled { get; set; }
-        public bool AiRecipeCreationEnabled { get; set; }
-        public bool FoodbookTemplatesEnabled { get; set; }
-        public bool PremiumRecipePacksEnabled { get; set; }
+        public DateTime? PremiumFrom { get; set; }
+        public DateTime? PremiumTo { get; set; }
+        public int? UserType { get; set; }
+        public int? PlanCountThisMonth { get; set; }
+        public int? ActiveListsCount { get; set; }
+        public JsonElement? AdUnlocksJson { get; set; }
 
-        public FeatureAccessSnapshot ToSnapshot()
+        public FeatureAccessSnapshot ToSnapshot(DateTime utcNow)
         {
+            var isPremiumActive = IsPremium && (!PremiumTo.HasValue || PremiumTo.Value > utcNow);
+            var monthStartUtc = new DateTime(utcNow.Year, utcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+
             return new FeatureAccessSnapshot
             {
-                IsPremiumUser = IsPremium,
+                IsPremiumUser = isPremiumActive,
                 Limits = new FeatureUsageLimits
                 {
-                    MonthlyPlanCreationLimit = MonthlyPlanCreationLimit,
-                    MonthlyPlanCreationsUsed = MonthlyPlanCreationsUsed,
-                    LastPlannerCreationMonthUtc = null
+                    MonthlyPlanCreationLimit = isPremiumActive ? null : 4,
+                    MonthlyPlanCreationsUsed = Math.Max(0, PlanCountThisMonth ?? 0),
+                    LastPlannerCreationMonthUtc = monthStartUtc
                 },
                 Entitlements = new List<FeatureEntitlement>
                 {
-                    new() { Feature = PremiumFeature.AutoPlanner, IsEnabled = AutoPlannerEnabled },
-                    new() { Feature = PremiumFeature.PlanRecycling, IsEnabled = PlanRecyclingEnabled },
-                    new() { Feature = PremiumFeature.AiRecipeCreation, IsEnabled = AiRecipeCreationEnabled },
-                    new() { Feature = PremiumFeature.FoodbookTemplates, IsEnabled = FoodbookTemplatesEnabled },
-                    new() { Feature = PremiumFeature.PremiumRecipePacks, IsEnabled = PremiumRecipePacksEnabled }
-                }
+                    new() { Feature = PremiumFeature.AutoPlanner, IsEnabled = isPremiumActive },
+                    new() { Feature = PremiumFeature.PlanRecycling, IsEnabled = isPremiumActive },
+                    new() { Feature = PremiumFeature.AiRecipeCreation, IsEnabled = isPremiumActive },
+                    new() { Feature = PremiumFeature.FoodbookTemplates, IsEnabled = isPremiumActive },
+                    new() { Feature = PremiumFeature.PremiumRecipePacks, IsEnabled = isPremiumActive }
+                },
+                AdUnlocks = ParseAdUnlocks(AdUnlocksJson, utcNow)
             };
+        }
+
+        private static List<AdUnlockState> ParseAdUnlocks(JsonElement? adUnlocksJson, DateTime utcNow)
+        {
+            var result = new List<AdUnlockState>();
+            if (!adUnlocksJson.HasValue || adUnlocksJson.Value.ValueKind != JsonValueKind.Array)
+            {
+                return result;
+            }
+
+            foreach (var item in adUnlocksJson.Value.EnumerateArray())
+            {
+                if (item.ValueKind != JsonValueKind.Object)
+                {
+                    continue;
+                }
+
+                if (!TryResolveFeature(item, out var feature))
+                {
+                    continue;
+                }
+
+                if (!TryResolveExpiry(item, out var expiresAtUtc))
+                {
+                    continue;
+                }
+
+                if (expiresAtUtc <= utcNow)
+                {
+                    continue;
+                }
+
+                result.Add(new AdUnlockState
+                {
+                    Feature = feature,
+                    ExpiresAtUtc = expiresAtUtc
+                });
+            }
+
+            return result;
+        }
+
+        private static bool TryResolveFeature(JsonElement item, out PremiumFeature feature)
+        {
+            feature = default;
+
+            if (!TryGetPropertyIgnoreCase(item, "feature", out var featureElement))
+            {
+                return false;
+            }
+
+            if (featureElement.ValueKind == JsonValueKind.Number && featureElement.TryGetInt32(out var numericFeature))
+            {
+                if (!Enum.IsDefined(typeof(PremiumFeature), numericFeature))
+                {
+                    return false;
+                }
+
+                feature = (PremiumFeature)numericFeature;
+                return true;
+            }
+
+            if (featureElement.ValueKind != JsonValueKind.String)
+            {
+                return false;
+            }
+
+            var raw = featureElement.GetString();
+            return Enum.TryParse(raw, ignoreCase: true, out feature);
+        }
+
+        private static bool TryResolveExpiry(JsonElement item, out DateTime expiresAtUtc)
+        {
+            expiresAtUtc = default;
+
+            var candidateKeys = new[] { "expiresAtUtc", "expires_at_utc", "expiresAt", "expires_at" };
+            foreach (var key in candidateKeys)
+            {
+                if (!TryGetPropertyIgnoreCase(item, key, out var expiryElement))
+                {
+                    continue;
+                }
+
+                if (expiryElement.ValueKind == JsonValueKind.String &&
+                    DateTime.TryParse(expiryElement.GetString(), out var parsed))
+                {
+                    expiresAtUtc = parsed.Kind == DateTimeKind.Utc ? parsed : parsed.ToUniversalTime();
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool TryGetPropertyIgnoreCase(JsonElement item, string propertyName, out JsonElement value)
+        {
+            foreach (var property in item.EnumerateObject())
+            {
+                if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = property.Value;
+                    return true;
+                }
+            }
+
+            value = default;
+            return false;
         }
     }
 }

@@ -32,6 +32,8 @@ public partial class ProfilePage : ContentPage
     private bool _syncQueueHasMoreItems;
     private int _syncQueueOffset;
     private SyncQueueSummaryState _syncQueueSummary = SyncQueueSummaryState.Empty;
+    private bool _isSubscriptionActionInProgress;
+    private bool _subscriptionAutoResumeAttempted;
 
     private const string SyncChoiceKeyPrefix = "cloudsync.enabled:";
     private const int SyncQueuePageSize = 50;
@@ -45,19 +47,25 @@ public partial class ProfilePage : ContentPage
     public ProfilePage()
     {
         InitializeComponent();
+        ShowMainProfileView();
         UpdateUiState();
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        ShowMainProfileView();
+        _subscriptionAutoResumeAttempted = false;
         SubscribeToAppEvents();
         StartSyncStatusRefresh();
         await CheckAndRestoreSessionAsync();
         await LoadProfileStatsAsync();
-        await LoadCurrentSubscriptionUiAsync();
+        await RefreshSubscriptionSectionAsync();
         if (_isLoggedIn)
+        {
             await LoadSyncStatusAsync();
+            await TryAutoResumePendingOperationAsync();
+        }
     }
 
     protected override void OnDisappearing()
@@ -65,6 +73,17 @@ public partial class ProfilePage : ContentPage
         UnsubscribeFromAppEvents();
         StopSyncStatusRefresh();
         base.OnDisappearing();
+    }
+
+    protected override bool OnBackButtonPressed()
+    {
+        if (PlanDetailsView.IsVisible || SyncQueueDetailsView.IsVisible)
+        {
+            ShowMainProfileView();
+            return true;
+        }
+
+        return base.OnBackButtonPressed();
     }
 
     #region Session
@@ -384,6 +403,7 @@ public partial class ProfilePage : ContentPage
     private async Task RefreshSubscriptionSectionAsync()
     {
         await LoadCurrentSubscriptionUiAsync();
+        await LoadPendingSubscriptionUiAsync();
     }
 
     private async Task<string> BuildPlanLimitsTextAsync(IFeatureAccessService featureAccess, bool isPremium)
@@ -413,6 +433,13 @@ public partial class ProfilePage : ContentPage
             title: "Zmiana planu");
     }
 
+    private async void OnSwitchToMonthlyClicked(object sender, EventArgs e)
+    {
+        await ExecuteSubscriptionActionAsync(
+            action: service => service.ChangePlanAsync(SubscriptionPlan.PremiumMonthly, CancellationToken.None),
+            title: "Zmiana planu");
+    }
+
     private async void OnCancelSubscriptionClicked(object sender, EventArgs e)
     {
         await ExecuteSubscriptionActionAsync(
@@ -420,10 +447,22 @@ public partial class ProfilePage : ContentPage
             title: "Subskrypcja");
     }
 
+    private async void OnResumePendingSubscriptionClicked(object sender, EventArgs e)
+    {
+        await ExecuteSubscriptionActionAsync(
+            action: service => service.ResumePendingOperationAsync(CancellationToken.None),
+            title: "Wznowienie subskrypcji");
+    }
+
     private async Task ExecuteSubscriptionActionAsync(
         Func<ISubscriptionManagementService, Task<SubscriptionActionResult>> action,
         string title)
     {
+        if (_isSubscriptionActionInProgress)
+        {
+            return;
+        }
+
         var service = GetSubscriptionManagementService();
         if (service == null)
         {
@@ -431,21 +470,143 @@ public partial class ProfilePage : ContentPage
             return;
         }
 
+        _isSubscriptionActionInProgress = true;
+        SetSubscriptionActionButtonsEnabled(false);
+        ShowSpinner("Aktualizacja subskrypcji...");
+
         try
         {
             var result = await action(service);
-            var featureAccess = GetFeatureAccessService();
-            if (featureAccess != null)
-            {
-                await featureAccess.RefreshAccessAsync();
-            }
-            await RefreshSubscriptionSectionAsync();
-            await DisplayAlert(title, result.UiMessage, "OK");
+            await HandleSubscriptionActionResultAsync(result, title, showAlert: true);
         }
         catch (Exception ex)
         {
             await DisplayAlert("Błąd subskrypcji", ex.Message, "OK");
         }
+        finally
+        {
+            HideSpinner();
+            _isSubscriptionActionInProgress = false;
+            SetSubscriptionActionButtonsEnabled(true);
+        }
+    }
+
+    private async Task HandleSubscriptionActionResultAsync(SubscriptionActionResult result, string title, bool showAlert)
+    {
+        var featureAccess = GetFeatureAccessService();
+        if (featureAccess != null)
+        {
+            await featureAccess.RefreshAccessAsync();
+        }
+
+        await RefreshSubscriptionSectionAsync();
+
+        if (!showAlert || string.IsNullOrWhiteSpace(result.UiMessage))
+        {
+            return;
+        }
+
+        await DisplayAlert(title, result.UiMessage, "OK");
+    }
+
+    private async Task TryAutoResumePendingOperationAsync()
+    {
+        if (_subscriptionAutoResumeAttempted || !_isLoggedIn)
+        {
+            return;
+        }
+
+        _subscriptionAutoResumeAttempted = true;
+        var service = GetSubscriptionManagementService();
+        if (service == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var pending = await service.GetPendingOperationAsync(CancellationToken.None);
+            if (pending == null)
+            {
+                return;
+            }
+
+            var result = await service.ResumePendingOperationAsync(CancellationToken.None);
+            await HandleSubscriptionActionResultAsync(result, "Wznowienie subskrypcji", showAlert: false);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ProfilePage] Auto resume subscription failed: {ex.Message}");
+        }
+    }
+
+    private async Task LoadPendingSubscriptionUiAsync()
+    {
+        if (!_isLoggedIn)
+        {
+            ApplyPendingSubscriptionUi(null);
+            return;
+        }
+
+        var service = GetSubscriptionManagementService();
+        if (service == null)
+        {
+            ApplyPendingSubscriptionUi(null);
+            return;
+        }
+
+        try
+        {
+            var pending = await service.GetPendingOperationAsync(CancellationToken.None);
+            ApplyPendingSubscriptionUi(pending);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ProfilePage] LoadPendingSubscriptionUiAsync error: {ex.Message}");
+            ApplyPendingSubscriptionUi(null);
+        }
+    }
+
+    private void ApplyPendingSubscriptionUi(SubscriptionPendingOperation? pending)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            if (pending == null)
+            {
+                PendingSubscriptionCard.IsVisible = false;
+                PendingSubscriptionErrorLabel.IsVisible = false;
+                PendingSubscriptionErrorLabel.Text = string.Empty;
+                return;
+            }
+
+            PendingSubscriptionCard.IsVisible = true;
+            PendingSubscriptionStatusLabel.Text = pending.Status switch
+            {
+                SubscriptionOperationStatus.InProgress => ProfilePageResources.SubscriptionPendingStatusProcessing,
+                SubscriptionOperationStatus.Failed => ProfilePageResources.SubscriptionPendingStatusFailed,
+                SubscriptionOperationStatus.Abandoned => ProfilePageResources.SubscriptionPendingStatusCancelled,
+                _ => ProfilePageResources.SubscriptionPendingStatusPending
+            };
+
+            PendingSubscriptionTargetLabel.Text = string.Format(
+                ProfilePageResources.SubscriptionPendingPlanFormat,
+                pending.TargetPlan switch
+                {
+                    SubscriptionPlan.PremiumYearly => ProfilePageResources.PlanNamePremiumYearly,
+                    SubscriptionPlan.PremiumMonthly => ProfilePageResources.PlanNamePremiumMonthly,
+                    _ => ProfilePageResources.PlanNameFree
+                });
+
+            PendingSubscriptionLastAttemptLabel.Text = pending.LastAttemptUtc.HasValue
+                ? string.Format(ProfilePageResources.SubscriptionPendingLastAttemptFormat, pending.LastAttemptUtc.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm"))
+                : ProfilePageResources.SubscriptionPendingNoAttempt;
+
+            var hasError = !string.IsNullOrWhiteSpace(pending.LastError);
+            PendingSubscriptionErrorLabel.IsVisible = hasError;
+            PendingSubscriptionErrorLabel.Text = hasError
+                ? string.Format(ProfilePageResources.SubscriptionPendingErrorFormat, pending.LastError)
+                : string.Empty;
+        });
     }
 
     #endregion
@@ -564,10 +725,12 @@ public partial class ProfilePage : ContentPage
             await ClearSyncChoiceAsync();
 
             _isLoggedIn = false;
+            _subscriptionAutoResumeAttempted = false;
             _currentUserEmail = string.Empty;
             EmailEntry.Text = string.Empty;
             PasswordEntry.Text = string.Empty;
             StatusLabel.Text = string.Empty;
+            ApplyPendingSubscriptionUi(null);
             UpdateUiState();
         }
         catch (Exception ex)
@@ -621,8 +784,22 @@ public partial class ProfilePage : ContentPage
         LoginPanel.IsVisible = !_isLoggedIn;
 
         if (!_isLoggedIn) SyncStatusLabel.IsVisible = false;
+        if (!_isLoggedIn) PendingSubscriptionCard.IsVisible = false;
 
         HeroUserEmailLabel.Text = _isLoggedIn ? _currentUserEmail : string.Empty;
+        SetSubscriptionActionButtonsEnabled(_isLoggedIn && !_isSubscriptionActionInProgress);
+    }
+
+    private void SetSubscriptionActionButtonsEnabled(bool isEnabled)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            SwitchToFreePlanButton.IsEnabled = isEnabled;
+            SwitchToMonthlyPlanButton.IsEnabled = isEnabled;
+            SwitchToYearlyPlanButton.IsEnabled = isEnabled;
+            CancelSubscriptionButton.IsEnabled = isEnabled;
+            ResumeSubscriptionButton.IsEnabled = isEnabled;
+        });
     }
 
     private void ShowSpinner(string message)
@@ -633,6 +810,7 @@ public partial class ProfilePage : ContentPage
             SyncActivityIndicator.IsRunning = true;
             SyncingOverlay.IsVisible = true;
             CloudSyncSwitch.IsEnabled = false;
+            SetSubscriptionActionButtonsEnabled(false);
         });
     }
 
@@ -643,6 +821,7 @@ public partial class ProfilePage : ContentPage
             SyncingOverlay.IsVisible = false;
             SyncActivityIndicator.IsRunning = false;
             CloudSyncSwitch.IsEnabled = true;
+            SetSubscriptionActionButtonsEnabled(_isLoggedIn && !_isSubscriptionActionInProgress);
         });
     }
 
@@ -697,6 +876,13 @@ public partial class ProfilePage : ContentPage
     #endregion
 
     private void OnBackgroundSyncClicked(object sender, EventArgs e) => HideSpinner();
+
+    private void ShowMainProfileView()
+    {
+        ProfileMainView.IsVisible = true;
+        PlanDetailsView.IsVisible = false;
+        SyncQueueDetailsView.IsVisible = false;
+    }
 
     private void OnOpenPlanDetailsTapped(object? sender, TappedEventArgs e)
     {

@@ -87,10 +87,11 @@ namespace Foodbook.ViewModels
         public void ApplySortingLabelAndIngredientFilter(SortBy sortBy, IEnumerable<Guid> labelIds, IEnumerable<string> ingredientNames)
         {
             _currentSortBy = sortBy;
-            _sortOrder = sortBy == SortBy.NameDesc ? SortOrder.Desc : SortOrder.Asc; // keep legacy field in sync for A-Z cases
+            _sortOrder = MapSortByToSortOrder(sortBy);
             _selectedLabelIds = new HashSet<Guid>(labelIds ?? Enumerable.Empty<Guid>());
             _selectedIngredientNames = new HashSet<string>(ingredientNames ?? Enumerable.Empty<string>(), System.StringComparer.OrdinalIgnoreCase);
             OnPropertyChanged(nameof(CurrentSortBy));
+            OnPropertyChanged(nameof(SortOrder));
             FilterItems();
         }
 
@@ -202,7 +203,7 @@ namespace Foodbook.ViewModels
                     case Folder f:
                         bool confirm = await Shell.Current.DisplayAlert(
                             "Usuwanie folderu",
-                            $"Czy na pewno chcesz usun¹æ folder '{f.Name}'? Przepisy zostan¹ przeniesione do folderu nadrzêdnego (lub root).",
+                            $"Czy na pewno chcesz usunï¿½ï¿½ folder '{f.Name}'? Przepisy zostanï¿½ przeniesione do folderu nadrzï¿½dnego (lub root).",
                             "Tak",
                             "Nie");
                         if (confirm)
@@ -285,7 +286,7 @@ namespace Foodbook.ViewModels
 
         private async Task CreateFolderAsync()
         {
-            string result = await Shell.Current.DisplayPromptAsync("Nowy folder", "Podaj nazwê folderu", "Utwórz", "Anuluj", maxLength: 200, keyboard: Microsoft.Maui.Keyboard.Text);
+            string result = await Shell.Current.DisplayPromptAsync("Nowy folder", "Podaj nazwï¿½ folderu", "Utwï¿½rz", "Anuluj", maxLength: 200, keyboard: Microsoft.Maui.Keyboard.Text);
             if (string.IsNullOrWhiteSpace(result)) return;
 
             var folder = new Folder { Name = result.Trim(), ParentFolderId = _currentFolder?.Id };
@@ -525,7 +526,7 @@ namespace Foodbook.ViewModels
             if (recipe == null) return;
             bool confirm = await Shell.Current.DisplayAlert(
                 "Usuwanie przepisu",
-                $"Czy na pewno chcesz usun¹æ przepis '{recipe.Name}'?",
+                $"Czy na pewno chcesz usunï¿½ï¿½ przepis '{recipe.Name}'?",
                 "Tak",
                 "Nie");
             if (!confirm) return;
@@ -705,5 +706,14 @@ namespace Foodbook.ViewModels
                 System.Diagnostics.Debug.WriteLine($"[RecipeViewModel] ResetFolderNavigation error: {ex.Message}");
             }
         }
+
+        private static SortOrder MapSortByToSortOrder(SortBy sortBy)
+            => sortBy is SortBy.NameDesc
+                or SortBy.CaloriesDesc
+                or SortBy.ProteinDesc
+                or SortBy.CarbsDesc
+                or SortBy.FatDesc
+                ? SortOrder.Desc
+                : SortOrder.Asc;
     }
 }

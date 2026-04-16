@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^dotnet build \"c:\\\\Users\\\\Takis\\\\source\\\\repos\\\\FoodbookApp\\\\FoodbookApp\\.App\\\\FoodbookApp\\.App\\.csproj\" -c Debug -nologo$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

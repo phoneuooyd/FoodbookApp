@@ -14,4 +14,14 @@ public sealed class SupabaseEdgeSubscriptionManagementService : ISubscriptionMan
     {
         throw new NotSupportedException("Supabase Edge subscription provider is not wired yet.");
     }
+
+    public Task<SubscriptionPendingOperation?> GetPendingOperationAsync(CancellationToken ct)
+    {
+        throw new NotSupportedException("Supabase Edge subscription provider is not wired yet.");
+    }
+
+    public Task<SubscriptionActionResult> ResumePendingOperationAsync(CancellationToken ct)
+    {
+        throw new NotSupportedException("Supabase Edge subscription provider is not wired yet.");
+    }
 }

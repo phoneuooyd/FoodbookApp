@@ -14,4 +14,14 @@ public sealed class PaymentProviderSubscriptionManagementService : ISubscription
     {
         throw new NotSupportedException("Payment provider subscription service is not wired yet.");
     }
+
+    public Task<SubscriptionPendingOperation?> GetPendingOperationAsync(CancellationToken ct)
+    {
+        throw new NotSupportedException("Payment provider subscription service is not wired yet.");
+    }
+
+    public Task<SubscriptionActionResult> ResumePendingOperationAsync(CancellationToken ct)
+    {
+        throw new NotSupportedException("Payment provider subscription service is not wired yet.");
+    }
 }

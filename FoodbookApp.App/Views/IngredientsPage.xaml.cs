@@ -240,7 +240,14 @@ public partial class IngredientsPage : ContentPage, ITabLoadable
         try
         {
             System.Diagnostics.Debug.WriteLine("[IngredientsPage] OnIngredientSortClicked invoked");
-            var popup = new FilterSortPopup(showLabels: false, labels: null, preselectedLabelIds: null, sortOrder: _viewModel.SortOrder, showApplyButton: true, useFullScreenSheet: true);
+            var popup = new FilterSortPopup(
+                showLabels: false,
+                labels: null,
+                preselectedLabelIds: null,
+                sortOrder: _viewModel.SortOrder,
+                sortBy: _viewModel.CurrentSortBy,
+                showApplyButton: true,
+                useFullScreenSheet: true);
 
             var nav = Application.Current?.MainPage?.Navigation ?? Navigation;
             if (nav == null)
@@ -253,7 +260,7 @@ public partial class IngredientsPage : ContentPage, ITabLoadable
             var result = await popup.ResultTask;
             if (result != null)
             {
-                _viewModel.SortOrder = result.SortOrder;
+                _viewModel.ApplySorting(result.SortBy);
             }
         }
         catch (Exception ex)

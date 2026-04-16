@@ -88,4 +88,18 @@
 	<data name="SyncQueueStatusError" xml:space="preserve"><value>Error</value></data>
 	<data name="SyncQueueStatusInProgress" xml:space="preserve"><value>In progress</value></data>
 	<data name="SyncQueueStatusPending" xml:space="preserve"><value>Pending</value></data>
+
+	<data name="SubscriptionPendingTitle" xml:space="preserve"><value>Pending subscription operation</value></data>
+	<data name="SubscriptionPendingResume" xml:space="preserve"><value>Resume operation</value></data>
+	<data name="SubscriptionPendingStatusPending" xml:space="preserve"><value>Status: waiting to continue</value></data>
+	<data name="SubscriptionPendingStatusProcessing" xml:space="preserve"><value>Status: processing</value></data>
+	<data name="SubscriptionPendingStatusFailed" xml:space="preserve"><value>Status: requires manual retry</value></data>
+	<data name="SubscriptionPendingStatusCancelled" xml:space="preserve"><value>Status: cancelled</value></data>
+	<data name="SubscriptionPendingPlanFormat" xml:space="preserve"><value>Target plan: {0}</value></data>
+	<data name="SubscriptionPendingLastAttemptFormat" xml:space="preserve"><value>Last attempt: {0}</value></data>
+	<data name="SubscriptionPendingNoAttempt" xml:space="preserve"><value>No attempt yet.</value></data>
+	<data name="SubscriptionPendingErrorFormat" xml:space="preserve"><value>Error: {0}</value></data>
+	<data name="PlanNameFree" xml:space="preserve"><value>Free</value></data>
+	<data name="PlanNamePremiumMonthly" xml:space="preserve"><value>Premium Monthly</value></data>
+	<data name="PlanNamePremiumYearly" xml:space="preserve"><value>Premium Yearly</value></data>
 </root>
