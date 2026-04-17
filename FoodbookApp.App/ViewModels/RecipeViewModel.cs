@@ -7,8 +7,8 @@ using Foodbook.Services;
 using Foodbook.Views;
 using Microsoft.Maui.Controls;
 using System.Threading.Tasks;
+using System.Threading;
 using System.Linq;
-using FoodbookApp.Localization;
 using FoodbookApp.Localization;
 using CommunityToolkit.Mvvm.Messaging;
 using FoodbookApp.Interfaces;
@@ -33,12 +33,20 @@ namespace Foodbook.ViewModels
         private string _searchText = string.Empty;
         private List<Recipe> _allRecipes = new();
         private List<Folder> _allFolders = new();
+        private readonly Dictionary<Guid, List<Recipe>> _recipesByFolder = new();
+        private readonly Dictionary<Guid, List<Folder>> _foldersByParent = new();
+        private readonly HashSet<Guid> _folderIds = new();
+        private CancellationTokenSource? _filterCts;
+        private int _filterVersion;
+        private int _pendingReloadRequests;
+        private bool _suppressNextFolderEntryAnimation;
+        private string _currentPathDisplay = "/";
+
+        private const int SearchDebounceMs = 140;
         private Folder? _currentFolder;
 
         // drag reorder state for folders
         private object? _dragSource;
-        private bool _showInsertBefore;
-        private bool _showInsertAfter;
 
         // New: sorting and label filter state
         private SortOrder _sortOrder = SortOrder.Asc;
@@ -123,7 +131,7 @@ namespace Foodbook.ViewModels
         public string SearchText
         {
             get => _searchText;
-            set { if (_searchText == value) return; _searchText = value; OnPropertyChanged(); FilterItems(); }
+            set { if (_searchText == value) return; _searchText = value; OnPropertyChanged(); FilterItems(debounce: true); }
         }
 
         public bool CanGoBack => Breadcrumb.Count > 0;
@@ -134,7 +142,7 @@ namespace Foodbook.ViewModels
         public ICommand RefreshCommand { get; }
         public ICommand ClearSearchCommand { get; }
 
-        public string CurrentPathDisplay => Breadcrumb.Count == 0 ? "/" : string.Join(" / ", Breadcrumb.Select(b => b.Name));
+        public string CurrentPathDisplay => _currentPathDisplay;
 
         public RecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService, IFolderService folderService)
         {
@@ -202,10 +210,10 @@ namespace Foodbook.ViewModels
                         break;
                     case Folder f:
                         bool confirm = await Shell.Current.DisplayAlert(
-                            "Usuwanie folderu",
-                            $"Czy na pewno chcesz usun�� folder '{f.Name}'? Przepisy zostan� przeniesione do folderu nadrz�dnego (lub root).",
-                            "Tak",
-                            "Nie");
+                            GetFolderText("DeleteFolderTitle", "Delete folder"),
+                            string.Format(GetFolderText("DeleteFolderConfirmFormat", "Are you sure you want to delete folder '{0}'? Recipes will be moved to the parent folder (or root)."), f.Name),
+                            ButtonResources.Yes,
+                            ButtonResources.No);
                         if (confirm)
                         {
                             await _folderService.DeleteFolderAsync(f.Id);
@@ -233,7 +241,7 @@ namespace Foodbook.ViewModels
                     newName = newName.Trim();
                     if (string.IsNullOrWhiteSpace(newName))
                     {
-                        await Shell.Current.DisplayAlert(title, FolderResources.ValidationNameRequired, "OK");
+                        await Shell.Current.DisplayAlert(title, FolderResources.ValidationNameRequired, ButtonResources.OK);
                         return;
                     }
 
@@ -259,6 +267,8 @@ namespace Foodbook.ViewModels
 
             Breadcrumb.RemoveAt(Breadcrumb.Count - 1);
             _currentFolder = Breadcrumb.LastOrDefault();
+            _suppressNextFolderEntryAnimation = true;
+            UpdateNavigationPathState();
             FilterItems();
             await Task.CompletedTask;
         }
@@ -267,6 +277,8 @@ namespace Foodbook.ViewModels
         {
             _currentFolder = f;
             Breadcrumb.Add(f);
+            _suppressNextFolderEntryAnimation = true;
+            UpdateNavigationPathState();
             FilterItems();
             await Task.CompletedTask;
         }
@@ -280,13 +292,21 @@ namespace Foodbook.ViewModels
                 Breadcrumb.RemoveAt(i);
             }
             _currentFolder = f;
+            _suppressNextFolderEntryAnimation = true;
+            UpdateNavigationPathState();
             FilterItems();
             await Task.CompletedTask;
         }
 
         private async Task CreateFolderAsync()
         {
-            string result = await Shell.Current.DisplayPromptAsync("Nowy folder", "Podaj nazw� folderu", "Utw�rz", "Anuluj", maxLength: 200, keyboard: Microsoft.Maui.Keyboard.Text);
+            string result = await Shell.Current.DisplayPromptAsync(
+                GetFolderText("CreateFolderTitle", "New folder"),
+                GetFolderText("CreateFolderPrompt", "Enter folder name"),
+                GetFolderText("CreateFolderAccept", "Create"),
+                ButtonResources.Cancel,
+                maxLength: 200,
+                keyboard: Microsoft.Maui.Keyboard.Text);
             if (string.IsNullOrWhiteSpace(result)) return;
 
             var folder = new Folder { Name = result.Trim(), ParentFolderId = _currentFolder?.Id };
@@ -301,6 +321,7 @@ namespace Foodbook.ViewModels
             _allRecipes = recipes;
 
             _allFolders = await _folderService.GetFoldersAsync();
+            RebuildNavigationIndexes();
 
             Recipes.Clear();
             foreach (var r in _allRecipes) Recipes.Add(r);
@@ -313,12 +334,25 @@ namespace Foodbook.ViewModels
 
         public async Task LoadRecipesAsync()
         {
-            if (IsLoading) return;
+            if (IsLoading)
+            {
+                Interlocked.Exchange(ref _pendingReloadRequests, 1);
+                return;
+            }
 
             IsLoading = true;
             try
             {
-                await FetchAsync();
+                while (true)
+                {
+                    Interlocked.Exchange(ref _pendingReloadRequests, 0);
+                    await FetchAsync();
+
+                    if (Interlocked.Exchange(ref _pendingReloadRequests, 0) == 0)
+                    {
+                        break;
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -330,111 +364,354 @@ namespace Foodbook.ViewModels
             }
         }
 
-        private void FilterItems()
+        private void FilterItems(bool debounce = false)
         {
-            IEnumerable<object> src;
-            IEnumerable<Folder> folderQuery;
-            IEnumerable<Recipe> recipeQuery;
+            ScheduleFilter(debounce ? SearchDebounceMs : 0);
+        }
 
-            if (_currentFolder == null)
+        private void ScheduleFilter(int delayMs)
+        {
+            var nextCts = new CancellationTokenSource();
+            var previousCts = Interlocked.Exchange(ref _filterCts, nextCts);
+            previousCts?.Cancel();
+            previousCts?.Dispose();
+
+            var version = Interlocked.Increment(ref _filterVersion);
+            _ = ApplyFilterAsync(version, delayMs, nextCts.Token);
+        }
+
+        private async Task ApplyFilterAsync(int version, int delayMs, CancellationToken cancellationToken)
+        {
+            try
             {
-                folderQuery = _allFolders.Where(f => f.ParentFolderId == null);
-                // Treat Guid.Empty as equivalent to null for legacy or mistaken values
-                recipeQuery = _allRecipes.Where(r => r.FolderId == null || r.FolderId == Guid.Empty);
-            }
-            else
-            {
-                // Ensure current folder still exists in the folder list; if not, reset to root
-                if (!_allFolders.Any(f => f.Id == _currentFolder.Id))
+                if (delayMs > 0)
+                {
+                    await Task.Delay(delayMs, cancellationToken).ConfigureAwait(false);
+                }
+
+                var resetInvalidFolderBreadcrumb = false;
+                if (_currentFolder != null && !_folderIds.Contains(_currentFolder.Id))
                 {
                     _currentFolder = null;
-                    folderQuery = _allFolders.Where(f => f.ParentFolderId == null);
-                    recipeQuery = _allRecipes.Where(r => r.FolderId == null || r.FolderId == Guid.Empty);
+                    resetInvalidFolderBreadcrumb = true;
                 }
-                else
+
+                var currentFolderId = _currentFolder?.Id;
+                var searchText = SearchText;
+                var selectedLabelIds = _selectedLabelIds.ToArray();
+                var selectedIngredientNames = _selectedIngredientNames.ToArray();
+                var currentSortBy = CurrentSortBy;
+                var currentSortOrder = SortOrder;
+                var suppressFolderAnimation = _suppressNextFolderEntryAnimation;
+
+                var folders = GetFoldersForCurrentFolder(currentFolderId);
+                var recipes = GetRecipesForCurrentFolder(currentFolderId);
+
+                var nextItems = await Task.Run(
+                    () => ComposeFilteredItems(
+                        folders,
+                        recipes,
+                        searchText,
+                        selectedLabelIds,
+                        selectedIngredientNames,
+                        currentSortBy,
+                        currentSortOrder,
+                        suppressFolderAnimation),
+                    cancellationToken).ConfigureAwait(false);
+
+                var shouldAutoRecoverToRoot = nextItems.Count == 0
+                    && (_allFolders.Count > 0 || _allRecipes.Count > 0)
+                    && HasActiveVisibilityConstraints(searchText, selectedLabelIds, selectedIngredientNames);
+
+                List<object>? recoveryItems = null;
+                if (shouldAutoRecoverToRoot)
                 {
-                    folderQuery = _allFolders.Where(f => f.ParentFolderId == _currentFolder.Id);
-                    recipeQuery = _allRecipes.Where(r => r.FolderId == _currentFolder.Id);
+                    var rootFolders = GetFoldersForCurrentFolder(null);
+                    var rootRecipes = GetRecipesForCurrentFolder(null);
+
+                    recoveryItems = await Task.Run(
+                        () => ComposeFilteredItems(
+                            rootFolders,
+                            rootRecipes,
+                            string.Empty,
+                            Array.Empty<Guid>(),
+                            Array.Empty<string>(),
+                            currentSortBy,
+                            currentSortOrder,
+                            suppressFolderAnimation: false),
+                        cancellationToken).ConfigureAwait(false);
                 }
-            }
 
-            // Apply search
-            if (!string.IsNullOrWhiteSpace(SearchText))
+                if (cancellationToken.IsCancellationRequested || version != _filterVersion)
+                {
+                    return;
+                }
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    if (cancellationToken.IsCancellationRequested || version != _filterVersion)
+                    {
+                        return;
+                    }
+
+                    if (resetInvalidFolderBreadcrumb)
+                    {
+                        Breadcrumb.Clear();
+                    }
+
+                    if (shouldAutoRecoverToRoot && recoveryItems != null)
+                    {
+                        ResetVisibilityConstraints();
+                        ApplyItemsSnapshot(recoveryItems);
+                    }
+                    else
+                    {
+                        ApplyItemsSnapshot(nextItems);
+                    }
+
+                    _suppressNextFolderEntryAnimation = false;
+                    UpdateNavigationPathState();
+                });
+            }
+            catch (OperationCanceledException)
             {
-                folderQuery = folderQuery.Where(ff => ff.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
-                recipeQuery = recipeQuery.Where(rr => rr.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                                                       (rr.Description?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
+                // Newer state superseded this filter request.
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[RecipeViewModel] ApplyFilterAsync error: {ex.Message}");
+            }
+        }
+
+        private static bool HasActiveVisibilityConstraints(
+            string searchText,
+            Guid[] selectedLabelIds,
+            string[] selectedIngredientNames)
+            => !string.IsNullOrWhiteSpace(searchText)
+                || selectedLabelIds.Length > 0
+                || selectedIngredientNames.Length > 0;
+
+        private void ResetVisibilityConstraints()
+        {
+            _currentFolder = null;
+            Breadcrumb.Clear();
+
+            if (!string.IsNullOrWhiteSpace(_searchText))
+            {
+                _searchText = string.Empty;
+                OnPropertyChanged(nameof(SearchText));
             }
 
-            // Apply label filter (recipes only)
             if (_selectedLabelIds.Count > 0)
             {
-                recipeQuery = recipeQuery.Where(r => (r.Labels?.Any(l => _selectedLabelIds.Contains(l.Id)) ?? false));
+                _selectedLabelIds.Clear();
+                OnPropertyChanged(nameof(SelectedLabelIds));
             }
 
-            // NEW: Apply ingredient names filter (recipes only)
             if (_selectedIngredientNames.Count > 0)
             {
-                recipeQuery = recipeQuery.Where(r => (r.Ingredients?.Any(i => !string.IsNullOrEmpty(i.Name) && _selectedIngredientNames.Contains(i.Name)) ?? false));
+                _selectedIngredientNames.Clear();
+                OnPropertyChanged(nameof(SelectedIngredientNames));
             }
+        }
 
-            // Sort folders by Order, name as tiebreaker; recipes by selected sort
-            folderQuery = folderQuery.OrderBy(f => f.Order).ThenBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase);
+        private List<Folder> GetFoldersForCurrentFolder(Guid? currentFolderId)
+        {
+            var lookupKey = NormalizeFolderKey(currentFolderId);
 
-            // Apply sorting (Name or macros) for recipes
-            if (CurrentSortBy.HasValue)
+            if (_foldersByParent.TryGetValue(lookupKey, out var folders))
             {
-                switch (CurrentSortBy.Value)
-                {
-                    case SortBy.NameAsc:
-                        recipeQuery = recipeQuery.OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase);
-                        break;
-                    case SortBy.NameDesc:
-                        recipeQuery = recipeQuery.OrderByDescending(r => r.Name, StringComparer.CurrentCultureIgnoreCase);
-                        break;
-                    case SortBy.CaloriesAsc:
-                        recipeQuery = recipeQuery.OrderBy(r => r.Calories);
-                        break;
-                    case SortBy.CaloriesDesc:
-                        recipeQuery = recipeQuery.OrderByDescending(r => r.Calories);
-                        break;
-                    case SortBy.ProteinAsc:
-                        recipeQuery = recipeQuery.OrderBy(r => r.Protein);
-                        break;
-                    case SortBy.ProteinDesc:
-                        recipeQuery = recipeQuery.OrderByDescending(r => r.Protein);
-                        break;
-                    case SortBy.CarbsAsc:
-                        recipeQuery = recipeQuery.OrderBy(r => r.Carbs);
-                        break;
-                    case SortBy.CarbsDesc:
-                        recipeQuery = recipeQuery.OrderByDescending(r => r.Carbs);
-                        break;
-                    case SortBy.FatAsc:
-                        recipeQuery = recipeQuery.OrderBy(r => r.Fat);
-                        break;
-                    case SortBy.FatDesc:
-                        recipeQuery = recipeQuery.OrderByDescending(r => r.Fat);
-                        break;
-                }
+                return folders.ToList();
             }
-            else
+
+            return new List<Folder>();
+        }
+
+        private List<Recipe> GetRecipesForCurrentFolder(Guid? currentFolderId)
+        {
+            var lookupKey = NormalizeFolderKey(currentFolderId);
+
+            if (currentFolderId is null)
             {
-                if (SortOrder == SortOrder.Asc)
+                if (_recipesByFolder.TryGetValue(lookupKey, out var rootRecipes))
                 {
-                    recipeQuery = recipeQuery.OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase);
+                    return rootRecipes.ToList();
                 }
-                else
+
+                return new List<Recipe>();
+            }
+
+            return _recipesByFolder.TryGetValue(lookupKey, out var recipes)
+                ? recipes.ToList()
+                : new List<Recipe>();
+        }
+
+        private static List<object> ComposeFilteredItems(
+            List<Folder> folders,
+            List<Recipe> recipes,
+            string searchText,
+            Guid[] selectedLabelIds,
+            string[] selectedIngredientNames,
+            SortBy? currentSortBy,
+            SortOrder sortOrder,
+            bool suppressFolderAnimation)
+        {
+            IEnumerable<Folder> folderQuery = folders;
+            IEnumerable<Recipe> recipeQuery = recipes;
+
+            if (!string.IsNullOrWhiteSpace(searchText))
+            {
+                folderQuery = folderQuery.Where(folder => folder.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+                recipeQuery = recipeQuery.Where(recipe =>
+                    recipe.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase)
+                    || (recipe.Description?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false));
+            }
+
+            if (selectedLabelIds.Length > 0)
+            {
+                var selectedLabelSet = new HashSet<Guid>(selectedLabelIds);
+                recipeQuery = recipeQuery.Where(recipe => recipe.Labels?.Any(label => selectedLabelSet.Contains(label.Id)) ?? false);
+            }
+
+            if (selectedIngredientNames.Length > 0)
+            {
+                var selectedIngredientSet = new HashSet<string>(selectedIngredientNames, StringComparer.OrdinalIgnoreCase);
+                recipeQuery = recipeQuery.Where(recipe =>
+                    recipe.Ingredients?.Any(ingredient =>
+                        !string.IsNullOrEmpty(ingredient.Name)
+                        && selectedIngredientSet.Contains(ingredient.Name)) ?? false);
+            }
+
+            var orderedFolders = folderQuery
+                .OrderBy(folder => folder.Order)
+                .ThenBy(folder => folder.Name, StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
+
+            if (suppressFolderAnimation)
+            {
+                foreach (var folder in orderedFolders)
                 {
-                    recipeQuery = recipeQuery.OrderByDescending(r => r.Name, StringComparer.CurrentCultureIgnoreCase);
+                    folder.AnimateOnNextRender = false;
+                    folder.EntryAnimationDelayMs = 0;
                 }
             }
 
-            src = folderQuery.Cast<object>().Concat(recipeQuery);
+            var orderedRecipes = SortRecipes(recipeQuery, currentSortBy, sortOrder).ToList();
+
+            var items = new List<object>(orderedFolders.Count + orderedRecipes.Count);
+            items.AddRange(orderedFolders);
+            items.AddRange(orderedRecipes);
+            return items;
+        }
+
+        private static IEnumerable<Recipe> SortRecipes(
+            IEnumerable<Recipe> recipeQuery,
+            SortBy? currentSortBy,
+            SortOrder sortOrder)
+        {
+            if (currentSortBy.HasValue)
+            {
+                return currentSortBy.Value switch
+                {
+                    SortBy.NameAsc => recipeQuery.OrderBy(recipe => recipe.Name, StringComparer.CurrentCultureIgnoreCase),
+                    SortBy.NameDesc => recipeQuery.OrderByDescending(recipe => recipe.Name, StringComparer.CurrentCultureIgnoreCase),
+                    SortBy.CaloriesAsc => recipeQuery.OrderBy(recipe => recipe.Calories),
+                    SortBy.CaloriesDesc => recipeQuery.OrderByDescending(recipe => recipe.Calories),
+                    SortBy.ProteinAsc => recipeQuery.OrderBy(recipe => recipe.Protein),
+                    SortBy.ProteinDesc => recipeQuery.OrderByDescending(recipe => recipe.Protein),
+                    SortBy.CarbsAsc => recipeQuery.OrderBy(recipe => recipe.Carbs),
+                    SortBy.CarbsDesc => recipeQuery.OrderByDescending(recipe => recipe.Carbs),
+                    SortBy.FatAsc => recipeQuery.OrderBy(recipe => recipe.Fat),
+                    SortBy.FatDesc => recipeQuery.OrderByDescending(recipe => recipe.Fat),
+                    _ => recipeQuery
+                };
+            }
+
+            return sortOrder == SortOrder.Asc
+                ? recipeQuery.OrderBy(recipe => recipe.Name, StringComparer.CurrentCultureIgnoreCase)
+                : recipeQuery.OrderByDescending(recipe => recipe.Name, StringComparer.CurrentCultureIgnoreCase);
+        }
+
+        private void ApplyItemsSnapshot(IReadOnlyList<object> nextItems)
+        {
+            if (Items.Count == nextItems.Count)
+            {
+                var unchanged = true;
+                for (var i = 0; i < nextItems.Count; i++)
+                {
+                    if (!ReferenceEquals(Items[i], nextItems[i]))
+                    {
+                        unchanged = false;
+                        break;
+                    }
+                }
+
+                if (unchanged)
+                {
+                    return;
+                }
+            }
 
             Items.Clear();
-            foreach (var o in src)
-                Items.Add(o);
+            foreach (var item in nextItems)
+            {
+                Items.Add(item);
+            }
+        }
+
+        private void RebuildNavigationIndexes()
+        {
+            _foldersByParent.Clear();
+            _recipesByFolder.Clear();
+            _folderIds.Clear();
+
+            foreach (var folder in _allFolders)
+            {
+                var parentKey = NormalizeFolderKey(folder.ParentFolderId);
+                if (!_foldersByParent.TryGetValue(parentKey, out var folderBucket))
+                {
+                    folderBucket = new List<Folder>();
+                    _foldersByParent[parentKey] = folderBucket;
+                }
+
+                folderBucket.Add(folder);
+                _folderIds.Add(folder.Id);
+            }
+
+            foreach (var pair in _foldersByParent)
+            {
+                pair.Value.Sort(static (left, right) =>
+                {
+                    var byOrder = left.Order.CompareTo(right.Order);
+                    return byOrder != 0
+                        ? byOrder
+                        : StringComparer.CurrentCultureIgnoreCase.Compare(left.Name, right.Name);
+                });
+            }
+
+            foreach (var recipe in _allRecipes)
+            {
+                var folderKey = NormalizeFolderKey(recipe.FolderId);
+                if (!_recipesByFolder.TryGetValue(folderKey, out var recipeBucket))
+                {
+                    recipeBucket = new List<Recipe>();
+                    _recipesByFolder[folderKey] = recipeBucket;
+                }
+
+                recipeBucket.Add(recipe);
+            }
+        }
+
+        private static Guid NormalizeFolderKey(Guid? folderId)
+            => folderId is null || folderId == Guid.Empty
+                ? Guid.Empty
+                : folderId.Value;
+
+        private void UpdateNavigationPathState()
+        {
+            _currentPathDisplay = Breadcrumb.Count == 0
+                ? "/"
+                : string.Join(" / ", Breadcrumb.Select(breadcrumb => breadcrumb.Name));
 
             OnPropertyChanged(nameof(CurrentPathDisplay));
             OnPropertyChanged(nameof(CanGoBack));
@@ -525,10 +802,10 @@ namespace Foodbook.ViewModels
         {
             if (recipe == null) return;
             bool confirm = await Shell.Current.DisplayAlert(
-                "Usuwanie przepisu",
-                $"Czy na pewno chcesz usun�� przepis '{recipe.Name}'?",
-                "Tak",
-                "Nie");
+                GetFolderText("DeleteRecipeTitle", "Delete recipe"),
+                string.Format(GetFolderText("DeleteRecipeConfirmFormat", "Are you sure you want to delete recipe '{0}'?"), recipe.Name),
+                ButtonResources.Yes,
+                ButtonResources.No);
             if (!confirm) return;
 
             try
@@ -536,7 +813,8 @@ namespace Foodbook.ViewModels
                 await _recipeService.DeleteRecipeAsync(recipe.Id);
                 Recipes.Remove(recipe);
                 _allRecipes.Remove(recipe);
-                Items.Remove(recipe);
+                RebuildNavigationIndexes();
+                FilterItems();
             }
             catch (Exception ex)
             {
@@ -545,10 +823,10 @@ namespace Foodbook.ViewModels
         }
 
         // New drag & drop commands
-        public ICommand DragStartingCommand { get; private set; }
-        public ICommand DragOverCommand { get; private set; }
-        public ICommand DragLeaveCommand { get; private set; }
-        public ICommand DropCommand { get; private set; }
+        public ICommand DragStartingCommand { get; private set; } = null!;
+        public ICommand DragOverCommand { get; private set; } = null!;
+        public ICommand DragLeaveCommand { get; private set; } = null!;
+        public ICommand DropCommand { get; private set; } = null!;
 
         private void InitializeDragDrop()
         {
@@ -621,6 +899,7 @@ namespace Foodbook.ViewModels
             {
                 draggedRecipe.FolderId = targetFolder.Id;
                 await _recipeService.UpdateRecipeAsync(draggedRecipe);
+                RebuildNavigationIndexes();
                 FilterItems();
                 return;
             }
@@ -671,8 +950,8 @@ namespace Foodbook.ViewModels
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        void OnPropertyChanged([CallerMemberName] string name = null) =>
+        public event PropertyChangedEventHandler? PropertyChanged;
+        void OnPropertyChanged([CallerMemberName] string? name = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
         // Move dragged recipe one level up (to parent of current folder, or root when no parent)
@@ -683,6 +962,7 @@ namespace Foodbook.ViewModels
 
             recipe.FolderId = _currentFolder.ParentFolderId; // null when parent is root
             await _recipeService.UpdateRecipeAsync(recipe);
+            RebuildNavigationIndexes();
             FilterItems();
         }
 
@@ -695,6 +975,8 @@ namespace Foodbook.ViewModels
                 {
                     Breadcrumb.Clear();
                     _currentFolder = null;
+                    _suppressNextFolderEntryAnimation = true;
+                    UpdateNavigationPathState();
                     FilterItems();
                     OnPropertyChanged(nameof(CanGoBack));
                     (GoBackCommand as Command)?.ChangeCanExecute();
@@ -715,5 +997,8 @@ namespace Foodbook.ViewModels
                 or SortBy.FatDesc
                 ? SortOrder.Desc
                 : SortOrder.Asc;
+
+        private static string GetFolderText(string key, string fallback)
+            => FolderResources.ResourceManager.GetString(key, FolderResources.Culture) ?? fallback;
     }
 }

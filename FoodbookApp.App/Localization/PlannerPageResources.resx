@@ -168,4 +168,133 @@
   <data name="CarbsLabel" xml:space="preserve">
     <value>🌾 Carbs</value>
   </data>
+  <data name="LoadingStatus" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="LoadingStatusError" xml:space="preserve">
+    <value>Error loading data</value>
+  </data>
+  <data name="SavedTitle" xml:space="preserve">
+    <value>Saved</value>
+  </data>
+  <data name="PlannerSavedMessageFormat" xml:space="preserve">
+    <value>Planner saved: {0} ({1} - {2})</value>
+  </data>
+  <data name="PlanLimitTitle" xml:space="preserve">
+    <value>Plan limit</value>
+  </data>
+  <data name="UnexpectedSaveErrorMessage" xml:space="preserve">
+    <value>An unexpected error occurred while saving.</value>
+  </data>
+  <data name="ErrorTitle" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="PlannerLoadErrorMessage" xml:space="preserve">
+    <value>There was a problem loading planner data. Please try again.</value>
+  </data>
+  <data name="PlannerNamePromptTitle" xml:space="preserve">
+    <value>Planner name</value>
+  </data>
+  <data name="PlannerNamePromptMessage" xml:space="preserve">
+    <value>Enter planner name (optional)</value>
+  </data>
+  <data name="PlannerNamePromptAccept" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="DefaultPlannerName" xml:space="preserve">
+    <value>Planner</value>
+  </data>
+  <data name="ConflictOptionOverwrite" xml:space="preserve">
+    <value>Overwrite</value>
+  </data>
+  <data name="ConflictOptionMerge" xml:space="preserve">
+    <value>Merge</value>
+  </data>
+  <data name="ConflictOptionSaveAndCreateNewList" xml:space="preserve">
+    <value>Save and create new list</value>
+  </data>
+  <data name="ConflictPlanExistsTitle" xml:space="preserve">
+    <value>A plan for selected dates already exists.</value>
+  </data>
+  <data name="ConflictMergeSuccessTitle" xml:space="preserve">
+    <value>Merged</value>
+  </data>
+  <data name="ConflictMergeSuccessMessageFormat" xml:space="preserve">
+    <value>Meals were merged with existing plan ({0} - {1}).</value>
+  </data>
+  <data name="ConflictMergeErrorMessage" xml:space="preserve">
+    <value>Merging plans failed.</value>
+  </data>
+  <data name="ConflictOverwriteRemoveErrorMessage" xml:space="preserve">
+    <value>Failed to remove existing plan.</value>
+  </data>
+  <data name="PlannerSaveErrorMessageFormat" xml:space="preserve">
+    <value>There was a problem saving planner:{0}{1}</value>
+  </data>
+  <data name="ShoppingListOptionOnlySavePlanner" xml:space="preserve">
+    <value>Only save planner</value>
+  </data>
+  <data name="ShoppingListOptionSaveAndMerge" xml:space="preserve">
+    <value>Save and merge with list</value>
+  </data>
+  <data name="ShoppingListOptionSaveAndOverwrite" xml:space="preserve">
+    <value>Save and overwrite list</value>
+  </data>
+  <data name="ShoppingListOptionMergeManual" xml:space="preserve">
+    <value>Merge with manually created list</value>
+  </data>
+  <data name="ShoppingListOptionSaveAndCreateNew" xml:space="preserve">
+    <value>Save and create new list</value>
+  </data>
+  <data name="ShoppingListOptionSaveAndCreate" xml:space="preserve">
+    <value>Save and create list</value>
+  </data>
+  <data name="ShoppingListLinkedQuestionTitle" xml:space="preserve">
+    <value>Do you want to update the linked shopping list?</value>
+  </data>
+  <data name="ShoppingListManualFoundQuestionTitle" xml:space="preserve">
+    <value>A manually created shopping list was found for this date range. What do you want to do?</value>
+  </data>
+  <data name="ShoppingListCreateQuestionTitle" xml:space="preserve">
+    <value>Do you want to create a shopping list?</value>
+  </data>
+  <data name="ShoppingListCreateErrorMessage" xml:space="preserve">
+    <value>Failed to create shopping list.</value>
+  </data>
+  <data name="ShoppingListMergeErrorMessage" xml:space="preserve">
+    <value>Failed to merge shopping list.</value>
+  </data>
+  <data name="ShoppingListOverwriteErrorMessage" xml:space="preserve">
+    <value>Failed to overwrite shopping list.</value>
+  </data>
+  <data name="PlanNotFoundMessage" xml:space="preserve">
+    <value>Plan not found</value>
+  </data>
+  <data name="PlanLoadErrorMessageFormat" xml:space="preserve">
+    <value>Failed to load plan: {0}</value>
+  </data>
+  <data name="PlanToSaveNotFoundMessage" xml:space="preserve">
+    <value>Plan to save not found</value>
+  </data>
+  <data name="PlanUpdatedMessageFormat" xml:space="preserve">
+    <value>Plan was updated ({0} - {1})</value>
+  </data>
+  <data name="PlanSaveErrorMessageFormat" xml:space="preserve">
+    <value>Failed to save plan:{0}{1}</value>
+  </data>
+  <data name="LoadingStatusPreparingData" xml:space="preserve">
+    <value>Preparing data...</value>
+  </data>
+  <data name="LoadingStatusLoadingRecipes" xml:space="preserve">
+    <value>Loading recipes...</value>
+  </data>
+  <data name="LoadingStatusLoadingPlannedMeals" xml:space="preserve">
+    <value>Loading planned meals...</value>
+  </data>
+  <data name="LoadingStatusPreparingCalendar" xml:space="preserve">
+    <value>Preparing calendar...</value>
+  </data>
+  <data name="LoadingStatusFinalizing" xml:space="preserve">
+    <value>Finalizing...</value>
+  </data>
 </root>

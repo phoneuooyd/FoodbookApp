@@ -38,9 +38,14 @@
 
 	<data name="EmailRequired" xml:space="preserve"><value>Email nie może być pusty.</value></data>
 	<data name="PasswordRequired" xml:space="preserve"><value>Hasło nie może być puste.</value></data>
+	<data name="CredentialsRequiredMessage" xml:space="preserve"><value>Wypełnij e-mail i hasło.</value></data>
 	<data name="LoggingIn" xml:space="preserve"><value>Logowanie...</value></data>
 	<data name="LoginErrorTitle" xml:space="preserve"><value>Błąd logowania</value></data>
 	<data name="LoginErrorMessage" xml:space="preserve"><value>Logowanie nie powiodło się. Sprawdź dane logowania.</value></data>
+	<data name="CloudSyncEnablePromptTitle" xml:space="preserve"><value>Synchronizacja z chmurą</value></data>
+	<data name="CloudSyncEnablePromptMessage" xml:space="preserve"><value>Czy chcesz włączyć synchronizację danych? Twoje dane będą automatycznie synchronizowane z chmurą.</value></data>
+	<data name="CloudSyncEnableConfirm" xml:space="preserve"><value>Tak, włącz</value></data>
+	<data name="CloudSyncEnableLater" xml:space="preserve"><value>Nie teraz</value></data>
 
 	<data name="SyncErrorTitle" xml:space="preserve"><value>Błąd synchronizacji</value></data>
 	<data name="SyncServiceUnavailable" xml:space="preserve"><value>Usługa synchronizacji niedostępna</value></data>
@@ -89,6 +94,8 @@
 	<data name="SyncQueueStatusError" xml:space="preserve"><value>Błąd</value></data>
 	<data name="SyncQueueStatusInProgress" xml:space="preserve"><value>W trakcie</value></data>
 	<data name="SyncQueueStatusPending" xml:space="preserve"><value>Oczekuje</value></data>
+	<data name="SyncRefreshWaitTitle" xml:space="preserve"><value>Odświeżanie</value></data>
+	<data name="SyncRefreshWaitMessageFormat" xml:space="preserve"><value>Odczekaj {0:0} s przed kolejnym odświeżeniem.</value></data>
 
 	<data name="SubscriptionPendingTitle" xml:space="preserve"><value>Oczekująca operacja subskrypcji</value></data>
 	<data name="SubscriptionPendingResume" xml:space="preserve"><value>Wznów operację</value></data>
@@ -103,4 +110,74 @@
 	<data name="PlanNameFree" xml:space="preserve"><value>Free</value></data>
 	<data name="PlanNamePremiumMonthly" xml:space="preserve"><value>Premium Miesięczny</value></data>
 	<data name="PlanNamePremiumYearly" xml:space="preserve"><value>Premium Roczny</value></data>
+	<data name="SubscriptionActionTitleChangePlan" xml:space="preserve"><value>Zmiana planu</value></data>
+	<data name="SubscriptionActionTitleSubscription" xml:space="preserve"><value>Subskrypcja</value></data>
+	<data name="SubscriptionActionTitleResume" xml:space="preserve"><value>Wznowienie subskrypcji</value></data>
+	<data name="SubscriptionServiceUnavailable" xml:space="preserve"><value>Usługa subskrypcji jest niedostępna.</value></data>
+	<data name="SubscriptionUpdating" xml:space="preserve"><value>Aktualizacja subskrypcji...</value></data>
+	<data name="SubscriptionErrorTitle" xml:space="preserve"><value>Błąd subskrypcji</value></data>
+	<data name="CurrentPlanStatusActive" xml:space="preserve"><value>Aktywny</value></data>
+	<data name="CurrentPlanRenewalFree" xml:space="preserve"><value>Okres: bezterminowo</value></data>
+	<data name="CurrentPlanRenewalPremiumMonthly" xml:space="preserve"><value>Okres: 1 miesiąc</value></data>
+	<data name="CurrentPlanRenewalPremiumYearly" xml:space="preserve"><value>Okres: 12 miesięcy</value></data>
+	<data name="CurrentPlanLimitsPremium" xml:space="preserve"><value>Limity: brak ograniczeń planu premium.</value></data>
+	<data name="CurrentPlanLimitsFree" xml:space="preserve"><value>Limity: max 3 aktywne plany, max 14 dni na plan i max 3 aktywne listy zakupów.</value></data>
+	<data name="CurrentPlanLimitsFreeReached" xml:space="preserve"><value>Limity: osiągnięto limit aktywnych planów Free.</value></data>
+	<data name="CurrentPlanPriceFree" xml:space="preserve"><value>0 zł / bezterminowo</value></data>
+	<data name="CurrentPlanPricePremiumMonthly" xml:space="preserve"><value>TBD / miesiąc</value></data>
+	<data name="CurrentPlanPricePremiumYearly" xml:space="preserve"><value>TBD / rok</value></data>
+	<data name="CurrentPlanFeaturesFree" xml:space="preserve"><value>• Przepisy i składniki: bez limitu
+• Import URL i automatyczne makro
+• Planer: max 3 aktywne, max 14 dni/plan
+• Lista zakupów: max 3 aktywne
+• Wybrane funkcje premium po reklamie (limity dzienne)</value></data>
+	<data name="CurrentPlanFeaturesPremiumMonthly" xml:space="preserve"><value>• Nielimitowane plany i listy zakupów
+• AI planer lokalny i cloud
+• AI agent przepisów
+• Recykling planów z archiwum
+• Szablony tygodniowe i miesięczne
+• Premium paczki przepisów</value></data>
+	<data name="CurrentPlanFeaturesPremiumYearly" xml:space="preserve"><value>• Nielimitowane plany i listy zakupów
+• AI planer lokalny i cloud
+• AI agent przepisów
+• Recykling planów z archiwum
+• Szablony tygodniowe i miesięczne
+• Premium paczki przepisów</value></data>
+	<data name="RegisterPopupTitle" xml:space="preserve"><value>Rejestracja</value></data>
+	<data name="RegisterServiceMissingMessage" xml:space="preserve"><value>Nie znaleziono usługi uwierzytelniania.</value></data>
+	<data name="PasswordsDoNotMatch" xml:space="preserve"><value>Hasła nie są takie same.</value></data>
+	<data name="RegisterInProgress" xml:space="preserve"><value>Trwa rejestracja...</value></data>
+	<data name="RegisterConfirmEmailMessage" xml:space="preserve"><value>Sprawdź skrzynkę e-mail, aby potwierdzić rejestrację.</value></data>
+	<data name="RegisterSuccessMessage" xml:space="preserve"><value>Konto zostało utworzone.</value></data>
+	<data name="HeroRecipesCountLabel" xml:space="preserve"><value>Przepisy</value></data>
+	<data name="HeroPlansCountLabel" xml:space="preserve"><value>Plany</value></data>
+	<data name="HeroListsCountLabel" xml:space="preserve"><value>Listy</value></data>
+	<data name="AccountSettingsSectionLabel" xml:space="preserve"><value>Ustawienia konta</value></data>
+	<data name="AccountDataTitle" xml:space="preserve"><value>Dane konta</value></data>
+	<data name="AccountDataSubtitle" xml:space="preserve"><value>Zmień e-mail lub hasło</value></data>
+	<data name="SubscriptionHeaderTitle" xml:space="preserve"><value>Subskrypcja</value></data>
+	<data name="SubscriptionHeaderSubtitle" xml:space="preserve"><value>Zarządzaj swoim planem</value></data>
+	<data name="CurrentPlanSectionTitle" xml:space="preserve"><value>Twój aktualny plan</value></data>
+	<data name="OtherPlansSectionTitle" xml:space="preserve"><value>Inne plany</value></data>
+	<data name="FreePlanPriceLabel" xml:space="preserve"><value>0 zł / zawsze</value></data>
+	<data name="FreePlanFeatureRecipes" xml:space="preserve"><value>• Przepisy bez limitu</value></data>
+	<data name="FreePlanFeaturePlanner" xml:space="preserve"><value>• Planer posiłków (3 aktywne)</value></data>
+	<data name="FreePlanFeatureShoppingList" xml:space="preserve"><value>• Lista zakupów</value></data>
+	<data name="FreePlanFeatureImport" xml:space="preserve"><value>• Import przepisów z internetu</value></data>
+	<data name="SwitchToFreeButton" xml:space="preserve"><value>Przejdź na Free</value></data>
+	<data name="PremiumMonthlyPriceLabel" xml:space="preserve"><value>9,99 zł / mies.</value></data>
+	<data name="PremiumFeatureAllIncluded" xml:space="preserve"><value>• Wszystko z planu Premium</value></data>
+	<data name="PremiumMonthlyFeatureBilling" xml:space="preserve"><value>• Rozliczanie miesięczne</value></data>
+	<data name="PremiumMonthlyFeatureFlexibility" xml:space="preserve"><value>• Elastyczna zmiana planu</value></data>
+	<data name="SwitchToMonthlyButton" xml:space="preserve"><value>Przejdź na miesięczny</value></data>
+	<data name="PremiumYearlyPriceLabel" xml:space="preserve"><value>95,99 zł / rok</value></data>
+	<data name="PremiumYearlyFeatureBilling" xml:space="preserve"><value>• Płatność raz w roku</value></data>
+	<data name="PremiumYearlyFeatureLowerPrice" xml:space="preserve"><value>• Niższa cena: 7,99 zł / mies.</value></data>
+	<data name="SwitchToYearlyButton" xml:space="preserve"><value>Przejdź na roczny</value></data>
+	<data name="CancelSubscriptionButton" xml:space="preserve"><value>Anuluj subskrypcję</value></data>
+	<data name="SyncQueueLoadMoreButton" xml:space="preserve"><value>Pokaż więcej</value></data>
+	<data name="BackgroundSyncButton" xml:space="preserve"><value>Synchronizacja w tle</value></data>
+	<data name="SyncLastSyncedWithTimeFormat" xml:space="preserve"><value>Zsynchronizowano • {0}</value></data>
+	<data name="SyncLastSynced" xml:space="preserve"><value>Zsynchronizowano</value></data>
+	<data name="SyncPendingFormat" xml:space="preserve"><value>Synchronizacja: {0} oczekujących</value></data>
 </root>

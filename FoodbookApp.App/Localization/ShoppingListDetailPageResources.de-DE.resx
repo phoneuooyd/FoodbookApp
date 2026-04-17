@@ -13,4 +13,23 @@
   <data name="AddItem" xml:space="preserve"><value>Element hinzufugen</value></data>
   <data name="Collected" xml:space="preserve"><value>Gesammelt</value></data>
   <data name="NoCollected" xml:space="preserve"><value>Keine gesammelt</value></data>
+  <data name="LoadErrorTitle" xml:space="preserve"><value>Fehler</value></data>
+  <data name="LoadErrorMessage" xml:space="preserve"><value>Einkaufsliste konnte nicht geladen werden.</value></data>
+  <data name="UnsavedChangesConfirmTitle" xml:space="preserve"><value>Bestaetigung</value></data>
+  <data name="UnsavedChangesConfirmMessage" xml:space="preserve"><value>Sie haben ungespeicherte Anderungen. Mochten Sie diese Seite ohne Speichern verlassen?</value></data>
+  <data name="ValidationErrorTitle" xml:space="preserve"><value>Validierungsfehler</value></data>
+  <data name="ValidationInvalidPlanIdMessage" xml:space="preserve"><value>Ungueltige Plan-ID. Einkaufsliste kann nicht gespeichert werden.</value></data>
+  <data name="ValidationItemMissingNameFormat" xml:space="preserve"><value>Eintrag {0}: Name fehlt</value></data>
+  <data name="ValidationItemInvalidQuantityFormat" xml:space="preserve"><value>Eintrag {0} ({1}): ungueltige Menge ({2})</value></data>
+  <data name="ValidationInvalidItemsSummaryFormat" xml:space="preserve"><value>Ungueltige Eintrage gefunden:{0}{1}</value></data>
+  <data name="ValidationInvalidItemsMoreFormat" xml:space="preserve"><value>...und {0} weitere</value></data>
+  <data name="ValidationFixItemsMessage" xml:space="preserve"><value>Entfernen oder korrigieren Sie ungueltige Eintrage vor dem Speichern.</value></data>
+  <data name="DatabaseErrorTitle" xml:space="preserve"><value>Datenbankfehler</value></data>
+  <data name="DatabaseSaveFailedMessageFormat" xml:space="preserve"><value>Einkaufsliste konnte nicht in der Datenbank gespeichert werden.{0}{0}Details: {1}{0}{0}Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.</value></data>
+  <data name="InvalidOperationErrorTitle" xml:space="preserve"><value>Vorgangsfehler</value></data>
+  <data name="InvalidOperationSaveFailedMessageFormat" xml:space="preserve"><value>Beim Speichern der Einkaufsliste ist ein Problem aufgetreten.{0}{0}Details: {1}{0}{0}Bitte versuchen Sie es erneut.</value></data>
+  <data name="SaveErrorTitle" xml:space="preserve"><value>Speicherfehler</value></data>
+  <data name="SaveFailedMessageFormat" xml:space="preserve"><value>Einkaufsliste konnte nicht gespeichert werden.{0}{0}Details: {1}{0}{0}Fehlertyp: {2}</value></data>
+  <data name="CriticalErrorTitle" xml:space="preserve"><value>Kritischer Fehler</value></data>
+  <data name="CriticalSaveFailedMessageFormat" xml:space="preserve"><value>Beim Speichern der Einkaufsliste ist ein unerwarteter Fehler aufgetreten.{0}{0}Details: {1}{0}{0}Wenn das Problem weiterhin besteht, versuchen Sie:{0}1. Leere oder ungueltige Eintrage entfernen{0}2. App neu starten{0}3. Support kontaktieren</value></data>
 </root>

@@ -5,4 +5,13 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Title" xml:space="preserve"><value>Archiv</value></data>
+  <data name="PlannerItemLabel" xml:space="preserve"><value>Planer</value></data>
+  <data name="ShoppingListItemLabel" xml:space="preserve"><value>Einkaufsliste</value></data>
+  <data name="ConflictDateTitle" xml:space="preserve"><value>Datenkonflikt</value></data>
+  <data name="RestoreConflictMessageFormat" xml:space="preserve"><value>{0} kann nicht wiederhergestellt werden. Fur diesen Zeitraum existiert bereits ein aktiver Plan.</value></data>
+  <data name="RestoreConfirmTitle" xml:space="preserve"><value>Wiederherstellen</value></data>
+  <data name="RestoreConfirmMessageFormat" xml:space="preserve"><value>Mochten Sie dieses {0} wirklich wiederherstellen?</value></data>
+  <data name="DeleteConfirmTitle" xml:space="preserve"><value>Loschen</value></data>
+  <data name="DeleteConfirmMessageFormat" xml:space="preserve"><value>Mochten Sie dieses {0} wirklich dauerhaft loschen? Dieser Vorgang kann nicht ruckgangig gemacht werden.</value></data>
+  <data name="EmptyArchivedPlannersTitle" xml:space="preserve"><value>Keine archivierten Planer</value></data>
 </root>

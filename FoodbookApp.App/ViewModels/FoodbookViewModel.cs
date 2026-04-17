@@ -5,6 +5,7 @@ using System.Windows.Input;
 using Foodbook.Models;
 using Foodbook.Services;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Localization;
 using Microsoft.Maui.Controls;
 
 namespace Foodbook.ViewModels;
@@ -33,8 +34,8 @@ public class FoodbookViewModel : INotifyPropertyChanged
     public bool IsEditing => _editingPlanId.HasValue;
     public bool RecipesLoaded => Recipes.Count > 0;
     public string CtaButtonText => SelectedTabIndex == 0
-        ? L("CtaNextToDishes", "Przejdz do Dan ?")
-        : L("CtaSave", "Zapisz Foodbook");
+        ? L("CtaNextToDishes", "Go to Meals ->")
+        : L("CtaSave", "Save Foodbook");
     public ICommand CtaCommand => SelectedTabIndex == 0 ? GoToDishesCommand : SaveCommand;
 
     public bool IsLoading
@@ -414,9 +415,9 @@ public class FoodbookViewModel : INotifyPropertyChanged
             {
                 SelectedTabIndex = 0;
                 await Shell.Current.DisplayAlert(
-                    L("MissingNameTitle", "Brak nazwy"),
-                    L("MissingNameMessage", "Podaj nazwê Foodbooka."),
-                    "OK");
+                    L("MissingNameTitle", "Name missing"),
+                    L("MissingNameMessage", "Enter a Foodbook name."),
+                    ButtonResources.OK);
                 return;
             }
 
@@ -478,28 +479,28 @@ public class FoodbookViewModel : INotifyPropertyChanged
 
             AppEvents.RaisePlanChanged();
 
-            var savedTemplate = L("SaveSuccessMessageFormat", "Foodbook \"{0}\" zosta³ zapisany.");
+            var savedTemplate = L("SaveSuccessMessageFormat", "Foodbook \"{0}\" has been saved.");
             await Shell.Current.DisplayAlert(
-                L("SaveSuccessTitle", "Zapisano"),
+                L("SaveSuccessTitle", "Saved"),
                 string.Format(savedTemplate, plan.Title),
-                "OK");
+                ButtonResources.OK);
             await Shell.Current.GoToAsync("..");
         }
         catch (PlanLimitExceededException ex)
         {
             System.Diagnostics.Debug.WriteLine($"[FoodbookVM] SaveAsync plan limit: {ex.Message}");
             await Shell.Current.DisplayAlert(
-                L("SaveErrorTitle", "Bd"),
+                L("SaveErrorTitle", "Error"),
                 ex.Message,
-                "OK");
+                ButtonResources.OK);
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[FoodbookVM] SaveAsync error: {ex.Message}");
             await Shell.Current.DisplayAlert(
-                L("SaveErrorTitle", "B³¹d"),
-                L("SaveErrorMessage", "Nie uda³o siê zapisaæ Foodbooka."),
-                "OK");
+                L("SaveErrorTitle", "Error"),
+                L("SaveErrorMessage", "Could not save Foodbook."),
+                ButtonResources.OK);
         }
     }
 

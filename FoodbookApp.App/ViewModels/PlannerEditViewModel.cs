@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Foodbook.Models;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Localization;
 using Microsoft.Maui.Controls;
 
 namespace Foodbook.ViewModels;
@@ -141,7 +142,10 @@ public class PlannerEditViewModel : INotifyPropertyChanged
             if (_currentPlan == null)
             {
                 System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] ERROR: Plan {planId} not found in database");
-                await Shell.Current.DisplayAlert("B³¹d", "Nie znaleziono planu", "OK");
+                await Shell.Current.DisplayAlert(
+                    T("ErrorTitle", "Error"),
+                    T("PlanNotFoundMessage", "Plan not found"),
+                    ButtonResources.OK);
                 await Shell.Current.GoToAsync("..");
                 return;
             }
@@ -263,7 +267,10 @@ public class PlannerEditViewModel : INotifyPropertyChanged
         {
             System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] ERROR loading plan: {ex.Message}");
             System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] Stack trace: {ex.StackTrace}");
-            await Shell.Current.DisplayAlert("B³¹d", $"Nie uda³o siê za³adowaæ planu: {ex.Message}", "OK");
+            await Shell.Current.DisplayAlert(
+                T("ErrorTitle", "Error"),
+                string.Format(T("PlanLoadErrorMessageFormat", "Failed to load plan: {0}"), ex.Message),
+                ButtonResources.OK);
             await Shell.Current.GoToAsync("..");
         }
         finally
@@ -469,7 +476,10 @@ public class PlannerEditViewModel : INotifyPropertyChanged
 
             if (_currentPlan == null)
             {
-                await Shell.Current.DisplayAlert("B³¹d", "Nie znaleziono planu do zapisania", "OK");
+                await Shell.Current.DisplayAlert(
+                    T("ErrorTitle", "Error"),
+                    T("PlanToSaveNotFoundMessage", "Plan to save not found"),
+                    ButtonResources.OK);
                 return;
             }
 
@@ -524,9 +534,12 @@ public class PlannerEditViewModel : INotifyPropertyChanged
             Foodbook.Services.AppEvents.RaisePlanChanged();
 
             await Shell.Current.DisplayAlert(
-                "Zapisano",
-                $"Plan zosta³ zaktualizowany ({StartDate:dd.MM.yyyy} - {EndDate:dd.MM.yyyy})",
-                "OK");
+                T("SavedTitle", "Saved"),
+                string.Format(
+                    T("PlanUpdatedMessageFormat", "Plan was updated ({0} - {1})"),
+                    StartDate.ToString("dd.MM.yyyy"),
+                    EndDate.ToString("dd.MM.yyyy")),
+                ButtonResources.OK);
 
             System.Diagnostics.Debug.WriteLine("[PlannerEditVM] ===== SAVE COMPLETE =====");
 
@@ -542,7 +555,10 @@ public class PlannerEditViewModel : INotifyPropertyChanged
             if (ex.InnerException != null)
                 message += "\n" + ex.InnerException.Message;
             
-            await Shell.Current.DisplayAlert("B³¹d", $"Nie uda³o siê zapisaæ planu:\n{message}", "OK");
+            await Shell.Current.DisplayAlert(
+                T("ErrorTitle", "Error"),
+                string.Format(T("PlanSaveErrorMessageFormat", "Failed to save plan:{0}{1}"), Environment.NewLine, message),
+                ButtonResources.OK);
         }
     }
 
@@ -577,17 +593,24 @@ public class PlannerEditViewModel : INotifyPropertyChanged
             }
 
             string? choice = null;
+            var onlySaveOption = T("ShoppingListOptionOnlySavePlanner", "Only save planner");
+            var saveAndMergeOption = T("ShoppingListOptionSaveAndMerge", "Save and merge with list");
+            var saveAndOverwriteOption = T("ShoppingListOptionSaveAndOverwrite", "Save and overwrite list");
+            var mergeManualOption = T("ShoppingListOptionMergeManual", "Merge with manually created list");
+            var saveAndCreateNewOption = T("ShoppingListOptionSaveAndCreateNew", "Save and create new list");
+            var saveAndCreateOption = T("ShoppingListOptionSaveAndCreate", "Save and create list");
+
             if (existingShoppingList != null && !existingShoppingList.IsArchived)
             {
                 // Shopping list exists and is linked - offer merge or overwrite options
                 System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] Existing linked shopping list found: {existingShoppingList.Id}");
                 choice = await Shell.Current.DisplayActionSheet(
-                    "Czy chcesz zaktualizowaæ powi¹zan¹ listê zakupów?",
-                    "Anuluj",
+                    T("ShoppingListLinkedQuestionTitle", "Do you want to update the linked shopping list?"),
+                    ButtonResources.Cancel,
                     null,
-                    "Tylko zapisz planer",
-                    "Zapisz i scal z list¹",
-                    "Zapisz i nadpisz listê"
+                    onlySaveOption,
+                    saveAndMergeOption,
+                    saveAndOverwriteOption
                 );
             }
             else if (manualShoppingList != null)
@@ -595,12 +618,12 @@ public class PlannerEditViewModel : INotifyPropertyChanged
                 // Manual shopping list exists for this date range
                 System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] Manual shopping list found: {manualShoppingList.Id}");
                 choice = await Shell.Current.DisplayActionSheet(
-                    "Znaleziono rêcznie utworzon¹ listê zakupów dla tego zakresu dat. Co chcesz zrobiæ?",
-                    "Anuluj",
+                    T("ShoppingListManualFoundQuestionTitle", "A manually created shopping list was found for this date range. What do you want to do?"),
+                    ButtonResources.Cancel,
                     null,
-                    "Tylko zapisz planer",
-                    "Scal z rêcznie utworzon¹ list¹",
-                    "Zapisz i utwórz now¹ listê"
+                    onlySaveOption,
+                    mergeManualOption,
+                    saveAndCreateNewOption
                 );
             }
             else
@@ -608,34 +631,34 @@ public class PlannerEditViewModel : INotifyPropertyChanged
                 // No shopping list exists or it was archived - offer to create one
                 System.Diagnostics.Debug.WriteLine("[PlannerEditVM] No linked shopping list found for this planner");
                 choice = await Shell.Current.DisplayActionSheet(
-                    "Czy chcesz stworzyæ listê zakupów?",
-                    "Anuluj",
+                    T("ShoppingListCreateQuestionTitle", "Do you want to create a shopping list?"),
+                    ButtonResources.Cancel,
                     null,
-                    "Tylko zapisz planer",
-                    "Zapisz i stwórz listê"
+                    onlySaveOption,
+                    saveAndCreateOption
                 );
             }
 
             // Handle user choice
-            if (string.IsNullOrEmpty(choice) || choice == "Anuluj" || choice == "Tylko zapisz planer")
+            if (string.IsNullOrEmpty(choice) || choice == ButtonResources.Cancel || choice == onlySaveOption)
             {
                 System.Diagnostics.Debug.WriteLine("[PlannerEditVM] User chose to skip shopping list operation");
                 return;
             }
 
-            if (choice == "Zapisz i stwórz listê" || choice == "Zapisz i utwórz now¹ listê")
+            if (choice == saveAndCreateOption || choice == saveAndCreateNewOption)
             {
                 await CreateShoppingListPlanAsync();
             }
-            else if (choice == "Zapisz i scal z list¹")
+            else if (choice == saveAndMergeOption)
             {
                 await MergeWithShoppingListAsync(existingShoppingList!);
             }
-            else if (choice == "Zapisz i nadpisz listê")
+            else if (choice == saveAndOverwriteOption)
             {
                 await OverwriteShoppingListAsync(existingShoppingList!);
             }
-            else if (choice == "Scal z rêcznie utworzon¹ list¹")
+            else if (choice == mergeManualOption)
             {
                 // Link manual list to this planner and update
                 if (_currentPlan != null && manualShoppingList != null)
@@ -682,7 +705,10 @@ public class PlannerEditViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] Error creating shopping list: {ex.Message}");
-            await Shell.Current.DisplayAlert("B³¹d", "Nie uda³o siê stworzyæ listy zakupów", "OK");
+            await Shell.Current.DisplayAlert(
+                T("ErrorTitle", "Error"),
+                T("ShoppingListCreateErrorMessage", "Failed to create shopping list."),
+                ButtonResources.OK);
         }
     }
 
@@ -722,7 +748,10 @@ public class PlannerEditViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] Error merging shopping list: {ex.Message}");
-            await Shell.Current.DisplayAlert("B³¹d", "Nie uda³o siê scaliæ listy zakupów", "OK");
+            await Shell.Current.DisplayAlert(
+                T("ErrorTitle", "Error"),
+                T("ShoppingListMergeErrorMessage", "Failed to merge shopping list."),
+                ButtonResources.OK);
         }
     }
 
@@ -743,11 +772,17 @@ public class PlannerEditViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] Error overwriting shopping list: {ex.Message}");
-            await Shell.Current.DisplayAlert("B³¹d", "Nie uda³o siê nadpisaæ listy zakupów", "OK");
+            await Shell.Current.DisplayAlert(
+                T("ErrorTitle", "Error"),
+                T("ShoppingListOverwriteErrorMessage", "Failed to overwrite shopping list."),
+                ButtonResources.OK);
         }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+    private static string T(string key, string fallback)
+        => PlannerPageResources.ResourceManager.GetString(key, PlannerPageResources.Culture) ?? fallback;
+
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }

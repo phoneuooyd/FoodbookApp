@@ -96,4 +96,37 @@
   <data name="DeduplicateIngredientsTitle" xml:space="preserve"><value>Eliminar ingredientes duplicados</value></data>
   <data name="DeduplicateIngredientsDescription" xml:space="preserve"><value>Limpia ingredientes base duplicados localmente (nombre + macros).</value></data>
   <data name="DeduplicateIngredientsButton" xml:space="preserve"><value>Eliminar duplicados</value></data>
+  <data name="DatabaseMigrationInProgress" xml:space="preserve"><value>Ejecutando migracion de base de datos...</value></data>
+  <data name="DatabaseMigrationSuccessStatus" xml:space="preserve"><value>Migracion de base de datos completada correctamente.</value></data>
+  <data name="DatabaseMigrationSuccessTitle" xml:space="preserve"><value>Exito</value></data>
+  <data name="DatabaseMigrationSuccessMessage" xml:space="preserve"><value>La migracion de la base de datos se completo correctamente.</value></data>
+  <data name="DatabaseMigrationFailedStatus" xml:space="preserve"><value>Migracion fallida.</value></data>
+  <data name="DatabaseMigrationFailedTitle" xml:space="preserve"><value>Error</value></data>
+  <data name="DatabaseMigrationFailedMessage" xml:space="preserve"><value>No se pudo ejecutar la migracion de base de datos. Revisa los registros.</value></data>
+  <data name="DatabaseMigrationErrorStatusFormat" xml:space="preserve"><value>Error de migracion: {0}</value></data>
+  <data name="DatabaseMigrationErrorMessageFormat" xml:space="preserve"><value>Se produjo un error durante la migracion: {0}</value></data>
+  <data name="DatabaseResetConfirmTitle" xml:space="preserve"><value>Restablecer base de datos</value></data>
+  <data name="DatabaseResetConfirmMessage" xml:space="preserve"><value>Seguro que deseas eliminar todos los datos? Esta operacion es irreversible.{0}{0}Se perderan todas las recetas, planes y listas de compra.</value></data>
+  <data name="DatabaseResetConfirmAccept" xml:space="preserve"><value>Si, restablecer</value></data>
+  <data name="DatabaseResetInProgress" xml:space="preserve"><value>Restableciendo base de datos...</value></data>
+  <data name="DatabaseResetSuccessStatus" xml:space="preserve"><value>La base de datos se ha restablecido.</value></data>
+  <data name="DatabaseResetSuccessTitle" xml:space="preserve"><value>Exito</value></data>
+  <data name="DatabaseResetSuccessMessage" xml:space="preserve"><value>La base de datos se restablecio. La app se cerrara; inicala de nuevo.</value></data>
+  <data name="DatabaseResetFailedStatus" xml:space="preserve"><value>Restablecimiento fallido.</value></data>
+  <data name="DatabaseResetFailedTitle" xml:space="preserve"><value>Error</value></data>
+  <data name="DatabaseResetFailedMessage" xml:space="preserve"><value>No se pudo restablecer la base de datos. Revisa los registros.</value></data>
+  <data name="DatabaseResetErrorStatusFormat" xml:space="preserve"><value>Error de restablecimiento: {0}</value></data>
+  <data name="DatabaseResetErrorMessageFormat" xml:space="preserve"><value>Se produjo un error al restablecer: {0}</value></data>
+  <data name="DeduplicateConfirmTitle" xml:space="preserve"><value>Eliminar ingredientes duplicados</value></data>
+  <data name="DeduplicateConfirmMessage" xml:space="preserve"><value>Seguro que deseas eliminar ingredientes base duplicados? (comparacion: nombre + macros).{0}{0}Esta operacion es irreversible.</value></data>
+  <data name="DeduplicateConfirmAccept" xml:space="preserve"><value>Si, eliminar</value></data>
+  <data name="DeduplicateInProgress" xml:space="preserve"><value>Eliminando ingredientes duplicados...</value></data>
+  <data name="DeduplicateDbUnavailableStatus" xml:space="preserve"><value>Error: sin acceso a la base de datos</value></data>
+  <data name="DeduplicateRemovedStatusFormat" xml:space="preserve"><value>Duplicados eliminados: {0}</value></data>
+  <data name="DeduplicateNoDuplicatesStatus" xml:space="preserve"><value>No hay duplicados para eliminar</value></data>
+  <data name="DeduplicateDoneTitle" xml:space="preserve"><value>Listo</value></data>
+  <data name="DeduplicateErrorStatusFormat" xml:space="preserve"><value>Error: {0}</value></data>
+  <data name="DeduplicateErrorTitle" xml:space="preserve"><value>Error</value></data>
+  <data name="PremiumRequiredTitle" xml:space="preserve"><value>Premium</value></data>
+  <data name="PremiumRequiredMessage" xml:space="preserve"><value>Esta opcion solo esta disponible para usuarios Premium.</value></data>
 </root>

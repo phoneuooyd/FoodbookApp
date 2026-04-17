@@ -38,9 +38,14 @@
 
 	<data name="EmailRequired" xml:space="preserve"><value>Email cannot be empty.</value></data>
 	<data name="PasswordRequired" xml:space="preserve"><value>Password cannot be empty.</value></data>
+	<data name="CredentialsRequiredMessage" xml:space="preserve"><value>Please enter email and password.</value></data>
 	<data name="LoggingIn" xml:space="preserve"><value>Signing in...</value></data>
 	<data name="LoginErrorTitle" xml:space="preserve"><value>Login Error</value></data>
 	<data name="LoginErrorMessage" xml:space="preserve"><value>Login failed. Please check your credentials.</value></data>
+	<data name="CloudSyncEnablePromptTitle" xml:space="preserve"><value>Cloud synchronization</value></data>
+	<data name="CloudSyncEnablePromptMessage" xml:space="preserve"><value>Do you want to enable data synchronization? Your data will be automatically synced with the cloud.</value></data>
+	<data name="CloudSyncEnableConfirm" xml:space="preserve"><value>Yes, enable</value></data>
+	<data name="CloudSyncEnableLater" xml:space="preserve"><value>Not now</value></data>
 
 	<data name="SyncErrorTitle" xml:space="preserve"><value>Sync Error</value></data>
 	<data name="SyncServiceUnavailable" xml:space="preserve"><value>Sync service not available</value></data>
@@ -88,6 +93,8 @@
 	<data name="SyncQueueStatusError" xml:space="preserve"><value>Error</value></data>
 	<data name="SyncQueueStatusInProgress" xml:space="preserve"><value>In progress</value></data>
 	<data name="SyncQueueStatusPending" xml:space="preserve"><value>Pending</value></data>
+	<data name="SyncRefreshWaitTitle" xml:space="preserve"><value>Refresh</value></data>
+	<data name="SyncRefreshWaitMessageFormat" xml:space="preserve"><value>Wait {0:0} s before refreshing again.</value></data>
 
 	<data name="SubscriptionPendingTitle" xml:space="preserve"><value>Pending subscription operation</value></data>
 	<data name="SubscriptionPendingResume" xml:space="preserve"><value>Resume operation</value></data>
@@ -102,4 +109,74 @@
 	<data name="PlanNameFree" xml:space="preserve"><value>Free</value></data>
 	<data name="PlanNamePremiumMonthly" xml:space="preserve"><value>Premium Monthly</value></data>
 	<data name="PlanNamePremiumYearly" xml:space="preserve"><value>Premium Yearly</value></data>
+	<data name="SubscriptionActionTitleChangePlan" xml:space="preserve"><value>Change plan</value></data>
+	<data name="SubscriptionActionTitleSubscription" xml:space="preserve"><value>Subscription</value></data>
+	<data name="SubscriptionActionTitleResume" xml:space="preserve"><value>Resume subscription</value></data>
+	<data name="SubscriptionServiceUnavailable" xml:space="preserve"><value>Subscription service is unavailable.</value></data>
+	<data name="SubscriptionUpdating" xml:space="preserve"><value>Updating subscription...</value></data>
+	<data name="SubscriptionErrorTitle" xml:space="preserve"><value>Subscription error</value></data>
+	<data name="CurrentPlanStatusActive" xml:space="preserve"><value>Active</value></data>
+	<data name="CurrentPlanRenewalFree" xml:space="preserve"><value>Period: unlimited</value></data>
+	<data name="CurrentPlanRenewalPremiumMonthly" xml:space="preserve"><value>Period: 1 month</value></data>
+	<data name="CurrentPlanRenewalPremiumYearly" xml:space="preserve"><value>Period: 12 months</value></data>
+	<data name="CurrentPlanLimitsPremium" xml:space="preserve"><value>Limits: no premium restrictions.</value></data>
+	<data name="CurrentPlanLimitsFree" xml:space="preserve"><value>Limits: max 3 active meal plans, max 14 days per plan, max 3 active shopping lists.</value></data>
+	<data name="CurrentPlanLimitsFreeReached" xml:space="preserve"><value>Limits: free plan limit for active meal plans has been reached.</value></data>
+	<data name="CurrentPlanPriceFree" xml:space="preserve"><value>0 PLN / unlimited</value></data>
+	<data name="CurrentPlanPricePremiumMonthly" xml:space="preserve"><value>TBD / month</value></data>
+	<data name="CurrentPlanPricePremiumYearly" xml:space="preserve"><value>TBD / year</value></data>
+	<data name="CurrentPlanFeaturesFree" xml:space="preserve"><value>• Recipes and ingredients: unlimited
+• URL import and macro calculation
+• Meal planner: max 3 active plans, max 14 days per plan
+• Shopping lists: max 3 active
+• Selected premium features via ads (daily limits)</value></data>
+	<data name="CurrentPlanFeaturesPremiumMonthly" xml:space="preserve"><value>• Unlimited meal plans and shopping lists
+• AI meal planner (local and cloud)
+• AI recipe agent
+• Archived plan recycling
+• Weekly and monthly templates
+• Premium recipe packs</value></data>
+	<data name="CurrentPlanFeaturesPremiumYearly" xml:space="preserve"><value>• Unlimited meal plans and shopping lists
+• AI meal planner (local and cloud)
+• AI recipe agent
+• Archived plan recycling
+• Weekly and monthly templates
+• Premium recipe packs</value></data>
+	<data name="RegisterPopupTitle" xml:space="preserve"><value>Register</value></data>
+	<data name="RegisterServiceMissingMessage" xml:space="preserve"><value>Authentication service not found.</value></data>
+	<data name="PasswordsDoNotMatch" xml:space="preserve"><value>Passwords do not match.</value></data>
+	<data name="RegisterInProgress" xml:space="preserve"><value>Registering...</value></data>
+	<data name="RegisterConfirmEmailMessage" xml:space="preserve"><value>Check your email inbox to confirm registration.</value></data>
+	<data name="RegisterSuccessMessage" xml:space="preserve"><value>Account has been created.</value></data>
+	<data name="HeroRecipesCountLabel" xml:space="preserve"><value>Recipes</value></data>
+	<data name="HeroPlansCountLabel" xml:space="preserve"><value>Plans</value></data>
+	<data name="HeroListsCountLabel" xml:space="preserve"><value>Lists</value></data>
+	<data name="AccountSettingsSectionLabel" xml:space="preserve"><value>Account settings</value></data>
+	<data name="AccountDataTitle" xml:space="preserve"><value>Account data</value></data>
+	<data name="AccountDataSubtitle" xml:space="preserve"><value>Change email or password</value></data>
+	<data name="SubscriptionHeaderTitle" xml:space="preserve"><value>Subscription</value></data>
+	<data name="SubscriptionHeaderSubtitle" xml:space="preserve"><value>Manage your plan</value></data>
+	<data name="CurrentPlanSectionTitle" xml:space="preserve"><value>Your current plan</value></data>
+	<data name="OtherPlansSectionTitle" xml:space="preserve"><value>Other plans</value></data>
+	<data name="FreePlanPriceLabel" xml:space="preserve"><value>0 PLN / forever</value></data>
+	<data name="FreePlanFeatureRecipes" xml:space="preserve"><value>• Unlimited recipes</value></data>
+	<data name="FreePlanFeaturePlanner" xml:space="preserve"><value>• Meal planner (3 active)</value></data>
+	<data name="FreePlanFeatureShoppingList" xml:space="preserve"><value>• Shopping list</value></data>
+	<data name="FreePlanFeatureImport" xml:space="preserve"><value>• Import recipes from the web</value></data>
+	<data name="SwitchToFreeButton" xml:space="preserve"><value>Switch to Free</value></data>
+	<data name="PremiumMonthlyPriceLabel" xml:space="preserve"><value>9.99 PLN / month</value></data>
+	<data name="PremiumFeatureAllIncluded" xml:space="preserve"><value>• Everything from Premium plan</value></data>
+	<data name="PremiumMonthlyFeatureBilling" xml:space="preserve"><value>• Monthly billing</value></data>
+	<data name="PremiumMonthlyFeatureFlexibility" xml:space="preserve"><value>• Flexible plan changes</value></data>
+	<data name="SwitchToMonthlyButton" xml:space="preserve"><value>Switch to monthly</value></data>
+	<data name="PremiumYearlyPriceLabel" xml:space="preserve"><value>95.99 PLN / year</value></data>
+	<data name="PremiumYearlyFeatureBilling" xml:space="preserve"><value>• Annual billing</value></data>
+	<data name="PremiumYearlyFeatureLowerPrice" xml:space="preserve"><value>• Lower price: 7.99 PLN / month</value></data>
+	<data name="SwitchToYearlyButton" xml:space="preserve"><value>Switch to yearly</value></data>
+	<data name="CancelSubscriptionButton" xml:space="preserve"><value>Cancel subscription</value></data>
+	<data name="SyncQueueLoadMoreButton" xml:space="preserve"><value>Show more</value></data>
+	<data name="BackgroundSyncButton" xml:space="preserve"><value>Background sync</value></data>
+	<data name="SyncLastSyncedWithTimeFormat" xml:space="preserve"><value>Synced • {0}</value></data>
+	<data name="SyncLastSynced" xml:space="preserve"><value>Synced</value></data>
+	<data name="SyncPendingFormat" xml:space="preserve"><value>Syncing: {0} pending</value></data>
 </root>

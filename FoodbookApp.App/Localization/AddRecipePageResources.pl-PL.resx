@@ -255,4 +255,79 @@
   <data name="FailedToOpenRecipeDetails" xml:space="preserve">
     <value>Nie udało się otworzyć szczegółów przepisu</value>
   </data>
+  <data name="AddModeTitle" xml:space="preserve">
+    <value>Nowy przepis</value>
+  </data>
+  <data name="EditModeTitle" xml:space="preserve">
+    <value>Edytuj przepis</value>
+  </data>
+  <data name="AddModeSaveButton" xml:space="preserve">
+    <value>Dodaj przepis</value>
+  </data>
+  <data name="EditModeSaveButton" xml:space="preserve">
+    <value>Zapisz zmiany</value>
+  </data>
+  <data name="ImportingStatus" xml:space="preserve">
+    <value>Importowanie...</value>
+  </data>
+  <data name="ImportedStatus" xml:space="preserve">
+    <value>Zaimportowano!</value>
+  </data>
+  <data name="ImportErrorMessageFormat" xml:space="preserve">
+    <value>Błąd importu: {0}</value>
+  </data>
+  <data name="LoadRecipeErrorMessageFormat" xml:space="preserve">
+    <value>Błąd ładowania przepisu: {0}</value>
+  </data>
+  <data name="AddIngredientErrorMessageFormat" xml:space="preserve">
+    <value>Błąd dodawania składnika: {0}</value>
+  </data>
+  <data name="RemoveIngredientErrorMessageFormat" xml:space="preserve">
+    <value>Błąd usuwania składnika: {0}</value>
+  </data>
+  <data name="ValidationNameRequired" xml:space="preserve">
+    <value>Nazwa przepisu jest wymagana</value>
+  </data>
+  <data name="ValidationPortionsInvalid" xml:space="preserve">
+    <value>Ilość porcji musi być liczbą całkowitą większą od 0</value>
+  </data>
+  <data name="ValidationCaloriesInvalid" xml:space="preserve">
+    <value>Kalorie muszą być liczbą</value>
+  </data>
+  <data name="ValidationProteinInvalid" xml:space="preserve">
+    <value>Białko musi być liczbą</value>
+  </data>
+  <data name="ValidationFatInvalid" xml:space="preserve">
+    <value>Tłuszcze muszą być liczbą</value>
+  </data>
+  <data name="ValidationCarbsInvalid" xml:space="preserve">
+    <value>Węglowodany muszą być liczbą</value>
+  </data>
+  <data name="ValidationIngredientNameRequired" xml:space="preserve">
+    <value>Każdy składnik musi mieć nazwę</value>
+  </data>
+  <data name="ValidationIngredientQuantityInvalid" xml:space="preserve">
+    <value>Ilość składnika musi być większa od zera</value>
+  </data>
+  <data name="ValidationGeneralError" xml:space="preserve">
+    <value>Błąd walidacji danych</value>
+  </data>
+  <data name="SaveRecipeServiceError" xml:space="preserve">
+    <value>Błąd zapisu przepisu. Sprawdź logi aplikacji.</value>
+  </data>
+  <data name="SaveRecipeErrorMessageFormat" xml:space="preserve">
+    <value>Błąd zapisywania: {0}</value>
+  </data>
+  <data name="PageLoadErrorMessageFormat" xml:space="preserve">
+    <value>Błąd ładowania strony: {0}</value>
+  </data>
+  <data name="PageDataLoadErrorMessageFormat" xml:space="preserve">
+    <value>Błąd ładowania danych: {0}</value>
+  </data>
+  <data name="ModeSwitchErrorMessageFormat" xml:space="preserve">
+    <value>Błąd przełączania trybu: {0}</value>
+  </data>
+  <data name="IngredientUpdateErrorMessageFormat" xml:space="preserve">
+    <value>Błąd aktualizacji składnika: {0}</value>
+  </data>
 </root>

@@ -48,4 +48,22 @@
   <data name="OK" xml:space="preserve">
     <value>OK</value>
   </data>
+  <data name="BulkVerifyConfirmTitle" xml:space="preserve"><value>Bulk ingredient verification</value></data>
+  <data name="BulkVerifyConfirmMessageFormat" xml:space="preserve"><value>Do you want to verify all {0} ingredients with OpenFoodFacts?
+
+This may take a few minutes.</value></data>
+  <data name="BulkVerifyConfirmAccept" xml:space="preserve"><value>Yes, verify</value></data>
+  <data name="BulkVerifyStatusStartFormat" xml:space="preserve"><value>Verifying ingredients: 0/{0}</value></data>
+  <data name="BulkVerifyStatusItemFormat" xml:space="preserve"><value>Verifying ingredients: {0}/{1} - {2}</value></data>
+  <data name="BulkVerifySummaryTitle" xml:space="preserve"><value>Bulk verification completed</value></data>
+  <data name="BulkVerifySummaryMessageFormat" xml:space="preserve"><value>Updated: {0}
+Unchanged: {1}
+Failed/not found: {2}</value></data>
+  <data name="BulkVerifyStatusCompletedFormat" xml:space="preserve"><value>Completed - updated {0}/{1} ingredients</value></data>
+  <data name="BulkVerifyStatusErrorFormat" xml:space="preserve"><value>Bulk verification error: {0}</value></data>
+  <data name="BulkVerifyErrorTitle" xml:space="preserve"><value>Verification error</value></data>
+  <data name="BulkVerifyErrorMessageFormat" xml:space="preserve"><value>An error occurred during bulk ingredient verification:
+{0}</value></data>
+  <data name="DeleteIngredientTitle" xml:space="preserve"><value>Delete ingredient</value></data>
+  <data name="DeleteIngredientConfirmFormat" xml:space="preserve"><value>Are you sure you want to delete ingredient '{0}'?</value></data>
 </root>

@@ -70,4 +70,69 @@
   <data name="SyncQueueStatusError" xml:space="preserve"><value>Error</value></data>
   <data name="SyncQueueStatusInProgress" xml:space="preserve"><value>En curso</value></data>
   <data name="SyncQueueStatusPending" xml:space="preserve"><value>Pendiente</value></data>
+
+  <data name="CurrentPlanStatusActive" xml:space="preserve"><value>Activo</value></data>
+  <data name="CurrentPlanRenewalFree" xml:space="preserve"><value>Período: ilimitado</value></data>
+  <data name="CurrentPlanRenewalPremiumMonthly" xml:space="preserve"><value>Período: 1 mes</value></data>
+  <data name="CurrentPlanRenewalPremiumYearly" xml:space="preserve"><value>Período: 12 meses</value></data>
+  <data name="CurrentPlanLimitsPremium" xml:space="preserve"><value>Límites: sin restricciones del plan premium.</value></data>
+  <data name="CurrentPlanLimitsFree" xml:space="preserve"><value>Límites: máx. 3 planes de comidas activos, máx. 14 días por plan y máx. 3 listas de compras activas.</value></data>
+  <data name="CurrentPlanLimitsFreeReached" xml:space="preserve"><value>Límites: se alcanzó el límite del plan Free para planes de comidas activos.</value></data>
+  <data name="CurrentPlanPriceFree" xml:space="preserve"><value>0 PLN / ilimitado</value></data>
+  <data name="CurrentPlanPricePremiumMonthly" xml:space="preserve"><value>TBD / mes</value></data>
+  <data name="CurrentPlanPricePremiumYearly" xml:space="preserve"><value>TBD / año</value></data>
+  <data name="CurrentPlanFeaturesFree" xml:space="preserve"><value>• Recetas e ingredientes: sin límite
+• Importación por URL y cálculo automático de macros
+• Planificador de comidas: máx. 3 planes activos, máx. 14 días por plan
+• Listas de compras: máx. 3 activas
+• Funciones premium seleccionadas mediante anuncios (límites diarios)</value></data>
+  <data name="CurrentPlanFeaturesPremiumMonthly" xml:space="preserve"><value>• Planes de comidas y listas de compras ilimitados
+• Planificador de comidas con IA (local y en la nube)
+• Agente de recetas con IA
+• Reciclaje de planes archivados
+• Plantillas semanales y mensuales
+• Paquetes de recetas premium</value></data>
+  <data name="CurrentPlanFeaturesPremiumYearly" xml:space="preserve"><value>• Planes de comidas y listas de compras ilimitados
+• Planificador de comidas con IA (local y en la nube)
+• Agente de recetas con IA
+• Reciclaje de planes archivados
+• Plantillas semanales y mensuales
+• Paquetes de recetas premium</value></data>
+  <data name="RegisterPopupTitle" xml:space="preserve"><value>Registro</value></data>
+  <data name="RegisterServiceMissingMessage" xml:space="preserve"><value>No se encontro el servicio de autenticacion.</value></data>
+  <data name="PasswordsDoNotMatch" xml:space="preserve"><value>Las contrasenas no coinciden.</value></data>
+  <data name="RegisterInProgress" xml:space="preserve"><value>Registrando...</value></data>
+  <data name="RegisterConfirmEmailMessage" xml:space="preserve"><value>Revisa tu correo para confirmar el registro.</value></data>
+  <data name="RegisterSuccessMessage" xml:space="preserve"><value>La cuenta ha sido creada.</value></data>
+  <data name="HeroRecipesCountLabel" xml:space="preserve"><value>Recetas</value></data>
+  <data name="HeroPlansCountLabel" xml:space="preserve"><value>Planes</value></data>
+  <data name="HeroListsCountLabel" xml:space="preserve"><value>Listas</value></data>
+  <data name="AccountSettingsSectionLabel" xml:space="preserve"><value>Ajustes de la cuenta</value></data>
+  <data name="AccountDataTitle" xml:space="preserve"><value>Datos de la cuenta</value></data>
+  <data name="AccountDataSubtitle" xml:space="preserve"><value>Cambiar correo o contraseña</value></data>
+  <data name="SubscriptionHeaderTitle" xml:space="preserve"><value>Suscripción</value></data>
+  <data name="SubscriptionHeaderSubtitle" xml:space="preserve"><value>Administra tu plan</value></data>
+  <data name="CurrentPlanSectionTitle" xml:space="preserve"><value>Tu plan actual</value></data>
+  <data name="OtherPlansSectionTitle" xml:space="preserve"><value>Otros planes</value></data>
+  <data name="FreePlanPriceLabel" xml:space="preserve"><value>0 PLN / para siempre</value></data>
+  <data name="FreePlanFeatureRecipes" xml:space="preserve"><value>• Recetas ilimitadas</value></data>
+  <data name="FreePlanFeaturePlanner" xml:space="preserve"><value>• Planificador de comidas (3 activos)</value></data>
+  <data name="FreePlanFeatureShoppingList" xml:space="preserve"><value>• Lista de compras</value></data>
+  <data name="FreePlanFeatureImport" xml:space="preserve"><value>• Importar recetas de la web</value></data>
+  <data name="SwitchToFreeButton" xml:space="preserve"><value>Cambiar a Free</value></data>
+  <data name="PremiumMonthlyPriceLabel" xml:space="preserve"><value>9,99 PLN / mes</value></data>
+  <data name="PremiumFeatureAllIncluded" xml:space="preserve"><value>• Todo lo del plan Premium</value></data>
+  <data name="PremiumMonthlyFeatureBilling" xml:space="preserve"><value>• Facturación mensual</value></data>
+  <data name="PremiumMonthlyFeatureFlexibility" xml:space="preserve"><value>• Cambio de plan flexible</value></data>
+  <data name="SwitchToMonthlyButton" xml:space="preserve"><value>Cambiar a mensual</value></data>
+  <data name="PremiumYearlyPriceLabel" xml:space="preserve"><value>95,99 PLN / año</value></data>
+  <data name="PremiumYearlyFeatureBilling" xml:space="preserve"><value>• Facturación anual</value></data>
+  <data name="PremiumYearlyFeatureLowerPrice" xml:space="preserve"><value>• Precio más bajo: 7,99 PLN / mes</value></data>
+  <data name="SwitchToYearlyButton" xml:space="preserve"><value>Cambiar a anual</value></data>
+  <data name="CancelSubscriptionButton" xml:space="preserve"><value>Cancelar suscripción</value></data>
+  <data name="SyncQueueLoadMoreButton" xml:space="preserve"><value>Mostrar más</value></data>
+  <data name="BackgroundSyncButton" xml:space="preserve"><value>Sincronización en segundo plano</value></data>
+  <data name="SyncLastSyncedWithTimeFormat" xml:space="preserve"><value>Sincronizado • {0}</value></data>
+  <data name="SyncLastSynced" xml:space="preserve"><value>Sincronizado</value></data>
+  <data name="SyncPendingFormat" xml:space="preserve"><value>Sincronizando: {0} pendientes</value></data>
 </root>

@@ -15,4 +15,31 @@
   <data name="Title" xml:space="preserve">
     <value>Archive</value>
   </data>
+  <data name="PlannerItemLabel" xml:space="preserve">
+    <value>planner</value>
+  </data>
+  <data name="ShoppingListItemLabel" xml:space="preserve">
+    <value>shopping list</value>
+  </data>
+  <data name="ConflictDateTitle" xml:space="preserve">
+    <value>Date conflict</value>
+  </data>
+  <data name="RestoreConflictMessageFormat" xml:space="preserve">
+    <value>Cannot restore {0}. An active plan already exists in this date range.</value>
+  </data>
+  <data name="RestoreConfirmTitle" xml:space="preserve">
+    <value>Restore</value>
+  </data>
+  <data name="RestoreConfirmMessageFormat" xml:space="preserve">
+    <value>Are you sure you want to restore this {0}?</value>
+  </data>
+  <data name="DeleteConfirmTitle" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="DeleteConfirmMessageFormat" xml:space="preserve">
+    <value>Are you sure you want to permanently delete this {0}? This operation cannot be undone.</value>
+  </data>
+  <data name="EmptyArchivedPlannersTitle" xml:space="preserve">
+    <value>No archived planners</value>
+  </data>
 </root>

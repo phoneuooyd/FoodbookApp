@@ -13,6 +13,8 @@ using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Dispatching;
 using Microsoft.Extensions.DependencyInjection;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Localization;
+using Foodbook.Utils;
 
 namespace Foodbook.Views
 {
@@ -146,7 +148,9 @@ namespace Foodbook.Views
                 System.Diagnostics.Debug.WriteLine($"Error in OnAppearing: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"Błąd ładowania strony: {ex.Message}";
+                    ViewModel.ValidationMessage = string.Format(
+                        R("PageLoadErrorMessageFormat", "Page load error: {0}"),
+                        ex.Message);
                 }
             }
         }
@@ -214,7 +218,9 @@ namespace Foodbook.Views
                 System.Diagnostics.Debug.WriteLine($"❌ AddRecipePage: Error loading data: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"Błąd ładowania danych: {ex.Message}";
+                    ViewModel.ValidationMessage = string.Format(
+                        R("PageDataLoadErrorMessageFormat", "Data load error: {0}"),
+                        ex.Message);
                 }
             }
         }
@@ -730,7 +736,9 @@ namespace Foodbook.Views
                 System.Diagnostics.Debug.WriteLine($"Error in OnAutoModeClicked: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"Błąd przełączania trybu: {ex.Message}";
+                    ViewModel.ValidationMessage = string.Format(
+                        R("ModeSwitchErrorMessageFormat", "Mode switch error: {0}"),
+                        ex.Message);
                 }
             }
         }
@@ -749,7 +757,9 @@ namespace Foodbook.Views
                 System.Diagnostics.Debug.WriteLine($"Error in OnManualModeClicked: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"Błąd przełączania trybu: {ex.Message}";
+                    ViewModel.ValidationMessage = string.Format(
+                        R("ModeSwitchErrorMessageFormat", "Mode switch error: {0}"),
+                        ex.Message);
                 }
             }
         }
@@ -836,7 +846,10 @@ namespace Foodbook.Views
                     return;
 
                 _isKeyboardLiftApplied = true;
-                await ContentHost.TranslateTo(0, -KeyboardLiftOffset, 180, Easing.CubicOut);
+                await ComponentAnimationHelper.AnimateKeyboardLiftAsync(
+                    ContentHost,
+                    lifted: true,
+                    liftOffset: KeyboardLiftOffset);
             }
             catch (Exception ex)
             {
@@ -855,7 +868,10 @@ namespace Foodbook.Views
                 }
 
                 _isKeyboardLiftApplied = false;
-                await ContentHost.TranslateTo(0, 0, 140, Easing.CubicOut);
+                await ComponentAnimationHelper.AnimateKeyboardLiftAsync(
+                    ContentHost,
+                    lifted: false,
+                    liftOffset: KeyboardLiftOffset);
                 ContentHost.TranslationY = 0;
             }
             catch (Exception ex)
@@ -905,7 +921,9 @@ namespace Foodbook.Views
                 System.Diagnostics.Debug.WriteLine($"Error in OnIngredientNameChanged: {ex.Message}");
                 if (ViewModel != null)
                 {
-                    ViewModel.ValidationMessage = $"Błąd aktualizacji składnika: {ex.Message}";
+                    ViewModel.ValidationMessage = string.Format(
+                        R("IngredientUpdateErrorMessageFormat", "Ingredient update error: {0}"),
+                        ex.Message);
                 }
             }
         }
@@ -1089,6 +1107,9 @@ namespace Foodbook.Views
             }
             return y;
         }
+
+        private static string R(string key, string fallback)
+            => AddRecipePageResources.ResourceManager.GetString(key, AddRecipePageResources.Culture) ?? fallback;
 
        protected override void OnSizeAllocated(double width, double height)
        {

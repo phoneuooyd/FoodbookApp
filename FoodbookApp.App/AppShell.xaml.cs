@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Foodbook.Utils;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Localization;
 using Foodbook.Views;
 
 namespace FoodbookApp
@@ -115,7 +116,7 @@ namespace FoodbookApp
                 {
                     var title = _localizationService?.GetString("HomePageResources", "ExitAppTitle") ?? "Wyjście";
                     var message = _localizationService?.GetString("HomePageResources", "ExitAppConfirmation") ?? "Czy chcesz wyjść z aplikacji?";
-                    bool result = await Application.Current!.MainPage!.DisplayAlert(title, message, "Tak", "Nie");
+                    bool result = await Application.Current!.MainPage!.DisplayAlert(title, message, ButtonResources.Yes, ButtonResources.No);
                     if (result)
                     {
                         Application.Current?.Quit();

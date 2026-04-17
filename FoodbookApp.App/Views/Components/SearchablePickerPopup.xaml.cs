@@ -139,7 +139,10 @@ public partial class SearchablePickerPopup : Popup, INotifyPropertyChanged
             var vm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IngredientFormViewModel>();
             if (vm == null)
             {
-                await Shell.Current.DisplayAlert("Błąd", "Nie można otworzyć formularza składnika.", "OK");
+                await Shell.Current.DisplayAlert(
+                    FoodbookApp.Localization.AddRecipePageResources.ErrorTitle,
+                    FoodbookApp.Localization.AddRecipePageResources.CouldNotOpenRecipeSelectionDialog,
+                    FoodbookApp.Localization.AddRecipePageResources.OKButton);
                 return;
             }
 

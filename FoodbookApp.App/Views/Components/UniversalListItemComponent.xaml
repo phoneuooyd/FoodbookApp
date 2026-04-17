@@ -193,10 +193,10 @@
                                 FontAttributes="Bold"
                                 HeightRequest="36"
                                 CornerRadius="18"
-                                BackgroundColor="{AppThemeBinding Light=#1A5B3FE8, Dark=#334A90E2}"
-                                BorderColor="{AppThemeBinding Light=#335B3FE8, Dark=#557AB2FF}"
+                                BackgroundColor="{DynamicResource FoodbookApplyButtonBackgroundColor}"
+                                BorderColor="{DynamicResource FoodbookApplyButtonBorderColor}"
                                 BorderWidth="1"
-                                TextColor="{DynamicResource Primary}"
+                                TextColor="{DynamicResource FoodbookApplyButtonTextColor}"
                                 Padding="12,0"
                                 VerticalOptions="Center" />
 

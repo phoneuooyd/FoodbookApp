@@ -39,4 +39,23 @@
   <data name="NoCollected" xml:space="preserve">
     <value>Brak zebranych produktów</value>
   </data>
+  <data name="LoadErrorTitle" xml:space="preserve"><value>Błąd</value></data>
+  <data name="LoadErrorMessage" xml:space="preserve"><value>Nie udało się załadować listy zakupów.</value></data>
+  <data name="UnsavedChangesConfirmTitle" xml:space="preserve"><value>Potwierdzenie</value></data>
+  <data name="UnsavedChangesConfirmMessage" xml:space="preserve"><value>Masz niezapisane zmiany. Czy chcesz opuścić tę stronę bez zapisywania?</value></data>
+  <data name="ValidationErrorTitle" xml:space="preserve"><value>Błąd walidacji</value></data>
+  <data name="ValidationInvalidPlanIdMessage" xml:space="preserve"><value>Nieprawidłowy identyfikator planu. Nie można zapisać listy zakupów.</value></data>
+  <data name="ValidationItemMissingNameFormat" xml:space="preserve"><value>Pozycja {0}: brak nazwy</value></data>
+  <data name="ValidationItemInvalidQuantityFormat" xml:space="preserve"><value>Pozycja {0} ({1}): nieprawidłowa ilość ({2})</value></data>
+  <data name="ValidationInvalidItemsSummaryFormat" xml:space="preserve"><value>Znaleziono nieprawidłowe elementy:{0}{1}</value></data>
+  <data name="ValidationInvalidItemsMoreFormat" xml:space="preserve"><value>...i {0} więcej</value></data>
+  <data name="ValidationFixItemsMessage" xml:space="preserve"><value>Usuń lub popraw nieprawidłowe pozycje przed zapisaniem.</value></data>
+  <data name="DatabaseErrorTitle" xml:space="preserve"><value>Błąd bazy danych</value></data>
+  <data name="DatabaseSaveFailedMessageFormat" xml:space="preserve"><value>Nie udało się zapisać listy zakupów do bazy danych.{0}{0}Szczegóły: {1}{0}{0}Spróbuj ponownie lub skontaktuj się z obsługą.</value></data>
+  <data name="InvalidOperationErrorTitle" xml:space="preserve"><value>Błąd operacji</value></data>
+  <data name="InvalidOperationSaveFailedMessageFormat" xml:space="preserve"><value>Wystąpił problem z zapisem listy zakupów.{0}{0}Szczegóły: {1}{0}{0}Spróbuj ponownie.</value></data>
+  <data name="SaveErrorTitle" xml:space="preserve"><value>Błąd zapisu</value></data>
+  <data name="SaveFailedMessageFormat" xml:space="preserve"><value>Nie udało się zapisać listy zakupów.{0}{0}Szczegóły: {1}{0}{0}Typ błędu: {2}</value></data>
+  <data name="CriticalErrorTitle" xml:space="preserve"><value>Błąd krytyczny</value></data>
+  <data name="CriticalSaveFailedMessageFormat" xml:space="preserve"><value>Wystąpił nieoczekiwany błąd podczas zapisywania listy zakupów.{0}{0}Szczegóły: {1}{0}{0}Jeśli problem się powtarza, spróbuj:{0}1. Usuń puste lub nieprawidłowe pozycje{0}2. Zrestartuj aplikację{0}3. Skontaktuj się z obsługą techniczną</value></data>
 </root>

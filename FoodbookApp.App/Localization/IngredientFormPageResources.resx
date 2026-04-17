@@ -64,4 +64,79 @@
   <data name="CarbsLabel" xml:space="preserve">
     <value>Carbohydrates (g)</value>
   </data>
+  <data name="LoadErrorTitle" xml:space="preserve">
+    <value>Loading error</value>
+  </data>
+  <data name="LoadErrorMessageFormat" xml:space="preserve">
+    <value>Could not load ingredient: {0}</value>
+  </data>
+  <data name="RecipeInfoPartOfRecipe" xml:space="preserve">
+    <value>This ingredient is part of a recipe</value>
+  </data>
+  <data name="LoadIngredientErrorMessageFormat" xml:space="preserve">
+    <value>Error loading ingredient: {0}</value>
+  </data>
+  <data name="VerifyNameRequiredStatus" xml:space="preserve">
+    <value>Enter ingredient name before verification</value>
+  </data>
+  <data name="VerifyCheckingStatus" xml:space="preserve">
+    <value>Verifying data in OpenFoodFacts...</value>
+  </data>
+  <data name="VerifyUpdatedStatusFormat" xml:space="preserve">
+    <value>Updated data for '{0}'</value>
+  </data>
+  <data name="VerifyDialogTitle" xml:space="preserve">
+    <value>Ingredient verification</value>
+  </data>
+  <data name="VerifyUpdatedDialogMessageFormat" xml:space="preserve">
+    <value>Updated data for '{0}':{1}Calories: {2:F1} -&gt; {3:F1}{1}Protein: {4:F1} -&gt; {5:F1}g{1}Fat: {6:F1} -&gt; {7:F1}g{1}Carbohydrates: {8:F1} -&gt; {9:F1}g</value>
+  </data>
+  <data name="VerifyNotFoundStatusFormat" xml:space="preserve">
+    <value>Product '{0}' not found in OpenFoodFacts</value>
+  </data>
+  <data name="VerifyNotFoundDialogMessageFormat" xml:space="preserve">
+    <value>Product '{0}' was not found in OpenFoodFacts or the values are unchanged.{1}{1}Try another ingredient name (e.g. in English) or enter values manually.</value>
+  </data>
+  <data name="VerifyErrorStatusFormat" xml:space="preserve">
+    <value>Verification error: {0}</value>
+  </data>
+  <data name="VerifyErrorTitle" xml:space="preserve">
+    <value>Verification error</value>
+  </data>
+  <data name="VerifyErrorDialogMessageFormat" xml:space="preserve">
+    <value>An error occurred while verifying ingredient '{0}': {1}</value>
+  </data>
+  <data name="ValidationNameRequired" xml:space="preserve">
+    <value>Ingredient name is required</value>
+  </data>
+  <data name="ValidationQuantityNumeric" xml:space="preserve">
+    <value>Quantity must be a number</value>
+  </data>
+  <data name="ValidationQuantityPositive" xml:space="preserve">
+    <value>Quantity must be greater than zero</value>
+  </data>
+  <data name="ValidationCaloriesNumeric" xml:space="preserve">
+    <value>Calories must be a number</value>
+  </data>
+  <data name="ValidationProteinNumeric" xml:space="preserve">
+    <value>Protein must be a number</value>
+  </data>
+  <data name="ValidationFatNumeric" xml:space="preserve">
+    <value>Fat must be a number</value>
+  </data>
+  <data name="ValidationCarbsNumeric" xml:space="preserve">
+    <value>Carbohydrates must be a number</value>
+  </data>
+  <data name="ValidationUnitWeightNumeric" xml:space="preserve">
+    <value>Unit weight must be a number</value>
+  </data>
+  <data name="ValidationUnitWeightPositive" xml:space="preserve">
+    <value>Unit weight must be greater than zero</value>
+  </data>
+  <data name="ValidationGeneralError" xml:space="preserve">
+    <value>Validation error</value>
+  </data>
+  <data name="SaveIngredientErrorMessageFormat" xml:space="preserve">
+    <value>Could not save ingredient: {0}</value>
+  </data>
 </root>

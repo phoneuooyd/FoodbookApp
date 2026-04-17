@@ -5,4 +5,9 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Title" xml:space="preserve"><value>Planifier un repas</value></data>
+  <data name="NewMealTitle" xml:space="preserve"><value>Nouveau repas</value></data>
+  <data name="EditMealTitle" xml:space="preserve"><value>Modifier le repas</value></data>
+  <data name="AddMealButtonText" xml:space="preserve"><value>Ajouter le repas</value></data>
+  <data name="SaveChangesButtonText" xml:space="preserve"><value>Enregistrer les modifications</value></data>
+  <data name="ValidationSelectRecipe" xml:space="preserve"><value>Selectionnez une recette</value></data>
 </root>

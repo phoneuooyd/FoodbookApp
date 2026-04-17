@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Foodbook.Models;
@@ -12,8 +13,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Localization;
 using CommunityToolkit.Mvvm.Messaging;
-using Foodbook.Messages;
+using FoodbookApp.Models.Messages;
 
 namespace Foodbook.ViewModels
 {
@@ -168,12 +170,12 @@ namespace Foodbook.ViewModels
         public ObservableCollection<Ingredient> Ingredients { get; set; } = new();
 
         public string Title => _editingRecipe == null 
-            ? "Nowy przepis" 
-            : "Edytuj przepis";
+            ? T("AddModeTitle", "New recipe") 
+            : T("EditModeTitle", "Edit recipe");
 
         public string SaveButtonText => _editingRecipe == null 
-            ? "Dodaj przepis" 
-            : "Zapisz zmiany";
+            ? T("AddModeSaveButton", "Add recipe") 
+            : T("EditModeSaveButton", "Save changes");
 
         public string ValidationMessage { get => _validationMessage; set { _validationMessage = value; OnPropertyChanged(); } }
         private string _validationMessage = string.Empty;
@@ -503,7 +505,10 @@ namespace Foodbook.ViewModels
             {
                 _suppressDirtyTracking = false;
                 System.Diagnostics.Debug.WriteLine($"❌ LoadRecipeAsync error: {ex.Message}");
-                ValidationMessage = $"Błąd ładowania przepisu: {ex.Message}";
+                ValidationMessage = string.Format(
+                    CultureInfo.CurrentUICulture,
+                    T("LoadRecipeErrorMessageFormat", "Error loading recipe: {0}"),
+                    ex.Message);
             }
         }
 
@@ -531,7 +536,10 @@ namespace Foodbook.ViewModels
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in AddIngredient: {ex.Message}");
-                ValidationMessage = $"Błąd dodawania składnika: {ex.Message}";
+                ValidationMessage = string.Format(
+                    CultureInfo.CurrentUICulture,
+                    T("AddIngredientErrorMessageFormat", "Error adding ingredient: {0}"),
+                    ex.Message);
             }
         }
 
@@ -548,7 +556,10 @@ namespace Foodbook.ViewModels
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in RemoveIngredient: {ex.Message}");
-                ValidationMessage = $"Błąd usuwania składnika: {ex.Message}";
+                ValidationMessage = string.Format(
+                    CultureInfo.CurrentUICulture,
+                    T("RemoveIngredientErrorMessageFormat", "Error removing ingredient: {0}"),
+                    ex.Message);
             }
         }
 
@@ -771,7 +782,7 @@ namespace Foodbook.ViewModels
         {
             try
             {
-                ImportStatus = "Importowanie...";
+                ImportStatus = T("ImportingStatus", "Importing...");
                 var recipe = await _importer.ImportFromUrlAsync(ImportUrl);
                 Name = recipe.Name;
                 Description = recipe.Description ?? string.Empty;
@@ -804,12 +815,15 @@ namespace Foodbook.ViewModels
                     Carbs = recipe.Carbs.ToString("F1");
                 }
                 
-                ImportStatus = "Zaimportowano!";
+                ImportStatus = T("ImportedStatus", "Imported!");
                 IsManualMode = true; // Przełącz na tryb ręczny po imporcie
             }
             catch (Exception ex)
             {
-                ImportStatus = $"Błąd importu: {ex.Message}";
+                ImportStatus = string.Format(
+                    CultureInfo.CurrentUICulture,
+                    T("ImportErrorMessageFormat", "Import error: {0}"),
+                    ex.Message);
                 System.Diagnostics.Debug.WriteLine($"Error in ImportRecipeAsync: {ex.Message}");
             }
         }
@@ -840,28 +854,28 @@ namespace Foodbook.ViewModels
 
                 if (string.IsNullOrWhiteSpace(Name))
                 {
-                    ValidationMessage = "Nazwa przepisu jest wymagana";
+                    ValidationMessage = T("ValidationNameRequired", "Recipe name is required");
                 }
                 else if (!IsValidInt(IloscPorcji))
                 {
-                    ValidationMessage = "Ilość porcji musi być liczbą całkowitą większą od 0";
+                    ValidationMessage = T("ValidationPortionsInvalid", "Portions must be an integer greater than 0");
                 }
                 // Usuwamy wymaganie składników - teraz można zapisać przepis bez składników
                 else if (!IsValidDouble(Calories))
                 {
-                    ValidationMessage = "Kalorie muszą być liczbą";
+                    ValidationMessage = T("ValidationCaloriesInvalid", "Calories must be a number");
                 }
                 else if (!IsValidDouble(Protein))
                 {
-                    ValidationMessage = "Białko musi być liczbą";
+                    ValidationMessage = T("ValidationProteinInvalid", "Protein must be a number");
                 }
                 else if (!IsValidDouble(Fat))
                 {
-                    ValidationMessage = "Tłuszcze muszą być liczbą";
+                    ValidationMessage = T("ValidationFatInvalid", "Fat must be a number");
                 }
                 else if (!IsValidDouble(Carbs))
                 {
-                    ValidationMessage = "Węglowodany muszą być liczbą";
+                    ValidationMessage = T("ValidationCarbsInvalid", "Carbohydrates must be a number");
                 }
                 else
                 {
@@ -870,12 +884,12 @@ namespace Foodbook.ViewModels
                     {
                         if (string.IsNullOrWhiteSpace(ing.Name))
                         {
-                            ValidationMessage = "Każdy składnik musi mieć nazwę";
+                            ValidationMessage = T("ValidationIngredientNameRequired", "Each ingredient must have a name");
                             break;
                         }
                         if (ing.Quantity <= 0)
                         {
-                            ValidationMessage = "Ilość składnika musi być większa od zera";
+                            ValidationMessage = T("ValidationIngredientQuantityInvalid", "Ingredient quantity must be greater than zero");
                             break;
                         }
                     }
@@ -887,7 +901,7 @@ namespace Foodbook.ViewModels
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in ValidateInput: {ex.Message}");
-                ValidationMessage = "Błąd walidacji danych";
+                ValidationMessage = T("ValidationGeneralError", "Validation error");
             }
         }
 
@@ -1007,7 +1021,7 @@ namespace Foodbook.ViewModels
                     catch { }
 
                     // Surface a concise message to the user but keep diagnostics in logs
-                    ValidationMessage = "Błąd zapisu przepisu. Sprawdź logi aplikacji dla szczegółów.";
+                    ValidationMessage = T("SaveRecipeServiceError", "Error saving recipe. Check application logs for details.");
                     System.Diagnostics.Debug.WriteLine($"❌ Service error in SaveRecipeAsync: {svcEx.Message}");
                     throw; // rethrow so outer catch can also handle cleanup/navigation decisions
                 }
@@ -1055,8 +1069,17 @@ namespace Foodbook.ViewModels
                 }
                 catch { }
 
-                ValidationMessage = $"Błąd zapisywania: {ex.Message}";
+                ValidationMessage = string.Format(
+                    CultureInfo.CurrentUICulture,
+                    T("SaveRecipeErrorMessageFormat", "Save error: {0}"),
+                    ex.Message);
             }
+        }
+
+        private static string T(string key, string fallback)
+        {
+            var value = AddRecipePageResources.ResourceManager.GetString(key, CultureInfo.CurrentUICulture);
+            return string.IsNullOrWhiteSpace(value) ? fallback : value;
         }
         
         /// <summary>

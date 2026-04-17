@@ -10,6 +10,7 @@ using Microsoft.Maui.Devices;
 using Microsoft.Maui.ApplicationModel;
 using System.Threading;
 using Microsoft.Maui.Layouts;
+using Foodbook.Utils;
 
 namespace Foodbook.Views.Components;
 
@@ -274,7 +275,7 @@ public class FilterSortPopup : ContentPage
 
         var closeBtn = new Button
         {
-            Text = "�",
+            Text = "×",
             WidthRequest = 32,
             HeightRequest = 32,
             Padding = new Thickness(0),
@@ -515,19 +516,10 @@ public class FilterSortPopup : ContentPage
 
         try
         {
-            if (_dimView != null)
-                _dimView.Opacity = 0;
-
-            if (_sheetView != null)
-            {
-                _sheetView.Opacity = 0;
-                _sheetView.TranslationY = 42;
-            }
-
-            var dimAnim = _dimView?.FadeTo(1, 180, Easing.CubicOut) ?? Task.CompletedTask;
-            var sheetFade = _sheetView?.FadeTo(1, 200, Easing.CubicOut) ?? Task.CompletedTask;
-            var sheetSlide = _sheetView?.TranslateTo(0, 0, 240, Easing.CubicOut) ?? Task.CompletedTask;
-            await Task.WhenAll(dimAnim, sheetFade, sheetSlide);
+            await ComponentAnimationHelper.AnimatePopupSheetAsync(
+                _dimView,
+                _sheetView,
+                entering: true);
         }
         catch { }
     }

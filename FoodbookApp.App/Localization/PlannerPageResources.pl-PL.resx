@@ -168,4 +168,47 @@
   <data name="CarbsLabel" xml:space="preserve">
     <value>🌾 Węgle</value>
   </data>
+  <data name="LoadingStatus" xml:space="preserve"><value>Ładowanie...</value></data>
+  <data name="LoadingStatusError" xml:space="preserve"><value>Błąd ładowania danych</value></data>
+  <data name="SavedTitle" xml:space="preserve"><value>Zapisano</value></data>
+  <data name="PlannerSavedMessageFormat" xml:space="preserve"><value>Zapisano planer: {0} ({1} - {2})</value></data>
+  <data name="PlanLimitTitle" xml:space="preserve"><value>Limit planu</value></data>
+  <data name="UnexpectedSaveErrorMessage" xml:space="preserve"><value>Wystąpił nieoczekiwany błąd podczas zapisywania.</value></data>
+  <data name="ErrorTitle" xml:space="preserve"><value>Błąd</value></data>
+  <data name="PlannerLoadErrorMessage" xml:space="preserve"><value>Wystąpił problem podczas ładowania danych planera. Spróbuj ponownie.</value></data>
+  <data name="PlannerNamePromptTitle" xml:space="preserve"><value>Nazwa planu</value></data>
+  <data name="PlannerNamePromptMessage" xml:space="preserve"><value>Podaj nazwę planu (opcjonalnie)</value></data>
+  <data name="PlannerNamePromptAccept" xml:space="preserve"><value>Zapisz</value></data>
+  <data name="DefaultPlannerName" xml:space="preserve"><value>Planner</value></data>
+  <data name="ConflictOptionOverwrite" xml:space="preserve"><value>Nadpisz</value></data>
+  <data name="ConflictOptionMerge" xml:space="preserve"><value>Scal</value></data>
+  <data name="ConflictOptionSaveAndCreateNewList" xml:space="preserve"><value>Zapisz i utwórz nową listę</value></data>
+  <data name="ConflictPlanExistsTitle" xml:space="preserve"><value>Plan na podane daty już istnieje.</value></data>
+  <data name="ConflictMergeSuccessTitle" xml:space="preserve"><value>Scalono</value></data>
+  <data name="ConflictMergeSuccessMessageFormat" xml:space="preserve"><value>Posiłki zostały scalone z istniejącym planem ({0} - {1}).</value></data>
+  <data name="ConflictMergeErrorMessage" xml:space="preserve"><value>Scalanie planów nie powiodło się.</value></data>
+  <data name="ConflictOverwriteRemoveErrorMessage" xml:space="preserve"><value>Nie udało się usunąć istniejącego planu.</value></data>
+  <data name="PlannerSaveErrorMessageFormat" xml:space="preserve"><value>Wystąpił problem podczas zapisywania planera:{0}{1}</value></data>
+  <data name="ShoppingListOptionOnlySavePlanner" xml:space="preserve"><value>Tylko zapisz planer</value></data>
+  <data name="ShoppingListOptionSaveAndMerge" xml:space="preserve"><value>Zapisz i scal z listą</value></data>
+  <data name="ShoppingListOptionSaveAndOverwrite" xml:space="preserve"><value>Zapisz i nadpisz listę</value></data>
+  <data name="ShoppingListOptionMergeManual" xml:space="preserve"><value>Scal z ręcznie utworzoną listą</value></data>
+  <data name="ShoppingListOptionSaveAndCreateNew" xml:space="preserve"><value>Zapisz i utwórz nową listę</value></data>
+  <data name="ShoppingListOptionSaveAndCreate" xml:space="preserve"><value>Zapisz i stwórz listę</value></data>
+  <data name="ShoppingListLinkedQuestionTitle" xml:space="preserve"><value>Czy chcesz zaktualizować powiązaną listę zakupów?</value></data>
+  <data name="ShoppingListManualFoundQuestionTitle" xml:space="preserve"><value>Znaleziono ręcznie utworzoną listę zakupów dla tego zakresu dat. Co chcesz zrobić?</value></data>
+  <data name="ShoppingListCreateQuestionTitle" xml:space="preserve"><value>Czy chcesz stworzyć listę zakupów?</value></data>
+  <data name="ShoppingListCreateErrorMessage" xml:space="preserve"><value>Nie udało się stworzyć listy zakupów.</value></data>
+  <data name="ShoppingListMergeErrorMessage" xml:space="preserve"><value>Nie udało się scalić listy zakupów.</value></data>
+  <data name="ShoppingListOverwriteErrorMessage" xml:space="preserve"><value>Nie udało się nadpisać listy zakupów.</value></data>
+  <data name="PlanNotFoundMessage" xml:space="preserve"><value>Nie znaleziono planu</value></data>
+  <data name="PlanLoadErrorMessageFormat" xml:space="preserve"><value>Nie udało się załadować planu: {0}</value></data>
+  <data name="PlanToSaveNotFoundMessage" xml:space="preserve"><value>Nie znaleziono planu do zapisania</value></data>
+  <data name="PlanUpdatedMessageFormat" xml:space="preserve"><value>Plan został zaktualizowany ({0} - {1})</value></data>
+  <data name="PlanSaveErrorMessageFormat" xml:space="preserve"><value>Nie udało się zapisać planu:{0}{1}</value></data>
+  <data name="LoadingStatusPreparingData" xml:space="preserve"><value>Przygotowywanie danych...</value></data>
+  <data name="LoadingStatusLoadingRecipes" xml:space="preserve"><value>Ładowanie przepisów...</value></data>
+  <data name="LoadingStatusLoadingPlannedMeals" xml:space="preserve"><value>Ładowanie zaplanowanych posiłków...</value></data>
+  <data name="LoadingStatusPreparingCalendar" xml:space="preserve"><value>Przygotowywanie kalendarza...</value></data>
+  <data name="LoadingStatusFinalizing" xml:space="preserve"><value>Finalizowanie...</value></data>
 </root>

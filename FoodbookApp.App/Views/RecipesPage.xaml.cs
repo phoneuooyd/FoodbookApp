@@ -43,7 +43,7 @@ public partial class RecipesPage : ContentPage, ITabLoadable
                 {
                     try
                     {
-                        _viewModel.ResetFolderNavigation();
+                        // Keep current folder context after save so user stays where they were.
                         await _viewModel.LoadRecipesAsync();
                     }
                     catch (Exception ex)
@@ -209,9 +209,6 @@ public partial class RecipesPage : ContentPage, ITabLoadable
             {
                 try
                 {
-                    // Reset folder navigation to root
-                    _viewModel.ResetFolderNavigation();
-                    
                     // Force fresh load from database (same as app startup)
                     await _viewModel.LoadRecipesAsync();
                     
@@ -232,6 +229,14 @@ public partial class RecipesPage : ContentPage, ITabLoadable
     private void OnThemeChanged(object? sender, EventArgs e)
     {
         MainThread.BeginInvokeOnMainThread(RefreshFilterButtonTintColor);
+            try
+            {
+                RecipesFab?.RefreshThemeResources();
+            }
+            catch
+            {
+                // Ignore: FAB is optional on some variants/layout states.
+            }
     }
 
     private void RefreshFilterButtonTintColor()
@@ -318,7 +323,7 @@ public partial class RecipesPage : ContentPage, ITabLoadable
                 sortBy: _viewModel.CurrentSortBy,
                 showApplyButton: true);
 
-            var nav = Application.Current?.MainPage?.Navigation ?? Navigation;
+                var nav = Application.Current?.Windows.FirstOrDefault()?.Page?.Navigation ?? Navigation;
             if (nav == null)
             {
                 System.Diagnostics.Debug.WriteLine("[RecipesPage] OnFilterSortClicked: Navigation is null");

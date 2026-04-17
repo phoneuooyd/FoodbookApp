@@ -406,26 +406,47 @@ namespace Foodbook.Services
                 app.Resources["WizardHeaderEyebrowColor"] = Color.FromArgb("#EADFFF");
                 app.Resources["WizardHeaderSubtitleColor"] = Color.FromArgb("#EEE6FF");
                 app.Resources["WizardTrackInactiveColor"] = Color.FromArgb("#FFFFFF");
-                app.Resources["WizardSelectionBackgroundColor"] = isDark ? Color.FromArgb("#332A4A") : Color.FromArgb("#F4F0FF");
-                app.Resources["WizardOptionSurfaceColor"] = isDark ? Color.FromArgb("#27273A") : Colors.White;
-                app.Resources["WizardOptionSelectedSurfaceColor"] = isDark ? Color.FromArgb("#3A2D55") : Color.FromArgb("#F0EAFF");
-                app.Resources["WizardToggleContainerColor"] = isDark ? Color.FromArgb("#2A2A40") : Color.FromArgb("#F7F7FB");
-                app.Resources["WizardToggleSelectedColor"] = isDark ? Color.FromArgb("#282840") : Colors.White;
+                var wizardSelectionBackground = isDark ? Darken(secondary, 0.58) : Lighten(secondary, 0.68);
+                var wizardOptionSurface = isDark ? Darken(secondary, 0.64) : Colors.White;
+                var wizardOptionSelectedSurface = isDark ? Darken(tertiary, 0.54) : Lighten(tertiary, 0.72);
+                var wizardToggleContainer = isDark ? Darken(secondary, 0.68) : Lighten(secondary, 0.74);
+                var wizardToggleSelected = isDark ? Darken(tertiary, 0.60) : Colors.White;
+                var selectionAccentStrongBackground = Color.FromRgba(tertiary.Red, tertiary.Green, tertiary.Blue, isDark ? 0.40f : 0.24f);
+                var badgeAccentBackground = Color.FromRgba(tertiary.Red, tertiary.Green, tertiary.Blue, isDark ? 0.46f : 0.18f);
+                var badgeNeutralBackground = isDark
+                    ? Color.FromRgba(secondary.Red, secondary.Green, secondary.Blue, 0.30f)
+                    : Color.FromArgb("#F3F3F7");
+
+                app.Resources["WizardSelectionBackgroundColor"] = wizardSelectionBackground;
+                app.Resources["WizardOptionSurfaceColor"] = wizardOptionSurface;
+                app.Resources["WizardOptionSelectedSurfaceColor"] = wizardOptionSelectedSurface;
+                app.Resources["WizardToggleContainerColor"] = wizardToggleContainer;
+                app.Resources["WizardToggleSelectedColor"] = wizardToggleSelected;
                 app.Resources["SegmentedContainerColor"] = app.Resources["WizardToggleContainerColor"];
                 app.Resources["SegmentedSelectedColor"] = app.Resources["WizardToggleSelectedColor"];
-                app.Resources["SelectionAccentStrongBackgroundColor"] = isDark ? Color.FromArgb("#553A2D55") : Color.FromArgb("#22512BD4");
-                app.Resources["BadgeAccentBackgroundColor"] = isDark ? Color.FromArgb("#4A3A70") : Color.FromArgb("#ECE5FF");
-                app.Resources["BadgeNeutralBackgroundColor"] = isDark ? Color.FromArgb("#3A3A4D") : Color.FromArgb("#F3F3F7");
+                app.Resources["SelectionAccentStrongBackgroundColor"] = selectionAccentStrongBackground;
+                app.Resources["BadgeAccentBackgroundColor"] = badgeAccentBackground;
+                app.Resources["BadgeNeutralBackgroundColor"] = badgeNeutralBackground;
                 app.Resources["DisabledCardBackgroundColor"] = isDark ? Color.FromArgb("#4A4A4A") : Color.FromArgb("#F1F1F1");
 
                 // Overhaul page visual tokens (AddRecipe / IngredientForm)
-                var overhaulCardBackground = isDark ? Color.FromArgb("#282840") : Colors.White;
-                var overhaulCardStroke = isDark ? Color.FromArgb("#20FFFFFF") : Color.FromArgb("#22000000");
-                var overhaulSectionCaption = isDark ? Color.FromArgb("#80FFFFFF") : Color.FromArgb("#6B7280");
-                var overhaulFooterSurface = isDark ? Color.FromArgb("#232336") : Color.FromArgb("#F6F5FA");
-                var overhaulAccentSoft = Color.FromRgba(secondary.Red, secondary.Green, secondary.Blue, isDark ? 0.42f : 0.55f);
+                var overhaulCardBackground = isDark ? Darken(secondary, 0.56) : Lighten(secondary, 0.62);
+                var overhaulCardStroke = Color.FromRgba(tertiary.Red, tertiary.Green, tertiary.Blue, isDark ? 0.42f : 0.22f);
+                var overhaulSectionCaptionBase = isDark ? primaryText : secondaryText;
+                var overhaulSectionCaption = Color.FromRgba(
+                    overhaulSectionCaptionBase.Red,
+                    overhaulSectionCaptionBase.Green,
+                    overhaulSectionCaptionBase.Blue,
+                    isDark ? 0.84f : 0.76f);
+                var overhaulFooterSurface = isDark ? Darken(secondary, 0.64) : Lighten(secondary, 0.54);
+                var overhaulAccentSoft = Color.FromRgba(tertiary.Red, tertiary.Green, tertiary.Blue, isDark ? 0.36f : 0.24f);
                 var overhaulInfoBannerBackground = isDark ? Color.FromArgb("#1F3A33") : Color.FromArgb("#E9FFF5");
                 var overhaulInfoBannerStroke = isDark ? Color.FromArgb("#3D7C67") : Color.FromArgb("#7DD3B0");
+                var modernBorderColor = Color.FromRgba(tertiary.Red, tertiary.Green, tertiary.Blue, isDark ? 0.48f : 0.24f);
+                var modernPlaceholderColor = Color.FromRgba(secondaryText.Red, secondaryText.Green, secondaryText.Blue, isDark ? 0.78f : 0.68f);
+                var foodbookApplyButtonBackground = Color.FromRgba(tertiary.Red, tertiary.Green, tertiary.Blue, isDark ? 0.34f : 0.16f);
+                var foodbookApplyButtonBorder = Color.FromRgba(tertiary.Red, tertiary.Green, tertiary.Blue, isDark ? 0.60f : 0.30f);
+                var foodbookApplyButtonText = isDark ? Lighten(tertiary, 0.34) : Darken(tertiary, 0.08);
 
                 app.Resources["OverhaulCardBackgroundColor"] = overhaulCardBackground;
                 app.Resources["OverhaulCardStrokeColor"] = overhaulCardStroke;
@@ -434,6 +455,12 @@ namespace Foodbook.Services
                 app.Resources["OverhaulAccentSoftColor"] = overhaulAccentSoft;
                 app.Resources["OverhaulInfoBannerBackgroundColor"] = overhaulInfoBannerBackground;
                 app.Resources["OverhaulInfoBannerStrokeColor"] = overhaulInfoBannerStroke;
+                app.Resources["ModernBorderColor"] = modernBorderColor;
+                app.Resources["ModernBorderColorDark"] = modernBorderColor;
+                app.Resources["ModernPlaceholderColor"] = modernPlaceholderColor;
+                app.Resources["FoodbookApplyButtonBackgroundColor"] = foodbookApplyButtonBackground;
+                app.Resources["FoodbookApplyButtonBorderColor"] = foodbookApplyButtonBorder;
+                app.Resources["FoodbookApplyButtonTextColor"] = foodbookApplyButtonText;
 
                 // Profile page visual tokens
                 var profileCardSurface = isDark ? Color.FromArgb("#282840") : Colors.White;
@@ -463,7 +490,6 @@ namespace Foodbook.Services
                 // Restore translucency specifically for folder cards while page background remains opaque.
                 var folderBg = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 0.12);
                 var folderStroke = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 0.32);
-                Color folderTextColor = frameTextColor;
 
                 if (wallpaperEnabled)
                 {
@@ -471,8 +497,6 @@ namespace Foodbook.Services
                     var opaqueSecondary = Color.FromRgb(secondary.Red, secondary.Green, secondary.Blue);
                     folderBg = opaqueSecondary;
                     folderStroke = isDark ? Lighten(opaqueSecondary, 0.18) : Darken(opaqueSecondary, 0.18);
-                    var candidateText = ChooseReadableEnhanced(opaqueSecondary, Colors.White, Color.FromArgb("#000000"));
-                    folderTextColor = EnsureContrastEnhanced(candidateText, opaqueSecondary, RelativeLuminance(opaqueSecondary) > 0.45 ? Colors.Black : Colors.White);
                 }
                 else
                 {
@@ -480,11 +504,10 @@ namespace Foodbook.Services
                      {
                          folderStroke = Color.FromArgb("#424242");
                      }
-
-                    var effectiveFolderBg = Color.FromRgb(folderBg.Red, folderBg.Green, folderBg.Blue);
-                    var candidateText = ChooseReadableEnhanced(effectiveFolderBg, Colors.White, Color.FromArgb("#000000"));
-                    folderTextColor = EnsureContrastEnhanced(candidateText, effectiveFolderBg, RelativeLuminance(effectiveFolderBg) > 0.45 ? Colors.Black : Colors.White);
                  }
+
+                // Keep folder text contrast deterministic per theme mode.
+                var folderTextColor = isDark ? Colors.White : Color.FromArgb("#1F1F1F");
 
                 app.Resources["FolderCardBackgroundColor"] = folderBg;
                 app.Resources["FolderCardStrokeColor"] = folderStroke;

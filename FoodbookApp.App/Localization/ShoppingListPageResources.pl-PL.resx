@@ -21,4 +21,9 @@
   <data name="EmptyHint" xml:space="preserve">
     <value>Utwórz listę w planerze</value>
   </data>
+  <data name="DeleteConfirmTitle" xml:space="preserve"><value>Usuwanie</value></data>
+  <data name="DeleteConfirmMessage" xml:space="preserve"><value>Czy na pewno chcesz trwale usunąć tę listę zakupów?</value></data>
+  <data name="CreateListTitleFormat" xml:space="preserve"><value>Lista zakupów ({0})</value></data>
+  <data name="CreateListErrorTitle" xml:space="preserve"><value>Błąd</value></data>
+  <data name="CreateListErrorMessageFormat" xml:space="preserve"><value>Nie udało się utworzyć listy zakupów.{0}{1}</value></data>
 </root>

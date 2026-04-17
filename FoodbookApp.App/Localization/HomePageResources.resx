@@ -102,4 +102,109 @@
 	<data name="PortionsFormat" xml:space="preserve">
   <value>({0} portions)</value>
 </data>
-<data name="ProfileOpenErrorTitle" xml:space="preserve"><value>Error</value></data><data name="ProfileOpenErrorMessage" xml:space="preserve"><value>Unable to open profile page.</value></data><data name="ProfileFetchJwtDebugTitle" xml:space="preserve"><value>Debug</value></data><data name="ProfileFetchJwtDebugMessage" xml:space="preserve"><value>ok</value></data><data name="ProfileFetchJwtTestTitle" xml:space="preserve"><value>Test</value></data><data name="ProfileFetchJwtTestMessage" xml:space="preserve"><value>Button works!</value></data></root>
+	<data name="StatsPeriodPickerTitle" xml:space="preserve">
+    <value>Select period for statistics</value>
+  </data>
+	<data name="PlanOptionLabel" xml:space="preserve">
+    <value>Plan</value>
+  </data>
+	<data name="NoPlansTitle" xml:space="preserve">
+    <value>No plans</value>
+  </data>
+	<data name="NoPlansMessage" xml:space="preserve">
+    <value>There are no plans available to choose from.</value>
+  </data>
+	<data name="PlanPickerTitle" xml:space="preserve">
+    <value>Select plan</value>
+  </data>
+	<data name="CustomDateStartTitle" xml:space="preserve">
+    <value>Start date</value>
+  </data>
+	<data name="CustomDateStartPrompt" xml:space="preserve">
+    <value>Enter start date (dd.mm.yyyy):</value>
+  </data>
+	<data name="CustomDateStartPlaceholder" xml:space="preserve">
+    <value>e.g. 01.01.2024</value>
+  </data>
+	<data name="CustomDateEndTitle" xml:space="preserve">
+    <value>End date</value>
+  </data>
+	<data name="CustomDateEndPrompt" xml:space="preserve">
+    <value>Enter end date (dd.mm.yyyy):</value>
+  </data>
+	<data name="CustomDateEndPlaceholder" xml:space="preserve">
+    <value>e.g. 07.01.2024</value>
+  </data>
+	<data name="CustomDateRangeSetTitle" xml:space="preserve">
+    <value>Range set</value>
+  </data>
+	<data name="CustomDateRangeSetMessageFormat" xml:space="preserve">
+    <value>Filter set to:{0}{1} - {2}</value>
+  </data>
+	<data name="ErrorTitle" xml:space="preserve">
+    <value>Error</value>
+  </data>
+	<data name="CustomDateRangeInvalidOrderMessage" xml:space="preserve">
+    <value>End date must be greater than or equal to start date.</value>
+  </data>
+	<data name="CustomDateRangeInvalidEndFormatMessage" xml:space="preserve">
+    <value>Invalid end date format. Use dd.mm.yyyy.</value>
+  </data>
+	<data name="CustomDateRangeInvalidStartFormatMessage" xml:space="preserve">
+    <value>Invalid start date format. Use dd.mm.yyyy.</value>
+  </data>
+	<data name="CustomDateRangeGeneralErrorMessage" xml:space="preserve">
+    <value>An error occurred while setting date range.</value>
+  </data>
+	<data name="RecipeIngredientsLoadErrorMessage" xml:space="preserve">
+    <value>Could not load recipe.</value>
+  </data>
+	<data name="RecipeDetailsLoadErrorMessage" xml:space="preserve">
+    <value>Could not load recipe details.</value>
+  </data>
+	<data name="IngredientsSectionTitle" xml:space="preserve">
+    <value>INGREDIENTS</value>
+  </data>
+	<data name="IngredientsSectionEmpty" xml:space="preserve">
+    <value>No ingredients defined.</value>
+  </data>
+	<data name="InstructionsSectionTitle" xml:space="preserve">
+    <value>INSTRUCTIONS</value>
+  </data>
+	<data name="PlannedMealsPeriodPickerTitle" xml:space="preserve">
+    <value>Select period for planned meals</value>
+  </data>
+	<data name="PlannedMealsStartDateTitle" xml:space="preserve">
+    <value>Start date</value>
+  </data>
+	<data name="PlannedMealsStartDatePrompt" xml:space="preserve">
+    <value>Enter start date (dd.mm.yyyy):</value>
+  </data>
+	<data name="PlannedMealsEndDateTitle" xml:space="preserve">
+    <value>End date</value>
+  </data>
+	<data name="PlannedMealsEndDatePrompt" xml:space="preserve">
+    <value>Enter end date (dd.mm.yyyy):</value>
+  </data>
+	<data name="PlannedMealsInvalidOrderMessage" xml:space="preserve">
+    <value>End date must be greater than or equal to start date.</value>
+  </data>
+	<data name="ProfileOpenErrorTitle" xml:space="preserve">
+    <value>Error</value>
+  </data>
+	<data name="ProfileOpenErrorMessage" xml:space="preserve">
+    <value>Unable to open profile page.</value>
+  </data>
+	<data name="ProfileFetchJwtDebugTitle" xml:space="preserve">
+    <value>Debug</value>
+  </data>
+	<data name="ProfileFetchJwtDebugMessage" xml:space="preserve">
+    <value>ok</value>
+  </data>
+	<data name="ProfileFetchJwtTestTitle" xml:space="preserve">
+    <value>Test</value>
+  </data>
+	<data name="ProfileFetchJwtTestMessage" xml:space="preserve">
+    <value>Button works!</value>
+  </data>
+</root>

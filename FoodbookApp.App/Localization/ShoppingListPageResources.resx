@@ -21,4 +21,19 @@
   <data name="EmptyHint" xml:space="preserve">
     <value>Create a list in Planner</value>
   </data>
+  <data name="DeleteConfirmTitle" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="DeleteConfirmMessage" xml:space="preserve">
+    <value>Are you sure you want to permanently delete this shopping list?</value>
+  </data>
+  <data name="CreateListTitleFormat" xml:space="preserve">
+    <value>Shopping List ({0})</value>
+  </data>
+  <data name="CreateListErrorTitle" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="CreateListErrorMessageFormat" xml:space="preserve">
+    <value>Failed to create shopping list.{0}{1}</value>
+  </data>
 </root>

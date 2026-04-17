@@ -13,4 +13,23 @@
   <data name="AddItem" xml:space="preserve"><value>Ajouter element</value></data>
   <data name="Collected" xml:space="preserve"><value>Collectes</value></data>
   <data name="NoCollected" xml:space="preserve"><value>Aucun element collecte</value></data>
+  <data name="LoadErrorTitle" xml:space="preserve"><value>Erreur</value></data>
+  <data name="LoadErrorMessage" xml:space="preserve"><value>Impossible de charger la liste de courses.</value></data>
+  <data name="UnsavedChangesConfirmTitle" xml:space="preserve"><value>Confirmation</value></data>
+  <data name="UnsavedChangesConfirmMessage" xml:space="preserve"><value>Vous avez des modifications non enregistrees. Voulez-vous quitter cette page sans enregistrer ?</value></data>
+  <data name="ValidationErrorTitle" xml:space="preserve"><value>Erreur de validation</value></data>
+  <data name="ValidationInvalidPlanIdMessage" xml:space="preserve"><value>ID de plan invalide. Impossible d'enregistrer la liste de courses.</value></data>
+  <data name="ValidationItemMissingNameFormat" xml:space="preserve"><value>Element {0} : nom manquant</value></data>
+  <data name="ValidationItemInvalidQuantityFormat" xml:space="preserve"><value>Element {0} ({1}) : quantite invalide ({2})</value></data>
+  <data name="ValidationInvalidItemsSummaryFormat" xml:space="preserve"><value>Elements invalides trouves :{0}{1}</value></data>
+  <data name="ValidationInvalidItemsMoreFormat" xml:space="preserve"><value>...et {0} de plus</value></data>
+  <data name="ValidationFixItemsMessage" xml:space="preserve"><value>Supprimez ou corrigez les elements invalides avant l'enregistrement.</value></data>
+  <data name="DatabaseErrorTitle" xml:space="preserve"><value>Erreur de base de donnees</value></data>
+  <data name="DatabaseSaveFailedMessageFormat" xml:space="preserve"><value>Impossible d'enregistrer la liste de courses dans la base de donnees.{0}{0}Details : {1}{0}{0}Reessayez ou contactez le support.</value></data>
+  <data name="InvalidOperationErrorTitle" xml:space="preserve"><value>Erreur d'operation</value></data>
+  <data name="InvalidOperationSaveFailedMessageFormat" xml:space="preserve"><value>Un probleme est survenu lors de l'enregistrement de la liste de courses.{0}{0}Details : {1}{0}{0}Reessayez.</value></data>
+  <data name="SaveErrorTitle" xml:space="preserve"><value>Erreur d'enregistrement</value></data>
+  <data name="SaveFailedMessageFormat" xml:space="preserve"><value>Impossible d'enregistrer la liste de courses.{0}{0}Details : {1}{0}{0}Type d'erreur : {2}</value></data>
+  <data name="CriticalErrorTitle" xml:space="preserve"><value>Erreur critique</value></data>
+  <data name="CriticalSaveFailedMessageFormat" xml:space="preserve"><value>Une erreur inattendue est survenue lors de l'enregistrement de la liste de courses.{0}{0}Details : {1}{0}{0}Si le probleme persiste, essayez :{0}1. Supprimer les elements vides ou invalides{0}2. Redemarrer l'application{0}3. Contacter le support</value></data>
 </root>

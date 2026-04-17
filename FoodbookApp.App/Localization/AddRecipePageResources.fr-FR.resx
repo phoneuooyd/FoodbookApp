@@ -72,4 +72,29 @@
   <data name="FailedToOpenRecipeDetails" xml:space="preserve">
     <value>Impossible d'ouvrir les détails de la recette</value>
   </data>
+  <data name="AddModeTitle" xml:space="preserve"><value>Nouvelle recette</value></data>
+  <data name="EditModeTitle" xml:space="preserve"><value>Modifier la recette</value></data>
+  <data name="AddModeSaveButton" xml:space="preserve"><value>Ajouter la recette</value></data>
+  <data name="EditModeSaveButton" xml:space="preserve"><value>Enregistrer les modifications</value></data>
+  <data name="ImportingStatus" xml:space="preserve"><value>Importation...</value></data>
+  <data name="ImportedStatus" xml:space="preserve"><value>Importe !</value></data>
+  <data name="ImportErrorMessageFormat" xml:space="preserve"><value>Erreur d'importation : {0}</value></data>
+  <data name="LoadRecipeErrorMessageFormat" xml:space="preserve"><value>Erreur lors du chargement de la recette : {0}</value></data>
+  <data name="AddIngredientErrorMessageFormat" xml:space="preserve"><value>Erreur lors de l'ajout de l'ingredient : {0}</value></data>
+  <data name="RemoveIngredientErrorMessageFormat" xml:space="preserve"><value>Erreur lors de la suppression de l'ingredient : {0}</value></data>
+  <data name="ValidationNameRequired" xml:space="preserve"><value>Le nom de la recette est obligatoire</value></data>
+  <data name="ValidationPortionsInvalid" xml:space="preserve"><value>Les portions doivent etre un entier superieur a 0</value></data>
+  <data name="ValidationCaloriesInvalid" xml:space="preserve"><value>Les calories doivent etre un nombre</value></data>
+  <data name="ValidationProteinInvalid" xml:space="preserve"><value>Les proteines doivent etre un nombre</value></data>
+  <data name="ValidationFatInvalid" xml:space="preserve"><value>Les lipides doivent etre un nombre</value></data>
+  <data name="ValidationCarbsInvalid" xml:space="preserve"><value>Les glucides doivent etre un nombre</value></data>
+  <data name="ValidationIngredientNameRequired" xml:space="preserve"><value>Chaque ingredient doit avoir un nom</value></data>
+  <data name="ValidationIngredientQuantityInvalid" xml:space="preserve"><value>La quantite de l'ingredient doit etre superieure a zero</value></data>
+  <data name="ValidationGeneralError" xml:space="preserve"><value>Erreur de validation</value></data>
+  <data name="SaveRecipeServiceError" xml:space="preserve"><value>Erreur lors de l'enregistrement de la recette. Verifiez les journaux de l'application.</value></data>
+  <data name="SaveRecipeErrorMessageFormat" xml:space="preserve"><value>Erreur d'enregistrement : {0}</value></data>
+  <data name="PageLoadErrorMessageFormat" xml:space="preserve"><value>Erreur de chargement de la page : {0}</value></data>
+  <data name="PageDataLoadErrorMessageFormat" xml:space="preserve"><value>Erreur de chargement des données : {0}</value></data>
+  <data name="ModeSwitchErrorMessageFormat" xml:space="preserve"><value>Erreur de changement de mode : {0}</value></data>
+  <data name="IngredientUpdateErrorMessageFormat" xml:space="preserve"><value>Erreur de mise à jour de l'ingrédient : {0}</value></data>
 </root>

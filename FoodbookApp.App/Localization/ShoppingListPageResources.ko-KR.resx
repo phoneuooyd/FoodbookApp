@@ -7,4 +7,9 @@
   <data name="Title" xml:space="preserve"><value>쇼핑 목록</value></data>
   <data name="EmptyTitle" xml:space="preserve"><value>목록 없음</value></data>
   <data name="EmptyHint" xml:space="preserve"><value>플래너에서 목록 만들기</value></data>
+  <data name="DeleteConfirmTitle" xml:space="preserve"><value>삭제</value></data>
+  <data name="DeleteConfirmMessage" xml:space="preserve"><value>이 쇼핑 목록을 정말 영구적으로 삭제하시겠습니까?</value></data>
+  <data name="CreateListTitleFormat" xml:space="preserve"><value>쇼핑 목록 ({0})</value></data>
+  <data name="CreateListErrorTitle" xml:space="preserve"><value>오류</value></data>
+  <data name="CreateListErrorMessageFormat" xml:space="preserve"><value>쇼핑 목록을 만들지 못했습니다.{0}{1}</value></data>
 </root>

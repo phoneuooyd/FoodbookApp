@@ -168,4 +168,47 @@
   <data name="CarbsLabel" xml:space="preserve">
     <value>🌾 Glucides</value>
   </data>
+  <data name="LoadingStatus" xml:space="preserve"><value>Chargement...</value></data>
+  <data name="LoadingStatusError" xml:space="preserve"><value>Erreur lors du chargement des donnees</value></data>
+  <data name="SavedTitle" xml:space="preserve"><value>Enregistre</value></data>
+  <data name="PlannerSavedMessageFormat" xml:space="preserve"><value>Planificateur enregistre: {0} ({1} - {2})</value></data>
+  <data name="PlanLimitTitle" xml:space="preserve"><value>Limite de plans</value></data>
+  <data name="UnexpectedSaveErrorMessage" xml:space="preserve"><value>Une erreur inattendue est survenue lors de l'enregistrement.</value></data>
+  <data name="ErrorTitle" xml:space="preserve"><value>Erreur</value></data>
+  <data name="PlannerLoadErrorMessage" xml:space="preserve"><value>Un probleme est survenu lors du chargement des donnees du planificateur. Reessayez.</value></data>
+  <data name="PlannerNamePromptTitle" xml:space="preserve"><value>Nom du plan</value></data>
+  <data name="PlannerNamePromptMessage" xml:space="preserve"><value>Entrez le nom du plan (optionnel)</value></data>
+  <data name="PlannerNamePromptAccept" xml:space="preserve"><value>Enregistrer</value></data>
+  <data name="DefaultPlannerName" xml:space="preserve"><value>Planificateur</value></data>
+  <data name="ConflictOptionOverwrite" xml:space="preserve"><value>Ecraser</value></data>
+  <data name="ConflictOptionMerge" xml:space="preserve"><value>Fusionner</value></data>
+  <data name="ConflictOptionSaveAndCreateNewList" xml:space="preserve"><value>Enregistrer et creer une nouvelle liste</value></data>
+  <data name="ConflictPlanExistsTitle" xml:space="preserve"><value>Un plan existe deja pour les dates selectionnees.</value></data>
+  <data name="ConflictMergeSuccessTitle" xml:space="preserve"><value>Fusionne</value></data>
+  <data name="ConflictMergeSuccessMessageFormat" xml:space="preserve"><value>Les repas ont ete fusionnes avec le plan existant ({0} - {1}).</value></data>
+  <data name="ConflictMergeErrorMessage" xml:space="preserve"><value>La fusion des plans a echoue.</value></data>
+  <data name="ConflictOverwriteRemoveErrorMessage" xml:space="preserve"><value>Impossible de supprimer le plan existant.</value></data>
+  <data name="PlannerSaveErrorMessageFormat" xml:space="preserve"><value>Un probleme est survenu lors de l'enregistrement du planificateur:{0}{1}</value></data>
+  <data name="ShoppingListOptionOnlySavePlanner" xml:space="preserve"><value>Enregistrer seulement le planificateur</value></data>
+  <data name="ShoppingListOptionSaveAndMerge" xml:space="preserve"><value>Enregistrer et fusionner avec la liste</value></data>
+  <data name="ShoppingListOptionSaveAndOverwrite" xml:space="preserve"><value>Enregistrer et ecraser la liste</value></data>
+  <data name="ShoppingListOptionMergeManual" xml:space="preserve"><value>Fusionner avec la liste creee manuellement</value></data>
+  <data name="ShoppingListOptionSaveAndCreateNew" xml:space="preserve"><value>Enregistrer et creer une nouvelle liste</value></data>
+  <data name="ShoppingListOptionSaveAndCreate" xml:space="preserve"><value>Enregistrer et creer la liste</value></data>
+  <data name="ShoppingListLinkedQuestionTitle" xml:space="preserve"><value>Voulez-vous mettre a jour la liste de courses liee ?</value></data>
+  <data name="ShoppingListManualFoundQuestionTitle" xml:space="preserve"><value>Une liste de courses creee manuellement a ete trouvee pour cette periode. Que voulez-vous faire ?</value></data>
+  <data name="ShoppingListCreateQuestionTitle" xml:space="preserve"><value>Voulez-vous creer une liste de courses ?</value></data>
+  <data name="ShoppingListCreateErrorMessage" xml:space="preserve"><value>Impossible de creer la liste de courses.</value></data>
+  <data name="ShoppingListMergeErrorMessage" xml:space="preserve"><value>Impossible de fusionner la liste de courses.</value></data>
+  <data name="ShoppingListOverwriteErrorMessage" xml:space="preserve"><value>Impossible d'ecraser la liste de courses.</value></data>
+  <data name="PlanNotFoundMessage" xml:space="preserve"><value>Plan introuvable</value></data>
+  <data name="PlanLoadErrorMessageFormat" xml:space="preserve"><value>Impossible de charger le plan : {0}</value></data>
+  <data name="PlanToSaveNotFoundMessage" xml:space="preserve"><value>Plan a enregistrer introuvable</value></data>
+  <data name="PlanUpdatedMessageFormat" xml:space="preserve"><value>Le plan a ete mis a jour ({0} - {1})</value></data>
+  <data name="PlanSaveErrorMessageFormat" xml:space="preserve"><value>Impossible d'enregistrer le plan :{0}{1}</value></data>
+  <data name="LoadingStatusPreparingData" xml:space="preserve"><value>Préparation des données...</value></data>
+  <data name="LoadingStatusLoadingRecipes" xml:space="preserve"><value>Chargement des recettes...</value></data>
+  <data name="LoadingStatusLoadingPlannedMeals" xml:space="preserve"><value>Chargement des repas planifiés...</value></data>
+  <data name="LoadingStatusPreparingCalendar" xml:space="preserve"><value>Préparation du calendrier...</value></data>
+  <data name="LoadingStatusFinalizing" xml:space="preserve"><value>Finalisation...</value></data>
 </root>

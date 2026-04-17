@@ -1,8 +1,10 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Windows.Input;
 using Foodbook.Models;
 using Foodbook.Services;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Localization;
 using Microsoft.Maui.Controls;
 
 namespace Foodbook.ViewModels;
@@ -34,10 +36,10 @@ public class ArchiveViewModel
         ArchivedPlanners.Clear();
         ArchivedShoppingLists.Clear();
         
-        // Pobierz tylko zarchiwizowane plany bezpoœrednio z us³ugi
+        // Pobierz tylko zarchiwizowane plany bezpoï¿½rednio z usï¿½ugi
         var plans = await _planService.GetArchivedPlansAsync();
         
-        // Rozdziel zarchiwizowane elementy wed³ug typu planu
+        // Rozdziel zarchiwizowane elementy wedï¿½ug typu planu
         foreach (var p in plans)
         {
             if (p.Type == PlanType.Planner)
@@ -51,25 +53,35 @@ public class ArchiveViewModel
     {
         if (plan == null) return;
         
-        // SprawdŸ konflikty tylko z aktywnymi planami tego samego typu
+        // Sprawdï¿½ konflikty tylko z aktywnymi planami tego samego typu
         bool hasConflict = await _planService.HasOverlapAsync(plan.StartDate, plan.EndDate, plan.Id);
         
         if (hasConflict)
         {
-            string itemType = plan.Type == PlanType.Planner ? "plannera" : "listy zakupów";
+            string itemType = plan.Type == PlanType.Planner
+                ? A("PlannerItemLabel", "planner")
+                : A("ShoppingListItemLabel", "shopping list");
             await Shell.Current.DisplayAlert(
-                "Konflikt dat", 
-                $"Nie mo¿na przywróciæ {itemType} - ju¿ istnieje aktywny plan na ten okres dat.", 
-                "OK");
+                A("ConflictDateTitle", "Date conflict"),
+                string.Format(
+                    CultureInfo.CurrentUICulture,
+                    A("RestoreConflictMessageFormat", "Cannot restore {0}. An active plan already exists in this date range."),
+                    itemType),
+                ButtonResources.OK);
             return;
         }
         
-        string itemName = plan.Type == PlanType.Planner ? "planner" : "listê zakupów";
+        string itemName = plan.Type == PlanType.Planner
+            ? A("PlannerItemLabel", "planner")
+            : A("ShoppingListItemLabel", "shopping list");
         bool confirm = await Shell.Current.DisplayAlert(
-            "Przywracanie", 
-            $"Czy na pewno chcesz przywróciæ ten {itemName}?", 
-            "Tak", 
-            "Nie");
+            A("RestoreConfirmTitle", "Restore"),
+            string.Format(
+                CultureInfo.CurrentUICulture,
+                A("RestoreConfirmMessageFormat", "Are you sure you want to restore this {0}?"),
+                itemName),
+            ButtonResources.Yes,
+            ButtonResources.No);
             
         if (confirm)
         {
@@ -86,12 +98,17 @@ public class ArchiveViewModel
     {
         if (plan == null) return;
         
-        string itemName = plan.Type == PlanType.Planner ? "planner" : "listê zakupów";
+        string itemName = plan.Type == PlanType.Planner
+            ? A("PlannerItemLabel", "planner")
+            : A("ShoppingListItemLabel", "shopping list");
         bool confirm = await Shell.Current.DisplayAlert(
-            "Usuwanie", 
-            $"Czy na pewno chcesz trwale usun¹æ ten {itemName}? Ta operacja jest nieodwracalna.", 
-            "Tak", 
-            "Nie");
+            A("DeleteConfirmTitle", "Delete"),
+            string.Format(
+                CultureInfo.CurrentUICulture,
+                A("DeleteConfirmMessageFormat", "Are you sure you want to permanently delete this {0}? This operation cannot be undone."),
+                itemName),
+            ButtonResources.Yes,
+            ButtonResources.No);
             
         if (confirm)
         {
@@ -104,5 +121,11 @@ public class ArchiveViewModel
             // Powiadom inne widoki
             AppEvents.RaisePlanChanged();
         }
+    }
+
+    private static string A(string key, string fallback)
+    {
+        var value = ArchivePageResources.ResourceManager.GetString(key, CultureInfo.CurrentUICulture);
+        return string.IsNullOrWhiteSpace(value) ? fallback : value;
     }
 }

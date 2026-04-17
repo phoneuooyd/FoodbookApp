@@ -5,4 +5,9 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Title" xml:space="preserve"><value>Plan meal</value></data>
+  <data name="NewMealTitle" xml:space="preserve"><value>새 식사</value></data>
+  <data name="EditMealTitle" xml:space="preserve"><value>식사 편집</value></data>
+  <data name="AddMealButtonText" xml:space="preserve"><value>식사 추가</value></data>
+  <data name="SaveChangesButtonText" xml:space="preserve"><value>변경 사항 저장</value></data>
+  <data name="ValidationSelectRecipe" xml:space="preserve"><value>레시피를 선택하세요</value></data>
 </root>

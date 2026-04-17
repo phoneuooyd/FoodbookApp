@@ -44,4 +44,33 @@
 	<data name="PortionsFormat" xml:space="preserve">
   <value>({0} portions)</value>
 </data>
+  <data name="StatsPeriodPickerTitle" xml:space="preserve"><value>Selectionnez la periode pour les statistiques</value></data>
+  <data name="PlanOptionLabel" xml:space="preserve"><value>Plan</value></data>
+  <data name="NoPlansTitle" xml:space="preserve"><value>Aucun plan</value></data>
+  <data name="NoPlansMessage" xml:space="preserve"><value>Aucun plan disponible a selectionner.</value></data>
+  <data name="PlanPickerTitle" xml:space="preserve"><value>Selectionnez un plan</value></data>
+  <data name="CustomDateStartTitle" xml:space="preserve"><value>Date de debut</value></data>
+  <data name="CustomDateStartPrompt" xml:space="preserve"><value>Saisissez la date de debut (dd.mm.yyyy):</value></data>
+  <data name="CustomDateStartPlaceholder" xml:space="preserve"><value>ex. 01.01.2024</value></data>
+  <data name="CustomDateEndTitle" xml:space="preserve"><value>Date de fin</value></data>
+  <data name="CustomDateEndPrompt" xml:space="preserve"><value>Saisissez la date de fin (dd.mm.yyyy):</value></data>
+  <data name="CustomDateEndPlaceholder" xml:space="preserve"><value>ex. 07.01.2024</value></data>
+  <data name="CustomDateRangeSetTitle" xml:space="preserve"><value>Plage definie</value></data>
+  <data name="CustomDateRangeSetMessageFormat" xml:space="preserve"><value>Filtre defini sur:{0}{1} - {2}</value></data>
+  <data name="ErrorTitle" xml:space="preserve"><value>Erreur</value></data>
+  <data name="CustomDateRangeInvalidOrderMessage" xml:space="preserve"><value>La date de fin doit etre superieure ou egale a la date de debut.</value></data>
+  <data name="CustomDateRangeInvalidEndFormatMessage" xml:space="preserve"><value>Format de date de fin invalide. Utilisez dd.mm.yyyy.</value></data>
+  <data name="CustomDateRangeInvalidStartFormatMessage" xml:space="preserve"><value>Format de date de debut invalide. Utilisez dd.mm.yyyy.</value></data>
+  <data name="CustomDateRangeGeneralErrorMessage" xml:space="preserve"><value>Une erreur est survenue lors du reglage de la plage de dates.</value></data>
+  <data name="RecipeIngredientsLoadErrorMessage" xml:space="preserve"><value>Impossible de charger la recette.</value></data>
+  <data name="RecipeDetailsLoadErrorMessage" xml:space="preserve"><value>Impossible de charger les details de la recette.</value></data>
+  <data name="IngredientsSectionTitle" xml:space="preserve"><value>INGREDIENTS</value></data>
+  <data name="IngredientsSectionEmpty" xml:space="preserve"><value>Aucun ingredient defini.</value></data>
+  <data name="InstructionsSectionTitle" xml:space="preserve"><value>INSTRUCTIONS</value></data>
+  <data name="PlannedMealsPeriodPickerTitle" xml:space="preserve"><value>Selectionnez la periode des repas planifies</value></data>
+  <data name="PlannedMealsStartDateTitle" xml:space="preserve"><value>Date de debut</value></data>
+  <data name="PlannedMealsStartDatePrompt" xml:space="preserve"><value>Saisissez la date de debut (dd.mm.yyyy):</value></data>
+  <data name="PlannedMealsEndDateTitle" xml:space="preserve"><value>Date de fin</value></data>
+  <data name="PlannedMealsEndDatePrompt" xml:space="preserve"><value>Saisissez la date de fin (dd.mm.yyyy):</value></data>
+  <data name="PlannedMealsInvalidOrderMessage" xml:space="preserve"><value>La date de fin doit etre superieure ou egale a la date de debut.</value></data>
 </root>

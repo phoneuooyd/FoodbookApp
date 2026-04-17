@@ -5,6 +5,7 @@ using System.Windows.Input;
 using Foodbook.Models;
 using FoodbookApp;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Localization;
 using Microsoft.Maui.Controls;
 
 namespace Foodbook.ViewModels;
@@ -50,7 +51,7 @@ public class PlannerViewModel : INotifyPropertyChanged
         }
     }
 
-    private string _loadingStatus = "Ładowanie...";
+    private string _loadingStatus = T("LoadingStatus", "Loading...");
     public string LoadingStatus
     {
         get => _loadingStatus;
@@ -161,9 +162,13 @@ public class PlannerViewModel : INotifyPropertyChanged
                 if (plan != null)
                 {
                     await Shell.Current.DisplayAlert(
-                        "Zapisano",
-                        $"Zapisano planer: {plan.Name} ({plan.StartDate:dd.MM.yyyy} - {plan.EndDate:dd.MM.yyyy})",
-                        "OK");
+                        T("SavedTitle", "Saved"),
+                        string.Format(
+                            T("PlannerSavedMessageFormat", "Planner saved: {0} ({1} - {2})"),
+                            plan.Name,
+                            plan.StartDate.ToString("dd.MM.yyyy"),
+                            plan.EndDate.ToString("dd.MM.yyyy")),
+                        ButtonResources.OK);
                     
                     // Notify shopping lists/plans
                     Foodbook.Services.AppEvents.RaisePlanChanged();
@@ -176,12 +181,15 @@ public class PlannerViewModel : INotifyPropertyChanged
             catch (PlanLimitExceededException ex)
             {
                 System.Diagnostics.Debug.WriteLine($"❌ Plan limit in SaveCommand: {ex.Message}");
-                await Shell.Current.DisplayAlert("Limit planu", ex.Message, "OK");
+                await Shell.Current.DisplayAlert(T("PlanLimitTitle", "Plan limit"), ex.Message, ButtonResources.OK);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"❌ Error in SaveCommand: {ex.Message}");
-                await Shell.Current.DisplayAlert("Błąd", "Wystąpił nieoczekiwany błąd podczas zapisywania.", "OK");
+                await Shell.Current.DisplayAlert(
+                    T("ErrorTitle", "Error"),
+                    T("UnexpectedSaveErrorMessage", "An unexpected error occurred while saving."),
+                    ButtonResources.OK);
             }
         });
         CancelCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
@@ -329,7 +337,7 @@ public class PlannerViewModel : INotifyPropertyChanged
             System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] LoadAsync started - forceReload={forceReload}, isEditing={IsEditing}");
             
             // Etap 1: Czyszczenie danych
-            LoadingStatus = "Przygotowywanie danych...";
+            LoadingStatus = T("LoadingStatusPreparingData", "Preparing data...");
             LoadingProgress = 0.1;
             await Task.Delay(50);
 
@@ -337,7 +345,7 @@ public class PlannerViewModel : INotifyPropertyChanged
             Recipes.Clear();
 
             // Etap 2: Ładowanie przepisów
-            LoadingStatus = "Ładowanie przepisów...";
+            LoadingStatus = T("LoadingStatusLoadingRecipes", "Loading recipes...");
             LoadingProgress = 0.2;
             await Task.Delay(50);
 
@@ -358,7 +366,7 @@ public class PlannerViewModel : INotifyPropertyChanged
             }
 
             // Etap 3: Ładowanie istniejących posiłków
-            LoadingStatus = "Ładowanie zaplanowanych posiłków...";
+            LoadingStatus = T("LoadingStatusLoadingPlannedMeals", "Loading planned meals...");
             LoadingProgress = 0.5;
             await Task.Delay(50);
 
@@ -377,7 +385,7 @@ public class PlannerViewModel : INotifyPropertyChanged
             }
             
             // Etap 4: Tworzenie dni planera
-            LoadingStatus = "Przygotowywanie kalendarza...";
+            LoadingStatus = T("LoadingStatusPreparingCalendar", "Preparing calendar...");
             LoadingProgress = 0.7;
             await Task.Delay(50);
 
@@ -417,7 +425,7 @@ public class PlannerViewModel : INotifyPropertyChanged
             }
 
             // Etap 5: Finalizacja
-            LoadingStatus = "Finalizowanie...";
+            LoadingStatus = T("LoadingStatusFinalizing", "Finalizing...");
             LoadingProgress = 0.9;
             await Task.Delay(50);
 
@@ -446,18 +454,18 @@ public class PlannerViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            LoadingStatus = "Błąd ładowania danych";
+            LoadingStatus = T("LoadingStatusError", "Error loading data");
             System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Error loading planner data: {ex.Message}");
             
             await Shell.Current.DisplayAlert(
-                "Błąd", 
-                "Wystąpił problem podczas ładowania danych planera. Spróbuj ponownie.", 
-                "OK");
+                T("ErrorTitle", "Error"),
+                T("PlannerLoadErrorMessage", "There was a problem loading planner data. Please try again."),
+                ButtonResources.OK);
         }
         finally
         {
             IsLoading = false;
-            LoadingStatus = "Ładowanie...";
+            LoadingStatus = T("LoadingStatus", "Loading...");
             LoadingProgress = 0;
         }
     }
@@ -626,11 +634,11 @@ public class PlannerViewModel : INotifyPropertyChanged
         try
         {
             return await Shell.Current.DisplayPromptAsync(
-                "Nazwa planu",
-                "Podaj nazwę planu (opcjonalnie)",
-                accept: "Zapisz",
-                cancel: "Anuluj",
-                placeholder: "Planner",
+                T("PlannerNamePromptTitle", "Planner name"),
+                T("PlannerNamePromptMessage", "Enter planner name (optional)"),
+                accept: T("PlannerNamePromptAccept", "Save"),
+                cancel: ButtonResources.Cancel,
+                placeholder: T("DefaultPlannerName", "Planner"),
                 initialValue: currentName ?? string.Empty,
                 maxLength: 50,
                 keyboard: Microsoft.Maui.Keyboard.Text);
@@ -660,7 +668,7 @@ public class PlannerViewModel : INotifyPropertyChanged
             if (enteredName == null)
                 return null;
 
-            var finalName = string.IsNullOrWhiteSpace(enteredName) ? "Planner" : enteredName.Trim();
+            var finalName = string.IsNullOrWhiteSpace(enteredName) ? T("DefaultPlannerName", "Planner") : enteredName.Trim();
 
             // Check for exact existing plan in the same period (ignore archived and the plan being edited)
             var allPlans = await _planService.GetPlansAsync();
@@ -676,21 +684,25 @@ public class PlannerViewModel : INotifyPropertyChanged
                 System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Conflicting plan found: {conflictingPlan.Id}");
                 
                 // Ask user how to proceed: overwrite, merge or cancel
+                var overwriteOption = T("ConflictOptionOverwrite", "Overwrite");
+                var mergeOption = T("ConflictOptionMerge", "Merge");
+                var createNewOption = T("ConflictOptionSaveAndCreateNewList", "Save and create new list");
+
                 var choice = await Shell.Current.DisplayActionSheet(
-                    "Plan na podane daty już istnieje.",
-                    "Anuluj",
+                    T("ConflictPlanExistsTitle", "A plan for selected dates already exists."),
+                    ButtonResources.Cancel,
                     null,
-                    "Nadpisz",
-                    "Scal",
-                    "Zapisz i utwórz nową listę"
+                    overwriteOption,
+                    mergeOption,
+                    createNewOption
                 );
 
-                if (string.IsNullOrEmpty(choice) || choice == "Anuluj")
+                if (string.IsNullOrEmpty(choice) || choice == ButtonResources.Cancel)
                 {
                     return null;
                 }
 
-                if (choice == "Scal")
+                if (choice == mergeOption)
                 {
                     try
                     {
@@ -720,9 +732,12 @@ public class PlannerViewModel : INotifyPropertyChanged
                         }
 
                         await Shell.Current.DisplayAlert(
-                            "Scalono",
-                            $"Posiłki zostały scalone z istniejącym planem ({conflictingPlan.StartDate:dd.MM.yyyy} - {conflictingPlan.EndDate:dd.MM.yyyy}).",
-                            "OK");
+                            T("ConflictMergeSuccessTitle", "Merged"),
+                            string.Format(
+                                T("ConflictMergeSuccessMessageFormat", "Meals were merged with existing plan ({0} - {1})."),
+                                conflictingPlan.StartDate.ToString("dd.MM.yyyy"),
+                                conflictingPlan.EndDate.ToString("dd.MM.yyyy")),
+                            ButtonResources.OK);
 
                         // Notify and reset/navigate back similar to normal save
                         Foodbook.Services.AppEvents.RaisePlanChanged();
@@ -734,12 +749,15 @@ public class PlannerViewModel : INotifyPropertyChanged
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Error during merge: {ex.Message}");
-                        await Shell.Current.DisplayAlert("Błąd", "Scalanie planów nie powiodło się.", "OK");
+                        await Shell.Current.DisplayAlert(
+                            T("ErrorTitle", "Error"),
+                            T("ConflictMergeErrorMessage", "Merging plans failed."),
+                            ButtonResources.OK);
                         return null;
                     }
                 }
 
-                if (choice == "Nadpisz")
+                if (choice == overwriteOption)
                 {
                     try
                     {
@@ -752,7 +770,10 @@ public class PlannerViewModel : INotifyPropertyChanged
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Failed to remove existing plan during overwrite: {ex.Message}");
-                        await Shell.Current.DisplayAlert("Błąd", "Nie udało się usunąć istniejącego planu.", "OK");
+                        await Shell.Current.DisplayAlert(
+                            T("ErrorTitle", "Error"),
+                            T("ConflictOverwriteRemoveErrorMessage", "Failed to remove existing plan."),
+                            ButtonResources.OK);
                         return null;
                     }
                 }
@@ -832,7 +853,7 @@ public class PlannerViewModel : INotifyPropertyChanged
         catch (PlanLimitExceededException ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Plan limit exceeded: {ex.Message}");
-            await Shell.Current.DisplayAlert("Limit planu", ex.Message, "OK");
+            await Shell.Current.DisplayAlert(T("PlanLimitTitle", "Plan limit"), ex.Message, ButtonResources.OK);
             return null;
         }
         catch (Exception ex)
@@ -842,7 +863,10 @@ public class PlannerViewModel : INotifyPropertyChanged
             var message = ex.Message;
             if (ex.InnerException != null)
                 message += "\n" + ex.InnerException.Message;
-            await Shell.Current.DisplayAlert("Błąd", $"Wystąpił problem podczas zapisywania planu:\n{message}", "OK");
+            await Shell.Current.DisplayAlert(
+                T("ErrorTitle", "Error"),
+                string.Format(T("PlannerSaveErrorMessageFormat", "There was a problem saving planner:{0}{1}"), Environment.NewLine, message),
+                ButtonResources.OK);
             return null;
         }
     }
@@ -879,17 +903,24 @@ public class PlannerViewModel : INotifyPropertyChanged
             }
 
             string? choice = null;
+            var onlySaveOption = T("ShoppingListOptionOnlySavePlanner", "Only save planner");
+            var saveAndMergeOption = T("ShoppingListOptionSaveAndMerge", "Save and merge with list");
+            var saveAndOverwriteOption = T("ShoppingListOptionSaveAndOverwrite", "Save and overwrite list");
+            var mergeManualOption = T("ShoppingListOptionMergeManual", "Merge with manually created list");
+            var saveAndCreateNewOption = T("ShoppingListOptionSaveAndCreateNew", "Save and create new list");
+            var saveAndCreateOption = T("ShoppingListOptionSaveAndCreate", "Save and create list");
+
             if (existingShoppingList != null && !existingShoppingList.IsArchived)
             {
                 // Shopping list exists and is linked - offer merge or overwrite options
                 System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Existing linked shopping list found: {existingShoppingList.Id}");
                 choice = await Shell.Current.DisplayActionSheet(
-                    "Czy chcesz zaktualizować powiązaną listę zakupów?",
-                    "Anuluj",
+                    T("ShoppingListLinkedQuestionTitle", "Do you want to update the linked shopping list?"),
+                    ButtonResources.Cancel,
                     null,
-                    "Tylko zapisz planer",
-                    "Zapisz i scal z listą",
-                    "Zapisz i nadpisz listę"
+                    onlySaveOption,
+                    saveAndMergeOption,
+                    saveAndOverwriteOption
                 );
             }
             else if (manualShoppingList != null)
@@ -897,12 +928,12 @@ public class PlannerViewModel : INotifyPropertyChanged
                 // Manual shopping list exists for this date range
                 System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Manual shopping list found: {manualShoppingList.Id}");
                 choice = await Shell.Current.DisplayActionSheet(
-                    "Znaleziono ręcznie utworzoną listę zakupów dla tego zakresu dat. Co chcesz zrobić?",
-                    "Anuluj",
+                    T("ShoppingListManualFoundQuestionTitle", "A manually created shopping list was found for this date range. What do you want to do?"),
+                    ButtonResources.Cancel,
                     null,
-                    "Tylko zapisz planer",
-                    "Scal z ręcznie utworzoną listą",
-                    "Zapisz i utwórz nową listę"
+                    onlySaveOption,
+                    mergeManualOption,
+                    saveAndCreateNewOption
                 );
             }
             else
@@ -910,34 +941,34 @@ public class PlannerViewModel : INotifyPropertyChanged
                 // No shopping list exists or it was archived - offer to create one
                 System.Diagnostics.Debug.WriteLine("[PlannerViewModel] No linked shopping list found for this planner");
                 choice = await Shell.Current.DisplayActionSheet(
-                    "Czy chcesz stworzyć listę zakupów?",
-                    "Anuluj",
+                    T("ShoppingListCreateQuestionTitle", "Do you want to create a shopping list?"),
+                    ButtonResources.Cancel,
                     null,
-                    "Tylko zapisz planer",
-                    "Zapisz i stwórz listę"
+                    onlySaveOption,
+                    saveAndCreateOption
                 );
             }
 
             // Handle user choice
-            if (string.IsNullOrEmpty(choice) || choice == "Anuluj" || choice == "Tylko zapisz planer")
+            if (string.IsNullOrEmpty(choice) || choice == ButtonResources.Cancel || choice == onlySaveOption)
             {
                 System.Diagnostics.Debug.WriteLine("[PlannerViewModel] User chose to skip shopping list operation");
                 return;
             }
 
-            if (choice == "Zapisz i stwórz listę" || choice == "Zapisz i utwórz nową listę")
+            if (choice == saveAndCreateOption || choice == saveAndCreateNewOption)
             {
                 await CreateShoppingListPlanAsync(plan);
             }
-            else if (choice == "Zapisz i scal z listą")
+            else if (choice == saveAndMergeOption)
             {
                 await MergeWithShoppingListAsync(existingShoppingList!, plan);
             }
-            else if (choice == "Zapisz i nadpisz listę")
+            else if (choice == saveAndOverwriteOption)
             {
                 await OverwriteShoppingListAsync(existingShoppingList!, plan);
             }
-            else if (choice == "Scal z ręcznie utworzoną listą")
+            else if (choice == mergeManualOption)
             {
                 // Link manual list to this planner and update
                 plan.LinkedShoppingListPlanId = manualShoppingList!.Id;
@@ -978,12 +1009,15 @@ public class PlannerViewModel : INotifyPropertyChanged
         catch (PlanLimitExceededException ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Shopping list limit exceeded: {ex.Message}");
-            await Shell.Current.DisplayAlert("Limit planu", ex.Message, "OK");
+            await Shell.Current.DisplayAlert(T("PlanLimitTitle", "Plan limit"), ex.Message, ButtonResources.OK);
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Error creating shopping list: {ex.Message}");
-            await Shell.Current.DisplayAlert("Błąd", "Nie udało się stworzyć listy zakupów", "OK");
+            await Shell.Current.DisplayAlert(
+                T("ErrorTitle", "Error"),
+                T("ShoppingListCreateErrorMessage", "Failed to create shopping list."),
+                ButtonResources.OK);
         }
     }
 
@@ -1023,7 +1057,10 @@ public class PlannerViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Error merging shopping list: {ex.Message}");
-            await Shell.Current.DisplayAlert("Błąd", "Nie udało się scalić listy zakupów", "OK");
+            await Shell.Current.DisplayAlert(
+                T("ErrorTitle", "Error"),
+                T("ShoppingListMergeErrorMessage", "Failed to merge shopping list."),
+                ButtonResources.OK);
         }
     }
 
@@ -1044,7 +1081,10 @@ public class PlannerViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Error overwriting shopping list: {ex.Message}");
-            await Shell.Current.DisplayAlert("Błąd", "Nie udało się nadpisać listy zakupów", "OK");
+            await Shell.Current.DisplayAlert(
+                T("ErrorTitle", "Error"),
+                T("ShoppingListOverwriteErrorMessage", "Failed to overwrite shopping list."),
+                ButtonResources.OK);
         }
     }
 
@@ -1067,6 +1107,9 @@ public class PlannerViewModel : INotifyPropertyChanged
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+    private static string T(string key, string fallback)
+        => PlannerPageResources.ResourceManager.GetString(key, PlannerPageResources.Culture) ?? fallback;
+
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }

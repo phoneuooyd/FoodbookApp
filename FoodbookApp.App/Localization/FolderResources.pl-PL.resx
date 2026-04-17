@@ -15,6 +15,13 @@
   <data name="ValidationNameRequired" xml:space="preserve">
     <value>Nazwa nie może być pusta.</value>
   </data>
+  <data name="CreateFolderTitle" xml:space="preserve"><value>Nowy folder</value></data>
+  <data name="CreateFolderPrompt" xml:space="preserve"><value>Podaj nazwę folderu</value></data>
+  <data name="CreateFolderAccept" xml:space="preserve"><value>Utwórz</value></data>
+  <data name="DeleteFolderTitle" xml:space="preserve"><value>Usuwanie folderu</value></data>
+  <data name="DeleteFolderConfirmFormat" xml:space="preserve"><value>Czy na pewno chcesz usunąć folder '{0}'? Przepisy zostaną przeniesione do folderu nadrzędnego (lub root).</value></data>
+  <data name="DeleteRecipeTitle" xml:space="preserve"><value>Usuwanie przepisu</value></data>
+  <data name="DeleteRecipeConfirmFormat" xml:space="preserve"><value>Czy na pewno chcesz usunąć przepis '{0}'?</value></data>
   <!-- FolderAwarePickerPopup -->
   <data name="ChooseRecipeTitle" xml:space="preserve"><value>Wybierz przepis</value></data>
   <data name="EmptyFolderTitle" xml:space="preserve"><value>Brak przepisów w tym folderze</value></data>

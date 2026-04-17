@@ -57,6 +57,12 @@
     <!-- Modern Border Color for consistent UI (adaptive) -->
     <Color x:Key="ModernBorderColor">#E0E0E0</Color>
     <Color x:Key="ModernBorderColorDark">#404040</Color>
+    <Color x:Key="ModernPlaceholderColor">#999999</Color>
+
+    <!-- Foodbook planner apply button colors (runtime-overridden by ThemeService) -->
+    <Color x:Key="FoodbookApplyButtonBackgroundColor">#1A5B3FE8</Color>
+    <Color x:Key="FoodbookApplyButtonBorderColor">#335B3FE8</Color>
+    <Color x:Key="FoodbookApplyButtonTextColor">#512BD4</Color>
 
     <!-- Dynamic Brushes - These will be updated when color theme changes -->
     <SolidColorBrush x:Key="PrimaryBrush" Color="{DynamicResource Primary}"/>

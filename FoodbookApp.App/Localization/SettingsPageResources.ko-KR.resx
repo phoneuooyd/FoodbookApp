@@ -321,4 +321,37 @@
   <data name="DeduplicateIngredientsTitle" xml:space="preserve"><value>중복 재료 제거</value></data>
   <data name="DeduplicateIngredientsDescription" xml:space="preserve"><value>로컬에 중복된 기본 재료(이름 + 매크로)를 정리합니다.</value></data>
   <data name="DeduplicateIngredientsButton" xml:space="preserve"><value>중복 제거</value></data>
+  <data name="DatabaseMigrationInProgress" xml:space="preserve"><value>데이터베이스 마이그레이션 실행 중...</value></data>
+  <data name="DatabaseMigrationSuccessStatus" xml:space="preserve"><value>데이터베이스 마이그레이션이 성공적으로 완료되었습니다.</value></data>
+  <data name="DatabaseMigrationSuccessTitle" xml:space="preserve"><value>성공</value></data>
+  <data name="DatabaseMigrationSuccessMessage" xml:space="preserve"><value>데이터베이스 마이그레이션이 성공적으로 완료되었습니다.</value></data>
+  <data name="DatabaseMigrationFailedStatus" xml:space="preserve"><value>마이그레이션 실패.</value></data>
+  <data name="DatabaseMigrationFailedTitle" xml:space="preserve"><value>오류</value></data>
+  <data name="DatabaseMigrationFailedMessage" xml:space="preserve"><value>데이터베이스 마이그레이션을 실행하지 못했습니다. 로그를 확인하세요.</value></data>
+  <data name="DatabaseMigrationErrorStatusFormat" xml:space="preserve"><value>마이그레이션 오류: {0}</value></data>
+  <data name="DatabaseMigrationErrorMessageFormat" xml:space="preserve"><value>마이그레이션 중 오류가 발생했습니다: {0}</value></data>
+  <data name="DatabaseResetConfirmTitle" xml:space="preserve"><value>데이터베이스 초기화</value></data>
+  <data name="DatabaseResetConfirmMessage" xml:space="preserve"><value>모든 데이터를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.{0}{0}모든 레시피, 플랜 및 쇼핑 목록이 삭제됩니다.</value></data>
+  <data name="DatabaseResetConfirmAccept" xml:space="preserve"><value>예, 초기화</value></data>
+  <data name="DatabaseResetInProgress" xml:space="preserve"><value>데이터베이스 초기화 중...</value></data>
+  <data name="DatabaseResetSuccessStatus" xml:space="preserve"><value>데이터베이스가 초기화되었습니다.</value></data>
+  <data name="DatabaseResetSuccessTitle" xml:space="preserve"><value>성공</value></data>
+  <data name="DatabaseResetSuccessMessage" xml:space="preserve"><value>데이터베이스가 초기화되었습니다. 앱이 종료됩니다. 다시 시작하세요.</value></data>
+  <data name="DatabaseResetFailedStatus" xml:space="preserve"><value>초기화 실패.</value></data>
+  <data name="DatabaseResetFailedTitle" xml:space="preserve"><value>오류</value></data>
+  <data name="DatabaseResetFailedMessage" xml:space="preserve"><value>데이터베이스를 초기화하지 못했습니다. 로그를 확인하세요.</value></data>
+  <data name="DatabaseResetErrorStatusFormat" xml:space="preserve"><value>초기화 오류: {0}</value></data>
+  <data name="DatabaseResetErrorMessageFormat" xml:space="preserve"><value>초기화 중 오류가 발생했습니다: {0}</value></data>
+  <data name="DeduplicateConfirmTitle" xml:space="preserve"><value>중복 재료 제거</value></data>
+  <data name="DeduplicateConfirmMessage" xml:space="preserve"><value>중복된 기본 재료를 제거하시겠습니까? (비교: 이름 + 매크로).{0}{0}이 작업은 되돌릴 수 없습니다.</value></data>
+  <data name="DeduplicateConfirmAccept" xml:space="preserve"><value>예, 제거</value></data>
+  <data name="DeduplicateInProgress" xml:space="preserve"><value>중복 재료 제거 중...</value></data>
+  <data name="DeduplicateDbUnavailableStatus" xml:space="preserve"><value>오류: 데이터베이스에 접근할 수 없습니다</value></data>
+  <data name="DeduplicateRemovedStatusFormat" xml:space="preserve"><value>제거된 중복: {0}</value></data>
+  <data name="DeduplicateNoDuplicatesStatus" xml:space="preserve"><value>제거할 중복이 없습니다</value></data>
+  <data name="DeduplicateDoneTitle" xml:space="preserve"><value>완료</value></data>
+  <data name="DeduplicateErrorStatusFormat" xml:space="preserve"><value>오류: {0}</value></data>
+  <data name="DeduplicateErrorTitle" xml:space="preserve"><value>오류</value></data>
+  <data name="PremiumRequiredTitle" xml:space="preserve"><value>프리미엄</value></data>
+  <data name="PremiumRequiredMessage" xml:space="preserve"><value>이 옵션은 프리미엄 사용자만 사용할 수 있습니다.</value></data>
 </root>

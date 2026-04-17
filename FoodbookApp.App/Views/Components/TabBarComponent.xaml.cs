@@ -10,6 +10,7 @@ using System.Windows.Input;
 using Foodbook.Utils;
 using FoodbookApp;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Localization;
 
 namespace Foodbook.Views.Components
 {
@@ -19,7 +20,10 @@ namespace Foodbook.Views.Components
         private bool _isNavigating;
         private readonly Dictionary<string, ContentPage> _pageCache = new();
         private readonly Dictionary<ContentPage, View> _pageViewCache = new();
+        private readonly List<CommunityToolkit.Maui.Behaviors.IconTintColorBehavior> _tabIconTintBehaviors = new();
         private readonly SemaphoreSlim _contentSwapGate = new(1, 1);
+        private CancellationTokenSource? _tabLoadCts;
+        private int _tabLoadVersion;
         private ILocalizationService? _localizationService;
         private Color _iconTintColor = Colors.Black;
         
@@ -72,22 +76,11 @@ namespace Foodbook.Views.Components
             {
                 try
                 {
-                    // Force refresh TintColor on all Image behaviors in TabBar
-                    foreach (var child in TabBarContainer.Children)
+                    EnsureTintBehaviorCache();
+
+                    foreach (var behavior in _tabIconTintBehaviors)
                     {
-                        if (child is Border border && border.Content is Grid grid)
-                        {
-                            var image = grid.Children.OfType<Image>().FirstOrDefault();
-                            if (image != null)
-                            {
-                                var behavior = image.Behaviors.OfType<CommunityToolkit.Maui.Behaviors.IconTintColorBehavior>().FirstOrDefault();
-                                if (behavior != null)
-                                {
-                                    // Directly set TintColor on behavior to force refresh
-                                    behavior.TintColor = color;
-                                }
-                            }
-                        }
+                        behavior.TintColor = color;
                     }
                 }
                 catch (Exception ex)
@@ -96,6 +89,32 @@ namespace Foodbook.Views.Components
                 }
             });
         }
+
+        private void EnsureTintBehaviorCache()
+        {
+            if (_tabIconTintBehaviors.Count > 0 || TabBarContainer == null)
+            {
+                return;
+            }
+
+            foreach (var child in TabBarContainer.Children)
+            {
+                if (child is not Border border || border.Content is not Grid grid)
+                {
+                    continue;
+                }
+
+                var image = grid.Children.OfType<Image>().FirstOrDefault();
+                var behavior = image?.Behaviors.OfType<CommunityToolkit.Maui.Behaviors.IconTintColorBehavior>().FirstOrDefault();
+                if (behavior != null)
+                {
+                    _tabIconTintBehaviors.Add(behavior);
+                }
+            }
+        }
+
+        private void InvalidateTintBehaviorCache()
+            => _tabIconTintBehaviors.Clear();
 
         public ObservableCollection<TabItemModel> TabItems
         {
@@ -161,9 +180,15 @@ namespace Foodbook.Views.Components
                         await Task.Yield();
                         try { _currentPageInstance?.SendAppearing(); } catch { }
                     }
+
+                    InvalidateTintBehaviorCache();
+                    EnsureTintBehaviorCache();
+                    ApplyTintColorToImages(IconTintColor);
                 }
                 catch { }
             };
+
+            Unloaded += (_, __) => CancelPendingTabLoad();
 
             // Subscribe to Shell navigation to track context
             if (Shell.Current != null)
@@ -213,6 +238,8 @@ namespace Foodbook.Views.Components
         {
             if (bindable is TabBarComponent component && newValue is ObservableCollection<TabItemModel> tabs)
             {
+                component.InvalidateTintBehaviorCache();
+
                 // Select default tab if none selected
                 if (component.SelectedTab == null && tabs.Count > 0)
                 {
@@ -270,7 +297,7 @@ namespace Foodbook.Views.Components
                 {
                     _currentPageInstance = pageInstance;
                     try { pageInstance.SendAppearing(); } catch { }
-                    _ = TriggerInitialLoadAsync(pageInstance);
+                    ScheduleTabLoad(pageInstance);
                     return;
                 }
 
@@ -291,7 +318,10 @@ namespace Foodbook.Views.Components
                     TransitionOverlay.IsVisible = false;
                 }
 
-                viewToRender.BindingContext = pageInstance.BindingContext;
+                if (!ReferenceEquals(viewToRender.BindingContext, pageInstance.BindingContext))
+                {
+                    viewToRender.BindingContext = pageInstance.BindingContext;
+                }
                 ContentContainer.Content = viewToRender;
                 _currentPageInstance = pageInstance;
 
@@ -308,7 +338,7 @@ namespace Foodbook.Views.Components
                     direction);
 
                 System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Rendered content with BindingContext: {viewToRender.BindingContext?.GetType().Name ?? "null"}");
-                _ = TriggerInitialLoadAsync(pageInstance);
+                ScheduleTabLoad(pageInstance);
             }
             catch (Exception ex)
             {
@@ -495,10 +525,10 @@ namespace Foodbook.Views.Components
                 // SCENARIO 3: We're on HomePage - show exit confirmation
                 System.Diagnostics.Debug.WriteLine($"[TabBarComponent] On HomePage, showing exit confirmation");
                 
-                var title = _localizationService?.GetString("HomePageResources", "ExitAppTitle") ?? "Wyj�cie";
-                var message = _localizationService?.GetString("HomePageResources", "ExitAppConfirmation") ?? "Czy chcesz wyj�� z aplikacji?";
-                
-                bool result = await Application.Current!.MainPage!.DisplayAlert(title, message, "Tak", "Nie");
+                var title = _localizationService?.GetString("HomePageResources", "ExitAppTitle") ?? HomePageResources.ExitAppTitle;
+                var message = _localizationService?.GetString("HomePageResources", "ExitAppConfirmation") ?? HomePageResources.ExitAppConfirmation;
+
+                bool result = await Application.Current!.MainPage!.DisplayAlert(title, message, ButtonResources.Yes, ButtonResources.No);
                 
                 if (result)
                 {
@@ -571,10 +601,10 @@ namespace Foodbook.Views.Components
         {
             try
             {
-                var title = _localizationService?.GetString("CommonResources", "UnsavedChangesTitle") ?? "Niezapisane zmiany";
-                var message = _localizationService?.GetString("CommonResources", "UnsavedChangesMessage") ?? "Masz niezapisane zmiany. Czy na pewno chcesz opu�ci� t� stron�?";
-                var leave = _localizationService?.GetString("CommonResources", "LeaveButton") ?? "Opu��";
-                var cancel = _localizationService?.GetString("CommonResources", "CancelButton") ?? "Anuluj";
+                var title = _localizationService?.GetString("CommonResources", "UnsavedChangesTitle") ?? AddRecipePageResources.ConfirmTitle;
+                var message = _localizationService?.GetString("CommonResources", "UnsavedChangesMessage") ?? AddRecipePageResources.UnsavedChangesMessage;
+                var leave = _localizationService?.GetString("CommonResources", "LeaveButton") ?? ButtonResources.Yes;
+                var cancel = _localizationService?.GetString("CommonResources", "CancelButton") ?? ButtonResources.Cancel;
 
                 var result = await Application.Current!.MainPage!.DisplayAlert(title, message, leave, cancel);
                 return !result;
@@ -597,13 +627,20 @@ namespace Foodbook.Views.Components
         }
 
         // Trigger data loading for embedded pages
-        private async Task TriggerInitialLoadAsync(ContentPage page)
+        private async Task TriggerInitialLoadAsync(ContentPage page, int loadVersion, CancellationToken cancellationToken)
         {
             try
             {
+                await ComponentAnimationHelper.DelayForPostTransitionLoadAsync(cancellationToken);
+
+                if (cancellationToken.IsCancellationRequested || loadVersion != _tabLoadVersion || !ReferenceEquals(page, _currentPageInstance))
+                {
+                    return;
+                }
+
                 System.Diagnostics.Debug.WriteLine($"[TabBarComponent] TriggerInitialLoadAsync for {page.GetType().Name}");
 
-                // Initialize theme/font handling if present (still via reflection � low risk, private method)
+                // Initialize theme/font handling if present (still via reflection, low risk, private method)
                 var initThemeMethod = page.GetType().GetMethod("InitializeThemeAndFontHandling", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 initThemeMethod?.Invoke(page, null);
 
@@ -617,9 +654,36 @@ namespace Foodbook.Views.Components
 
                 System.Diagnostics.Debug.WriteLine($"[TabBarComponent] {page.GetType().Name} does not implement ITabLoadable - skipping load");
             }
+            catch (OperationCanceledException)
+            {
+                // A newer tab selection superseded this request.
+            }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[TabBarComponent] TriggerInitialLoadAsync error: {ex.Message}");
+            }
+        }
+
+        private void ScheduleTabLoad(ContentPage page)
+        {
+            CancelPendingTabLoad();
+
+            _tabLoadCts = new CancellationTokenSource();
+            var loadVersion = Interlocked.Increment(ref _tabLoadVersion);
+            _ = TriggerInitialLoadAsync(page, loadVersion, _tabLoadCts.Token);
+        }
+
+        private void CancelPendingTabLoad()
+        {
+            try
+            {
+                _tabLoadCts?.Cancel();
+                _tabLoadCts?.Dispose();
+            }
+            catch { }
+            finally
+            {
+                _tabLoadCts = null;
             }
         }
 
@@ -671,92 +735,91 @@ namespace Foodbook.Views.Components
             }
         }
 
+        private static Color ResolveColorResource(object? resource, Color fallback)
+        {
+            if (resource is Color color)
+            {
+                return color;
+            }
+
+            if (resource is SolidColorBrush brush)
+            {
+                return brush.Color;
+            }
+
+            return fallback;
+        }
+
+        private static bool TryGetTabBarTitleColors(ResourceDictionary resources, out Color activeColor, out Color unselectedColor)
+        {
+            activeColor = Colors.Black;
+            unselectedColor = Colors.Gray;
+
+            if (!resources.TryGetValue("TabBarForeground", out var activeObj) ||
+                !resources.TryGetValue("TabBarUnselected", out var unselectedObj))
+            {
+                return false;
+            }
+
+            activeColor = ResolveColorResource(activeObj, Colors.Black);
+            unselectedColor = ResolveColorResource(unselectedObj, Colors.Gray);
+            return true;
+        }
+
+        private void UpdateTabTitleColors(Color activeColor, Color unselectedColor)
+        {
+            if (TabBarContainer == null)
+            {
+                return;
+            }
+
+            foreach (var child in TabBarContainer.Children)
+            {
+                if (child is not Border border || border.Content is not Grid grid)
+                {
+                    continue;
+                }
+
+                if (border.BindingContext is not TabItemModel tabItem)
+                {
+                    continue;
+                }
+
+                var titleLabel = grid.Children.OfType<Label>().FirstOrDefault();
+                if (titleLabel != null)
+                {
+                    titleLabel.TextColor = tabItem.IsSelected ? activeColor : unselectedColor;
+                }
+            }
+        }
+
         // Ensure tab item shadow and pressed backgrounds immediately reflect current theme
         private void RefreshTabBarVisualsInternal()
         {
             try
             {
-                if (TabBarContainer == null) return;
+                if (TabBarContainer == null)
+                {
+                    return;
+                }
+
                 var app = Application.Current;
-                if (app?.Resources == null) return;
-
-                static Color? TryGetColor(object? obj)
+                var resources = app?.Resources;
+                if (resources == null)
                 {
-                    if (obj is Color c) return c;
-                    if (obj is SolidColorBrush b) return b.Color;
-                    return null;
+                    TabBarContainer.InvalidateMeasure();
+                    return;
                 }
 
-                app.Resources.TryGetValue("Primary", out var primaryObj);
-                app.Resources.TryGetValue("TabBarBackgroundDarken", out var darkenObj);
-                app.Resources.TryGetValue("TabBarForeground", out var foregroundObj);
-
-                var primaryColor = TryGetColor(primaryObj);
-                var darkenColor = TryGetColor(darkenObj);
-                var foregroundColor = TryGetColor(foregroundObj);
-
-                foreach (var child in TabBarContainer.Children)
+                if (!TryGetTabBarTitleColors(resources, out var activeColor, out var unselectedColor))
                 {
-                    if (child is not Border containerBorder || containerBorder.Content is not Grid grid)
-                        continue;
-
-                    var tabVm = containerBorder.BindingContext as TabItemModel;
-                    var isSelected = tabVm?.IsSelected ?? false;
-
-                    // Update outer container shadow
-                    if (isSelected && primaryColor != null)
-                    {
-                        containerBorder.Shadow = new Shadow
-                        {
-                            Brush = new SolidColorBrush(primaryColor),
-                            Radius = 12,
-                            Opacity = 0.4f,
-                            Offset = new Point(0, 2)
-                        };
-                    }
-                    else
-                    {
-                        containerBorder.Shadow = new Shadow
-                        {
-                            Brush = new SolidColorBrush(Colors.Transparent),
-                            Radius = 0,
-                            Opacity = 0f,
-                            Offset = new Point(0, 0)
-                        };
-                    }
-
-                    // Update inner pressed background (if present)
-                    var innerBorder = grid.Children.OfType<Border>().FirstOrDefault();
-                    if (innerBorder != null)
-                    {
-                        if (darkenColor != null)
-                        {
-                            innerBorder.BackgroundColor = darkenColor;
-                        }
-                        if (primaryColor != null)
-                        {
-                            innerBorder.Shadow = new Shadow
-                            {
-                                Brush = new SolidColorBrush(primaryColor),
-                                Radius = 6,
-                                Opacity = 0.9f,
-                                Offset = new Point(0, 1)
-                            };
-                        }
-
-                        // Keep selected marker crisp across themes
-                        if (isSelected && foregroundColor != null)
-                        {
-                            innerBorder.Stroke = Color.FromRgba(foregroundColor.Red, foregroundColor.Green, foregroundColor.Blue, 0.32f);
-                            innerBorder.StrokeThickness = 1;
-                        }
-                        else
-                        {
-                            innerBorder.Stroke = Colors.Transparent;
-                            innerBorder.StrokeThickness = 0;
-                        }
-                    }
+                    TabBarContainer.InvalidateMeasure();
+                    return;
                 }
+
+                UpdateTabTitleColors(activeColor, unselectedColor);
+
+                TabBarContainer.InvalidateMeasure();
             }
             catch (Exception ex)
             {

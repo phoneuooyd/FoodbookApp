@@ -792,7 +792,7 @@
 
     <Style x:Key="ModernBorder" TargetType="Border">
         <Setter Property="BackgroundColor" Value="{DynamicResource FrameBackgroundColor}" />
-        <Setter Property="Stroke" Value="{AppThemeBinding Light=#E0E0E0, Dark=#555555}" />
+        <Setter Property="Stroke" Value="{DynamicResource ModernBorderColor}" />
         <Setter Property="StrokeThickness" Value="1" />
         <Setter Property="StrokeShape" Value="RoundRectangle 6" />
         <Setter Property="MinimumHeightRequest" Value="44" />
@@ -801,8 +801,8 @@
     <Style x:Key="ModernEntry" TargetType="Entry">
         <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="PlaceholderColor" Value="{AppThemeBinding Light=#999999, Dark=#CCCCCC}" />
-        <Setter Property="TextColor" Value="{AppThemeBinding Light=Black, Dark=White}" />
+        <Setter Property="PlaceholderColor" Value="{DynamicResource ModernPlaceholderColor}" />
+        <Setter Property="TextColor" Value="{DynamicResource FrameTextColor}" />
         <Setter Property="VerticalOptions" Value="Center" />
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
         <Setter Property="MinimumHeightRequest" Value="44" />

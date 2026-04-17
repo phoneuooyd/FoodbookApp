@@ -21,4 +21,27 @@
   <data name="ProteinLabel" xml:space="preserve"><value>Protein (g)</value></data>
   <data name="FatLabel" xml:space="preserve"><value>Fat (g)</value></data>
   <data name="CarbsLabel" xml:space="preserve"><value>Carbs (g)</value></data>
+  <data name="RecipeInfoPartOfRecipe" xml:space="preserve"><value>이 재료는 레시피의 일부입니다</value></data>
+  <data name="LoadIngredientErrorMessageFormat" xml:space="preserve"><value>재료를 불러오는 중 오류: {0}</value></data>
+  <data name="VerifyNameRequiredStatus" xml:space="preserve"><value>검증 전에 재료 이름을 입력하세요</value></data>
+  <data name="VerifyCheckingStatus" xml:space="preserve"><value>OpenFoodFacts에서 데이터를 검증하는 중...</value></data>
+  <data name="VerifyUpdatedStatusFormat" xml:space="preserve"><value>'{0}' 데이터가 업데이트되었습니다</value></data>
+  <data name="VerifyDialogTitle" xml:space="preserve"><value>재료 검증</value></data>
+  <data name="VerifyUpdatedDialogMessageFormat" xml:space="preserve"><value>'{0}' 데이터가 업데이트되었습니다:{1}칼로리: {2:F1} -&gt; {3:F1}{1}단백질: {4:F1} -&gt; {5:F1}g{1}지방: {6:F1} -&gt; {7:F1}g{1}탄수화물: {8:F1} -&gt; {9:F1}g</value></data>
+  <data name="VerifyNotFoundStatusFormat" xml:space="preserve"><value>OpenFoodFacts에서 '{0}' 제품을 찾을 수 없습니다</value></data>
+  <data name="VerifyNotFoundDialogMessageFormat" xml:space="preserve"><value>OpenFoodFacts에서 '{0}' 제품을 찾을 수 없거나 값이 변경되지 않았습니다.{1}{1}다른 재료 이름을 사용하거나 값을 수동으로 입력하세요.</value></data>
+  <data name="VerifyErrorStatusFormat" xml:space="preserve"><value>검증 오류: {0}</value></data>
+  <data name="VerifyErrorTitle" xml:space="preserve"><value>검증 오류</value></data>
+  <data name="VerifyErrorDialogMessageFormat" xml:space="preserve"><value>재료 '{0}' 검증 중 오류가 발생했습니다: {1}</value></data>
+  <data name="ValidationNameRequired" xml:space="preserve"><value>재료 이름은 필수입니다</value></data>
+  <data name="ValidationQuantityNumeric" xml:space="preserve"><value>수량은 숫자여야 합니다</value></data>
+  <data name="ValidationQuantityPositive" xml:space="preserve"><value>수량은 0보다 커야 합니다</value></data>
+  <data name="ValidationCaloriesNumeric" xml:space="preserve"><value>칼로리는 숫자여야 합니다</value></data>
+  <data name="ValidationProteinNumeric" xml:space="preserve"><value>단백질은 숫자여야 합니다</value></data>
+  <data name="ValidationFatNumeric" xml:space="preserve"><value>지방은 숫자여야 합니다</value></data>
+  <data name="ValidationCarbsNumeric" xml:space="preserve"><value>탄수화물은 숫자여야 합니다</value></data>
+  <data name="ValidationUnitWeightNumeric" xml:space="preserve"><value>단위 중량은 숫자여야 합니다</value></data>
+  <data name="ValidationUnitWeightPositive" xml:space="preserve"><value>단위 중량은 0보다 커야 합니다</value></data>
+  <data name="ValidationGeneralError" xml:space="preserve"><value>유효성 검사 오류</value></data>
+  <data name="SaveIngredientErrorMessageFormat" xml:space="preserve"><value>재료를 저장할 수 없습니다: {0}</value></data>
 </root>

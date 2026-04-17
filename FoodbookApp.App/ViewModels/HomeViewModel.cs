@@ -41,7 +41,7 @@ public class HomeViewModel : INotifyPropertyChanged
         set { if (_archivedPlanCount != value) { _archivedPlanCount = value; OnPropertyChanged(); } }
     }
 
-    private bool _isLoading = true; // Zaczynamy z true, ¿eby pokazaæ loader
+    private bool _isLoading = true; // Zaczynamy z true, ï¿½eby pokazaï¿½ loader
     public bool IsLoading
     {
         get => _isLoading;
@@ -348,11 +348,11 @@ public class HomeViewModel : INotifyPropertyChanged
         {
             IsLoading = true;
 
-            // £aduj przepisy
+            // ï¿½aduj przepisy
             var recipes = await _recipeService.GetRecipesAsync();
             RecipeCount = recipes?.Count ?? 0;
 
-            // £aduj plany
+            // ï¿½aduj plany
             var allPlans = await _planService.GetPlansAsync();
             if (allPlans != null)
             {
@@ -368,15 +368,15 @@ public class HomeViewModel : INotifyPropertyChanged
             // Load available plans for filtering
             await LoadAvailablePlansAsync();
 
-            // £aduj zaplanowane posi³ki
+            // ï¿½aduj zaplanowane posiï¿½ki
             await LoadPlannedMealsAsync();
             
-            // Oblicz statystyki ¿ywieniowe
+            // Oblicz statystyki ï¿½ywieniowe
             await RefreshNutritionDataAsync(); // Use centralized refresh method
         }
         catch (Exception ex)
         {
-            // W przypadku b³êdu, ustaw wartoœci na 0
+            // W przypadku bï¿½ï¿½du, ustaw wartoï¿½ci na 0
             RecipeCount = 0;
             PlanCount = 0;
             ArchivedPlanCount = 0;
@@ -385,7 +385,7 @@ public class HomeViewModel : INotifyPropertyChanged
             AvailablePlans.Clear();
             ResetNutritionStats();
             
-            // Log b³êdu (opcjonalne)
+            // Log bï¿½ï¿½du (opcjonalne)
             System.Diagnostics.Debug.WriteLine($"Error loading home data: {ex.Message}");
         }
         finally
@@ -452,11 +452,11 @@ public class HomeViewModel : INotifyPropertyChanged
             {
                 if (meal.Recipe == null) continue;
 
-                // Pobierz pe³ny przepis ze sk³adnikami
+                // Pobierz peï¿½ny przepis ze skï¿½adnikami
                 var fullRecipe = await _recipeService.GetRecipeAsync(meal.Recipe.Id);
                 if (fullRecipe == null) continue;
 
-                // Oblicz wartoœci na podstawie liczby porcji
+                // Oblicz wartoï¿½ci na podstawie liczby porcji
                 var portionMultiplier = (double)meal.Portions / fullRecipe.IloscPorcji;
 
                 totalCalories += fullRecipe.Calories * portionMultiplier;
@@ -528,15 +528,15 @@ public class HomeViewModel : INotifyPropertyChanged
         // Add plan option if plans are available
         if (AvailablePlans.Any())
         {
-            options.Add("Plan");
+            options.Add(GetHomeText("PlanOptionLabel", "Plan"));
         }
         
         // RESTORED: Add custom date option back
         options.Add(ButtonResources.CustomDate);
 
         var choice = await page.DisplayActionSheet(
-            "Wybierz okres dla statystyk", 
-            "Anuluj", 
+            GetHomeText("StatsPeriodPickerTitle", "Select period for statistics"),
+            ButtonResources.Cancel,
             null, 
             options.ToArray());
 
@@ -548,7 +548,7 @@ public class HomeViewModel : INotifyPropertyChanged
             case var thisWeek when thisWeek == ButtonResources.ThisWeek:
                 SelectedNutritionPeriod = NutritionPeriod.Week;
                 break;
-            case "Plan":
+            case var planOption when planOption == GetHomeText("PlanOptionLabel", "Plan"):
                 await ShowPlanPickerAsync();
                 break;
             case var customDate when customDate == ButtonResources.CustomDate:
@@ -564,19 +564,22 @@ public class HomeViewModel : INotifyPropertyChanged
 
         if (!AvailablePlans.Any())
         {
-            await page.DisplayAlert("Brak planów", "Nie ma dostêpnych planów do wyboru.", "OK");
+            await page.DisplayAlert(
+                GetHomeText("NoPlansTitle", "No plans"),
+                GetHomeText("NoPlansMessage", "There are no plans available to choose from."),
+                ButtonResources.OK);
             return;
         }
 
         var planOptions = AvailablePlans.Select(p => $"{p.StartDate:dd.MM.yyyy} - {p.EndDate:dd.MM.yyyy}").ToArray();
         
         var choice = await page.DisplayActionSheet(
-            "Wybierz plan", 
-            "Anuluj", 
+            GetHomeText("PlanPickerTitle", "Select plan"),
+            ButtonResources.Cancel,
             null, 
             planOptions);
 
-        if (!string.IsNullOrEmpty(choice) && choice != "Anuluj")
+        if (!string.IsNullOrEmpty(choice) && choice != ButtonResources.Cancel)
         {
             var selectedIndex = Array.IndexOf(planOptions, choice);
             if (selectedIndex >= 0 && selectedIndex < AvailablePlans.Count)
@@ -604,11 +607,11 @@ public class HomeViewModel : INotifyPropertyChanged
         {
             // Simple input dialog approach for better reliability
             var startDateInput = await page.DisplayPromptAsync(
-                "Data pocz¹tkowa", 
-                "Podaj datê pocz¹tkow¹ (dd.mm.yyyy):", 
-                "OK",
-                "Anuluj",
-                placeholder: "np. 01.01.2024",
+                GetHomeText("CustomDateStartTitle", "Start date"),
+                GetHomeText("CustomDateStartPrompt", "Enter start date (dd.mm.yyyy):"),
+                ButtonResources.OK,
+                ButtonResources.Cancel,
+                placeholder: GetHomeText("CustomDateStartPlaceholder", "e.g. 01.01.2024"),
                 initialValue: CustomStartDate.ToString("dd.MM.yyyy"));
 
             if (string.IsNullOrEmpty(startDateInput))
@@ -617,11 +620,11 @@ public class HomeViewModel : INotifyPropertyChanged
             if (DateTime.TryParseExact(startDateInput, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out var startDate))
             {
                 var endDateInput = await page.DisplayPromptAsync(
-                    "Data koñcowa", 
-                    "Podaj datê koñcow¹ (dd.mm.yyyy):", 
-                    "OK",
-                    "Anuluj",
-                    placeholder: "np. 07.01.2024",
+                    GetHomeText("CustomDateEndTitle", "End date"),
+                    GetHomeText("CustomDateEndPrompt", "Enter end date (dd.mm.yyyy):"),
+                    ButtonResources.OK,
+                    ButtonResources.Cancel,
+                    placeholder: GetHomeText("CustomDateEndPlaceholder", "e.g. 07.01.2024"),
                     initialValue: CustomEndDate.ToString("dd.MM.yyyy"));
 
                 if (string.IsNullOrEmpty(endDateInput))
@@ -639,29 +642,45 @@ public class HomeViewModel : INotifyPropertyChanged
                         await RefreshNutritionDataAsync();
                         
                         await page.DisplayAlert(
-                            "Zakres ustawiony", 
-                            $"Filtr ustawiony na okres:\n{startDate:dd.MM.yyyy} - {endDate:dd.MM.yyyy}", 
-                            "OK");
+                            GetHomeText("CustomDateRangeSetTitle", "Range set"),
+                            string.Format(
+                                GetHomeText("CustomDateRangeSetMessageFormat", "Filter set to:{0}{1} - {2}"),
+                                Environment.NewLine,
+                                startDate.ToString("dd.MM.yyyy"),
+                                endDate.ToString("dd.MM.yyyy")),
+                            ButtonResources.OK);
                     }
                     else
                     {
-                        await page.DisplayAlert("B³¹d", "Data koñcowa musi byæ póŸniejsza lub równa dacie pocz¹tkowej", "OK");
+                        await page.DisplayAlert(
+                            GetHomeText("ErrorTitle", "Error"),
+                            GetHomeText("CustomDateRangeInvalidOrderMessage", "End date must be greater than or equal to start date."),
+                            ButtonResources.OK);
                     }
                 }
                 else
                 {
-                    await page.DisplayAlert("B³¹d", "Nieprawid³owy format daty koñcowej. U¿yj formatu dd.mm.yyyy", "OK");
+                    await page.DisplayAlert(
+                        GetHomeText("ErrorTitle", "Error"),
+                        GetHomeText("CustomDateRangeInvalidEndFormatMessage", "Invalid end date format. Use dd.mm.yyyy."),
+                        ButtonResources.OK);
                 }
             }
             else
             {
-                await page.DisplayAlert("B³¹d", "Nieprawid³owy format daty pocz¹tkowej. U¿yj formatu dd.mm.yyyy", "OK");
+                await page.DisplayAlert(
+                    GetHomeText("ErrorTitle", "Error"),
+                    GetHomeText("CustomDateRangeInvalidStartFormatMessage", "Invalid start date format. Use dd.mm.yyyy."),
+                    ButtonResources.OK);
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error showing custom date range picker: {ex.Message}");
-            await page.DisplayAlert("B³¹d", "Wyst¹pi³ b³¹d podczas ustawiania zakresu dat", "OK");
+            await page.DisplayAlert(
+                GetHomeText("ErrorTitle", "Error"),
+                GetHomeText("CustomDateRangeGeneralErrorMessage", "An error occurred while setting date range."),
+                ButtonResources.OK);
         }
     }
 
@@ -778,43 +797,46 @@ public class HomeViewModel : INotifyPropertyChanged
             var fullRecipe = await _recipeService.GetRecipeAsync(meal.Recipe.Id);
             if (fullRecipe == null)
             {
-                await page.DisplayAlert("B³¹d", "Nie uda³o siê pobraæ przepisu.", "OK");
+                await page.DisplayAlert(
+                    GetHomeText("ErrorTitle", "Error"),
+                    GetHomeText("RecipeIngredientsLoadErrorMessage", "Could not load recipe."),
+                    ButtonResources.OK);
                 return;
             }
 
             var title = $"{fullRecipe.Name}";
             if (meal.Portions != fullRecipe.IloscPorcji)
             {
-                title += $" ({meal.Portions} porcji)";
+                title += string.Format(GetHomeText("PortionsFormat", "({0} portions)"), meal.Portions);
             }
 
             var content = "";
 
             if (fullRecipe.Ingredients != null && fullRecipe.Ingredients.Any())
             {
-                content += "SK£ADNIKI:\n";
+                content += $"{GetHomeText("IngredientsSectionTitle", "INGREDIENTS")}:\n";
                 var ingredientsList = fullRecipe.Ingredients
                     .Select(ing =>
                     {
                         var adjustedQuantity = (ing.Quantity * meal.Portions) / fullRecipe.IloscPorcji;
                         var unitText = GetUnitText(ing.Unit);
-                        return $"• {ing.Name}: {adjustedQuantity:F1} {unitText}";
+                        return $"â€¢ {ing.Name}: {adjustedQuantity:F1} {unitText}";
                     })
                     .ToList();
                 content += string.Join("\n", ingredientsList);
             }
             else
             {
-                content += "SK£ADNIKI:\nBrak zdefiniowanych sk³adników.";
+                content += $"{GetHomeText("IngredientsSectionTitle", "INGREDIENTS")}:\n{GetHomeText("IngredientsSectionEmpty", "No ingredients defined.")}";
             }
 
             if (!string.IsNullOrWhiteSpace(fullRecipe.Description))
             {
-                content += "\n\nSPOSÓB WYKONANIA:\n";
+                content += $"\n\n{GetHomeText("InstructionsSectionTitle", "INSTRUCTIONS")}:\n";
                 content += fullRecipe.Description;
             }
 
-            await page.DisplayAlert(title, content, "OK");
+            await page.DisplayAlert(title, content, ButtonResources.OK);
 
             System.Diagnostics.Debug.WriteLine($"? HomeViewModel: Recipe ingredients popup closed");
         }
@@ -839,7 +861,10 @@ public class HomeViewModel : INotifyPropertyChanged
                 }
             }
 
-            await page.DisplayAlert("B³¹d", "Nie uda³o siê pobraæ szczegó³ów przepisu.", "OK");
+            await page.DisplayAlert(
+                GetHomeText("ErrorTitle", "Error"),
+                GetHomeText("RecipeDetailsLoadErrorMessage", "Could not load recipe details."),
+                ButtonResources.OK);
         }
         finally
         {
@@ -918,8 +943,8 @@ public class HomeViewModel : INotifyPropertyChanged
         };
 
         var choice = await page.DisplayActionSheet(
-            "Wybierz okres dla zaplanowanych posi³ków",
-            "Anuluj",
+            GetHomeText("PlannedMealsPeriodPickerTitle", "Select period for planned meals"),
+            ButtonResources.Cancel,
             null,
             options);
 
@@ -943,21 +968,29 @@ public class HomeViewModel : INotifyPropertyChanged
         if (page == null) return;
 
         var startDateInput = await page.DisplayPromptAsync(
-            "Data pocz¹tkowa",
-            "Podaj datê pocz¹tkow¹ (dd.mm.yyyy):",
+            GetHomeText("PlannedMealsStartDateTitle", "Start date"),
+            GetHomeText("PlannedMealsStartDatePrompt", "Enter start date (dd.mm.yyyy):"),
+            ButtonResources.OK,
+            ButtonResources.Cancel,
             initialValue: PlannedMealsCustomStartDate.ToString("dd.MM.yyyy"));
 
         if (DateTime.TryParseExact(startDateInput, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out var startDate))
         {
             var endDateInput = await page.DisplayPromptAsync(
-                "Data koñcowa",
-                "Podaj datê koñcow¹ (dd.mm.yyyy):",
+                GetHomeText("PlannedMealsEndDateTitle", "End date"),
+                GetHomeText("PlannedMealsEndDatePrompt", "Enter end date (dd.mm.yyyy):"),
+                ButtonResources.OK,
+                ButtonResources.Cancel,
                 initialValue: PlannedMealsCustomEndDate.ToString("dd.MM.yyyy"));
 
             if (DateTime.TryParseExact(endDateInput, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out var endDate))
             {
                 if (endDate >= startDate) { PlannedMealsCustomStartDate = startDate; PlannedMealsCustomEndDate = endDate; SelectedPlannedMealsPeriod = PlannedMealsPeriod.Custom; OnPropertyChanged(nameof(PlannedMealsMaxHeight)); }
-                else await page.DisplayAlert("B³¹d", "Data koñcowa musi byæ póŸniejsza ni¿ pocz¹tkowa", "OK");
+                else
+                    await page.DisplayAlert(
+                        GetHomeText("ErrorTitle", "Error"),
+                        GetHomeText("PlannedMealsInvalidOrderMessage", "End date must be greater than or equal to start date."),
+                        ButtonResources.OK);
             }
         }
     }
@@ -1018,7 +1051,7 @@ public class HomeViewModel : INotifyPropertyChanged
 
             var popup = new Views.Components.SimpleListPopup
             {
-                TitleText = "Zaplanowane posi³ki",
+                TitleText = GetHomeText("PlannedMealsHeader", "Planned meals"),
                 Items = items,
                 IsBulleted = false
             };
@@ -1086,6 +1119,9 @@ public class HomeViewModel : INotifyPropertyChanged
         }
     }
 
+    private static string GetHomeText(string key, string fallback)
+        => HomePageResources.ResourceManager.GetString(key, HomePageResources.Culture) ?? fallback;
+
     public event PropertyChangedEventHandler? PropertyChanged;
     private void OnPropertyChanged([CallerMemberName] string? name = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
@@ -1098,7 +1134,7 @@ public class HomeViewModel : INotifyPropertyChanged
     }
 }
 
-// Klasa pomocnicza do grupowania zaplanowanych posi³ków
+// Klasa pomocnicza do grupowania zaplanowanych posiï¿½kï¿½w
 public class PlannedMealGroup
 {
     public DateTime Date { get; set; }
@@ -1106,7 +1142,7 @@ public class PlannedMealGroup
     public ObservableCollection<PlannedMeal> Meals { get; set; } = new();
 }
 
-// SIMPLIFIED: Enum dla okresów statystyk ¿ywieniowych - Custom handled separately
+// SIMPLIFIED: Enum dla okresï¿½w statystyk ï¿½ywieniowych - Custom handled separately
 public enum NutritionPeriod
 {
     Day,
@@ -1115,7 +1151,7 @@ public enum NutritionPeriod
     Custom     // Now handled separately from main menu
 }
 
-// Enum dla okresów zaplanowanych posi³ków
+// Enum dla okresï¿½w zaplanowanych posiï¿½kï¿½w
 public enum PlannedMealsPeriod
 {
     Today,

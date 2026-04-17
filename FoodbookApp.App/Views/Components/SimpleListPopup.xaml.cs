@@ -184,7 +184,10 @@ public partial class SimpleListPopup : Popup
             if (editPage == null)
             {
                 System.Diagnostics.Debug.WriteLine("[SimpleListPopup] Failed to resolve AddRecipePage from DI");
-                await Shell.Current.DisplayAlert("Błąd", "Nie można otworzyć formularza edycji przepisu.", "OK");
+                await Shell.Current.DisplayAlert(
+                    FoodbookApp.Localization.AddRecipePageResources.ErrorTitle,
+                    FoodbookApp.Localization.AddRecipePageResources.CouldNotOpenRecipeSelectionDialog,
+                    FoodbookApp.Localization.AddRecipePageResources.OKButton);
                 return;
             }
 
@@ -200,13 +203,19 @@ public partial class SimpleListPopup : Popup
             else
             {
                 System.Diagnostics.Debug.WriteLine("[SimpleListPopup] Navigation is null");
-                await Shell.Current.DisplayAlert("Błąd", "Błąd nawigacji.", "OK");
+                await Shell.Current.DisplayAlert(
+                    FoodbookApp.Localization.AddRecipePageResources.ErrorTitle,
+                    FoodbookApp.Localization.AddRecipePageResources.CouldNotOpenRecipeSelectionDialog,
+                    FoodbookApp.Localization.AddRecipePageResources.OKButton);
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[SimpleListPopup] OnEditRecipeAsync error: {ex.Message}");
-            await Shell.Current.DisplayAlert("Błąd", $"Nie udało się otworzyć edycji: {ex.Message}", "OK");
+            await Shell.Current.DisplayAlert(
+                FoodbookApp.Localization.AddRecipePageResources.ErrorTitle,
+                ex.Message,
+                FoodbookApp.Localization.AddRecipePageResources.OKButton);
         }
     }
 
@@ -237,7 +246,10 @@ public partial class SimpleListPopup : Popup
             var vm = MauiProgram.ServiceProvider?.GetService<IngredientFormViewModel>();
             if (vm == null)
             {
-                await Shell.Current.DisplayAlert("Błąd", "Nie można otworzyć formularza składnika.", "OK");
+                await Shell.Current.DisplayAlert(
+                    FoodbookApp.Localization.AddRecipePageResources.ErrorTitle,
+                    FoodbookApp.Localization.AddRecipePageResources.CouldNotOpenRecipeSelectionDialog,
+                    FoodbookApp.Localization.AddRecipePageResources.OKButton);
                 return;
             }
 

@@ -7,6 +7,7 @@ using Microsoft.Maui.Controls;
 using Foodbook.Views;
 using Foodbook.Data;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Localization;
 using Foodbook.Services;
 using Foodbook.Views.Components;
 
@@ -65,7 +66,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
 
     public event EventHandler? DataLoaded; // Raised when all data finished loading
 
-    // W�a�ciwo�ci dla masowej weryfikacji
+    // Wlasciwosci dla masowej weryfikacji
     private bool _isBulkVerifying;
     public bool IsBulkVerifying
     {
@@ -304,17 +305,19 @@ public class IngredientsViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Masowa weryfikacja wszystkich sk�adnik�w z OpenFoodFacts
+    /// Mass verification of all ingredients against OpenFoodFacts.
     /// </summary>
     private async Task BulkVerifyIngredientsAsync()
     {
         if (IsBulkVerifying || Ingredients.Count == 0) return;
 
         bool confirm = await Shell.Current.DisplayAlert(
-            "Masowa weryfikacja sk�adnik�w",
-            $"Czy chcesz zweryfikowa� wszystkie {Ingredients.Count} sk�adnik�w z OpenFoodFacts?\n\nMo�e to potrwa� kilka minut.",
-            "Tak, weryfikuj",
-            "Anuluj");
+            GetIngredientsText("BulkVerifyConfirmTitle", "Bulk ingredient verification"),
+            string.Format(
+                GetIngredientsText("BulkVerifyConfirmMessageFormat", "Do you want to verify all {0} ingredients with OpenFoodFacts?\n\nThis may take a few minutes."),
+                Ingredients.Count),
+            GetIngredientsText("BulkVerifyConfirmAccept", "Yes, verify"),
+            ButtonResources.Cancel);
 
         if (!confirm) return;
 
@@ -325,7 +328,9 @@ public class IngredientsViewModel : INotifyPropertyChanged
             var totalCount = Ingredients.Count;
             var failedCount = 0;
 
-            BulkVerificationStatus = $"Weryfikuj� sk�adniki: 0/{totalCount}";
+            BulkVerificationStatus = string.Format(
+                GetIngredientsText("BulkVerifyStatusStartFormat", "Verifying ingredients: 0/{0}"),
+                totalCount);
 
             const int batchSize = 5; // Mniejsze batche dla API
             for (int i = 0; i < Ingredients.Count; i += batchSize)
@@ -337,9 +342,13 @@ public class IngredientsViewModel : INotifyPropertyChanged
                 {
                     try
                     {
-                        BulkVerificationStatus = $"Weryfikuj� sk�adniki: {i + 1}/{totalCount} - {ingredient.Name}";
+                        BulkVerificationStatus = string.Format(
+                            GetIngredientsText("BulkVerifyStatusItemFormat", "Verifying ingredients: {0}/{1} - {2}"),
+                            i + 1,
+                            totalCount,
+                            ingredient.Name);
 
-                        // Skopiuj sk�adnik do weryfikacji
+                        // Copy ingredient snapshot for verification.
                         var tempIngredient = new Ingredient
                         {
                             Id = ingredient.Id,
@@ -353,12 +362,12 @@ public class IngredientsViewModel : INotifyPropertyChanged
                             RecipeId = ingredient.RecipeId
                         };
 
-                        // Weryfikuj z OpenFoodFacts
+                        // Verify against OpenFoodFacts.
                         bool wasUpdated = await SeedData.UpdateIngredientWithOpenFoodFactsAsync(tempIngredient);
 
                         if (wasUpdated)
                         {
-                            // Aktualizuj sk�adnik w bazie danych
+                            // Persist updated nutrition values.
                             ingredient.Calories = tempIngredient.Calories;
                             ingredient.Protein = tempIngredient.Protein;
                             ingredient.Fat = tempIngredient.Fat;
@@ -367,48 +376,54 @@ public class IngredientsViewModel : INotifyPropertyChanged
                             await _service.UpdateIngredientAsync(ingredient);
                             updatedCount++;
                             
-                            System.Diagnostics.Debug.WriteLine($"? Zaktualizowano: {ingredient.Name}");
+                            System.Diagnostics.Debug.WriteLine($"[IngredientsViewModel] Updated: {ingredient.Name}");
                         }
                     }
                     catch (Exception ex)
                     {
                         failedCount++;
-                        System.Diagnostics.Debug.WriteLine($"? B��d weryfikacji {ingredient.Name}: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"[IngredientsViewModel] Verification error for {ingredient.Name}: {ex.Message}");
                     }
                 }
 
-                // Throttling mi�dzy batchami
+                // Throttle between batches.
                 if (i + batchSize < Ingredients.Count)
                 {
-                    await Task.Delay(1000); // 1 sekunda pauzy mi�dzy batchami
+                    await Task.Delay(1000);
                 }
             }
 
-            // Poka� wyniki
             var successMessage =
-                "Weryfikacja zako�czona!\n\n" +
-                $"? Zaktualizowano: {updatedCount} sk�adnik�w\n" +
-                $"?? Bez zmian: {totalCount - updatedCount - failedCount} sk�adnik�w\n" +
-                (failedCount > 0 ? $"? B��dy/nie znaleziono: {failedCount} sk�adnik�w" : "");
+                string.Format(
+                    GetIngredientsText("BulkVerifySummaryMessageFormat", "Updated: {0}\nUnchanged: {1}\nFailed/not found: {2}"),
+                    updatedCount,
+                    totalCount - updatedCount - failedCount,
+                    failedCount);
 
-            BulkVerificationStatus = $"? Zako�czono - zaktualizowano {updatedCount}/{totalCount} sk�adnik�w";
+            BulkVerificationStatus = string.Format(
+                GetIngredientsText("BulkVerifyStatusCompletedFormat", "Completed - updated {0}/{1} ingredients"),
+                updatedCount,
+                totalCount);
 
             await Shell.Current.DisplayAlert(
-                "Masowa weryfikacja zako�czona",
+                GetIngredientsText("BulkVerifySummaryTitle", "Bulk verification completed"),
                 successMessage,
-                "OK");
+                ButtonResources.OK);
 
-            // Od�wie� list�
             await HardReloadAsync();
         }
         catch (Exception ex)
         {
-            BulkVerificationStatus = $"? B��d masowej weryfikacji: {ex.Message}";
+            BulkVerificationStatus = string.Format(
+                GetIngredientsText("BulkVerifyStatusErrorFormat", "Bulk verification error: {0}"),
+                ex.Message);
             
             await Shell.Current.DisplayAlert(
-                "B��d weryfikacji",
-                $"Wyst�pi� b��d podczas masowej weryfikacji sk�adnik�w:\n{ex.Message}",
-                "OK");
+                GetIngredientsText("BulkVerifyErrorTitle", "Verification error"),
+                string.Format(
+                    GetIngredientsText("BulkVerifyErrorMessageFormat", "An error occurred during bulk ingredient verification:\n{0}"),
+                    ex.Message),
+                ButtonResources.OK);
         }
         finally
         {
@@ -527,12 +542,11 @@ public class IngredientsViewModel : INotifyPropertyChanged
     {
         if (ing == null) return;
         
-        // Add confirmation dialog
         bool confirm = await Shell.Current.DisplayAlert(
-            "Usuwanie sk�adnika", 
-            $"Czy na pewno chcesz usun�� sk�adnik '{ing.Name}'?", 
-            "Tak", 
-            "Nie");
+            GetIngredientsText("DeleteIngredientTitle", "Delete ingredient"),
+            string.Format(GetIngredientsText("DeleteIngredientConfirmFormat", "Are you sure you want to delete ingredient '{0}'?"), ing.Name),
+            ButtonResources.Yes,
+            ButtonResources.No);
             
         if (!confirm) return;
         
@@ -559,4 +573,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
             or SortBy.FatDesc
             ? SortOrder.Desc
             : SortOrder.Asc;
+
+    private static string GetIngredientsText(string key, string fallback)
+        => IngredientsPageResources.ResourceManager.GetString(key, IngredientsPageResources.Culture) ?? fallback;
 }

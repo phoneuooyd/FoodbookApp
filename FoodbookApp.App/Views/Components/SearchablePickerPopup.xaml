@@ -3,6 +3,7 @@
            xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
            xmlns:mct="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui"
            xmlns:components="clr-namespace:Foodbook.Views.Components"
+           xmlns:loc="clr-namespace:FoodbookApp.Localization"
            x:Class="Foodbook.Views.Components.SearchablePickerPopup"
            x:Name="ThisPopup"
            CanBeDismissedByTappingOutsideOfPopup="True"
@@ -34,7 +35,7 @@
                     <!-- Modern search bar component -->
                     <components:ModernSearchBarComponent Grid.Column="0"
                                                          SearchText="{Binding SearchText, Source={x:Reference ThisPopup}}"
-                                                         PlaceholderText="Szukaj..."
+                                                         PlaceholderText="{x:Static loc:FolderResources.SearchPlaceholder}"
                                                          ClearCommand="{Binding ClearSearchCommand, Source={x:Reference ThisPopup}}" />
 
                     <!-- Close button -->
@@ -70,7 +71,7 @@
                                     VerticalOptions="Center"
                                     StyleClass="Secondary"
                                     Command="{Binding AddIngredientCommand, Source={x:Reference ThisPopup}}" />
-                            <Label Text="Dodaj składnik"
+                            <Label Text="{x:Static loc:AddRecipePageResources.AddIngredient}"
                                    FontSize="15"
                                    VerticalOptions="Center"
                                    TextColor="{DynamicResource PrimaryText}">

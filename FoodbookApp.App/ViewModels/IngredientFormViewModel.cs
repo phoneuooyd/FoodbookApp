@@ -1,8 +1,10 @@
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Foodbook.Models;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Localization;
 using Microsoft.Maui.Controls;
 using System.Collections.Generic;
 using System.Linq;
@@ -120,7 +122,9 @@ public class IngredientFormViewModel : INotifyPropertyChanged
 
     public bool IsPartOfRecipe => _loadedRecipeId.HasValue;
     
-    public string RecipeInfo => IsPartOfRecipe ? "Ten sk³adnik jest czêœci¹ przepisu" : string.Empty;
+    public string RecipeInfo => IsPartOfRecipe
+        ? I("RecipeInfoPartOfRecipe", "This ingredient is part of a recipe")
+        : string.Empty;
 
     // Status weryfikacji OpenFoodFacts
     public string VerificationStatus { get => _verificationStatus; set { _verificationStatus = value; OnPropertyChanged(); } }
@@ -265,13 +269,16 @@ public class IngredientFormViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             _suppressDirtyTracking = false;
-            ValidationMessage = $"B³¹d podczas ³adowania sk³adnika: {ex.Message}";
+            ValidationMessage = string.Format(
+                CultureInfo.CurrentUICulture,
+                I("LoadIngredientErrorMessageFormat", "Error loading ingredient: {0}"),
+                ex.Message);
             System.Diagnostics.Debug.WriteLine($"Error in LoadAsync: {ex.Message}");
         }
     }
 
     /// <summary>
-    /// Weryfikuje wartoœci od¿ywcze sk³adnika z OpenFoodFacts
+    /// Weryfikuje wartoï¿½ci odï¿½ywcze skï¿½adnika z OpenFoodFacts
     /// </summary>
     private async Task VerifyNutritionAsync()
     {
@@ -279,21 +286,21 @@ public class IngredientFormViewModel : INotifyPropertyChanged
         {
             if (string.IsNullOrWhiteSpace(Name))
             {
-                VerificationStatus = "WprowadŸ nazwê sk³adnika przed weryfikacj¹";
+                VerificationStatus = I("VerifyNameRequiredStatus", "Enter ingredient name before verification");
                 return;
             }
 
             IsVerifying = true;
-            VerificationStatus = "Weryfikujê dane w OpenFoodFacts...";
+            VerificationStatus = I("VerifyCheckingStatus", "Verifying data in OpenFoodFacts...");
             ((Command)VerifyNutritionCommand).ChangeCanExecute();
 
-            // Zapisz oryginalne wartoœci
+            // Zapisz oryginalne wartoï¿½ci
             var originalCalories = double.TryParse(Calories, out var cal) ? cal : 0;
             var originalProtein = double.TryParse(Protein, out var prot) ? prot : 0;
             var originalFat = double.TryParse(Fat, out var fat) ? fat : 0;
             var originalCarbs = double.TryParse(Carbs, out var carbs) ? carbs : 0;
 
-            // Stwórz tymczasowy sk³adnik do weryfikacji
+            // Stwï¿½rz tymczasowy skï¿½adnik do weryfikacji
             var tempIngredient = new Ingredient
             {
                 Name = Name.Trim(),
@@ -303,7 +310,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 Carbs = originalCarbs
             };
 
-            // U¿yj publicznej metody z SeedData
+            // Uï¿½yj publicznej metody z SeedData
             bool wasUpdated = await Data.SeedData.UpdateIngredientWithOpenFoodFactsAsync(tempIngredient);
 
             if (wasUpdated)
@@ -314,35 +321,59 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 Fat = tempIngredient.Fat.ToString("F1");
                 Carbs = tempIngredient.Carbs.ToString("F1");
 
-                VerificationStatus = $"? Zaktualizowano dane dla '{Name}'";
+                VerificationStatus = string.Format(
+                    CultureInfo.CurrentUICulture,
+                    I("VerifyUpdatedStatusFormat", "Updated data for '{0}'"),
+                    Name);
                 
                 await Shell.Current.DisplayAlert(
-                    "Weryfikacja sk³adnika", 
-                    $"Zaktualizowano dane dla '{Name}':\n" +
-                    $"Kalorie: {originalCalories:F1} ? {tempIngredient.Calories:F1}\n" +
-                    $"Bia³ko: {originalProtein:F1} ? {tempIngredient.Protein:F1}g\n" +
-                    $"T³uszcze: {originalFat:F1} ? {tempIngredient.Fat:F1}g\n" +
-                    $"Wêglowodany: {originalCarbs:F1} ? {tempIngredient.Carbs:F1}g", 
-                    "OK");
+                    I("VerifyDialogTitle", "Ingredient verification"),
+                    string.Format(
+                        CultureInfo.CurrentUICulture,
+                        I("VerifyUpdatedDialogMessageFormat", "Updated data for '{0}':{1}Calories: {2:F1} -> {3:F1}{1}Protein: {4:F1} -> {5:F1}g{1}Fat: {6:F1} -> {7:F1}g{1}Carbohydrates: {8:F1} -> {9:F1}g"),
+                        Name,
+                        Environment.NewLine,
+                        originalCalories,
+                        tempIngredient.Calories,
+                        originalProtein,
+                        tempIngredient.Protein,
+                        originalFat,
+                        tempIngredient.Fat,
+                        originalCarbs,
+                        tempIngredient.Carbs),
+                    ButtonResources.OK);
             }
             else
             {
-                VerificationStatus = $"?? Nie znaleziono produktu '{Name}' w OpenFoodFacts";
+                VerificationStatus = string.Format(
+                    CultureInfo.CurrentUICulture,
+                    I("VerifyNotFoundStatusFormat", "Product '{0}' not found in OpenFoodFacts"),
+                    Name);
                 
                 await Shell.Current.DisplayAlert(
-                    "Weryfikacja sk³adnika", 
-                    $"Nie znaleziono produktu '{Name}' w bazie OpenFoodFacts lub dane s¹ identyczne z obecnymi.\n\n" +
-                    "Spróbuj u¿yæ innej nazwy sk³adnika (np. po angielsku) lub wprowadŸ dane rêcznie.", 
-                    "OK");
+                    I("VerifyDialogTitle", "Ingredient verification"),
+                    string.Format(
+                        CultureInfo.CurrentUICulture,
+                        I("VerifyNotFoundDialogMessageFormat", "Product '{0}' was not found in OpenFoodFacts or the values are unchanged.{1}{1}Try another ingredient name (e.g. in English) or enter values manually."),
+                        Name,
+                        Environment.NewLine),
+                    ButtonResources.OK);
             }
         }
         catch (Exception ex)
         {
-            VerificationStatus = $"? B³¹d weryfikacji: {ex.Message}";
+            VerificationStatus = string.Format(
+                CultureInfo.CurrentUICulture,
+                I("VerifyErrorStatusFormat", "Verification error: {0}"),
+                ex.Message);
             await Shell.Current.DisplayAlert(
-                "B³¹d weryfikacji", 
-                $"Wyst¹pi³ b³¹d podczas weryfikacji sk³adnika '{Name}': {ex.Message}", 
-                "OK");
+                I("VerifyErrorTitle", "Verification error"),
+                string.Format(
+                    CultureInfo.CurrentUICulture,
+                    I("VerifyErrorDialogMessageFormat", "An error occurred while verifying ingredient '{0}': {1}"),
+                    Name,
+                    ex.Message),
+                ButtonResources.OK);
             System.Diagnostics.Debug.WriteLine($"Error in VerifyNutritionAsync: {ex.Message}");
         }
         finally
@@ -379,39 +410,39 @@ public class IngredientFormViewModel : INotifyPropertyChanged
 
             if (string.IsNullOrWhiteSpace(Name))
             {
-                ValidationMessage = "Nazwa sk³adnika jest wymagana";
+                ValidationMessage = I("ValidationNameRequired", "Ingredient name is required");
             }
             else if (!IsValidDouble(Quantity))
             {
-                ValidationMessage = "Iloœæ musi byæ liczb¹";
+                ValidationMessage = I("ValidationQuantityNumeric", "Quantity must be a number");
             }
             else if (ParseDoubleValue(Quantity) <= 0)
             {
-                ValidationMessage = "Iloœæ musi byæ wiêksza od zera";
+                ValidationMessage = I("ValidationQuantityPositive", "Quantity must be greater than zero");
             }
             else if (!IsValidDouble(Calories))
             {
-                ValidationMessage = "Kalorie musz¹ byæ liczb¹";
+                ValidationMessage = I("ValidationCaloriesNumeric", "Calories must be a number");
             }
             else if (!IsValidDouble(Protein))
             {
-                ValidationMessage = "Bia³ko musi byæ liczb¹";
+                ValidationMessage = I("ValidationProteinNumeric", "Protein must be a number");
             }
             else if (!IsValidDouble(Fat))
             {
-                ValidationMessage = "T³uszcze musz¹ byæ liczb¹";
+                ValidationMessage = I("ValidationFatNumeric", "Fat must be a number");
             }
             else if (!IsValidDouble(Carbs))
             {
-                ValidationMessage = "Wêglowodany musz¹ byæ liczb¹";
+                ValidationMessage = I("ValidationCarbsNumeric", "Carbohydrates must be a number");
             }
             else if (!IsValidDouble(UnitWeight))
             {
-                ValidationMessage = "Waga jednostkowa musi byæ liczb¹";
+                ValidationMessage = I("ValidationUnitWeightNumeric", "Unit weight must be a number");
             }
             else if (ParseDoubleValue(UnitWeight) <= 0)
             {
-                ValidationMessage = "Waga jednostkowa musi byæ wiêksza od zera";
+                ValidationMessage = I("ValidationUnitWeightPositive", "Unit weight must be greater than zero");
             }
 
             OnPropertyChanged(nameof(HasValidationError));
@@ -421,7 +452,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error in ValidateInput: {ex.Message}");
-            ValidationMessage = "B³¹d walidacji danych";
+            ValidationMessage = I("ValidationGeneralError", "Validation error");
         }
     }
 
@@ -538,7 +569,10 @@ public class IngredientFormViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[IngredientFormViewModel] Error saving ingredient: {ex.Message}\n{ex.StackTrace}");
-            ValidationMessage = $"Nie uda³o siê zapisaæ sk³adnika: {ex.Message}";
+            ValidationMessage = string.Format(
+                CultureInfo.CurrentUICulture,
+                I("SaveIngredientErrorMessageFormat", "Could not save ingredient: {0}"),
+                ex.Message);
         }
     }
 
@@ -559,7 +593,14 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
-    void OnPropertyChanged([CallerMemberName] string name = null)
+
+    private static string I(string key, string fallback)
+    {
+        var value = IngredientFormPageResources.ResourceManager.GetString(key, CultureInfo.CurrentUICulture);
+        return string.IsNullOrWhiteSpace(value) ? fallback : value;
+    }
+
+    void OnPropertyChanged([CallerMemberName] string? name = null)
     {
         try
         {

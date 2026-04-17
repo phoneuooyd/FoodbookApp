@@ -23,6 +23,7 @@ public partial class ProfilePage : ContentPage
     private IAccountService? _accountService;
     private IFeatureAccessService? _featureAccessService;
     private ISubscriptionManagementService? _subscriptionManagementService;
+    private IPreferencesService? _preferencesService;
     private CancellationTokenSource? _syncRefreshCts;
     private bool _isLoggedIn;
     private bool _suppressToggle;
@@ -34,6 +35,7 @@ public partial class ProfilePage : ContentPage
     private SyncQueueSummaryState _syncQueueSummary = SyncQueueSummaryState.Empty;
     private bool _isSubscriptionActionInProgress;
     private bool _subscriptionAutoResumeAttempted;
+    private SubscriptionPlan _currentSubscriptionPlan = SubscriptionPlan.Free;
 
     private const string SyncChoiceKeyPrefix = "cloudsync.enabled:";
     private const int SyncQueuePageSize = 50;
@@ -144,7 +146,7 @@ public partial class ProfilePage : ContentPage
             var saved = await SecureStorage.GetAsync(key);
             if (saved == "true" && !await syncService.IsCloudSyncEnabledAsync())
             {
-                ShowSpinner("Wznawianie synchronizacji...");
+                ShowSpinner(ProfilePageResources.EnablingSync);
                 await syncService.EnableCloudSyncAsync();
                 HideSpinner();
             }
@@ -210,15 +212,17 @@ public partial class ProfilePage : ContentPage
                     string lastSyncText;
                     if (state.LastSyncUtc.HasValue)
                     {
-                        lastSyncText = $"Zsynchronizowano • {state.LastSyncUtc.Value.ToLocalTime():HH:mm}";
+                        lastSyncText = string.Format(
+                            GetProfileText("SyncLastSyncedWithTimeFormat", "Synced • {0}"),
+                            state.LastSyncUtc.Value.ToLocalTime().ToString("HH:mm"));
                     }
                     else
                     {
-                        lastSyncText = "Zsynchronizowano";
+                        lastSyncText = GetProfileText("SyncLastSynced", "Synced");
                     }
 
                     SyncStatusLabel.Text = pending > 0
-                        ? $"Synchronizacja: {pending} oczekujących"
+                        ? string.Format(GetProfileText("SyncPendingFormat", "Syncing: {0} pending"), pending)
                         : lastSyncText;
                     SyncStatusLabel.IsVisible = true;
                 }
@@ -243,7 +247,10 @@ public partial class ProfilePage : ContentPage
         if (syncService == null)
         {
             SetToggle(!e.Value);
-            await DisplayAlert("Błąd", "Usługa synchronizacji jest niedostępna.", "OK");
+            await DisplayAlert(
+                ProfilePageResources.GenericErrorTitle,
+                ProfilePageResources.SyncServiceUnavailable,
+                ProfilePageResources.OK);
             return;
         }
 
@@ -251,16 +258,16 @@ public partial class ProfilePage : ContentPage
         {
             if (e.Value)
             {
-                ShowSpinner("Włączanie synchronizacji...");
+                ShowSpinner(ProfilePageResources.EnablingSync);
                 await syncService.EnableCloudSyncAsync();
                 await SaveSyncChoiceAsync(true);
                 HideSpinner();
-                SyncStatusLabel.Text = "Synchronizacja włączona";
+                SyncStatusLabel.Text = ProfilePageResources.SyncEnabled;
                 SyncStatusLabel.IsVisible = true;
             }
             else
             {
-                ShowSpinner("Wyłączanie synchronizacji...");
+                ShowSpinner(ProfilePageResources.DisablingSync);
                 await syncService.DisableCloudSyncAsync();
                 await SaveSyncChoiceAsync(false);
                 HideSpinner();
@@ -274,7 +281,7 @@ public partial class ProfilePage : ContentPage
         {
             HideSpinner();
             SetToggle(!e.Value);
-            await DisplayAlert("Błąd synchronizacji", ex.Message, "OK");
+            await DisplayAlert(ProfilePageResources.SyncErrorTitle, ex.Message, ProfilePageResources.OK);
         }
     }
 
@@ -370,24 +377,22 @@ public partial class ProfilePage : ContentPage
             if (featureAccess == null)
                 return;
 
-            var isPremium = await featureAccess.CanUsePremiumFeatureAsync(PremiumFeature.AutoPlanner);
-            var currentPlanName = isPremium ? "Premium" : "Free";
-            var currentPlanStatus = isPremium ? "Aktywny" : "Nieaktywny";
-            var renewalText = isPremium
-                ? "Dostęp premium aktywny"
-                : "Brak aktywnej subskrypcji";
-            var limitsText = await BuildPlanLimitsTextAsync(featureAccess, isPremium);
+            var resolvedPlan = await ResolveCurrentSubscriptionPlanAsync(featureAccess);
+            var canCreatePlan = await featureAccess.CanCreatePlanAsync();
+            var currentPlanUi = BuildCurrentPlanUi(resolvedPlan, canCreatePlan);
 
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
-                CurrentPlanNameLabel.Text = currentPlanName;
-                CurrentPlanStatusLabel.Text = currentPlanStatus;
-                CurrentPlanRenewalLabel.Text = renewalText;
+                CurrentPlanNameLabel.Text = currentPlanUi.Name;
+                CurrentPlanStatusLabel.Text = currentPlanUi.Status;
+                CurrentPlanRenewalLabel.Text = currentPlanUi.Renewal;
 
-                CurrentPlanNameDetailsLabel.Text = currentPlanName;
-                CurrentPlanStatusDetailsLabel.Text = currentPlanStatus;
-                CurrentPlanRenewalDetailsLabel.Text = renewalText;
-                CurrentPlanLimitsDetailsLabel.Text = limitsText;
+                CurrentPlanNameDetailsLabel.Text = currentPlanUi.Name;
+                CurrentPlanStatusDetailsLabel.Text = currentPlanUi.Status;
+                CurrentPlanPriceDetailsLabel.Text = currentPlanUi.Price;
+                CurrentPlanFeaturesDetailsLabel.Text = currentPlanUi.Features;
+                CurrentPlanRenewalDetailsLabel.Text = currentPlanUi.Renewal;
+                CurrentPlanLimitsDetailsLabel.Text = currentPlanUi.Limits;
             });
         }
         catch (Exception ex)
@@ -406,52 +411,39 @@ public partial class ProfilePage : ContentPage
         await LoadPendingSubscriptionUiAsync();
     }
 
-    private async Task<string> BuildPlanLimitsTextAsync(IFeatureAccessService featureAccess, bool isPremium)
-    {
-        if (isPremium)
-        {
-            return "Limity: brak ograniczeń planu premium.";
-        }
-
-        var canCreatePlan = await featureAccess.CanCreatePlanAsync();
-        return canCreatePlan
-            ? "Limity: możesz tworzyć kolejne plany miesięczne."
-            : "Limity: osiągnięto miesięczny limit planów.";
-    }
-
     private async void OnSwitchToFreeClicked(object sender, EventArgs e)
     {
         await ExecuteSubscriptionActionAsync(
             action: service => service.ChangePlanAsync(SubscriptionPlan.Free, CancellationToken.None),
-            title: "Zmiana planu");
+            title: GetProfileText("SubscriptionActionTitleChangePlan", "Change plan"));
     }
 
     private async void OnSwitchToYearlyClicked(object sender, EventArgs e)
     {
         await ExecuteSubscriptionActionAsync(
             action: service => service.ChangePlanAsync(SubscriptionPlan.PremiumYearly, CancellationToken.None),
-            title: "Zmiana planu");
+            title: GetProfileText("SubscriptionActionTitleChangePlan", "Change plan"));
     }
 
     private async void OnSwitchToMonthlyClicked(object sender, EventArgs e)
     {
         await ExecuteSubscriptionActionAsync(
             action: service => service.ChangePlanAsync(SubscriptionPlan.PremiumMonthly, CancellationToken.None),
-            title: "Zmiana planu");
+            title: GetProfileText("SubscriptionActionTitleChangePlan", "Change plan"));
     }
 
     private async void OnCancelSubscriptionClicked(object sender, EventArgs e)
     {
         await ExecuteSubscriptionActionAsync(
             action: service => service.CancelSubscriptionAsync(CancellationToken.None),
-            title: "Subskrypcja");
+            title: GetProfileText("SubscriptionActionTitleSubscription", "Subscription"));
     }
 
     private async void OnResumePendingSubscriptionClicked(object sender, EventArgs e)
     {
         await ExecuteSubscriptionActionAsync(
             action: service => service.ResumePendingOperationAsync(CancellationToken.None),
-            title: "Wznowienie subskrypcji");
+            title: GetProfileText("SubscriptionActionTitleResume", "Resume subscription"));
     }
 
     private async Task ExecuteSubscriptionActionAsync(
@@ -466,13 +458,16 @@ public partial class ProfilePage : ContentPage
         var service = GetSubscriptionManagementService();
         if (service == null)
         {
-            await DisplayAlert("Błąd", "Usługa subskrypcji jest niedostępna.", "OK");
+            await DisplayAlert(
+                ProfilePageResources.GenericErrorTitle,
+                GetProfileText("SubscriptionServiceUnavailable", "Subscription service is unavailable."),
+                ProfilePageResources.OK);
             return;
         }
 
         _isSubscriptionActionInProgress = true;
         SetSubscriptionActionButtonsEnabled(false);
-        ShowSpinner("Aktualizacja subskrypcji...");
+        ShowSpinner(GetProfileText("SubscriptionUpdating", "Updating subscription..."));
 
         try
         {
@@ -481,7 +476,10 @@ public partial class ProfilePage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Błąd subskrypcji", ex.Message, "OK");
+            await DisplayAlert(
+                GetProfileText("SubscriptionErrorTitle", "Subscription error"),
+                ex.Message,
+                ProfilePageResources.OK);
         }
         finally
         {
@@ -493,6 +491,9 @@ public partial class ProfilePage : ContentPage
 
     private async Task HandleSubscriptionActionResultAsync(SubscriptionActionResult result, string title, bool showAlert)
     {
+        _currentSubscriptionPlan = result.CurrentPlan;
+        SaveSubscriptionPlanChoice(result.CurrentPlan);
+
         var featureAccess = GetFeatureAccessService();
         if (featureAccess != null)
         {
@@ -506,7 +507,7 @@ public partial class ProfilePage : ContentPage
             return;
         }
 
-        await DisplayAlert(title, result.UiMessage, "OK");
+        await DisplayAlert(title, result.UiMessage, ProfilePageResources.OK);
     }
 
     private async Task TryAutoResumePendingOperationAsync()
@@ -616,19 +617,29 @@ public partial class ProfilePage : ContentPage
     private async void OnProfileFetchJwtClicked(object sender, EventArgs e)
     {
         var auth = GetSupabaseAuth();
-        if (auth == null) { await DisplayAlert("Błąd", "Usługa autoryzacji niedostępna.", "OK"); return; }
+        if (auth == null)
+        {
+            await DisplayAlert(
+                ProfilePageResources.GenericErrorTitle,
+                ProfilePageResources.ServiceMissingMessage,
+                ProfilePageResources.OK);
+            return;
+        }
 
         var email = EmailEntry.Text?.Trim();
         var password = PasswordEntry.Text;
 
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
-            await DisplayAlert("Logowanie", "Wypełnij e-mail i hasło.", "OK");
+            await DisplayAlert(
+                ProfilePageResources.LoginPanelTitle,
+                GetProfileText("CredentialsRequiredMessage", "Please enter email and password."),
+                ProfilePageResources.OK);
             return;
         }
 
-        StatusLabel.Text = "Logowanie...";
-        ShowSpinner("Logowanie...");
+        StatusLabel.Text = ProfilePageResources.LoggingIn;
+        ShowSpinner(ProfilePageResources.LoggingIn);
 
         try
         {
@@ -638,7 +649,10 @@ public partial class ProfilePage : ContentPage
             {
                 HideSpinner();
                 StatusLabel.Text = string.Empty;
-                await DisplayAlert("Błąd logowania", "Nieprawidłowe dane logowania.", "OK");
+                await DisplayAlert(
+                    ProfilePageResources.LoginErrorTitle,
+                    ProfilePageResources.LoginErrorMessage,
+                    ProfilePageResources.OK);
                 return;
             }
 
@@ -651,14 +665,14 @@ public partial class ProfilePage : ContentPage
 
             // Single, simple question — no local/cloud priority dialog
             var enableSync = await DisplayAlert(
-                "Synchronizacja z chmurą",
-                "Czy chcesz włączyć synchronizację danych? Twoje dane będą automatycznie synchronizowane z chmurą.",
-                "Tak, włącz",
-                "Nie teraz");
+                GetProfileText("CloudSyncEnablePromptTitle", "Cloud synchronization"),
+                GetProfileText("CloudSyncEnablePromptMessage", "Do you want to enable data synchronization? Your data will be automatically synced with the cloud."),
+                GetProfileText("CloudSyncEnableConfirm", "Yes, enable"),
+                GetProfileText("CloudSyncEnableLater", "Not now"));
 
             if (enableSync)
             {
-                ShowSpinner("Synchronizacja danych...");
+                ShowSpinner(ProfilePageResources.SyncOverlaySyncing);
                 var syncService = GetSyncService();
                 if (syncService != null)
                 {
@@ -678,7 +692,10 @@ public partial class ProfilePage : ContentPage
         {
             HideSpinner();
             StatusLabel.Text = string.Empty;
-            await DisplayAlert("Błąd", ex.InnerException?.Message ?? ex.Message, "OK");
+            await DisplayAlert(
+                ProfilePageResources.GenericErrorTitle,
+                ex.InnerException?.Message ?? ex.Message,
+                ProfilePageResources.OK);
         }
     }
 
@@ -704,7 +721,10 @@ public partial class ProfilePage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Błąd", ex.InnerException?.Message ?? ex.Message, "OK");
+            await DisplayAlert(
+                ProfilePageResources.GenericErrorTitle,
+                ex.InnerException?.Message ?? ex.Message,
+                ProfilePageResources.OK);
         }
     }
 
@@ -726,6 +746,7 @@ public partial class ProfilePage : ContentPage
 
             _isLoggedIn = false;
             _subscriptionAutoResumeAttempted = false;
+            _currentSubscriptionPlan = SubscriptionPlan.Free;
             _currentUserEmail = string.Empty;
             EmailEntry.Text = string.Empty;
             PasswordEntry.Text = string.Empty;
@@ -735,7 +756,7 @@ public partial class ProfilePage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Błąd wylogowania", ex.Message, "OK");
+            await DisplayAlert(ProfilePageResources.LogoutErrorTitle, ex.Message, ProfilePageResources.OK);
         }
     }
 
@@ -746,25 +767,39 @@ public partial class ProfilePage : ContentPage
     private async void OnForceSyncClicked(object sender, EventArgs e)
     {
         var sync = GetSyncService();
-        if (sync == null) { await DisplayAlert("Błąd", "Usługa synchronizacji niedostępna.", "OK"); return; }
+        if (sync == null)
+        {
+            await DisplayAlert(
+                ProfilePageResources.GenericErrorTitle,
+                ProfilePageResources.SyncServiceUnavailable,
+                ProfilePageResources.OK);
+            return;
+        }
 
-        ShowSpinner("Synchronizacja...");
+        ShowSpinner(ProfilePageResources.SyncOverlaySyncing);
         try
         {
             var result = await sync.ForceSyncAllAsync();
             HideSpinner();
 
-            var msg = $"Zsynchronizowano: {result.ItemsProcessed}";
-            if (result.ItemsRemaining > 0) msg += $"\nOczekujące: {result.ItemsRemaining}";
-            if (result.ItemsFailed > 0) msg += $"\nBłędy: {result.ItemsFailed}";
-            msg += $"\nCzas: {result.Duration.TotalSeconds:F1}s";
+            var lines = new List<string>
+            {
+                string.Format(ProfilePageResources.ForceSyncSynced, result.ItemsProcessed)
+            };
+            if (result.ItemsRemaining > 0)
+                lines.Add(string.Format(ProfilePageResources.ForceSyncRemaining, result.ItemsRemaining));
+            if (result.ItemsFailed > 0)
+                lines.Add(string.Format(ProfilePageResources.ForceSyncFailed, result.ItemsFailed));
+            lines.Add(string.Format(ProfilePageResources.ForceSyncDuration, result.Duration.TotalSeconds.ToString("F1")));
 
-            await DisplayAlert("Synchronizacja zakończona", msg, "OK");
+            var msg = string.Join("\n", lines);
+
+            await DisplayAlert(ProfilePageResources.ForceSyncCompletedTitle, msg, ProfilePageResources.OK);
         }
         catch (Exception ex)
         {
             HideSpinner();
-            await DisplayAlert("Błąd synchronizacji", ex.Message, "OK");
+            await DisplayAlert(ProfilePageResources.SyncErrorTitle, ex.Message, ProfilePageResources.OK);
         }
         finally
         {
@@ -854,6 +889,148 @@ public partial class ProfilePage : ContentPage
         if (key != null) SecureStorage.Remove(key);
     }
 
+    private async Task<SubscriptionPlan> ResolveCurrentSubscriptionPlanAsync(IFeatureAccessService featureAccess)
+    {
+        var plan = _currentSubscriptionPlan != SubscriptionPlan.Free
+            ? _currentSubscriptionPlan
+            : GetSubscriptionPlanChoice();
+
+        var subscriptionService = GetSubscriptionManagementService();
+        if (subscriptionService != null)
+        {
+            try
+            {
+                var pending = await subscriptionService.GetPendingOperationAsync(CancellationToken.None);
+                if (pending is { Status: SubscriptionOperationStatus.Pending or SubscriptionOperationStatus.InProgress })
+                {
+                    plan = pending.TargetPlan;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ProfilePage] ResolveCurrentSubscriptionPlanAsync pending lookup error: {ex.Message}");
+            }
+        }
+
+        var hasPremiumAccess = await featureAccess.CanUsePremiumFeatureAsync(PremiumFeature.AutoPlanner);
+        if (!hasPremiumAccess)
+        {
+            _currentSubscriptionPlan = SubscriptionPlan.Free;
+            if (_isLoggedIn)
+            {
+                SaveSubscriptionPlanChoice(SubscriptionPlan.Free);
+            }
+            return SubscriptionPlan.Free;
+        }
+
+        if (plan == SubscriptionPlan.Free)
+        {
+            plan = GetSubscriptionPlanChoice();
+            if (plan == SubscriptionPlan.Free)
+            {
+                plan = SubscriptionPlan.PremiumMonthly;
+            }
+        }
+
+        _currentSubscriptionPlan = plan;
+        SaveSubscriptionPlanChoice(plan);
+        return plan;
+    }
+
+    private SubscriptionPlanUiModel BuildCurrentPlanUi(SubscriptionPlan plan, bool canCreatePlan)
+    {
+        return plan switch
+        {
+            SubscriptionPlan.PremiumMonthly => new SubscriptionPlanUiModel(
+                Name: ProfilePageResources.PlanNamePremiumMonthly,
+                Status: GetProfileText("CurrentPlanStatusActive", "Active"),
+                Renewal: GetProfileText("CurrentPlanRenewalPremiumMonthly", "Period: 1 month"),
+                Limits: GetProfileText("CurrentPlanLimitsPremium", "Limits: no premium restrictions."),
+                Price: GetProfileText("CurrentPlanPricePremiumMonthly", "TBD / month"),
+                Features: GetProfileText("CurrentPlanFeaturesPremiumMonthly",
+                    "• Unlimited plans and shopping lists\n• AI planner (local and cloud)\n• AI recipe agent\n• Plan recycling\n• Weekly and monthly templates\n• Premium recipe packs")),
+
+            SubscriptionPlan.PremiumYearly => new SubscriptionPlanUiModel(
+                Name: ProfilePageResources.PlanNamePremiumYearly,
+                Status: GetProfileText("CurrentPlanStatusActive", "Active"),
+                Renewal: GetProfileText("CurrentPlanRenewalPremiumYearly", "Period: 12 months"),
+                Limits: GetProfileText("CurrentPlanLimitsPremium", "Limits: no premium restrictions."),
+                Price: GetProfileText("CurrentPlanPricePremiumYearly", "TBD / year"),
+                Features: GetProfileText("CurrentPlanFeaturesPremiumYearly",
+                    "• Unlimited plans and shopping lists\n• AI planner (local and cloud)\n• AI recipe agent\n• Plan recycling\n• Weekly and monthly templates\n• Premium recipe packs")),
+
+            _ => new SubscriptionPlanUiModel(
+                Name: ProfilePageResources.PlanNameFree,
+                Status: GetProfileText("CurrentPlanStatusActive", "Active"),
+                Renewal: GetProfileText("CurrentPlanRenewalFree", "Period: indefinite"),
+                Limits: canCreatePlan
+                    ? GetProfileText("CurrentPlanLimitsFree", "Limits: max 3 active plans, max 14 days per plan, and max 3 active shopping lists.")
+                    : GetProfileText("CurrentPlanLimitsFreeReached", "Limits: Free plan active-plan limit reached."),
+                Price: GetProfileText("CurrentPlanPriceFree", "0 PLN / unlimited"),
+                Features: GetProfileText("CurrentPlanFeaturesFree",
+                    "• Recipes and ingredients: unlimited\n• URL import and automatic macro\n• Planner: max 3 active, max 14 days per plan\n• Shopping list: max 3 active\n• Selected premium features after ads (daily limits)"))
+        };
+    }
+
+    private static string GetProfileText(string key, string fallback)
+        => ProfilePageResources.ResourceManager.GetString(key, ProfilePageResources.Culture) ?? fallback;
+
+    private SubscriptionPlan GetSubscriptionPlanChoice()
+    {
+        try
+        {
+            var planChoice = GetPreferencesService()?.GetPlanChoice();
+            return ParsePlanChoice(planChoice);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ProfilePage] GetSubscriptionPlanChoice error: {ex.Message}");
+            return SubscriptionPlan.Free;
+        }
+    }
+
+    private void SaveSubscriptionPlanChoice(SubscriptionPlan plan)
+    {
+        try
+        {
+            GetPreferencesService()?.SavePlanChoice(PlanChoiceToString(plan));
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ProfilePage] SaveSubscriptionPlanChoice error: {ex.Message}");
+        }
+    }
+
+    private static SubscriptionPlan ParsePlanChoice(string? planChoice)
+    {
+        if (string.IsNullOrWhiteSpace(planChoice))
+            return SubscriptionPlan.Free;
+
+        var normalized = planChoice.Trim();
+
+        if (normalized.Equals("Premium", StringComparison.OrdinalIgnoreCase) ||
+            normalized.Equals("PremiumMonthly", StringComparison.OrdinalIgnoreCase))
+        {
+            return SubscriptionPlan.PremiumMonthly;
+        }
+
+        if (normalized.Equals("PremiumYearly", StringComparison.OrdinalIgnoreCase))
+        {
+            return SubscriptionPlan.PremiumYearly;
+        }
+
+        return Enum.TryParse<SubscriptionPlan>(normalized, true, out var parsed)
+            ? parsed
+            : SubscriptionPlan.Free;
+    }
+
+    private static string PlanChoiceToString(SubscriptionPlan plan) => plan switch
+    {
+        SubscriptionPlan.PremiumMonthly => "PremiumMonthly",
+        SubscriptionPlan.PremiumYearly => "PremiumYearly",
+        _ => "Free"
+    };
+
     #endregion
 
     #region Service Locators
@@ -872,6 +1049,9 @@ public partial class ProfilePage : ContentPage
 
     private ISubscriptionManagementService? GetSubscriptionManagementService()
         => _subscriptionManagementService ??= FoodbookApp.MauiProgram.ServiceProvider?.GetService<ISubscriptionManagementService>();
+
+    private IPreferencesService? GetPreferencesService()
+        => _preferencesService ??= FoodbookApp.MauiProgram.ServiceProvider?.GetService<IPreferencesService>();
 
     #endregion
 
@@ -916,7 +1096,10 @@ public partial class ProfilePage : ContentPage
         if (elapsed < SyncQueueManualRefreshThrottle)
         {
             var waitTime = Math.Ceiling((SyncQueueManualRefreshThrottle - elapsed).TotalSeconds);
-            await DisplayAlert("Odświeżanie", $"Odczekaj {waitTime:0} s przed kolejnym odświeżeniem.", "OK");
+            await DisplayAlert(
+                GetProfileText("SyncRefreshWaitTitle", "Refresh"),
+                string.Format(GetProfileText("SyncRefreshWaitMessageFormat", "Wait {0:0} s before refreshing again."), waitTime),
+                ProfilePageResources.OK);
             return;
         }
 
@@ -1179,4 +1362,12 @@ public partial class ProfilePage : ContentPage
             return new SyncQueueSummaryState(Total + 1, uploaded, downloaded, success, failed, pending);
         }
     }
+
+    private readonly record struct SubscriptionPlanUiModel(
+        string Name,
+        string Status,
+        string Renewal,
+        string Limits,
+        string Price,
+        string Features);
 }

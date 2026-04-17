@@ -168,4 +168,47 @@
   <data name="CarbsLabel" xml:space="preserve">
     <value>🌾 Kohlenhydrate</value>
   </data>
+  <data name="LoadingStatus" xml:space="preserve"><value>Wird geladen...</value></data>
+  <data name="LoadingStatusError" xml:space="preserve"><value>Fehler beim Laden der Daten</value></data>
+  <data name="SavedTitle" xml:space="preserve"><value>Gespeichert</value></data>
+  <data name="PlannerSavedMessageFormat" xml:space="preserve"><value>Planer gespeichert: {0} ({1} - {2})</value></data>
+  <data name="PlanLimitTitle" xml:space="preserve"><value>Planlimit</value></data>
+  <data name="UnexpectedSaveErrorMessage" xml:space="preserve"><value>Beim Speichern ist ein unerwarteter Fehler aufgetreten.</value></data>
+  <data name="ErrorTitle" xml:space="preserve"><value>Fehler</value></data>
+  <data name="PlannerLoadErrorMessage" xml:space="preserve"><value>Beim Laden der Planerdaten ist ein Problem aufgetreten. Bitte versuche es erneut.</value></data>
+  <data name="PlannerNamePromptTitle" xml:space="preserve"><value>Planname</value></data>
+  <data name="PlannerNamePromptMessage" xml:space="preserve"><value>Gib einen Planname ein (optional)</value></data>
+  <data name="PlannerNamePromptAccept" xml:space="preserve"><value>Speichern</value></data>
+  <data name="DefaultPlannerName" xml:space="preserve"><value>Planer</value></data>
+  <data name="ConflictOptionOverwrite" xml:space="preserve"><value>Uberschreiben</value></data>
+  <data name="ConflictOptionMerge" xml:space="preserve"><value>Zusammenfuhren</value></data>
+  <data name="ConflictOptionSaveAndCreateNewList" xml:space="preserve"><value>Speichern und neue Liste erstellen</value></data>
+  <data name="ConflictPlanExistsTitle" xml:space="preserve"><value>Ein Plan fur den gewahlten Zeitraum existiert bereits.</value></data>
+  <data name="ConflictMergeSuccessTitle" xml:space="preserve"><value>Zusammengefuhrt</value></data>
+  <data name="ConflictMergeSuccessMessageFormat" xml:space="preserve"><value>Mahlzeiten wurden mit dem bestehenden Plan zusammengefuhrt ({0} - {1}).</value></data>
+  <data name="ConflictMergeErrorMessage" xml:space="preserve"><value>Zusammenfuhren der Plane ist fehlgeschlagen.</value></data>
+  <data name="ConflictOverwriteRemoveErrorMessage" xml:space="preserve"><value>Bestehender Plan konnte nicht entfernt werden.</value></data>
+  <data name="PlannerSaveErrorMessageFormat" xml:space="preserve"><value>Beim Speichern des Planers ist ein Problem aufgetreten:{0}{1}</value></data>
+  <data name="ShoppingListOptionOnlySavePlanner" xml:space="preserve"><value>Nur Planer speichern</value></data>
+  <data name="ShoppingListOptionSaveAndMerge" xml:space="preserve"><value>Speichern und mit Liste zusammenfuhren</value></data>
+  <data name="ShoppingListOptionSaveAndOverwrite" xml:space="preserve"><value>Speichern und Liste uberschreiben</value></data>
+  <data name="ShoppingListOptionMergeManual" xml:space="preserve"><value>Mit manuell erstellter Liste zusammenfuhren</value></data>
+  <data name="ShoppingListOptionSaveAndCreateNew" xml:space="preserve"><value>Speichern und neue Liste erstellen</value></data>
+  <data name="ShoppingListOptionSaveAndCreate" xml:space="preserve"><value>Speichern und Liste erstellen</value></data>
+  <data name="ShoppingListLinkedQuestionTitle" xml:space="preserve"><value>Mochtest du die verknupfte Einkaufsliste aktualisieren?</value></data>
+  <data name="ShoppingListManualFoundQuestionTitle" xml:space="preserve"><value>Eine manuell erstellte Einkaufsliste fur diesen Zeitraum wurde gefunden. Was mochtest du tun?</value></data>
+  <data name="ShoppingListCreateQuestionTitle" xml:space="preserve"><value>Mochtest du eine Einkaufsliste erstellen?</value></data>
+  <data name="ShoppingListCreateErrorMessage" xml:space="preserve"><value>Einkaufsliste konnte nicht erstellt werden.</value></data>
+  <data name="ShoppingListMergeErrorMessage" xml:space="preserve"><value>Einkaufsliste konnte nicht zusammengefuhrt werden.</value></data>
+  <data name="ShoppingListOverwriteErrorMessage" xml:space="preserve"><value>Einkaufsliste konnte nicht uberschrieben werden.</value></data>
+  <data name="PlanNotFoundMessage" xml:space="preserve"><value>Plan nicht gefunden</value></data>
+  <data name="PlanLoadErrorMessageFormat" xml:space="preserve"><value>Plan konnte nicht geladen werden: {0}</value></data>
+  <data name="PlanToSaveNotFoundMessage" xml:space="preserve"><value>Zu speichernder Plan wurde nicht gefunden</value></data>
+  <data name="PlanUpdatedMessageFormat" xml:space="preserve"><value>Plan wurde aktualisiert ({0} - {1})</value></data>
+  <data name="PlanSaveErrorMessageFormat" xml:space="preserve"><value>Plan konnte nicht gespeichert werden:{0}{1}</value></data>
+  <data name="LoadingStatusPreparingData" xml:space="preserve"><value>Daten werden vorbereitet...</value></data>
+  <data name="LoadingStatusLoadingRecipes" xml:space="preserve"><value>Rezepte werden geladen...</value></data>
+  <data name="LoadingStatusLoadingPlannedMeals" xml:space="preserve"><value>Geplante Mahlzeiten werden geladen...</value></data>
+  <data name="LoadingStatusPreparingCalendar" xml:space="preserve"><value>Kalender wird vorbereitet...</value></data>
+  <data name="LoadingStatusFinalizing" xml:space="preserve"><value>Wird finalisiert...</value></data>
 </root>

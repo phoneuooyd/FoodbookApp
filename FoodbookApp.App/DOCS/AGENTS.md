@@ -17,6 +17,7 @@
 - **UI**: XAML z Material Design
 - **Wzorce architektoniczne**: MVVM, Dependency Injection, Clean Architecture
 
+
 ### Główne Zależności
 <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.6" />
 <PackageReference Include="HtmlAgilityPack" Version="1.12.1" />
@@ -54,7 +55,7 @@ Kompleksowa aplikacja mobilna do:
 - **Mocking**: Moq
 - **Assertions**: FluentAssertions
 - **Coverage**: Po 5 przypadków pozytywnych dla każdej wlaściwości/funkcji metody oraz 2 negatywne (true = pozytyw, false negatyw)
-
+- **Guidlinesy**: TEST_GUIDLINES.MD FoodbookApp\FoodbookApp.App\DOCS\TEST_GUIDELINES.MD_
 ---
 
 ## 🎨 Standardy UI/UX dla Aplikacji Mobilnych

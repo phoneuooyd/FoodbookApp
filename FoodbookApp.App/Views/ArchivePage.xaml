@@ -39,7 +39,7 @@
                     ItemsSource="{Binding ArchivedPlanners}"
                     ItemTemplate="{StaticResource ArchivedPlanItemTemplate}"
                     IsRefreshing="False"
-                    EmptyTitle="Brak zarchiwizowanych plannerów"
+                    EmptyTitle="{loc:Translate Resource=ArchivePageResources, Key=EmptyArchivedPlannersTitle}"
                     EmptyHint=""
                     IsVisible="True" />
             </VerticalStackLayout>

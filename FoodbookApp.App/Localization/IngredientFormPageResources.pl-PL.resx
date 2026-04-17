@@ -64,4 +64,79 @@
   <data name="CarbsLabel" xml:space="preserve">
     <value>Węglowodany (g)</value>
   </data>
+  <data name="LoadErrorTitle" xml:space="preserve">
+    <value>Błąd ładowania</value>
+  </data>
+  <data name="LoadErrorMessageFormat" xml:space="preserve">
+    <value>Nie udało się załadować składnika: {0}</value>
+  </data>
+  <data name="RecipeInfoPartOfRecipe" xml:space="preserve">
+    <value>Ten składnik jest częścią przepisu</value>
+  </data>
+  <data name="LoadIngredientErrorMessageFormat" xml:space="preserve">
+    <value>Błąd podczas ładowania składnika: {0}</value>
+  </data>
+  <data name="VerifyNameRequiredStatus" xml:space="preserve">
+    <value>Wprowadź nazwę składnika przed weryfikacją</value>
+  </data>
+  <data name="VerifyCheckingStatus" xml:space="preserve">
+    <value>Weryfikowanie danych w OpenFoodFacts...</value>
+  </data>
+  <data name="VerifyUpdatedStatusFormat" xml:space="preserve">
+    <value>Zaktualizowano dane dla '{0}'</value>
+  </data>
+  <data name="VerifyDialogTitle" xml:space="preserve">
+    <value>Weryfikacja składnika</value>
+  </data>
+  <data name="VerifyUpdatedDialogMessageFormat" xml:space="preserve">
+    <value>Zaktualizowano dane dla '{0}':{1}Kalorie: {2:F1} -&gt; {3:F1}{1}Białko: {4:F1} -&gt; {5:F1}g{1}Tłuszcze: {6:F1} -&gt; {7:F1}g{1}Węglowodany: {8:F1} -&gt; {9:F1}g</value>
+  </data>
+  <data name="VerifyNotFoundStatusFormat" xml:space="preserve">
+    <value>Nie znaleziono produktu '{0}' w OpenFoodFacts</value>
+  </data>
+  <data name="VerifyNotFoundDialogMessageFormat" xml:space="preserve">
+    <value>Nie znaleziono produktu '{0}' w OpenFoodFacts lub dane są niezmienione.{1}{1}Spróbuj innej nazwy składnika (np. po angielsku) lub wprowadź dane ręcznie.</value>
+  </data>
+  <data name="VerifyErrorStatusFormat" xml:space="preserve">
+    <value>Błąd weryfikacji: {0}</value>
+  </data>
+  <data name="VerifyErrorTitle" xml:space="preserve">
+    <value>Błąd weryfikacji</value>
+  </data>
+  <data name="VerifyErrorDialogMessageFormat" xml:space="preserve">
+    <value>Wystąpił błąd podczas weryfikacji składnika '{0}': {1}</value>
+  </data>
+  <data name="ValidationNameRequired" xml:space="preserve">
+    <value>Nazwa składnika jest wymagana</value>
+  </data>
+  <data name="ValidationQuantityNumeric" xml:space="preserve">
+    <value>Ilość musi być liczbą</value>
+  </data>
+  <data name="ValidationQuantityPositive" xml:space="preserve">
+    <value>Ilość musi być większa od zera</value>
+  </data>
+  <data name="ValidationCaloriesNumeric" xml:space="preserve">
+    <value>Kalorie muszą być liczbą</value>
+  </data>
+  <data name="ValidationProteinNumeric" xml:space="preserve">
+    <value>Białko musi być liczbą</value>
+  </data>
+  <data name="ValidationFatNumeric" xml:space="preserve">
+    <value>Tłuszcze muszą być liczbą</value>
+  </data>
+  <data name="ValidationCarbsNumeric" xml:space="preserve">
+    <value>Węglowodany muszą być liczbą</value>
+  </data>
+  <data name="ValidationUnitWeightNumeric" xml:space="preserve">
+    <value>Waga jednostkowa musi być liczbą</value>
+  </data>
+  <data name="ValidationUnitWeightPositive" xml:space="preserve">
+    <value>Waga jednostkowa musi być większa od zera</value>
+  </data>
+  <data name="ValidationGeneralError" xml:space="preserve">
+    <value>Błąd walidacji danych</value>
+  </data>
+  <data name="SaveIngredientErrorMessageFormat" xml:space="preserve">
+    <value>Nie udało się zapisać składnika: {0}</value>
+  </data>
 </root>

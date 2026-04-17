@@ -6,6 +6,7 @@ using Foodbook.Models;
 using Foodbook.ViewModels;
 using Foodbook.Views.Base;
 using Foodbook.Views.Components;
+using Foodbook.Utils;
 using FoodbookApp.Localization;
 
 namespace Foodbook.Views;
@@ -430,7 +431,10 @@ public partial class ShoppingListDetailPage : ContentPage
                 return;
 
             _isKeyboardLiftApplied = true;
-            await ContentHost.TranslateTo(0, -KeyboardLiftOffset, 180, Easing.CubicOut);
+            await ComponentAnimationHelper.AnimateKeyboardLiftAsync(
+                ContentHost,
+                lifted: true,
+                liftOffset: KeyboardLiftOffset);
         }
         catch (OperationCanceledException)
         {
@@ -450,7 +454,10 @@ public partial class ShoppingListDetailPage : ContentPage
                 return;
 
             _isKeyboardLiftApplied = false;
-            await ContentHost.TranslateTo(0, 0, 140, Easing.CubicOut);
+            await ComponentAnimationHelper.AnimateKeyboardLiftAsync(
+                ContentHost,
+                lifted: false,
+                liftOffset: KeyboardLiftOffset);
         }
         catch (Exception ex)
         {
