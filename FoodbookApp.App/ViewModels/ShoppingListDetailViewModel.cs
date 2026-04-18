@@ -704,6 +704,37 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
                 return;
             }
 
+            var duplicateGroups = allItems
+                .Where(i => !string.IsNullOrWhiteSpace(i.Name))
+                .GroupBy(i => new { Name = i.Name.Trim().ToUpperInvariant(), i.Unit })
+                .Where(g => g.Count() > 1)
+                .ToList();
+
+            if (duplicateGroups.Count > 0)
+            {
+                var duplicatesPreview = string.Join(
+                    ", ",
+                    duplicateGroups.Take(5).Select(g =>
+                    {
+                        var first = g.First();
+                        return $"{first.Name.Trim()} ({first.Unit})";
+                    }));
+
+                var duplicateMessage = string.Format(
+                    T("ValidationDuplicateItemsSummaryFormat", "Found duplicate items with the same name and unit:{0}{1}"),
+                    Environment.NewLine,
+                    duplicatesPreview);
+
+                if (duplicateGroups.Count > 5)
+                    duplicateMessage += Environment.NewLine + string.Format(T("ValidationInvalidItemsMoreFormat", "...and {0} more"), duplicateGroups.Count - 5);
+
+                await Microsoft.Maui.Controls.Shell.Current.DisplayAlert(
+                    T("ValidationErrorTitle", "Validation error"),
+                    duplicateMessage + Environment.NewLine + Environment.NewLine + T("ValidationFixItemsMessage", "Remove or correct invalid items before saving."),
+                    ButtonResources.OK);
+                return;
+            }
+
             System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] ? Validation passed");
             
             // ? PREPARE: Assign order to all items
@@ -904,7 +935,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
         }
     }
 
-    private async void RemoveItem(Ingredient? item)
+    private void RemoveItem(Ingredient? item)
     {
         if (item == null) return;
 
@@ -992,14 +1023,10 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
 
     public async Task SaveAllStatesAsync()
     {
-        try
-        {
-            // Use FlatItems order to ensure correct order is preserved
-            var allItems = FlatItems.OfType<Ingredient>().ToList();
-            await _shoppingListService.SaveAllShoppingListStatesAsync(_currentPlanId, allItems);
-            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] SaveAllStatesAsync: saved {allItems.Count} items in FlatItems order");
-        }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error saving all shopping list states: {ex.Message}"); }
+        // Use FlatItems order to ensure correct order is preserved
+        var allItems = FlatItems.OfType<Ingredient>().ToList();
+        await _shoppingListService.SaveAllShoppingListStatesAsync(_currentPlanId, allItems);
+        System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] SaveAllStatesAsync: saved {allItems.Count} items in FlatItems order");
     }
 
     public void DiscardChanges() => HasUnsavedChanges = false;

@@ -115,7 +115,8 @@
                            Unfocused="OnEntryUnfocused"
                            IsVisible="{Binding IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
                     
-                    <components:SimplePicker Grid.Column="1" 
+                    <components:SimplePicker x:Name="UnitPicker"
+                                            Grid.Column="1" 
                                             WidthRequest="100" 
                                             Scale="0.81" 
                                             ItemsSource="{Binding UnitsSource, Source={x:Reference ItemComponent}}" 

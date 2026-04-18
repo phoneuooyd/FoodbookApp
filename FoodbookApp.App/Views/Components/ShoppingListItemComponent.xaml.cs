@@ -8,6 +8,16 @@ namespace Foodbook.Views.Components;
 
 public partial class ShoppingListItemComponent : ContentView
 {
+    public sealed class UnitSelectionChangedEventArgs : EventArgs
+    {
+        public UnitSelectionChangedEventArgs(Unit? selectedUnit)
+        {
+            SelectedUnit = selectedUnit;
+        }
+
+        public Unit? SelectedUnit { get; }
+    }
+
     public static readonly BindableProperty RemoveItemCommandProperty =
         BindableProperty.Create(nameof(RemoveItemCommand), typeof(ICommand), typeof(ShoppingListItemComponent));
 
@@ -49,7 +59,7 @@ public partial class ShoppingListItemComponent : ContentView
     // Events for focus handling
     public event EventHandler? EntryFocused;
     public event EventHandler? EntryUnfocused;
-    public event EventHandler? UnitSelectionChanged;
+    public event EventHandler<UnitSelectionChangedEventArgs>? UnitSelectionChanged;
 
     public ShoppingListItemComponent()
     {
@@ -86,6 +96,11 @@ public partial class ShoppingListItemComponent : ContentView
     private void OnUnitPickerSelectionChanged(object? sender, EventArgs e)
     {
         _ = ComponentAnimationHelper.AnimateSoftRefreshAsync(ItemFrame);
-        UnitSelectionChanged?.Invoke(this, EventArgs.Empty);
+
+        Unit? selectedUnit = sender is SimplePicker picker && picker.SelectedItem is Unit unit
+            ? unit
+            : null;
+
+        UnitSelectionChanged?.Invoke(this, new UnitSelectionChangedEventArgs(selectedUnit));
     }
 }

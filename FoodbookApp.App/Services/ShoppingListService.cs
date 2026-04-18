@@ -265,6 +265,40 @@ public class ShoppingListService : IShoppingListService
             var normalized = ingredients.Where(i => !string.IsNullOrWhiteSpace(i.Name)).ToList();
             System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Normalized {normalized.Count} valid ingredients (filtered out {ingredients.Count - normalized.Count} invalid)");
 
+            var deduped = new List<Ingredient>(normalized.Count);
+            var dedupedByKey = new Dictionary<(string NameKey, Unit Unit), int>();
+
+            foreach (var item in normalized)
+            {
+                var trimmedName = item.Name!.Trim();
+                var key = (trimmedName.ToUpperInvariant(), item.Unit);
+
+                if (dedupedByKey.TryGetValue(key, out var existingIndex))
+                {
+                    var existingItem = deduped[existingIndex];
+                    existingItem.Quantity += item.Quantity;
+                    existingItem.IsChecked = existingItem.IsChecked && item.IsChecked;
+
+                    if (existingItem.Id == Guid.Empty && item.Id != Guid.Empty)
+                    {
+                        existingItem.Id = item.Id;
+                    }
+                }
+                else
+                {
+                    item.Name = trimmedName;
+                    dedupedByKey[key] = deduped.Count;
+                    deduped.Add(item);
+                }
+            }
+
+            if (deduped.Count != normalized.Count)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ShoppingListService] Collapsed duplicates by (name, unit): {normalized.Count} -> {deduped.Count}");
+            }
+
+            normalized = deduped;
+
             if (normalized.Count == 0)
             {
                 var existingItems = await _context.ShoppingListItems.Where(sli => sli.PlanId == planId).ToListAsync();

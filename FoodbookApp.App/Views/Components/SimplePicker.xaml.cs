@@ -241,29 +241,6 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
         {
             picker.OnPropertyChanged(nameof(DisplayText));
             picker.SelectionChanged?.Invoke(picker, EventArgs.Empty);
-            
-            // ? SIMPLIFIED: Only propagate to Ingredient model (for shopping lists)
-            // IngredientFormViewModel now handles unit changes internally with immediate DB save
-            try
-            {
-                if (newValue != oldValue && newValue is Enum enumValue)
-                {
-                    // Case: Ingredient model bound in lists (ShoppingList/Recipe ingredients)
-                    if (picker.BindingContext is Foodbook.Models.Ingredient ingredient)
-                    {
-                        if (enumValue is Foodbook.Models.Unit unit)
-                        {
-                            var oldUnit = ingredient.Unit;
-                            ingredient.Unit = unit; // raises PropertyChanged in Ingredient
-                            System.Diagnostics.Debug.WriteLine($"[SimplePicker] Ingredient.Unit changed: {oldUnit} -> {unit}");
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[SimplePicker] Failed to propagate SelectedItem: {ex.Message}");
-            }
         }
     }
 
@@ -343,22 +320,6 @@ public partial class SimplePicker : ContentView, INotifyPropertyChanged
                         SelectedItem = matchingItem;
                         OnPropertyChanged(nameof(SelectedItem));
                         OnPropertyChanged(nameof(DisplayText));
-                        
-                        // ? SIMPLIFIED: Only explicit propagation for Ingredient lists
-                        // IngredientFormViewModel handles unit changes via setter with immediate DB save
-                        try
-                        {
-                            if (BindingContext is Foodbook.Models.Ingredient ingredient && matchingItem is Foodbook.Models.Unit unit)
-                            {
-                                var oldUnit = ingredient.Unit;
-                                ingredient.Unit = unit;
-                                System.Diagnostics.Debug.WriteLine($"[SimplePicker] Ingredient.Unit changed (popup): {oldUnit} -> {unit}");
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"[SimplePicker] Failed to set Unit on BindingContext: {ex.Message}");
-                        }
                     });
                     
                     // Give binding system time to propagate changes

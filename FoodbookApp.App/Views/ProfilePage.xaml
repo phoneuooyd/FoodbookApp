@@ -23,6 +23,7 @@
             <Setter Property="CharacterSpacing" Value="1.2" />
             <Setter Property="TextColor" Value="{DynamicResource ProfileSectionLabelColor}" />
         </Style>
+
     </ContentPage.Resources>
 
     <Grid>
@@ -230,12 +231,12 @@
                             <Label Text="{svc:Translate Resource=ProfilePageResources, Key=FreePlanFeaturePlanner}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
                             <Label Text="{svc:Translate Resource=ProfilePageResources, Key=FreePlanFeatureShoppingList}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
                             <Label Text="{svc:Translate Resource=ProfilePageResources, Key=FreePlanFeatureImport}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
-                            <Button x:Name="SwitchToFreePlanButton"
+                                <Button x:Name="SwitchToFreePlanButton"
                                     Text="{svc:Translate Resource=ProfilePageResources, Key=SwitchToFreeButton}"
-                                    BackgroundColor="{DynamicResource SegmentedContainerColor}"
-                                    TextColor="{DynamicResource SecondaryText}"
-                                    BorderColor="{DynamicResource ProfileCardStrokeColor}"
-                                    BorderWidth="1" />
+                                    StyleClass="Secondary"
+                                    BackgroundColor="{DynamicResource ProfilePlanSecondaryButtonBackgroundColor}"
+                                    BorderColor="{DynamicResource ProfilePlanSecondaryButtonBorderColor}"
+                                    TextColor="{DynamicResource ProfilePlanSecondaryButtonTextColor}" />
                         </VerticalStackLayout>
                     </Border>
 
@@ -279,8 +280,12 @@
                             HorizontalOptions="Center"
                             FontSize="12"
                             FontAttributes="Bold"
-                            TextColor="#FF5F6D"
-                            BackgroundColor="Transparent" />
+                            Padding="14,10"
+                            MinimumHeightRequest="44"
+                            MinimumWidthRequest="44"
+                            BackgroundColor="Transparent"
+                            BorderWidth="0"
+                            TextColor="{DynamicResource ProfilePlanDestructiveButtonTextColor}" />
                 </VerticalStackLayout>
             </ScrollView>
         </Grid>

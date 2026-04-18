@@ -189,6 +189,53 @@ namespace Foodbook.ViewModels
         public string ImportStatus { get => _importStatus; set { _importStatus = value; OnPropertyChanged(); } }
         private string _importStatus = string.Empty;
 
+        private bool _canUseAutoServingRecognition;
+        public bool CanUseAutoServingRecognition
+        {
+            get => _canUseAutoServingRecognition;
+            private set
+            {
+                if (_canUseAutoServingRecognition == value)
+                {
+                    return;
+                }
+
+                _canUseAutoServingRecognition = value;
+                OnPropertyChanged();
+
+                if (!value && _importServingMode == ImportServingMode.AutoRecognition)
+                {
+                    _importServingMode = ImportServingMode.ManualEntry;
+                }
+
+                OnPropertyChanged(nameof(IsAutoServingRecognitionEnabled));
+                OnPropertyChanged(nameof(IsManualServingCountEnabled));
+            }
+        }
+
+        public string ImportServingsCount { get => _importServingsCount; set { _importServingsCount = value; OnPropertyChanged(); MarkDirty(); } }
+        private string _importServingsCount = "2";
+
+        private enum ImportServingMode
+        {
+            AutoRecognition,
+            ManualEntry
+        }
+
+        private ImportServingMode _importServingMode = ImportServingMode.ManualEntry;
+
+        public bool IsAutoServingRecognitionEnabled
+        {
+            get => _importServingMode == ImportServingMode.AutoRecognition;
+            set => SetImportServingMode(value ? ImportServingMode.AutoRecognition : ImportServingMode.ManualEntry);
+        }
+
+        public bool IsManualServingCountEnabled
+        {
+            get => _importServingMode == ImportServingMode.ManualEntry;
+            set => SetImportServingMode(value ? ImportServingMode.ManualEntry : ImportServingMode.AutoRecognition);
+        }
+
         // Komendy
         public ICommand AddIngredientCommand { get; }
         public ICommand RemoveIngredientCommand { get; }
@@ -259,6 +306,7 @@ namespace Foodbook.ViewModels
             // Load folders and labels list in background
             _ = LoadAvailableFoldersAsync();
             _ = LoadAvailableLabelsAsync();
+            InitializeImportServingAccess();
 
             ValidateInput();
         }
@@ -291,6 +339,61 @@ namespace Foodbook.ViewModels
             {
                 return null;
             }
+        }
+
+        private static IPreferencesService? ResolvePreferencesService()
+        {
+            try
+            {
+                return Application.Current?.Handler?.MauiContext?.Services?.GetService<IPreferencesService>();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private void InitializeImportServingAccess()
+        {
+            try
+            {
+                CanUseAutoServingRecognition = IsPremiumPlanChoice(ResolvePreferencesService()?.GetPlanChoice());
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Failed to initialize import serving access: {ex.Message}");
+                CanUseAutoServingRecognition = false;
+            }
+        }
+
+        private static bool IsPremiumPlanChoice(string? planChoice)
+        {
+            if (string.IsNullOrWhiteSpace(planChoice))
+            {
+                return false;
+            }
+
+            return planChoice.Trim().StartsWith("Premium", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void SetImportServingMode(ImportServingMode requestedMode)
+        {
+            var mode = requestedMode;
+
+            if (mode == ImportServingMode.AutoRecognition && !CanUseAutoServingRecognition)
+            {
+                mode = ImportServingMode.ManualEntry;
+            }
+
+            if (_importServingMode == mode)
+            {
+                return;
+            }
+
+            _importServingMode = mode;
+            OnPropertyChanged(nameof(IsAutoServingRecognitionEnabled));
+            OnPropertyChanged(nameof(IsManualServingCountEnabled));
+            MarkDirty();
         }
 
         private sealed class NullDatabaseService : IDatabaseService
@@ -629,8 +732,10 @@ namespace Foodbook.ViewModels
 
                 ImportUrl = string.Empty;
                 ImportStatus = string.Empty;
+                ImportServingsCount = "2";
                 UseCalculatedValues = true;
                 IsManualMode = true;
+                SetImportServingMode(ImportServingMode.ManualEntry);
                 SelectedTabIndex = 0;
 
                 OnPropertyChanged(nameof(Title));
@@ -783,9 +888,13 @@ namespace Foodbook.ViewModels
             try
             {
                 ImportStatus = T("ImportingStatus", "Importing...");
-                var recipe = await _importer.ImportFromUrlAsync(ImportUrl);
+                InitializeImportServingAccess();
+                var sourceServings = ParseImportServingsCount();
+                var useAutoServingRecognition = CanUseAutoServingRecognition && IsAutoServingRecognitionEnabled;
+                var recipe = await _importer.ImportFromUrlAsync(ImportUrl, sourceServings, useAutoServingRecognition);
                 Name = recipe.Name;
                 Description = recipe.Description ?? string.Empty;
+                IloscPorcji = recipe.IloscPorcji.ToString(CultureInfo.InvariantCulture);
                 
                 Ingredients.Clear();
                 
@@ -826,6 +935,13 @@ namespace Foodbook.ViewModels
                     ex.Message);
                 System.Diagnostics.Debug.WriteLine($"Error in ImportRecipeAsync: {ex.Message}");
             }
+        }
+
+        private int ParseImportServingsCount()
+        {
+            return int.TryParse(ImportServingsCount, NumberStyles.Integer, CultureInfo.InvariantCulture, out var servings) && servings > 0
+                ? servings
+                : 2;
         }
 
         private bool CanSave()

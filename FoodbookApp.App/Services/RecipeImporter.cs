@@ -53,7 +53,7 @@ public class RecipeImporter
 
     // ─── Publiczne API ────────────────────────────────────────────────────────
 
-    public async Task<Recipe> ImportFromUrlAsync(string url)
+    public async Task<Recipe> ImportFromUrlAsync(string url, int sourceServings = 2, bool autoDetectServings = false)
     {
         Debug.WriteLine($"{Tag} ══════════════════════════════════════════");
         Debug.WriteLine($"{Tag} START import: {url}");
@@ -65,10 +65,16 @@ public class RecipeImporter
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
+        var servings = autoDetectServings
+            ? DetectServingsFromDocument(doc, html, sourceServings)
+            : NormalizeSourceServingsCount(sourceServings);
+        Debug.WriteLine($"{Tag} Źródłowa liczba porcji: {servings} (auto={autoDetectServings})");
+
         var recipe = new Recipe
         {
             Name = ExtractTitle(url, doc),
-            Ingredients = []
+            Ingredients = [],
+            IloscPorcji = 1
         };
         Debug.WriteLine($"{Tag} Tytuł przepisu: \"{recipe.Name}\"");
 
@@ -151,7 +157,15 @@ public class RecipeImporter
         Debug.WriteLine($"{Tag} Składniki po parsowaniu lokalnym: {parsedIngredients.Count} dopasowanych, {unmatchedLines.Count} niedopasowanych");
 
         // 2. WARTOŚCI ODŻYWCZE
-        ExtractNutrition(doc, recipe);
+        var nutritionIsPerServing = ExtractNutrition(doc, recipe);
+        if (!nutritionIsPerServing && servings > 1)
+        {
+            recipe.Calories /= servings;
+            recipe.Protein /= servings;
+            recipe.Fat /= servings;
+            recipe.Carbs /= servings;
+            Debug.WriteLine($"{Tag} Wartości odżywcze przeliczone na 1 porcję z {servings} porcji źródłowych");
+        }
         Debug.WriteLine($"{Tag} Wartości odżywcze: kcal={recipe.Calories} | B={recipe.Protein}g | T={recipe.Fat}g | W={recipe.Carbs}g");
 
         // 3. AI FALLBACK
@@ -165,7 +179,7 @@ public class RecipeImporter
 
             try
             {
-                var aiResult = await TryEnhanceWithAiAsync(recipe.Name, unmatchedLines, availableIngredients);
+                var aiResult = await TryEnhanceWithAiAsync(recipe.Name, unmatchedLines, availableIngredients, servings);
                 if (aiResult is not null)
                 {
                     aiSuccess = true;
@@ -176,10 +190,10 @@ public class RecipeImporter
                         Debug.WriteLine($"{Tag}   Tytuł z AI: \"{aiResult.Title}\" (poprzedni: \"{recipe.Name}\")");
                         recipe.Name = aiResult.Title;
                     }
-                    if (aiResult.Calories > 0 && recipe.Calories == 0) { recipe.Calories = aiResult.Calories; Debug.WriteLine($"{Tag}   Kalorie z AI: {aiResult.Calories}"); }
-                    if (aiResult.Protein > 0 && recipe.Protein == 0) { recipe.Protein = aiResult.Protein; Debug.WriteLine($"{Tag}   Białko z AI: {aiResult.Protein}"); }
-                    if (aiResult.Fat > 0 && recipe.Fat == 0) { recipe.Fat = aiResult.Fat; Debug.WriteLine($"{Tag}   Tłuszcz z AI: {aiResult.Fat}"); }
-                    if (aiResult.Carbs > 0 && recipe.Carbs == 0) { recipe.Carbs = aiResult.Carbs; Debug.WriteLine($"{Tag}   Węglowodany z AI: {aiResult.Carbs}"); }
+                    if (aiResult.Calories > 0 && IsApproximatelyZero(recipe.Calories)) { recipe.Calories = aiResult.Calories; Debug.WriteLine($"{Tag}   Kalorie z AI: {aiResult.Calories}"); }
+                    if (aiResult.Protein > 0 && IsApproximatelyZero(recipe.Protein)) { recipe.Protein = aiResult.Protein; Debug.WriteLine($"{Tag}   Białko z AI: {aiResult.Protein}"); }
+                    if (aiResult.Fat > 0 && IsApproximatelyZero(recipe.Fat)) { recipe.Fat = aiResult.Fat; Debug.WriteLine($"{Tag}   Tłuszcz z AI: {aiResult.Fat}"); }
+                    if (aiResult.Carbs > 0 && IsApproximatelyZero(recipe.Carbs)) { recipe.Carbs = aiResult.Carbs; Debug.WriteLine($"{Tag}   Węglowodany z AI: {aiResult.Carbs}"); }
 
                     foreach (var aiIng in aiResult.Ingredients)
                     {
@@ -247,6 +261,7 @@ public class RecipeImporter
         }
 
         recipe.Ingredients = parsedIngredients;
+        NormalizeRecipeToSinglePortion(recipe, servings);
 
         Debug.WriteLine($"{Tag} ── WYNIK KOŃCOWY ────────────────────────────");
         Debug.WriteLine($"{Tag} Tytuł:      {recipe.Name}");
@@ -260,7 +275,7 @@ public class RecipeImporter
 
     // ─── Wartości odżywcze ────────────────────────────────────────────────────
 
-    private static void ExtractNutrition(HtmlDocument doc, Recipe recipe)
+    private static bool ExtractNutrition(HtmlDocument doc, Recipe recipe)
     {
         var header = FindAllNodesByKeywords(doc,
             ["wartosci odzywcze", "nutrition", "nahrwert", "valeur nutritive"])
@@ -269,7 +284,7 @@ public class RecipeImporter
         if (header is null)
         {
             Debug.WriteLine($"{Tag} ExtractNutrition: brak nagłówka — pomijam");
-            return;
+            return false;
         }
 
         Debug.WriteLine($"{Tag} ExtractNutrition: nagłówek <{header.Name}> \"{Truncate(header.InnerText, 60)}\" pos={header.StreamPosition}");
@@ -279,12 +294,16 @@ public class RecipeImporter
         if (node is null)
         {
             Debug.WriteLine($"{Tag} ExtractNutrition: brak <p>/<ul> po nagłówku");
-            return;
+            return false;
         }
 
         Debug.WriteLine($"{Tag} ExtractNutrition: parsowanie z <{node.Name}>");
 
-        foreach (var line in HtmlEntity.DeEntitize(node.InnerText)
+        var rawText = HtmlEntity.DeEntitize(node.InnerText);
+        var normalizedText = NormalizeForSearch(rawText);
+        var isPerServing = IsNutritionPerServingText(normalizedText);
+
+        foreach (var line in rawText
             .Split(['\n', '\r', ','], StringSplitOptions.RemoveEmptyEntries))
         {
             var t = line.Trim();
@@ -303,6 +322,8 @@ public class RecipeImporter
                      t.StartsWith("Carb", StringComparison.OrdinalIgnoreCase))
                 recipe.Carbs = ParseFirstNumber(t);
         }
+
+            return isPerServing;
     }
 
     // ─── Sposób przygotowania ─────────────────────────────────────────────────
@@ -443,6 +464,169 @@ public class RecipeImporter
             RegexOptions.IgnoreCase))
             return false;
         return true;
+    }
+
+    private static int NormalizeSourceServingsCount(int servings)
+        => servings > 0 ? servings : 2;
+
+    private static int NormalizeServingsCount(double servings)
+        => Math.Max(1, (int)Math.Round(servings, MidpointRounding.AwayFromZero));
+
+    private static bool IsNutritionPerServingText(string normalizedText)
+    {
+        return normalizedText.Contains("na porcje", StringComparison.OrdinalIgnoreCase)
+            || normalizedText.Contains("na porcji", StringComparison.OrdinalIgnoreCase)
+            || normalizedText.Contains("na 1 porcje", StringComparison.OrdinalIgnoreCase)
+            || normalizedText.Contains("na 1 porcji", StringComparison.OrdinalIgnoreCase)
+            || normalizedText.Contains("per serving", StringComparison.OrdinalIgnoreCase)
+            || normalizedText.Contains("per portion", StringComparison.OrdinalIgnoreCase)
+            || normalizedText.Contains("serving size", StringComparison.OrdinalIgnoreCase)
+            || normalizedText.Contains("portion size", StringComparison.OrdinalIgnoreCase)
+            || normalizedText.Contains("1 serving", StringComparison.OrdinalIgnoreCase)
+            || normalizedText.Contains("1 portion", StringComparison.OrdinalIgnoreCase)
+            || normalizedText.Contains("na osobe", StringComparison.OrdinalIgnoreCase)
+            || normalizedText.Contains("na osobe", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsApproximatelyZero(double value)
+        => Math.Abs(value) < 0.0001;
+
+    private static int DetectServingsFromDocument(HtmlDocument doc, string html, int fallbackServings)
+    {
+        var normalizedFallback = NormalizeSourceServingsCount(fallbackServings);
+
+        foreach (var candidate in EnumerateServingsCandidates(doc, html))
+        {
+            if (TryParseServingsValue(candidate, out var servings))
+            {
+                return servings;
+            }
+        }
+
+        return normalizedFallback;
+    }
+
+    private const string ServingsValueGroup = "value";
+
+    private static IEnumerable<string> EnumerateServingsCandidates(HtmlDocument doc, string html)
+    {
+        foreach (var candidate in EnumerateServingsCandidatesFromNodes(doc))
+        {
+            yield return candidate;
+        }
+
+        foreach (var candidate in EnumerateServingsCandidatesFromJson(html, "recipeYield"))
+        {
+            yield return candidate;
+        }
+
+        foreach (var candidate in EnumerateServingsCandidatesFromJson(html, "recipeServings"))
+        {
+            yield return candidate;
+        }
+
+        var bodyText = HtmlEntity.DeEntitize(doc.DocumentNode.InnerText);
+        if (!string.IsNullOrWhiteSpace(bodyText))
+        {
+            yield return bodyText;
+        }
+    }
+
+    private static IEnumerable<string> EnumerateServingsCandidatesFromNodes(HtmlDocument doc)
+    {
+        var nodes = doc.DocumentNode.SelectNodes("//*[@itemprop='recipeYield' or @itemprop='recipeServings' or @property='recipe:yield' or @name='recipeYield' or @name='recipeServings']");
+        if (nodes is not null)
+        {
+            foreach (var node in nodes)
+            {
+                var candidate = node.GetAttributeValue("content", string.Empty);
+                if (string.IsNullOrWhiteSpace(candidate))
+                {
+                    candidate = CleanNodeText(node);
+                }
+
+                if (!string.IsNullOrWhiteSpace(candidate))
+                {
+                    yield return candidate;
+                }
+            }
+        }
+    }
+
+    private static IEnumerable<string> EnumerateServingsCandidatesFromJson(string html, string propertyName)
+    {
+        foreach (Match match in Regex.Matches(html, $"\"{propertyName}\"\\s*:\\s*(?:\"(?<{ServingsValueGroup}>[^\"]+)\"|(?<{ServingsValueGroup}>\\d+(?:[.,]\\d+)?))", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        {
+            var value = match.Groups[ServingsValueGroup].Value;
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                yield return value;
+            }
+        }
+    }
+
+    private static bool TryParseServingsValue(string text, out int servings)
+    {
+        servings = 0;
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return false;
+        }
+
+        var normalized = NormalizeForSearch(HtmlEntity.DeEntitize(text));
+        var patterns = new[]
+        {
+            @"\b(?:na|dla)\s*(?<value>\d+(?:[.,]\d+)?)\s*(?:porcje|porcji|porcję|osob|osoby|servings?|serves?|people|portions?)\b",
+            @"\b(?<value>\d+(?:[.,]\d+)?)\s*(?:porcje|porcji|porcję|osob|osoby|servings?|serves?|people|portions?)\b",
+            @"\b(?:recipe\s*)?(?:yield|servings?|serves?)\s*[:\-]?\s*(?<value>\d+(?:[.,]\d+)?)\b",
+            @"\bporcje?\s*[:\-]?\s*(?<value>\d+(?:[.,]\d+)?)\b",
+            @"\bservings?\s*[:\-]?\s*(?<value>\d+(?:[.,]\d+)?)\b",
+            @"\bserves?\s*[:\-]?\s*(?<value>\d+(?:[.,]\d+)?)\b"
+        };
+
+        foreach (var pattern in patterns)
+        {
+            var match = Regex.Match(normalized, pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            if (!match.Success)
+            {
+                continue;
+            }
+
+            if (double.TryParse(match.Groups[ServingsValueGroup].Value.Replace(",", "."), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
+            {
+                servings = NormalizeServingsCount(parsed);
+                return true;
+            }
+        }
+
+        if (normalized.Length <= 16)
+        {
+            var numberMatch = Regex.Match(normalized, $@"\b(?<{ServingsValueGroup}>\d+(?:[.,]\d+)?)\b", RegexOptions.CultureInvariant);
+            if (numberMatch.Success &&
+                double.TryParse(numberMatch.Groups[ServingsValueGroup].Value.Replace(",", "."), NumberStyles.Float, CultureInfo.InvariantCulture, out var fallbackValue))
+            {
+                servings = NormalizeServingsCount(fallbackValue);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void NormalizeRecipeToSinglePortion(Recipe recipe, int servings)
+    {
+        var safeServings = NormalizeSourceServingsCount(servings);
+
+        if (safeServings > 1)
+        {
+            foreach (var ingredient in recipe.Ingredients)
+            {
+                ingredient.Quantity = EnsurePositiveQuantity(ingredient.Quantity / safeServings);
+            }
+        }
+
+        recipe.IloscPorcji = 1;
     }
 
     // ─── Parsowanie składników ────────────────────────────────────────────────
@@ -714,7 +898,7 @@ public class RecipeImporter
     // ─── AI Fallback ──────────────────────────────────────────────────────────
 
     private async Task<LlmParsedRecipe?> TryEnhanceWithAiAsync(
-        string title, List<string> unmatchedRawNames, List<Ingredient> db)
+        string title, List<string> unmatchedRawNames, List<Ingredient> db, int servingsCount)
     {
         if (_aiService is null) return null;
 
@@ -734,11 +918,11 @@ public class RecipeImporter
             "- 1 łyżka=15ml, 1 łyżeczka=5ml, 1 szklanka=250ml, 1 dag=10g, 1 kg=1000g\n" +
             "- Zakres \"12-15 szt\" -> srednia; ułamek \"1/2\" -> 0.5; \"(62g)\" -> quantity=62, unit=\"gram\"\n" +
             "- raw_name: oryginalna linia; matched_db_name: DOKŁADNA nazwa z bazy lub null\n" +
-            "- calories/protein/fat/carbs: cały przepis lub 0.0";
+            "- calories/protein/fat/carbs: wartości na 1 porcję lub 0.0";
 
         var dbNames = string.Join("\n", db.Select(i => $"- {i.Name}"));
         var ingredients = string.Join("\n", unmatchedRawNames.Select((l, i) => $"{i + 1}. {l}"));
-        var userPrompt = $"PRZEPIS: {title}\n\nSKŁADNIKI:\n{ingredients}\n\nBAZA:\n{dbNames}";
+        var userPrompt = $"PRZEPIS: {title}\nPORCJE ŹRÓDŁOWE: {servingsCount}\n\nSKŁADNIKI:\n{ingredients}\n\nBAZA:\n{dbNames}";
 
         Debug.WriteLine($"{Tag} ┌─ AI SYSTEM PROMPT ─────────────────────────");
         foreach (var line in systemPrompt.Split('\n'))

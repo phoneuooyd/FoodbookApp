@@ -14,8 +14,6 @@ namespace Foodbook.Services
 {
     public class ThemeService : IThemeService
     {
-        private readonly IPreferencesService _preferencesService;
-        
         public event EventHandler? ThemeChanged;
 
         private Foodbook.Models.AppTheme _currentTheme = Foodbook.Models.AppTheme.System;
@@ -56,7 +54,6 @@ namespace Foodbook.Services
 
         public ThemeService(IPreferencesService preferencesService)
         {
-            _preferencesService = preferencesService ?? throw new ArgumentNullException(nameof(preferencesService));
             _availableColorThemes = InitializeThemes();
         }
 
@@ -479,9 +476,15 @@ namespace Foodbook.Services
                 app.Resources["FoodbookApplyButtonTextColor"] = foodbookApplyButtonText;
 
                 // Profile page visual tokens
-                var profileCardSurface = isDark ? Color.FromArgb("#282840") : Colors.White;
-                var profileCardStroke = isDark ? Color.FromArgb("#20FFFFFF") : Color.FromArgb("#22000000");
-                var profileSectionLabel = isDark ? Color.FromArgb("#80FFFFFF") : Color.FromArgb("#6B7280");
+                var profileCardSurface = isDark
+                    ? Darken(secondary, 0.68)
+                    : Lighten(secondary, 0.82);
+                var profileCardStroke = Color.FromRgba(primary.Red, primary.Green, primary.Blue, isDark ? 0.34f : 0.22f);
+                var profileSectionLabel = Color.FromRgba(
+                    secondaryText.Red,
+                    secondaryText.Green,
+                    secondaryText.Blue,
+                    isDark ? 0.82f : 0.74f);
                 var profilePlanRowBrush = new LinearGradientBrush(
                     new GradientStopCollection
                     {
@@ -490,9 +493,16 @@ namespace Foodbook.Services
                     },
                     new Point(0, 0),
                     new Point(1, 1));
-                var profilePlanRowBorder = Color.FromRgba(primary.Red, primary.Green, primary.Blue, isDark ? 0.40f : 0.32f);
-                var profilePlanActiveBg = Color.FromRgba(primary.Red, primary.Green, primary.Blue, isDark ? 0.30f : 0.20f);
+                var profilePlanRowBorder = Color.FromRgba(tertiary.Red, tertiary.Green, tertiary.Blue, isDark ? 0.46f : 0.30f);
+                var profilePlanActiveBg = Color.FromRgba(primary.Red, primary.Green, primary.Blue, isDark ? 0.34f : 0.22f);
                 var profilePlanActiveText = EnsureContrastEnhanced(ChooseReadableEnhanced(profilePlanActiveBg, Colors.White, Colors.Black), profilePlanActiveBg, RelativeLuminance(profilePlanActiveBg) > 0.45 ? Colors.Black : Colors.White);
+                var profilePlanSecondaryButtonBackground = Color.FromRgba(secondary.Red, secondary.Green, secondary.Blue, isDark ? 0.18f : 0.34f);
+                var profilePlanSecondaryButtonBorder = Color.FromRgba(tertiary.Red, tertiary.Green, tertiary.Blue, isDark ? 0.48f : 0.26f);
+                var profilePlanSecondaryButtonText = EnsureContrastEnhanced(
+                    ChooseReadableEnhanced(profilePlanSecondaryButtonBackground, Colors.White, Colors.Black),
+                    profilePlanSecondaryButtonBackground,
+                    RelativeLuminance(profilePlanSecondaryButtonBackground) > 0.45 ? Colors.Black : Colors.White);
+                var profilePlanDestructiveButtonText = isDark ? Color.FromArgb("#FF8A80") : Color.FromArgb("#C62828");
 
                 app.Resources["ProfileCardSurfaceColor"] = profileCardSurface;
                 app.Resources["ProfileCardStrokeColor"] = profileCardStroke;
@@ -501,6 +511,10 @@ namespace Foodbook.Services
                 app.Resources["ProfilePlanRowBorderColor"] = profilePlanRowBorder;
                 app.Resources["ProfilePlanActiveBadgeBackgroundColor"] = profilePlanActiveBg;
                 app.Resources["ProfilePlanActiveBadgeTextColor"] = profilePlanActiveText;
+                app.Resources["ProfilePlanSecondaryButtonBackgroundColor"] = profilePlanSecondaryButtonBackground;
+                app.Resources["ProfilePlanSecondaryButtonBorderColor"] = profilePlanSecondaryButtonBorder;
+                app.Resources["ProfilePlanSecondaryButtonTextColor"] = profilePlanSecondaryButtonText;
+                app.Resources["ProfilePlanDestructiveButtonTextColor"] = profilePlanDestructiveButtonText;
 
                 // Folder card colors (use translucent accents so the card feels subtle over page background)
                 // Restore translucency specifically for folder cards while page background remains opaque.
