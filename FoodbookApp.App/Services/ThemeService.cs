@@ -208,6 +208,16 @@ namespace Foodbook.Services
             );
         }
 
+        private static Color Blend(Color source, Color target, double amount)
+        {
+            amount = Math.Clamp(amount, 0, 1);
+            return Color.FromRgb(
+                source.Red + (target.Red - source.Red) * amount,
+                source.Green + (target.Green - source.Green) * amount,
+                source.Blue + (target.Blue - source.Blue) * amount
+            );
+        }
+
         private void ApplyColorTheme(AppColorTheme colorTheme)
         {
             try
@@ -313,9 +323,15 @@ namespace Foodbook.Services
                 {
                     if (isDark)
                     {
-                        var darkened = Darken(secondary, 0.12);
-                        // Keep page background opaque to prevent transition darkening artifacts between pages
-                        pageBackground = Color.FromRgb(darkened.Red, darkened.Green, darkened.Blue);
+                        // Dark colorful backgrounds: tone down saturation and add subtle transparency.
+                        // Bubblegum requires a stronger fade in dark mode.
+                        var darkenFactor = colorTheme == AppColorTheme.Bubblegum ? 0.24 : 0.18;
+                        var neutralBlend = colorTheme == AppColorTheme.Bubblegum ? 0.36 : 0.18;
+                        var overlayAlpha = colorTheme == AppColorTheme.Bubblegum ? 0.90 : 0.96;
+
+                        var darkened = Darken(secondary, darkenFactor);
+                        var muted = Blend(darkened, Color.FromArgb("#1E1E1E"), neutralBlend);
+                        pageBackground = Color.FromRgba(muted.Red, muted.Green, muted.Blue, overlayAlpha);
                     }
                     else
                     {
@@ -490,6 +506,7 @@ namespace Foodbook.Services
                 // Restore translucency specifically for folder cards while page background remains opaque.
                 var folderBg = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 0.12);
                 var folderStroke = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 0.32);
+                var darkColorfulMode = isDark && _isColorfulBackgroundEnabled && !wallpaperEnabled;
 
                 if (wallpaperEnabled)
                 {
@@ -504,6 +521,35 @@ namespace Foodbook.Services
                      {
                          folderStroke = Color.FromArgb("#424242");
                      }
+
+                    if (darkColorfulMode)
+                    {
+                        // Dark + colorful background theme overrides for folder readability.
+                        // "Same folder color + stronger border" themes.
+                        if (colorTheme is AppColorTheme.Bubblegum or AppColorTheme.Autumn or AppColorTheme.Forest or AppColorTheme.Nature or AppColorTheme.Default)
+                        {
+                            var folderBase = primary;
+                            folderBg = Color.FromRgba(folderBase.Red, folderBase.Green, folderBase.Blue, colorTheme == AppColorTheme.Bubblegum ? 0.30 : 0.28);
+                            folderStroke = Color.FromRgba(folderBase.Red, folderBase.Green, folderBase.Blue, colorTheme == AppColorTheme.Bubblegum ? 0.84 : 0.82);
+                        }
+                        // Sky: only sharpen folder (keep tone, emphasize edge).
+                        else if (colorTheme == AppColorTheme.Sky)
+                        {
+                            var folderBase = primary;
+                            folderBg = Color.FromRgba(folderBase.Red, folderBase.Green, folderBase.Blue, 0.16);
+                            folderStroke = Color.FromRgba(folderBase.Red, folderBase.Green, folderBase.Blue, 0.88);
+                        }
+                        // Mint/Navy/Vibrant/Sunset/Warm: use a different motif color for folder + clear border.
+                        else if (colorTheme is AppColorTheme.Mint or AppColorTheme.Navy or AppColorTheme.Vibrant or AppColorTheme.Sunset or AppColorTheme.Warm)
+                        {
+                            var folderBase = colorTheme == AppColorTheme.Mint
+                                ? Darken(tertiary, 0.18)
+                                : tertiary;
+
+                            folderBg = Color.FromRgba(folderBase.Red, folderBase.Green, folderBase.Blue, 0.34);
+                            folderStroke = Color.FromRgba(folderBase.Red, folderBase.Green, folderBase.Blue, 0.90);
+                        }
+                    }
                  }
 
                 // Keep folder text contrast deterministic per theme mode.
