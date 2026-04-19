@@ -8,6 +8,7 @@ using FoodbookApp.Localization;
 using CommunityToolkit.Maui.Views;
 using CommunityToolkit.Maui.Extensions;
 using FoodbookApp.Interfaces;
+using Foodbook.Views;
 
 namespace Foodbook.ViewModels;
 
@@ -214,6 +215,7 @@ public class HomeViewModel : INotifyPropertyChanged
     public ICommand ShowMealDetailsPopupCommand { get; }
     public ICommand ChangeNutritionPeriodCommand { get; }
     public ICommand ChangePlannedMealsPeriodCommand { get; }
+    public ICommand OpenDietStatisticsCommand { get; }
 
     // Portion adjustment from Home popups
     public ICommand IncreaseMealPortionsCommand { get; }
@@ -237,6 +239,7 @@ public class HomeViewModel : INotifyPropertyChanged
         ShowMealDetailsPopupCommand = new Command<PlannedMeal>(async (meal) => await ShowMealDetailsPopupAsync(meal), (meal) => !_isMealsPopupOpen);
         ChangeNutritionPeriodCommand = new Command(async () => await ShowNutritionPeriodPickerAsync());
         ChangePlannedMealsPeriodCommand = new Command(async () => await ShowPlannedMealsPeriodPickerAsync());
+        OpenDietStatisticsCommand = new Command(async () => await Shell.Current.GoToAsync(nameof(DietStatisticsPage)));
 
         IncreaseMealPortionsCommand = new Command<PlannedMeal>(async (meal) => await IncreaseMealPortionsAsync(meal), CanIncreaseMealPortions);
         DecreaseMealPortionsCommand = new Command<PlannedMeal>(async (meal) => await DecreaseMealPortionsAsync(meal), CanDecreaseMealPortions);

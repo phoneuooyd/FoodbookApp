@@ -19,7 +19,27 @@
   <data name="FilterCustom" xml:space="preserve"><value>Personnalise</value></data>
   <data name="FilterPlan" xml:space="preserve"><value>Plan</value></data>
   <data name="MealsHeader" xml:space="preserve"><value>Repas</value></data>
+  <data name="MealsTodayHeader" xml:space="preserve"><value>Repas d'aujourd'hui</value></data>
+  <data name="MealsTodayHint" xml:space="preserve"><value>Repas planifies et saisies manuelles pour aujourd'hui.</value></data>
+  <data name="MealBreakfast" xml:space="preserve"><value>Petit-dejeuner</value></data>
+  <data name="MealLunch" xml:space="preserve"><value>Dejeuner</value></data>
+  <data name="MealDinner" xml:space="preserve"><value>Diner</value></data>
+  <data name="MealMorningSnack" xml:space="preserve"><value>Collation matin</value></data>
+  <data name="MealAfternoonSnack" xml:space="preserve"><value>Collation apres-midi</value></data>
+  <data name="MealSlot" xml:space="preserve"><value>Repas</value></data>
+  <data name="MealPlannerEntrySubtitle" xml:space="preserve"><value>Repas planifie</value></data>
+  <data name="MealManualEntrySubtitle" xml:space="preserve"><value>Saisie manuelle</value></data>
   <data name="AddMealButton" xml:space="preserve"><value>Ajouter</value></data>
+  <data name="AddMealPopupTitle" xml:space="preserve"><value>Ajouter un repas</value></data>
+  <data name="AddMealPopupNameLabel" xml:space="preserve"><value>Nom du repas</value></data>
+  <data name="AddMealPopupNamePlaceholder" xml:space="preserve"><value>ex. collation proteinee</value></data>
+  <data name="AddMealPopupCaloriesLabel" xml:space="preserve"><value>Calories (kcal)</value></data>
+  <data name="AddMealPopupCaloriesPlaceholder" xml:space="preserve"><value>ex. 250</value></data>
+  <data name="AddMealPopupSave" xml:space="preserve"><value>Enregistrer</value></data>
+  <data name="AddMealPopupCancel" xml:space="preserve"><value>Annuler</value></data>
+  <data name="AddMealPopupInvalidName" xml:space="preserve"><value>Saisissez le nom du repas.</value></data>
+  <data name="AddMealPopupInvalidCalories" xml:space="preserve"><value>Saisissez une valeur kcal valide.</value></data>
+  <data name="AddMealPopupSaveError" xml:space="preserve"><value>Impossible d'enregistrer l'entree du repas.</value></data>
   <data name="NoMealsPlaceholder" xml:space="preserve"><value>Aucun repas</value></data>
   <data name="NutritionCardTitle" xml:space="preserve"><value>Valeurs nutritionnelles</value></data>
 </root>

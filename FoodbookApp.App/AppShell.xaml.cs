@@ -15,6 +15,8 @@ namespace FoodbookApp
         public AppShell()
         {
             InitializeComponent();
+
+            Routing.RegisterRoute(nameof(DietStatisticsPage), typeof(DietStatisticsPage));
             
             // Get localization service
             _localizationService = MauiProgram.ServiceProvider?.GetService<ILocalizationService>();

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:loc="clr-namespace:Foodbook.Services"
              xmlns:viewModels="clr-namespace:Foodbook.ViewModels"
              xmlns:components="clr-namespace:Foodbook.Views.Components"
              x:Class="Foodbook.Views.DietStatisticsPage"
@@ -10,100 +9,38 @@
              BackgroundColor="{DynamicResource PageBackgroundColor}">
 
     <Grid RowDefinitions="Auto,*">
-        <Grid Grid.Row="0"
-              Padding="20,44,20,18"
-              Background="{DynamicResource AppHeroGradientBrush}">
-            <Border WidthRequest="132"
-                    HeightRequest="132"
-                    HorizontalOptions="End"
-                    VerticalOptions="Start"
-                    TranslationX="24"
-                    TranslationY="-38"
-                    StrokeThickness="0"
-                    Stroke="Transparent"
-                    StrokeShape="RoundRectangle 66"
-                    BackgroundColor="{DynamicResource AppHeroBubbleColorStrong}" />
-            <Border WidthRequest="72"
-                    HeightRequest="72"
-                    HorizontalOptions="End"
-                    VerticalOptions="Start"
-                    TranslationX="-8"
-                    TranslationY="14"
-                    StrokeThickness="0"
-                    Stroke="Transparent"
-                    StrokeShape="RoundRectangle 36"
-                    BackgroundColor="{DynamicResource AppHeroBubbleColorMedium}" />
-
-            <Grid ColumnDefinitions="Auto,*"
-                  ColumnSpacing="10"
-                  ZIndex="1">
-                <Border WidthRequest="36"
-                        HeightRequest="36"
-                        StrokeThickness="0"
-                        Stroke="Transparent"
-                        StrokeShape="RoundRectangle 18"
-                        BackgroundColor="{DynamicResource AppHeroActionOverlayColor}">
-                    <Label Text="←"
-                           FontSize="18"
-                           FontAttributes="Bold"
-                           HorizontalTextAlignment="Center"
-                           VerticalTextAlignment="Center"
-                           TextColor="{DynamicResource AppHeroTitleTextColor}">
-                        <Label.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnBackTapped" />
-                        </Label.GestureRecognizers>
-                    </Label>
-                </Border>
-
-                <VerticalStackLayout Grid.Column="1"
-                                     Spacing="2"
-                                     VerticalOptions="Center">
-                    <Label Text="{loc:Translate Resource=DietStatisticsPageResources, Key=PageTitle}"
-                           FontSize="30"
-                           FontAttributes="Bold"
-                           TextColor="{DynamicResource AppHeroTitleTextColor}" />
-                    <Label Text="{Binding FilterRangeText}"
-                           FontSize="12"
-                           TextColor="{DynamicResource AppHeroSubtitleTextColor}" />
-                </VerticalStackLayout>
-            </Grid>
-        </Grid>
+        <components:PageHeaderComponent Grid.Row="0"
+                                        Title="{Binding HeaderTitle}"
+                                        Subtitle="{Binding HeaderSubtitle}"
+                                        HeaderPadding="16,44,16,16" />
 
         <ScrollView Grid.Row="1"
+                Padding="16,8,16,32"
+                    BackgroundColor="{DynamicResource PageBackgroundColor}"
                     VerticalScrollBarVisibility="Never">
-            <VerticalStackLayout Padding="16,16,16,96"
-                                 Spacing="14">
+            <VerticalStackLayout Spacing="10">
                 <components:FilterBarComponent SelectedFilter="{Binding SelectedFilter, Mode=TwoWay}"
-                                               AvailablePlans="{Binding AvailablePlans}"
-                                               SelectedPlan="{Binding SelectedPlan, Mode=TwoWay}"
-                                               SelectFilterCommand="{Binding SelectFilterCommand}"
-                                               SelectPlanCommand="{Binding SelectPlanCommand}" />
+                                              AvailablePlans="{Binding AvailablePlans}"
+                                              SelectedPlan="{Binding SelectedPlan, Mode=TwoWay}"
+                                              SelectFilterCommand="{Binding SelectFilterCommand}"
+                                              IsPlanPickerVisible="{Binding IsPlanPickerVisible}"
+                                              IsCustomRangeVisible="{Binding IsCustomRangeVisible}"
+                                              FilterStartDate="{Binding FilterStartDate, Mode=TwoWay}"
+                                              FilterEndDate="{Binding FilterEndDate, Mode=TwoWay}" />
 
-                <components:DateNavigationBarComponent DateRange="{Binding DateRange}"
-                                                      SelectedDate="{Binding SelectedDate, Mode=TwoWay}"
+                <components:DateNavigationBarComponent IsVisible="{Binding IsDayFilterActive}"
+                                                      DateRange="{Binding DateRange}"
+                                                      SelectedDate="{Binding SelectedDate}"
                                                       SelectDateCommand="{Binding SelectDateCommand}"
-                                                      IsVisibleForFilter="{Binding IsDayFilter}"
+                                                      IsVisibleForFilter="{Binding IsDayFilterActive}"
                                                       SelectedDateCaloriesText="{Binding SelectedDateCaloriesText}" />
 
-                <components:CalorieSummaryCardComponent ConsumedCalories="{Binding ConsumedCalories}"
-                                                       GoalCalories="{Binding GoalCalories}"
-                                                       CaloriesProgressRatio="{Binding CaloriesProgressRatio}"
-                                                       CaloriesMin="{Binding CaloriesMin}"
-                                                       CaloriesMax="{Binding CaloriesMax}"
-                                                       TargetRangeStart="{Binding TargetRangeStart}"
-                                                       TargetRangeEnd="{Binding TargetRangeEnd}" />
+                <components:CalorieSummaryCardComponent Data="{Binding CalorieSummaryData}"
+                                                       OpenSettingsCommand="{Binding OpenCalorieSettingsCommand}" />
 
-                <components:MacroNutritionCardComponent ConsumedCarbs="{Binding ConsumedCarbs}"
-                                                      ConsumedFat="{Binding ConsumedFat}"
-                                                      ConsumedProtein="{Binding ConsumedProtein}"
-                                                      RecommendedCarbsPercent="{Binding RecommendedCarbsPercent}"
-                                                      RecommendedFatPercent="{Binding RecommendedFatPercent}"
-                                                      RecommendedProteinPercent="{Binding RecommendedProteinPercent}"
-                                                      ActualCarbsPercent="{Binding ActualCarbsPercent}"
-                                                      ActualFatPercent="{Binding ActualFatPercent}"
-                                                      ActualProteinPercent="{Binding ActualProteinPercent}" />
+                <components:MacroNutritionCardComponent Data="{Binding MacroCardData}" />
 
-                <components:MealSlotListComponent MealSlots="{Binding MealSlots}"
+                <components:MealSlotListComponent Data="{Binding MealSlotListData}"
                                                  AddMealCommand="{Binding AddMealCommand}"
                                                  OpenMealDetailCommand="{Binding OpenMealDetailCommand}" />
             </VerticalStackLayout>

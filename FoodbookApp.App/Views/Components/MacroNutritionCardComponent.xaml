@@ -36,7 +36,7 @@
                             <Ellipse WidthRequest="8" HeightRequest="8" Fill="{DynamicResource DietStatsCarbsColor}" VerticalOptions="Center" />
                             <Label Text="{loc:Translate Resource=DietStatisticsPageResources, Key=MacroCarbs}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
                         </HorizontalStackLayout>
-                        <Label Text="{Binding ConsumedCarbs, Source={x:Reference MacroCardRoot}, StringFormat='{}{0:F1} g'}" FontSize="20" FontAttributes="Bold" TextColor="{DynamicResource PrimaryText}" />
+                        <Label Text="{Binding Data.ConsumedCarbs, Source={x:Reference MacroCardRoot}, StringFormat='{}{0:F1} g'}" FontSize="20" FontAttributes="Bold" TextColor="{DynamicResource PrimaryText}" />
                     </VerticalStackLayout>
 
                     <VerticalStackLayout Grid.Column="1" Spacing="2">
@@ -44,7 +44,7 @@
                             <Ellipse WidthRequest="8" HeightRequest="8" Fill="{DynamicResource DietStatsFatColor}" VerticalOptions="Center" />
                             <Label Text="{loc:Translate Resource=DietStatisticsPageResources, Key=MacroFat}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
                         </HorizontalStackLayout>
-                        <Label Text="{Binding ConsumedFat, Source={x:Reference MacroCardRoot}, StringFormat='{}{0:F1} g'}" FontSize="20" FontAttributes="Bold" TextColor="{DynamicResource PrimaryText}" />
+                        <Label Text="{Binding Data.ConsumedFat, Source={x:Reference MacroCardRoot}, StringFormat='{}{0:F1} g'}" FontSize="20" FontAttributes="Bold" TextColor="{DynamicResource PrimaryText}" />
                     </VerticalStackLayout>
 
                     <VerticalStackLayout Grid.Column="2" Spacing="2">
@@ -52,20 +52,41 @@
                             <Ellipse WidthRequest="8" HeightRequest="8" Fill="{DynamicResource DietStatsProteinColor}" VerticalOptions="Center" />
                             <Label Text="{loc:Translate Resource=DietStatisticsPageResources, Key=MacroProtein}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
                         </HorizontalStackLayout>
-                        <Label Text="{Binding ConsumedProtein, Source={x:Reference MacroCardRoot}, StringFormat='{}{0:F1} g'}" FontSize="20" FontAttributes="Bold" TextColor="{DynamicResource PrimaryText}" />
+                        <Label Text="{Binding Data.ConsumedProtein, Source={x:Reference MacroCardRoot}, StringFormat='{}{0:F1} g'}" FontSize="20" FontAttributes="Bold" TextColor="{DynamicResource PrimaryText}" />
                     </VerticalStackLayout>
                 </Grid>
 
                 <Grid ColumnDefinitions="*,*"
-                      ColumnSpacing="8">
-                    <VerticalStackLayout Grid.Column="0" Spacing="4">
-                        <GraphicsView x:Name="RecommendedChart" HeightRequest="142" WidthRequest="142" HorizontalOptions="Center" />
-                        <Label Text="{loc:Translate Resource=DietStatisticsPageResources, Key=MacroRecommended}" HorizontalTextAlignment="Center" FontAttributes="Bold" TextColor="{DynamicResource PrimaryText}" />
+                      ColumnSpacing="16"
+                      Margin="0,12,0,0">
+                    <VerticalStackLayout Grid.Column="0"
+                                         HorizontalOptions="Center"
+                                         Spacing="0">
+                        <GraphicsView x:Name="RecommendedChart"
+                                      WidthRequest="130"
+                                      HeightRequest="130"
+                                      HorizontalOptions="Center" />
+                        <Label Text="{loc:Translate Resource=DietStatisticsPageResources, Key=MacroRecommended}"
+                               HorizontalOptions="Center"
+                               HorizontalTextAlignment="Center"
+                               FontSize="12"
+                               Margin="0,6,0,0"
+                               TextColor="{DynamicResource PrimaryText}" />
                     </VerticalStackLayout>
 
-                    <VerticalStackLayout Grid.Column="1" Spacing="4">
-                        <GraphicsView x:Name="ActualChart" HeightRequest="142" WidthRequest="142" HorizontalOptions="Center" />
-                        <Label Text="{loc:Translate Resource=DietStatisticsPageResources, Key=MacroActual}" HorizontalTextAlignment="Center" FontAttributes="Bold" TextColor="{DynamicResource PrimaryText}" />
+                    <VerticalStackLayout Grid.Column="1"
+                                         HorizontalOptions="Center"
+                                         Spacing="0">
+                        <GraphicsView x:Name="ActualChart"
+                                      WidthRequest="130"
+                                      HeightRequest="130"
+                                      HorizontalOptions="Center" />
+                        <Label Text="{loc:Translate Resource=DietStatisticsPageResources, Key=MacroActual}"
+                               HorizontalOptions="Center"
+                               HorizontalTextAlignment="Center"
+                               FontSize="12"
+                               Margin="0,6,0,0"
+                               TextColor="{DynamicResource PrimaryText}" />
                     </VerticalStackLayout>
                 </Grid>
             </VerticalStackLayout>

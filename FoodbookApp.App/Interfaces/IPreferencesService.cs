@@ -1,4 +1,5 @@
 using Foodbook.Models;
+using Foodbook.Models.DTOs;
 
 namespace FoodbookApp.Interfaces;
 
@@ -146,6 +147,16 @@ public interface IPreferencesService
     /// Reads selected onboarding plan choice
     /// </summary>
     string GetPlanChoice();
+
+    /// <summary>
+    /// Gets manual meal entries stored for DietStatistics.
+    /// </summary>
+    IReadOnlyList<DietStatisticsMealDto> GetDietStatisticsMeals();
+
+    /// <summary>
+    /// Saves manual meal entries for DietStatistics.
+    /// </summary>
+    void SaveDietStatisticsMeals(IEnumerable<DietStatisticsMealDto> meals);
 
     /// <summary>
     /// Temporarily suppresses auto cloud sync for preference write operations.

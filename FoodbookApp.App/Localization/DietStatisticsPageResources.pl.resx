@@ -19,7 +19,27 @@
   <data name="FilterCustom" xml:space="preserve"><value>Wlasny</value></data>
   <data name="FilterPlan" xml:space="preserve"><value>Plan</value></data>
   <data name="MealsHeader" xml:space="preserve"><value>Posilki</value></data>
+  <data name="MealsTodayHeader" xml:space="preserve"><value>Dzisiejsze posilki</value></data>
+  <data name="MealsTodayHint" xml:space="preserve"><value>Zaplanowane i recznie dodane posilki na dzisiaj.</value></data>
+  <data name="MealBreakfast" xml:space="preserve"><value>Sniadanie</value></data>
+  <data name="MealLunch" xml:space="preserve"><value>Obiad</value></data>
+  <data name="MealDinner" xml:space="preserve"><value>Kolacja</value></data>
+  <data name="MealMorningSnack" xml:space="preserve"><value>Poranna przekaska</value></data>
+  <data name="MealAfternoonSnack" xml:space="preserve"><value>Popoludniowa przekaska</value></data>
+  <data name="MealSlot" xml:space="preserve"><value>Posilek</value></data>
+  <data name="MealPlannerEntrySubtitle" xml:space="preserve"><value>Zaplanowany posilek</value></data>
+  <data name="MealManualEntrySubtitle" xml:space="preserve"><value>Wpis reczny</value></data>
   <data name="AddMealButton" xml:space="preserve"><value>Dodaj</value></data>
+  <data name="AddMealPopupTitle" xml:space="preserve"><value>Dodaj posilek</value></data>
+  <data name="AddMealPopupNameLabel" xml:space="preserve"><value>Nazwa posilku</value></data>
+  <data name="AddMealPopupNamePlaceholder" xml:space="preserve"><value>np. przekaska proteinowa</value></data>
+  <data name="AddMealPopupCaloriesLabel" xml:space="preserve"><value>Kalorie (kcal)</value></data>
+  <data name="AddMealPopupCaloriesPlaceholder" xml:space="preserve"><value>np. 250</value></data>
+  <data name="AddMealPopupSave" xml:space="preserve"><value>Zapisz</value></data>
+  <data name="AddMealPopupCancel" xml:space="preserve"><value>Anuluj</value></data>
+  <data name="AddMealPopupInvalidName" xml:space="preserve"><value>Wpisz nazwe posilku.</value></data>
+  <data name="AddMealPopupInvalidCalories" xml:space="preserve"><value>Wpisz poprawna wartosc kcal.</value></data>
+  <data name="AddMealPopupSaveError" xml:space="preserve"><value>Nie udalo sie zapisac wpisu posilku.</value></data>
   <data name="NoMealsPlaceholder" xml:space="preserve"><value>Brak zarejestrowanych posilkow</value></data>
   <data name="NutritionCardTitle" xml:space="preserve"><value>Wart. odzywcza</value></data>
 </root>

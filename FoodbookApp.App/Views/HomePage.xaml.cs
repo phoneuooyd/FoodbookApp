@@ -246,18 +246,6 @@ public partial class HomePage : ContentPage, ITabLoadable
         }
     }
 
-    private async void OnOpenDietStatisticsClicked(object sender, EventArgs e)
-    {
-        try
-        {
-            await Shell.Current.GoToAsync(nameof(DietStatisticsPage));
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[HomePage] Failed to open DietStatisticsPage: {ex.Message}");
-        }
-    }
-
     protected override bool OnBackButtonPressed()
     {
         try

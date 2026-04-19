@@ -19,7 +19,27 @@
   <data name="FilterCustom" xml:space="preserve"><value>Benutzerd.</value></data>
   <data name="FilterPlan" xml:space="preserve"><value>Plan</value></data>
   <data name="MealsHeader" xml:space="preserve"><value>Mahlzeiten</value></data>
+  <data name="MealsTodayHeader" xml:space="preserve"><value>Heutige Mahlzeiten</value></data>
+  <data name="MealsTodayHint" xml:space="preserve"><value>Geplante und manuelle Eintrage fur heute.</value></data>
+  <data name="MealBreakfast" xml:space="preserve"><value>Fruehstueck</value></data>
+  <data name="MealLunch" xml:space="preserve"><value>Mittagessen</value></data>
+  <data name="MealDinner" xml:space="preserve"><value>Abendessen</value></data>
+  <data name="MealMorningSnack" xml:space="preserve"><value>Morgensnack</value></data>
+  <data name="MealAfternoonSnack" xml:space="preserve"><value>Nachmittagssnack</value></data>
+  <data name="MealSlot" xml:space="preserve"><value>Mahlzeit</value></data>
+  <data name="MealPlannerEntrySubtitle" xml:space="preserve"><value>Geplante Mahlzeit</value></data>
+  <data name="MealManualEntrySubtitle" xml:space="preserve"><value>Manueller Eintrag</value></data>
   <data name="AddMealButton" xml:space="preserve"><value>Hinzufugen</value></data>
+  <data name="AddMealPopupTitle" xml:space="preserve"><value>Mahlzeit hinzufugen</value></data>
+  <data name="AddMealPopupNameLabel" xml:space="preserve"><value>Name der Mahlzeit</value></data>
+  <data name="AddMealPopupNamePlaceholder" xml:space="preserve"><value>z.B. Protein-Snack</value></data>
+  <data name="AddMealPopupCaloriesLabel" xml:space="preserve"><value>Kalorien (kcal)</value></data>
+  <data name="AddMealPopupCaloriesPlaceholder" xml:space="preserve"><value>z.B. 250</value></data>
+  <data name="AddMealPopupSave" xml:space="preserve"><value>Speichern</value></data>
+  <data name="AddMealPopupCancel" xml:space="preserve"><value>Abbrechen</value></data>
+  <data name="AddMealPopupInvalidName" xml:space="preserve"><value>Bitte einen Mahlzeitnamen eingeben.</value></data>
+  <data name="AddMealPopupInvalidCalories" xml:space="preserve"><value>Bitte einen gueltigen kcal-Wert eingeben.</value></data>
+  <data name="AddMealPopupSaveError" xml:space="preserve"><value>Der Mahlzeiteintrag konnte nicht gespeichert werden.</value></data>
   <data name="NoMealsPlaceholder" xml:space="preserve"><value>Keine Mahlzeiten</value></data>
   <data name="NutritionCardTitle" xml:space="preserve"><value>Nahrwerte</value></data>
 </root>

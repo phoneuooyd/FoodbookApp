@@ -1,265 +1,124 @@
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Globalization;
-using System.Resources;
-using System.Runtime.CompilerServices;
-using System.Windows.Input;
-using Foodbook.Models;
-using StatsFilterMode = Foodbook.ViewModels.FilterMode;
-using Foodbook.Views.Base;
-
 namespace Foodbook.Views.Components;
-
-public sealed class FilterChipItem : INotifyPropertyChanged
-{
-    private Color _backgroundColor = Colors.Transparent;
-    private Color _textColor = Colors.Gray;
-
-    public StatsFilterMode Mode { get; init; }
-
-    public string Title { get; init; } = string.Empty;
-
-    public Color BackgroundColor
-    {
-        get => _backgroundColor;
-        set
-        {
-            if (_backgroundColor == value)
-            {
-                return;
-            }
-
-            _backgroundColor = value;
-            OnPropertyChanged();
-        }
-    }
-
-    public Color TextColor
-    {
-        get => _textColor;
-        set
-        {
-            if (_textColor == value)
-            {
-                return;
-            }
-
-            _textColor = value;
-            OnPropertyChanged();
-        }
-    }
-
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-}
 
 public partial class FilterBarComponent : ContentView
 {
-    private static readonly ResourceManager ResourceManager =
-        new("FoodbookApp.Localization.DietStatisticsPageResources", typeof(FilterBarComponent).Assembly);
-
     public static readonly BindableProperty SelectedFilterProperty =
-        BindableProperty.Create(
-            nameof(SelectedFilter),
-            typeof(StatsFilterMode),
-            typeof(FilterBarComponent),
-            StatsFilterMode.Day,
-            BindingMode.TwoWay,
-            propertyChanged: OnSelectedFilterChanged);
+        BindableProperty.Create(nameof(SelectedFilter), typeof(ViewModels.FilterMode), typeof(FilterBarComponent), ViewModels.FilterMode.Day, propertyChanged: OnStateChanged);
 
     public static readonly BindableProperty AvailablePlansProperty =
-        BindableProperty.Create(
-            nameof(AvailablePlans),
-            typeof(IEnumerable<Plan>),
-            typeof(FilterBarComponent));
+        BindableProperty.Create(nameof(AvailablePlans), typeof(IEnumerable<Models.Plan>), typeof(FilterBarComponent), null);
 
     public static readonly BindableProperty SelectedPlanProperty =
-        BindableProperty.Create(
-            nameof(SelectedPlan),
-            typeof(Plan),
-            typeof(FilterBarComponent),
-            null,
-            BindingMode.TwoWay);
+        BindableProperty.Create(nameof(SelectedPlan), typeof(Models.Plan), typeof(FilterBarComponent), null, BindingMode.TwoWay);
 
     public static readonly BindableProperty SelectFilterCommandProperty =
-        BindableProperty.Create(
-            nameof(SelectFilterCommand),
-            typeof(ICommand),
-            typeof(FilterBarComponent));
+        BindableProperty.Create(nameof(SelectFilterCommand), typeof(System.Windows.Input.ICommand), typeof(FilterBarComponent), null);
 
-    public static readonly BindableProperty SelectPlanCommandProperty =
-        BindableProperty.Create(
-            nameof(SelectPlanCommand),
-            typeof(ICommand),
-            typeof(FilterBarComponent));
+    public static readonly BindableProperty IsPlanPickerVisibleProperty =
+        BindableProperty.Create(nameof(IsPlanPickerVisible), typeof(bool), typeof(FilterBarComponent), false);
 
-    private readonly PageThemeHelper _themeHelper;
+    public static readonly BindableProperty IsCustomRangeVisibleProperty =
+        BindableProperty.Create(nameof(IsCustomRangeVisible), typeof(bool), typeof(FilterBarComponent), false);
+
+    public static readonly BindableProperty FilterStartDateProperty =
+        BindableProperty.Create(nameof(FilterStartDate), typeof(DateTime), typeof(FilterBarComponent), DateTime.Today, BindingMode.TwoWay);
+
+    public static readonly BindableProperty FilterEndDateProperty =
+        BindableProperty.Create(nameof(FilterEndDate), typeof(DateTime), typeof(FilterBarComponent), DateTime.Today, BindingMode.TwoWay);
 
     public FilterBarComponent()
     {
         InitializeComponent();
-        _themeHelper = new PageThemeHelper();
-
-        Chips = new ObservableCollection<FilterChipItem>();
-        BindingContext = this;
-
-        Loaded += OnComponentLoaded;
-        Unloaded += OnComponentUnloaded;
     }
 
-    public ObservableCollection<FilterChipItem> Chips { get; }
-
-    public StatsFilterMode SelectedFilter
+    public ViewModels.FilterMode SelectedFilter
     {
-        get => (StatsFilterMode)GetValue(SelectedFilterProperty);
+        get => (ViewModels.FilterMode)GetValue(SelectedFilterProperty);
         set => SetValue(SelectedFilterProperty, value);
     }
 
-    public IEnumerable<Plan>? AvailablePlans
+    public IEnumerable<Models.Plan>? AvailablePlans
     {
-        get => (IEnumerable<Plan>?)GetValue(AvailablePlansProperty);
+        get => (IEnumerable<Models.Plan>?)GetValue(AvailablePlansProperty);
         set => SetValue(AvailablePlansProperty, value);
     }
 
-    public Plan? SelectedPlan
+    public Models.Plan? SelectedPlan
     {
-        get => (Plan?)GetValue(SelectedPlanProperty);
+        get => (Models.Plan?)GetValue(SelectedPlanProperty);
         set => SetValue(SelectedPlanProperty, value);
     }
 
-    public ICommand? SelectFilterCommand
+    public System.Windows.Input.ICommand? SelectFilterCommand
     {
-        get => (ICommand?)GetValue(SelectFilterCommandProperty);
+        get => (System.Windows.Input.ICommand?)GetValue(SelectFilterCommandProperty);
         set => SetValue(SelectFilterCommandProperty, value);
     }
 
-    public ICommand? SelectPlanCommand
+    public bool IsPlanPickerVisible
     {
-        get => (ICommand?)GetValue(SelectPlanCommandProperty);
-        set => SetValue(SelectPlanCommandProperty, value);
+        get => (bool)GetValue(IsPlanPickerVisibleProperty);
+        set => SetValue(IsPlanPickerVisibleProperty, value);
     }
 
-    public bool IsPlanPickerVisible => SelectedFilter == StatsFilterMode.Plan;
-
-    private void OnComponentLoaded(object? sender, EventArgs e)
+    public bool IsCustomRangeVisible
     {
-        _themeHelper.Initialize();
-        BuildChips();
-        RefreshVisualState(animateSelectedChip: false);
+        get => (bool)GetValue(IsCustomRangeVisibleProperty);
+        set => SetValue(IsCustomRangeVisibleProperty, value);
     }
 
-    private void OnComponentUnloaded(object? sender, EventArgs e)
+    public DateTime FilterStartDate
     {
-        _themeHelper.Cleanup();
+        get => (DateTime)GetValue(FilterStartDateProperty);
+        set => SetValue(FilterStartDateProperty, value);
     }
 
-    private static void OnSelectedFilterChanged(BindableObject bindable, object oldValue, object newValue)
+    public DateTime FilterEndDate
     {
-        if (bindable is not FilterBarComponent component)
+        get => (DateTime)GetValue(FilterEndDateProperty);
+        set => SetValue(FilterEndDateProperty, value);
+    }
+
+    public Color ChipDayColor => GetChipBackground(ViewModels.FilterMode.Day);
+
+    public Color ChipDayTextColor => GetChipText(ViewModels.FilterMode.Day);
+
+    public Color ChipWeekColor => GetChipBackground(ViewModels.FilterMode.Week);
+
+    public Color ChipWeekTextColor => GetChipText(ViewModels.FilterMode.Week);
+
+    public Color ChipMonthColor => GetChipBackground(ViewModels.FilterMode.Month);
+
+    public Color ChipMonthTextColor => GetChipText(ViewModels.FilterMode.Month);
+
+    public Color ChipCustomColor => GetChipBackground(ViewModels.FilterMode.Custom);
+
+    public Color ChipCustomTextColor => GetChipText(ViewModels.FilterMode.Custom);
+
+    public Color ChipPlanColor => GetChipBackground(ViewModels.FilterMode.Plan);
+
+    public Color ChipPlanTextColor => GetChipText(ViewModels.FilterMode.Plan);
+
+    private static void OnStateChanged(BindableObject bindable, object oldValue, object newValue)
+    {
+        if (bindable is FilterBarComponent component)
         {
-            return;
-        }
-
-        component.OnPropertyChanged(nameof(component.IsPlanPickerVisible));
-        component.RefreshVisualState(animateSelectedChip: true);
-    }
-
-    private void BuildChips()
-    {
-        Chips.Clear();
-        Chips.Add(new FilterChipItem { Mode = StatsFilterMode.Day, Title = Localize("FilterDay") });
-        Chips.Add(new FilterChipItem { Mode = StatsFilterMode.Week, Title = Localize("FilterWeek") });
-        Chips.Add(new FilterChipItem { Mode = StatsFilterMode.Month, Title = Localize("FilterMonth") });
-        Chips.Add(new FilterChipItem { Mode = StatsFilterMode.Custom, Title = Localize("FilterCustom") });
-        Chips.Add(new FilterChipItem { Mode = StatsFilterMode.Plan, Title = Localize("FilterPlan") });
-    }
-
-    private void RefreshVisualState(bool animateSelectedChip)
-    {
-        var activeBackground = TryGetColor("DietStatsChipActiveBackgroundColor", Color.FromArgb("#8B72FF"));
-        var activeText = TryGetColor("DietStatsChipActiveTextColor", Colors.White);
-        var inactiveBackground = TryGetColor("DietStatsChipInactiveBackgroundColor", Color.FromRgba(255, 255, 255, 0.12f));
-        var inactiveText = TryGetColor("DietStatsChipInactiveTextColor", Color.FromArgb("#AFAFB8"));
-
-        foreach (var chip in Chips)
-        {
-            var isSelected = chip.Mode == SelectedFilter;
-            chip.BackgroundColor = isSelected ? activeBackground : inactiveBackground;
-            chip.TextColor = isSelected ? activeText : inactiveText;
-        }
-
-        if (animateSelectedChip)
-        {
-            _ = AnimateSelectionAsync();
-        }
-    }
-
-    private async Task AnimateSelectionAsync()
-    {
-        try
-        {
-            await this.FadeTo(0.92, 80, Easing.CubicOut);
-            await this.ScaleTo(0.995, 80, Easing.CubicOut);
-            await this.FadeTo(1, 120, Easing.CubicIn);
-            await this.ScaleTo(1, 120, Easing.CubicIn);
-        }
-        catch
-        {
+            component.OnPropertyChanged(nameof(ChipDayColor));
+            component.OnPropertyChanged(nameof(ChipDayTextColor));
+            component.OnPropertyChanged(nameof(ChipWeekColor));
+            component.OnPropertyChanged(nameof(ChipWeekTextColor));
+            component.OnPropertyChanged(nameof(ChipMonthColor));
+            component.OnPropertyChanged(nameof(ChipMonthTextColor));
+            component.OnPropertyChanged(nameof(ChipCustomColor));
+            component.OnPropertyChanged(nameof(ChipCustomTextColor));
+            component.OnPropertyChanged(nameof(ChipPlanColor));
+            component.OnPropertyChanged(nameof(ChipPlanTextColor));
         }
     }
 
-    private void OnChipTapped(object? sender, TappedEventArgs e)
-    {
-        if (e.Parameter is not FilterChipItem chip)
-        {
-            return;
-        }
+    private Color GetChipBackground(ViewModels.FilterMode mode)
+        => SelectedFilter == mode ? Color.FromArgb("#8B72FF") : Color.FromArgb("#338B72FF");
 
-        SelectedFilter = chip.Mode;
-        if (SelectFilterCommand?.CanExecute(chip.Mode) == true)
-        {
-            SelectFilterCommand.Execute(chip.Mode);
-        }
-    }
-
-    private void OnPlanPickerChanged(object? sender, EventArgs e)
-    {
-        if (SelectedPlan == null)
-        {
-            return;
-        }
-
-        if (SelectPlanCommand?.CanExecute(SelectedPlan) == true)
-        {
-            SelectPlanCommand.Execute(SelectedPlan);
-        }
-    }
-
-    private string Localize(string key)
-    {
-        return key switch
-        {
-            "FilterDay" => GetText("FilterDay", "Day"),
-            "FilterWeek" => GetText("FilterWeek", "Week"),
-            "FilterMonth" => GetText("FilterMonth", "Month"),
-            "FilterCustom" => GetText("FilterCustom", "Custom"),
-            "FilterPlan" => GetText("FilterPlan", "Plan"),
-            _ => key
-        };
-    }
-
-    private static Color TryGetColor(string key, Color fallback)
-    {
-        if (Application.Current?.Resources.TryGetValue(key, out var value) == true && value is Color color)
-        {
-            return color;
-        }
-
-        return fallback;
-    }
-
-    private static string GetText(string key, string fallback)
-        => ResourceManager.GetString(key, CultureInfo.CurrentUICulture) ?? fallback;
+    private Color GetChipText(ViewModels.FilterMode mode)
+        => SelectedFilter == mode ? Colors.White : Color.FromArgb("#AAAAAA");
 }

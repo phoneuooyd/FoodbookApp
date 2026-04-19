@@ -3,8 +3,13 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using CommunityToolkit.Maui.Extensions;
 using Foodbook.Models;
+using Foodbook.Models.DTOs;
 using FoodbookApp.Interfaces;
+using Foodbook.Services;
+using Foodbook.Views.Components;
+using Microsoft.Maui.Graphics;
 
 namespace Foodbook.ViewModels;
 
@@ -64,15 +69,58 @@ public sealed class DateItem : INotifyPropertyChanged
 /// </summary>
 public sealed class MealSlotViewModel
 {
-    public Guid PlannedMealId { get; init; }
+    public Guid MealId { get; init; }
+
+    public DateTime MealDate { get; init; }
+
+    public bool IsManualMeal { get; init; }
+
+    public Guid? PlannedMealId { get; init; }
+
+    public Guid? ManualMealId { get; init; }
 
     public string MealName { get; init; } = string.Empty;
 
     public string IngredientsSummary { get; init; } = string.Empty;
 
+    public string PortionsSummary { get; init; } = string.Empty;
+
     public double Calories { get; init; }
 
     public PlannedMeal? SourceMeal { get; init; }
+}
+
+public sealed record MacroNutritionCardData(
+    double ConsumedCarbs,
+    double ConsumedFat,
+    double ConsumedProtein,
+    double RecommendedCarbsPercent,
+    double RecommendedFatPercent,
+    double RecommendedProteinPercent,
+    double ActualCarbsPercent,
+    double ActualFatPercent,
+    double ActualProteinPercent)
+{
+    public static MacroNutritionCardData Empty { get; } = new(0, 0, 0, 55, 20, 25, 0, 0, 0);
+}
+
+public sealed record CalorieSummaryCardData(
+    double ConsumedCalories,
+    double GoalCalories,
+    double CaloriesProgressRatio,
+    double CaloriesMin,
+    double CaloriesMax,
+    double TargetRangeStart,
+    double TargetRangeEnd)
+{
+    public static CalorieSummaryCardData Empty { get; } = new(0, 0, 0, 0, 1, 0, 0);
+}
+
+public sealed record MealSlotListData(IReadOnlyList<MealSlotViewModel> MealSlots)
+{
+    public static MealSlotListData Empty { get; } = new(Array.Empty<MealSlotViewModel>());
+
+    public bool IsEmpty => MealSlots.Count == 0;
 }
 
 /// <summary>
@@ -80,17 +128,23 @@ public sealed class MealSlotViewModel
 /// </summary>
 public class DietStatisticsViewModel : INotifyPropertyChanged
 {
-    private readonly IRecipeService _recipeService;
-    private readonly IPlanService _planService;
     private readonly IPlannerService _plannerService;
+    private readonly IPlanService _planService;
+    private readonly IRecipeService _recipeService;
+    private readonly IIngredientService _ingredientService;
     private readonly ILocalizationService _localizationService;
+    private readonly IPreferencesService _preferencesService;
+    private readonly Func<Task> _planChangedHandler;
 
-    private FilterMode _selectedFilter = FilterMode.Day;
-    private DateTime _filterStartDate = DateTime.Today;
+    private FilterMode _selectedFilter = FilterMode.Week;
+    private DateTime _filterStartDate = DateTime.Today.AddDays(-6);
     private DateTime _filterEndDate = DateTime.Today;
     private Plan? _selectedPlan;
     private double _consumedCalories;
-    private double _goalCalories = 2010;
+    private double _goalCalories = 2000;
+    private double _baseDailyCalorieLimit = 2000;
+    private double _targetRangeLowerRatio = 0.9;
+    private double _targetRangeUpperRatio = 1.1;
     private double _caloriesMin;
     private double _caloriesMax = 2613;
     private double _targetRangeStart = 1809;
@@ -103,20 +157,29 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
     private double _actualProteinPercent;
     private DateItem? _selectedDate;
     private bool _isLoading;
+    private bool _isListening;
+    private bool _suppressAutoReload;
+    private MacroNutritionCardData _macroCardData = MacroNutritionCardData.Empty;
+    private CalorieSummaryCardData _calorieSummaryData = CalorieSummaryCardData.Empty;
+    private MealSlotListData _mealSlotListData = MealSlotListData.Empty;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DietStatisticsViewModel"/> class.
     /// </summary>
     public DietStatisticsViewModel(
-        IRecipeService recipeService,
-        IPlanService planService,
         IPlannerService plannerService,
-        ILocalizationService localizationService)
+        IPlanService planService,
+        IRecipeService recipeService,
+        IIngredientService ingredientService,
+        ILocalizationService localizationService,
+        IPreferencesService preferencesService)
     {
-        _recipeService = recipeService;
-        _planService = planService;
         _plannerService = plannerService;
+        _planService = planService;
+        _recipeService = recipeService;
+        _ingredientService = ingredientService;
         _localizationService = localizationService;
+        _preferencesService = preferencesService;
 
         AvailablePlans = new ObservableCollection<Plan>();
         MealSlots = new ObservableCollection<MealSlotViewModel>();
@@ -125,11 +188,11 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
         SelectDateCommand = new Command<DateItem>(async item => await SelectDateAsync(item));
         SelectFilterCommand = new Command<FilterMode>(async mode => await SelectFilterAsync(mode));
         SelectPlanCommand = new Command<Plan>(async plan => await SelectPlanAsync(plan));
-        AddMealCommand = new Command<MealSlotViewModel>(OnAddMeal);
+        AddMealCommand = new Command<MealSlotViewModel>(async item => await AddManualMealAsync(item));
         OpenMealDetailCommand = new Command<MealSlotViewModel>(OnOpenMealDetail);
         SelectCustomRangeCommand = new Command(async () => await SelectCustomRangeAsync());
-
-        _localizationService.CultureChanged += OnCultureChanged;
+        OpenCalorieSettingsCommand = new Command(async () => await OpenCalorieSettingsAsync());
+        _planChangedHandler = OnPlanChangedAsync;
 
         BuildDateRange(DateTime.Today);
         if (DateRange.Count > 0)
@@ -154,6 +217,21 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
             _selectedFilter = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(IsDayFilter));
+            OnPropertyChanged(nameof(IsDayFilterActive));
+            OnPropertyChanged(nameof(IsPlanPickerVisible));
+            OnPropertyChanged(nameof(IsCustomRangeVisible));
+            OnPropertyChanged(nameof(ChipDayColor));
+            OnPropertyChanged(nameof(ChipDayTextColor));
+            OnPropertyChanged(nameof(ChipWeekColor));
+            OnPropertyChanged(nameof(ChipWeekTextColor));
+            OnPropertyChanged(nameof(ChipMonthColor));
+            OnPropertyChanged(nameof(ChipMonthTextColor));
+            OnPropertyChanged(nameof(ChipCustomColor));
+            OnPropertyChanged(nameof(ChipCustomTextColor));
+            OnPropertyChanged(nameof(ChipPlanColor));
+            OnPropertyChanged(nameof(ChipPlanTextColor));
+
+            TriggerAutoReload();
         }
     }
 
@@ -173,6 +251,12 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
             _filterStartDate = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(FilterRangeText));
+            OnPropertyChanged(nameof(HeaderSubtitle));
+
+            if (SelectedFilter == FilterMode.Custom)
+            {
+                TriggerAutoReload();
+            }
         }
     }
 
@@ -192,6 +276,12 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
             _filterEndDate = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(FilterRangeText));
+            OnPropertyChanged(nameof(HeaderSubtitle));
+
+            if (SelectedFilter == FilterMode.Custom)
+            {
+                TriggerAutoReload();
+            }
         }
     }
 
@@ -210,6 +300,7 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
 
             _selectedPlan = value;
             OnPropertyChanged();
+            TriggerAutoReload();
         }
     }
 
@@ -463,6 +554,51 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
     /// </summary>
     public ObservableCollection<MealSlotViewModel> MealSlots { get; }
 
+    public MacroNutritionCardData MacroCardData
+    {
+        get => _macroCardData;
+        private set
+        {
+            if (Equals(_macroCardData, value))
+            {
+                return;
+            }
+
+            _macroCardData = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public CalorieSummaryCardData CalorieSummaryData
+    {
+        get => _calorieSummaryData;
+        private set
+        {
+            if (Equals(_calorieSummaryData, value))
+            {
+                return;
+            }
+
+            _calorieSummaryData = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public MealSlotListData MealSlotListData
+    {
+        get => _mealSlotListData;
+        private set
+        {
+            if (Equals(_mealSlotListData, value))
+            {
+                return;
+            }
+
+            _mealSlotListData = value;
+            OnPropertyChanged();
+        }
+    }
+
     /// <summary>
     /// Date range chips for day mode.
     /// </summary>
@@ -547,10 +683,54 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
     /// </summary>
     public ICommand SelectCustomRangeCommand { get; }
 
+    public ICommand OpenCalorieSettingsCommand { get; }
+
+    public double BaseDailyCalorieLimit => _baseDailyCalorieLimit;
+
+    public double TargetRangeLowerRatio => _targetRangeLowerRatio;
+
+    public double TargetRangeUpperRatio => _targetRangeUpperRatio;
+
     /// <summary>
     /// Indicates whether day filter UI sections should be visible.
     /// </summary>
     public bool IsDayFilter => SelectedFilter == FilterMode.Day;
+
+    public bool IsDayFilterActive => IsDayFilter;
+
+    public string HeaderTitle => _localizationService.GetString("DietStatisticsPageResources", "PageTitle");
+
+    public string HeaderSubtitle => FilterRangeText;
+
+    /// <summary>
+    /// Indicates whether plan picker is visible.
+    /// </summary>
+    public bool IsPlanPickerVisible => SelectedFilter == FilterMode.Plan;
+
+    /// <summary>
+    /// Indicates whether custom date range pickers are visible.
+    /// </summary>
+    public bool IsCustomRangeVisible => SelectedFilter == FilterMode.Custom;
+
+    public Color ChipDayColor => GetChipBackground(FilterMode.Day);
+
+    public Color ChipDayTextColor => GetChipTextColor(FilterMode.Day);
+
+    public Color ChipWeekColor => GetChipBackground(FilterMode.Week);
+
+    public Color ChipWeekTextColor => GetChipTextColor(FilterMode.Week);
+
+    public Color ChipMonthColor => GetChipBackground(FilterMode.Month);
+
+    public Color ChipMonthTextColor => GetChipTextColor(FilterMode.Month);
+
+    public Color ChipCustomColor => GetChipBackground(FilterMode.Custom);
+
+    public Color ChipCustomTextColor => GetChipTextColor(FilterMode.Custom);
+
+    public Color ChipPlanColor => GetChipBackground(FilterMode.Plan);
+
+    public Color ChipPlanTextColor => GetChipTextColor(FilterMode.Plan);
 
     /// <summary>
     /// Human-readable selected range.
@@ -567,16 +747,221 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
     /// </summary>
     public async Task LoadAsync()
     {
+        if (IsLoading)
+        {
+            return;
+        }
+
         try
         {
             IsLoading = true;
-            await LoadAvailablePlansAsync();
-            await RefreshAsync();
+            _suppressAutoReload = true;
+
+            var plans = await _planService.GetPlansAsync();
+            var plannerPlans = plans
+                .Where(p => p.Type == PlanType.Planner && !p.IsArchived)
+                .OrderByDescending(p => p.StartDate)
+                .ToList();
+
+            AvailablePlans.Clear();
+            foreach (var plan in plannerPlans)
+            {
+                AvailablePlans.Add(plan);
+            }
+
+            if (SelectedPlan == null || AvailablePlans.All(p => p.Id != SelectedPlan.Id))
+            {
+                _selectedPlan = AvailablePlans.FirstOrDefault();
+                OnPropertyChanged(nameof(SelectedPlan));
+            }
+
+            var (start, end) = GetDateRangeForFilter();
+            if (end < start)
+            {
+                (start, end) = (end, start);
+            }
+
+            FilterStartDate = start.Date;
+            FilterEndDate = end.Date;
+
+            List<PlannedMeal> plannedMeals;
+            if (SelectedFilter == FilterMode.Plan && SelectedPlan != null)
+            {
+                plannedMeals = await _plannerService.GetPlannedMealsAsync(SelectedPlan.Id);
+            }
+            else
+            {
+                plannedMeals = await _plannerService.GetPlannedMealsAsync(start.Date, end.Date.AddDays(1).AddTicks(-1));
+            }
+
+            plannedMeals = plannedMeals
+                .Where(m => m.Date.Date >= start.Date && m.Date.Date <= end.Date)
+                .ToList();
+
+            var recipes = await _recipeService.GetRecipesAsync();
+            var recipeMap = recipes.ToDictionary(r => r.Id);
+
+            var allManualMeals = (_preferencesService.GetDietStatisticsMeals() ?? Array.Empty<DietStatisticsMealDto>())
+                .OrderBy(m => m.Date)
+                .ThenBy(m => m.CreatedAt)
+                .ToList();
+
+            var manualMeals = allManualMeals
+                .Where(m => m.Date.Date >= start.Date && m.Date.Date <= end.Date)
+                .ToList();
+
+            var todayStart = DateTime.Today;
+            var todayEnd = DateTime.Today.AddDays(1).AddTicks(-1);
+
+            var todaysPlannedMeals = await _plannerService.GetPlannedMealsAsync(todayStart, todayEnd);
+            todaysPlannedMeals = todaysPlannedMeals
+                .Where(m => m.Date.Date == DateTime.Today)
+                .OrderBy(m => m.Date)
+                .ThenBy(m => m.Id)
+                .ToList();
+
+            var todaysManualMeals = allManualMeals
+                .Where(m => m.Date.Date == DateTime.Today)
+                .ToList();
+
+            double totalCalories = 0;
+            double totalCarbs = 0;
+            double totalFat = 0;
+            double totalProtein = 0;
+
+            foreach (var meal in plannedMeals)
+            {
+                var recipe = meal.Recipe;
+
+                if (recipe == null && meal.RecipeId != Guid.Empty)
+                {
+                    recipeMap.TryGetValue(meal.RecipeId, out recipe);
+                }
+
+                if (recipe == null && meal.RecipeId != Guid.Empty)
+                {
+                    recipe = await _recipeService.GetRecipeAsync(meal.RecipeId);
+                    if (recipe != null)
+                    {
+                        recipeMap[meal.RecipeId] = recipe;
+                    }
+                }
+
+                if (recipe == null)
+                {
+                    continue;
+                }
+
+                double portions = meal.Portions > 0 ? meal.Portions : 1;
+                double recipePortions = recipe.IloscPorcji > 0 ? recipe.IloscPorcji : 1;
+                double portionMultiplier = portions / recipePortions;
+
+                totalCalories += recipe.Calories * portionMultiplier;
+                totalCarbs += recipe.Carbs * portionMultiplier;
+                totalFat += recipe.Fat * portionMultiplier;
+                totalProtein += recipe.Protein * portionMultiplier;
+            }
+
+            foreach (var manualMeal in manualMeals)
+            {
+                totalCalories += manualMeal.Calories;
+                totalCarbs += manualMeal.Carbs;
+                totalFat += manualMeal.Fat;
+                totalProtein += manualMeal.Protein;
+            }
+
+            ConsumedCalories = Math.Round(totalCalories, 1);
+            ConsumedCarbs = Math.Round(totalCarbs, 1);
+            ConsumedFat = Math.Round(totalFat, 1);
+            ConsumedProtein = Math.Round(totalProtein, 1);
+
+            double macroTotal = totalCarbs + totalFat + totalProtein;
+            if (macroTotal > 0)
+            {
+                ActualCarbsPercent = Math.Round(totalCarbs / macroTotal * 100, 1);
+                ActualFatPercent = Math.Round(totalFat / macroTotal * 100, 1);
+                ActualProteinPercent = Math.Round(totalProtein / macroTotal * 100, 1);
+            }
+            else
+            {
+                ActualCarbsPercent = 0;
+                ActualFatPercent = 0;
+                ActualProteinPercent = 0;
+            }
+
+            GoalCalories = Math.Max(1, Math.Round(_baseDailyCalorieLimit));
+            CaloriesMin = 0;
+            CaloriesMax = Math.Max(GoalCalories * 1.3, ConsumedCalories * 1.1);
+            TargetRangeStart = GoalCalories * _targetRangeLowerRatio;
+            TargetRangeEnd = GoalCalories * _targetRangeUpperRatio;
+
+            await BuildMealSlotsAsync(todaysPlannedMeals, todaysManualMeals, recipeMap);
+
+            MacroCardData = new MacroNutritionCardData(
+                ConsumedCarbs,
+                ConsumedFat,
+                ConsumedProtein,
+                RecommendedCarbsPercent,
+                RecommendedFatPercent,
+                RecommendedProteinPercent,
+                ActualCarbsPercent,
+                ActualFatPercent,
+                ActualProteinPercent);
+
+            CalorieSummaryData = new CalorieSummaryCardData(
+                ConsumedCalories,
+                GoalCalories,
+                CaloriesProgressRatio,
+                CaloriesMin,
+                CaloriesMax,
+                TargetRangeStart,
+                TargetRangeEnd);
+
+            MealSlotListData = new MealSlotListData(MealSlots.ToList());
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[DietStatisticsViewModel] LoadAsync error: {ex}");
         }
         finally
         {
+            _suppressAutoReload = false;
             IsLoading = false;
         }
+    }
+
+    private void TriggerAutoReload()
+    {
+        if (_suppressAutoReload)
+        {
+            return;
+        }
+
+        _ = LoadAsync();
+    }
+
+    public void StartListening()
+    {
+        if (_isListening)
+        {
+            return;
+        }
+
+        _localizationService.CultureChanged += OnCultureChanged;
+        AppEvents.PlanChangedAsync += _planChangedHandler;
+        _isListening = true;
+    }
+
+    public void StopListening()
+    {
+        if (!_isListening)
+        {
+            return;
+        }
+
+        _localizationService.CultureChanged -= OnCultureChanged;
+        AppEvents.PlanChangedAsync -= _planChangedHandler;
+        _isListening = false;
     }
 
     private async Task SelectDateAsync(DateItem? dateItem)
@@ -592,6 +977,7 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
 
     private async Task SelectFilterAsync(FilterMode mode)
     {
+        _suppressAutoReload = true;
         SelectedFilter = mode;
 
         switch (mode)
@@ -611,36 +997,32 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
                 break;
 
             case FilterMode.Week:
-                var startOfWeek = GetStartOfWeek(DateTime.Today);
-                FilterStartDate = startOfWeek;
-                FilterEndDate = startOfWeek.AddDays(6);
+                FilterStartDate = DateTime.Today.AddDays(-6);
+                FilterEndDate = DateTime.Today;
                 break;
 
             case FilterMode.Month:
-                var monthStart = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-                FilterStartDate = monthStart;
-                FilterEndDate = monthStart.AddMonths(1).AddDays(-1);
+                FilterStartDate = DateTime.Today.AddDays(-29);
+                FilterEndDate = DateTime.Today;
                 break;
 
             case FilterMode.Custom:
-                await SelectCustomRangeAsync();
+                if (FilterEndDate < FilterStartDate)
+                {
+                    FilterEndDate = FilterStartDate;
+                }
                 break;
 
             case FilterMode.Plan:
-                if (SelectedPlan != null)
+                if (SelectedPlan == null && AvailablePlans.Count > 0)
                 {
-                    FilterStartDate = SelectedPlan.StartDate.Date;
-                    FilterEndDate = SelectedPlan.EndDate.Date;
-                }
-                else if (AvailablePlans.Count > 0)
-                {
-                    await SelectPlanAsync(AvailablePlans[0]);
-                    return;
+                    SelectedPlan = AvailablePlans[0];
                 }
                 break;
         }
 
-        await RefreshAsync();
+        _suppressAutoReload = false;
+        await LoadAsync();
     }
 
     private async Task SelectPlanAsync(Plan? plan)
@@ -650,12 +1032,12 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
             return;
         }
 
+        _suppressAutoReload = true;
         SelectedPlan = plan;
         SelectedFilter = FilterMode.Plan;
-        FilterStartDate = plan.StartDate.Date;
-        FilterEndDate = plan.EndDate.Date;
+        _suppressAutoReload = false;
 
-        await RefreshAsync();
+        await LoadAsync();
     }
 
     private async Task SelectCustomRangeAsync()
@@ -699,136 +1081,133 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
 
         FilterStartDate = startDate.Date;
         FilterEndDate = endDate.Date;
+
+        await LoadAsync();
     }
 
     private async Task RefreshAsync()
     {
-        var (from, to) = ResolveRange();
-        var plannedMeals = await _plannerService.GetPlannedMealsAsync(from, to);
-        var meals = plannedMeals?.Where(m => m.Recipe != null || m.RecipeId != Guid.Empty).ToList() ?? new List<PlannedMeal>();
-
-        await PopulateMealsAndNutritionAsync(meals);
+        await LoadAsync();
     }
 
-    private async Task PopulateMealsAndNutritionAsync(List<PlannedMeal> meals)
+    private (DateTime start, DateTime end) GetDateRangeForFilter()
+    {
+        return SelectedFilter switch
+        {
+            FilterMode.Day =>
+                SelectedDate != null
+                    ? (SelectedDate.Date, SelectedDate.Date)
+                    : (FilterStartDate.Date, FilterStartDate.Date),
+            FilterMode.Week => (FilterStartDate.Date, FilterEndDate.Date),
+            FilterMode.Month => (FilterStartDate.Date, FilterEndDate.Date),
+            FilterMode.Custom => (FilterStartDate.Date, FilterEndDate.Date),
+            FilterMode.Plan => SelectedPlan != null
+                ? (SelectedPlan.StartDate.Date, SelectedPlan.EndDate.Date)
+                : (FilterStartDate.Date, FilterEndDate.Date),
+            _ => (FilterStartDate.Date, FilterEndDate.Date)
+        };
+    }
+
+    private async Task BuildMealSlotsAsync(
+        IEnumerable<PlannedMeal> plannedMeals,
+        IReadOnlyList<DietStatisticsMealDto> manualMeals,
+        Dictionary<Guid, Recipe> recipeMap)
     {
         MealSlots.Clear();
 
-        double calories = 0;
-        double carbs = 0;
-        double fat = 0;
-        double protein = 0;
-
-        foreach (var meal in meals.OrderBy(m => m.Date))
+        foreach (var meal in plannedMeals.OrderBy(m => m.Date).ThenBy(m => m.Id))
         {
+            double kcal = 0;
+            string mealName = _localizationService.GetString("DietStatisticsPageResources", "MealSlot");
+            string portionsSummary = string.Empty;
+
             var recipe = meal.Recipe;
             if (recipe == null && meal.RecipeId != Guid.Empty)
             {
-                recipe = await _recipeService.GetRecipeAsync(meal.RecipeId);
+                recipeMap.TryGetValue(meal.RecipeId, out recipe);
             }
 
-            if (recipe == null)
+            if (recipe == null && meal.RecipeId != Guid.Empty)
             {
-                continue;
+                recipe = await _recipeService.GetRecipeAsync(meal.RecipeId);
+                if (recipe != null)
+                {
+                    recipeMap[meal.RecipeId] = recipe;
+                }
             }
 
-            var portionBase = recipe.IloscPorcji <= 0 ? 1 : recipe.IloscPorcji;
-            var portionMultiplier = (double)meal.Portions / portionBase;
-
-            var mealCalories = recipe.Calories * portionMultiplier;
-            var mealCarbs = recipe.Carbs * portionMultiplier;
-            var mealFat = recipe.Fat * portionMultiplier;
-            var mealProtein = recipe.Protein * portionMultiplier;
-
-            calories += mealCalories;
-            carbs += mealCarbs;
-            fat += mealFat;
-            protein += mealProtein;
+            if (recipe != null)
+            {
+                double portions = meal.Portions > 0 ? meal.Portions : 1;
+                double recipePortions = recipe.IloscPorcji > 0 ? recipe.IloscPorcji : 1;
+                double portionMultiplier = portions / recipePortions;
+                kcal = Math.Round(recipe.Calories * portionMultiplier, 0);
+                mealName = recipe.Name;
+                portionsSummary = $"x{Math.Round(portions, 1):0.#}";
+            }
 
             MealSlots.Add(new MealSlotViewModel
             {
+                MealId = meal.Id,
+                MealDate = meal.Date.Date,
+                IsManualMeal = false,
                 PlannedMealId = meal.Id,
-                MealName = recipe.Name,
-                IngredientsSummary = BuildIngredientSummary(recipe),
-                Calories = mealCalories,
+                MealName = mealName,
+                IngredientsSummary = _localizationService.GetString("DietStatisticsPageResources", "MealPlannerEntrySubtitle"),
+                PortionsSummary = portionsSummary,
+                Calories = kcal,
                 SourceMeal = meal
             });
         }
 
-        ConsumedCalories = calories;
-        ConsumedCarbs = carbs;
-        ConsumedFat = fat;
-        ConsumedProtein = protein;
+        foreach (var manualMeal in manualMeals.OrderBy(m => m.CreatedAt))
+        {
+            MealSlots.Add(new MealSlotViewModel
+            {
+                MealId = manualMeal.Id,
+                MealDate = manualMeal.Date.Date,
+                IsManualMeal = true,
+                ManualMealId = manualMeal.Id,
+                MealName = manualMeal.Name,
+                IngredientsSummary = _localizationService.GetString("DietStatisticsPageResources", "MealManualEntrySubtitle"),
+                PortionsSummary = string.Empty,
+                Calories = Math.Round(manualMeal.Calories, 0),
+                SourceMeal = null
+            });
+        }
 
-        GoalCalories = Math.Max(1800, Math.Round(GoalCalories));
-        CaloriesMin = 0;
-        CaloriesMax = Math.Max(Math.Ceiling(GoalCalories * 1.3), Math.Ceiling(ConsumedCalories * 1.1));
-        TargetRangeStart = Math.Round(GoalCalories * 0.9);
-        TargetRangeEnd = Math.Round(GoalCalories * 1.1);
-
-        CalculateActualMacroPercentages();
+        await Task.CompletedTask;
     }
 
-    private void CalculateActualMacroPercentages()
+    private async Task OpenCalorieSettingsAsync()
     {
-        var carbsKcal = ConsumedCarbs * 4;
-        var fatKcal = ConsumedFat * 9;
-        var proteinKcal = ConsumedProtein * 4;
-        var totalMacroKcal = carbsKcal + fatKcal + proteinKcal;
-
-        if (totalMacroKcal <= 0)
+        var page = Application.Current?.MainPage;
+        if (page == null)
         {
-            ActualCarbsPercent = 0;
-            ActualFatPercent = 0;
-            ActualProteinPercent = 0;
             return;
         }
 
-        ActualCarbsPercent = Math.Round(carbsKcal / totalMacroKcal * 100, 1);
-        ActualFatPercent = Math.Round(fatKcal / totalMacroKcal * 100, 1);
-        ActualProteinPercent = Math.Round(proteinKcal / totalMacroKcal * 100, 1);
+        await page.Navigation.PushModalAsync(new CalorieLimitSettingsPage(this), true);
     }
 
-    private async Task LoadAvailablePlansAsync()
+    public async Task UpdateCalorieLimitSettingsAsync(double dailyLimit, double lowerRatio, double upperRatio)
     {
-        var plans = await _planService.GetPlansAsync();
-        var plannerPlans = plans
-            .Where(p => p.Type == PlanType.Planner && !p.IsArchived)
-            .OrderByDescending(p => p.StartDate)
-            .ToList();
+        _baseDailyCalorieLimit = Math.Max(1, dailyLimit);
+        _targetRangeLowerRatio = Math.Clamp(lowerRatio, 0.5, 1.5);
+        _targetRangeUpperRatio = Math.Clamp(upperRatio, _targetRangeLowerRatio, 2.0);
 
-        AvailablePlans.Clear();
-        foreach (var plan in plannerPlans)
-        {
-            AvailablePlans.Add(plan);
-        }
+        OnPropertyChanged(nameof(BaseDailyCalorieLimit));
+        OnPropertyChanged(nameof(TargetRangeLowerRatio));
+        OnPropertyChanged(nameof(TargetRangeUpperRatio));
+
+        await RefreshAsync();
     }
 
-    private (DateTime from, DateTime to) ResolveRange()
-    {
-        var from = FilterStartDate.Date;
-        var to = FilterEndDate.Date.AddDays(1).AddTicks(-1);
-        return (from, to);
-    }
+    private Color GetChipBackground(FilterMode chipMode)
+        => SelectedFilter == chipMode ? Color.FromArgb("#8B72FF") : Color.FromArgb("#338B72FF");
 
-    private static DateTime GetStartOfWeek(DateTime date)
-    {
-        var diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
-        return date.Date.AddDays(-diff);
-    }
-
-    private static string BuildIngredientSummary(Recipe recipe)
-    {
-        if (recipe.Ingredients == null || recipe.Ingredients.Count == 0)
-        {
-            return string.Empty;
-        }
-
-        return string.Join(", ", recipe.Ingredients
-            .Where(i => !string.IsNullOrWhiteSpace(i.Name))
-            .Select(i => i.Name)
-            .Take(4));
-    }
+    private Color GetChipTextColor(FilterMode chipMode)
+        => SelectedFilter == chipMode ? Colors.White : Color.FromArgb("#AAAAAA");
 
     private void BuildDateRange(DateTime centerDate)
     {
@@ -841,8 +1220,78 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
         }
     }
 
-    private void OnAddMeal(MealSlotViewModel? _)
+    private async Task AddManualMealAsync(MealSlotViewModel? sourceMeal)
     {
+        var page = Application.Current?.MainPage;
+        if (page == null)
+        {
+            return;
+        }
+
+        _ = sourceMeal;
+        var targetDate = DateTime.Today;
+
+        try
+        {
+            var popup = new AddDietMealPopup();
+
+            var showTask = page.ShowPopupAsync(popup);
+            await Task.WhenAny(showTask, popup.ResultTask);
+            var popupResult = await popup.ResultTask;
+            await showTask;
+            if (popupResult == null)
+            {
+                return;
+            }
+
+            var name = popupResult.MealName?.Trim();
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                await page.DisplayAlert(
+                    _localizationService.GetString("DietStatisticsPageResources", "AddMealPopupTitle"),
+                    _localizationService.GetString("DietStatisticsPageResources", "AddMealPopupInvalidName"),
+                    "OK");
+                return;
+            }
+
+            var caloriesText = popupResult.Calories;
+
+            if (string.IsNullOrWhiteSpace(caloriesText) ||
+                (!double.TryParse(caloriesText, NumberStyles.Float, CultureInfo.CurrentCulture, out var calories) &&
+                 !double.TryParse(caloriesText, NumberStyles.Float, CultureInfo.InvariantCulture, out calories)) ||
+                calories < 0)
+            {
+                await page.DisplayAlert(
+                    _localizationService.GetString("DietStatisticsPageResources", "AddMealPopupTitle"),
+                    _localizationService.GetString("DietStatisticsPageResources", "AddMealPopupInvalidCalories"),
+                    "OK");
+                return;
+            }
+
+            var meals = _preferencesService.GetDietStatisticsMeals().ToList();
+            meals.Add(new DietStatisticsMealDto
+            {
+                Date = targetDate.Date,
+                Name = name.Trim(),
+                Calories = calories,
+                Carbs = 0,
+                Fat = 0,
+                Protein = 0,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            _preferencesService.SaveDietStatisticsMeals(meals);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[DietStatisticsViewModel] AddManualMealAsync error: {ex.Message}");
+            await page.DisplayAlert(
+                _localizationService.GetString("DietStatisticsPageResources", "AddMealPopupTitle"),
+                _localizationService.GetString("DietStatisticsPageResources", "AddMealPopupSaveError"),
+                "OK");
+        }
     }
 
     private void OnOpenMealDetail(MealSlotViewModel? _)
@@ -859,7 +1308,26 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
             }
 
             OnPropertyChanged(nameof(FilterRangeText));
+            OnPropertyChanged(nameof(HeaderTitle));
+            OnPropertyChanged(nameof(HeaderSubtitle));
         });
+
+        await LoadAsync();
+    }
+
+    private async Task OnPlanChangedAsync()
+    {
+        try
+        {
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                await LoadAsync();
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[DietStatisticsViewModel] OnPlanChangedAsync error: {ex.Message}");
+        }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -869,6 +1337,6 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
 
     ~DietStatisticsViewModel()
     {
-        _localizationService.CultureChanged -= OnCultureChanged;
+        StopListening();
     }
 }

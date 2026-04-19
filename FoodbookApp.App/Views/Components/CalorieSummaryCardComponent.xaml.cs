@@ -1,6 +1,8 @@
-using Foodbook.Views.Base;
+using Foodbook.ViewModels;
 using System.Globalization;
 using System.Resources;
+using System.Windows.Input;
+using Microsoft.Maui.Graphics;
 
 namespace Foodbook.Views.Components;
 
@@ -9,98 +11,40 @@ public partial class CalorieSummaryCardComponent : ContentView
     private static readonly ResourceManager ResourceManager =
         new("FoodbookApp.Localization.DietStatisticsPageResources", typeof(CalorieSummaryCardComponent).Assembly);
 
-    public static readonly BindableProperty ConsumedCaloriesProperty =
-        BindableProperty.Create(nameof(ConsumedCalories), typeof(double), typeof(CalorieSummaryCardComponent), 0d, propertyChanged: OnCardValueChanged);
+    public static readonly BindableProperty DataProperty =
+        BindableProperty.Create(
+            nameof(Data),
+            typeof(CalorieSummaryCardData),
+            typeof(CalorieSummaryCardComponent),
+            CalorieSummaryCardData.Empty,
+            propertyChanged: OnCardValueChanged);
 
-    public static readonly BindableProperty GoalCaloriesProperty =
-        BindableProperty.Create(nameof(GoalCalories), typeof(double), typeof(CalorieSummaryCardComponent), 0d, propertyChanged: OnCardValueChanged);
+    public static readonly BindableProperty OpenSettingsCommandProperty =
+        BindableProperty.Create(nameof(OpenSettingsCommand), typeof(ICommand), typeof(CalorieSummaryCardComponent));
 
-    public static readonly BindableProperty CaloriesProgressRatioProperty =
-        BindableProperty.Create(nameof(CaloriesProgressRatio), typeof(double), typeof(CalorieSummaryCardComponent), 0d, propertyChanged: OnCardValueChanged);
-
-    public static readonly BindableProperty CaloriesMinProperty =
-        BindableProperty.Create(nameof(CaloriesMin), typeof(double), typeof(CalorieSummaryCardComponent), 0d, propertyChanged: OnCardValueChanged);
-
-    public static readonly BindableProperty CaloriesMaxProperty =
-        BindableProperty.Create(nameof(CaloriesMax), typeof(double), typeof(CalorieSummaryCardComponent), 0d, propertyChanged: OnCardValueChanged);
-
-    public static readonly BindableProperty TargetRangeStartProperty =
-        BindableProperty.Create(nameof(TargetRangeStart), typeof(double), typeof(CalorieSummaryCardComponent), 0d, propertyChanged: OnCardValueChanged);
-
-    public static readonly BindableProperty TargetRangeEndProperty =
-        BindableProperty.Create(nameof(TargetRangeEnd), typeof(double), typeof(CalorieSummaryCardComponent), 0d, propertyChanged: OnCardValueChanged);
-
-    private readonly PageThemeHelper _themeHelper;
     private readonly CalorieRangeDrawable _drawable;
 
     public CalorieSummaryCardComponent()
     {
         InitializeComponent();
-        _themeHelper = new PageThemeHelper();
         _drawable = new CalorieRangeDrawable();
-
-        BindingContext = this;
         CalorieRangeBar.Drawable = _drawable;
-
-        Loaded += OnComponentLoaded;
-        Unloaded += OnComponentUnloaded;
     }
 
-    public double ConsumedCalories
+    public CalorieSummaryCardData Data
     {
-        get => (double)GetValue(ConsumedCaloriesProperty);
-        set => SetValue(ConsumedCaloriesProperty, value);
+        get => (CalorieSummaryCardData)GetValue(DataProperty);
+        set => SetValue(DataProperty, value);
     }
 
-    public double GoalCalories
+    public ICommand? OpenSettingsCommand
     {
-        get => (double)GetValue(GoalCaloriesProperty);
-        set => SetValue(GoalCaloriesProperty, value);
-    }
-
-    public double CaloriesProgressRatio
-    {
-        get => (double)GetValue(CaloriesProgressRatioProperty);
-        set => SetValue(CaloriesProgressRatioProperty, value);
-    }
-
-    public double CaloriesMin
-    {
-        get => (double)GetValue(CaloriesMinProperty);
-        set => SetValue(CaloriesMinProperty, value);
-    }
-
-    public double CaloriesMax
-    {
-        get => (double)GetValue(CaloriesMaxProperty);
-        set => SetValue(CaloriesMaxProperty, value);
-    }
-
-    public double TargetRangeStart
-    {
-        get => (double)GetValue(TargetRangeStartProperty);
-        set => SetValue(TargetRangeStartProperty, value);
-    }
-
-    public double TargetRangeEnd
-    {
-        get => (double)GetValue(TargetRangeEndProperty);
-        set => SetValue(TargetRangeEndProperty, value);
+        get => (ICommand?)GetValue(OpenSettingsCommandProperty);
+        set => SetValue(OpenSettingsCommandProperty, value);
     }
 
     public string TargetRangeText =>
-        $"{GetText("CaloriesTargetRange", "Target range")}: {TargetRangeStart:F0} - {TargetRangeEnd:F0} kcal";
-
-    private void OnComponentLoaded(object? sender, EventArgs e)
-    {
-        _themeHelper.Initialize();
-        UpdateDrawable();
-    }
-
-    private void OnComponentUnloaded(object? sender, EventArgs e)
-    {
-        _themeHelper.Cleanup();
-    }
+        $"{GetText("CaloriesTargetRange", "Target range")}: {(Data?.TargetRangeStart ?? 0):F0} - {(Data?.TargetRangeEnd ?? 0):F0} kcal";
 
     private static void OnCardValueChanged(BindableObject bindable, object oldValue, object newValue)
     {
@@ -115,11 +59,19 @@ public partial class CalorieSummaryCardComponent : ContentView
 
     private void UpdateDrawable()
     {
-        _drawable.ProgressRatio = CaloriesProgressRatio;
-        _drawable.MinValue = CaloriesMin;
-        _drawable.MaxValue = CaloriesMax <= 0 ? 1 : CaloriesMax;
-        _drawable.TargetStart = TargetRangeStart;
-        _drawable.TargetEnd = TargetRangeEnd;
+        var data = Data ?? CalorieSummaryCardData.Empty;
+
+        var ratio = data.CaloriesProgressRatio;
+        if (ratio <= 0 && data.GoalCalories > 0 && data.ConsumedCalories > 0)
+        {
+            ratio = data.ConsumedCalories / data.GoalCalories;
+        }
+
+        _drawable.ProgressRatio = ratio;
+        _drawable.MinValue = data.CaloriesMin;
+        _drawable.MaxValue = data.CaloriesMax <= 0 ? 1 : data.CaloriesMax;
+        _drawable.TargetStart = data.TargetRangeStart;
+        _drawable.TargetEnd = data.TargetRangeEnd;
 
         _drawable.ProgressColor = TryGetColor("DietStatsCarbsColor", Color.FromArgb("#00C9A7"));
         _drawable.TrackColor = TryGetColor("DietStatsTrackColor", Color.FromArgb("#30303A"));

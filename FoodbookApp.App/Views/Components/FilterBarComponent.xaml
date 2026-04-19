@@ -2,45 +2,128 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:Foodbook.Services"
-             xmlns:components="clr-namespace:Foodbook.Views.Components"
+             xmlns:viewModels="clr-namespace:Foodbook.ViewModels"
              x:Class="Foodbook.Views.Components.FilterBarComponent"
              x:Name="FilterBarRoot">
 
-    <VerticalStackLayout Spacing="10">
-        <HorizontalStackLayout Spacing="8"
-                               BindableLayout.ItemsSource="{Binding Chips, Source={x:Reference FilterBarRoot}}">
-            <BindableLayout.ItemTemplate>
-                <DataTemplate x:DataType="components:FilterChipItem">
-                    <Border x:Name="ChipBorder"
-                            StrokeThickness="0"
-                            Stroke="Transparent"
-                            StrokeShape="RoundRectangle 16"
-                            Padding="12,7"
-                            BackgroundColor="{Binding BackgroundColor}">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnChipTapped" CommandParameter="{Binding .}" />
-                        </Border.GestureRecognizers>
-                        <Label Text="{Binding Title}"
-                               FontAttributes="Bold"
-                               FontSize="12"
-                               TextColor="{Binding TextColor}" />
-                    </Border>
-                </DataTemplate>
-            </BindableLayout.ItemTemplate>
-        </HorizontalStackLayout>
+    <VerticalStackLayout Spacing="8">
+        <ScrollView Orientation="Horizontal"
+                    HorizontalScrollBarVisibility="Never">
+            <HorizontalStackLayout Spacing="8"
+                                   Padding="0,4">
+                <Frame CornerRadius="20"
+                       Padding="14,7"
+                       HasShadow="False"
+                                                   BackgroundColor="{Binding ChipDayColor, Source={x:Reference FilterBarRoot}}">
+                    <Frame.GestureRecognizers>
+                                                        <TapGestureRecognizer Command="{Binding SelectFilterCommand, Source={x:Reference FilterBarRoot}}"
+                                              CommandParameter="{x:Static viewModels:FilterMode.Day}" />
+                    </Frame.GestureRecognizers>
+                    <Label Text="{loc:Translate Resource=DietStatisticsPageResources, Key=FilterDay}"
+                                                               TextColor="{Binding ChipDayTextColor, Source={x:Reference FilterBarRoot}}"
+                           FontSize="13" />
+                </Frame>
 
-        <Border IsVisible="{Binding IsPlanPickerVisible, Source={x:Reference FilterBarRoot}}"
-                Padding="10,4"
-                StrokeThickness="1"
-                Stroke="{DynamicResource DashboardCardStrokeColor}"
-                StrokeShape="RoundRectangle 14"
-                BackgroundColor="{DynamicResource DashboardCardBackgroundColor}">
-            <Picker Title="{loc:Translate Resource=DietStatisticsPageResources, Key=FilterPlan}"
-                    ItemsSource="{Binding AvailablePlans, Source={x:Reference FilterBarRoot}}"
-                    ItemDisplayBinding="{Binding Name}"
-                    SelectedItem="{Binding SelectedPlan, Source={x:Reference FilterBarRoot}, Mode=TwoWay}"
-                    SelectedIndexChanged="OnPlanPickerChanged"
-                    TextColor="{DynamicResource PrimaryText}" />
-        </Border>
+                <Frame CornerRadius="20"
+                       Padding="14,7"
+                       HasShadow="False"
+                                                   BackgroundColor="{Binding ChipWeekColor, Source={x:Reference FilterBarRoot}}">
+                    <Frame.GestureRecognizers>
+                                                        <TapGestureRecognizer Command="{Binding SelectFilterCommand, Source={x:Reference FilterBarRoot}}"
+                                              CommandParameter="{x:Static viewModels:FilterMode.Week}" />
+                    </Frame.GestureRecognizers>
+                    <Label Text="{loc:Translate Resource=DietStatisticsPageResources, Key=FilterWeek}"
+                                                               TextColor="{Binding ChipWeekTextColor, Source={x:Reference FilterBarRoot}}"
+                           FontSize="13" />
+                </Frame>
+
+                <Frame CornerRadius="20"
+                       Padding="14,7"
+                       HasShadow="False"
+                                                   BackgroundColor="{Binding ChipMonthColor, Source={x:Reference FilterBarRoot}}">
+                    <Frame.GestureRecognizers>
+                                                        <TapGestureRecognizer Command="{Binding SelectFilterCommand, Source={x:Reference FilterBarRoot}}"
+                                              CommandParameter="{x:Static viewModels:FilterMode.Month}" />
+                    </Frame.GestureRecognizers>
+                    <Label Text="{loc:Translate Resource=DietStatisticsPageResources, Key=FilterMonth}"
+                                                               TextColor="{Binding ChipMonthTextColor, Source={x:Reference FilterBarRoot}}"
+                           FontSize="13" />
+                </Frame>
+
+                <Frame CornerRadius="20"
+                       Padding="14,7"
+                       HasShadow="False"
+                                                   BackgroundColor="{Binding ChipCustomColor, Source={x:Reference FilterBarRoot}}">
+                    <Frame.GestureRecognizers>
+                                                        <TapGestureRecognizer Command="{Binding SelectFilterCommand, Source={x:Reference FilterBarRoot}}"
+                                              CommandParameter="{x:Static viewModels:FilterMode.Custom}" />
+                    </Frame.GestureRecognizers>
+                    <Label Text="{loc:Translate Resource=DietStatisticsPageResources, Key=FilterCustom}"
+                                                               TextColor="{Binding ChipCustomTextColor, Source={x:Reference FilterBarRoot}}"
+                           FontSize="13" />
+                </Frame>
+
+                <Frame CornerRadius="20"
+                       Padding="14,7"
+                       HasShadow="False"
+                                                   BackgroundColor="{Binding ChipPlanColor, Source={x:Reference FilterBarRoot}}">
+                    <Frame.GestureRecognizers>
+                                                        <TapGestureRecognizer Command="{Binding SelectFilterCommand, Source={x:Reference FilterBarRoot}}"
+                                              CommandParameter="{x:Static viewModels:FilterMode.Plan}" />
+                    </Frame.GestureRecognizers>
+                    <Label Text="{loc:Translate Resource=DietStatisticsPageResources, Key=FilterPlan}"
+                                                               TextColor="{Binding ChipPlanTextColor, Source={x:Reference FilterBarRoot}}"
+                           FontSize="13" />
+                </Frame>
+            </HorizontalStackLayout>
+        </ScrollView>
+
+        <Picker Title="{loc:Translate Resource=DietStatisticsPageResources, Key=FilterPlan}"
+                                                        ItemsSource="{Binding AvailablePlans, Source={x:Reference FilterBarRoot}}"
+                ItemDisplayBinding="{Binding Name}"
+                                                        SelectedItem="{Binding SelectedPlan, Source={x:Reference FilterBarRoot}, Mode=TwoWay}"
+                                                        IsVisible="{Binding IsPlanPickerVisible, Source={x:Reference FilterBarRoot}}"
+                Margin="0,4,0,0"
+                TextColor="{AppThemeBinding Dark=White, Light=Black}"
+                BackgroundColor="{AppThemeBinding Dark=#2a2a40, Light=#f0f0f0}"/>
+
+        <Grid ColumnDefinitions="*,Auto,*"
+                                                 IsVisible="{Binding IsCustomRangeVisible, Source={x:Reference FilterBarRoot}}"
+              Margin="0,4,0,0">
+                     <Border Grid.Column="0"
+                                   StrokeThickness="1"
+                                   Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                                   BackgroundColor="{DynamicResource PageBackgroundColor}"
+                                   Padding="8,4">
+                            <Border.StrokeShape>
+                                   <RoundRectangle CornerRadius="9" />
+                            </Border.StrokeShape>
+                            <DatePicker Date="{Binding FilterStartDate, Source={x:Reference FilterBarRoot}, Mode=TwoWay}"
+                                                 Format="dd.MM.yyyy"
+                                                 FontSize="12"
+                                                 TextColor="{DynamicResource FrameTextColor}"
+                                                 BackgroundColor="Transparent"
+                                                 HeightRequest="30" />
+                     </Border>
+            <Label Grid.Column="1"
+                   Text="-"
+                   VerticalOptions="Center"
+                   Margin="8,0" />
+                     <Border Grid.Column="2"
+                                   StrokeThickness="1"
+                                   Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                                   BackgroundColor="{DynamicResource PageBackgroundColor}"
+                                   Padding="8,4">
+                            <Border.StrokeShape>
+                                   <RoundRectangle CornerRadius="9" />
+                            </Border.StrokeShape>
+                            <DatePicker Date="{Binding FilterEndDate, Source={x:Reference FilterBarRoot}, Mode=TwoWay}"
+                                                 Format="dd.MM.yyyy"
+                                                 FontSize="12"
+                                                 TextColor="{DynamicResource FrameTextColor}"
+                                                 BackgroundColor="Transparent"
+                                                 HeightRequest="30" />
+                     </Border>
+        </Grid>
     </VerticalStackLayout>
 </ContentView>

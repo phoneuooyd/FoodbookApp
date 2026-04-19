@@ -169,8 +169,8 @@ Nowy ekran statystyk żywieniowych inspirowany układem Samsung Health, zbudowan
 - `Localization/DietStatisticsPageResources*.resx`
 
 ### 4.3 Integracja nawigacji
-- Trasa shell: `DietStatisticsPage` zarejestrowana w `AppShell.xaml` i `MauiProgram.cs`.
-- Punkt wejścia: tap na kartę statystyk żywieniowych w `HomePage`.
+- Trasa shell: `DietStatisticsPage` zarejestrowana w `AppShell.xaml.cs` (oraz pomocniczo w `MauiProgram.cs`).
+- Punkt wejścia: komenda `OpenDietStatisticsCommand` w `HomeViewModel`, podpięta do kafla kalorii/makro w `HomePage`.
 
 ### 4.4 Integracja z motywami i lokalizacją
 - Komponenty używają zasobów dynamicznych (`DynamicResource`) i tokenów publikowanych przez `ThemeService`.

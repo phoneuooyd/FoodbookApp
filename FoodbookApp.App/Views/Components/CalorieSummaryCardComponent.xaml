@@ -18,12 +18,32 @@
         </Border.Shadow>
 
         <VerticalStackLayout Spacing="8">
-            <Label Text="{Binding ConsumedCalories, Source={x:Reference CalorieCardRoot}, StringFormat='{}{0:F0} kcal'}"
-                   FontSize="46"
-                   FontAttributes="Bold"
-                   TextColor="{DynamicResource PrimaryText}" />
+                     <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="8">
+                                 <Label Text="{Binding Data.ConsumedCalories, Source={x:Reference CalorieCardRoot}, StringFormat='{}{0:F0} kcal'}"
+                                      FontSize="46"
+                                      FontAttributes="Bold"
+                                      TextColor="{DynamicResource PrimaryText}" />
+                            <Border Grid.Column="1"
+                                          WidthRequest="30"
+                                          HeightRequest="30"
+                                          StrokeThickness="0"
+                                          Stroke="Transparent"
+                                          StrokeShape="RoundRectangle 15"
+                                          BackgroundColor="{DynamicResource Secondary}"
+                                          VerticalOptions="Start">
+                                   <Border.GestureRecognizers>
+                                          <TapGestureRecognizer Command="{Binding OpenSettingsCommand, Source={x:Reference CalorieCardRoot}}" />
+                                   </Border.GestureRecognizers>
+                                   <Label Text="⚙"
+                                             FontSize="14"
+                                             TextColor="{DynamicResource OnSecondaryText}"
+                                             HorizontalTextAlignment="Center"
+                                             VerticalTextAlignment="Center" />
+                            </Border>
+                     </Grid>
 
-            <Label Text="{Binding GoalCalories, Source={x:Reference CalorieCardRoot}, StringFormat='{loc:Translate Resource=DietStatisticsPageResources, Key=CaloriesGoal}: {0:F0}'}"
+            <Label Text="{Binding Data.GoalCalories, Source={x:Reference CalorieCardRoot}, StringFormat='{loc:Translate Resource=DietStatisticsPageResources, Key=CaloriesGoal}: {0:F0}'}"
                    FontSize="14"
                    TextColor="{DynamicResource SecondaryText}" />
 
@@ -33,11 +53,11 @@
 
             <Grid ColumnDefinitions="Auto,*,Auto"
                   Margin="0,2,0,0">
-                <Label Text="{Binding CaloriesMin, Source={x:Reference CalorieCardRoot}, StringFormat='{}{0:F0}'}"
+                <Label Text="{Binding Data.CaloriesMin, Source={x:Reference CalorieCardRoot}, StringFormat='{}{0:F0}'}"
                        FontSize="12"
                        TextColor="{DynamicResource SecondaryText}" />
                 <Label Grid.Column="2"
-                       Text="{Binding CaloriesMax, Source={x:Reference CalorieCardRoot}, StringFormat='{}{0:F0}'}"
+                       Text="{Binding Data.CaloriesMax, Source={x:Reference CalorieCardRoot}, StringFormat='{}{0:F0}'}"
                        FontSize="12"
                        TextColor="{DynamicResource SecondaryText}" />
             </Grid>
