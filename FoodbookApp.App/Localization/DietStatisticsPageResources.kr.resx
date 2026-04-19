@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="PageTitle" xml:space="preserve"><value>식단 통계</value></data>
+  <data name="CaloriesConsumed" xml:space="preserve"><value>섭취</value></data>
+  <data name="CaloriesGoal" xml:space="preserve"><value>목표</value></data>
+  <data name="CaloriesTargetRange" xml:space="preserve"><value>목표 범위</value></data>
+  <data name="MacroCarbs" xml:space="preserve"><value>탄수화물</value></data>
+  <data name="MacroFat" xml:space="preserve"><value>지방</value></data>
+  <data name="MacroProtein" xml:space="preserve"><value>단백질</value></data>
+  <data name="MacroRecommended" xml:space="preserve"><value>권장</value></data>
+  <data name="MacroActual" xml:space="preserve"><value>실제</value></data>
+  <data name="FilterDay" xml:space="preserve"><value>일</value></data>
+  <data name="FilterWeek" xml:space="preserve"><value>주</value></data>
+  <data name="FilterMonth" xml:space="preserve"><value>월</value></data>
+  <data name="FilterCustom" xml:space="preserve"><value>사용자 정의</value></data>
+  <data name="FilterPlan" xml:space="preserve"><value>식단 계획</value></data>
+  <data name="MealsHeader" xml:space="preserve"><value>식사</value></data>
+  <data name="AddMealButton" xml:space="preserve"><value>추가</value></data>
+  <data name="NoMealsPlaceholder" xml:space="preserve"><value>기록된 식사 없음</value></data>
+  <data name="NutritionCardTitle" xml:space="preserve"><value>영양 정보</value></data>
+</root>

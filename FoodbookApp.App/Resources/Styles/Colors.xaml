@@ -64,6 +64,22 @@
     <Color x:Key="FoodbookApplyButtonBorderColor">#335B3FE8</Color>
     <Color x:Key="FoodbookApplyButtonTextColor">#512BD4</Color>
 
+    <!-- Diet statistics semantic colors (runtime-overridden by ThemeService) -->
+    <Color x:Key="DietStatsCarbsColor">#00C9A7</Color>
+    <Color x:Key="DietStatsFatColor">#FFB347</Color>
+    <Color x:Key="DietStatsProteinColor">#8B72FF</Color>
+    <Color x:Key="DietStatsTrackColor">#30303A</Color>
+    <Color x:Key="DietStatsTargetRangeColor">#4DFFFFFF</Color>
+    <Color x:Key="DietStatsTooltipBackgroundColor">#8B72FF</Color>
+    <Color x:Key="DietStatsTooltipTextColor">#FFFFFF</Color>
+    <Color x:Key="DietStatsDateActiveBackgroundColor">#8B72FF</Color>
+    <Color x:Key="DietStatsDateTextColor">#FFFFFF</Color>
+    <Color x:Key="DietStatsChipActiveBackgroundColor">#8B72FF</Color>
+    <Color x:Key="DietStatsChipActiveTextColor">#FFFFFF</Color>
+    <Color x:Key="DietStatsChipInactiveBackgroundColor">#26FFFFFF</Color>
+    <Color x:Key="DietStatsChipInactiveTextColor">#AFAFB8</Color>
+    <Color x:Key="DietStatsActionSurfaceColor">#1FFFFFFF</Color>
+
     <!-- Dynamic Brushes - These will be updated when color theme changes -->
     <SolidColorBrush x:Key="PrimaryBrush" Color="{DynamicResource Primary}"/>
     <SolidColorBrush x:Key="SecondaryBrush" Color="{DynamicResource Secondary}"/>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Foodbook.Services"
+             xmlns:components="clr-namespace:Foodbook.Views.Components"
+             x:Class="Foodbook.Views.Components.FilterBarComponent"
+             x:Name="FilterBarRoot">
+
+    <VerticalStackLayout Spacing="10">
+        <HorizontalStackLayout Spacing="8"
+                               BindableLayout.ItemsSource="{Binding Chips, Source={x:Reference FilterBarRoot}}">
+            <BindableLayout.ItemTemplate>
+                <DataTemplate x:DataType="components:FilterChipItem">
+                    <Border x:Name="ChipBorder"
+                            StrokeThickness="0"
+                            Stroke="Transparent"
+                            StrokeShape="RoundRectangle 16"
+                            Padding="12,7"
+                            BackgroundColor="{Binding BackgroundColor}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnChipTapped" CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                        <Label Text="{Binding Title}"
+                               FontAttributes="Bold"
+                               FontSize="12"
+                               TextColor="{Binding TextColor}" />
+                    </Border>
+                </DataTemplate>
+            </BindableLayout.ItemTemplate>
+        </HorizontalStackLayout>
+
+        <Border IsVisible="{Binding IsPlanPickerVisible, Source={x:Reference FilterBarRoot}}"
+                Padding="10,4"
+                StrokeThickness="1"
+                Stroke="{DynamicResource DashboardCardStrokeColor}"
+                StrokeShape="RoundRectangle 14"
+                BackgroundColor="{DynamicResource DashboardCardBackgroundColor}">
+            <Picker Title="{loc:Translate Resource=DietStatisticsPageResources, Key=FilterPlan}"
+                    ItemsSource="{Binding AvailablePlans, Source={x:Reference FilterBarRoot}}"
+                    ItemDisplayBinding="{Binding Name}"
+                    SelectedItem="{Binding SelectedPlan, Source={x:Reference FilterBarRoot}, Mode=TwoWay}"
+                    SelectedIndexChanged="OnPlanPickerChanged"
+                    TextColor="{DynamicResource PrimaryText}" />
+        </Border>
+    </VerticalStackLayout>
+</ContentView>

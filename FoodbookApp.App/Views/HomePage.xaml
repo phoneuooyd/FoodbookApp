@@ -246,6 +246,9 @@
                 </Border>
 
                 <Border Style="{StaticResource SectionCardStyle}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnOpenDietStatisticsClicked" />
+                    </Border.GestureRecognizers>
                     <VerticalStackLayout Spacing="12">
                         <Grid ColumnDefinitions="*,Auto"
                               ColumnSpacing="12">

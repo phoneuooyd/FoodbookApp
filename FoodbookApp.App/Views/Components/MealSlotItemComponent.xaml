@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Foodbook.Services"
+             x:Class="Foodbook.Views.Components.MealSlotItemComponent"
+             x:Name="MealSlotItemRoot">
+
+    <Border Padding="0"
+            StrokeThickness="0"
+            Stroke="Transparent"
+            BackgroundColor="Transparent"
+            StrokeShape="RoundRectangle 16">
+        <Border.GestureRecognizers>
+            <TapGestureRecognizer Tapped="OnOpenMealTapped" />
+        </Border.GestureRecognizers>
+
+        <Grid ColumnDefinitions="Auto,*,Auto"
+              ColumnSpacing="12"
+              Padding="0,8">
+            <Border WidthRequest="50"
+                    HeightRequest="50"
+                    StrokeThickness="0"
+                    Stroke="Transparent"
+                    StrokeShape="RoundRectangle 25"
+                    BackgroundColor="{Binding CircleColor, Source={x:Reference MealSlotItemRoot}}"
+                    VerticalOptions="Center">
+                <VerticalStackLayout Spacing="0"
+                                     HorizontalOptions="Center"
+                                     VerticalOptions="Center">
+                    <Label Text="{Binding Calories, Source={x:Reference MealSlotItemRoot}, StringFormat='{}{0:F0}'}"
+                           HorizontalTextAlignment="Center"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="White" />
+                    <Label Text="kcal"
+                           HorizontalTextAlignment="Center"
+                           FontSize="10"
+                           TextColor="White" />
+                </VerticalStackLayout>
+            </Border>
+
+            <VerticalStackLayout Grid.Column="1"
+                                 Spacing="2"
+                                 VerticalOptions="Center">
+                <Label Text="{Binding MealName, Source={x:Reference MealSlotItemRoot}}"
+                       FontSize="22"
+                       FontAttributes="Bold"
+                       TextColor="{DynamicResource PrimaryText}" />
+                <Label Text="{Binding IngredientsSummary, Source={x:Reference MealSlotItemRoot}}"
+                       FontSize="12"
+                       MaxLines="2"
+                       LineBreakMode="TailTruncation"
+                       TextColor="{DynamicResource SecondaryText}" />
+            </VerticalStackLayout>
+
+            <Border Grid.Column="2"
+                    WidthRequest="38"
+                    HeightRequest="38"
+                    VerticalOptions="Center"
+                    StrokeThickness="0"
+                    Stroke="Transparent"
+                    StrokeShape="RoundRectangle 19"
+                    BackgroundColor="{DynamicResource DietStatsActionSurfaceColor}">
+                <Label Text="+"
+                       FontSize="24"
+                       HorizontalTextAlignment="Center"
+                       VerticalTextAlignment="Center"
+                       TextColor="{DynamicResource PrimaryText}">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnAddMealTapped" />
+                    </Label.GestureRecognizers>
+                </Label>
+            </Border>
+        </Grid>
+    </Border>
+</ContentView>

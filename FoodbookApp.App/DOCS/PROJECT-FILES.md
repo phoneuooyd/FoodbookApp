@@ -70,6 +70,20 @@ Przykładowe obszary pokryte testami: baza danych, składniki, przepisy, planner
 - Globalne animacje stron Shell: `FoodbookApp.App/Utils/PageTransitionAnimator.cs`
 - Globalne animacje podmiany tresci zakladek: `FoodbookApp.App/Utils/TabContentTransitionAnimator.cs`
 - Wspolne animacje komponentow UI: `FoodbookApp.App/Utils/ComponentAnimationHelper.cs`
+- Moduł statystyk diety: `FoodbookApp.App/Views/DietStatisticsPage.xaml` + `FoodbookApp.App/ViewModels/DietStatisticsViewModel.cs`
+
+## 9) DietStatistics (dodane 2026-04-19)
+
+Nowe elementy struktury:
+- `Views/DietStatisticsPage.xaml` i `Views/DietStatisticsPage.xaml.cs`.
+- `ViewModels/DietStatisticsViewModel.cs`.
+- `Views/Components/DateNavigationBarComponent.xaml(.cs)`.
+- `Views/Components/CalorieSummaryCardComponent.xaml(.cs)`.
+- `Views/Components/MacroNutritionCardComponent.xaml(.cs)`.
+- `Views/Components/MealSlotListComponent.xaml(.cs)`.
+- `Views/Components/MealSlotItemComponent.xaml(.cs)`.
+- `Views/Components/FilterBarComponent.xaml(.cs)`.
+- `Localization/DietStatisticsPageResources.resx` i warianty kulturowe (`.pl`, `.de`, `.fr`, `.es`, `.kr`).
 
 ## 6) Zasada utrzymania tego dokumentu
 

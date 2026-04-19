@@ -145,6 +145,37 @@ Przyszłe rozszerzenia: ...
 ## 3. Moduł Składników (Ingredients) – Dokumentacja Funkcjonalna
 Analiza na podstawie: `IngredientsViewModel`, `IngredientsPage`, `IngredientFormViewModel`, `IngredientFormPage`, `Ingredient`, `IIngredientService`, integracja `SeedData.UpdateIngredientWithOpenFoodFactsAsync`.
 
+---
+## 4. Moduł DietStatistics (dodane 2026-04-19)
+
+Nowy ekran statystyk żywieniowych inspirowany układem Samsung Health, zbudowany jako kompozycja komponentów i zasilany przez `DietStatisticsViewModel`.
+
+### 4.1 Zakres funkcjonalny
+- Filtrowanie statystyk po: dzień, tydzień, miesiąc, zakres własny, plan.
+- Nawigacja dat w trybie dnia (poziomy pasek dat z aktywną pozycją).
+- Karta kalorii: suma kcal, cel, pasek postępu i strefa docelowa.
+- Karta makro: wartości gramowe + dwa wykresy kołowe (`recommended` i `actual`).
+- Lista slotów posiłków (nazwa, kcal, skrócony opis składników, akcja dodawania).
+
+### 4.2 Kluczowe pliki
+- `Views/DietStatisticsPage.xaml`, `Views/DietStatisticsPage.xaml.cs`
+- `ViewModels/DietStatisticsViewModel.cs`
+- `Views/Components/FilterBarComponent.xaml(.cs)`
+- `Views/Components/DateNavigationBarComponent.xaml(.cs)`
+- `Views/Components/CalorieSummaryCardComponent.xaml(.cs)`
+- `Views/Components/MacroNutritionCardComponent.xaml(.cs)`
+- `Views/Components/MealSlotListComponent.xaml(.cs)`
+- `Views/Components/MealSlotItemComponent.xaml(.cs)`
+- `Localization/DietStatisticsPageResources*.resx`
+
+### 4.3 Integracja nawigacji
+- Trasa shell: `DietStatisticsPage` zarejestrowana w `AppShell.xaml` i `MauiProgram.cs`.
+- Punkt wejścia: tap na kartę statystyk żywieniowych w `HomePage`.
+
+### 4.4 Integracja z motywami i lokalizacją
+- Komponenty używają zasobów dynamicznych (`DynamicResource`) i tokenów publikowanych przez `ThemeService`.
+- Teksty UI korzystają z `DietStatisticsPageResources` i tłumaczeń kulturowych.
+
 ### 3.1 Cel modułu
 Umożliwić zarządzanie katalogiem składników z wartościami odżywczymi wykorzystywanymi w przepisach i planowaniu posiłków:
 - Przeglądaj i filtruj listę składników

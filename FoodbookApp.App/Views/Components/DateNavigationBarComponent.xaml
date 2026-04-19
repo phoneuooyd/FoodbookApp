@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:Foodbook.ViewModels"
+             x:Class="Foodbook.Views.Components.DateNavigationBarComponent"
+             x:Name="DateNavRoot">
+
+    <Grid RowDefinitions="Auto,Auto"
+          IsVisible="{Binding IsVisibleForFilter, Source={x:Reference DateNavRoot}}">
+        <Border Grid.Row="0"
+                Padding="6,3"
+                StrokeThickness="0"
+                Stroke="Transparent"
+                BackgroundColor="{DynamicResource DietStatsTooltipBackgroundColor}"
+                HorizontalOptions="Center"
+                IsVisible="{Binding IsTooltipVisible, Source={x:Reference DateNavRoot}}"
+                StrokeShape="RoundRectangle 10">
+            <Label Text="{Binding SelectedDateCaloriesText, Source={x:Reference DateNavRoot}}"
+                   FontAttributes="Bold"
+                   FontSize="12"
+                   TextColor="{DynamicResource DietStatsTooltipTextColor}" />
+        </Border>
+
+        <CollectionView x:Name="DateCollection"
+                        Grid.Row="1"
+                        ItemsSource="{Binding DateRange, Source={x:Reference DateNavRoot}}"
+                        SelectionMode="None"
+                        Margin="0,8,0,0"
+                        HeightRequest="64"
+                        ItemsLayout="HorizontalList">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="viewModels:DateItem">
+                    <VerticalStackLayout Spacing="3"
+                                         Margin="4,0"
+                                         WidthRequest="48">
+                        <Border StrokeThickness="0"
+                                Stroke="Transparent"
+                                Padding="0"
+                                HeightRequest="40"
+                                WidthRequest="40"
+                                HorizontalOptions="Center"
+                                BackgroundColor="Transparent"
+                                StrokeShape="RoundRectangle 20">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource DietStatsDateActiveBackgroundColor}" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnDateTapped" CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
+                            <VerticalStackLayout Spacing="0"
+                                                 VerticalOptions="Center"
+                                                 HorizontalOptions="Center">
+                                <Label Text="{Binding DayNumber}"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       HorizontalTextAlignment="Center"
+                                       TextColor="{DynamicResource DietStatsDateTextColor}">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="False">
+                                            <Setter Property="TextColor" Value="{DynamicResource SecondaryText}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                                <Label Text="{Binding DayLabel}"
+                                       FontSize="10"
+                                       HorizontalTextAlignment="Center"
+                                       TextColor="{DynamicResource DietStatsDateTextColor}">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="False">
+                                            <Setter Property="TextColor" Value="{DynamicResource SecondaryText}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </VerticalStackLayout>
+                        </Border>
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentView>
