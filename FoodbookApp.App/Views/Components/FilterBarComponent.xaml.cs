@@ -2,6 +2,8 @@ namespace Foodbook.Views.Components;
 
 public partial class FilterBarComponent : ContentView
 {
+    private readonly FoodbookApp.Interfaces.IThemeService? _themeService;
+
     public static readonly BindableProperty SelectedFilterProperty =
         BindableProperty.Create(nameof(SelectedFilter), typeof(ViewModels.FilterMode), typeof(FilterBarComponent), ViewModels.FilterMode.Day, propertyChanged: OnStateChanged);
 
@@ -29,6 +31,21 @@ public partial class FilterBarComponent : ContentView
     public FilterBarComponent()
     {
         InitializeComponent();
+
+        try
+        {
+            _themeService = FoodbookApp.MauiProgram.ServiceProvider?.GetService(typeof(FoodbookApp.Interfaces.IThemeService)) as FoodbookApp.Interfaces.IThemeService;
+            if (_themeService != null)
+            {
+                _themeService.ThemeChanged += OnThemeChanged;
+            }
+        }
+        catch
+        {
+            _themeService = null;
+        }
+
+        Unloaded += OnUnloaded;
     }
 
     public ViewModels.FilterMode SelectedFilter
@@ -116,9 +133,51 @@ public partial class FilterBarComponent : ContentView
         }
     }
 
+    private static Color TryGetThemeColor(string key, Color fallback)
+    {
+        var resources = Application.Current?.Resources;
+        if (resources != null && resources.TryGetValue(key, out var value) && value is Color color)
+        {
+            return color;
+        }
+
+        return fallback;
+    }
+
     private Color GetChipBackground(ViewModels.FilterMode mode)
-        => SelectedFilter == mode ? Color.FromArgb("#8B72FF") : Color.FromArgb("#338B72FF");
+        => SelectedFilter == mode
+            ? TryGetThemeColor("DietStatsChipActiveBackgroundColor", Color.FromArgb("#8B72FF"))
+            : TryGetThemeColor("DietStatsChipInactiveBackgroundColor", Color.FromArgb("#338B72FF"));
 
     private Color GetChipText(ViewModels.FilterMode mode)
-        => SelectedFilter == mode ? Colors.White : Color.FromArgb("#AAAAAA");
+        => SelectedFilter == mode
+            ? TryGetThemeColor("DietStatsChipActiveTextColor", Colors.White)
+            : TryGetThemeColor("DietStatsChipInactiveTextColor", Color.FromArgb("#AAAAAA"));
+
+    private void OnThemeChanged(object? sender, EventArgs e)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            OnPropertyChanged(nameof(ChipDayColor));
+            OnPropertyChanged(nameof(ChipDayTextColor));
+            OnPropertyChanged(nameof(ChipWeekColor));
+            OnPropertyChanged(nameof(ChipWeekTextColor));
+            OnPropertyChanged(nameof(ChipMonthColor));
+            OnPropertyChanged(nameof(ChipMonthTextColor));
+            OnPropertyChanged(nameof(ChipCustomColor));
+            OnPropertyChanged(nameof(ChipCustomTextColor));
+            OnPropertyChanged(nameof(ChipPlanColor));
+            OnPropertyChanged(nameof(ChipPlanTextColor));
+        });
+    }
+
+    private void OnUnloaded(object? sender, EventArgs e)
+    {
+        if (_themeService != null)
+        {
+            _themeService.ThemeChanged -= OnThemeChanged;
+        }
+
+        Unloaded -= OnUnloaded;
+    }
 }

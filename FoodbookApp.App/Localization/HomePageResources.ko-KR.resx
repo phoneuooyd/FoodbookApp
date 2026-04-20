@@ -13,6 +13,7 @@
   <data name="ActiveLists" xml:space="preserve"><value>활성 목록</value></data>
   <data name="PlannedMealsHeader" xml:space="preserve"><value>계획된 식사</value></data>
   <data name="ClickRecipeHint" xml:space="preserve"><value>재료를 보려면 레시피를 탭하세요</value></data>
+  <data name="PlannedMealsOpenStatsHint" xml:space="preserve"><value>탭하여 영양 통계를 여세요</value></data>
   <data name="NutritionStatsHeader" xml:space="preserve"><value>영양 통계</value></data>
   <data name="Calories" xml:space="preserve"><value>칼로리</value></data>
   <data name="Protein" xml:space="preserve"><value>단백질</value></data>

@@ -4,12 +4,7 @@ public class PieChartDrawable : IDrawable
 {
     public float[] Percentages { get; set; } = [55f, 25f, 20f];
 
-    public Color[] SegmentColors { get; set; } =
-    [
-        Color.FromArgb("#00C9A7"),
-        Color.FromArgb("#FFB347"),
-        Color.FromArgb("#8B72FF")
-    ];
+    public Color[] SegmentColors { get; set; } = [];
 
     public bool IsDonut { get; set; } = true;
 
@@ -18,6 +13,12 @@ public class PieChartDrawable : IDrawable
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
         if (Percentages.Length == 0)
+        {
+            return;
+        }
+
+        var segmentColors = SegmentColors.Length > 0 ? SegmentColors : ResolveThemeMacroColors();
+        if (segmentColors.Length == 0)
         {
             return;
         }
@@ -50,13 +51,10 @@ public class PieChartDrawable : IDrawable
             float sweep = 360f * (percent / sum);
             DrawPieSegment(
                 canvas,
-                cx,
-                cy,
-                radius,
-                innerRadius,
+                (cx, cy, radius, innerRadius),
                 currentAngle,
                 sweep,
-                SegmentColors[i % SegmentColors.Length]);
+                segmentColors[i % segmentColors.Length]);
             currentAngle += sweep;
         }
 
@@ -84,7 +82,9 @@ public class PieChartDrawable : IDrawable
                 float lx = cx + labelR * MathF.Cos(midAngle);
                 float ly = cy + labelR * MathF.Sin(midAngle);
 
-                canvas.FontColor = Microsoft.Maui.Graphics.Colors.White;
+                var segmentColor = segmentColors[i % segmentColors.Length];
+
+                canvas.FontColor = GetReadableLabelColor(segmentColor);
                 canvas.FontSize = 9f;
                 canvas.DrawString(
                     $"{percent / sum * 100f:F0}%",
@@ -100,16 +100,47 @@ public class PieChartDrawable : IDrawable
         }
     }
 
+    private static Color[] ResolveThemeMacroColors()
+    {
+        var resources = Application.Current?.Resources;
+        return
+        [
+            TryGetThemeColor(resources, "DietStatsCarbsColor", Color.FromArgb("#00C9A7")),
+            TryGetThemeColor(resources, "DietStatsFatColor", Color.FromArgb("#FFB347")),
+            TryGetThemeColor(resources, "DietStatsProteinColor", Color.FromArgb("#8B72FF"))
+        ];
+    }
+
+    private static Color TryGetThemeColor(ResourceDictionary? resources, string key, Color fallback)
+    {
+        if (resources != null && resources.TryGetValue(key, out var value) && value is Color color)
+        {
+            return color;
+        }
+
+        return fallback;
+    }
+
+    private static Color GetReadableLabelColor(Color background)
+    {
+        static double ToLinear(double c)
+            => c <= 0.03928 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4);
+
+        var luminance = (0.2126 * ToLinear(background.Red)) +
+                        (0.7152 * ToLinear(background.Green)) +
+                        (0.0722 * ToLinear(background.Blue));
+
+        return luminance > 0.52 ? Colors.Black : Colors.White;
+    }
+
     private static void DrawPieSegment(
         ICanvas canvas,
-        float cx,
-        float cy,
-        float outerR,
-        float innerR,
+        (float cx, float cy, float outerR, float innerR) geometry,
         float startDeg,
         float sweepDeg,
         Color color)
     {
+        var (cx, cy, outerR, innerR) = geometry;
         const int steps = 36;
         float stepAngle = sweepDeg / steps;
 

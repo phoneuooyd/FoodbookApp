@@ -73,9 +73,9 @@ public partial class CalorieSummaryCardComponent : ContentView
         _drawable.TargetStart = data.TargetRangeStart;
         _drawable.TargetEnd = data.TargetRangeEnd;
 
-        _drawable.ProgressColor = TryGetColor("DietStatsCarbsColor", Color.FromArgb("#00C9A7"));
+        _drawable.ProgressColor = TryGetColor("DietStatsCalorieProgressColor", Color.FromRgba(0, 201, 167, 0.6f));
         _drawable.TrackColor = TryGetColor("DietStatsTrackColor", Color.FromArgb("#30303A"));
-        _drawable.TargetRangeColor = TryGetColor("DietStatsTargetRangeColor", Color.FromRgba(255, 255, 255, 0.30f));
+        _drawable.TargetRangeColor = TryGetColor("DietStatsCalorieTargetRangeColor", TryGetColor("DietStatsTargetRangeColor", Color.FromRgba(255, 255, 255, 0.30f)));
 
         CalorieRangeBar.Invalidate();
     }
@@ -120,6 +120,13 @@ internal sealed class CalorieRangeDrawable : IDrawable
         canvas.FillColor = TrackColor;
         canvas.FillRoundedRectangle(barRect, corner);
 
+        var progressWidth = (float)(barRect.Width * Math.Clamp(ProgressRatio, 0, 1));
+        if (progressWidth > 0)
+        {
+            canvas.FillColor = ProgressColor;
+            canvas.FillRoundedRectangle(new RectF(barRect.X, barRect.Y, progressWidth, barRect.Height), corner);
+        }
+
         var startRatio = (float)Math.Clamp((TargetStart - MinValue) / Math.Max(1, MaxValue - MinValue), 0, 1);
         var endRatio = (float)Math.Clamp((TargetEnd - MinValue) / Math.Max(1, MaxValue - MinValue), 0, 1);
         var targetRect = new RectF(
@@ -130,12 +137,5 @@ internal sealed class CalorieRangeDrawable : IDrawable
 
         canvas.FillColor = TargetRangeColor;
         canvas.FillRoundedRectangle(targetRect, corner);
-
-        var progressWidth = (float)(barRect.Width * Math.Clamp(ProgressRatio, 0, 1));
-        if (progressWidth > 0)
-        {
-            canvas.FillColor = ProgressColor;
-            canvas.FillRoundedRectangle(new RectF(barRect.X, barRect.Y, progressWidth, barRect.Height), corner);
-        }
     }
 }

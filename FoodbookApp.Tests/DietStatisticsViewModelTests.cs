@@ -103,8 +103,8 @@ public class DietStatisticsViewModelTests
         {
             Id = Guid.NewGuid(),
             Type = PlanType.Planner,
-            StartDate = new DateTime(2026, 4, 1),
-            EndDate = new DateTime(2026, 4, 7)
+            StartDate = new DateTime(2026, 4, 1, 0, 0, 0, DateTimeKind.Utc),
+            EndDate = new DateTime(2026, 4, 7, 0, 0, 0, DateTimeKind.Utc)
         };
 
         planService
@@ -204,5 +204,51 @@ public class DietStatisticsViewModelTests
 
         sut.MealSlots.Should().HaveCount(1);
         sut.MealSlots[0].MealDate.Should().Be(DateTime.Today);
+    }
+
+    [Fact]
+    public async Task LoadAsync_WhenFilterIsWeekOrMonth_ShouldScaleGoalCaloriesByRangeDays()
+    {
+        var plannerService = new Mock<IPlannerService>();
+        var planService = new Mock<IPlanService>();
+        var recipeService = new Mock<IRecipeService>();
+        var ingredientService = new Mock<IIngredientService>();
+        var localizationService = new Mock<ILocalizationService>();
+        var preferencesService = new Mock<IPreferencesService>();
+
+        localizationService.SetupGet(s => s.CurrentCulture).Returns(System.Globalization.CultureInfo.InvariantCulture);
+        localizationService.Setup(s => s.GetString(It.IsAny<string>(), It.IsAny<string>())).Returns("text");
+        preferencesService.Setup(s => s.GetDietStatisticsMeals()).Returns(Array.Empty<Foodbook.Models.DTOs.DietStatisticsMealDto>());
+
+        plannerService
+            .Setup(s => s.GetPlannedMealsAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(new List<PlannedMeal>());
+
+        planService
+            .Setup(s => s.GetPlansAsync())
+            .ReturnsAsync(new List<Plan>());
+
+        recipeService
+            .Setup(s => s.GetRecipesAsync())
+            .ReturnsAsync(new List<Recipe>());
+
+        var sut = new DietStatisticsViewModel(
+            plannerService.Object,
+            planService.Object,
+            recipeService.Object,
+            ingredientService.Object,
+            localizationService.Object,
+            preferencesService.Object);
+
+        await sut.LoadAsync();
+
+        // Default filter is week => 7 days.
+        sut.GoalCalories.Should().Be(14000);
+
+        sut.SelectFilterCommand.Execute(Foodbook.ViewModels.FilterMode.Month);
+        await sut.LoadAsync();
+
+        // Month filter uses 30-day window.
+        sut.GoalCalories.Should().Be(60000);
     }
 }

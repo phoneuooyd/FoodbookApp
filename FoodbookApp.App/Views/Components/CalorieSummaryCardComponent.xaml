@@ -43,13 +43,13 @@
                             </Border>
                      </Grid>
 
-            <Label Text="{Binding Data.GoalCalories, Source={x:Reference CalorieCardRoot}, StringFormat='{loc:Translate Resource=DietStatisticsPageResources, Key=CaloriesGoal}: {0:F0}'}"
-                   FontSize="14"
-                   TextColor="{DynamicResource SecondaryText}" />
+            <!--<Label Text="{Binding Data.GoalCalories, Source={x:Reference CalorieCardRoot}, StringFormat='{loc:Translate Resource=DietStatisticsPageResources, Key=CaloriesGoal}: {0:F0}'}"
+                   FontSize="12"
+                   TextColor="{DynamicResource SecondaryText}" />-->
 
             <GraphicsView x:Name="CalorieRangeBar"
                           HeightRequest="26"
-                          Margin="0,6,0,0" />
+                          Margin="0,5,0,0" />
 
             <Grid ColumnDefinitions="Auto,*,Auto"
                   Margin="0,2,0,0">

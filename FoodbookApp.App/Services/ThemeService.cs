@@ -404,16 +404,45 @@ namespace Foodbook.Services
                 app.Resources["DashboardCardStrokeColor"] = dashboardCardStroke;
                 app.Resources["DashboardCardShadowBrush"] = dashboardCardShadowBrush;
 
-                // Diet statistics visual tokens
-                var dietProtein = Color.FromArgb("#8B72FF");
-                var dietCarbs = Color.FromArgb("#00C9A7");
-                var dietFat = Color.FromArgb("#FFB347");
-                var dietTrack = isDark ? Color.FromArgb("#30303A") : Color.FromArgb("#E7E7EF");
-                var dietTargetRange = isDark ? Color.FromRgba(255, 255, 255, 0.30f) : Color.FromRgba(139, 114, 255, 0.22f);
+                // Diet statistics visual tokens (theme-aware)
+                var dietProtein = isDark ? Lighten(tertiary, 0.14) : Darken(tertiary, 0.04);
+                var dietCarbs = isDark ? Lighten(secondary, 0.10) : Darken(secondary, 0.18);
+                var dietFat = isDark ? Lighten(accent, 0.08) : Darken(accent, 0.12);
+                var dietTrack = isDark
+                    ? Blend(dashboardCardBackground, Colors.White, 0.10)
+                    : Blend(dashboardCardBackground, Colors.Black, 0.09);
+                var dietTargetRange = Color.FromRgba(
+                    dietProtein.Red,
+                    dietProtein.Green,
+                    dietProtein.Blue,
+                    isDark ? 0.30f : 0.20f);
                 var dietChipActive = dietProtein;
-                var dietChipInactiveBackground = isDark ? Color.FromRgba(255, 255, 255, 0.13f) : Color.FromRgba(53, 53, 62, 0.08f);
-                var dietChipInactiveText = isDark ? Color.FromArgb("#AFAFB8") : Color.FromArgb("#6C6C78");
-                var dietActionSurface = isDark ? Color.FromRgba(255, 255, 255, 0.12f) : Color.FromRgba(139, 114, 255, 0.14f);
+                var dietChipActiveText = ChooseReadableEnhanced(dietChipActive, Colors.White, Colors.Black);
+                var dietChipInactiveBackground = Color.FromRgba(
+                    dietProtein.Red,
+                    dietProtein.Green,
+                    dietProtein.Blue,
+                    isDark ? 0.22f : 0.12f);
+                var dietChipInactiveText = Color.FromRgba(
+                    secondaryText.Red,
+                    secondaryText.Green,
+                    secondaryText.Blue,
+                    isDark ? 0.92f : 0.84f);
+                var dietActionSurface = Color.FromRgba(
+                    dietProtein.Red,
+                    dietProtein.Green,
+                    dietProtein.Blue,
+                    isDark ? 0.20f : 0.16f);
+                var dietCalorieProgress = Color.FromRgba(
+                    dietCarbs.Red,
+                    dietCarbs.Green,
+                    dietCarbs.Blue,
+                    isDark ? 0.62f : 0.58f);
+                var dietCalorieTargetRange = Color.FromRgba(
+                    dietProtein.Red,
+                    dietProtein.Green,
+                    dietProtein.Blue,
+                    isDark ? 0.88f : 0.82f);
 
                 app.Resources["DietStatsCarbsColor"] = dietCarbs;
                 app.Resources["DietStatsFatColor"] = dietFat;
@@ -421,14 +450,16 @@ namespace Foodbook.Services
                 app.Resources["DietStatsTrackColor"] = dietTrack;
                 app.Resources["DietStatsTargetRangeColor"] = dietTargetRange;
                 app.Resources["DietStatsTooltipBackgroundColor"] = dietProtein;
-                app.Resources["DietStatsTooltipTextColor"] = Colors.White;
+                app.Resources["DietStatsTooltipTextColor"] = ChooseReadableEnhanced(dietProtein, Colors.White, Colors.Black);
                 app.Resources["DietStatsDateActiveBackgroundColor"] = dietProtein;
-                app.Resources["DietStatsDateTextColor"] = Colors.White;
+                app.Resources["DietStatsDateTextColor"] = dietChipActiveText;
                 app.Resources["DietStatsChipActiveBackgroundColor"] = dietChipActive;
-                app.Resources["DietStatsChipActiveTextColor"] = Colors.White;
+                app.Resources["DietStatsChipActiveTextColor"] = dietChipActiveText;
                 app.Resources["DietStatsChipInactiveBackgroundColor"] = dietChipInactiveBackground;
                 app.Resources["DietStatsChipInactiveTextColor"] = dietChipInactiveText;
                 app.Resources["DietStatsActionSurfaceColor"] = dietActionSurface;
+                app.Resources["DietStatsCalorieProgressColor"] = dietCalorieProgress;
+                app.Resources["DietStatsCalorieTargetRangeColor"] = dietCalorieTargetRange;
 
                 var wizardHeaderStart = isDark ? Lighten(primary, 0.10) : Lighten(primary, 0.22);
                 var wizardHeaderEnd = isDark ? Lighten(tertiary, 0.08) : Lighten(tertiary, 0.16);

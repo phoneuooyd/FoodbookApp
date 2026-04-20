@@ -1,4 +1,3 @@
-using System.Windows.Input;
 using CommunityToolkit.Maui.Views;
 
 namespace Foodbook.Views.Components;
@@ -13,12 +12,7 @@ public partial class AddDietMealPopup : Popup
     {
         InitializeComponent();
 
-        SaveCommand = new Command(async () => await OnSaveAsync());
-        CancelCommand = new Command(async () => await OnCancelAsync());
-
         Closed += OnPopupClosed;
-
-        BindingContext = this;
     }
 
     public Task<AddDietMealPopupResult?> ResultTask => _tcs.Task;
@@ -27,12 +21,21 @@ public partial class AddDietMealPopup : Popup
 
     public string Calories { get; set; } = string.Empty;
 
-    public ICommand SaveCommand { get; }
+    private async void OnSaveClicked(object? sender, EventArgs e)
+    {
+        await OnSaveAsync();
+    }
 
-    public ICommand CancelCommand { get; }
+    private async void OnCancelClicked(object? sender, EventArgs e)
+    {
+        await OnCancelAsync();
+    }
 
     private async Task OnSaveAsync()
     {
+        MealName = MealNameEntry.Text ?? string.Empty;
+        Calories = CaloriesEntry.Text ?? string.Empty;
+
         if (!_tcs.Task.IsCompleted)
         {
             _tcs.SetResult(new AddDietMealPopupResult(MealName?.Trim() ?? string.Empty, Calories?.Trim() ?? string.Empty));

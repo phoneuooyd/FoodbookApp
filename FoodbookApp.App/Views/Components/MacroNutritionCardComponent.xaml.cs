@@ -1,10 +1,13 @@
 using Foodbook.ViewModels;
+using FoodbookApp.Interfaces;
 using Microsoft.Maui.Graphics;
 
 namespace Foodbook.Views.Components;
 
 public partial class MacroNutritionCardComponent : ContentView
 {
+    private readonly IThemeService? _themeService;
+
     public static readonly BindableProperty DataProperty =
         BindableProperty.Create(
             nameof(Data),
@@ -18,6 +21,21 @@ public partial class MacroNutritionCardComponent : ContentView
     public MacroNutritionCardComponent()
     {
         InitializeComponent();
+
+        try
+        {
+            _themeService = FoodbookApp.MauiProgram.ServiceProvider?.GetService(typeof(IThemeService)) as IThemeService;
+            if (_themeService != null)
+            {
+                _themeService.ThemeChanged += OnThemeChanged;
+            }
+        }
+        catch
+        {
+            _themeService = null;
+        }
+
+        Unloaded += OnUnloaded;
     }
 
     public MacroNutritionCardData Data
@@ -39,6 +57,7 @@ public partial class MacroNutritionCardComponent : ContentView
         var data = Data ?? MacroNutritionCardData.Empty;
         var (recommendedCarbs, recommendedFat, recommendedProtein) = ResolveRecommendedPercentages(data);
         var (actualCarbs, actualFat, actualProtein) = ResolveActualPercentages(data);
+        var macroSegmentColors = GetMacroSegmentColors();
 
         RecommendedChart.Drawable = new PieChartDrawable
         {
@@ -48,12 +67,7 @@ public partial class MacroNutritionCardComponent : ContentView
                 (float)recommendedFat,
                 (float)recommendedProtein
             ],
-            SegmentColors =
-            [
-                Color.FromArgb("#00C9A7"),
-                Color.FromArgb("#FFB347"),
-                Color.FromArgb("#8B72FF")
-            ],
+            SegmentColors = macroSegmentColors,
             IsDonut = true,
             HoleColor = GetHoleColor()
         };
@@ -66,12 +80,7 @@ public partial class MacroNutritionCardComponent : ContentView
                 (float)actualFat,
                 (float)actualProtein
             ],
-            SegmentColors =
-            [
-                Color.FromArgb("#00C9A7"),
-                Color.FromArgb("#FFB347"),
-                Color.FromArgb("#8B72FF")
-            ],
+            SegmentColors = macroSegmentColors,
             IsDonut = true,
             HoleColor = GetHoleColor()
         };
@@ -111,10 +120,46 @@ public partial class MacroNutritionCardComponent : ContentView
         return (carbsPercent, fatPercent, proteinPercent);
     }
 
-    private static Color GetHoleColor() =>
-        Application.Current?.RequestedTheme == AppTheme.Dark
-            ? Color.FromArgb("#1E1E2E")
-            : Colors.White;
+    private static Color GetHoleColor()
+        => TryGetColor(
+            "DashboardCardBackgroundColor",
+            Application.Current?.RequestedTheme == AppTheme.Dark
+                ? Color.FromArgb("#1E1E2E")
+                : Colors.White);
+
+    private static Color[] GetMacroSegmentColors()
+        =>
+        [
+            TryGetColor("DietStatsCarbsColor", Color.FromArgb("#00C9A7")),
+            TryGetColor("DietStatsFatColor", Color.FromArgb("#FFB347")),
+            TryGetColor("DietStatsProteinColor", Color.FromArgb("#8B72FF"))
+        ];
+
+    private static Color TryGetColor(string resourceKey, Color fallback)
+    {
+        var resources = Application.Current?.Resources;
+        if (resources != null && resources.TryGetValue(resourceKey, out var value) && value is Color color)
+        {
+            return color;
+        }
+
+        return fallback;
+    }
+
+    private void OnThemeChanged(object? sender, EventArgs e)
+    {
+        MainThread.BeginInvokeOnMainThread(RefreshCharts);
+    }
+
+    private void OnUnloaded(object? sender, EventArgs e)
+    {
+        if (_themeService != null)
+        {
+            _themeService.ThemeChanged -= OnThemeChanged;
+        }
+
+        Unloaded -= OnUnloaded;
+    }
 
     private async void OnToggleTapped(object? sender, TappedEventArgs e)
     {

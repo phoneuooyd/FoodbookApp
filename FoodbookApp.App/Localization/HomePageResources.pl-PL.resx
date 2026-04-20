@@ -39,6 +39,9 @@
   <data name="ClickRecipeHint" xml:space="preserve">
     <value>Kliknij na przepis aby zobaczyć składniki</value>
   </data>
+  <data name="PlannedMealsOpenStatsHint" xml:space="preserve">
+    <value>Kliknij, aby otworzyć statystyki diety</value>
+  </data>
   <data name="NutritionStatsHeader" xml:space="preserve">
     <value>Statystyki diety</value>
   </data>

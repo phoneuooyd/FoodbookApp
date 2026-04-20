@@ -13,6 +13,7 @@
   <data name="ActiveLists" xml:space="preserve"><value>Aktive Listen</value></data>
   <data name="PlannedMealsHeader" xml:space="preserve"><value>Geplante Mahlzeiten</value></data>
   <data name="ClickRecipeHint" xml:space="preserve"><value>Tippe ein Rezept an fur Zutaten</value></data>
+  <data name="PlannedMealsOpenStatsHint" xml:space="preserve"><value>Tippe hier, um Ernahrungsstatistiken zu offnen</value></data>
   <data name="NutritionStatsHeader" xml:space="preserve"><value>Ernahrungsstatistiken</value></data>
   <data name="Calories" xml:space="preserve"><value>Kalorien</value></data>
   <data name="Protein" xml:space="preserve"><value>Protein</value></data>

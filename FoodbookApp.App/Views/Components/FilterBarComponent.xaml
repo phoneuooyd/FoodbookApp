@@ -84,16 +84,16 @@
                                                         SelectedItem="{Binding SelectedPlan, Source={x:Reference FilterBarRoot}, Mode=TwoWay}"
                                                         IsVisible="{Binding IsPlanPickerVisible, Source={x:Reference FilterBarRoot}}"
                 Margin="0,4,0,0"
-                TextColor="{AppThemeBinding Dark=White, Light=Black}"
-                BackgroundColor="{AppThemeBinding Dark=#2a2a40, Light=#f0f0f0}"/>
+              TextColor="{DynamicResource FrameTextColor}"
+              BackgroundColor="{DynamicResource FrameBackgroundColor}"/>
 
         <Grid ColumnDefinitions="*,Auto,*"
                                                  IsVisible="{Binding IsCustomRangeVisible, Source={x:Reference FilterBarRoot}}"
               Margin="0,4,0,0">
                      <Border Grid.Column="0"
                                    StrokeThickness="1"
-                                   Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
-                                   BackgroundColor="{DynamicResource PageBackgroundColor}"
+                                   Stroke="{DynamicResource ModernBorderColor}"
+                                   BackgroundColor="{DynamicResource FrameBackgroundColor}"
                                    Padding="8,4">
                             <Border.StrokeShape>
                                    <RoundRectangle CornerRadius="9" />
@@ -111,8 +111,8 @@
                    Margin="8,0" />
                      <Border Grid.Column="2"
                                    StrokeThickness="1"
-                                   Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
-                                   BackgroundColor="{DynamicResource PageBackgroundColor}"
+                                   Stroke="{DynamicResource ModernBorderColor}"
+                                   BackgroundColor="{DynamicResource FrameBackgroundColor}"
                                    Padding="8,4">
                             <Border.StrokeShape>
                                    <RoundRectangle CornerRadius="9" />

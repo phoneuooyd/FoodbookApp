@@ -889,7 +889,8 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
                 ActualProteinPercent = 0;
             }
 
-            GoalCalories = Math.Max(1, Math.Round(_baseDailyCalorieLimit));
+            var rangeDays = Math.Max(1, (end.Date - start.Date).Days + 1);
+            GoalCalories = Math.Max(1, Math.Round(_baseDailyCalorieLimit * rangeDays));
             CaloriesMin = 0;
             CaloriesMax = Math.Max(GoalCalories * 1.3, ConsumedCalories * 1.1);
             TargetRangeStart = GoalCalories * _targetRangeLowerRatio;
@@ -1098,8 +1099,8 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
                 SelectedDate != null
                     ? (SelectedDate.Date, SelectedDate.Date)
                     : (FilterStartDate.Date, FilterStartDate.Date),
-            FilterMode.Week => (FilterStartDate.Date, FilterEndDate.Date),
-            FilterMode.Month => (FilterStartDate.Date, FilterEndDate.Date),
+            FilterMode.Week => (DateTime.Today.AddDays(-6), DateTime.Today),
+            FilterMode.Month => (DateTime.Today.AddDays(-29), DateTime.Today),
             FilterMode.Custom => (FilterStartDate.Date, FilterEndDate.Date),
             FilterMode.Plan => SelectedPlan != null
                 ? (SelectedPlan.StartDate.Date, SelectedPlan.EndDate.Date)
@@ -1203,11 +1204,26 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
         await RefreshAsync();
     }
 
+    private static Color TryGetThemeColor(string key, Color fallback)
+    {
+        var resources = Application.Current?.Resources;
+        if (resources != null && resources.TryGetValue(key, out var value) && value is Color color)
+        {
+            return color;
+        }
+
+        return fallback;
+    }
+
     private Color GetChipBackground(FilterMode chipMode)
-        => SelectedFilter == chipMode ? Color.FromArgb("#8B72FF") : Color.FromArgb("#338B72FF");
+        => SelectedFilter == chipMode
+            ? TryGetThemeColor("DietStatsChipActiveBackgroundColor", Color.FromArgb("#8B72FF"))
+            : TryGetThemeColor("DietStatsChipInactiveBackgroundColor", Color.FromArgb("#338B72FF"));
 
     private Color GetChipTextColor(FilterMode chipMode)
-        => SelectedFilter == chipMode ? Colors.White : Color.FromArgb("#AAAAAA");
+        => SelectedFilter == chipMode
+            ? TryGetThemeColor("DietStatsChipActiveTextColor", Colors.White)
+            : TryGetThemeColor("DietStatsChipInactiveTextColor", Color.FromArgb("#AAAAAA"));
 
     private void BuildDateRange(DateTime centerDate)
     {

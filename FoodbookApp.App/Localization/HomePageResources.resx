@@ -39,6 +39,9 @@
 	<data name="ClickRecipeHint" xml:space="preserve">
     <value>Tap on a recipe to see ingredients</value>
   </data>
+	<data name="PlannedMealsOpenStatsHint" xml:space="preserve">
+    <value>Tap to open diet statistics</value>
+  </data>
 	<data name="NutritionStatsHeader" xml:space="preserve">
     <value>Diet Stats</value>
   </data>

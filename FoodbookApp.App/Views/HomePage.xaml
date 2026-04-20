@@ -462,6 +462,27 @@
                                Text="{loc:Translate Resource=HomePageResources, Key=NoNutritionData}"
                                FontSize="12"
                                TextColor="{DynamicResource SecondaryText}" />
+
+                        <HorizontalStackLayout Spacing="8"
+                                               VerticalOptions="Center">
+                            <Label Text="{loc:Translate Resource=HomePageResources, Key=PlannedMealsOpenStatsHint}"
+                                   Style="{StaticResource SectionSubtitleStyle}" />
+
+                            <Border StrokeThickness="0"
+                                    Stroke="Transparent"
+                                    StrokeShape="RoundRectangle 10"
+                                    BackgroundColor="{DynamicResource Secondary}"
+                                    Padding="8,5"
+                                    VerticalOptions="Center">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding OpenDietStatisticsCommand}" />
+                                </Border.GestureRecognizers>
+                                <Label Text="{loc:Translate Resource=HomePageResources, Key=GoToSettings}"
+                                       FontSize="11"
+                                       FontAttributes="Bold"
+                                       TextColor="{DynamicResource FrameTextColor}" />
+                            </Border>
+                        </HorizontalStackLayout>
                     </VerticalStackLayout>
                 </Border>
 
