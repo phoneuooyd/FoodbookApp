@@ -1,20 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Maui.Controls;
-using Foodbook.Models;
-using Foodbook.ViewModels;
-using Foodbook.Views.Components;
-using Foodbook.Views.Base;
+﻿using CommunityToolkit.Maui.Extensions; // For ShowPopupAsync extension
 using CommunityToolkit.Maui.Views;
-using CommunityToolkit.Maui.Extensions; // For ShowPopupAsync extension
-using Microsoft.Maui.Graphics;
-using Microsoft.Maui.Dispatching;
-using Microsoft.Extensions.DependencyInjection;
+using Foodbook.Models;
+using Foodbook.Utils;
+using Foodbook.ViewModels;
+using Foodbook.Views.Base;
+using Foodbook.Views.Components;
 using FoodbookApp.Interfaces;
 using FoodbookApp.Localization;
-using Foodbook.Utils;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Maui.Controls;
+using Microsoft.Maui.Dispatching;
+using Microsoft.Maui.Graphics;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Foodbook.Views
 {
@@ -1022,79 +1023,51 @@ namespace Foodbook.Views
             _ = ViewModel.RecalculateNutritionalValuesAsync();
         }
 
-        // Open labels management popup (also acts as selector)
         private async void OnManageLabelsClicked(object sender, EventArgs e)
         {
             try
             {
-                if (_isModalOpen)
-                {
-                    System.Diagnostics.Debug.WriteLine("Modal already open, ignoring click");
-                    return;
-                }
+                if (_isModalOpen) return;
                 _isModalOpen = true;
 
-                var settingsVm = FoodbookApp.MauiProgram.ServiceProvider?.GetService<SettingsViewModel>();
-                if (settingsVm == null)
+                var manageLabelsVm = IPlatformApplication.Current!.Services.GetService<ManageLabelsViewModel>();
+                if (manageLabelsVm == null)
                 {
-                    await DisplayAlert(FoodbookApp.Localization.AddRecipePageResources.ErrorTitle, FoodbookApp.Localization.AddRecipePageResources.CannotOpenLabelsManagement, FoodbookApp.Localization.AddRecipePageResources.OKButton);
+                    await DisplayAlert("Błąd", "Nie można otworzyć zarządzania etykietami", "OK");
                     return;
                 }
 
-                var initiallySelected = ViewModel?.SelectedLabels.Select(l => l.Id).ToList() ?? new List<Guid>();
-                var popup = new CRUDComponentPopup(settingsVm, initiallySelected);
+                // Przekaż obecnie wybrane etykiety do modala
+                var currentSelectedIds = ViewModel?.SelectedLabels?.Select(l => l.Id).ToList() ?? new List<Guid>();
+                manageLabelsVm.SetSelectedLabelIds(currentSelectedIds);
 
-                try
+                var managePage = new ManageLabelsPage(manageLabelsVm);
+                await Shell.Current.Navigation.PushModalAsync(managePage);
+
+                // Po zamknięciu modala zaktualizuj SelectedLabels
+                if (ViewModel != null)
                 {
-                    if (IsModalPage())
+                    var updatedLabels = manageLabelsVm.SelectedLabels.ToList();
+                    ViewModel.SelectedLabels = new ObservableCollection<RecipeLabel>(updatedLabels);
+
+                    // WYMUŚ ODŚWIEŻENIE CollectionView – bug MAUI z wiązaniem po modalu
+                    var collectionView = this.FindByName<CollectionView>("LabelsCollectionView");
+                    if (collectionView != null)
                     {
-                        var app = Application.Current;
-                        if (app?.Resources != null)
-                        {
-                            var overlay = ResolveOpaquePopupOverlayColor(app);
-                            popup.Resources["PopupBackgroundColor"] = overlay;
-                            popup.Resources["PopupBackgroundBrush"] = new SolidColorBrush(overlay);
-                            HideUnderlyingContent();
-                            System.Diagnostics.Debug.WriteLine($"[AddRecipePage] Applied local opaque PopupBackgroundColor override for CRUDComponentPopup: {overlay}");
-                        }
+                        collectionView.ItemsSource = null;
+                        collectionView.ItemsSource = ViewModel.SelectedLabels;
                     }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[AddRecipePage] Failed to apply local popup override: {ex.Message}");
-                }
-
-                var showTask = this.ShowPopupAsync(popup);
-                var resultTask = popup.ResultTask;
-                
-                await Task.WhenAny(showTask, resultTask);
-                
-                var result = resultTask.IsCompleted ? await resultTask : null;
-
-                if (result is IEnumerable<Guid> selectedIds && ViewModel != null)
-                {
-                    await ViewModel.LoadAvailableLabelsAsync();
-                    var idSet = selectedIds.ToHashSet();
-                    ViewModel.SelectedLabels.Clear();
-                    foreach (var lbl in ViewModel.AvailableLabels.Where(l => idSet.Contains(l.Id)))
-                        ViewModel.SelectedLabels.Add(lbl);
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] CRUDComponentPopup error: {ex.Message}");
-                await DisplayAlert(FoodbookApp.Localization.AddRecipePageResources.ErrorTitle, FoodbookApp.Localization.AddRecipePageResources.CannotOpenLabelsManagement, FoodbookApp.Localization.AddRecipePageResources.OKButton);
+                System.Diagnostics.Debug.WriteLine($"[AddRecipePage] ManageLabels error: {ex.Message}");
             }
             finally
             {
-                if (Application.Current is Application app && IsModalPage())
-                {
-                    RestoreModalPopupOverlay(app);
-                }
                 _isModalOpen = false;
             }
         }
-
         private static double GetElementYRelativeToPage(Element? element)
         {
             double y = 0;

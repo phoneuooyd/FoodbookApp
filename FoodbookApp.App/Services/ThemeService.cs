@@ -23,19 +23,19 @@ namespace Foodbook.Services
         private readonly Dictionary<AppColorTheme, ThemeColors> _availableColorThemes;
 
         // Supported wallpapers per color theme
-        // Files are expected in Resources/Wallpapers with pattern: <theme>_light.jpg and <theme>_dark.jpg
+        // Files are expected in Resources/Wallpapers with pattern: <theme>_light.<ext> and <theme>_dark.<ext>
         // If only single is provided, it will be used for both light and dark
         private readonly Dictionary<AppColorTheme, (string? single, string? light, string? dark)> _wallpaperMap = new()
         {
             // Default
             [AppColorTheme.Default]    = (single: null, light: "default_light.jpg",    dark: "default_dark.jpg"),
             // Nature family
-            [AppColorTheme.Nature]     = (single: null, light: "nature_light.jpg",     dark: "nature_dark.jpg"),
+            [AppColorTheme.Nature]     = (single: null, light: "nature_light.webp",    dark: "nature_dark.jpg"),
             [AppColorTheme.Forest]     = (single: null, light: "forest_light.jpg",     dark: "forest_dark.jpg"),
             // Warm colors
             [AppColorTheme.Autumn]     = (single: null, light: "autumn_light.jpg",     dark: "autumn_dark.jpg"),
             [AppColorTheme.Warm]       = (single: null, light: "warm_light.jpg",       dark: "warm_dark.jpg"),
-            [AppColorTheme.Sunset]     = (single: null, light: "sunset_light.jpg",     dark: "sunset_dark.jpg"),
+            [AppColorTheme.Sunset]     = (single: null, light: "sunset_light.jpg",     dark: "sunset_dark.png"),
             [AppColorTheme.Vibrant]    = (single: null, light: "vibrant_light.jpg",    dark: "vibrant_dark.jpg"),
             // Neutral
             [AppColorTheme.Monochrome] = (single: "monochrome.jpg", light: null,       dark: null),

@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:resources="clr-namespace:FoodbookApp.Localization"
+             x:Class="Foodbook.Views.ManageLabelsPage"
+             BackgroundColor="#88000000"
+             Shell.NavBarIsVisible="False">
+
+    <Grid>
+        <Border Margin="20,60,20,60"
+                BackgroundColor="{DynamicResource PopupBackgroundColor}"
+                StrokeThickness="0"
+                StrokeShape="RoundRectangle 20"
+                VerticalOptions="Fill">
+
+            <Grid RowDefinitions="Auto,*,Auto">
+
+                <!-- HEADER -->
+                <Border Grid.Row="0"
+                        BackgroundColor="{DynamicResource Primary}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 20,20,0,0"
+                        Padding="16,14">
+                    <Grid ColumnDefinitions="*,40">
+                        <Label Grid.Column="0"
+                               Text="Etykiety"
+                               FontFamily="NunitoBold"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{DynamicResource AppHeroTitleTextColor}"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
+                        <Label Grid.Column="1"
+                               Text="✕"
+                               TextColor="{DynamicResource AppHeroTitleTextColor}"
+                               FontSize="18"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding CloseCommand}" />
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </Grid>
+                </Border>
+
+                <!-- CONTENT -->
+                <ScrollView Grid.Row="1" Padding="16,12">
+                    <VerticalStackLayout Spacing="0">
+
+                        <!-- TOOLBAR -->
+                        <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+                            <Label Text="Zarządzaj etykietami"
+                                   FontFamily="NunitoRegular"
+                                   FontSize="12"
+                                   TextColor="{DynamicResource SecondaryText}"
+                                   VerticalOptions="Center" />
+                            <Border Grid.Column="1"
+                                    WidthRequest="36"
+                                    HeightRequest="36"
+                                    BackgroundColor="Transparent"
+                                    Stroke="{DynamicResource Primary}"
+                                    StrokeThickness="1.5"
+                                    StrokeShape="RoundRectangle 18">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ShowAddFormCommand}" />
+                                </Border.GestureRecognizers>
+                                <Label Text="+"
+                                       FontSize="20"
+                                       FontAttributes="Bold"
+                                       TextColor="{DynamicResource Primary}"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center" />
+                            </Border>
+                        </Grid>
+
+                        <!-- ADD FORM -->
+                        <Border IsVisible="{Binding IsAddFormVisible}"
+                                BackgroundColor="{DynamicResource OverhaulCardBackgroundColor}"
+                                Stroke="{DynamicResource ModernBorderColor}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 14"
+                                Padding="14,12"
+                                Margin="0,0,0,14">
+                            <VerticalStackLayout Spacing="10">
+                                <Label Text="Nowa etykieta"
+                                       FontFamily="NunitoBold"
+                                       FontSize="13"
+                                       FontAttributes="Bold"
+                                       TextColor="{DynamicResource FrameTextColor}" />
+
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="Nazwa" FontFamily="NunitoRegular" FontSize="11" TextColor="{DynamicResource SecondaryText}" />
+                                    <Border BackgroundColor="{DynamicResource DashboardCardBackgroundColor}" StrokeThickness="0" StrokeShape="RoundRectangle 10" Padding="12,0">
+                                        <Entry Text="{Binding NewLabelName}" Placeholder="Nazwa etykiety" PlaceholderColor="{DynamicResource ModernPlaceholderColor}" TextColor="{DynamicResource FrameTextColor}" FontFamily="NunitoRegular" FontSize="14" HeightRequest="44" BackgroundColor="Transparent" />
+                                    </Border>
+                                </VerticalStackLayout>
+
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="Kolor (hex)" FontFamily="NunitoRegular" FontSize="11" TextColor="{DynamicResource SecondaryText}" />
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                        <Border BackgroundColor="{DynamicResource DashboardCardBackgroundColor}" StrokeThickness="0" StrokeShape="RoundRectangle 10" Padding="12,0">
+                                            <Entry Text="{Binding NewLabelColorHex}" Placeholder="#8B72FF" PlaceholderColor="{DynamicResource ModernPlaceholderColor}" TextColor="{DynamicResource FrameTextColor}" FontFamily="NunitoRegular" FontSize="14" HeightRequest="44" BackgroundColor="Transparent" />
+                                        </Border>
+                                        <Border Grid.Column="1" WidthRequest="44" HeightRequest="44" BackgroundColor="{Binding NewLabelColorPreview}" Stroke="{DynamicResource ModernBorderColor}" StrokeThickness="1" StrokeShape="RoundRectangle 10" />
+                                    </Grid>
+                                </VerticalStackLayout>
+
+                                <HorizontalStackLayout Spacing="8" Margin="0,2,0,0">
+                                    <Label Text="Szybki wybór:" FontFamily="NunitoRegular" FontSize="11" TextColor="{DynamicResource SecondaryText}" VerticalOptions="Center" />
+                                    <Border WidthRequest="26" HeightRequest="26" BackgroundColor="#EF4444" StrokeThickness="0" StrokeShape="RoundRectangle 13">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding SetColorCommand}" CommandParameter="#EF4444" />
+                                        </Border.GestureRecognizers>
+                                    </Border>
+                                    <Border WidthRequest="26" HeightRequest="26" BackgroundColor="#F97316" StrokeThickness="0" StrokeShape="RoundRectangle 13">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding SetColorCommand}" CommandParameter="#F97316" />
+                                        </Border.GestureRecognizers>
+                                    </Border>
+                                    <Border WidthRequest="26" HeightRequest="26" BackgroundColor="#22C55E" StrokeThickness="0" StrokeShape="RoundRectangle 13">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding SetColorCommand}" CommandParameter="#22C55E" />
+                                        </Border.GestureRecognizers>
+                                    </Border>
+                                    <Border WidthRequest="26" HeightRequest="26" BackgroundColor="#3B82F6" StrokeThickness="0" StrokeShape="RoundRectangle 13">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding SetColorCommand}" CommandParameter="#3B82F6" />
+                                        </Border.GestureRecognizers>
+                                    </Border>
+                                    <Border WidthRequest="26" HeightRequest="26" BackgroundColor="#8B72FF" StrokeThickness="0" StrokeShape="RoundRectangle 13">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding SetColorCommand}" CommandParameter="#8B72FF" />
+                                        </Border.GestureRecognizers>
+                                    </Border>
+                                    <Border WidthRequest="26" HeightRequest="26" BackgroundColor="#EC4899" StrokeThickness="0" StrokeShape="RoundRectangle 13">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding SetColorCommand}" CommandParameter="#EC4899" />
+                                        </Border.GestureRecognizers>
+                                    </Border>
+                                </HorizontalStackLayout>
+
+                                <Label Text="{Binding NewLabelValidationMessage}" IsVisible="{Binding HasNewValidationError}" FontFamily="NunitoRegular" FontSize="11" TextColor="#EF4444" />
+
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,4,0,0">
+                                    <Border Grid.Column="0" Stroke="{DynamicResource Primary}" StrokeThickness="1" StrokeShape="RoundRectangle 10" BackgroundColor="Transparent" HeightRequest="40">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding CancelAddFormCommand}" />
+                                        </Border.GestureRecognizers>
+                                        <Label Text="Anuluj" TextColor="{DynamicResource Primary}" FontFamily="NunitoBold" FontSize="13" HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </Border>
+                                    <Border Grid.Column="1" BackgroundColor="{DynamicResource Primary}" StrokeThickness="0" StrokeShape="RoundRectangle 10" HeightRequest="40">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding SaveNewLabelCommand}" />
+                                        </Border.GestureRecognizers>
+                                        <Label Text="Dodaj" TextColor="{DynamicResource AppHeroTitleTextColor}" FontFamily="NunitoBold" FontSize="13" HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </Border>
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <!-- EMPTY STATE -->
+                        <Label Text="Brak etykiet. Dodaj pierwszą!"
+                               IsVisible="{Binding IsEmpty}"
+                               FontFamily="NunitoRegular"
+                               FontSize="13"
+                               TextColor="{DynamicResource SecondaryText}"
+                               HorizontalOptions="Center"
+                               Margin="0,24,0,0" />
+
+                        <!-- LABELS LIST -->
+                        <CollectionView ItemsSource="{Binding Labels}"
+                                        IsVisible="{Binding HasLabels}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <!-- VIEW MODE -->
+                                        <Border Margin="0,0,0,8"
+                                                Padding="12,10"
+                                                StrokeShape="RoundRectangle 12"
+                                                StrokeThickness="1.5"
+                                                Stroke="{Binding ColorHex}"
+                                                BackgroundColor="{DynamicResource OverhaulCardBackgroundColor}"
+                                                IsVisible="{Binding IsEditing, Converter={StaticResource InvertedBoolConverter}}">
+
+                                            <Border.Triggers>
+                                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                                    <Setter Property="Stroke" Value="{DynamicResource Primary}" />
+                                                </DataTrigger>
+                                            </Border.Triggers>
+
+                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                                                <Border Grid.Column="0" WidthRequest="14" HeightRequest="14" BackgroundColor="{Binding ColorHex}" StrokeThickness="0" StrokeShape="RoundRectangle 7" VerticalOptions="Center" />
+                                                <Label Grid.Column="1" Text="{Binding Name}" FontFamily="NunitoBold" FontSize="13" TextColor="{DynamicResource FrameTextColor}" VerticalOptions="Center" LineBreakMode="TailTruncation" MaxLines="1" />
+                                                <Button Grid.Column="2" Style="{StaticResource DeleteButton}" Text="✏" TextColor="{DynamicResource Primary}" BackgroundColor="{DynamicResource DashboardCardBackgroundColor}" BorderColor="Transparent"
+                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditLabelCommand}" CommandParameter="{Binding .}" />
+                                                <Button Grid.Column="3" Style="{StaticResource DeleteButton}"
+                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeleteLabelCommand}" CommandParameter="{Binding .}" />
+                                            </Grid>
+
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ToggleLabelSelectionCommand}" CommandParameter="{Binding .}" />
+                                            </Border.GestureRecognizers>
+                                        </Border>
+
+                                        <!-- EDIT MODE -->
+                                        <Border Margin="0,0,0,8"
+                                                Padding="12,10"
+                                                BackgroundColor="{DynamicResource OverhaulCardBackgroundColor}"
+                                                Stroke="{DynamicResource Primary}"
+                                                StrokeThickness="1.5"
+                                                StrokeShape="RoundRectangle 12"
+                                                IsVisible="{Binding IsEditing}">
+                                            <VerticalStackLayout Spacing="8">
+                                                <Label Text="Edytuj etykietę" FontFamily="NunitoBold" FontSize="12" TextColor="{DynamicResource FrameTextColor}" />
+                                                <VerticalStackLayout Spacing="4">
+                                                    <Label Text="Nazwa" FontFamily="NunitoRegular" FontSize="10" TextColor="{DynamicResource SecondaryText}" />
+                                                    <Border BackgroundColor="{DynamicResource DashboardCardBackgroundColor}" StrokeThickness="0" StrokeShape="RoundRectangle 8" Padding="10,0">
+                                                        <Entry Text="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditingName}" Placeholder="Nazwa" PlaceholderColor="{DynamicResource ModernPlaceholderColor}" TextColor="{DynamicResource FrameTextColor}" FontFamily="NunitoRegular" FontSize="13" HeightRequest="40" BackgroundColor="Transparent" />
+                                                    </Border>
+                                                </VerticalStackLayout>
+                                                <VerticalStackLayout Spacing="4">
+                                                    <Label Text="Kolor (hex)" FontFamily="NunitoRegular" FontSize="10" TextColor="{DynamicResource SecondaryText}" />
+                                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                                                        <Border BackgroundColor="{DynamicResource DashboardCardBackgroundColor}" StrokeThickness="0" StrokeShape="RoundRectangle 8" Padding="10,0">
+                                                            <Entry Text="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditingColorHex}" Placeholder="#8B72FF" PlaceholderColor="{DynamicResource ModernPlaceholderColor}" TextColor="{DynamicResource FrameTextColor}" FontFamily="NunitoRegular" FontSize="13" HeightRequest="40" BackgroundColor="Transparent" />
+                                                        </Border>
+                                                        <Border Grid.Column="1" WidthRequest="40" HeightRequest="40" BackgroundColor="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditingColorPreview}" Stroke="{DynamicResource ModernBorderColor}" StrokeThickness="1" StrokeShape="RoundRectangle 8" />
+                                                    </Grid>
+                                                </VerticalStackLayout>
+                                                <HorizontalStackLayout Spacing="6" Margin="0,1,0,0">
+                                                    <Border WidthRequest="22" HeightRequest="22" BackgroundColor="#EF4444" StrokeThickness="0" StrokeShape="RoundRectangle 11">
+                                                        <Border.GestureRecognizers>
+                                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetEditColorCommand}" CommandParameter="#EF4444" />
+                                                        </Border.GestureRecognizers>
+                                                    </Border>
+                                                    <Border WidthRequest="22" HeightRequest="22" BackgroundColor="#F97316" StrokeThickness="0" StrokeShape="RoundRectangle 11">
+                                                        <Border.GestureRecognizers>
+                                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetEditColorCommand}" CommandParameter="#F97316" />
+                                                        </Border.GestureRecognizers>
+                                                    </Border>
+                                                    <Border WidthRequest="22" HeightRequest="22" BackgroundColor="#22C55E" StrokeThickness="0" StrokeShape="RoundRectangle 11">
+                                                        <Border.GestureRecognizers>
+                                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetEditColorCommand}" CommandParameter="#22C55E" />
+                                                        </Border.GestureRecognizers>
+                                                    </Border>
+                                                    <Border WidthRequest="22" HeightRequest="22" BackgroundColor="#3B82F6" StrokeThickness="0" StrokeShape="RoundRectangle 11">
+                                                        <Border.GestureRecognizers>
+                                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetEditColorCommand}" CommandParameter="#3B82F6" />
+                                                        </Border.GestureRecognizers>
+                                                    </Border>
+                                                    <Border WidthRequest="22" HeightRequest="22" BackgroundColor="#8B72FF" StrokeThickness="0" StrokeShape="RoundRectangle 11">
+                                                        <Border.GestureRecognizers>
+                                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetEditColorCommand}" CommandParameter="#8B72FF" />
+                                                        </Border.GestureRecognizers>
+                                                    </Border>
+                                                    <Border WidthRequest="22" HeightRequest="22" BackgroundColor="#EC4899" StrokeThickness="0" StrokeShape="RoundRectangle 11">
+                                                        <Border.GestureRecognizers>
+                                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetEditColorCommand}" CommandParameter="#EC4899" />
+                                                        </Border.GestureRecognizers>
+                                                    </Border>
+                                                </HorizontalStackLayout>
+                                                <Label Text="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditingValidationMessage}" IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.HasEditValidationError}" FontFamily="NunitoRegular" FontSize="10" TextColor="#EF4444" />
+                                                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                                                    <Border Stroke="{DynamicResource Primary}" StrokeThickness="1" StrokeShape="RoundRectangle 8" BackgroundColor="Transparent" HeightRequest="36">
+                                                        <Border.GestureRecognizers>
+                                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CancelEditCommand}" />
+                                                        </Border.GestureRecognizers>
+                                                        <Label Text="Anuluj" TextColor="{DynamicResource Primary}" FontFamily="NunitoBold" FontSize="12" HorizontalOptions="Center" VerticalOptions="Center" />
+                                                    </Border>
+                                                    <Border BackgroundColor="{DynamicResource Primary}" StrokeThickness="0" StrokeShape="RoundRectangle 8" HeightRequest="36">
+                                                        <Border.GestureRecognizers>
+                                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SaveEditCommand}" />
+                                                        </Border.GestureRecognizers>
+                                                        <Label Text="Zapisz" TextColor="{DynamicResource AppHeroTitleTextColor}" FontFamily="NunitoBold" FontSize="12" HorizontalOptions="Center" VerticalOptions="Center" />
+                                                    </Border>
+                                                </Grid>
+                                            </VerticalStackLayout>
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+
+                    </VerticalStackLayout>
+                </ScrollView>
+
+                <!-- FOOTER -->
+                <Border Grid.Row="2"
+                        BackgroundColor="{DynamicResource OverhaulCardBackgroundColor}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 0,0,20,20"
+                        Padding="16,12">
+                    <Border BackgroundColor="{DynamicResource Primary}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 12"
+                            HeightRequest="44">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding CloseCommand}" />
+                        </Border.GestureRecognizers>
+                        <Label Text="Gotowe"
+                               TextColor="{DynamicResource AppHeroTitleTextColor}"
+                               FontFamily="NunitoBold"
+                               FontSize="15"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
+                    </Border>
+                </Border>
+
+            </Grid>
+        </Border>
+    </Grid>
+</ContentPage>

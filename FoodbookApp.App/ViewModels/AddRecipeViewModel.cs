@@ -47,7 +47,13 @@ namespace Foodbook.ViewModels
         // ✅ Labels support
         private readonly IRecipeLabelService _labelService;
         public ObservableCollection<RecipeLabel> AvailableLabels { get; } = new();
-        public ObservableCollection<RecipeLabel> SelectedLabels { get; } = new();
+
+        private ObservableCollection<RecipeLabel> _selectedLabels = new();
+        public ObservableCollection<RecipeLabel> SelectedLabels
+        {
+            get => _selectedLabels;
+            set { _selectedLabels = value; OnPropertyChanged(); }
+        }
 
         // Tab management
         private int _selectedTabIndex = 0;
@@ -308,6 +314,19 @@ namespace Foodbook.ViewModels
             _ = LoadAvailableLabelsAsync();
             InitializeImportServingAccess();
 
+            // Diagnostic: log SelectedLabels changes
+            SelectedLabels.CollectionChanged += (s, e) =>
+            {
+                try
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] SelectedLabels.CollectionChanged: action={e.Action}, now={string.Join(',', SelectedLabels.Select(sl => sl.Id + ":" + sl.Name))}");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Error in SelectedLabels.CollectionChanged log: {ex.Message}");
+                }
+            };
+
             ValidateInput();
         }
 
@@ -503,18 +522,92 @@ namespace Foodbook.ViewModels
             try
             {
                 var labels = await _labelService.GetAllAsync();
-                MainThread.BeginInvokeOnMainThread(() =>
+                System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Fetched {labels?.Count ?? 0} labels from label service");
+                if (labels != null && labels.Count > 0)
+                {
+                    var sample = string.Join(", ", labels.Take(10).Select(l => $"{l.Id}:{l.Name}"));
+                    System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Label sample: {sample}");
+                }
+                await MainThread.InvokeOnMainThreadAsync(() =>
                 {
                     AvailableLabels.Clear();
                     foreach (var l in labels)
                         AvailableLabels.Add(l);
                 });
+
+                if (SelectedLabels.Count > 0)
+                {
+                    var selectedIds = SelectedLabels.Select(l => l.Id).ToList();
+                    await SyncSelectedLabelsFromStoreAsync(selectedIds);
+                }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Error loading labels: {ex.Message}");
                 MainThread.BeginInvokeOnMainThread(() => AvailableLabels.Clear());
             }
+        }
+
+        private async Task SyncSelectedLabelsFromStoreAsync(IEnumerable<Guid> selectedLabelIds)
+        {
+            var ids = selectedLabelIds
+                ?.Where(id => id != Guid.Empty)
+                .Distinct()
+                .ToList() ?? new List<Guid>();
+
+            System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] SyncSelectedLabelsFromStoreAsync requested ids: {string.Join(',', ids)}");
+
+            var resolved = new List<RecipeLabel>();
+            if (ids.Count > 0)
+            {
+                if (AvailableLabels.Count > 0)
+                {
+                    var availableById = AvailableLabels.ToDictionary(l => l.Id, l => l);
+                    resolved.AddRange(ids.Select(id => availableById.TryGetValue(id, out var label) ? label : null)
+                        .Where(label => label != null)!
+                        .Cast<RecipeLabel>());
+                }
+
+                if (resolved.Count != ids.Count)
+                {
+                    var all = await _labelService.GetAllAsync();
+                    System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Fallback fetched {all?.Count ?? 0} labels from service for resolution");
+                    var lookup = all.ToDictionary(l => l.Id, l => l);
+                    resolved = ids.Select(id => lookup.TryGetValue(id, out var label) ? label : null)
+                        .Where(label => label != null)!
+                        .Cast<RecipeLabel>()
+                        .ToList();
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Resolved selected labels: {string.Join(',', resolved.Select(r => r.Id + ":" + r.Name))}");
+
+            void Apply()
+            {
+                SelectedLabels.Clear();
+                foreach (var label in resolved)
+                    SelectedLabels.Add(label);
+            }
+
+            if (MainThread.IsMainThread)
+            {
+                Apply();
+            }
+            else
+            {
+                await MainThread.InvokeOnMainThreadAsync(Apply);
+            }
+        }
+
+        public void ApplySelectedLabelIds(IEnumerable<Guid> selectedLabelIds)
+        {
+            if (selectedLabelIds == null)
+                return;
+
+            var selectedSet = new HashSet<Guid>(selectedLabelIds);
+            SelectedLabels.Clear();
+            foreach (var label in AvailableLabels.Where(l => selectedSet.Contains(l.Id)))
+                SelectedLabels.Add(label);
         }
 
         public bool IsEditMode => _editingRecipe != null;
@@ -541,6 +634,19 @@ namespace Foodbook.ViewModels
                     System.Diagnostics.Debug.WriteLine($"⚠️ LoadRecipeAsync: Recipe {id} not found");
                     _suppressDirtyTracking = false;
                     return;
+                }
+
+                // Log labels present on the recipe object returned from the service
+                try
+                {
+                    var rlabels = recipe.Labels != null && recipe.Labels.Any()
+                        ? string.Join(", ", recipe.Labels.Select(l => $"{l.Id}:{l.Name}"))
+                        : "(no labels)";
+                    System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] LoadRecipeAsync: recipe.Labels => {rlabels}");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Error logging recipe labels: {ex.Message}");
                 }
 
                 _editingRecipe = recipe;
@@ -582,15 +688,13 @@ namespace Foodbook.ViewModels
                 }
 
                 // labels
-                SelectedLabels.Clear();
-                if (recipe.Labels != null)
-                {
-                    foreach (var label in recipe.Labels)
-                    {
-                        if (label.Id != Guid.Empty)
-                            SelectedLabels.Add(label);
-                    }
-                }
+                var selectedIds = recipe.Labels?
+                    .Select(label => label.Id)
+                    .Where(id => id != Guid.Empty)
+                    .ToList() ?? new List<Guid>();
+
+                await SyncSelectedLabelsFromStoreAsync(selectedIds);
+                System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] LoadRecipeAsync: SelectedLabels after sync => {string.Join(',', SelectedLabels.Select(s => s.Id + ":" + s.Name))}");
                 
                 await ScheduleNutritionalCalculationAsync();
                 

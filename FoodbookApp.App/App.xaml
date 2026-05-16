@@ -18,7 +18,8 @@
             <converters:IsPlanConverter x:Key="IsPlanConverter" />
             <converters:IsRecipeConverter x:Key="IsRecipeConverter" />
             <converters:IsFolderConverter x:Key="IsFolderConverter" />
-            
+            <converters:HexColorConverter x:Key="HexColorConverter" />
+
             <!-- Font Settings - Dynamic Resources for runtime font changes -->
             <!-- These will be set by FontService -->
             <x:String x:Key="AppFontFamily">Default</x:String>
