@@ -144,27 +144,27 @@
                                                 <Button Grid.Column="1" Text="+" Clicked="OnManageLabelsClicked" WidthRequest="32" HeightRequest="32" CornerRadius="16" FontSize="16" BackgroundColor="{DynamicResource Secondary}" TextColor="{DynamicResource FrameTextColor}" Padding="0" />
                                             </Grid>
                                             <CollectionView x:Name="LabelsCollectionView" 
-                ItemsSource="{Binding SelectedLabels}">
+                                                   ItemsSource="{Binding SelectedLabels}">
                                                 <CollectionView.ItemsLayout>
                                                     <GridItemsLayout Orientation="Vertical" Span="3" />
                                                 </CollectionView.ItemsLayout>
                                                 <CollectionView.ItemTemplate>
                                                     <DataTemplate x:DataType="models:RecipeLabel">
                                                         <Border Padding="8,6" Margin="2" 
-                    Stroke="{DynamicResource Primary}" 
-                    StrokeShape="RoundRectangle 8" 
-                    BackgroundColor="{DynamicResource OverhaulCardBackgroundColor}">
+                                                            Stroke="{DynamicResource Primary}" 
+                                                            StrokeShape="RoundRectangle 8" 
+                                                            BackgroundColor="{DynamicResource OverhaulCardBackgroundColor}">
                                                             <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
                                                                 <Border WidthRequest="12" HeightRequest="12" 
-                            BackgroundColor="{Binding ColorHex}" 
-                            StrokeThickness="0" 
-                            StrokeShape="RoundRectangle 6" 
-                            VerticalOptions="Center" />
+                                                                    BackgroundColor="{Binding ColorHex}" 
+                                                                    StrokeThickness="0" 
+                                                                    StrokeShape="RoundRectangle 6" 
+                                                                    VerticalOptions="Center" />
                                                                 <Label Text="{Binding Name}" 
-                           FontSize="13" 
-                           FontAttributes="Bold" 
-                           TextColor="{DynamicResource PrimaryText}" 
-                           VerticalOptions="Center" />
+                                                                   FontSize="13" 
+                                                                   FontAttributes="Bold" 
+                                                                   TextColor="{DynamicResource PrimaryText}" 
+                                                                   VerticalOptions="Center" />
                                                             </HorizontalStackLayout>
                                                         </Border>
                                                     </DataTemplate>

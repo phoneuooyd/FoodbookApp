@@ -410,12 +410,12 @@ public partial class SettingsViewModel : INotifyPropertyChanged
         SupportedColorThemes = new ObservableCollection<AppColorTheme>
         {
             AppColorTheme.Default,
-            AppColorTheme.Nature,
+            //AppColorTheme.Nature,
             AppColorTheme.Forest,
             AppColorTheme.Autumn,
             AppColorTheme.Warm,
             AppColorTheme.Sunset,
-            AppColorTheme.Vibrant,
+            //AppColorTheme.Vibrant,
             AppColorTheme.Monochrome,
             AppColorTheme.Navy,
             AppColorTheme.Mint,

@@ -5,10 +5,11 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using FoodbookApp.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Storage;
 
-namespace FoodbookApp.Services;
+namespace FoodbookApp.Interfaces;
 
 /// <summary>
 /// Serwis integruj¹cy siê z API OpenAI umo¿liwiaj¹cy uzyskanie odpowiedzi od modelu GPT.

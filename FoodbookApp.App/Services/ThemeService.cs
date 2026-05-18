@@ -322,9 +322,9 @@ namespace Foodbook.Services
                     {
                         // Dark colorful backgrounds: tone down saturation and add subtle transparency.
                         // Bubblegum requires a stronger fade in dark mode.
-                        var darkenFactor = colorTheme == AppColorTheme.Bubblegum ? 0.24 : 0.18;
-                        var neutralBlend = colorTheme == AppColorTheme.Bubblegum ? 0.36 : 0.18;
-                        var overlayAlpha = colorTheme == AppColorTheme.Bubblegum ? 0.90 : 0.96;
+                        var darkenFactor = colorTheme == AppColorTheme.Bubblegum ? 0.19 : 0.18;
+                        var neutralBlend = colorTheme == AppColorTheme.Bubblegum ? 0.18 : 0.18;
+                        var overlayAlpha = colorTheme == AppColorTheme.Bubblegum ? 0.95 : 0.96;
 
                         var darkened = Darken(secondary, darkenFactor);
                         var muted = Blend(darkened, Color.FromArgb("#1E1E1E"), neutralBlend);
@@ -365,6 +365,7 @@ namespace Foodbook.Services
                 // Frame colors
                 Color frameBackgroundColor = isDark ? Color.FromArgb("#2A2A2A") : Color.FromArgb("#FFFFFF");
                 Color frameTextColor = isDark ? Color.FromArgb("#E0E0E0") : Color.FromArgb("#2A2A2A");
+                if (colorTheme == AppColorTheme.Bubblegum && isDark) frameTextColor = Color.FromArgb("#2A2A2A");
                 app.Resources["FrameBackgroundColor"] = frameBackgroundColor;
                 app.Resources["FrameTextColor"] = frameTextColor;
 
@@ -761,8 +762,8 @@ namespace Foodbook.Services
                 [AppColorTheme.Forest] = new ThemeColors
                 {
                     Name = "Forest",
-                    PrimaryLight = Color.FromArgb("#1B5E20"), SecondaryLight = Color.FromArgb("#E8F5E9"), TertiaryLight = Color.FromArgb("#2E7D32"), AccentLight = Color.FromArgb("#388E3C"),
-                    PrimaryDark = Color.FromArgb("#66BB6A"), SecondaryDark = Color.FromArgb("#43A047"), TertiaryDark = Color.FromArgb("#388E3C"), AccentDark = Color.FromArgb("#81C784"),
+                    PrimaryLight = Color.FromArgb("#0c6106"), SecondaryLight = Color.FromArgb("#E8F5E9"), TertiaryLight = Color.FromArgb("#2E7D32"), AccentLight = Color.FromArgb("#388E3C"),
+                    PrimaryDark = Color.FromArgb("#609963"), SecondaryDark = Color.FromArgb("#37a63b"), TertiaryDark = Color.FromArgb("#388E3C"), AccentDark = Color.FromArgb("#81C784"),
                     PrimaryTextLight = Color.FromArgb("#1B5E20"), SecondaryTextLight = Color.FromArgb("#2E7D32"), PrimaryTextDark = Color.FromArgb("#E8F5E9"), SecondaryTextDark = Color.FromArgb("#C8E6C9")
                 },
                 [AppColorTheme.Autumn] = new ThemeColors
@@ -789,7 +790,7 @@ namespace Foodbook.Services
                 [AppColorTheme.Vibrant] = new ThemeColors
                 {
                     Name = "Vibrant",
-                    PrimaryLight = Color.FromArgb("#D32F2F"), SecondaryLight = Color.FromArgb("#FCE4EC"), TertiaryLight = Color.FromArgb("#B71C1C"), AccentLight = Color.FromArgb("#E91E63"),
+                    PrimaryLight = Color.FromArgb("#cf61a3"), SecondaryLight = Color.FromArgb("#FCE4EC"), TertiaryLight = Color.FromArgb("#b71c79"), AccentLight = Color.FromArgb("#E91E63"),
                     PrimaryDark = Color.FromArgb("#F48FB1"), SecondaryDark = Color.FromArgb("#EC407A"), TertiaryDark = Color.FromArgb("#AD1457"), AccentDark = Color.FromArgb("#F48FB1"),
                     PrimaryTextLight = Color.FromArgb("#B71C1C"), SecondaryTextLight = Color.FromArgb("#C2185B"), PrimaryTextDark = Color.FromArgb("#FCE4EC"), SecondaryTextDark = Color.FromArgb("#F8BBD9")
                 },
@@ -824,9 +825,9 @@ namespace Foodbook.Services
                 [AppColorTheme.Bubblegum] = new ThemeColors
                 {
                     Name = "Bubblegum",
-                    PrimaryLight = Color.FromArgb("#F48FB1"), SecondaryLight = Color.FromArgb("#E1F5FE"), TertiaryLight = Color.FromArgb("#F06292"), AccentLight = Color.FromArgb("#81D4FA"),
-                    PrimaryDark = Color.FromArgb("#F8BBD0"), SecondaryDark = Color.FromArgb("#4FC3F7"), TertiaryDark = Color.FromArgb("#EC407A"), AccentDark = Color.FromArgb("#29B6F6"),
-                    PrimaryTextLight = Color.FromArgb("#AD1457"), SecondaryTextLight = Color.FromArgb("#0288D1"), PrimaryTextDark = Color.FromArgb("#FCE4EC"), SecondaryTextDark = Color.FromArgb("#E1F5FE")
+                    PrimaryLight = Color.FromArgb("#f2acc4"), SecondaryLight = Color.FromArgb("#E1F5FE"), TertiaryLight = Color.FromArgb("#F06292"), AccentLight = Color.FromArgb("#a2defa"),
+                    PrimaryDark = Color.FromArgb("#fac5d7"), SecondaryDark = Color.FromArgb("#7fddfa"), TertiaryDark = Color.FromArgb("#ff6e9f"), AccentDark = Color.FromArgb("#6fcbfc"),
+                    PrimaryTextLight = Color.FromArgb("#AD1457"), SecondaryTextLight = Color.FromArgb("#009df2"), PrimaryTextDark = Color.FromArgb("#FCE4EC"), SecondaryTextDark = Color.FromArgb("#E1F5FE")
                 }
             };
         }
