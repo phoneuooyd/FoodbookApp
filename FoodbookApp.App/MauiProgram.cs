@@ -15,6 +15,8 @@ using Microsoft.IdentityModel.Tokens;
 using FoodbookApp.Services.Auth;
 using Foodbook.Views.Components;
 using FoodbookApp.Services.Supabase;
+using FoodbookApp.Services;
+using FoodbookApp.Services.Subscription;
 
 namespace FoodbookApp
 {
@@ -66,6 +68,9 @@ namespace FoodbookApp
             builder.Services.AddScoped<IShoppingListService, ShoppingListService>();
             builder.Services.AddScoped<IPlanService, PlanService>();
             builder.Services.AddScoped<IFeatureAccessService, FeatureAccessService>();
+            builder.Services.AddSingleton<ISecureStorageAdapter, SecureStorageAdapter>();
+            builder.Services.AddSingleton<IClock, SystemClock>();
+            builder.Services.AddScoped<ISubscriptionManagementService, MockSubscriptionManagementService>();
             builder.Services.AddScoped<IIngredientService, IngredientService>();
             builder.Services.AddScoped<IFolderService, FolderService>();
             builder.Services.AddScoped<IRecipeLabelService, RecipeLabelService>();
@@ -75,6 +80,13 @@ namespace FoodbookApp
             builder.Services.AddSingleton<IThemeService, ThemeService>();
             builder.Services.AddSingleton<IFontService, FontService>();
             builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
+
+            // Rejestracja serwisu AI z wykorzystaniem nowego HttpClient
+            builder.Services.AddScoped<IAIService>(sp => 
+            {
+                var logger = sp.GetRequiredService<ILogger<AIService>>();
+                return new AIService(new HttpClient(), logger);
+            });
 
             // MAUI client-side JWT handling:
             // - store token in SecureStorage
@@ -124,7 +136,8 @@ namespace FoodbookApp
             builder.Services.AddScoped<RecipeImporter>(sp =>
             {
                 var ingredientService = sp.GetRequiredService<IIngredientService>();
-                return new RecipeImporter(new HttpClient(), ingredientService);
+                var aiService = sp.GetService<IAIService>();
+                return new RecipeImporter(new HttpClient(), ingredientService, aiService);
             });
 
             // Register SupabaseRestClient BEFORE SupabaseCrudService - must have HttpClient available
@@ -154,6 +167,7 @@ namespace FoodbookApp
             builder.Services.AddTransient<PlannerViewModel>();
             builder.Services.AddScoped<PlannerEditViewModel>(); 
             builder.Services.AddTransient<HomeViewModel>();
+            builder.Services.AddTransient<DietStatisticsViewModel>();
             builder.Services.AddTransient<ShoppingListViewModel>();
             builder.Services.AddScoped<ShoppingListDetailViewModel>();
             builder.Services.AddScoped<IngredientsViewModel>();
@@ -161,6 +175,7 @@ namespace FoodbookApp
             builder.Services.AddScoped<PlannedMealFormViewModel>();
             builder.Services.AddScoped<ArchiveViewModel>();
             builder.Services.AddSingleton<SettingsViewModel>();
+            builder.Services.AddTransient<Foodbook.ViewModels.ManageLabelsViewModel>();
             builder.Services.AddTransient<SetupLoginViewModel>();
             builder.Services.AddTransient<SetupWizardViewModel>();
             // New: Planner lists VM
@@ -169,8 +184,10 @@ namespace FoodbookApp
 
             System.Diagnostics.Debug.WriteLine("[MauiProgram] Registering pages");
             builder.Services.AddTransient<HomePage>();
+            builder.Services.AddTransient<DietStatisticsPage>();
             builder.Services.AddTransient<RecipesPage>();
             builder.Services.AddTransient<AddRecipePage>();
+            builder.Services.AddTransient<Foodbook.Views.ManageLabelsPage>();
             builder.Services.AddTransient<IngredientsPage>();
             builder.Services.AddScoped<IngredientFormPage>();
             builder.Services.AddTransient<PlannerPage>();
@@ -198,6 +215,7 @@ namespace FoodbookApp
             Routing.RegisterRoute(nameof(ProfilePage), typeof(ProfilePage));
             Routing.RegisterRoute(nameof(RecipesPage), typeof(RecipesPage));
             Routing.RegisterRoute(nameof(AddRecipePage), typeof(AddRecipePage));
+            Routing.RegisterRoute(nameof(Foodbook.Views.ManageLabelsPage), typeof(Foodbook.Views.ManageLabelsPage));
             Routing.RegisterRoute(nameof(IngredientFormPage), typeof(IngredientFormPage));
             Routing.RegisterRoute(nameof(IngredientsPage), typeof(IngredientsPage));
             Routing.RegisterRoute(nameof(PlannerPage), typeof(PlannerPage));

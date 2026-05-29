@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
+using Foodbook.Utils;
 using Foodbook.Views.Base;
 
 namespace Foodbook.Views.Components
@@ -31,6 +32,9 @@ namespace Foodbook.Views.Components
 
     public partial class FloatingActionButtonComponent : ContentView
     {
+        private const string PrimaryResourceKey = "Primary";
+        private const string ButtonPrimaryTextResourceKey = "ButtonPrimaryText";
+
         public static readonly BindableProperty CommandProperty = BindableProperty.Create(
             nameof(Command), typeof(ICommand), typeof(FloatingActionButtonComponent), propertyChanged: OnComponentCommandChanged);
         public static readonly BindableProperty ButtonTextProperty = BindableProperty.Create(
@@ -118,8 +122,8 @@ namespace Foodbook.Views.Components
                 Command = new Command(OnMainFabCommandProxy) // proxy to avoid double-exec with Command binding
             };
             // Bind to dynamic resources so color updates with theme changes
-            _mainFab.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
-            _mainFab.SetDynamicResource(Button.TextColorProperty, "ButtonPrimaryText");
+            _mainFab.SetDynamicResource(Button.BackgroundColorProperty, PrimaryResourceKey);
+            _mainFab.SetDynamicResource(Button.TextColorProperty, ButtonPrimaryTextResourceKey);
             // Try apply FloatingActionButton style if exists (will not override dynamic colors)
             if (Application.Current?.Resources.TryGetValue("FloatingActionButton", out var styleObj) == true && styleObj is Style style)
             {
@@ -151,7 +155,7 @@ namespace Foodbook.Views.Components
                 InputTransparent = true,
                 Margin = new Thickness(0)
             };
-            _iconLabel.SetDynamicResource(Label.TextColorProperty, "ButtonPrimaryText");
+            _iconLabel.SetDynamicResource(Label.TextColorProperty, ButtonPrimaryTextResourceKey);
 
             fabContainer.Add(_mainFab);
             fabContainer.Add(_iconLabel);
@@ -173,10 +177,7 @@ namespace Foodbook.Views.Components
             _themeHelper.ThemeChanged += OnThemeChanged;
             AttachActions();
             BuildActions();
-            // Sync icon text with ButtonText on load
-            if (_iconLabel != null) _iconLabel.Text = ButtonText;
-            // Ensure correct command hookup on load
-            UpdateMainButtonCommandBinding();
+            RefreshThemeResources();
         }
         private void OnComponentUnloaded(object? sender, EventArgs e)
         {
@@ -190,25 +191,49 @@ namespace Foodbook.Views.Components
             {
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    // Reapply style and dynamic resources to ensure color refresh
-                    if (_mainFab != null)
-                    {
-                        _mainFab.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
-                        _mainFab.SetDynamicResource(Button.TextColorProperty, "ButtonPrimaryText");
-                        if (Application.Current?.Resources.TryGetValue("FloatingActionButton", out var styleObj) == true && styleObj is Style style)
-                        {
-                            _mainFab.Style = style;
-                        }
-                    }
-                    if (_iconLabel != null)
-                    {
-                        _iconLabel.SetDynamicResource(Label.TextColorProperty, "ButtonPrimaryText");
-                    }
+                    RefreshThemeResources();
                 });
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[FAB] Error applying theme: {ex.Message}");
+            }
+        }
+
+        public void RefreshThemeResources()
+        {
+            // Sync icon text with ButtonText
+            if (_iconLabel != null)
+            {
+                _iconLabel.Text = ButtonText;
+                _iconLabel.SetDynamicResource(Label.TextColorProperty, ButtonPrimaryTextResourceKey);
+            }
+
+            // Ensure command hookup remains correct
+            UpdateMainButtonCommandBinding();
+
+            if (_mainFab != null)
+            {
+                _mainFab.SetDynamicResource(Button.BackgroundColorProperty, PrimaryResourceKey);
+                _mainFab.SetDynamicResource(Button.TextColorProperty, ButtonPrimaryTextResourceKey);
+
+                if (Application.Current?.Resources.TryGetValue("FloatingActionButton", out var styleObj) == true && styleObj is Style style)
+                {
+                    _mainFab.Style = style;
+                    _mainFab.Text = string.Empty;
+                    _mainFab.HorizontalOptions = LayoutOptions.Center;
+                    _mainFab.VerticalOptions = LayoutOptions.Center;
+                    _mainFab.Margin = new Thickness(0);
+                }
+            }
+
+            if (_actionsStack != null)
+            {
+                foreach (var actionButton in _actionsStack.Children.OfType<Button>())
+                {
+                    actionButton.SetDynamicResource(Button.BackgroundColorProperty, PrimaryResourceKey);
+                    actionButton.SetDynamicResource(Button.TextColorProperty, ButtonPrimaryTextResourceKey);
+                }
             }
         }
 
@@ -289,8 +314,8 @@ namespace Foodbook.Views.Components
                     FontAttributes = FontAttributes.Bold,
                 };
 
-                btn.SetDynamicResource(Button.BackgroundColorProperty, "Primary");
-                btn.SetDynamicResource(Button.TextColorProperty, "ButtonPrimaryText");
+                btn.SetDynamicResource(Button.BackgroundColorProperty, PrimaryResourceKey);
+                btn.SetDynamicResource(Button.TextColorProperty, ButtonPrimaryTextResourceKey);
 
                 var states = new VisualStateGroupList();
                 var common = new VisualStateGroup { Name = "CommonStates" };
@@ -328,16 +353,24 @@ namespace Foodbook.Views.Components
             _isExpanded = true;
             if (_overlay != null) _overlay.IsVisible = true;
             if (_actionsStack != null) _actionsStack.IsVisible = true;
-            var rotate = _iconLabel?.RotateTo(45, 150, Easing.CubicIn) ?? Task.CompletedTask; // rotate icon only to avoid layout shift
-            var fade = _actionsStack != null ? _actionsStack.FadeTo(1, 150, Easing.CubicIn) : Task.CompletedTask;
-            await Task.WhenAll(rotate, fade);
+            await ComponentAnimationHelper.AnimateRotateAndFadeAsync(
+                _iconLabel,
+                targetRotation: 45,
+                fadeElement: _actionsStack,
+                targetOpacity: 1,
+                durationMs: AnimationPolicy.FabToggleDurationMs,
+                easing: Easing.CubicIn);
         }
         private async Task CollapseAsync()
         {
             _isExpanded = false;
-            var rotate = _iconLabel?.RotateTo(0, 150, Easing.CubicOut) ?? Task.CompletedTask; // rotate icon only
-            var fade = _actionsStack != null ? _actionsStack.FadeTo(0, 150, Easing.CubicOut) : Task.CompletedTask;
-            await Task.WhenAll(rotate, fade);
+            await ComponentAnimationHelper.AnimateRotateAndFadeAsync(
+                _iconLabel,
+                targetRotation: 0,
+                fadeElement: _actionsStack,
+                targetOpacity: 0,
+                durationMs: AnimationPolicy.FabToggleDurationMs,
+                easing: Easing.CubicOut);
             if (_actionsStack != null) _actionsStack.IsVisible = false; if (_overlay != null) _overlay.IsVisible = false;
         }
     }

@@ -2,6 +2,7 @@
 using Foodbook.Models;
 using Foodbook.ViewModels;
 using FoodbookApp.Interfaces;
+using Foodbook.Views.Components;
 using Microsoft.Maui.Controls;
 using Moq;
 
@@ -94,6 +95,80 @@ namespace FoodbookApp.Tests
 
             // Assert
             canExecute.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task IngredientsViewModel_ApplySorting_WhenCaloriesDesc_ShouldSortByCaloriesDescending()
+        {
+            // Arrange
+            var ingredients = new List<Ingredient>
+            {
+                new() { Id = Guid.NewGuid(), Name = "Low", Calories = 40, Protein = 2, Fat = 1, Carbs = 8 },
+                new() { Id = Guid.NewGuid(), Name = "High", Calories = 220, Protein = 10, Fat = 12, Carbs = 5 },
+                new() { Id = Guid.NewGuid(), Name = "Mid", Calories = 120, Protein = 6, Fat = 4, Carbs = 14 }
+            };
+
+            _mockIngredientService.Setup(s => s.GetIngredientsAsync())
+                .ReturnsAsync(ingredients);
+
+            await _viewModel.LoadAsync();
+
+            // Act
+            _viewModel.ApplySorting(SortBy.CaloriesDesc);
+
+            // Assert
+            _viewModel.CurrentSortBy.Should().Be(SortBy.CaloriesDesc);
+            _viewModel.SortOrder.Should().Be(SortOrder.Desc);
+            _viewModel.Ingredients.Select(i => i.Name).Should().ContainInOrder("High", "Mid", "Low");
+        }
+
+        [Fact]
+        public async Task IngredientsViewModel_ApplySorting_WhenProteinAsc_ShouldSortByProteinAscending()
+        {
+            // Arrange
+            var ingredients = new List<Ingredient>
+            {
+                new() { Id = Guid.NewGuid(), Name = "Steak", Calories = 200, Protein = 26, Fat = 11, Carbs = 0 },
+                new() { Id = Guid.NewGuid(), Name = "Rice", Calories = 130, Protein = 2.7, Fat = 0.3, Carbs = 28 },
+                new() { Id = Guid.NewGuid(), Name = "Egg", Calories = 155, Protein = 13, Fat = 11, Carbs = 1.1 }
+            };
+
+            _mockIngredientService.Setup(s => s.GetIngredientsAsync())
+                .ReturnsAsync(ingredients);
+
+            await _viewModel.LoadAsync();
+
+            // Act
+            _viewModel.ApplySorting(SortBy.ProteinAsc);
+
+            // Assert
+            _viewModel.CurrentSortBy.Should().Be(SortBy.ProteinAsc);
+            _viewModel.SortOrder.Should().Be(SortOrder.Asc);
+            _viewModel.Ingredients.Select(i => i.Name).Should().ContainInOrder("Rice", "Egg", "Steak");
+        }
+
+        [Fact]
+        public async Task IngredientsViewModel_WhenSortOrderSetToDesc_ShouldMapToNameDescSorting()
+        {
+            // Arrange
+            var ingredients = new List<Ingredient>
+            {
+                new() { Id = Guid.NewGuid(), Name = "Banana" },
+                new() { Id = Guid.NewGuid(), Name = "Apple" },
+                new() { Id = Guid.NewGuid(), Name = "Carrot" }
+            };
+
+            _mockIngredientService.Setup(s => s.GetIngredientsAsync())
+                .ReturnsAsync(ingredients);
+
+            await _viewModel.LoadAsync();
+
+            // Act
+            _viewModel.SortOrder = SortOrder.Desc;
+
+            // Assert
+            _viewModel.CurrentSortBy.Should().Be(SortBy.NameDesc);
+            _viewModel.Ingredients.Select(i => i.Name).Should().ContainInOrder("Carrot", "Banana", "Apple");
         }
     }
 }

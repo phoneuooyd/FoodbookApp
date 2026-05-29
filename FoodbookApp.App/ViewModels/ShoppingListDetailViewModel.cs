@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Foodbook.Models;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Localization;
 using Microsoft.Maui.ApplicationModel;
 using Sharpnado.CollectionView.ViewModels; // Sharpnado DragAndDropInfo
 
@@ -660,9 +661,9 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
             // ? VALIDATION: Check if plan ID is valid
             if (_currentPlanId == Guid.Empty)
             {
-                var errorMsg = "Nieprawid³owy identyfikator planu. Nie mo¿na zapisaæ listy zakupów.";
+                var errorMsg = T("ValidationInvalidPlanIdMessage", "Invalid plan ID. Cannot save shopping list.");
                 System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ? VALIDATION ERROR: {errorMsg}");
-                await Microsoft.Maui.Controls.Shell.Current.DisplayAlert("B³¹d walidacji", errorMsg, "OK");
+                await Microsoft.Maui.Controls.Shell.Current.DisplayAlert(T("ValidationErrorTitle", "Validation error"), errorMsg, ButtonResources.OK);
                 return;
             }
 
@@ -675,28 +676,62 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
                 var item = allItems[i];
                 if (string.IsNullOrWhiteSpace(item.Name))
                 {
-                    invalidItems.Add($"Pozycja {i + 1}: brak nazwy");
+                    invalidItems.Add(string.Format(T("ValidationItemMissingNameFormat", "Item {0}: missing name"), i + 1));
                 }
                 if (item.Quantity <= 0)
                 {
-                    invalidItems.Add($"Pozycja {i + 1} ({item.Name}): nieprawid³owa iloœæ ({item.Quantity})");
+                    invalidItems.Add(string.Format(T("ValidationItemInvalidQuantityFormat", "Item {0} ({1}): invalid quantity ({2})"), i + 1, item.Name, item.Quantity));
                 }
             }
 
             if (invalidItems.Any())
             {
-                var errorMsg = $"Znaleziono nieprawid³owe elementy:\n{string.Join("\n", invalidItems.Take(5))}";
+                var errorMsg = string.Format(
+                    T("ValidationInvalidItemsSummaryFormat", "Found invalid items:{0}{1}"),
+                    Environment.NewLine,
+                    string.Join(Environment.NewLine, invalidItems.Take(5)));
                 if (invalidItems.Count > 5)
-                    errorMsg += $"\n...i {invalidItems.Count - 5} wiêcej";
+                    errorMsg += Environment.NewLine + string.Format(T("ValidationInvalidItemsMoreFormat", "...and {0} more"), invalidItems.Count - 5);
                 
                 System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] ? VALIDATION ERROR: {invalidItems.Count} invalid items");
                 foreach (var err in invalidItems)
                     System.Diagnostics.Debug.WriteLine($"  - {err}");
                 
                 await Microsoft.Maui.Controls.Shell.Current.DisplayAlert(
-                    "B³¹d walidacji", 
-                    errorMsg + "\n\nUsuñ lub popraw nieprawid³owe pozycje przed zapisaniem.", 
-                    "OK");
+                    T("ValidationErrorTitle", "Validation error"),
+                    errorMsg + Environment.NewLine + Environment.NewLine + T("ValidationFixItemsMessage", "Remove or correct invalid items before saving."),
+                    ButtonResources.OK);
+                return;
+            }
+
+            var duplicateGroups = allItems
+                .Where(i => !string.IsNullOrWhiteSpace(i.Name))
+                .GroupBy(i => new { Name = i.Name.Trim().ToUpperInvariant(), i.Unit })
+                .Where(g => g.Count() > 1)
+                .ToList();
+
+            if (duplicateGroups.Count > 0)
+            {
+                var duplicatesPreview = string.Join(
+                    ", ",
+                    duplicateGroups.Take(5).Select(g =>
+                    {
+                        var first = g.First();
+                        return $"{first.Name.Trim()} ({first.Unit})";
+                    }));
+
+                var duplicateMessage = string.Format(
+                    T("ValidationDuplicateItemsSummaryFormat", "Found duplicate items with the same name and unit:{0}{1}"),
+                    Environment.NewLine,
+                    duplicatesPreview);
+
+                if (duplicateGroups.Count > 5)
+                    duplicateMessage += Environment.NewLine + string.Format(T("ValidationInvalidItemsMoreFormat", "...and {0} more"), duplicateGroups.Count - 5);
+
+                await Microsoft.Maui.Controls.Shell.Current.DisplayAlert(
+                    T("ValidationErrorTitle", "Validation error"),
+                    duplicateMessage + Environment.NewLine + Environment.NewLine + T("ValidationFixItemsMessage", "Remove or correct invalid items before saving."),
+                    ButtonResources.OK);
                 return;
             }
 
@@ -726,11 +761,12 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
                 System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Stack trace: {dbEx.StackTrace}");
                 
                 await Microsoft.Maui.Controls.Shell.Current.DisplayAlert(
-                    "B³¹d bazy danych",
-                    $"Nie uda³o siê zapisaæ listy zakupów do bazy danych.\n\n" +
-                    $"Szczegó³y: {dbEx.InnerException?.Message ?? dbEx.Message}\n\n" +
-                    $"Spróbuj ponownie lub skontaktuj siê z obs³ug¹.",
-                    "OK");
+                    T("DatabaseErrorTitle", "Database error"),
+                    string.Format(
+                        T("DatabaseSaveFailedMessageFormat", "Failed to save shopping list to database.{0}{0}Details: {1}{0}{0}Please try again or contact support."),
+                        Environment.NewLine,
+                        dbEx.InnerException?.Message ?? dbEx.Message),
+                    ButtonResources.OK);
                 return;
             }
             catch (InvalidOperationException invEx)
@@ -740,11 +776,12 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
                 System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Stack trace: {invEx.StackTrace}");
                 
                 await Microsoft.Maui.Controls.Shell.Current.DisplayAlert(
-                    "B³¹d operacji",
-                    $"Wyst¹pi³ problem z zapisem listy zakupów.\n\n" +
-                    $"Szczegó³y: {invEx.Message}\n\n" +
-                    $"Spróbuj ponownie.",
-                    "OK");
+                    T("InvalidOperationErrorTitle", "Operation error"),
+                    string.Format(
+                        T("InvalidOperationSaveFailedMessageFormat", "There was a problem saving shopping list.{0}{0}Details: {1}{0}{0}Please try again."),
+                        Environment.NewLine,
+                        invEx.Message),
+                    ButtonResources.OK);
                 return;
             }
             catch (Exception saveEx)
@@ -755,11 +792,13 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
                 System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] Stack trace: {saveEx.StackTrace}");
                 
                 await Microsoft.Maui.Controls.Shell.Current.DisplayAlert(
-                    "B³¹d zapisu",
-                    $"Nie uda³o siê zapisaæ listy zakupów.\n\n" +
-                    $"Szczegó³y: {saveEx.Message}\n\n" +
-                    $"Typ b³êdu: {saveEx.GetType().Name}",
-                    "OK");
+                    T("SaveErrorTitle", "Save error"),
+                    string.Format(
+                        T("SaveFailedMessageFormat", "Failed to save shopping list.{0}{0}Details: {1}{0}{0}Error type: {2}"),
+                        Environment.NewLine,
+                        saveEx.Message,
+                        saveEx.GetType().Name),
+                    ButtonResources.OK);
                 return;
             }
             
@@ -803,14 +842,12 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
             try
             {
                 await Microsoft.Maui.Controls.Shell.Current.DisplayAlert(
-                    "B³¹d krytyczny", 
-                    $"Wyst¹pi³ nieoczekiwany b³¹d podczas zapisywania listy zakupów.\n\n" +
-                    $"Szczegó³y: {ex.Message}\n\n" +
-                    $"Jeœli problem siê powtarza, spróbuj:\n" +
-                    $"1. Usun¹æ puste lub nieprawid³owe pozycje\n" +
-                    $"2. Zrestartowaæ aplikacjê\n" +
-                    $"3. Skontaktowaæ siê z obs³ug¹ techniczn¹",
-                    "OK");
+                    T("CriticalErrorTitle", "Critical error"),
+                    string.Format(
+                        T("CriticalSaveFailedMessageFormat", "An unexpected error occurred while saving shopping list.{0}{0}Details: {1}{0}{0}If the issue persists, try:{0}1. Remove empty or invalid items{0}2. Restart the app{0}3. Contact support"),
+                        Environment.NewLine,
+                        ex.Message),
+                    ButtonResources.OK);
             }
             catch (Exception displayEx)
             {
@@ -898,30 +935,21 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
         }
     }
 
-    private async void RemoveItem(Ingredient? item)
+    private void RemoveItem(Ingredient? item)
     {
         if (item == null) return;
+
         item.PropertyChanged -= OnItemPropertyChanged;
+
         var removed = UncheckedItems.Remove(item) || CheckedItems.Remove(item);
-        if (removed)
-        {
-            // Remove from FlatItems
-            FlatItems.Remove(item);
-            
-            // Remove headers if sections are empty
-            if (UncheckedItems.Count == 0 && _toBuyHeader != null)
-                FlatItems.Remove(_toBuyHeader);
-            if (CheckedItems.Count == 0 && _collectedHeader != null)
-                FlatItems.Remove(_collectedHeader);
-            
-            MarkDirty();
-            if (item.Id != Guid.Empty)
-            {
-                try { await _shoppingListService.RemoveShoppingListItemByIdAsync(item.Id); }
-                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error removing item by Id: {ex.Message}"); }
-                item.Id = Guid.Empty;
-            }
-        }
+        if (!removed)
+            return;
+
+        // Rebuild the visible list from the in-memory collections only.
+        // The actual database delete is deferred until SaveAllStatesAsync().
+        RebuildFlatItems();
+        UpdateAllItemOrders();
+        MarkDirty();
     }
 
     public async Task MoveItemUpAsync(Ingredient? item)
@@ -995,14 +1023,10 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
 
     public async Task SaveAllStatesAsync()
     {
-        try
-        {
-            // Use FlatItems order to ensure correct order is preserved
-            var allItems = FlatItems.OfType<Ingredient>().ToList();
-            await _shoppingListService.SaveAllShoppingListStatesAsync(_currentPlanId, allItems);
-            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] SaveAllStatesAsync: saved {allItems.Count} items in FlatItems order");
-        }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error saving all shopping list states: {ex.Message}"); }
+        // Use FlatItems order to ensure correct order is preserved
+        var allItems = FlatItems.OfType<Ingredient>().ToList();
+        await _shoppingListService.SaveAllShoppingListStatesAsync(_currentPlanId, allItems);
+        System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailVM] SaveAllStatesAsync: saved {allItems.Count} items in FlatItems order");
     }
 
     public void DiscardChanges() => HasUnsavedChanges = false;
@@ -1019,6 +1043,9 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
         
         if (!HasUnsavedChanges) MarkDirty();
     }
+
+    private static string T(string key, string fallback)
+        => ShoppingListDetailPageResources.ResourceManager.GetString(key, ShoppingListDetailPageResources.Culture) ?? fallback;
 
     public event PropertyChangedEventHandler? PropertyChanged;
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

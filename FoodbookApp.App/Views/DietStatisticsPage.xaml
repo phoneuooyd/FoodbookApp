@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:Foodbook.ViewModels"
+             xmlns:components="clr-namespace:Foodbook.Views.Components"
+             x:Class="Foodbook.Views.DietStatisticsPage"
+             x:DataType="viewModels:DietStatisticsViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
+
+    <Grid RowDefinitions="Auto,*">
+        <components:PageHeaderComponent Grid.Row="0"
+                                        Title="{Binding HeaderTitle}"
+                                        Subtitle="{Binding HeaderSubtitle}"
+                                        HeaderPadding="16,44,16,16" />
+
+        <ScrollView Grid.Row="1"
+                Padding="16,8,16,32"
+                    BackgroundColor="{DynamicResource PageBackgroundColor}"
+                    VerticalScrollBarVisibility="Never">
+            <VerticalStackLayout Spacing="10">
+                <components:FilterBarComponent SelectedFilter="{Binding SelectedFilter, Mode=TwoWay}"
+                                              AvailablePlans="{Binding AvailablePlans}"
+                                              SelectedPlan="{Binding SelectedPlan, Mode=TwoWay}"
+                                              SelectFilterCommand="{Binding SelectFilterCommand}"
+                                              IsPlanPickerVisible="{Binding IsPlanPickerVisible}"
+                                              IsCustomRangeVisible="{Binding IsCustomRangeVisible}"
+                                              FilterStartDate="{Binding FilterStartDate, Mode=TwoWay}"
+                                              FilterEndDate="{Binding FilterEndDate, Mode=TwoWay}" />
+
+                <components:DateNavigationBarComponent IsVisible="{Binding IsDayFilterActive}"
+                                                      DateRange="{Binding DateRange}"
+                                                      SelectedDate="{Binding SelectedDate}"
+                                                      SelectDateCommand="{Binding SelectDateCommand}"
+                                                      IsVisibleForFilter="{Binding IsDayFilterActive}"
+                                                      SelectedDateCaloriesText="{Binding SelectedDateCaloriesText}" />
+
+                <components:CalorieSummaryCardComponent Data="{Binding CalorieSummaryData}"
+                                                       OpenSettingsCommand="{Binding OpenCalorieSettingsCommand}" />
+
+                <components:MacroNutritionCardComponent Data="{Binding MacroCardData}" />
+
+                <components:MealSlotListComponent Data="{Binding MealSlotListData}"
+                                                 AddMealCommand="{Binding AddMealCommand}"
+                                                 OpenMealDetailCommand="{Binding OpenMealDetailCommand}" />
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

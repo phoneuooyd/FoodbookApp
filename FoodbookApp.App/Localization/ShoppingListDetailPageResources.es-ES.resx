@@ -13,4 +13,23 @@
   <data name="AddItem" xml:space="preserve"><value>Anadir item</value></data>
   <data name="Collected" xml:space="preserve"><value>Recogidos</value></data>
   <data name="NoCollected" xml:space="preserve"><value>Sin recogidos</value></data>
+  <data name="LoadErrorTitle" xml:space="preserve"><value>Error</value></data>
+  <data name="LoadErrorMessage" xml:space="preserve"><value>No se pudo cargar la lista de compras.</value></data>
+  <data name="UnsavedChangesConfirmTitle" xml:space="preserve"><value>Confirmacion</value></data>
+  <data name="UnsavedChangesConfirmMessage" xml:space="preserve"><value>Tienes cambios sin guardar. Quieres salir de esta pagina sin guardar?</value></data>
+  <data name="ValidationErrorTitle" xml:space="preserve"><value>Error de validacion</value></data>
+  <data name="ValidationInvalidPlanIdMessage" xml:space="preserve"><value>ID de plan no valida. No se puede guardar la lista de compras.</value></data>
+  <data name="ValidationItemMissingNameFormat" xml:space="preserve"><value>Elemento {0}: falta nombre</value></data>
+  <data name="ValidationItemInvalidQuantityFormat" xml:space="preserve"><value>Elemento {0} ({1}): cantidad no valida ({2})</value></data>
+  <data name="ValidationInvalidItemsSummaryFormat" xml:space="preserve"><value>Se encontraron elementos no validos:{0}{1}</value></data>
+  <data name="ValidationInvalidItemsMoreFormat" xml:space="preserve"><value>...y {0} mas</value></data>
+  <data name="ValidationFixItemsMessage" xml:space="preserve"><value>Elimina o corrige los elementos no validos antes de guardar.</value></data>
+  <data name="DatabaseErrorTitle" xml:space="preserve"><value>Error de base de datos</value></data>
+  <data name="DatabaseSaveFailedMessageFormat" xml:space="preserve"><value>No se pudo guardar la lista de compras en la base de datos.{0}{0}Detalles: {1}{0}{0}Intentalo de nuevo o contacta con soporte.</value></data>
+  <data name="InvalidOperationErrorTitle" xml:space="preserve"><value>Error de operacion</value></data>
+  <data name="InvalidOperationSaveFailedMessageFormat" xml:space="preserve"><value>Se produjo un problema al guardar la lista de compras.{0}{0}Detalles: {1}{0}{0}Intentalo de nuevo.</value></data>
+  <data name="SaveErrorTitle" xml:space="preserve"><value>Error de guardado</value></data>
+  <data name="SaveFailedMessageFormat" xml:space="preserve"><value>No se pudo guardar la lista de compras.{0}{0}Detalles: {1}{0}{0}Tipo de error: {2}</value></data>
+  <data name="CriticalErrorTitle" xml:space="preserve"><value>Error critico</value></data>
+  <data name="CriticalSaveFailedMessageFormat" xml:space="preserve"><value>Se produjo un error inesperado al guardar la lista de compras.{0}{0}Detalles: {1}{0}{0}Si el problema persiste, prueba:{0}1. Eliminar elementos vacios o no validos{0}2. Reiniciar la aplicacion{0}3. Contactar con soporte</value></data>
 </root>

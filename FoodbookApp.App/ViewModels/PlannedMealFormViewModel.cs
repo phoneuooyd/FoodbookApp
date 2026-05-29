@@ -1,8 +1,10 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Foodbook.Models;
+using FoodbookApp.Localization;
 using FoodbookApp.Interfaces;
 using Microsoft.Maui.Controls;
 
@@ -16,9 +18,13 @@ public class PlannedMealFormViewModel : INotifyPropertyChanged
 
     public ObservableCollection<Recipe> Recipes { get; } = new();
 
-    public string Title => _meal == null ? "Nowy posiłek" : "Edytuj posiłek";
+    public string Title => _meal == null
+        ? T("NewMealTitle", "New meal")
+        : T("EditMealTitle", "Edit meal");
 
-    public string SaveButtonText => _meal == null ? "Dodaj posiłek" : "Zapisz zmiany";
+    public string SaveButtonText => _meal == null
+        ? T("AddMealButtonText", "Add meal")
+        : T("SaveChangesButtonText", "Save changes");
 
     public string ValidationMessage { get => _validationMessage; set { _validationMessage = value; OnPropertyChanged(); } }
     private string _validationMessage = string.Empty;
@@ -78,7 +84,7 @@ public class PlannedMealFormViewModel : INotifyPropertyChanged
 
         if (SelectedRecipe == null)
         {
-            ValidationMessage = "Wybierz przepis";
+            ValidationMessage = T("ValidationSelectRecipe", "Select a recipe");
         }
 
         OnPropertyChanged(nameof(HasValidationError));
@@ -118,6 +124,13 @@ public class PlannedMealFormViewModel : INotifyPropertyChanged
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    private static string T(string key, string fallback)
+    {
+        var value = MealFormPageResources.ResourceManager.GetString(key, CultureInfo.CurrentUICulture);
+        return string.IsNullOrWhiteSpace(value) ? fallback : value;
+    }
+
     void OnPropertyChanged([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }

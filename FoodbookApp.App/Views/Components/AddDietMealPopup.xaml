@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<mct:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+           xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+           xmlns:mct="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui"
+           xmlns:loc="clr-namespace:Foodbook.Services"
+           x:Class="Foodbook.Views.Components.AddDietMealPopup"
+           x:Name="ThisPopup"
+           CanBeDismissedByTappingOutsideOfPopup="True"
+           Padding="0"
+           Margin="0">
+    <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#1F1F30}"
+            StrokeShape="RoundRectangle 20"
+            StrokeThickness="0"
+            Stroke="Transparent"
+            Padding="16"
+            MinimumWidthRequest="320"
+            MaximumWidthRequest="520"
+            HorizontalOptions="Center"
+            VerticalOptions="End">
+        <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="0" RowSpacing="12">
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <Label Grid.Column="0"
+                       Text="{loc:Translate Resource=DietStatisticsPageResources, Key=AddMealPopupTitle}"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       TextColor="{DynamicResource PrimaryText}"
+                       VerticalOptions="Center" />
+
+                <Button Grid.Column="1"
+                        Text="✕"
+                        FontSize="16"
+                        WidthRequest="32"
+                        HeightRequest="32"
+                        CornerRadius="16"
+                        BackgroundColor="Transparent"
+                        TextColor="{DynamicResource SecondaryText}"
+                        Clicked="OnCancelClicked" />
+            </Grid>
+
+            <Label Grid.Row="1"
+                   Text="{loc:Translate Resource=DietStatisticsPageResources, Key=MealsTodayHint}"
+                   FontSize="12"
+                   TextColor="{DynamicResource SecondaryText}" />
+
+            <VerticalStackLayout Grid.Row="2" Spacing="10">
+                <Label Text="{loc:Translate Resource=DietStatisticsPageResources, Key=AddMealPopupNameLabel}"
+                       FontSize="12"
+                       FontAttributes="Bold"
+                       TextColor="{DynamicResource PrimaryText}" />
+                <Border StrokeThickness="1"
+                        Stroke="{AppThemeBinding Light=#D8D8E3, Dark=#4A4A62}"
+                        BackgroundColor="{AppThemeBinding Light=#F0F0F5, Dark=#2A2A40}"
+                        StrokeShape="RoundRectangle 10"
+                        Padding="8,4">
+                    <Entry x:Name="MealNameEntry"
+                           BackgroundColor="Transparent"
+                           FontSize="14"
+                           TextColor="{DynamicResource PrimaryText}"
+                           PlaceholderColor="{DynamicResource SecondaryText}"
+                          Placeholder="{loc:Translate Resource=DietStatisticsPageResources, Key=AddMealPopupNamePlaceholder}"
+                           MaxLength="80"
+                           ReturnType="Next" />
+                </Border>
+
+                <Label Text="{loc:Translate Resource=DietStatisticsPageResources, Key=AddMealPopupCaloriesLabel}"
+                       FontSize="12"
+                       FontAttributes="Bold"
+                       TextColor="{DynamicResource PrimaryText}" />
+                <Border StrokeThickness="1"
+                        Stroke="{AppThemeBinding Light=#D8D8E3, Dark=#4A4A62}"
+                        BackgroundColor="{AppThemeBinding Light=#F0F0F5, Dark=#2A2A40}"
+                        StrokeShape="RoundRectangle 10"
+                        Padding="8,4">
+                    <Entry x:Name="CaloriesEntry"
+                           BackgroundColor="Transparent"
+                           FontSize="14"
+                           TextColor="{DynamicResource PrimaryText}"
+                           PlaceholderColor="{DynamicResource SecondaryText}"
+                          Placeholder="{loc:Translate Resource=DietStatisticsPageResources, Key=AddMealPopupCaloriesPlaceholder}"
+                           Keyboard="Numeric"
+                           ReturnType="Done" />
+                </Border>
+            </VerticalStackLayout>
+
+            <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Button Grid.Column="0"
+                        Text="{loc:Translate Resource=DietStatisticsPageResources, Key=AddMealPopupCancel}"
+                        BackgroundColor="{AppThemeBinding Light=#808080, Dark=#4A4A62}"
+                        TextColor="White"
+                        Clicked="OnCancelClicked" />
+
+                <Button Grid.Column="1"
+                        Text="{loc:Translate Resource=DietStatisticsPageResources, Key=AddMealPopupSave}"
+                        StyleClass="Primary"
+                        Clicked="OnSaveClicked" />
+            </Grid>
+        </Grid>
+    </Border>
+</mct:Popup>

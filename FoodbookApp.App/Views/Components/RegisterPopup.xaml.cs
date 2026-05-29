@@ -1,5 +1,6 @@
 using System.Windows.Input;
 using CommunityToolkit.Maui.Views;
+using FoodbookApp.Localization;
 using FoodbookApp.Services.Auth;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -33,7 +34,10 @@ public partial class RegisterPopup : Popup
             var auth = GetSupabaseAuth();
             if (auth is null)
             {
-                await Shell.Current.DisplayAlert("Rejestracja", "Brak ISupabaseAuthService w DI.", "OK");
+                await Shell.Current.DisplayAlert(
+                    P("RegisterPopupTitle", "Register"),
+                    P("RegisterServiceMissingMessage", "Authentication service unavailable."),
+                    P("OK", "OK"));
                 return;
             }
 
@@ -43,30 +47,33 @@ public partial class RegisterPopup : Popup
 
             if (string.IsNullOrWhiteSpace(email))
             {
-                await Shell.Current.DisplayAlert("Rejestracja", "Email nie mo¿e byæ pusty.", "OK");
+                await Shell.Current.DisplayAlert(P("RegisterPopupTitle", "Register"), P("EmailRequired", "Email cannot be empty."), P("OK", "OK"));
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(password))
             {
-                await Shell.Current.DisplayAlert("Rejestracja", "Has³o nie mo¿e byæ puste.", "OK");
+                await Shell.Current.DisplayAlert(P("RegisterPopupTitle", "Register"), P("PasswordRequired", "Password cannot be empty."), P("OK", "OK"));
                 return;
             }
 
             if (password != confirm)
             {
-                await Shell.Current.DisplayAlert("Rejestracja", "Has³a nie s¹ takie same.", "OK");
+                await Shell.Current.DisplayAlert(P("RegisterPopupTitle", "Register"), P("PasswordsDoNotMatch", "Passwords do not match."), P("OK", "OK"));
                 return;
             }
 
-            StatusLabel.Text = "Trwa rejestracja...";
+            StatusLabel.Text = P("RegisterInProgress", "Registering...");
 
             var session = await auth.SignUpAsync(email, password);
 
             if (session == null || string.IsNullOrWhiteSpace(session.AccessToken))
             {
                 StatusLabel.Text = string.Empty;
-                await Shell.Current.DisplayAlert("Rejestracja", "SprawdŸ skrzynkê e-mail w celu potwierdzenia rejestracji", "OK");
+                await Shell.Current.DisplayAlert(
+                    P("RegisterPopupTitle", "Register"),
+                    P("RegisterConfirmEmailMessage", "Check your email inbox to confirm registration."),
+                    P("OK", "OK"));
                 await CloseWithResultAsync(true);
             }
 
@@ -75,16 +82,22 @@ public partial class RegisterPopup : Popup
             PasswordEntry.Text = string.Empty;
             ConfirmPasswordEntry.Text = string.Empty;
 
-            await Shell.Current.DisplayAlert("Rejestracja", "Konto zosta³o utworzone.", "OK");
+            await Shell.Current.DisplayAlert(
+                P("RegisterPopupTitle", "Register"),
+                P("RegisterSuccessMessage", "Account has been created."),
+                P("OK", "OK"));
             await CloseWithResultAsync(true);
         }
         catch (Exception ex)
         {
             StatusLabel.Text = string.Empty;
             var msg = ex.InnerException?.Message is { Length: > 0 } inner ? inner : ex.Message;
-            await Shell.Current.DisplayAlert("B³¹d", msg, "OK");
+            await Shell.Current.DisplayAlert(P("GenericErrorTitle", "Error"), msg, P("OK", "OK"));
         }
     }
+
+    private static string P(string key, string fallback)
+        => ProfilePageResources.ResourceManager.GetString(key, ProfilePageResources.Culture) ?? fallback;
 
     private async Task CloseWithResultAsync(bool result)
     {

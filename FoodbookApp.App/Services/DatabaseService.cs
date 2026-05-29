@@ -45,6 +45,7 @@ namespace Foodbook.Services
             "Recipes", "Ingredients", "Folders", "RecipeLabels",
             "Plans", "PlannedMeals", "ShoppingListItems",
             "AuthAccounts", "SyncQueue", "SyncStates",
+            "SubscriptionOperations",
             "__EFMigrationsHistory"
         };
 
@@ -59,7 +60,7 @@ namespace Foodbook.Services
         }
 
         // ================================================================
-        //  Core: shared migrate + validate (DRY – used by all public methods)
+        //  Core: shared migrate + validate (DRY ï¿½ used by all public methods)
         // ================================================================
 
         /// <summary>
@@ -145,11 +146,11 @@ namespace Foodbook.Services
                 var dbExists = File.Exists(dbPath);
                 Log($"InitializeAsync DB path: {dbPath} | exists={dbExists}");
 
-                // If the database file already exists – leave it alone, just ensure migrations
+                // If the database file already exists ï¿½ leave it alone, just ensure migrations
                 if (dbExists)
                 {
                     var fi = new FileInfo(dbPath);
-                    Log($"DB exists ({fi.Length} bytes, modified {fi.LastWriteTime}) – applying migrations and schema validation");
+                    Log($"DB exists ({fi.Length} bytes, modified {fi.LastWriteTime}) - applying migrations and schema validation");
                 }
                 else
                 {
@@ -224,7 +225,7 @@ namespace Foodbook.Services
         {
             try
             {
-                Log("WARNING: ResetDatabaseAsync — deleting all data!");
+                Log("WARNING: ResetDatabaseAsync - deleting all data!");
                 using var scope = _services.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
@@ -234,7 +235,7 @@ namespace Foodbook.Services
                 var missing = await GetMissingTablesAsync().ConfigureAwait(false);
                 if (missing.Count > 0)
                 {
-                    Log($"ERROR: Reset failed — missing tables: {string.Join(", ", missing)}");
+                    Log($"ERROR: Reset failed - missing tables: {string.Join(", ", missing)}");
                     return false;
                 }
 
@@ -269,7 +270,7 @@ namespace Foodbook.Services
                 var markerRestored = await CheckDeploymentMarkerAndRestoreAsync(dbPath).ConfigureAwait(false);
                 if (markerRestored)
                 {
-                    Log("Auto-restore from deployment marker completed — skipping normal archive creation");
+                    Log("Auto-restore from deployment marker completed - skipping normal archive creation");
                     dbExists = File.Exists(dbPath);
                 }
 
@@ -285,7 +286,7 @@ namespace Foodbook.Services
 
                 if (FORCE_CLEAN_DEPLOYMENT)
                 {
-                    Log("WARNING: FORCE_CLEAN_DEPLOYMENT – wiping all app data");
+                    Log("WARNING: FORCE_CLEAN_DEPLOYMENT - wiping all app data");
                     using var scope = _services.CreateScope();
                     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                     await db.Database.EnsureDeletedAsync().ConfigureAwait(false);
@@ -346,20 +347,20 @@ namespace Foodbook.Services
                 var markerContent = await File.ReadAllTextAsync(markerPath).ConfigureAwait(false);
                 Log($"Marker content: {markerContent}");
 
-                // If DB already exists, deployment didn't wipe it — delete marker and continue
+                // If DB already exists, deployment didn't wipe it ï¿½ delete marker and continue
                 if (File.Exists(dbPath))
                 {
-                    Log("DB exists — skipping auto-restore");
+                    Log("DB exists - skipping auto-restore");
                     TryDelete(markerPath);
                     return false;
                 }
 
                 // DB was wiped ? restore from archive
-                Log("DB was wiped by deployment — attempting auto-restore from safety archive...");
+                Log("DB was wiped by deployment - attempting auto-restore from safety archive...");
                 var archivePath = FindBestArchive();
                 if (archivePath == null)
                 {
-                    Log("WARNING: No safety archive found for restore — user data may be lost!");
+                    Log("WARNING: No safety archive found for restore - user data may be lost!");
                     TryDelete(markerPath);
                     return false;
                 }
@@ -385,11 +386,11 @@ namespace Foodbook.Services
                 var restored = File.Exists(dbPath) && new FileInfo(dbPath).Length > 1024;
                 if (restored)
                 {
-                    Log("? AUTO-RESTORE SUCCESS — user data recovered from safety archive");
+                    Log("? AUTO-RESTORE SUCCESS - user data recovered from safety archive");
                 }
                 else
                 {
-                    Log("ERROR: Auto-restore failed — user data may be lost!");
+                    Log("ERROR: Auto-restore failed - user data may be lost!");
                 }
 
                 // Delete marker regardless of restore outcome (avoid infinite retry loop)
@@ -479,7 +480,7 @@ namespace Foodbook.Services
         }
 
         // ================================================================
-        //  PUBLIC: CreateSafetyArchiveAsync (archive code — untouched logic)
+        //  PUBLIC: CreateSafetyArchiveAsync (archive code ï¿½ untouched logic)
         // ================================================================
 
         public async Task<string?> CreateSafetyArchiveAsync()
@@ -492,7 +493,7 @@ namespace Foodbook.Services
                 var dbInfo = new FileInfo(dbPath);
                 if (dbInfo.Length < 1024)
                 {
-                    Log("DB too small for archive — skipping");
+                    Log("DB too small for archive - skipping");
                     return null;
                 }
 

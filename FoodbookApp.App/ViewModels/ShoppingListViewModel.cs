@@ -1,9 +1,9 @@
 using System.Collections.ObjectModel;
-using System.Globalization;
 using System.Windows.Input;
 using Foodbook.Models;
 using Foodbook.Views;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Localization;
 using Microsoft.Maui.Controls;
 using Foodbook.Services;
 
@@ -71,10 +71,10 @@ public class ShoppingListViewModel
         if (plan == null) return;
         
         bool confirm = await Shell.Current.DisplayAlert(
-            "Usuwanie", 
-            "Czy na pewno chcesz trwale usun¹æ tê listê zakupów?", 
-            "Tak", 
-            "Nie");
+            T("DeleteConfirmTitle", "Delete"),
+            T("DeleteConfirmMessage", "Are you sure you want to permanently delete this shopping list?"),
+            ButtonResources.Yes,
+            ButtonResources.No);
             
         if (confirm)
         {
@@ -95,22 +95,24 @@ public class ShoppingListViewModel
 
             var today = DateTime.Today;
 
-            // If a standalone shopping list for today already exists, open it instead of creating another one.
-            // This prevents overlap/duplicate-plan edge cases that can surface as 'cannot add shopping list'.
-            var existingStandalone = (await _planService.GetPlansAsync())
-                .FirstOrDefault(p =>
-                    !p.IsArchived &&
-                    p.Type == PlanType.ShoppingList &&
-                    p.StartDate.Date == today &&
-                    p.EndDate.Date == today &&
-                    (!p.LinkedShoppingListPlanId.HasValue || p.LinkedShoppingListPlanId == Guid.Empty));
+            var defaultTitle = T("CreateListDefaultName", "Shopping List");
+            var providedTitle = await Shell.Current.DisplayPromptAsync(
+                T("CreateListNamePromptTitle", "New shopping list"),
+                T("CreateListNamePromptMessage", "Enter shopping list name"),
+                T("CreateListNamePromptAccept", "Create"),
+                ButtonResources.Cancel,
+                maxLength: 120,
+                initialValue: defaultTitle);
 
-            if (existingStandalone != null)
+            // User cancelled the prompt.
+            if (providedTitle == null)
             {
-                System.Diagnostics.Debug.WriteLine($"[ShoppingListVM] Standalone shopping list for today already exists: {existingStandalone.Id} - opening");
-                await Shell.Current.GoToAsync($"{nameof(ShoppingListDetailPage)}?id={existingStandalone.Id}");
                 return;
             }
+
+            var finalTitle = string.IsNullOrWhiteSpace(providedTitle)
+                ? defaultTitle
+                : providedTitle.Trim();
 
             var newPlan = new Plan
             {
@@ -119,7 +121,7 @@ public class ShoppingListViewModel
                 EndDate = today,
                 IsArchived = false,
                 LinkedShoppingListPlanId = null,
-                Title = $"Lista zakupów ({today.ToString("dd.MM.yyyy", CultureInfo.CurrentCulture)})"
+                Title = finalTitle
             };
 
             await _planService.AddPlanAsync(newPlan);
@@ -136,8 +138,14 @@ public class ShoppingListViewModel
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ShoppingListVM] Error creating shopping list: {ex.Message}\n{ex.StackTrace}");
-            await Shell.Current.DisplayAlert("B³¹d", $"Nie uda³o siê utworzyæ listy zakupów.\n{ex.Message}", "OK");
+            await Shell.Current.DisplayAlert(
+                T("CreateListErrorTitle", "Error"),
+                string.Format(T("CreateListErrorMessageFormat", "Failed to create shopping list.{0}{1}"), Environment.NewLine, ex.Message),
+                ButtonResources.OK);
         }
     }
+
+    private static string T(string key, string fallback)
+        => ShoppingListPageResources.ResourceManager.GetString(key, ShoppingListPageResources.Culture) ?? fallback;
 }
 

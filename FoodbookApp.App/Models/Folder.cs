@@ -42,5 +42,11 @@ namespace Foodbook.Models
         public string DisplayName { get; set; } = string.Empty;
         [NotMapped]
         public bool IsExpanded { get; set; }
+
+        // Lightweight animation hints (UI-only, do not persist)
+        [NotMapped]
+        public bool AnimateOnNextRender { get; set; } = true;
+        [NotMapped]
+        public uint EntryAnimationDelayMs { get; set; }
     }
 }

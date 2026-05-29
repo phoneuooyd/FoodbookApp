@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Foodbook.Models;
@@ -12,8 +13,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Localization;
 using CommunityToolkit.Mvvm.Messaging;
-using Foodbook.Messages;
+using FoodbookApp.Models.Messages;
 
 namespace Foodbook.ViewModels
 {
@@ -45,7 +47,13 @@ namespace Foodbook.ViewModels
         // ✅ Labels support
         private readonly IRecipeLabelService _labelService;
         public ObservableCollection<RecipeLabel> AvailableLabels { get; } = new();
-        public ObservableCollection<RecipeLabel> SelectedLabels { get; } = new();
+
+        private ObservableCollection<RecipeLabel> _selectedLabels = new();
+        public ObservableCollection<RecipeLabel> SelectedLabels
+        {
+            get => _selectedLabels;
+            set { _selectedLabels = value; OnPropertyChanged(); }
+        }
 
         // Tab management
         private int _selectedTabIndex = 0;
@@ -168,12 +176,12 @@ namespace Foodbook.ViewModels
         public ObservableCollection<Ingredient> Ingredients { get; set; } = new();
 
         public string Title => _editingRecipe == null 
-            ? "Nowy przepis" 
-            : "Edytuj przepis";
+            ? T("AddModeTitle", "New recipe") 
+            : T("EditModeTitle", "Edit recipe");
 
         public string SaveButtonText => _editingRecipe == null 
-            ? "Dodaj przepis" 
-            : "Zapisz zmiany";
+            ? T("AddModeSaveButton", "Add recipe") 
+            : T("EditModeSaveButton", "Save changes");
 
         public string ValidationMessage { get => _validationMessage; set { _validationMessage = value; OnPropertyChanged(); } }
         private string _validationMessage = string.Empty;
@@ -186,6 +194,53 @@ namespace Foodbook.ViewModels
 
         public string ImportStatus { get => _importStatus; set { _importStatus = value; OnPropertyChanged(); } }
         private string _importStatus = string.Empty;
+
+        private bool _canUseAutoServingRecognition;
+        public bool CanUseAutoServingRecognition
+        {
+            get => _canUseAutoServingRecognition;
+            private set
+            {
+                if (_canUseAutoServingRecognition == value)
+                {
+                    return;
+                }
+
+                _canUseAutoServingRecognition = value;
+                OnPropertyChanged();
+
+                if (!value && _importServingMode == ImportServingMode.AutoRecognition)
+                {
+                    _importServingMode = ImportServingMode.ManualEntry;
+                }
+
+                OnPropertyChanged(nameof(IsAutoServingRecognitionEnabled));
+                OnPropertyChanged(nameof(IsManualServingCountEnabled));
+            }
+        }
+
+        public string ImportServingsCount { get => _importServingsCount; set { _importServingsCount = value; OnPropertyChanged(); MarkDirty(); } }
+        private string _importServingsCount = "2";
+
+        private enum ImportServingMode
+        {
+            AutoRecognition,
+            ManualEntry
+        }
+
+        private ImportServingMode _importServingMode = ImportServingMode.ManualEntry;
+
+        public bool IsAutoServingRecognitionEnabled
+        {
+            get => _importServingMode == ImportServingMode.AutoRecognition;
+            set => SetImportServingMode(value ? ImportServingMode.AutoRecognition : ImportServingMode.ManualEntry);
+        }
+
+        public bool IsManualServingCountEnabled
+        {
+            get => _importServingMode == ImportServingMode.ManualEntry;
+            set => SetImportServingMode(value ? ImportServingMode.ManualEntry : ImportServingMode.AutoRecognition);
+        }
 
         // Komendy
         public ICommand AddIngredientCommand { get; }
@@ -257,6 +312,20 @@ namespace Foodbook.ViewModels
             // Load folders and labels list in background
             _ = LoadAvailableFoldersAsync();
             _ = LoadAvailableLabelsAsync();
+            InitializeImportServingAccess();
+
+            // Diagnostic: log SelectedLabels changes
+            SelectedLabels.CollectionChanged += (s, e) =>
+            {
+                try
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] SelectedLabels.CollectionChanged: action={e.Action}, now={string.Join(',', SelectedLabels.Select(sl => sl.Id + ":" + sl.Name))}");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Error in SelectedLabels.CollectionChanged log: {ex.Message}");
+                }
+            };
 
             ValidateInput();
         }
@@ -289,6 +358,61 @@ namespace Foodbook.ViewModels
             {
                 return null;
             }
+        }
+
+        private static IPreferencesService? ResolvePreferencesService()
+        {
+            try
+            {
+                return Application.Current?.Handler?.MauiContext?.Services?.GetService<IPreferencesService>();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private void InitializeImportServingAccess()
+        {
+            try
+            {
+                CanUseAutoServingRecognition = IsPremiumPlanChoice(ResolvePreferencesService()?.GetPlanChoice());
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Failed to initialize import serving access: {ex.Message}");
+                CanUseAutoServingRecognition = false;
+            }
+        }
+
+        private static bool IsPremiumPlanChoice(string? planChoice)
+        {
+            if (string.IsNullOrWhiteSpace(planChoice))
+            {
+                return false;
+            }
+
+            return planChoice.Trim().StartsWith("Premium", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void SetImportServingMode(ImportServingMode requestedMode)
+        {
+            var mode = requestedMode;
+
+            if (mode == ImportServingMode.AutoRecognition && !CanUseAutoServingRecognition)
+            {
+                mode = ImportServingMode.ManualEntry;
+            }
+
+            if (_importServingMode == mode)
+            {
+                return;
+            }
+
+            _importServingMode = mode;
+            OnPropertyChanged(nameof(IsAutoServingRecognitionEnabled));
+            OnPropertyChanged(nameof(IsManualServingCountEnabled));
+            MarkDirty();
         }
 
         private sealed class NullDatabaseService : IDatabaseService
@@ -398,18 +522,92 @@ namespace Foodbook.ViewModels
             try
             {
                 var labels = await _labelService.GetAllAsync();
-                MainThread.BeginInvokeOnMainThread(() =>
+                System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Fetched {labels?.Count ?? 0} labels from label service");
+                if (labels != null && labels.Count > 0)
+                {
+                    var sample = string.Join(", ", labels.Take(10).Select(l => $"{l.Id}:{l.Name}"));
+                    System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Label sample: {sample}");
+                }
+                await MainThread.InvokeOnMainThreadAsync(() =>
                 {
                     AvailableLabels.Clear();
                     foreach (var l in labels)
                         AvailableLabels.Add(l);
                 });
+
+                if (SelectedLabels.Count > 0)
+                {
+                    var selectedIds = SelectedLabels.Select(l => l.Id).ToList();
+                    await SyncSelectedLabelsFromStoreAsync(selectedIds);
+                }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Error loading labels: {ex.Message}");
                 MainThread.BeginInvokeOnMainThread(() => AvailableLabels.Clear());
             }
+        }
+
+        private async Task SyncSelectedLabelsFromStoreAsync(IEnumerable<Guid> selectedLabelIds)
+        {
+            var ids = selectedLabelIds
+                ?.Where(id => id != Guid.Empty)
+                .Distinct()
+                .ToList() ?? new List<Guid>();
+
+            System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] SyncSelectedLabelsFromStoreAsync requested ids: {string.Join(',', ids)}");
+
+            var resolved = new List<RecipeLabel>();
+            if (ids.Count > 0)
+            {
+                if (AvailableLabels.Count > 0)
+                {
+                    var availableById = AvailableLabels.ToDictionary(l => l.Id, l => l);
+                    resolved.AddRange(ids.Select(id => availableById.TryGetValue(id, out var label) ? label : null)
+                        .Where(label => label != null)!
+                        .Cast<RecipeLabel>());
+                }
+
+                if (resolved.Count != ids.Count)
+                {
+                    var all = await _labelService.GetAllAsync();
+                    System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Fallback fetched {all?.Count ?? 0} labels from service for resolution");
+                    var lookup = all.ToDictionary(l => l.Id, l => l);
+                    resolved = ids.Select(id => lookup.TryGetValue(id, out var label) ? label : null)
+                        .Where(label => label != null)!
+                        .Cast<RecipeLabel>()
+                        .ToList();
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Resolved selected labels: {string.Join(',', resolved.Select(r => r.Id + ":" + r.Name))}");
+
+            void Apply()
+            {
+                SelectedLabels.Clear();
+                foreach (var label in resolved)
+                    SelectedLabels.Add(label);
+            }
+
+            if (MainThread.IsMainThread)
+            {
+                Apply();
+            }
+            else
+            {
+                await MainThread.InvokeOnMainThreadAsync(Apply);
+            }
+        }
+
+        public void ApplySelectedLabelIds(IEnumerable<Guid> selectedLabelIds)
+        {
+            if (selectedLabelIds == null)
+                return;
+
+            var selectedSet = new HashSet<Guid>(selectedLabelIds);
+            SelectedLabels.Clear();
+            foreach (var label in AvailableLabels.Where(l => selectedSet.Contains(l.Id)))
+                SelectedLabels.Add(label);
         }
 
         public bool IsEditMode => _editingRecipe != null;
@@ -436,6 +634,19 @@ namespace Foodbook.ViewModels
                     System.Diagnostics.Debug.WriteLine($"⚠️ LoadRecipeAsync: Recipe {id} not found");
                     _suppressDirtyTracking = false;
                     return;
+                }
+
+                // Log labels present on the recipe object returned from the service
+                try
+                {
+                    var rlabels = recipe.Labels != null && recipe.Labels.Any()
+                        ? string.Join(", ", recipe.Labels.Select(l => $"{l.Id}:{l.Name}"))
+                        : "(no labels)";
+                    System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] LoadRecipeAsync: recipe.Labels => {rlabels}");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] Error logging recipe labels: {ex.Message}");
                 }
 
                 _editingRecipe = recipe;
@@ -477,15 +688,13 @@ namespace Foodbook.ViewModels
                 }
 
                 // labels
-                SelectedLabels.Clear();
-                if (recipe.Labels != null)
-                {
-                    foreach (var label in recipe.Labels)
-                    {
-                        if (label.Id != Guid.Empty)
-                            SelectedLabels.Add(label);
-                    }
-                }
+                var selectedIds = recipe.Labels?
+                    .Select(label => label.Id)
+                    .Where(id => id != Guid.Empty)
+                    .ToList() ?? new List<Guid>();
+
+                await SyncSelectedLabelsFromStoreAsync(selectedIds);
+                System.Diagnostics.Debug.WriteLine($"[AddRecipeViewModel] LoadRecipeAsync: SelectedLabels after sync => {string.Join(',', SelectedLabels.Select(s => s.Id + ":" + s.Name))}");
                 
                 await ScheduleNutritionalCalculationAsync();
                 
@@ -503,7 +712,10 @@ namespace Foodbook.ViewModels
             {
                 _suppressDirtyTracking = false;
                 System.Diagnostics.Debug.WriteLine($"❌ LoadRecipeAsync error: {ex.Message}");
-                ValidationMessage = $"Błąd ładowania przepisu: {ex.Message}";
+                ValidationMessage = string.Format(
+                    CultureInfo.CurrentUICulture,
+                    T("LoadRecipeErrorMessageFormat", "Error loading recipe: {0}"),
+                    ex.Message);
             }
         }
 
@@ -531,7 +743,10 @@ namespace Foodbook.ViewModels
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in AddIngredient: {ex.Message}");
-                ValidationMessage = $"Błąd dodawania składnika: {ex.Message}";
+                ValidationMessage = string.Format(
+                    CultureInfo.CurrentUICulture,
+                    T("AddIngredientErrorMessageFormat", "Error adding ingredient: {0}"),
+                    ex.Message);
             }
         }
 
@@ -548,7 +763,10 @@ namespace Foodbook.ViewModels
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in RemoveIngredient: {ex.Message}");
-                ValidationMessage = $"Błąd usuwania składnika: {ex.Message}";
+                ValidationMessage = string.Format(
+                    CultureInfo.CurrentUICulture,
+                    T("RemoveIngredientErrorMessageFormat", "Error removing ingredient: {0}"),
+                    ex.Message);
             }
         }
 
@@ -618,8 +836,10 @@ namespace Foodbook.ViewModels
 
                 ImportUrl = string.Empty;
                 ImportStatus = string.Empty;
+                ImportServingsCount = "2";
                 UseCalculatedValues = true;
                 IsManualMode = true;
+                SetImportServingMode(ImportServingMode.ManualEntry);
                 SelectedTabIndex = 0;
 
                 OnPropertyChanged(nameof(Title));
@@ -771,10 +991,14 @@ namespace Foodbook.ViewModels
         {
             try
             {
-                ImportStatus = "Importowanie...";
-                var recipe = await _importer.ImportFromUrlAsync(ImportUrl);
+                ImportStatus = T("ImportingStatus", "Importing...");
+                InitializeImportServingAccess();
+                var sourceServings = ParseImportServingsCount();
+                var useAutoServingRecognition = CanUseAutoServingRecognition && IsAutoServingRecognitionEnabled;
+                var recipe = await _importer.ImportFromUrlAsync(ImportUrl, sourceServings, useAutoServingRecognition);
                 Name = recipe.Name;
                 Description = recipe.Description ?? string.Empty;
+                IloscPorcji = recipe.IloscPorcji.ToString(CultureInfo.InvariantCulture);
                 
                 Ingredients.Clear();
                 
@@ -804,14 +1028,24 @@ namespace Foodbook.ViewModels
                     Carbs = recipe.Carbs.ToString("F1");
                 }
                 
-                ImportStatus = "Zaimportowano!";
+                ImportStatus = T("ImportedStatus", "Imported!");
                 IsManualMode = true; // Przełącz na tryb ręczny po imporcie
             }
             catch (Exception ex)
             {
-                ImportStatus = $"Błąd importu: {ex.Message}";
+                ImportStatus = string.Format(
+                    CultureInfo.CurrentUICulture,
+                    T("ImportErrorMessageFormat", "Import error: {0}"),
+                    ex.Message);
                 System.Diagnostics.Debug.WriteLine($"Error in ImportRecipeAsync: {ex.Message}");
             }
+        }
+
+        private int ParseImportServingsCount()
+        {
+            return int.TryParse(ImportServingsCount, NumberStyles.Integer, CultureInfo.InvariantCulture, out var servings) && servings > 0
+                ? servings
+                : 2;
         }
 
         private bool CanSave()
@@ -840,28 +1074,28 @@ namespace Foodbook.ViewModels
 
                 if (string.IsNullOrWhiteSpace(Name))
                 {
-                    ValidationMessage = "Nazwa przepisu jest wymagana";
+                    ValidationMessage = T("ValidationNameRequired", "Recipe name is required");
                 }
                 else if (!IsValidInt(IloscPorcji))
                 {
-                    ValidationMessage = "Ilość porcji musi być liczbą całkowitą większą od 0";
+                    ValidationMessage = T("ValidationPortionsInvalid", "Portions must be an integer greater than 0");
                 }
                 // Usuwamy wymaganie składników - teraz można zapisać przepis bez składników
                 else if (!IsValidDouble(Calories))
                 {
-                    ValidationMessage = "Kalorie muszą być liczbą";
+                    ValidationMessage = T("ValidationCaloriesInvalid", "Calories must be a number");
                 }
                 else if (!IsValidDouble(Protein))
                 {
-                    ValidationMessage = "Białko musi być liczbą";
+                    ValidationMessage = T("ValidationProteinInvalid", "Protein must be a number");
                 }
                 else if (!IsValidDouble(Fat))
                 {
-                    ValidationMessage = "Tłuszcze muszą być liczbą";
+                    ValidationMessage = T("ValidationFatInvalid", "Fat must be a number");
                 }
                 else if (!IsValidDouble(Carbs))
                 {
-                    ValidationMessage = "Węglowodany muszą być liczbą";
+                    ValidationMessage = T("ValidationCarbsInvalid", "Carbohydrates must be a number");
                 }
                 else
                 {
@@ -870,12 +1104,12 @@ namespace Foodbook.ViewModels
                     {
                         if (string.IsNullOrWhiteSpace(ing.Name))
                         {
-                            ValidationMessage = "Każdy składnik musi mieć nazwę";
+                            ValidationMessage = T("ValidationIngredientNameRequired", "Each ingredient must have a name");
                             break;
                         }
                         if (ing.Quantity <= 0)
                         {
-                            ValidationMessage = "Ilość składnika musi być większa od zera";
+                            ValidationMessage = T("ValidationIngredientQuantityInvalid", "Ingredient quantity must be greater than zero");
                             break;
                         }
                     }
@@ -887,7 +1121,7 @@ namespace Foodbook.ViewModels
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in ValidateInput: {ex.Message}");
-                ValidationMessage = "Błąd walidacji danych";
+                ValidationMessage = T("ValidationGeneralError", "Validation error");
             }
         }
 
@@ -1007,7 +1241,7 @@ namespace Foodbook.ViewModels
                     catch { }
 
                     // Surface a concise message to the user but keep diagnostics in logs
-                    ValidationMessage = "Błąd zapisu przepisu. Sprawdź logi aplikacji dla szczegółów.";
+                    ValidationMessage = T("SaveRecipeServiceError", "Error saving recipe. Check application logs for details.");
                     System.Diagnostics.Debug.WriteLine($"❌ Service error in SaveRecipeAsync: {svcEx.Message}");
                     throw; // rethrow so outer catch can also handle cleanup/navigation decisions
                 }
@@ -1055,8 +1289,17 @@ namespace Foodbook.ViewModels
                 }
                 catch { }
 
-                ValidationMessage = $"Błąd zapisywania: {ex.Message}";
+                ValidationMessage = string.Format(
+                    CultureInfo.CurrentUICulture,
+                    T("SaveRecipeErrorMessageFormat", "Save error: {0}"),
+                    ex.Message);
             }
+        }
+
+        private static string T(string key, string fallback)
+        {
+            var value = AddRecipePageResources.ResourceManager.GetString(key, CultureInfo.CurrentUICulture);
+            return string.IsNullOrWhiteSpace(value) ? fallback : value;
         }
         
         /// <summary>

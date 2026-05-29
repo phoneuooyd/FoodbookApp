@@ -70,4 +70,69 @@
   <data name="SyncQueueStatusError" xml:space="preserve"><value>오류</value></data>
   <data name="SyncQueueStatusInProgress" xml:space="preserve"><value>진행 중</value></data>
   <data name="SyncQueueStatusPending" xml:space="preserve"><value>대기 중</value></data>
+
+  <data name="CurrentPlanStatusActive" xml:space="preserve"><value>활성</value></data>
+  <data name="CurrentPlanRenewalFree" xml:space="preserve"><value>기간: 무기한</value></data>
+  <data name="CurrentPlanRenewalPremiumMonthly" xml:space="preserve"><value>기간: 1개월</value></data>
+  <data name="CurrentPlanRenewalPremiumYearly" xml:space="preserve"><value>기간: 12개월</value></data>
+  <data name="CurrentPlanLimitsPremium" xml:space="preserve"><value>제한: 프리미엄 플랜 제한 없음.</value></data>
+  <data name="CurrentPlanLimitsFree" xml:space="preserve"><value>제한: 활성 식단 플랜 최대 3개, 플랜당 최대 14일, 활성 장보기 목록 최대 3개.</value></data>
+  <data name="CurrentPlanLimitsFreeReached" xml:space="preserve"><value>제한: 활성 식단 플랜에 대한 Free 플랜 한도에 도달했습니다.</value></data>
+  <data name="CurrentPlanPriceFree" xml:space="preserve"><value>0 PLN / 무기한</value></data>
+  <data name="CurrentPlanPricePremiumMonthly" xml:space="preserve"><value>TBD / 월</value></data>
+  <data name="CurrentPlanPricePremiumYearly" xml:space="preserve"><value>TBD / 연</value></data>
+  <data name="CurrentPlanFeaturesFree" xml:space="preserve"><value>• 레시피와 재료: 무제한
+• URL 가져오기 및 자동 매크로 계산
+• 식단 플래너: 활성 플랜 최대 3개, 플랜당 최대 14일
+• 장보기 목록: 활성 최대 3개
+• 일부 프리미엄 기능 광고로 해제 (일일 한도)</value></data>
+  <data name="CurrentPlanFeaturesPremiumMonthly" xml:space="preserve"><value>• 식단 플랜 및 장보기 목록 무제한
+• AI 식단 플래너 (로컬/클라우드)
+• AI 레시피 에이전트
+• 보관된 플랜 재활용
+• 주간/월간 템플릿
+• 프리미엄 레시피 팩</value></data>
+  <data name="CurrentPlanFeaturesPremiumYearly" xml:space="preserve"><value>• 식단 플랜 및 장보기 목록 무제한
+• AI 식단 플래너 (로컬/클라우드)
+• AI 레시피 에이전트
+• 보관된 플랜 재활용
+• 주간/월간 템플릿
+• 프리미엄 레시피 팩</value></data>
+    <data name="RegisterPopupTitle" xml:space="preserve"><value>회원가입</value></data>
+    <data name="RegisterServiceMissingMessage" xml:space="preserve"><value>인증 서비스를 찾을 수 없습니다.</value></data>
+    <data name="PasswordsDoNotMatch" xml:space="preserve"><value>비밀번호가 일치하지 않습니다.</value></data>
+    <data name="RegisterInProgress" xml:space="preserve"><value>회원가입 처리 중...</value></data>
+    <data name="RegisterConfirmEmailMessage" xml:space="preserve"><value>등록 확인을 위해 이메일함을 확인하세요.</value></data>
+    <data name="RegisterSuccessMessage" xml:space="preserve"><value>계정이 생성되었습니다.</value></data>
+  <data name="HeroRecipesCountLabel" xml:space="preserve"><value>레시피</value></data>
+  <data name="HeroPlansCountLabel" xml:space="preserve"><value>플랜</value></data>
+  <data name="HeroListsCountLabel" xml:space="preserve"><value>목록</value></data>
+  <data name="AccountSettingsSectionLabel" xml:space="preserve"><value>계정 설정</value></data>
+  <data name="AccountDataTitle" xml:space="preserve"><value>계정 정보</value></data>
+  <data name="AccountDataSubtitle" xml:space="preserve"><value>이메일 또는 비밀번호 변경</value></data>
+  <data name="SubscriptionHeaderTitle" xml:space="preserve"><value>구독</value></data>
+  <data name="SubscriptionHeaderSubtitle" xml:space="preserve"><value>요금제를 관리하세요</value></data>
+  <data name="CurrentPlanSectionTitle" xml:space="preserve"><value>현재 요금제</value></data>
+  <data name="OtherPlansSectionTitle" xml:space="preserve"><value>다른 요금제</value></data>
+  <data name="FreePlanPriceLabel" xml:space="preserve"><value>0 PLN / 영구</value></data>
+  <data name="FreePlanFeatureRecipes" xml:space="preserve"><value>• 레시피 무제한</value></data>
+  <data name="FreePlanFeaturePlanner" xml:space="preserve"><value>• 식단 플래너 (활성 3개)</value></data>
+  <data name="FreePlanFeatureShoppingList" xml:space="preserve"><value>• 장보기 목록</value></data>
+  <data name="FreePlanFeatureImport" xml:space="preserve"><value>• 웹에서 레시피 가져오기</value></data>
+  <data name="SwitchToFreeButton" xml:space="preserve"><value>Free로 전환</value></data>
+  <data name="PremiumMonthlyPriceLabel" xml:space="preserve"><value>9.99 PLN / 월</value></data>
+  <data name="PremiumFeatureAllIncluded" xml:space="preserve"><value>• Premium 요금제의 모든 기능</value></data>
+  <data name="PremiumMonthlyFeatureBilling" xml:space="preserve"><value>• 월간 결제</value></data>
+  <data name="PremiumMonthlyFeatureFlexibility" xml:space="preserve"><value>• 유연한 요금제 변경</value></data>
+  <data name="SwitchToMonthlyButton" xml:space="preserve"><value>월간으로 전환</value></data>
+  <data name="PremiumYearlyPriceLabel" xml:space="preserve"><value>95.99 PLN / 년</value></data>
+  <data name="PremiumYearlyFeatureBilling" xml:space="preserve"><value>• 연간 결제</value></data>
+  <data name="PremiumYearlyFeatureLowerPrice" xml:space="preserve"><value>• 더 낮은 가격: 7.99 PLN / 월</value></data>
+  <data name="SwitchToYearlyButton" xml:space="preserve"><value>연간으로 전환</value></data>
+  <data name="CancelSubscriptionButton" xml:space="preserve"><value>구독 취소</value></data>
+  <data name="SyncQueueLoadMoreButton" xml:space="preserve"><value>더 보기</value></data>
+  <data name="BackgroundSyncButton" xml:space="preserve"><value>백그라운드 동기화</value></data>
+  <data name="SyncLastSyncedWithTimeFormat" xml:space="preserve"><value>동기화됨 • {0}</value></data>
+  <data name="SyncLastSynced" xml:space="preserve"><value>동기화됨</value></data>
+  <data name="SyncPendingFormat" xml:space="preserve"><value>동기화 중: {0}개 대기</value></data>
 </root>

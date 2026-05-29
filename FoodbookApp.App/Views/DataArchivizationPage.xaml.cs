@@ -1541,22 +1541,26 @@ namespace Foodbook.Views
                 var hasStartDateColumn = HasColumn(reader, "StartDate");
                 var hasEndDateColumn = HasColumn(reader, "EndDate");
                 var hasIsArchivedColumn = HasColumn(reader, "IsArchived");
+                var hasLinkedShoppingListPlanIdColumn = HasColumn(reader, "LinkedShoppingListPlanId");
+                var hasAccentColorColumn = HasColumn(reader, "AccentColor");
+                var hasEmojiColumn = HasColumn(reader, "Emoji");
+                var hasDurationDaysColumn = HasColumn(reader, "DurationDays");
+                var hasCreatedAtColumn = HasColumn(reader, "CreatedAt");
+                var hasUpdatedAtColumn = HasColumn(reader, "UpdatedAt");
 
                 while (await reader.ReadAsync())
                 {
                     var newId = Guid.NewGuid();
 
-                    // Read ID (may be GUID or int)
                     if (hasIdColumn && !reader.IsDBNull(reader.GetOrdinal("Id")))
                     {
                         var rawId = reader.GetValue(reader.GetOrdinal("Id"));
                         if (rawId is string idStr && Guid.TryParse(idStr, out var parsedGuid))
                         {
-                            newId = parsedGuid; // Preserve GUID
+                            newId = parsedGuid;
                         }
                         else if (rawId is long longId)
                         {
-                            // Legacy int - store mapping
                             restoreCtx.PlanIdMapping[(int)longId] = newId;
                         }
                         else if (rawId is int intId)
@@ -1565,27 +1569,55 @@ namespace Foodbook.Views
                         }
                     }
 
-                    // SAFE reading of Type (may be int, string, or missing)
-                    PlanType planType = PlanType.ShoppingList; // Default
-                    if (hasTypeColumn)
+                    var startDate = hasStartDateColumn && !reader.IsDBNull(reader.GetOrdinal("StartDate"))
+                        ? reader.GetDateTime(reader.GetOrdinal("StartDate"))
+                        : DateTime.Today;
+                    var endDate = hasEndDateColumn && !reader.IsDBNull(reader.GetOrdinal("EndDate"))
+                        ? reader.GetDateTime(reader.GetOrdinal("EndDate"))
+                        : startDate;
+                    var createdAt = hasCreatedAtColumn && !reader.IsDBNull(reader.GetOrdinal("CreatedAt"))
+                        ? reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
+                        : DateTime.UtcNow;
+                    var updatedAt = hasUpdatedAtColumn && !reader.IsDBNull(reader.GetOrdinal("UpdatedAt"))
+                        ? reader.GetDateTime(reader.GetOrdinal("UpdatedAt"))
+                        : (DateTime?)null;
+                    Guid? linkedShoppingListPlanId = null;
+                    if (hasLinkedShoppingListPlanIdColumn && !reader.IsDBNull(reader.GetOrdinal("LinkedShoppingListPlanId")))
+                    {
+                        var rawLinkedId = reader.GetValue(reader.GetOrdinal("LinkedShoppingListPlanId"));
+                        if (rawLinkedId is string linkedStr && Guid.TryParse(linkedStr, out var parsedLinkedGuid))
+                        {
+                            linkedShoppingListPlanId = parsedLinkedGuid;
+                        }
+                        else if (rawLinkedId is Guid linkedGuid)
+                        {
+                            linkedShoppingListPlanId = linkedGuid;
+                        }
+                    }
+
+                    var planType = PlanType.ShoppingList;
+                    if (hasTypeColumn && !reader.IsDBNull(reader.GetOrdinal("Type")))
                     {
                         try
                         {
-                            var typeOrdinal = reader.GetOrdinal("Type");
-                            if (!reader.IsDBNull(typeOrdinal))
+                            var rawType = reader.GetValue(reader.GetOrdinal("Type"));
+                            if (rawType is long longType)
                             {
-                                var rawType = reader.GetValue(typeOrdinal);
-                                if (rawType is long longType)
-                                {
-                                    planType = (PlanType)(int)longType;
-                                }
-                                else if (rawType is int intType)
-                                {
-                                    planType = (PlanType)intType;
-                                }
-                                else if (rawType is string strType && int.TryParse(strType, out var parsedType))
+                                planType = (PlanType)(int)longType;
+                            }
+                            else if (rawType is int intType)
+                            {
+                                planType = (PlanType)intType;
+                            }
+                            else if (rawType is string typeString)
+                            {
+                                if (int.TryParse(typeString, out var parsedType))
                                 {
                                     planType = (PlanType)parsedType;
+                                }
+                                else if (Enum.TryParse<PlanType>(typeString, true, out var parsedEnum))
+                                {
+                                    planType = parsedEnum;
                                 }
                             }
                         }
@@ -1595,7 +1627,6 @@ namespace Foodbook.Views
                         }
                     }
 
-                    // SAFE reading of Title/Name
                     string? title = null;
                     if (hasTitleColumn)
                     {
@@ -1625,18 +1656,25 @@ namespace Foodbook.Views
                     var plan = new Plan
                     {
                         Id = newId,
-                        StartDate = hasStartDateColumn && !reader.IsDBNull(reader.GetOrdinal("StartDate")) 
-                            ? reader.GetDateTime(reader.GetOrdinal("StartDate")) 
-                            : DateTime.Now,
-                        EndDate = hasEndDateColumn && !reader.IsDBNull(reader.GetOrdinal("EndDate")) 
-                            ? reader.GetDateTime(reader.GetOrdinal("EndDate")) 
-                            : DateTime.Now.AddDays(7),
-                        IsArchived = hasIsArchivedColumn && !reader.IsDBNull(reader.GetOrdinal("IsArchived")) 
-                            ? reader.GetBoolean(reader.GetOrdinal("IsArchived")) 
+                        StartDate = startDate,
+                        EndDate = endDate,
+                        IsArchived = hasIsArchivedColumn && !reader.IsDBNull(reader.GetOrdinal("IsArchived"))
+                            ? reader.GetBoolean(reader.GetOrdinal("IsArchived"))
                             : false,
                         Type = planType,
+                        LinkedShoppingListPlanId = linkedShoppingListPlanId,
                         Title = title,
-                        LinkedShoppingListPlanId = null
+                        AccentColor = hasAccentColorColumn && !reader.IsDBNull(reader.GetOrdinal("AccentColor"))
+                            ? reader.GetString(reader.GetOrdinal("AccentColor"))
+                            : null,
+                        Emoji = hasEmojiColumn && !reader.IsDBNull(reader.GetOrdinal("Emoji"))
+                            ? reader.GetString(reader.GetOrdinal("Emoji"))
+                            : null,
+                        DurationDays = hasDurationDaysColumn && !reader.IsDBNull(reader.GetOrdinal("DurationDays"))
+                            ? reader.GetInt32(reader.GetOrdinal("DurationDays"))
+                            : Math.Max(1, (endDate.Date - startDate.Date).Days + 1),
+                        CreatedAt = createdAt,
+                        UpdatedAt = updatedAt
                     };
                     plans.Add(plan);
                 }
@@ -1674,6 +1712,8 @@ namespace Foodbook.Views
                 var hasPlanIdColumn = HasColumn(reader, "PlanId");
                 var hasDateColumn = HasColumn(reader, "Date");
                 var hasPortionsColumn = HasColumn(reader, "Portions");
+                var hasCreatedAtColumn = HasColumn(reader, "CreatedAt");
+                var hasUpdatedAtColumn = HasColumn(reader, "UpdatedAt");
 
                 // Get existing IDs to validate foreign keys
                 var existingRecipeIds = await context.Recipes.Select(r => r.Id).ToHashSetAsync();
@@ -1685,23 +1725,20 @@ namespace Foodbook.Views
                     Guid? newRecipeId = null;
                     Guid? newPlanId = null;
 
-                    // Read ID (may be GUID or int)
                     if (hasIdColumn && !reader.IsDBNull(reader.GetOrdinal("Id")))
                     {
                         var rawId = reader.GetValue(reader.GetOrdinal("Id"));
                         if (rawId is string idStr && Guid.TryParse(idStr, out var parsedGuid))
                         {
-                            newId = parsedGuid; // Preserve GUID
+                            newId = parsedGuid;
                         }
                     }
 
-                    // Read RecipeId (may be GUID or int)
                     if (hasRecipeIdColumn && !reader.IsDBNull(reader.GetOrdinal("RecipeId")))
                     {
                         var rawRecipeId = reader.GetValue(reader.GetOrdinal("RecipeId"));
                         if (rawRecipeId is string recipeStr && Guid.TryParse(recipeStr, out var parsedRecipeGuid))
                         {
-                            // GUID-based: use direct or mapped
                             if (restoreCtx.RecipeGuidMapping.TryGetValue(parsedRecipeGuid, out var mappedGuid))
                             {
                                 newRecipeId = mappedGuid;
@@ -1727,7 +1764,6 @@ namespace Foodbook.Views
                         }
                     }
 
-                    // Read PlanId (may be GUID or int)
                     if (hasPlanIdColumn && !reader.IsDBNull(reader.GetOrdinal("PlanId")))
                     {
                         var rawPlanId = reader.GetValue(reader.GetOrdinal("PlanId"));
@@ -1751,7 +1787,6 @@ namespace Foodbook.Views
                         }
                     }
 
-                    // SKIP meals with invalid foreign keys
                     if (!newRecipeId.HasValue || !existingRecipeIds.Contains(newRecipeId.Value))
                     {
                         log($"WARNING: Skipping planned meal - Recipe ID {newRecipeId} not found");
@@ -1773,7 +1808,13 @@ namespace Foodbook.Views
                             : DateTime.Now,
                         Portions = hasPortionsColumn && !reader.IsDBNull(reader.GetOrdinal("Portions"))
                             ? reader.GetInt32(reader.GetOrdinal("Portions"))
-                            : 1
+                            : 1,
+                        CreatedAt = hasCreatedAtColumn && !reader.IsDBNull(reader.GetOrdinal("CreatedAt"))
+                            ? reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
+                            : DateTime.UtcNow,
+                        UpdatedAt = hasUpdatedAtColumn && !reader.IsDBNull(reader.GetOrdinal("UpdatedAt"))
+                            ? reader.GetDateTime(reader.GetOrdinal("UpdatedAt"))
+                            : null
                     };
                     meals.Add(meal);
                 }
@@ -1809,9 +1850,11 @@ namespace Foodbook.Views
                 using var cmd = srcConnection.CreateCommand();
                 cmd.CommandText = "SELECT * FROM ShoppingListItems";
                 using var reader = await cmd.ExecuteReaderAsync();
-                
+
                 var hasIdColumn = HasColumn(reader, "Id");
                 var hasPlanIdColumn = HasColumn(reader, "PlanId");
+                var hasCreatedAtColumn = HasColumn(reader, "CreatedAt");
+                var hasUpdatedAtColumn = HasColumn(reader, "UpdatedAt");
 
                 // Get all existing plan IDs to validate foreign key constraints
                 var existingPlanIds = await context.Plans.Select(p => p.Id).ToHashSetAsync();
@@ -1821,17 +1864,15 @@ namespace Foodbook.Views
                     var newId = Guid.NewGuid();
                     Guid? newPlanId = null;
 
-                    // Read ID (may be GUID or int)
                     if (hasIdColumn && !reader.IsDBNull(reader.GetOrdinal("Id")))
                     {
                         var rawId = reader.GetValue(reader.GetOrdinal("Id"));
                         if (rawId is string idStr && Guid.TryParse(idStr, out var parsedGuid))
                         {
-                            newId = parsedGuid; // Preserve GUID
+                            newId = parsedGuid;
                         }
                     }
 
-                    // Read PlanId (may be GUID or int)
                     if (hasPlanIdColumn && !reader.IsDBNull(reader.GetOrdinal("PlanId")))
                     {
                         var rawPlanId = reader.GetValue(reader.GetOrdinal("PlanId"));
@@ -1855,7 +1896,6 @@ namespace Foodbook.Views
                         }
                     }
 
-                    // SKIP items with invalid/missing Plan references
                     if (!newPlanId.HasValue || !existingPlanIds.Contains(newPlanId.Value))
                     {
                         log($"WARNING: Skipping shopping item '{reader.GetString(reader.GetOrdinal("IngredientName"))}' - Plan ID {newPlanId} not found");
@@ -1870,7 +1910,13 @@ namespace Foodbook.Views
                         Unit = (Unit)reader.GetInt32(reader.GetOrdinal("Unit")),
                         Quantity = reader.GetDouble(reader.GetOrdinal("Quantity")),
                         IsChecked = reader.GetBoolean(reader.GetOrdinal("IsChecked")),
-                        Order = HasColumn(reader, "Order") && !reader.IsDBNull(reader.GetOrdinal("Order")) ? reader.GetInt32(reader.GetOrdinal("Order")) : 0
+                        Order = HasColumn(reader, "Order") && !reader.IsDBNull(reader.GetOrdinal("Order")) ? reader.GetInt32(reader.GetOrdinal("Order")) : 0,
+                        CreatedAt = hasCreatedAtColumn && !reader.IsDBNull(reader.GetOrdinal("CreatedAt"))
+                            ? reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
+                            : DateTime.UtcNow,
+                        UpdatedAt = hasUpdatedAtColumn && !reader.IsDBNull(reader.GetOrdinal("UpdatedAt"))
+                            ? reader.GetDateTime(reader.GetOrdinal("UpdatedAt"))
+                            : null
                     };
                     items.Add(item);
                 }

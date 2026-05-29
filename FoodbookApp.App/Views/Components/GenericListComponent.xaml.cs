@@ -1,6 +1,7 @@
 using System.Collections;
 using System.ComponentModel;
 using System.Windows.Input;
+using Foodbook.Utils;
 using Foodbook.Views.Base;
 
 namespace Foodbook.Views.Components
@@ -34,6 +35,7 @@ namespace Foodbook.Views.Components
             BindableProperty.Create(nameof(DisableRefreshWhenEmpty), typeof(bool), typeof(GenericListComponent), true);
 
         private readonly PageThemeHelper _themeHelper;
+        private bool _hasAnimatedInitialLoad;
 
         public IEnumerable ItemsSource
         {
@@ -102,6 +104,7 @@ namespace Foodbook.Views.Components
             InnerCollectionView.ItemsSource = ItemsSource;
 
             this.PropertyChanged += OnHostPropertyChanged;
+            _ = AnimateCollectionStateAsync();
         }
 
         private void OnComponentUnloaded(object? sender, EventArgs e)
@@ -117,12 +120,29 @@ namespace Foodbook.Views.Components
             {
                 InnerCollectionView.ItemTemplate = ItemTemplate;
                 InvalidateListItemSizes();
+                _ = ComponentAnimationHelper.AnimateSoftRefreshAsync(InnerCollectionView);
             }
             else if (e.PropertyName == nameof(ItemsSource))
             {
                 InnerCollectionView.ItemsSource = ItemsSource;
                 InvalidateListItemSizes();
+                _ = AnimateCollectionStateAsync();
             }
+        }
+
+        private async Task AnimateCollectionStateAsync()
+        {
+            if (InnerCollectionView == null)
+                return;
+
+            if (!_hasAnimatedInitialLoad)
+            {
+                _hasAnimatedInitialLoad = true;
+                await ComponentAnimationHelper.AnimateEntranceAsync(InnerCollectionView, offsetY: 8);
+                return;
+            }
+
+            await ComponentAnimationHelper.AnimateSoftRefreshAsync(InnerCollectionView);
         }
 
         // Helper method: request remeasure of items after template/data changes

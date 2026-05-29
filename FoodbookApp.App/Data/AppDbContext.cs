@@ -20,6 +20,7 @@ namespace Foodbook.Data
         // Sync tables
         public DbSet<SyncQueueEntry> SyncQueue => Set<SyncQueueEntry>();
         public DbSet<SyncState> SyncStates => Set<SyncState>();
+        public DbSet<SubscriptionOperationEntry> SubscriptionOperations => Set<SubscriptionOperationEntry>();
         
         // Used by DI at runtime
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
@@ -174,6 +175,28 @@ namespace Foodbook.Data
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.Property(e => e.Status)
+                    .HasConversion<int>();
+            });
+
+            modelBuilder.Entity<SubscriptionOperationEntry>(entity =>
+            {
+                entity.HasIndex(e => e.AccountId)
+                    .HasDatabaseName("IX_SubscriptionOperations_AccountId");
+
+                entity.HasIndex(e => new { e.AccountId, e.Status })
+                    .HasDatabaseName("IX_SubscriptionOperations_AccountId_Status");
+
+                entity.HasIndex(e => e.IdempotencyKey)
+                    .IsUnique()
+                    .HasDatabaseName("IX_SubscriptionOperations_IdempotencyKey");
+
+                entity.HasIndex(e => new { e.Status, e.UpdatedUtc })
+                    .HasDatabaseName("IX_SubscriptionOperations_Processing");
+
+                entity.Property(e => e.Status)
+                    .HasConversion<int>();
+
+                entity.Property(e => e.TargetPlan)
                     .HasConversion<int>();
             });
 

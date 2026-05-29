@@ -9,8 +9,12 @@ using System.Globalization;
 
 namespace FoodbookApp.Tests
 {
-    public class AddRecipePageTests
+    public class AddRecipePageTests : IDisposable
     {
+        private static readonly CultureInfo PolishCulture = CultureInfo.GetCultureInfo("pl-PL");
+
+        private readonly CultureInfo _originalCulture;
+        private readonly CultureInfo _originalUICulture;
         private readonly Mock<IRecipeService> _mockRecipeService;
         private readonly Mock<IIngredientService> _mockIngredientService;
         private readonly Mock<IFolderService> _mockFolderService;
@@ -19,6 +23,11 @@ namespace FoodbookApp.Tests
 
         public AddRecipePageTests()
         {
+            _originalCulture = CultureInfo.CurrentCulture;
+            _originalUICulture = CultureInfo.CurrentUICulture;
+            CultureInfo.CurrentCulture = PolishCulture;
+            CultureInfo.CurrentUICulture = PolishCulture;
+
             _mockRecipeService = new Mock<IRecipeService>();
             _mockIngredientService = new Mock<IIngredientService>();
             _mockFolderService = new Mock<IFolderService>();
@@ -40,6 +49,12 @@ namespace FoodbookApp.Tests
                 _mockIngredientService.Object, 
                 _recipeImporter,
                 _mockFolderService.Object);
+        }
+
+        public void Dispose()
+        {
+            CultureInfo.CurrentCulture = _originalCulture;
+            CultureInfo.CurrentUICulture = _originalUICulture;
         }
 
         [Fact]

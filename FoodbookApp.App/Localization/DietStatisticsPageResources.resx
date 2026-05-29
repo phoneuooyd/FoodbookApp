@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="PageTitle" xml:space="preserve"><value>Diet Statistics</value></data>
+  <data name="CaloriesConsumed" xml:space="preserve"><value>Consumed</value></data>
+  <data name="CaloriesGoal" xml:space="preserve"><value>Goal</value></data>
+  <data name="CaloriesTargetRange" xml:space="preserve"><value>Target range</value></data>
+  <data name="MacroCarbs" xml:space="preserve"><value>Carbs</value></data>
+  <data name="MacroFat" xml:space="preserve"><value>Fat</value></data>
+  <data name="MacroProtein" xml:space="preserve"><value>Protein</value></data>
+  <data name="MacroRecommended" xml:space="preserve"><value>Recommended</value></data>
+  <data name="MacroActual" xml:space="preserve"><value>Actual</value></data>
+  <data name="FilterDay" xml:space="preserve"><value>Day</value></data>
+  <data name="FilterWeek" xml:space="preserve"><value>Week</value></data>
+  <data name="FilterMonth" xml:space="preserve"><value>Month</value></data>
+  <data name="FilterCustom" xml:space="preserve"><value>Custom</value></data>
+  <data name="FilterPlan" xml:space="preserve"><value>Plan</value></data>
+  <data name="MealsHeader" xml:space="preserve"><value>Meals</value></data>
+  <data name="MealsTodayHeader" xml:space="preserve"><value>Today's meals</value></data>
+  <data name="MealsTodayHint" xml:space="preserve"><value>Planned meals and manual entries for today.</value></data>
+  <data name="MealBreakfast" xml:space="preserve"><value>Breakfast</value></data>
+  <data name="MealLunch" xml:space="preserve"><value>Lunch</value></data>
+  <data name="MealDinner" xml:space="preserve"><value>Dinner</value></data>
+  <data name="MealMorningSnack" xml:space="preserve"><value>Morning snack</value></data>
+  <data name="MealAfternoonSnack" xml:space="preserve"><value>Afternoon snack</value></data>
+  <data name="MealSlot" xml:space="preserve"><value>Meal</value></data>
+  <data name="MealPlannerEntrySubtitle" xml:space="preserve"><value>Planned meal</value></data>
+  <data name="MealManualEntrySubtitle" xml:space="preserve"><value>Manual entry</value></data>
+  <data name="AddMealButton" xml:space="preserve"><value>Add</value></data>
+  <data name="AddMealPopupTitle" xml:space="preserve"><value>Add meal</value></data>
+  <data name="AddMealPopupNameLabel" xml:space="preserve"><value>Meal name</value></data>
+  <data name="AddMealPopupNamePlaceholder" xml:space="preserve"><value>e.g. protein snack</value></data>
+  <data name="AddMealPopupCaloriesLabel" xml:space="preserve"><value>Calories (kcal)</value></data>
+  <data name="AddMealPopupCaloriesPlaceholder" xml:space="preserve"><value>e.g. 250</value></data>
+  <data name="AddMealPopupSave" xml:space="preserve"><value>Save</value></data>
+  <data name="AddMealPopupCancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="AddMealPopupInvalidName" xml:space="preserve"><value>Enter meal name.</value></data>
+  <data name="AddMealPopupInvalidCalories" xml:space="preserve"><value>Enter a valid kcal value.</value></data>
+  <data name="AddMealPopupSaveError" xml:space="preserve"><value>Could not save the meal entry.</value></data>
+  <data name="NoMealsPlaceholder" xml:space="preserve"><value>No meals logged</value></data>
+  <data name="NutritionCardTitle" xml:space="preserve"><value>Nutritional values</value></data>
+</root>

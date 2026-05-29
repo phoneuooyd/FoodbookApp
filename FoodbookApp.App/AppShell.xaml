@@ -48,4 +48,7 @@
     <ShellContent
         Route="DataArchivizationPage"
         ContentTemplate="{DataTemplate views:DataArchivizationPage}" />
+    <ShellContent
+        Route="DietStatisticsPage"
+        ContentTemplate="{DataTemplate views:DietStatisticsPage}" />
 </Shell>

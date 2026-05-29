@@ -72,4 +72,29 @@
   <data name="FailedToOpenRecipeDetails" xml:space="preserve">
     <value>Rezeptdetails konnten nicht geöffnet werden</value>
   </data>
+  <data name="AddModeTitle" xml:space="preserve"><value>Neues Rezept</value></data>
+  <data name="EditModeTitle" xml:space="preserve"><value>Rezept bearbeiten</value></data>
+  <data name="AddModeSaveButton" xml:space="preserve"><value>Rezept hinzufugen</value></data>
+  <data name="EditModeSaveButton" xml:space="preserve"><value>Anderungen speichern</value></data>
+  <data name="ImportingStatus" xml:space="preserve"><value>Importiere...</value></data>
+  <data name="ImportedStatus" xml:space="preserve"><value>Importiert!</value></data>
+  <data name="ImportErrorMessageFormat" xml:space="preserve"><value>Importfehler: {0}</value></data>
+  <data name="LoadRecipeErrorMessageFormat" xml:space="preserve"><value>Fehler beim Laden des Rezepts: {0}</value></data>
+  <data name="AddIngredientErrorMessageFormat" xml:space="preserve"><value>Fehler beim Hinzufugen der Zutat: {0}</value></data>
+  <data name="RemoveIngredientErrorMessageFormat" xml:space="preserve"><value>Fehler beim Entfernen der Zutat: {0}</value></data>
+  <data name="ValidationNameRequired" xml:space="preserve"><value>Rezeptname ist erforderlich</value></data>
+  <data name="ValidationPortionsInvalid" xml:space="preserve"><value>Portionen mussen eine ganze Zahl groesser als 0 sein</value></data>
+  <data name="ValidationCaloriesInvalid" xml:space="preserve"><value>Kalorien mussen eine Zahl sein</value></data>
+  <data name="ValidationProteinInvalid" xml:space="preserve"><value>Protein muss eine Zahl sein</value></data>
+  <data name="ValidationFatInvalid" xml:space="preserve"><value>Fett muss eine Zahl sein</value></data>
+  <data name="ValidationCarbsInvalid" xml:space="preserve"><value>Kohlenhydrate mussen eine Zahl sein</value></data>
+  <data name="ValidationIngredientNameRequired" xml:space="preserve"><value>Jede Zutat muss einen Namen haben</value></data>
+  <data name="ValidationIngredientQuantityInvalid" xml:space="preserve"><value>Zutatenmenge muss groesser als null sein</value></data>
+  <data name="ValidationGeneralError" xml:space="preserve"><value>Validierungsfehler</value></data>
+  <data name="SaveRecipeServiceError" xml:space="preserve"><value>Fehler beim Speichern des Rezepts. Details im App-Log.</value></data>
+  <data name="SaveRecipeErrorMessageFormat" xml:space="preserve"><value>Speicherfehler: {0}</value></data>
+  <data name="PageLoadErrorMessageFormat" xml:space="preserve"><value>Fehler beim Laden der Seite: {0}</value></data>
+  <data name="PageDataLoadErrorMessageFormat" xml:space="preserve"><value>Fehler beim Laden der Daten: {0}</value></data>
+  <data name="ModeSwitchErrorMessageFormat" xml:space="preserve"><value>Fehler beim Umschalten des Modus: {0}</value></data>
+  <data name="IngredientUpdateErrorMessageFormat" xml:space="preserve"><value>Fehler beim Aktualisieren der Zutat: {0}</value></data>
 </root>

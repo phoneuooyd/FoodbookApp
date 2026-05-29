@@ -5,4 +5,13 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Title" xml:space="preserve"><value>Archive</value></data>
+  <data name="PlannerItemLabel" xml:space="preserve"><value>플래너</value></data>
+  <data name="ShoppingListItemLabel" xml:space="preserve"><value>쇼핑 목록</value></data>
+  <data name="ConflictDateTitle" xml:space="preserve"><value>날짜 충돌</value></data>
+  <data name="RestoreConflictMessageFormat" xml:space="preserve"><value>{0}을(를) 복원할 수 없습니다. 이 날짜 범위에 이미 활성 계획이 있습니다.</value></data>
+  <data name="RestoreConfirmTitle" xml:space="preserve"><value>복원</value></data>
+  <data name="RestoreConfirmMessageFormat" xml:space="preserve"><value>이 {0}을(를) 복원하시겠습니까?</value></data>
+  <data name="DeleteConfirmTitle" xml:space="preserve"><value>삭제</value></data>
+  <data name="DeleteConfirmMessageFormat" xml:space="preserve"><value>이 {0}을(를) 영구적으로 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</value></data>
+  <data name="EmptyArchivedPlannersTitle" xml:space="preserve"><value>보관된 플래너가 없습니다</value></data>
 </root>

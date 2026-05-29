@@ -255,4 +255,29 @@
   <data name="FailedToOpenRecipeDetails" xml:space="preserve">
     <value>레시피 세부 정보를 열 수 없습니다</value>
   </data>
+  <data name="AddModeTitle" xml:space="preserve"><value>새 레시피</value></data>
+  <data name="EditModeTitle" xml:space="preserve"><value>레시피 편집</value></data>
+  <data name="AddModeSaveButton" xml:space="preserve"><value>레시피 추가</value></data>
+  <data name="EditModeSaveButton" xml:space="preserve"><value>변경 사항 저장</value></data>
+  <data name="ImportingStatus" xml:space="preserve"><value>가져오는 중...</value></data>
+  <data name="ImportedStatus" xml:space="preserve"><value>가져오기 완료!</value></data>
+  <data name="ImportErrorMessageFormat" xml:space="preserve"><value>가져오기 오류: {0}</value></data>
+  <data name="LoadRecipeErrorMessageFormat" xml:space="preserve"><value>레시피 로드 오류: {0}</value></data>
+  <data name="AddIngredientErrorMessageFormat" xml:space="preserve"><value>재료 추가 오류: {0}</value></data>
+  <data name="RemoveIngredientErrorMessageFormat" xml:space="preserve"><value>재료 제거 오류: {0}</value></data>
+  <data name="ValidationNameRequired" xml:space="preserve"><value>레시피 이름은 필수입니다</value></data>
+  <data name="ValidationPortionsInvalid" xml:space="preserve"><value>인분은 0보다 큰 정수여야 합니다</value></data>
+  <data name="ValidationCaloriesInvalid" xml:space="preserve"><value>칼로리는 숫자여야 합니다</value></data>
+  <data name="ValidationProteinInvalid" xml:space="preserve"><value>단백질은 숫자여야 합니다</value></data>
+  <data name="ValidationFatInvalid" xml:space="preserve"><value>지방은 숫자여야 합니다</value></data>
+  <data name="ValidationCarbsInvalid" xml:space="preserve"><value>탄수화물은 숫자여야 합니다</value></data>
+  <data name="ValidationIngredientNameRequired" xml:space="preserve"><value>각 재료에는 이름이 필요합니다</value></data>
+  <data name="ValidationIngredientQuantityInvalid" xml:space="preserve"><value>재료 수량은 0보다 커야 합니다</value></data>
+  <data name="ValidationGeneralError" xml:space="preserve"><value>유효성 검사 오류</value></data>
+  <data name="SaveRecipeServiceError" xml:space="preserve"><value>레시피 저장 오류입니다. 앱 로그를 확인하세요.</value></data>
+  <data name="SaveRecipeErrorMessageFormat" xml:space="preserve"><value>저장 오류: {0}</value></data>
+  <data name="PageLoadErrorMessageFormat" xml:space="preserve"><value>페이지 로드 오류: {0}</value></data>
+  <data name="PageDataLoadErrorMessageFormat" xml:space="preserve"><value>데이터 로드 오류: {0}</value></data>
+  <data name="ModeSwitchErrorMessageFormat" xml:space="preserve"><value>모드 전환 오류: {0}</value></data>
+  <data name="IngredientUpdateErrorMessageFormat" xml:space="preserve"><value>재료 업데이트 오류: {0}</value></data>
 </root>

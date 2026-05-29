@@ -7,4 +7,9 @@
   <data name="Title" xml:space="preserve"><value>Einkaufslisten</value></data>
   <data name="EmptyTitle" xml:space="preserve"><value>Keine Listen</value></data>
   <data name="EmptyHint" xml:space="preserve"><value>Liste im Planer erstellen</value></data>
+  <data name="DeleteConfirmTitle" xml:space="preserve"><value>Loschen</value></data>
+  <data name="DeleteConfirmMessage" xml:space="preserve"><value>Mochtest du diese Einkaufsliste wirklich dauerhaft loschen?</value></data>
+  <data name="CreateListTitleFormat" xml:space="preserve"><value>Einkaufsliste ({0})</value></data>
+  <data name="CreateListErrorTitle" xml:space="preserve"><value>Fehler</value></data>
+  <data name="CreateListErrorMessageFormat" xml:space="preserve"><value>Einkaufsliste konnte nicht erstellt werden.{0}{1}</value></data>
 </root>

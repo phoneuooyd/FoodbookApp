@@ -17,6 +17,7 @@
 - **UI**: XAML z Material Design
 - **Wzorce architektoniczne**: MVVM, Dependency Injection, Clean Architecture
 
+
 ### Główne Zależności
 <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.6" />
 <PackageReference Include="HtmlAgilityPack" Version="1.12.1" />
@@ -53,15 +54,15 @@ Kompleksowa aplikacja mobilna do:
 - **Framework**: xUnit
 - **Mocking**: Moq
 - **Assertions**: FluentAssertions
-- **Coverage**: Minimum 80% dla business logic
-
+- **Coverage**: Po 5 przypadków pozytywnych dla każdej wlaściwości/funkcji metody oraz 2 negatywne (true = pozytyw, false negatyw)
+- **Guidlinesy**: TEST_GUIDLINES.MD FoodbookApp\FoodbookApp.App\DOCS\TEST_GUIDELINES.MD_
 ---
 
 ## 🎨 Standardy UI/UX dla Aplikacji Mobilnych
 
 ### Design System
 - **Material Design**: Zgodność z wytycznymi Google/Microsoft
-- **Light/Dark Mode**: Automatyczne przełączanie na podstawie ustawień systemu. Należy zawsze dodawać opcje motywowe z ThemeService
+- **Light/Dark Mode**: Automatyczne przełączanie na podstawie ustawień systemu. - **Themes** Należy zawsze dodawać opcje motywowe z ThemeService
 - **Zawsze dodawać tłumaczenia z użyciem plików zasobów .resx**
 - **Responsive Layout**: Adaptacja do różnych rozmiarów ekranów
 - **Touch-First**: Minimalna wielkość przycisków 44x44 px
@@ -78,6 +79,10 @@ Kompleksowa aplikacja mobilna do:
 - **ActivityIndicator**: Dla krótkich operacji
 - **Skeleton Screens**: Dla ładowania list
 - **batch loading**: Ładowanie danych w partiach dla dużych zestawów danych
+
+### Performance tips
+- **Preferowane używanie** elementów UI z wbudowaną wirtualizacją i jak największą wydajnością (CollectionView)
+- **MultiThreading** - Używanie ThreadPool/Task.Start(), Task.WhenAll(), używanie semaforów i locków i asynchronicznych tasków. ThreadPool dla dlugich operacji I/o oraz dla nieblokowania wątku UI.
 
 ---
 
@@ -331,6 +336,14 @@ Po każdej zmianie w kodzie należy przeanalizować i w razie potrzeby zaktualiz
 - `FoodbookApp.App/DOCS/DOCUMENTATION-GUIDE.md`
 - `FoodbookApp.App/DOCS/ARCHITECTURE.md`
 - `FoodbookApp.App/DOCS/PROJECT-FILES.md`
+
+## Lokalizacja Serwisów, modeli i komponentów/widoków/Vmów
+C:\Users\Takis\source\repos\FoodbookApp\FoodbookApp.App\Services\
+C:\Users\Takis\source\repos\FoodbookApp\FoodbookApp.App\Models\
+C:\Users\Takis\source\repos\FoodbookApp\FoodbookApp.App\Views\
+
+Jak KATEGORYCZNIE NIE ROBIĆ:
+Nie wstawiać do takiej lokalizacji (nie robić zbędnego folderu): "C:\Users\Takis\source\repos\FoodbookApp\FoodbookApp.App\FoodbookApp.App\Services\"
 
 ## Jakość kodu (Sonar)
 

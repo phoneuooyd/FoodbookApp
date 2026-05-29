@@ -44,6 +44,7 @@ public sealed class FeatureUsageLimits
 {
     public int? MonthlyPlanCreationLimit { get; set; }
     public int MonthlyPlanCreationsUsed { get; set; }
+    public DateTime? LastPlannerCreationMonthUtc { get; set; }
 }
 
 public sealed class FeatureEntitlement

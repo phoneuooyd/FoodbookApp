@@ -21,4 +21,27 @@
   <data name="ProteinLabel" xml:space="preserve"><value>Eiweiss (g)</value></data>
   <data name="FatLabel" xml:space="preserve"><value>Fett (g)</value></data>
   <data name="CarbsLabel" xml:space="preserve"><value>Kohlenhydrate (g)</value></data>
+  <data name="RecipeInfoPartOfRecipe" xml:space="preserve"><value>Diese Zutat ist Teil eines Rezepts</value></data>
+  <data name="LoadIngredientErrorMessageFormat" xml:space="preserve"><value>Fehler beim Laden der Zutat: {0}</value></data>
+  <data name="VerifyNameRequiredStatus" xml:space="preserve"><value>Geben Sie vor der Prufung einen Zutatennamen ein</value></data>
+  <data name="VerifyCheckingStatus" xml:space="preserve"><value>Daten werden in OpenFoodFacts gepruft...</value></data>
+  <data name="VerifyUpdatedStatusFormat" xml:space="preserve"><value>Daten fur '{0}' wurden aktualisiert</value></data>
+  <data name="VerifyDialogTitle" xml:space="preserve"><value>Zutatenprufung</value></data>
+  <data name="VerifyUpdatedDialogMessageFormat" xml:space="preserve"><value>Aktualisierte Daten fur '{0}':{1}Kalorien: {2:F1} -&gt; {3:F1}{1}Protein: {4:F1} -&gt; {5:F1}g{1}Fett: {6:F1} -&gt; {7:F1}g{1}Kohlenhydrate: {8:F1} -&gt; {9:F1}g</value></data>
+  <data name="VerifyNotFoundStatusFormat" xml:space="preserve"><value>Produkt '{0}' wurde in OpenFoodFacts nicht gefunden</value></data>
+  <data name="VerifyNotFoundDialogMessageFormat" xml:space="preserve"><value>Produkt '{0}' wurde in OpenFoodFacts nicht gefunden oder die Werte sind unverandert.{1}{1}Versuchen Sie einen anderen Zutatennamen oder geben Sie Werte manuell ein.</value></data>
+  <data name="VerifyErrorStatusFormat" xml:space="preserve"><value>Prufungsfehler: {0}</value></data>
+  <data name="VerifyErrorTitle" xml:space="preserve"><value>Prufungsfehler</value></data>
+  <data name="VerifyErrorDialogMessageFormat" xml:space="preserve"><value>Beim Prufen der Zutat '{0}' ist ein Fehler aufgetreten: {1}</value></data>
+  <data name="ValidationNameRequired" xml:space="preserve"><value>Zutatenname ist erforderlich</value></data>
+  <data name="ValidationQuantityNumeric" xml:space="preserve"><value>Menge muss eine Zahl sein</value></data>
+  <data name="ValidationQuantityPositive" xml:space="preserve"><value>Menge muss grosser als null sein</value></data>
+  <data name="ValidationCaloriesNumeric" xml:space="preserve"><value>Kalorien mussen eine Zahl sein</value></data>
+  <data name="ValidationProteinNumeric" xml:space="preserve"><value>Protein muss eine Zahl sein</value></data>
+  <data name="ValidationFatNumeric" xml:space="preserve"><value>Fett muss eine Zahl sein</value></data>
+  <data name="ValidationCarbsNumeric" xml:space="preserve"><value>Kohlenhydrate mussen eine Zahl sein</value></data>
+  <data name="ValidationUnitWeightNumeric" xml:space="preserve"><value>Einheitsgewicht muss eine Zahl sein</value></data>
+  <data name="ValidationUnitWeightPositive" xml:space="preserve"><value>Einheitsgewicht muss grosser als null sein</value></data>
+  <data name="ValidationGeneralError" xml:space="preserve"><value>Validierungsfehler</value></data>
+  <data name="SaveIngredientErrorMessageFormat" xml:space="preserve"><value>Zutat konnte nicht gespeichert werden: {0}</value></data>
 </root>

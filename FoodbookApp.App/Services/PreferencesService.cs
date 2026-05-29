@@ -4,6 +4,7 @@ using FoodbookApp.Services.Auth;
 using Foodbook.Data;
 using Foodbook.Models.DTOs;
 using System.Threading;
+using System.Text.Json;
 
 namespace Foodbook.Services;
 
@@ -26,6 +27,12 @@ public class PreferencesService : IPreferencesService
     private const string IsFirstLaunchKey = "IsFirstLaunch";
     private const string InstallBasicIngredientsKey = "InstallBasicIngredients";
     private const string PlanChoiceKey = "PlanChoice";
+    private const string DietStatisticsMealsKey = "DietStatisticsMeals";
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
     
     private static readonly string[] SupportedCultures = { "en", "pl-PL", "de-DE", "es-ES", "fr-FR", "ko-KR" };
 
@@ -458,6 +465,40 @@ public class PreferencesService : IPreferencesService
     }
 
     /// <inheritdoc/>
+    public IReadOnlyList<DietStatisticsMealDto> GetDietStatisticsMeals()
+    {
+        try
+        {
+            var json = Preferences.Get(DietStatisticsMealsKey, string.Empty);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return Array.Empty<DietStatisticsMealDto>();
+            }
+
+            return JsonSerializer.Deserialize<List<DietStatisticsMealDto>>(json, JsonOptions) ?? new List<DietStatisticsMealDto>();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to get DietStatistics meals: {ex.Message}");
+            return Array.Empty<DietStatisticsMealDto>();
+        }
+    }
+
+    /// <inheritdoc/>
+    public void SaveDietStatisticsMeals(IEnumerable<DietStatisticsMealDto> meals)
+    {
+        try
+        {
+            var payload = meals?.ToList() ?? new List<DietStatisticsMealDto>();
+            Preferences.Set(DietStatisticsMealsKey, JsonSerializer.Serialize(payload, JsonOptions));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PreferencesService] Failed to save DietStatistics meals: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc/>
     public void SuppressCloudSync()
     {
         _suppressCloudSync = true;
@@ -499,6 +540,7 @@ public class PreferencesService : IPreferencesService
             Preferences.Clear();
             // Ensure first-launch flow on next app start
             Preferences.Set(IsFirstLaunchKey, true);
+            Preferences.Remove(DietStatisticsMealsKey);
         }
         catch (Exception ex)
         {

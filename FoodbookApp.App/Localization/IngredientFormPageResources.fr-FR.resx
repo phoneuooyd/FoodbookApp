@@ -21,4 +21,27 @@
   <data name="ProteinLabel" xml:space="preserve"><value>Proteines (g)</value></data>
   <data name="FatLabel" xml:space="preserve"><value>Lipides (g)</value></data>
   <data name="CarbsLabel" xml:space="preserve"><value>Glucides (g)</value></data>
+  <data name="RecipeInfoPartOfRecipe" xml:space="preserve"><value>Cet ingredient fait partie d'une recette</value></data>
+  <data name="LoadIngredientErrorMessageFormat" xml:space="preserve"><value>Erreur lors du chargement de l'ingredient : {0}</value></data>
+  <data name="VerifyNameRequiredStatus" xml:space="preserve"><value>Entrez un nom d'ingredient avant la verification</value></data>
+  <data name="VerifyCheckingStatus" xml:space="preserve"><value>Verification des donnees dans OpenFoodFacts...</value></data>
+  <data name="VerifyUpdatedStatusFormat" xml:space="preserve"><value>Donnees mises a jour pour '{0}'</value></data>
+  <data name="VerifyDialogTitle" xml:space="preserve"><value>Verification de l'ingredient</value></data>
+  <data name="VerifyUpdatedDialogMessageFormat" xml:space="preserve"><value>Donnees mises a jour pour '{0}' :{1}Calories: {2:F1} -&gt; {3:F1}{1}Proteines: {4:F1} -&gt; {5:F1}g{1}Lipides: {6:F1} -&gt; {7:F1}g{1}Glucides: {8:F1} -&gt; {9:F1}g</value></data>
+  <data name="VerifyNotFoundStatusFormat" xml:space="preserve"><value>Produit '{0}' introuvable dans OpenFoodFacts</value></data>
+  <data name="VerifyNotFoundDialogMessageFormat" xml:space="preserve"><value>Le produit '{0}' est introuvable dans OpenFoodFacts ou les valeurs sont inchangées.{1}{1}Essayez un autre nom d'ingredient ou saisissez les valeurs manuellement.</value></data>
+  <data name="VerifyErrorStatusFormat" xml:space="preserve"><value>Erreur de verification : {0}</value></data>
+  <data name="VerifyErrorTitle" xml:space="preserve"><value>Erreur de verification</value></data>
+  <data name="VerifyErrorDialogMessageFormat" xml:space="preserve"><value>Une erreur s'est produite lors de la verification de l'ingredient '{0}' : {1}</value></data>
+  <data name="ValidationNameRequired" xml:space="preserve"><value>Le nom de l'ingredient est obligatoire</value></data>
+  <data name="ValidationQuantityNumeric" xml:space="preserve"><value>La quantite doit etre un nombre</value></data>
+  <data name="ValidationQuantityPositive" xml:space="preserve"><value>La quantite doit etre superieure a zero</value></data>
+  <data name="ValidationCaloriesNumeric" xml:space="preserve"><value>Les calories doivent etre un nombre</value></data>
+  <data name="ValidationProteinNumeric" xml:space="preserve"><value>Les proteines doivent etre un nombre</value></data>
+  <data name="ValidationFatNumeric" xml:space="preserve"><value>Les lipides doivent etre un nombre</value></data>
+  <data name="ValidationCarbsNumeric" xml:space="preserve"><value>Les glucides doivent etre un nombre</value></data>
+  <data name="ValidationUnitWeightNumeric" xml:space="preserve"><value>Le poids unitaire doit etre un nombre</value></data>
+  <data name="ValidationUnitWeightPositive" xml:space="preserve"><value>Le poids unitaire doit etre superieur a zero</value></data>
+  <data name="ValidationGeneralError" xml:space="preserve"><value>Erreur de validation</value></data>
+  <data name="SaveIngredientErrorMessageFormat" xml:space="preserve"><value>Impossible d'enregistrer l'ingredient : {0}</value></data>
 </root>

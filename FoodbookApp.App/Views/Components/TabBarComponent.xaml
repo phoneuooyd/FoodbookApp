@@ -9,9 +9,14 @@
           BackgroundColor="{DynamicResource PageBackgroundColor}">
         
         <!-- Main content area -->
-        <ContentView x:Name="ContentContainer" 
-                     Grid.Row="0"
-                     BackgroundColor="Transparent" />
+        <Grid Grid.Row="0">
+            <ContentView x:Name="ContentContainer"
+                         BackgroundColor="Transparent" />
+            <ContentView x:Name="TransitionOverlay"
+                         BackgroundColor="Transparent"
+                         IsVisible="False"
+                         InputTransparent="True" />
+        </Grid>
         
         <!-- TabBar at bottom - matches Shell.TabBar styling -->
         <Grid Grid.Row="1"
@@ -40,30 +45,13 @@
                 
                 <BindableLayout.ItemTemplate>
                     <DataTemplate>
-                        <!-- Wrap each tab item in a Border to apply shadow, pressed effect, and background change when active -->
+                        <!-- Wrap each tab item in a Border to apply pressed and active-state visuals -->
                         <Border Padding="0"
                                 StrokeThickness="0"
                                 BackgroundColor="Transparent"
                                 VerticalOptions="Fill"
                                 HorizontalOptions="Fill">
-                            <Border.Triggers>
-                                <!-- Selected state: stronger primary-colored shadow -->
-                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                                    <Setter Property="Shadow">
-                                        <Setter.Value>
-                                            <Shadow Brush="{DynamicResource Primary}" Radius="12" Opacity="0.4" Offset="0,2" />
-                                        </Setter.Value>
-                                    </Setter>
-                                </DataTrigger>
-                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
-                                    <Setter Property="Shadow">
-                                        <Setter.Value>
-                                            <Shadow Brush="Transparent" Radius="0" Opacity="0" />
-                                        </Setter.Value>
-                                    </Setter>
-                                </DataTrigger>
-                            </Border.Triggers>
-                            
+
                             <!-- Content grid for icon and text -->
                             <Grid RowDefinitions="24,Auto"
                                   RowSpacing="2"
@@ -81,9 +69,6 @@
                                         BackgroundColor="{DynamicResource TabBarBackgroundDarken}"
                                         StrokeThickness="0"
                                         IsVisible="False">
-                                    <Border.Shadow>
-                                        <Shadow Brush="{DynamicResource Primary}" Radius="6" Opacity="0.9" Offset="0,1" />
-                                    </Border.Shadow>
                                 </Border>
                                 
                                 <Grid.Triggers>

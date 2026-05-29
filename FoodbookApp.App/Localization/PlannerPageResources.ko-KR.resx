@@ -168,4 +168,47 @@
   <data name="CarbsLabel" xml:space="preserve">
     <value>🌾 탄수화물</value>
   </data>
+  <data name="LoadingStatus" xml:space="preserve"><value>로딩 중...</value></data>
+  <data name="LoadingStatusError" xml:space="preserve"><value>데이터 로드 오류</value></data>
+  <data name="SavedTitle" xml:space="preserve"><value>저장됨</value></data>
+  <data name="PlannerSavedMessageFormat" xml:space="preserve"><value>플래너가 저장되었습니다: {0} ({1} - {2})</value></data>
+  <data name="PlanLimitTitle" xml:space="preserve"><value>플랜 제한</value></data>
+  <data name="UnexpectedSaveErrorMessage" xml:space="preserve"><value>저장 중 예기치 않은 오류가 발생했습니다.</value></data>
+  <data name="ErrorTitle" xml:space="preserve"><value>오류</value></data>
+  <data name="PlannerLoadErrorMessage" xml:space="preserve"><value>플래너 데이터를 불러오는 중 문제가 발생했습니다. 다시 시도하세요.</value></data>
+  <data name="PlannerNamePromptTitle" xml:space="preserve"><value>플랜 이름</value></data>
+  <data name="PlannerNamePromptMessage" xml:space="preserve"><value>플랜 이름을 입력하세요 (선택 사항)</value></data>
+  <data name="PlannerNamePromptAccept" xml:space="preserve"><value>저장</value></data>
+  <data name="DefaultPlannerName" xml:space="preserve"><value>플래너</value></data>
+  <data name="ConflictOptionOverwrite" xml:space="preserve"><value>덮어쓰기</value></data>
+  <data name="ConflictOptionMerge" xml:space="preserve"><value>병합</value></data>
+  <data name="ConflictOptionSaveAndCreateNewList" xml:space="preserve"><value>저장하고 새 목록 만들기</value></data>
+  <data name="ConflictPlanExistsTitle" xml:space="preserve"><value>선택한 날짜에 이미 플랜이 있습니다.</value></data>
+  <data name="ConflictMergeSuccessTitle" xml:space="preserve"><value>병합됨</value></data>
+  <data name="ConflictMergeSuccessMessageFormat" xml:space="preserve"><value>식사가 기존 플랜과 병합되었습니다 ({0} - {1}).</value></data>
+  <data name="ConflictMergeErrorMessage" xml:space="preserve"><value>플랜 병합에 실패했습니다.</value></data>
+  <data name="ConflictOverwriteRemoveErrorMessage" xml:space="preserve"><value>기존 플랜을 삭제하지 못했습니다.</value></data>
+  <data name="PlannerSaveErrorMessageFormat" xml:space="preserve"><value>플래너 저장 중 문제가 발생했습니다:{0}{1}</value></data>
+  <data name="ShoppingListOptionOnlySavePlanner" xml:space="preserve"><value>플래너만 저장</value></data>
+  <data name="ShoppingListOptionSaveAndMerge" xml:space="preserve"><value>저장하고 목록과 병합</value></data>
+  <data name="ShoppingListOptionSaveAndOverwrite" xml:space="preserve"><value>저장하고 목록 덮어쓰기</value></data>
+  <data name="ShoppingListOptionMergeManual" xml:space="preserve"><value>수동으로 만든 목록과 병합</value></data>
+  <data name="ShoppingListOptionSaveAndCreateNew" xml:space="preserve"><value>저장하고 새 목록 만들기</value></data>
+  <data name="ShoppingListOptionSaveAndCreate" xml:space="preserve"><value>저장하고 목록 만들기</value></data>
+  <data name="ShoppingListLinkedQuestionTitle" xml:space="preserve"><value>연결된 쇼핑 목록을 업데이트하시겠습니까?</value></data>
+  <data name="ShoppingListManualFoundQuestionTitle" xml:space="preserve"><value>이 날짜 범위에 대해 수동으로 만든 쇼핑 목록이 있습니다. 무엇을 하시겠습니까?</value></data>
+  <data name="ShoppingListCreateQuestionTitle" xml:space="preserve"><value>쇼핑 목록을 만드시겠습니까?</value></data>
+  <data name="ShoppingListCreateErrorMessage" xml:space="preserve"><value>쇼핑 목록을 만들지 못했습니다.</value></data>
+  <data name="ShoppingListMergeErrorMessage" xml:space="preserve"><value>쇼핑 목록을 병합하지 못했습니다.</value></data>
+  <data name="ShoppingListOverwriteErrorMessage" xml:space="preserve"><value>쇼핑 목록을 덮어쓰지 못했습니다.</value></data>
+  <data name="PlanNotFoundMessage" xml:space="preserve"><value>플랜을 찾을 수 없습니다</value></data>
+  <data name="PlanLoadErrorMessageFormat" xml:space="preserve"><value>플랜을 불러오지 못했습니다: {0}</value></data>
+  <data name="PlanToSaveNotFoundMessage" xml:space="preserve"><value>저장할 플랜을 찾을 수 없습니다</value></data>
+  <data name="PlanUpdatedMessageFormat" xml:space="preserve"><value>플랜이 업데이트되었습니다 ({0} - {1})</value></data>
+  <data name="PlanSaveErrorMessageFormat" xml:space="preserve"><value>플랜을 저장하지 못했습니다:{0}{1}</value></data>
+  <data name="LoadingStatusPreparingData" xml:space="preserve"><value>데이터 준비 중...</value></data>
+  <data name="LoadingStatusLoadingRecipes" xml:space="preserve"><value>레시피 불러오는 중...</value></data>
+  <data name="LoadingStatusLoadingPlannedMeals" xml:space="preserve"><value>계획된 식사 불러오는 중...</value></data>
+  <data name="LoadingStatusPreparingCalendar" xml:space="preserve"><value>캘린더 준비 중...</value></data>
+  <data name="LoadingStatusFinalizing" xml:space="preserve"><value>마무리 중...</value></data>
 </root>

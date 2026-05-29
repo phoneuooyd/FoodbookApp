@@ -73,9 +73,10 @@
                                     </VerticalStackLayout>
                                 </Border>
 
-                                <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FontFamilyTitle}" Style="{StaticResource SettingsSectionLabel}" />
+                                
                                 <Border Style="{StaticResource SettingsCard}">
                                     <VerticalStackLayout Spacing="10">
+                                        <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FontFamilyTitle}" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource Primary}" />
                                         <Label Text="{loc:Translate Resource=SettingsPageResources, Key=FontFamilyDescription}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
                                         <Border Style="{StaticResource ModernBorder}" Padding="10,2">
                                             <Picker ItemsSource="{Binding SupportedFontFamilies}" SelectedItem="{Binding SelectedFontFamily}" ItemDisplayBinding="{Binding ., Converter={StaticResource FontFamilyToLocalizedStringConverter}}" />
@@ -153,7 +154,7 @@
                                                     <Switch Grid.Column="2"
                                                             VerticalOptions="Center"
                                                             IsToggled="{Binding IsWallpaperBackgroundEnabled}"
-                                                            IsEnabled="{Binding IsWallpaperAvailable}"
+                                                            IsEnabled="{Binding CanUseWallpaperBackground}"
                                                             OnColor="{DynamicResource Primary}" />
                                                 </Grid>
 

@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:FoodbookApp.Localization"
+             xmlns:svc="clr-namespace:Foodbook.Services"
              x:Class="Foodbook.Views.ProfilePage"
              x:Name="RootPage"
              Title="{x:Static loc:ProfilePageResources.Title}"
@@ -22,6 +23,7 @@
             <Setter Property="CharacterSpacing" Value="1.2" />
             <Setter Property="TextColor" Value="{DynamicResource ProfileSectionLabelColor}" />
         </Style>
+
     </ContentPage.Resources>
 
     <Grid>
@@ -47,20 +49,20 @@
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
                         <Border Grid.Column="0" BackgroundColor="{DynamicResource AppHeroTileOverlayColor}" StrokeThickness="0" Padding="8,7" StrokeShape="RoundRectangle 12">
                             <VerticalStackLayout Spacing="0">
-                                <Label Text="0" FontSize="16" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="Center" />
-                                <Label Text="Przepisy" FontSize="10" TextColor="{DynamicResource AppHeroHintTextColor}" HorizontalTextAlignment="Center" />
+                                <Label x:Name="RecipesCountLabel" Text="0" FontSize="16" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="Center" />
+                                <Label Text="{svc:Translate Resource=ProfilePageResources, Key=HeroRecipesCountLabel}" FontSize="10" TextColor="{DynamicResource AppHeroHintTextColor}" HorizontalTextAlignment="Center" />
                             </VerticalStackLayout>
                         </Border>
                         <Border Grid.Column="1" BackgroundColor="{DynamicResource AppHeroTileOverlayColor}" StrokeThickness="0" Padding="8,7" StrokeShape="RoundRectangle 12">
                             <VerticalStackLayout Spacing="0">
-                                <Label Text="0" FontSize="16" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="Center" />
-                                <Label Text="Plany" FontSize="10" TextColor="{DynamicResource AppHeroHintTextColor}" HorizontalTextAlignment="Center" />
+                                <Label x:Name="PlansCountLabel" Text="0" FontSize="16" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="Center" />
+                                <Label Text="{svc:Translate Resource=ProfilePageResources, Key=HeroPlansCountLabel}" FontSize="10" TextColor="{DynamicResource AppHeroHintTextColor}" HorizontalTextAlignment="Center" />
                             </VerticalStackLayout>
                         </Border>
                         <Border Grid.Column="2" BackgroundColor="{DynamicResource AppHeroTileOverlayColor}" StrokeThickness="0" Padding="8,7" StrokeShape="RoundRectangle 12">
                             <VerticalStackLayout Spacing="0">
-                                <Label Text="0" FontSize="16" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="Center" />
-                                <Label Text="Listy" FontSize="10" TextColor="{DynamicResource AppHeroHintTextColor}" HorizontalTextAlignment="Center" />
+                                <Label x:Name="ListsCountLabel" Text="0" FontSize="16" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="Center" />
+                                <Label Text="{svc:Translate Resource=ProfilePageResources, Key=HeroListsCountLabel}" FontSize="10" TextColor="{DynamicResource AppHeroHintTextColor}" HorizontalTextAlignment="Center" />
                             </VerticalStackLayout>
                         </Border>
                     </Grid>
@@ -70,7 +72,7 @@
             <ScrollView Grid.Row="1">
                 <VerticalStackLayout Padding="16" Spacing="10">
                     <VerticalStackLayout x:Name="AccountContentSection" Spacing="10">
-                        <Label Text="Ustawienia konta" Style="{StaticResource ProfileSectionLabel}" />
+                        <Label Text="{svc:Translate Resource=ProfilePageResources, Key=AccountSettingsSectionLabel}" Style="{StaticResource ProfileSectionLabel}" />
 
                         <Border Style="{StaticResource ProfileCard}" Background="{DynamicResource ProfilePlanRowBrush}" Stroke="{DynamicResource ProfilePlanRowBorderColor}" Padding="16,14">
                             <Border.GestureRecognizers>
@@ -79,11 +81,11 @@
                             <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
                                 <Label Text="✨" FontSize="22" VerticalOptions="Center" />
                                 <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                                    <Label Text="Premium" FontSize="16" FontAttributes="Bold" TextColor="White" />
-                                    <Label Text="Aktywny · odnowienie 15.04.2026" FontSize="12" TextColor="{DynamicResource AppHeroSubtitleTextColor}" />
+                                    <Label x:Name="CurrentPlanNameLabel" Text="" FontSize="16" FontAttributes="Bold" TextColor="White" />
+                                    <Label x:Name="CurrentPlanRenewalLabel" Text="" FontSize="12" TextColor="{DynamicResource AppHeroSubtitleTextColor}" />
                                 </VerticalStackLayout>
                                 <Border Grid.Column="2" BackgroundColor="{DynamicResource ProfilePlanActiveBadgeBackgroundColor}" StrokeThickness="0" Padding="8,4" StrokeShape="RoundRectangle 10" VerticalOptions="Center">
-                                    <Label Text="Aktywny" FontSize="10" FontAttributes="Bold" TextColor="{DynamicResource ProfilePlanActiveBadgeTextColor}" />
+                                    <Label x:Name="CurrentPlanStatusLabel" Text="" FontSize="10" FontAttributes="Bold" TextColor="{DynamicResource ProfilePlanActiveBadgeTextColor}" />
                                 </Border>
                                 <Label Grid.Column="3" Text="›" FontSize="18" TextColor="{DynamicResource AppHeroHintTextColor}" VerticalOptions="Center" />
                             </Grid>
@@ -96,8 +98,8 @@
                                         <Label Text="👤" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center" />
                                     </Border>
                                     <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
-                                        <Label Text="Dane konta" FontSize="14" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" />
-                                        <Label Text="Zmień e-mail lub hasło" FontSize="11" TextColor="{DynamicResource SecondaryText}" />
+                                        <Label Text="{svc:Translate Resource=ProfilePageResources, Key=AccountDataTitle}" FontSize="14" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" />
+                                        <Label Text="{svc:Translate Resource=ProfilePageResources, Key=AccountDataSubtitle}" FontSize="11" TextColor="{DynamicResource SecondaryText}" />
                                     </VerticalStackLayout>
                                 </Grid>
                                 <BoxView HeightRequest="1" BackgroundColor="{DynamicResource ProfileCardStrokeColor}" />
@@ -171,52 +173,87 @@
                     <Label Text="‹" FontSize="18" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" VerticalOptions="Center" />
                 </Border>
                 <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                    <Label Text="Subskrypcja" FontSize="20" FontAttributes="Bold" TextColor="White" />
-                    <Label Text="Zarządzaj swoim planem" FontSize="13" TextColor="{DynamicResource AppHeroSubtitleTextColor}" />
+                    <Label Text="{svc:Translate Resource=ProfilePageResources, Key=SubscriptionHeaderTitle}" FontSize="20" FontAttributes="Bold" TextColor="White" />
+                    <Label Text="{svc:Translate Resource=ProfilePageResources, Key=SubscriptionHeaderSubtitle}" FontSize="13" TextColor="{DynamicResource AppHeroSubtitleTextColor}" />
                 </VerticalStackLayout>
             </Grid>
 
             <ScrollView Grid.Row="1">
                 <VerticalStackLayout Padding="16" Spacing="10">
-                    <Label Text="Twój aktualny plan" Style="{StaticResource ProfileSectionLabel}" />
+                    <Label Text="{svc:Translate Resource=ProfilePageResources, Key=CurrentPlanSectionTitle}" Style="{StaticResource ProfileSectionLabel}" />
                     <Border Style="{StaticResource ProfileCard}" Background="{DynamicResource ProfilePlanRowBrush}" Stroke="{DynamicResource ProfilePlanRowBorderColor}" Padding="16">
                         <VerticalStackLayout Spacing="8">
                             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
                                 <Label Text="✨" FontSize="24" VerticalOptions="Center" />
-                                <Label Grid.Column="1" Text="Premium" FontSize="20" FontAttributes="Bold" TextColor="White" VerticalOptions="Center" />
+                                <Label x:Name="CurrentPlanNameDetailsLabel" Grid.Column="1" Text="" FontSize="20" FontAttributes="Bold" TextColor="White" VerticalOptions="Center" />
                                 <Border Grid.Column="2" BackgroundColor="{DynamicResource ProfilePlanActiveBadgeBackgroundColor}" StrokeThickness="0" Padding="9,4" StrokeShape="RoundRectangle 12" VerticalOptions="Center">
-                                    <Label Text="Aktywny" FontSize="10" FontAttributes="Bold" TextColor="{DynamicResource ProfilePlanActiveBadgeTextColor}" />
+                                    <Label x:Name="CurrentPlanStatusDetailsLabel" Text="" FontSize="10" FontAttributes="Bold" TextColor="{DynamicResource ProfilePlanActiveBadgeTextColor}" />
                                 </Border>
                             </Grid>
 
-                            <Label Text="9,99 zł / miesiąc" FontSize="24" FontAttributes="Bold" TextColor="White" />
+                            <Label x:Name="CurrentPlanPriceDetailsLabel" Text="" FontSize="24" FontAttributes="Bold" TextColor="White" />
 
-                            <VerticalStackLayout Spacing="3">
-                                <Label Text="✓ AI Planer posiłków" FontSize="12" TextColor="{DynamicResource AppHeroSubtitleTextColor}" />
-                                <Label Text="✓ AI Agent przepisów (JSON)" FontSize="12" TextColor="{DynamicResource AppHeroSubtitleTextColor}" />
-                                <Label Text="✓ Szablony tygodniowe i miesięczne" FontSize="12" TextColor="{DynamicResource AppHeroSubtitleTextColor}" />
-                                <Label Text="✓ Archiwum planów bez limitu" FontSize="12" TextColor="{DynamicResource AppHeroSubtitleTextColor}" />
-                                <Label Text="✓ Premium paczki przepisów" FontSize="12" TextColor="{DynamicResource AppHeroSubtitleTextColor}" />
-                            </VerticalStackLayout>
+                            <Label x:Name="CurrentPlanFeaturesDetailsLabel"
+                                   Text=""
+                                   FontSize="12"
+                                   TextColor="{DynamicResource AppHeroSubtitleTextColor}"
+                                   LineBreakMode="WordWrap" />
 
-                            <Label Text="Następne odnowienie: 15 kwietnia 2026" FontSize="11" TextColor="{DynamicResource AppHeroHintTextColor}" />
+                            <Label x:Name="CurrentPlanRenewalDetailsLabel" Text="" FontSize="11" TextColor="{DynamicResource AppHeroHintTextColor}" />
+                            <Label x:Name="CurrentPlanLimitsDetailsLabel" Text="" FontSize="11" TextColor="{DynamicResource AppHeroHintTextColor}" />
                         </VerticalStackLayout>
                     </Border>
 
-                    <Label Text="Inne plany" Style="{StaticResource ProfileSectionLabel}" />
+                    <Border x:Name="PendingSubscriptionCard" Style="{StaticResource ProfileCard}" Padding="16" IsVisible="False">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="{x:Static loc:ProfilePageResources.SubscriptionPendingTitle}" FontSize="14" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" />
+                            <Label x:Name="PendingSubscriptionStatusLabel" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource Primary}" />
+                            <Label x:Name="PendingSubscriptionTargetLabel" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                            <Label x:Name="PendingSubscriptionLastAttemptLabel" FontSize="11" TextColor="{DynamicResource SecondaryText}" />
+                            <Label x:Name="PendingSubscriptionErrorLabel" FontSize="11" TextColor="#C62828" IsVisible="False" LineBreakMode="WordWrap" />
+                            <Button x:Name="ResumeSubscriptionButton"
+                                    Text="{x:Static loc:ProfilePageResources.SubscriptionPendingResume}"
+                                    Clicked="OnResumePendingSubscriptionClicked"
+                                    StyleClass="Primary" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Label Text="{svc:Translate Resource=ProfilePageResources, Key=OtherPlansSectionTitle}" Style="{StaticResource ProfileSectionLabel}" />
 
                     <Border Style="{StaticResource ProfileCard}" Padding="16">
                         <VerticalStackLayout Spacing="8">
                             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
                                 <Label Text="🔓" FontSize="18" VerticalOptions="Center" />
-                                <Label Grid.Column="1" Text="Free" FontSize="16" FontAttributes="Bold" VerticalOptions="Center" TextColor="{DynamicResource FrameTextColor}" />
-                                <Label Grid.Column="2" Text="0 zł / zawsze" FontSize="13" TextColor="{DynamicResource SecondaryText}" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="{x:Static loc:ProfilePageResources.PlanNameFree}" FontSize="16" FontAttributes="Bold" VerticalOptions="Center" TextColor="{DynamicResource FrameTextColor}" />
+                                <Label Grid.Column="2" Text="{svc:Translate Resource=ProfilePageResources, Key=FreePlanPriceLabel}" FontSize="13" TextColor="{DynamicResource SecondaryText}" VerticalOptions="Center" />
                             </Grid>
-                            <Label Text="• Przepisy bez limitu" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
-                            <Label Text="• Planer posiłków (3 aktywne)" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
-                            <Label Text="• Lista zakupów" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
-                            <Label Text="• Import przepisów z internetu" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
-                            <Button Text="Przejdź na Free" BackgroundColor="{DynamicResource SegmentedContainerColor}" TextColor="{DynamicResource SecondaryText}" BorderColor="{DynamicResource ProfileCardStrokeColor}" BorderWidth="1" />
+                            <Label Text="{svc:Translate Resource=ProfilePageResources, Key=FreePlanFeatureRecipes}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                            <Label Text="{svc:Translate Resource=ProfilePageResources, Key=FreePlanFeaturePlanner}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                            <Label Text="{svc:Translate Resource=ProfilePageResources, Key=FreePlanFeatureShoppingList}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                            <Label Text="{svc:Translate Resource=ProfilePageResources, Key=FreePlanFeatureImport}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                                <Button x:Name="SwitchToFreePlanButton"
+                                    Text="{svc:Translate Resource=ProfilePageResources, Key=SwitchToFreeButton}"
+                                    StyleClass="Secondary"
+                                    BackgroundColor="{DynamicResource ProfilePlanSecondaryButtonBackgroundColor}"
+                                    BorderColor="{DynamicResource ProfilePlanSecondaryButtonBorderColor}"
+                                    TextColor="{DynamicResource ProfilePlanSecondaryButtonTextColor}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Style="{StaticResource ProfileCard}" Padding="16" Stroke="{DynamicResource ProfilePlanRowBorderColor}">
+                        <VerticalStackLayout Spacing="8">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                <Label Text="✨" FontSize="18" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="{x:Static loc:ProfilePageResources.PlanNamePremiumMonthly}" FontSize="16" FontAttributes="Bold" VerticalOptions="Center" TextColor="{DynamicResource FrameTextColor}" />
+                                <Label Grid.Column="2" Text="{svc:Translate Resource=ProfilePageResources, Key=PremiumMonthlyPriceLabel}" FontSize="13" TextColor="{DynamicResource SecondaryText}" VerticalOptions="Center" />
+                            </Grid>
+                            <Label Text="{svc:Translate Resource=ProfilePageResources, Key=PremiumFeatureAllIncluded}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                            <Label Text="{svc:Translate Resource=ProfilePageResources, Key=PremiumMonthlyFeatureBilling}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                            <Label Text="{svc:Translate Resource=ProfilePageResources, Key=PremiumMonthlyFeatureFlexibility}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                            <Button x:Name="SwitchToMonthlyPlanButton"
+                                    Text="{svc:Translate Resource=ProfilePageResources, Key=SwitchToMonthlyButton}"
+                                    StyleClass="Primary"
+                                    Clicked="OnSwitchToMonthlyClicked" />
                         </VerticalStackLayout>
                     </Border>
 
@@ -224,17 +261,31 @@
                         <VerticalStackLayout Spacing="8">
                             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
                                 <Label Text="🌟" FontSize="18" VerticalOptions="Center" />
-                                <Label Grid.Column="1" Text="Premium Roczny" FontSize="16" FontAttributes="Bold" VerticalOptions="Center" TextColor="{DynamicResource FrameTextColor}" />
-                                <Label Grid.Column="2" Text="95,99 zł / rok" FontSize="13" TextColor="{DynamicResource SecondaryText}" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="{x:Static loc:ProfilePageResources.PlanNamePremiumYearly}" FontSize="16" FontAttributes="Bold" VerticalOptions="Center" TextColor="{DynamicResource FrameTextColor}" />
+                                <Label Grid.Column="2" Text="{svc:Translate Resource=ProfilePageResources, Key=PremiumYearlyPriceLabel}" FontSize="13" TextColor="{DynamicResource SecondaryText}" VerticalOptions="Center" />
                             </Grid>
-                            <Label Text="• Wszystko z planu Premium" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
-                            <Label Text="• Płatność raz w roku" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
-                            <Label Text="• Niższa cena: 7,99 zł / mies." FontSize="12" TextColor="{DynamicResource SecondaryText}" />
-                            <Button Text="Przejdź na roczny" StyleClass="Primary" />
+                            <Label Text="{svc:Translate Resource=ProfilePageResources, Key=PremiumFeatureAllIncluded}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                            <Label Text="{svc:Translate Resource=ProfilePageResources, Key=PremiumYearlyFeatureBilling}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                            <Label Text="{svc:Translate Resource=ProfilePageResources, Key=PremiumYearlyFeatureLowerPrice}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                                <Button x:Name="SwitchToYearlyPlanButton"
+                                    Text="{svc:Translate Resource=ProfilePageResources, Key=SwitchToYearlyButton}"
+                                    StyleClass="Primary"
+                                    Clicked="OnSwitchToYearlyClicked" />
                         </VerticalStackLayout>
                     </Border>
 
-                    <Label Text="Anuluj subskrypcję" HorizontalTextAlignment="Center" FontSize="12" FontAttributes="Bold" TextColor="#FF5F6D" />
+                            <Button x:Name="CancelSubscriptionButton"
+                                Text="{svc:Translate Resource=ProfilePageResources, Key=CancelSubscriptionButton}"
+                            Clicked="OnCancelSubscriptionClicked"
+                            HorizontalOptions="Center"
+                            FontSize="12"
+                            FontAttributes="Bold"
+                            Padding="14,10"
+                            MinimumHeightRequest="44"
+                            MinimumWidthRequest="44"
+                            BackgroundColor="Transparent"
+                            BorderWidth="0"
+                            TextColor="{DynamicResource ProfilePlanDestructiveButtonTextColor}" />
                 </VerticalStackLayout>
             </ScrollView>
         </Grid>
@@ -290,6 +341,16 @@
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                     </CollectionView>
+
+                    <Button x:Name="SyncQueueLoadMoreButton"
+                            Text="{svc:Translate Resource=ProfilePageResources, Key=SyncQueueLoadMoreButton}"
+                            Clicked="OnLoadMoreSyncQueueClicked"
+                            IsVisible="False"
+                            FontSize="12"
+                            Padding="10,6"
+                            HorizontalOptions="Center"
+                            BackgroundColor="{DynamicResource SegmentedContainerColor}"
+                            TextColor="{DynamicResource FrameTextColor}" />
                 </VerticalStackLayout>
             </ScrollView>
         </Grid>
@@ -320,7 +381,7 @@
                            MaximumWidthRequest="220"
                            TextColor="{DynamicResource FrameTextColor}" />
                     <Button x:Name="BackgroundSyncButton"
-                            Text="Synchronizacja w tle"
+                            Text="{svc:Translate Resource=ProfilePageResources, Key=BackgroundSyncButton}"
                             StyleClass="Secondary"
                             Clicked="OnBackgroundSyncClicked" />
                 </VerticalStackLayout>

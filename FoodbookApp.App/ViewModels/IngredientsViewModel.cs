@@ -7,7 +7,9 @@ using Microsoft.Maui.Controls;
 using Foodbook.Views;
 using Foodbook.Data;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Localization;
 using Foodbook.Services;
+using Foodbook.Views.Components;
 
 namespace Foodbook.ViewModels;
 
@@ -24,12 +26,47 @@ public class IngredientsViewModel : INotifyPropertyChanged
     public SortOrder SortOrder
     {
         get => _sortOrder;
-        set { if (_sortOrder == value) return; _sortOrder = value; OnPropertyChanged(); FilterIngredients(); }
+        set
+        {
+            var mappedSortBy = value == SortOrder.Desc ? SortBy.NameDesc : SortBy.NameAsc;
+            if (_sortOrder == value && _currentSortBy == mappedSortBy) return;
+
+            _sortOrder = value;
+            _currentSortBy = mappedSortBy;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(CurrentSortBy));
+            FilterIngredients();
+        }
+    }
+
+    private SortBy? _currentSortBy = SortBy.NameAsc;
+    public SortBy? CurrentSortBy
+    {
+        get => _currentSortBy;
+        set
+        {
+            if (_currentSortBy == value) return;
+
+            _currentSortBy = value;
+            if (value.HasValue)
+            {
+                _sortOrder = MapSortByToSortOrder(value.Value);
+                OnPropertyChanged(nameof(SortOrder));
+            }
+
+            OnPropertyChanged();
+            FilterIngredients();
+        }
+    }
+
+    public void ApplySorting(SortBy sortBy)
+    {
+        CurrentSortBy = sortBy;
     }
 
     public event EventHandler? DataLoaded; // Raised when all data finished loading
 
-    // W³aœciwoœci dla masowej weryfikacji
+    // Wlasciwosci dla masowej weryfikacji
     private bool _isBulkVerifying;
     public bool IsBulkVerifying
     {
@@ -133,7 +170,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
         }
         catch
         {
-            // No dispatcher available (e.g., unit tests) – run inline
+            // No dispatcher available (e.g., unit tests) ï¿½ run inline
             try { action(); } catch { }
         }
     }
@@ -146,7 +183,7 @@ public class IngredientsViewModel : INotifyPropertyChanged
         }
         catch
         {
-            // No dispatcher available – run inline
+            // No dispatcher available ï¿½ run inline
             try { action(); } catch { }
             await Task.CompletedTask;
         }
@@ -268,17 +305,19 @@ public class IngredientsViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Masowa weryfikacja wszystkich sk³adników z OpenFoodFacts
+    /// Mass verification of all ingredients against OpenFoodFacts.
     /// </summary>
     private async Task BulkVerifyIngredientsAsync()
     {
         if (IsBulkVerifying || Ingredients.Count == 0) return;
 
         bool confirm = await Shell.Current.DisplayAlert(
-            "Masowa weryfikacja sk³adników",
-            $"Czy chcesz zweryfikowaæ wszystkie {Ingredients.Count} sk³adników z OpenFoodFacts?\n\nMo¿e to potrwaæ kilka minut.",
-            "Tak, weryfikuj",
-            "Anuluj");
+            GetIngredientsText("BulkVerifyConfirmTitle", "Bulk ingredient verification"),
+            string.Format(
+                GetIngredientsText("BulkVerifyConfirmMessageFormat", "Do you want to verify all {0} ingredients with OpenFoodFacts?\n\nThis may take a few minutes."),
+                Ingredients.Count),
+            GetIngredientsText("BulkVerifyConfirmAccept", "Yes, verify"),
+            ButtonResources.Cancel);
 
         if (!confirm) return;
 
@@ -289,7 +328,9 @@ public class IngredientsViewModel : INotifyPropertyChanged
             var totalCount = Ingredients.Count;
             var failedCount = 0;
 
-            BulkVerificationStatus = $"Weryfikujê sk³adniki: 0/{totalCount}";
+            BulkVerificationStatus = string.Format(
+                GetIngredientsText("BulkVerifyStatusStartFormat", "Verifying ingredients: 0/{0}"),
+                totalCount);
 
             const int batchSize = 5; // Mniejsze batche dla API
             for (int i = 0; i < Ingredients.Count; i += batchSize)
@@ -301,9 +342,13 @@ public class IngredientsViewModel : INotifyPropertyChanged
                 {
                     try
                     {
-                        BulkVerificationStatus = $"Weryfikujê sk³adniki: {i + 1}/{totalCount} - {ingredient.Name}";
+                        BulkVerificationStatus = string.Format(
+                            GetIngredientsText("BulkVerifyStatusItemFormat", "Verifying ingredients: {0}/{1} - {2}"),
+                            i + 1,
+                            totalCount,
+                            ingredient.Name);
 
-                        // Skopiuj sk³adnik do weryfikacji
+                        // Copy ingredient snapshot for verification.
                         var tempIngredient = new Ingredient
                         {
                             Id = ingredient.Id,
@@ -317,12 +362,12 @@ public class IngredientsViewModel : INotifyPropertyChanged
                             RecipeId = ingredient.RecipeId
                         };
 
-                        // Weryfikuj z OpenFoodFacts
+                        // Verify against OpenFoodFacts.
                         bool wasUpdated = await SeedData.UpdateIngredientWithOpenFoodFactsAsync(tempIngredient);
 
                         if (wasUpdated)
                         {
-                            // Aktualizuj sk³adnik w bazie danych
+                            // Persist updated nutrition values.
                             ingredient.Calories = tempIngredient.Calories;
                             ingredient.Protein = tempIngredient.Protein;
                             ingredient.Fat = tempIngredient.Fat;
@@ -331,48 +376,54 @@ public class IngredientsViewModel : INotifyPropertyChanged
                             await _service.UpdateIngredientAsync(ingredient);
                             updatedCount++;
                             
-                            System.Diagnostics.Debug.WriteLine($"? Zaktualizowano: {ingredient.Name}");
+                            System.Diagnostics.Debug.WriteLine($"[IngredientsViewModel] Updated: {ingredient.Name}");
                         }
                     }
                     catch (Exception ex)
                     {
                         failedCount++;
-                        System.Diagnostics.Debug.WriteLine($"? B³¹d weryfikacji {ingredient.Name}: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"[IngredientsViewModel] Verification error for {ingredient.Name}: {ex.Message}");
                     }
                 }
 
-                // Throttling miêdzy batchami
+                // Throttle between batches.
                 if (i + batchSize < Ingredients.Count)
                 {
-                    await Task.Delay(1000); // 1 sekunda pauzy miêdzy batchami
+                    await Task.Delay(1000);
                 }
             }
 
-            // Poka¿ wyniki
             var successMessage =
-                "Weryfikacja zakoñczona!\n\n" +
-                $"? Zaktualizowano: {updatedCount} sk³adników\n" +
-                $"?? Bez zmian: {totalCount - updatedCount - failedCount} sk³adników\n" +
-                (failedCount > 0 ? $"? B³êdy/nie znaleziono: {failedCount} sk³adników" : "");
+                string.Format(
+                    GetIngredientsText("BulkVerifySummaryMessageFormat", "Updated: {0}\nUnchanged: {1}\nFailed/not found: {2}"),
+                    updatedCount,
+                    totalCount - updatedCount - failedCount,
+                    failedCount);
 
-            BulkVerificationStatus = $"? Zakoñczono - zaktualizowano {updatedCount}/{totalCount} sk³adników";
+            BulkVerificationStatus = string.Format(
+                GetIngredientsText("BulkVerifyStatusCompletedFormat", "Completed - updated {0}/{1} ingredients"),
+                updatedCount,
+                totalCount);
 
             await Shell.Current.DisplayAlert(
-                "Masowa weryfikacja zakoñczona",
+                GetIngredientsText("BulkVerifySummaryTitle", "Bulk verification completed"),
                 successMessage,
-                "OK");
+                ButtonResources.OK);
 
-            // Odœwie¿ listê
             await HardReloadAsync();
         }
         catch (Exception ex)
         {
-            BulkVerificationStatus = $"? B³¹d masowej weryfikacji: {ex.Message}";
+            BulkVerificationStatus = string.Format(
+                GetIngredientsText("BulkVerifyStatusErrorFormat", "Bulk verification error: {0}"),
+                ex.Message);
             
             await Shell.Current.DisplayAlert(
-                "B³¹d weryfikacji",
-                $"Wyst¹pi³ b³¹d podczas masowej weryfikacji sk³adników:\n{ex.Message}",
-                "OK");
+                GetIngredientsText("BulkVerifyErrorTitle", "Verification error"),
+                string.Format(
+                    GetIngredientsText("BulkVerifyErrorMessageFormat", "An error occurred during bulk ingredient verification:\n{0}"),
+                    ex.Message),
+                ButtonResources.OK);
         }
         finally
         {
@@ -451,9 +502,29 @@ public class IngredientsViewModel : INotifyPropertyChanged
                 .Where(i => i.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
         }
 
-        source = SortOrder == SortOrder.Asc
-            ? source.OrderBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase)
-            : source.OrderByDescending(i => i.Name, StringComparer.CurrentCultureIgnoreCase);
+        if (CurrentSortBy.HasValue)
+        {
+            source = CurrentSortBy.Value switch
+            {
+                SortBy.NameAsc => source.OrderBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase),
+                SortBy.NameDesc => source.OrderByDescending(i => i.Name, StringComparer.CurrentCultureIgnoreCase),
+                SortBy.CaloriesAsc => source.OrderBy(i => i.Calories).ThenBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase),
+                SortBy.CaloriesDesc => source.OrderByDescending(i => i.Calories).ThenBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase),
+                SortBy.ProteinAsc => source.OrderBy(i => i.Protein).ThenBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase),
+                SortBy.ProteinDesc => source.OrderByDescending(i => i.Protein).ThenBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase),
+                SortBy.CarbsAsc => source.OrderBy(i => i.Carbs).ThenBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase),
+                SortBy.CarbsDesc => source.OrderByDescending(i => i.Carbs).ThenBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase),
+                SortBy.FatAsc => source.OrderBy(i => i.Fat).ThenBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase),
+                SortBy.FatDesc => source.OrderByDescending(i => i.Fat).ThenBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase),
+                _ => source.OrderBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase)
+            };
+        }
+        else
+        {
+            source = SortOrder == SortOrder.Asc
+                ? source.OrderBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase)
+                : source.OrderByDescending(i => i.Name, StringComparer.CurrentCultureIgnoreCase);
+        }
 
         // Update bound collection safely (works without UI thread in tests)
         RunOnUiThread(() =>
@@ -471,12 +542,11 @@ public class IngredientsViewModel : INotifyPropertyChanged
     {
         if (ing == null) return;
         
-        // Add confirmation dialog
         bool confirm = await Shell.Current.DisplayAlert(
-            "Usuwanie sk³adnika", 
-            $"Czy na pewno chcesz usun¹æ sk³adnik '{ing.Name}'?", 
-            "Tak", 
-            "Nie");
+            GetIngredientsText("DeleteIngredientTitle", "Delete ingredient"),
+            string.Format(GetIngredientsText("DeleteIngredientConfirmFormat", "Are you sure you want to delete ingredient '{0}'?"), ing.Name),
+            ButtonResources.Yes,
+            ButtonResources.No);
             
         if (!confirm) return;
         
@@ -494,4 +564,16 @@ public class IngredientsViewModel : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
     void OnPropertyChanged([CallerMemberName] string name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+    private static SortOrder MapSortByToSortOrder(SortBy sortBy)
+        => sortBy is SortBy.NameDesc
+            or SortBy.CaloriesDesc
+            or SortBy.ProteinDesc
+            or SortBy.CarbsDesc
+            or SortBy.FatDesc
+            ? SortOrder.Desc
+            : SortOrder.Asc;
+
+    private static string GetIngredientsText(string key, string fallback)
+        => IngredientsPageResources.ResourceManager.GetString(key, IngredientsPageResources.Culture) ?? fallback;
 }

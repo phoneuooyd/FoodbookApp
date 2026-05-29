@@ -348,4 +348,37 @@
   <data name="DeduplicateIngredientsTitle" xml:space="preserve"><value>Usuń duplikaty składników</value></data>
   <data name="DeduplicateIngredientsDescription" xml:space="preserve"><value>Czyści lokalnie powtórzone składniki bazowe (nazwa + makra).</value></data>
   <data name="DeduplicateIngredientsButton" xml:space="preserve"><value>Usuń duplikaty</value></data>
+  <data name="DatabaseMigrationInProgress" xml:space="preserve"><value>Wykonywanie migracji bazy danych...</value></data>
+  <data name="DatabaseMigrationSuccessStatus" xml:space="preserve"><value>Migracja zakończona pomyślnie!</value></data>
+  <data name="DatabaseMigrationSuccessTitle" xml:space="preserve"><value>Sukces</value></data>
+  <data name="DatabaseMigrationSuccessMessage" xml:space="preserve"><value>Migracja bazy danych została wykonana pomyślnie.</value></data>
+  <data name="DatabaseMigrationFailedStatus" xml:space="preserve"><value>Migracja nieudana.</value></data>
+  <data name="DatabaseMigrationFailedTitle" xml:space="preserve"><value>Błąd</value></data>
+  <data name="DatabaseMigrationFailedMessage" xml:space="preserve"><value>Nie udało się wykonać migracji bazy danych. Sprawdź logi aplikacji.</value></data>
+  <data name="DatabaseMigrationErrorStatusFormat" xml:space="preserve"><value>Błąd migracji: {0}</value></data>
+  <data name="DatabaseMigrationErrorMessageFormat" xml:space="preserve"><value>Wystąpił błąd podczas migracji: {0}</value></data>
+  <data name="DatabaseResetConfirmTitle" xml:space="preserve"><value>Resetuj bazę danych</value></data>
+  <data name="DatabaseResetConfirmMessage" xml:space="preserve"><value>Czy na pewno chcesz usunąć wszystkie dane? Ta operacja jest nieodwracalna.{0}{0}Wszystkie przepisy, plany i listy zakupów zostaną utracone.</value></data>
+  <data name="DatabaseResetConfirmAccept" xml:space="preserve"><value>Tak, resetuj</value></data>
+  <data name="DatabaseResetInProgress" xml:space="preserve"><value>Resetowanie bazy danych...</value></data>
+  <data name="DatabaseResetSuccessStatus" xml:space="preserve"><value>Baza danych została zresetowana!</value></data>
+  <data name="DatabaseResetSuccessTitle" xml:space="preserve"><value>Sukces</value></data>
+  <data name="DatabaseResetSuccessMessage" xml:space="preserve"><value>Baza danych została zresetowana. Aplikacja zostanie zamknięta - uruchom ją ponownie.</value></data>
+  <data name="DatabaseResetFailedStatus" xml:space="preserve"><value>Reset nieudany.</value></data>
+  <data name="DatabaseResetFailedTitle" xml:space="preserve"><value>Błąd</value></data>
+  <data name="DatabaseResetFailedMessage" xml:space="preserve"><value>Nie udało się zresetować bazy danych. Sprawdź logi aplikacji.</value></data>
+  <data name="DatabaseResetErrorStatusFormat" xml:space="preserve"><value>Błąd resetu: {0}</value></data>
+  <data name="DatabaseResetErrorMessageFormat" xml:space="preserve"><value>Wystąpił błąd podczas resetowania: {0}</value></data>
+  <data name="DeduplicateConfirmTitle" xml:space="preserve"><value>Usuń duplikaty składników</value></data>
+  <data name="DeduplicateConfirmMessage" xml:space="preserve"><value>Czy na pewno chcesz usunąć zduplikowane składniki bazowe? (porównanie: nazwa + makra).{0}{0}Ta operacja jest nieodwracalna.</value></data>
+  <data name="DeduplicateConfirmAccept" xml:space="preserve"><value>Tak, usuń</value></data>
+  <data name="DeduplicateInProgress" xml:space="preserve"><value>Usuwanie duplikatów składników...</value></data>
+  <data name="DeduplicateDbUnavailableStatus" xml:space="preserve"><value>Błąd: brak dostępu do bazy danych</value></data>
+  <data name="DeduplicateRemovedStatusFormat" xml:space="preserve"><value>Usunięto duplikaty: {0}</value></data>
+  <data name="DeduplicateNoDuplicatesStatus" xml:space="preserve"><value>Brak duplikatów do usunięcia</value></data>
+  <data name="DeduplicateDoneTitle" xml:space="preserve"><value>Gotowe</value></data>
+  <data name="DeduplicateErrorStatusFormat" xml:space="preserve"><value>Błąd: {0}</value></data>
+  <data name="DeduplicateErrorTitle" xml:space="preserve"><value>Błąd</value></data>
+  <data name="PremiumRequiredTitle" xml:space="preserve"><value>Premium</value></data>
+  <data name="PremiumRequiredMessage" xml:space="preserve"><value>Ta opcja jest dostępna tylko dla użytkowników Premium.</value></data>
 </root>

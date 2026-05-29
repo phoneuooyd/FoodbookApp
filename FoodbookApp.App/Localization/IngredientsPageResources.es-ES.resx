@@ -16,4 +16,22 @@
   <data name="ErrorTitle" xml:space="preserve"><value>Error</value></data>
   <data name="LoadingIngredientsError" xml:space="preserve"><value>Se produjo un problema al cargar los ingredientes.</value></data>
   <data name="OK" xml:space="preserve"><value>OK</value></data>
+  <data name="BulkVerifyConfirmTitle" xml:space="preserve"><value>Verificacion masiva de ingredientes</value></data>
+  <data name="BulkVerifyConfirmMessageFormat" xml:space="preserve"><value>¿Quieres verificar los {0} ingredientes con OpenFoodFacts?
+
+Esto puede tardar unos minutos.</value></data>
+  <data name="BulkVerifyConfirmAccept" xml:space="preserve"><value>Si, verificar</value></data>
+  <data name="BulkVerifyStatusStartFormat" xml:space="preserve"><value>Verificando ingredientes: 0/{0}</value></data>
+  <data name="BulkVerifyStatusItemFormat" xml:space="preserve"><value>Verificando ingredientes: {0}/{1} - {2}</value></data>
+  <data name="BulkVerifySummaryTitle" xml:space="preserve"><value>Verificacion masiva completada</value></data>
+  <data name="BulkVerifySummaryMessageFormat" xml:space="preserve"><value>Actualizados: {0}
+Sin cambios: {1}
+Errores/no encontrados: {2}</value></data>
+  <data name="BulkVerifyStatusCompletedFormat" xml:space="preserve"><value>Completado - {0}/{1} ingredientes actualizados</value></data>
+  <data name="BulkVerifyStatusErrorFormat" xml:space="preserve"><value>Error en la verificacion masiva: {0}</value></data>
+  <data name="BulkVerifyErrorTitle" xml:space="preserve"><value>Error de verificacion</value></data>
+  <data name="BulkVerifyErrorMessageFormat" xml:space="preserve"><value>Se produjo un error durante la verificacion masiva de ingredientes:
+{0}</value></data>
+  <data name="DeleteIngredientTitle" xml:space="preserve"><value>Eliminar ingrediente</value></data>
+  <data name="DeleteIngredientConfirmFormat" xml:space="preserve"><value>¿Seguro que quieres eliminar el ingrediente '{0}'?</value></data>
 </root>

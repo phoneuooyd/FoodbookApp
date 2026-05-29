@@ -16,4 +16,22 @@
   <data name="ErrorTitle" xml:space="preserve"><value>오류</value></data>
   <data name="LoadingIngredientsError" xml:space="preserve"><value>재료를 로드하는 중 문제가 발생했습니다.</value></data>
   <data name="OK" xml:space="preserve"><value>확인</value></data>
+    <data name="BulkVerifyConfirmTitle" xml:space="preserve"><value>재료 일괄 검증</value></data>
+    <data name="BulkVerifyConfirmMessageFormat" xml:space="preserve"><value>OpenFoodFacts로 {0}개의 재료를 모두 검증하시겠습니까?
+
+  몇 분 정도 걸릴 수 있습니다.</value></data>
+    <data name="BulkVerifyConfirmAccept" xml:space="preserve"><value>예, 검증</value></data>
+    <data name="BulkVerifyStatusStartFormat" xml:space="preserve"><value>재료 검증 중: 0/{0}</value></data>
+    <data name="BulkVerifyStatusItemFormat" xml:space="preserve"><value>재료 검증 중: {0}/{1} - {2}</value></data>
+    <data name="BulkVerifySummaryTitle" xml:space="preserve"><value>일괄 검증 완료</value></data>
+    <data name="BulkVerifySummaryMessageFormat" xml:space="preserve"><value>업데이트됨: {0}
+  변경 없음: {1}
+  오류/미발견: {2}</value></data>
+    <data name="BulkVerifyStatusCompletedFormat" xml:space="preserve"><value>완료 - {0}/{1}개 재료 업데이트</value></data>
+    <data name="BulkVerifyStatusErrorFormat" xml:space="preserve"><value>일괄 검증 오류: {0}</value></data>
+    <data name="BulkVerifyErrorTitle" xml:space="preserve"><value>검증 오류</value></data>
+    <data name="BulkVerifyErrorMessageFormat" xml:space="preserve"><value>재료 일괄 검증 중 오류가 발생했습니다:
+  {0}</value></data>
+    <data name="DeleteIngredientTitle" xml:space="preserve"><value>재료 삭제</value></data>
+    <data name="DeleteIngredientConfirmFormat" xml:space="preserve"><value>'{0}' 재료를 정말 삭제하시겠습니까?</value></data>
 </root>

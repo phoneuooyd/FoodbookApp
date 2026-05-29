@@ -6,6 +6,7 @@ using Foodbook.Models;
 using Foodbook.ViewModels;
 using Foodbook.Views.Base;
 using Foodbook.Views.Components;
+using Foodbook.Utils;
 using FoodbookApp.Localization;
 
 namespace Foodbook.Views;
@@ -51,7 +52,9 @@ public partial class ShoppingListDetailPage : ContentPage
 
     // Popup state control to avoid reload after closing unit picker
     private bool _skipNextAppearReload = false;
+    private bool _isPickerPopupOpen = false;
     private bool _popupSubscribed = false;
+    private bool _saveCompletedSubscribed = false;
 
     public ShoppingListDetailPage(ShoppingListDetailViewModel viewModel)
     {
@@ -64,6 +67,7 @@ public partial class ShoppingListDetailPage : ContentPage
         try
         {
             _viewModel.SaveCompletedAsync += OnSaveCompletedAsync;
+            _saveCompletedSubscribed = true;
             System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Subscribed to SaveCompletedAsync event");
         }
         catch (Exception ex)
@@ -145,19 +149,9 @@ public partial class ShoppingListDetailPage : ContentPage
     {
         try
         {
-            // Set flag when popup OPENS (true) to prevent reload during popup interaction
-            // AND when popup CLOSES (false) to skip reload after popup closes
-            if (isOpen)
-            {
-                _skipNextAppearReload = true;
-                System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Picker popup opened - setting skip reload flag");
-            }
-            else
-            {
-                // Keep the flag set when popup closes - it will be consumed in OnAppearing
-                _skipNextAppearReload = true;
-                System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Picker popup closed - keeping skip reload flag");
-            }
+            _isPickerPopupOpen = isOpen;
+            _skipNextAppearReload = isOpen;
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Picker popup state changed: isOpen={isOpen}");
         }
         catch (Exception ex)
         {
@@ -190,12 +184,14 @@ public partial class ShoppingListDetailPage : ContentPage
 
         try
         {
-            if (_skipNextAppearReload)
+            if (_skipNextAppearReload && _isPickerPopupOpen)
             {
                 System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Skipping reload on appearing (popup interaction)");
                 _skipNextAppearReload = false;
                 return; // Don't load - just skip
             }
+
+            _skipNextAppearReload = false;
             
             if (_planIdGuid == Guid.Empty)
             {
@@ -248,6 +244,20 @@ public partial class ShoppingListDetailPage : ContentPage
         catch { }
 
         UnsubscribeFromPopupStateChanged();
+
+        try
+        {
+            if (_saveCompletedSubscribed)
+            {
+                _viewModel.SaveCompletedAsync -= OnSaveCompletedAsync;
+                _saveCompletedSubscribed = false;
+                System.Diagnostics.Debug.WriteLine("[ShoppingListDetailPage] Unsubscribed from SaveCompletedAsync event");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShoppingListDetailPage] Failed to unsubscribe SaveCompletedAsync: {ex.Message}");
+        }
     }
 
     protected override void OnSizeAllocated(double width, double height)
@@ -430,7 +440,10 @@ public partial class ShoppingListDetailPage : ContentPage
                 return;
 
             _isKeyboardLiftApplied = true;
-            await ContentHost.TranslateTo(0, -KeyboardLiftOffset, 180, Easing.CubicOut);
+            await ComponentAnimationHelper.AnimateKeyboardLiftAsync(
+                ContentHost,
+                lifted: true,
+                liftOffset: KeyboardLiftOffset);
         }
         catch (OperationCanceledException)
         {
@@ -450,7 +463,10 @@ public partial class ShoppingListDetailPage : ContentPage
                 return;
 
             _isKeyboardLiftApplied = false;
-            await ContentHost.TranslateTo(0, 0, 140, Easing.CubicOut);
+            await ComponentAnimationHelper.AnimateKeyboardLiftAsync(
+                ContentHost,
+                lifted: false,
+                liftOffset: KeyboardLiftOffset);
         }
         catch (Exception ex)
         {
@@ -471,13 +487,15 @@ public partial class ShoppingListDetailPage : ContentPage
         return y;
     }
 
-    private void OnUnitPickerSelectionChanged(object? sender, EventArgs e)
+    private void OnUnitPickerSelectionChanged(object? sender, ShoppingListItemComponent.UnitSelectionChangedEventArgs e)
     {
         try
         {
-            if (sender is ShoppingListItemComponent component && component.BindingContext is Ingredient ing)
+            if (sender is ShoppingListItemComponent component
+                && component.BindingContext is Ingredient ing
+                && e.SelectedUnit is Unit selectedUnit)
             {
-                _viewModel.ChangeUnit(ing, ing.Unit);
+                _viewModel.ChangeUnit(ing, selectedUnit);
             }
         }
         catch (Exception ex)

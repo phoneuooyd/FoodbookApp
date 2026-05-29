@@ -160,11 +160,11 @@ namespace FoodbookApp.Migrations
                         .HasColumnType("INTEGER")
                         .HasDefaultValue(7);
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Emoji")
                         .HasMaxLength(8)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("EndDate")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsArchived")
@@ -287,6 +287,9 @@ namespace FoodbookApp.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("IsSelected")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -341,6 +344,63 @@ namespace FoodbookApp.Migrations
                         .HasDatabaseName("IX_ShoppingListItems_PlanId_IngredientName_Unit");
 
                     b.ToTable("ShoppingListItems");
+                });
+
+            modelBuilder.Entity("Foodbook.Models.SubscriptionOperationEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("CompletedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IdempotencyKey")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastAttemptUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("TargetPlan")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("UpdatedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId")
+                        .HasDatabaseName("IX_SubscriptionOperations_AccountId");
+
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique()
+                        .HasDatabaseName("IX_SubscriptionOperations_IdempotencyKey");
+
+                    b.HasIndex("AccountId", "Status")
+                        .HasDatabaseName("IX_SubscriptionOperations_AccountId_Status");
+
+                    b.HasIndex("Status", "UpdatedUtc")
+                        .HasDatabaseName("IX_SubscriptionOperations_Processing");
+
+                    b.ToTable("SubscriptionOperations");
                 });
 
             modelBuilder.Entity("Foodbook.Models.SyncQueueEntry", b =>
@@ -514,7 +574,7 @@ namespace FoodbookApp.Migrations
 
             modelBuilder.Entity("Foodbook.Models.PlannedMeal", b =>
                 {
-                    b.HasOne("Foodbook.Models.Plan", null)
+                    b.HasOne("Foodbook.Models.Plan", "Plan")
                         .WithMany()
                         .HasForeignKey("PlanId")
                         .OnDelete(DeleteBehavior.Cascade);
@@ -524,6 +584,8 @@ namespace FoodbookApp.Migrations
                         .HasForeignKey("RecipeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Plan");
 
                     b.Navigation("Recipe");
                 });

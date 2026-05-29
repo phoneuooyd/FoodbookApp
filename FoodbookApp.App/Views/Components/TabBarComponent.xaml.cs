@@ -4,10 +4,13 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Foodbook.Utils;
 using FoodbookApp;
 using FoodbookApp.Interfaces;
+using FoodbookApp.Localization;
 
 namespace Foodbook.Views.Components
 {
@@ -17,6 +20,10 @@ namespace Foodbook.Views.Components
         private bool _isNavigating;
         private readonly Dictionary<string, ContentPage> _pageCache = new();
         private readonly Dictionary<ContentPage, View> _pageViewCache = new();
+        private readonly List<CommunityToolkit.Maui.Behaviors.IconTintColorBehavior> _tabIconTintBehaviors = new();
+        private readonly SemaphoreSlim _contentSwapGate = new(1, 1);
+        private CancellationTokenSource? _tabLoadCts;
+        private int _tabLoadVersion;
         private ILocalizationService? _localizationService;
         private Color _iconTintColor = Colors.Black;
         
@@ -69,22 +76,11 @@ namespace Foodbook.Views.Components
             {
                 try
                 {
-                    // Force refresh TintColor on all Image behaviors in TabBar
-                    foreach (var child in TabBarContainer.Children)
+                    EnsureTintBehaviorCache();
+
+                    foreach (var behavior in _tabIconTintBehaviors)
                     {
-                        if (child is Border border && border.Content is Grid grid)
-                        {
-                            var image = grid.Children.OfType<Image>().FirstOrDefault();
-                            if (image != null)
-                            {
-                                var behavior = image.Behaviors.OfType<CommunityToolkit.Maui.Behaviors.IconTintColorBehavior>().FirstOrDefault();
-                                if (behavior != null)
-                                {
-                                    // Directly set TintColor on behavior to force refresh
-                                    behavior.TintColor = color;
-                                }
-                            }
-                        }
+                        behavior.TintColor = color;
                     }
                 }
                 catch (Exception ex)
@@ -93,6 +89,32 @@ namespace Foodbook.Views.Components
                 }
             });
         }
+
+        private void EnsureTintBehaviorCache()
+        {
+            if (_tabIconTintBehaviors.Count > 0 || TabBarContainer == null)
+            {
+                return;
+            }
+
+            foreach (var child in TabBarContainer.Children)
+            {
+                if (child is not Border border || border.Content is not Grid grid)
+                {
+                    continue;
+                }
+
+                var image = grid.Children.OfType<Image>().FirstOrDefault();
+                var behavior = image?.Behaviors.OfType<CommunityToolkit.Maui.Behaviors.IconTintColorBehavior>().FirstOrDefault();
+                if (behavior != null)
+                {
+                    _tabIconTintBehaviors.Add(behavior);
+                }
+            }
+        }
+
+        private void InvalidateTintBehaviorCache()
+            => _tabIconTintBehaviors.Clear();
 
         public ObservableCollection<TabItemModel> TabItems
         {
@@ -151,16 +173,22 @@ namespace Foodbook.Views.Components
                         // Force initial render + lifecycle for embedded pages (ContentPage.OnAppearing isn't automatic)
                         if (ContentContainer?.Content == null && SelectedTab != null)
                         {
-                            UpdateContent(SelectedTab);
+                            await UpdateContentAsync(previousTab: null, tab: SelectedTab);
                         }
 
                         // Give UI a tick, then ensure Appearing fired for initial page
                         await Task.Yield();
                         try { _currentPageInstance?.SendAppearing(); } catch { }
                     }
+
+                    InvalidateTintBehaviorCache();
+                    EnsureTintBehaviorCache();
+                    ApplyTintColorToImages(IconTintColor);
                 }
                 catch { }
             };
+
+            Unloaded += (_, __) => CancelPendingTabLoad();
 
             // Subscribe to Shell navigation to track context
             if (Shell.Current != null)
@@ -210,6 +238,8 @@ namespace Foodbook.Views.Components
         {
             if (bindable is TabBarComponent component && newValue is ObservableCollection<TabItemModel> tabs)
             {
+                component.InvalidateTintBehaviorCache();
+
                 // Select default tab if none selected
                 if (component.SelectedTab == null && tabs.Count > 0)
                 {
@@ -230,98 +260,169 @@ namespace Foodbook.Views.Components
         private void UpdateSelectedTab(TabItemModel? oldTab, TabItemModel? newTab)
         {
             if (oldTab != null) oldTab.IsSelected = false;
-            if (newTab != null)
-            {
-                newTab.IsSelected = true;
-                _selectedTab = newTab;
-                UpdateContent(newTab);
-            }
+            if (newTab == null) return;
+
+            newTab.IsSelected = true;
+            _selectedTab = newTab;
+            _ = UpdateContentAsync(oldTab, newTab);
         }
 
         private ContentPage? _currentPageInstance;
 
-private void UpdateContent(TabItemModel tab)
-{
-    try
-    {
-        if (ContentContainer == null) return;
-
-        try
+        private async Task UpdateContentAsync(TabItemModel? previousTab, TabItemModel tab)
         {
-            _currentPageInstance?.SendDisappearing();
-        }
-        catch { }
-
-        ContentPage? pageInstance = null;
-
-        if (!string.IsNullOrEmpty(tab.Route) && _pageCache.TryGetValue(tab.Route, out var cachedPage))
-        {
-            pageInstance = cachedPage;
-            System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Using cached page for route: {tab.Route}");
-        }
-        else if (tab.PageType != null)
-        {
-            pageInstance = MauiProgram.ServiceProvider?.GetService(tab.PageType) as ContentPage;
-            if (pageInstance != null)
+            await _contentSwapGate.WaitAsync();
+            try
             {
-                if (!string.IsNullOrEmpty(tab.Route))
-                    _pageCache[tab.Route] = pageInstance;
-                System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Created new page from DI for route: {tab.Route}, VM: {pageInstance.BindingContext?.GetType().Name ?? "null"}");
+                if (ContentContainer == null) return;
+
+                try
+                {
+                    _currentPageInstance?.SendDisappearing();
+                }
+                catch { }
+
+                var previousView = ContentContainer.Content as View;
+                var direction = ResolveTransitionDirection(previousTab, tab);
+
+                var pageInstance = ResolvePageInstance(tab);
+                if (pageInstance == null)
+                    return;
+
+                var viewToRender = ResolveViewForPage(pageInstance);
+                if (viewToRender == null)
+                    return;
+
+                if (ReferenceEquals(previousView, viewToRender))
+                {
+                    _currentPageInstance = pageInstance;
+                    try { pageInstance.SendAppearing(); } catch { }
+                    ScheduleTabLoad(pageInstance);
+                    return;
+                }
+
+                DetachViewFromParent(viewToRender);
+
+                if (previousView != null)
+                {
+                    ContentContainer.Content = null;
+                    if (TransitionOverlay != null)
+                    {
+                        TransitionOverlay.Content = previousView;
+                        TransitionOverlay.IsVisible = true;
+                    }
+                }
+                else if (TransitionOverlay != null)
+                {
+                    TransitionOverlay.Content = null;
+                    TransitionOverlay.IsVisible = false;
+                }
+
+                if (!ReferenceEquals(viewToRender.BindingContext, pageInstance.BindingContext))
+                {
+                    viewToRender.BindingContext = pageInstance.BindingContext;
+                }
+                ContentContainer.Content = viewToRender;
+                _currentPageInstance = pageInstance;
+
+                try
+                {
+                    pageInstance.SendAppearing();
+                }
+                catch { }
+
+                await TabContentTransitionAnimator.AnimateContentSwapAsync(
+                    TransitionOverlay,
+                    previousView,
+                    viewToRender,
+                    direction);
+
+                System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Rendered content with BindingContext: {viewToRender.BindingContext?.GetType().Name ?? "null"}");
+                ScheduleTabLoad(pageInstance);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Error updating content: {ex.Message}");
+            }
+            finally
+            {
+                _contentSwapGate.Release();
             }
         }
-        else if (tab.ContentTemplate != null)
+
+        private ContentPage? ResolvePageInstance(TabItemModel tab)
         {
-            var created = tab.ContentTemplate.CreateContent();
-            if (created is ContentPage cp)
+            ContentPage? pageInstance = null;
+
+            if (!string.IsNullOrEmpty(tab.Route) && _pageCache.TryGetValue(tab.Route, out var cachedPage))
             {
-                pageInstance = cp;
+                pageInstance = cachedPage;
+                System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Using cached page for route: {tab.Route}");
             }
+            else if (tab.PageType != null)
+            {
+                pageInstance = MauiProgram.ServiceProvider?.GetService(tab.PageType) as ContentPage;
+                if (pageInstance != null)
+                {
+                    if (!string.IsNullOrEmpty(tab.Route))
+                        _pageCache[tab.Route] = pageInstance;
+                    System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Created new page from DI for route: {tab.Route}, VM: {pageInstance.BindingContext?.GetType().Name ?? "null"}");
+                }
+            }
+            else if (tab.ContentTemplate != null)
+            {
+                var created = tab.ContentTemplate.CreateContent();
+                if (created is ContentPage cp)
+                {
+                    pageInstance = cp;
+                }
+            }
+
+            return pageInstance;
         }
 
-        if (pageInstance == null)
-            return;
-
-        if (!_pageViewCache.TryGetValue(pageInstance, out var viewToRender))
+        private View? ResolveViewForPage(ContentPage pageInstance)
         {
-            viewToRender = pageInstance.Content;
+            if (_pageViewCache.TryGetValue(pageInstance, out var cachedView))
+                return cachedView;
+
+            var viewToRender = pageInstance.Content;
             if (viewToRender == null)
-                return;
+                return null;
 
             pageInstance.Content = null;
             _pageViewCache[pageInstance] = viewToRender;
+            return viewToRender;
         }
 
-        if (viewToRender.Parent is ContentView contentViewParent)
+        private static void DetachViewFromParent(View view)
         {
-            contentViewParent.Content = null;
-        }
-        else if (viewToRender.Parent is ContentPage contentPageParent)
-        {
-            contentPageParent.Content = null;
-        }
-        else if (viewToRender.Parent is Border borderParent)
-        {
-            borderParent.Content = null;
+            if (view.Parent is ContentView contentViewParent)
+            {
+                contentViewParent.Content = null;
+            }
+            else if (view.Parent is ContentPage contentPageParent)
+            {
+                contentPageParent.Content = null;
+            }
+            else if (view.Parent is Border borderParent)
+            {
+                borderParent.Content = null;
+            }
         }
 
-        viewToRender.BindingContext = pageInstance.BindingContext;
-        ContentContainer.Content = viewToRender;
-        _currentPageInstance = pageInstance;
-
-        try
+        private int ResolveTransitionDirection(TabItemModel? previousTab, TabItemModel currentTab)
         {
-            pageInstance.SendAppearing();
-        }
-        catch { }
+            if (TabItems == null || previousTab == null)
+                return 1;
 
-        System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Rendered content with BindingContext: {viewToRender.BindingContext?.GetType().Name ?? "null"}");
-        _ = TriggerInitialLoadAsync(pageInstance);
-    }
-    catch (Exception ex)
-    {
-        System.Diagnostics.Debug.WriteLine($"[TabBarComponent] Error updating content: {ex.Message}");
-    }
-}
+            var previousIndex = TabItems.IndexOf(previousTab);
+            var currentIndex = TabItems.IndexOf(currentTab);
+            if (previousIndex < 0 || currentIndex < 0 || previousIndex == currentIndex)
+                return 1;
+
+            return currentIndex > previousIndex ? 1 : -1;
+        }
 
         /// <summary>
         /// Handles tab selection with navigation stack management and unsaved changes detection
@@ -424,10 +525,10 @@ private void UpdateContent(TabItemModel tab)
                 // SCENARIO 3: We're on HomePage - show exit confirmation
                 System.Diagnostics.Debug.WriteLine($"[TabBarComponent] On HomePage, showing exit confirmation");
                 
-                var title = _localizationService?.GetString("HomePageResources", "ExitAppTitle") ?? "Wyjœcie";
-                var message = _localizationService?.GetString("HomePageResources", "ExitAppConfirmation") ?? "Czy chcesz wyjœæ z aplikacji?";
-                
-                bool result = await Application.Current!.MainPage!.DisplayAlert(title, message, "Tak", "Nie");
+                var title = _localizationService?.GetString("HomePageResources", "ExitAppTitle") ?? HomePageResources.ExitAppTitle;
+                var message = _localizationService?.GetString("HomePageResources", "ExitAppConfirmation") ?? HomePageResources.ExitAppConfirmation;
+
+                bool result = await Application.Current!.MainPage!.DisplayAlert(title, message, ButtonResources.Yes, ButtonResources.No);
                 
                 if (result)
                 {
@@ -500,10 +601,10 @@ private void UpdateContent(TabItemModel tab)
         {
             try
             {
-                var title = _localizationService?.GetString("CommonResources", "UnsavedChangesTitle") ?? "Niezapisane zmiany";
-                var message = _localizationService?.GetString("CommonResources", "UnsavedChangesMessage") ?? "Masz niezapisane zmiany. Czy na pewno chcesz opuœciæ tê stronê?";
-                var leave = _localizationService?.GetString("CommonResources", "LeaveButton") ?? "Opuœæ";
-                var cancel = _localizationService?.GetString("CommonResources", "CancelButton") ?? "Anuluj";
+                var title = _localizationService?.GetString("CommonResources", "UnsavedChangesTitle") ?? AddRecipePageResources.ConfirmTitle;
+                var message = _localizationService?.GetString("CommonResources", "UnsavedChangesMessage") ?? AddRecipePageResources.UnsavedChangesMessage;
+                var leave = _localizationService?.GetString("CommonResources", "LeaveButton") ?? ButtonResources.Yes;
+                var cancel = _localizationService?.GetString("CommonResources", "CancelButton") ?? ButtonResources.Cancel;
 
                 var result = await Application.Current!.MainPage!.DisplayAlert(title, message, leave, cancel);
                 return !result;
@@ -526,13 +627,20 @@ private void UpdateContent(TabItemModel tab)
         }
 
         // Trigger data loading for embedded pages
-        private async Task TriggerInitialLoadAsync(ContentPage page)
+        private async Task TriggerInitialLoadAsync(ContentPage page, int loadVersion, CancellationToken cancellationToken)
         {
             try
             {
+                await ComponentAnimationHelper.DelayForPostTransitionLoadAsync(cancellationToken);
+
+                if (cancellationToken.IsCancellationRequested || loadVersion != _tabLoadVersion || !ReferenceEquals(page, _currentPageInstance))
+                {
+                    return;
+                }
+
                 System.Diagnostics.Debug.WriteLine($"[TabBarComponent] TriggerInitialLoadAsync for {page.GetType().Name}");
 
-                // Initialize theme/font handling if present (still via reflection — low risk, private method)
+                // Initialize theme/font handling if present (still via reflection, low risk, private method)
                 var initThemeMethod = page.GetType().GetMethod("InitializeThemeAndFontHandling", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 initThemeMethod?.Invoke(page, null);
 
@@ -546,9 +654,36 @@ private void UpdateContent(TabItemModel tab)
 
                 System.Diagnostics.Debug.WriteLine($"[TabBarComponent] {page.GetType().Name} does not implement ITabLoadable - skipping load");
             }
+            catch (OperationCanceledException)
+            {
+                // A newer tab selection superseded this request.
+            }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[TabBarComponent] TriggerInitialLoadAsync error: {ex.Message}");
+            }
+        }
+
+        private void ScheduleTabLoad(ContentPage page)
+        {
+            CancelPendingTabLoad();
+
+            _tabLoadCts = new CancellationTokenSource();
+            var loadVersion = Interlocked.Increment(ref _tabLoadVersion);
+            _ = TriggerInitialLoadAsync(page, loadVersion, _tabLoadCts.Token);
+        }
+
+        private void CancelPendingTabLoad()
+        {
+            try
+            {
+                _tabLoadCts?.Cancel();
+                _tabLoadCts?.Dispose();
+            }
+            catch { }
+            finally
+            {
+                _tabLoadCts = null;
             }
         }
 
@@ -600,92 +735,91 @@ private void UpdateContent(TabItemModel tab)
             }
         }
 
+        private static Color ResolveColorResource(object? resource, Color fallback)
+        {
+            if (resource is Color color)
+            {
+                return color;
+            }
+
+            if (resource is SolidColorBrush brush)
+            {
+                return brush.Color;
+            }
+
+            return fallback;
+        }
+
+        private static bool TryGetTabBarTitleColors(ResourceDictionary resources, out Color activeColor, out Color unselectedColor)
+        {
+            activeColor = Colors.Black;
+            unselectedColor = Colors.Gray;
+
+            if (!resources.TryGetValue("TabBarForeground", out var activeObj) ||
+                !resources.TryGetValue("TabBarUnselected", out var unselectedObj))
+            {
+                return false;
+            }
+
+            activeColor = ResolveColorResource(activeObj, Colors.Black);
+            unselectedColor = ResolveColorResource(unselectedObj, Colors.Gray);
+            return true;
+        }
+
+        private void UpdateTabTitleColors(Color activeColor, Color unselectedColor)
+        {
+            if (TabBarContainer == null)
+            {
+                return;
+            }
+
+            foreach (var child in TabBarContainer.Children)
+            {
+                if (child is not Border border || border.Content is not Grid grid)
+                {
+                    continue;
+                }
+
+                if (border.BindingContext is not TabItemModel tabItem)
+                {
+                    continue;
+                }
+
+                var titleLabel = grid.Children.OfType<Label>().FirstOrDefault();
+                if (titleLabel != null)
+                {
+                    titleLabel.TextColor = tabItem.IsSelected ? activeColor : unselectedColor;
+                }
+            }
+        }
+
         // Ensure tab item shadow and pressed backgrounds immediately reflect current theme
         private void RefreshTabBarVisualsInternal()
         {
             try
             {
-                if (TabBarContainer == null) return;
+                if (TabBarContainer == null)
+                {
+                    return;
+                }
+
                 var app = Application.Current;
-                if (app?.Resources == null) return;
-
-                static Color? TryGetColor(object? obj)
+                var resources = app?.Resources;
+                if (resources == null)
                 {
-                    if (obj is Color c) return c;
-                    if (obj is SolidColorBrush b) return b.Color;
-                    return null;
+                    TabBarContainer.InvalidateMeasure();
+                    return;
                 }
 
-                app.Resources.TryGetValue("Primary", out var primaryObj);
-                app.Resources.TryGetValue("TabBarBackgroundDarken", out var darkenObj);
-                app.Resources.TryGetValue("TabBarForeground", out var foregroundObj);
-
-                var primaryColor = TryGetColor(primaryObj);
-                var darkenColor = TryGetColor(darkenObj);
-                var foregroundColor = TryGetColor(foregroundObj);
-
-                foreach (var child in TabBarContainer.Children)
+                if (!TryGetTabBarTitleColors(resources, out var activeColor, out var unselectedColor))
                 {
-                    if (child is not Border containerBorder || containerBorder.Content is not Grid grid)
-                        continue;
-
-                    var tabVm = containerBorder.BindingContext as TabItemModel;
-                    var isSelected = tabVm?.IsSelected ?? false;
-
-                    // Update outer container shadow
-                    if (isSelected && primaryColor != null)
-                    {
-                        containerBorder.Shadow = new Shadow
-                        {
-                            Brush = new SolidColorBrush(primaryColor),
-                            Radius = 12,
-                            Opacity = 0.4f,
-                            Offset = new Point(0, 2)
-                        };
-                    }
-                    else
-                    {
-                        containerBorder.Shadow = new Shadow
-                        {
-                            Brush = new SolidColorBrush(Colors.Transparent),
-                            Radius = 0,
-                            Opacity = 0f,
-                            Offset = new Point(0, 0)
-                        };
-                    }
-
-                    // Update inner pressed background (if present)
-                    var innerBorder = grid.Children.OfType<Border>().FirstOrDefault();
-                    if (innerBorder != null)
-                    {
-                        if (darkenColor != null)
-                        {
-                            innerBorder.BackgroundColor = darkenColor;
-                        }
-                        if (primaryColor != null)
-                        {
-                            innerBorder.Shadow = new Shadow
-                            {
-                                Brush = new SolidColorBrush(primaryColor),
-                                Radius = 6,
-                                Opacity = 0.9f,
-                                Offset = new Point(0, 1)
-                            };
-                        }
-
-                        // Keep selected marker crisp across themes
-                        if (isSelected && foregroundColor != null)
-                        {
-                            innerBorder.Stroke = Color.FromRgba(foregroundColor.Red, foregroundColor.Green, foregroundColor.Blue, 0.32f);
-                            innerBorder.StrokeThickness = 1;
-                        }
-                        else
-                        {
-                            innerBorder.Stroke = Colors.Transparent;
-                            innerBorder.StrokeThickness = 0;
-                        }
-                    }
+                    TabBarContainer.InvalidateMeasure();
+                    return;
                 }
+
+                UpdateTabTitleColors(activeColor, unselectedColor);
+
+                TabBarContainer.InvalidateMeasure();
             }
             catch (Exception ex)
             {

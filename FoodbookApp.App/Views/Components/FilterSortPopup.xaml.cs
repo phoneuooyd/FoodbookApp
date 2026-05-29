@@ -10,6 +10,7 @@ using Microsoft.Maui.Devices;
 using Microsoft.Maui.ApplicationModel;
 using System.Threading;
 using Microsoft.Maui.Layouts;
+using Foodbook.Utils;
 
 namespace Foodbook.Views.Components;
 
@@ -221,6 +222,15 @@ public class FilterSortPopup : ContentPage
 
     private static SortBy MapOrderToSortBy(SortOrder order) => order == SortOrder.Desc ? SortBy.NameDesc : SortBy.NameAsc;
 
+    private static SortOrder MapSortByToSortOrder(SortBy sortBy)
+        => sortBy is SortBy.NameDesc
+            or SortBy.CaloriesDesc
+            or SortBy.ProteinDesc
+            or SortBy.CarbsDesc
+            or SortBy.FatDesc
+            ? SortOrder.Desc
+            : SortOrder.Asc;
+
     private View BuildContent()
     {
         double displayWidth = DeviceDisplay.Current.MainDisplayInfo.Width / DeviceDisplay.Current.MainDisplayInfo.Density;
@@ -265,7 +275,7 @@ public class FilterSortPopup : ContentPage
 
         var closeBtn = new Button
         {
-            Text = "×",
+            Text = "Ã—",
             WidthRequest = 32,
             HeightRequest = 32,
             Padding = new Thickness(0),
@@ -506,19 +516,10 @@ public class FilterSortPopup : ContentPage
 
         try
         {
-            if (_dimView != null)
-                _dimView.Opacity = 0;
-
-            if (_sheetView != null)
-            {
-                _sheetView.Opacity = 0;
-                _sheetView.TranslationY = 42;
-            }
-
-            var dimAnim = _dimView?.FadeTo(1, 180, Easing.CubicOut) ?? Task.CompletedTask;
-            var sheetFade = _sheetView?.FadeTo(1, 200, Easing.CubicOut) ?? Task.CompletedTask;
-            var sheetSlide = _sheetView?.TranslateTo(0, 0, 240, Easing.CubicOut) ?? Task.CompletedTask;
-            await Task.WhenAll(dimAnim, sheetFade, sheetSlide);
+            await ComponentAnimationHelper.AnimatePopupSheetAsync(
+                _dimView,
+                _sheetView,
+                entering: true);
         }
         catch { }
     }
@@ -888,7 +889,7 @@ public class FilterSortPopup : ContentPage
         return new FilterSortResult
         {
             SortBy = chosen,
-            SortOrder = chosen == SortBy.NameDesc ? SortOrder.Desc : SortOrder.Asc,
+            SortOrder = MapSortByToSortOrder(chosen),
             SelectedLabelIds = _selected.ToList(),
             SelectedIngredientNames = _selectedIngredientNames.ToList()
         };

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Maui;
+using Microsoft.Maui.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using Foodbook.Models;
 using Foodbook.Views;
@@ -14,7 +15,6 @@ namespace FoodbookApp
         private readonly IThemeService _themeService;
         private readonly IFontService _fontService;
         private bool _globalHandlersRegistered = false;
-        private bool _autoLoginCompleted = false;
 
         public App(ILocalizationService localizationService, IPreferencesService preferencesService, IThemeService themeService, IFontService fontService)
         {
@@ -41,6 +41,8 @@ namespace FoodbookApp
                 var savedColorTheme = LoadSavedColorTheme();
                 _themeService.SetColorTheme(savedColorTheme);
                 System.Diagnostics.Debug.WriteLine($"[App][Ctor] Color theme applied: {savedColorTheme}");
+
+                Current.RequestedThemeChanged += OnRequestedThemeChanged;
 
                 var isColorfulBackgroundEnabled = LoadSavedColorfulBackgroundSetting();
                 _themeService.SetColorfulBackground(isColorfulBackgroundEnabled);
@@ -259,6 +261,19 @@ namespace FoodbookApp
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[App] OnWindowCreated error: {ex.Message}");
+            }
+        }
+
+        private void OnRequestedThemeChanged(object? sender, AppThemeChangedEventArgs e)
+        {
+            try
+            {
+                var currentColorTheme = _themeService.GetCurrentColorTheme();
+                MainThread.BeginInvokeOnMainThread(() => _themeService.SetColorTheme(currentColorTheme));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[App] OnRequestedThemeChanged error: {ex.Message}");
             }
         }
     }

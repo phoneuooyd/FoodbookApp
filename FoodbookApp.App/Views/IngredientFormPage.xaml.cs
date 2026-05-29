@@ -2,6 +2,8 @@ using Microsoft.Maui.Controls;
 using Foodbook.ViewModels;
 using System.Threading.Tasks;
 using System;
+using Foodbook.Utils;
+using FoodbookApp.Localization;
 
 namespace Foodbook.Views;
 
@@ -121,9 +123,9 @@ public partial class IngredientFormPage : ContentPage
             await MainThread.InvokeOnMainThreadAsync(async () =>
             {
                 await DisplayAlert(
-                    "B³¹d ³adowania", 
-                    $"Nie uda³o siê za³adowaæ sk³adnika: {ex.Message}", 
-                    "OK");
+                    GetIngredientFormText("LoadErrorTitle", "Loading error"),
+                    string.Format(GetIngredientFormText("LoadErrorMessageFormat", "Could not load ingredient: {0}"), ex.Message),
+                    ButtonResources.OK);
             });
         }
     }
@@ -199,7 +201,10 @@ public partial class IngredientFormPage : ContentPage
                 return;
 
             _isKeyboardLiftApplied = true;
-            await ContentHost.TranslateTo(0, -KeyboardLiftOffset, 180, Easing.CubicOut);
+            await ComponentAnimationHelper.AnimateKeyboardLiftAsync(
+                ContentHost,
+                lifted: true,
+                liftOffset: KeyboardLiftOffset);
         }
         catch (Exception ex)
         {
@@ -218,7 +223,10 @@ public partial class IngredientFormPage : ContentPage
             }
 
             _isKeyboardLiftApplied = false;
-            await ContentHost.TranslateTo(0, 0, 140, Easing.CubicOut);
+            await ComponentAnimationHelper.AnimateKeyboardLiftAsync(
+                ContentHost,
+                lifted: false,
+                liftOffset: KeyboardLiftOffset);
             ContentHost.TranslationY = 0;
         }
         catch (Exception ex)
@@ -249,6 +257,9 @@ public partial class IngredientFormPage : ContentPage
         }
         return y;
     }
+
+    private static string GetIngredientFormText(string key, string fallback)
+        => IngredientFormPageResources.ResourceManager.GetString(key, IngredientFormPageResources.Culture) ?? fallback;
 
     protected override void OnSizeAllocated(double width, double height)
     {

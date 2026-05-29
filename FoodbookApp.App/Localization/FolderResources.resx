@@ -9,6 +9,13 @@
   <data name="EditDescriptionTitle" xml:space="preserve"><value>Folder description</value></data>
   <data name="EditDescriptionPrompt" xml:space="preserve"><value>Enter description (optional)</value></data>
   <data name="ValidationNameRequired" xml:space="preserve"><value>Name cannot be empty.</value></data>
+  <data name="CreateFolderTitle" xml:space="preserve"><value>New folder</value></data>
+  <data name="CreateFolderPrompt" xml:space="preserve"><value>Enter folder name</value></data>
+  <data name="CreateFolderAccept" xml:space="preserve"><value>Create</value></data>
+  <data name="DeleteFolderTitle" xml:space="preserve"><value>Delete folder</value></data>
+  <data name="DeleteFolderConfirmFormat" xml:space="preserve"><value>Are you sure you want to delete folder '{0}'? Recipes will be moved to the parent folder (or root).</value></data>
+  <data name="DeleteRecipeTitle" xml:space="preserve"><value>Delete recipe</value></data>
+  <data name="DeleteRecipeConfirmFormat" xml:space="preserve"><value>Are you sure you want to delete recipe '{0}'?</value></data>
   
   <!-- FolderAwarePickerPopup -->
   <data name="ChooseRecipeTitle" xml:space="preserve"><value>Select recipe</value></data>

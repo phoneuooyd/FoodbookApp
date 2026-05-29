@@ -2,15 +2,16 @@ using Microsoft.Maui.Controls;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using Foodbook.Converters;
-using Foodbook.Services;
-using Foodbook.Models;
+using Foodbook.Utils;
 
 namespace Foodbook.Views.Components;
 
 /// <summary>
 /// Controls the height of the tab header bar.
-/// Small = 44px (default), Mid = 88px (2×), Big = 132px (3×).
+/// Small = 44px (default), Mid = 88px (2ï¿½), Big = 132px (3ï¿½).
 /// </summary>
 public enum TabHeaderSize
 {
@@ -26,11 +27,12 @@ public enum TabHeaderSize
 [ContentProperty(nameof(Tabs))]
 public class TabComponent : ContentView, INotifyPropertyChanged
 {
-    private int _selectedIndex = 0;
     private readonly ObservableCollection<TabItem> _tabs = new();
     private Grid? _tabHeaderGrid;
     private ContentView? _tabContentContainer;
-    private Color _iconColor;
+    private ContentView? _tabTransitionOverlay;
+    private readonly SemaphoreSlim _contentSwapGate = new(1, 1);
+    private bool _hasRenderedInitialContent;
 
     public static readonly BindableProperty SelectedIndexProperty =
         BindableProperty.Create(nameof(SelectedIndex), typeof(int), typeof(TabComponent), 0, BindingMode.TwoWay, propertyChanged: OnSelectedIndexChanged);
@@ -106,10 +108,7 @@ public class TabComponent : ContentView, INotifyPropertyChanged
 
     private void BuildControl()
     {
-        //get primary color from ThemeService to the _iconColor field
-        _iconColor = (Color)Application.Current.Resources["Primary"];
-
-        // Create header grid – two rows: label row + thin underline row
+        // Create header grid ï¿½ two rows: label row + thin underline row
         _tabHeaderGrid = new Grid
         {
             RowDefinitions = new RowDefinitionCollection
@@ -121,8 +120,17 @@ public class TabComponent : ContentView, INotifyPropertyChanged
         };
         _tabHeaderGrid.SetAppThemeColor(Grid.BackgroundColorProperty, Colors.White, Color.FromArgb("#2D2D30"));
 
-        // Create content container
+        // Create content containers (active content + transition overlay)
         _tabContentContainer = new ContentView();
+        _tabTransitionOverlay = new ContentView
+        {
+            IsVisible = false,
+            InputTransparent = true
+        };
+
+        var contentHostGrid = new Grid();
+        contentHostGrid.Add(_tabContentContainer);
+        contentHostGrid.Add(_tabTransitionOverlay);
 
         // Create main layout
         var mainGrid = new Grid
@@ -135,7 +143,7 @@ public class TabComponent : ContentView, INotifyPropertyChanged
         };
 
         mainGrid.Add(_tabHeaderGrid, 0, 0);
-        mainGrid.Add(_tabContentContainer, 0, 1);
+        mainGrid.Add(contentHostGrid, 0, 1);
 
         Content = mainGrid;
     }
@@ -143,14 +151,30 @@ public class TabComponent : ContentView, INotifyPropertyChanged
     private void OnTabsCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
         RebuildTabHeaders();
-        UpdateTabVisibility();
+
+        if (_tabs.Count == 0)
+        {
+            if (_tabContentContainer != null)
+                _tabContentContainer.Content = null;
+            return;
+        }
+
+        if (SelectedIndex < 0 || SelectedIndex >= _tabs.Count)
+        {
+            SelectedIndex = Math.Clamp(SelectedIndex, 0, _tabs.Count - 1);
+            return;
+        }
+
+        _ = UpdateTabVisibilityAsync(SelectedIndex, SelectedIndex, animated: false);
     }
 
     private static void OnSelectedIndexChanged(BindableObject bindable, object oldValue, object newValue)
     {
         if (bindable is TabComponent tabComponent)
         {
-            tabComponent.UpdateTabVisibility();
+            var previousIndex = oldValue is int oldIndex ? oldIndex : tabComponent.SelectedIndex;
+            var currentIndex = newValue is int newIndex ? newIndex : tabComponent.SelectedIndex;
+            _ = tabComponent.UpdateTabVisibilityAsync(previousIndex, currentIndex, animated: true);
             tabComponent.OnPropertyChanged(nameof(SelectedIndex));
         }
     }
@@ -191,7 +215,7 @@ public class TabComponent : ContentView, INotifyPropertyChanged
             var tab = _tabs[i];
             var tabIndex = i;
 
-            // Create tab button – compact, no border, transparent bg
+            // Create tab button ï¿½ compact, no border, transparent bg
             var button = new Button
             {
                 FontSize  = ButtonFontSize,
@@ -302,17 +326,91 @@ public class TabComponent : ContentView, INotifyPropertyChanged
     /// <summary>
     /// Updates tab visibility based on the currently selected index.
     /// </summary>
-    private void UpdateTabVisibility()
+    private async Task UpdateTabVisibilityAsync(int previousIndex, int currentIndex, bool animated)
     {
         for (int i = 0; i < _tabs.Count; i++)
         {
-            _tabs[i].IsSelected = i == SelectedIndex;
+            _tabs[i].IsSelected = i == currentIndex;
         }
 
-        // Update content
-        if (_tabContentContainer != null && SelectedIndex >= 0 && SelectedIndex < _tabs.Count)
+        if (_tabContentContainer == null || currentIndex < 0 || currentIndex >= _tabs.Count)
+            return;
+
+        var nextView = _tabs[currentIndex].Content;
+        if (nextView == null)
+            return;
+
+        await _contentSwapGate.WaitAsync();
+        try
         {
-            _tabContentContainer.Content = _tabs[SelectedIndex].Content;
+            var previousView = _tabContentContainer.Content;
+
+            if (ReferenceEquals(previousView, nextView))
+            {
+                _hasRenderedInitialContent = true;
+                return;
+            }
+
+            DetachViewFromParent(nextView);
+
+            var shouldAnimate = animated
+                && _hasRenderedInitialContent
+                && previousView != null
+                && previousIndex != currentIndex;
+
+            if (shouldAnimate)
+            {
+                _tabContentContainer.Content = null;
+                if (_tabTransitionOverlay != null)
+                {
+                    _tabTransitionOverlay.Content = previousView;
+                    _tabTransitionOverlay.IsVisible = true;
+                }
+            }
+            else if (_tabTransitionOverlay != null)
+            {
+                _tabTransitionOverlay.Content = null;
+                _tabTransitionOverlay.IsVisible = false;
+            }
+
+            _tabContentContainer.Content = nextView;
+
+            if (shouldAnimate)
+            {
+                var direction = currentIndex > previousIndex ? 1 : -1;
+                await TabContentTransitionAnimator.AnimateContentSwapAsync(
+                    _tabTransitionOverlay,
+                    previousView,
+                    nextView,
+                    direction);
+            }
+            else
+            {
+                nextView.Opacity = 1;
+                nextView.TranslationX = 0;
+            }
+
+            _hasRenderedInitialContent = true;
+        }
+        finally
+        {
+            _contentSwapGate.Release();
+        }
+    }
+
+    private static void DetachViewFromParent(View view)
+    {
+        if (view.Parent is ContentView contentViewParent)
+        {
+            contentViewParent.Content = null;
+        }
+        else if (view.Parent is ContentPage contentPageParent)
+        {
+            contentPageParent.Content = null;
+        }
+        else if (view.Parent is Border borderParent)
+        {
+            borderParent.Content = null;
         }
     }
 

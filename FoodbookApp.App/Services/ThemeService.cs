@@ -14,8 +14,6 @@ namespace Foodbook.Services
 {
     public class ThemeService : IThemeService
     {
-        private readonly IPreferencesService _preferencesService;
-        
         public event EventHandler? ThemeChanged;
 
         private Foodbook.Models.AppTheme _currentTheme = Foodbook.Models.AppTheme.System;
@@ -25,19 +23,19 @@ namespace Foodbook.Services
         private readonly Dictionary<AppColorTheme, ThemeColors> _availableColorThemes;
 
         // Supported wallpapers per color theme
-        // Files are expected in Resources/Wallpapers with pattern: <theme>_light.jpg and <theme>_dark.jpg
+        // Files are expected in Resources/Wallpapers with pattern: <theme>_light.<ext> and <theme>_dark.<ext>
         // If only single is provided, it will be used for both light and dark
         private readonly Dictionary<AppColorTheme, (string? single, string? light, string? dark)> _wallpaperMap = new()
         {
             // Default
             [AppColorTheme.Default]    = (single: null, light: "default_light.jpg",    dark: "default_dark.jpg"),
             // Nature family
-            [AppColorTheme.Nature]     = (single: null, light: "nature_light.jpg",     dark: "nature_dark.jpg"),
+            [AppColorTheme.Nature]     = (single: null, light: "nature_light.webp",    dark: "nature_dark.jpg"),
             [AppColorTheme.Forest]     = (single: null, light: "forest_light.jpg",     dark: "forest_dark.jpg"),
             // Warm colors
             [AppColorTheme.Autumn]     = (single: null, light: "autumn_light.jpg",     dark: "autumn_dark.jpg"),
             [AppColorTheme.Warm]       = (single: null, light: "warm_light.jpg",       dark: "warm_dark.jpg"),
-            [AppColorTheme.Sunset]     = (single: null, light: "sunset_light.jpg",     dark: "sunset_dark.jpg"),
+            [AppColorTheme.Sunset]     = (single: null, light: "sunset_light.jpg",     dark: "sunset_dark.png"),
             [AppColorTheme.Vibrant]    = (single: null, light: "vibrant_light.jpg",    dark: "vibrant_dark.jpg"),
             // Neutral
             [AppColorTheme.Monochrome] = (single: "monochrome.jpg", light: null,       dark: null),
@@ -56,7 +54,6 @@ namespace Foodbook.Services
 
         public ThemeService(IPreferencesService preferencesService)
         {
-            _preferencesService = preferencesService ?? throw new ArgumentNullException(nameof(preferencesService));
             _availableColorThemes = InitializeThemes();
         }
 
@@ -208,6 +205,16 @@ namespace Foodbook.Services
             );
         }
 
+        private static Color Blend(Color source, Color target, double amount)
+        {
+            amount = Math.Clamp(amount, 0, 1);
+            return Color.FromRgb(
+                source.Red + (target.Red - source.Red) * amount,
+                source.Green + (target.Green - source.Green) * amount,
+                source.Blue + (target.Blue - source.Blue) * amount
+            );
+        }
+
         private void ApplyColorTheme(AppColorTheme colorTheme)
         {
             try
@@ -313,9 +320,15 @@ namespace Foodbook.Services
                 {
                     if (isDark)
                     {
-                        var darkened = Darken(secondary, 0.12);
-                        // Keep page background opaque to prevent transition darkening artifacts between pages
-                        pageBackground = Color.FromRgb(darkened.Red, darkened.Green, darkened.Blue);
+                        // Dark colorful backgrounds: tone down saturation and add subtle transparency.
+                        // Bubblegum requires a stronger fade in dark mode.
+                        var darkenFactor = colorTheme == AppColorTheme.Bubblegum ? 0.19 : 0.18;
+                        var neutralBlend = colorTheme == AppColorTheme.Bubblegum ? 0.18 : 0.18;
+                        var overlayAlpha = colorTheme == AppColorTheme.Bubblegum ? 0.95 : 0.96;
+
+                        var darkened = Darken(secondary, darkenFactor);
+                        var muted = Blend(darkened, Color.FromArgb("#1E1E1E"), neutralBlend);
+                        pageBackground = Color.FromRgba(muted.Red, muted.Green, muted.Blue, overlayAlpha);
                     }
                     else
                     {
@@ -352,6 +365,7 @@ namespace Foodbook.Services
                 // Frame colors
                 Color frameBackgroundColor = isDark ? Color.FromArgb("#2A2A2A") : Color.FromArgb("#FFFFFF");
                 Color frameTextColor = isDark ? Color.FromArgb("#E0E0E0") : Color.FromArgb("#2A2A2A");
+                if (colorTheme == AppColorTheme.Bubblegum && isDark) frameTextColor = Color.FromArgb("#2A2A2A");
                 app.Resources["FrameBackgroundColor"] = frameBackgroundColor;
                 app.Resources["FrameTextColor"] = frameTextColor;
 
@@ -391,6 +405,63 @@ namespace Foodbook.Services
                 app.Resources["DashboardCardStrokeColor"] = dashboardCardStroke;
                 app.Resources["DashboardCardShadowBrush"] = dashboardCardShadowBrush;
 
+                // Diet statistics visual tokens (theme-aware)
+                var dietProtein = isDark ? Lighten(tertiary, 0.14) : Darken(tertiary, 0.04);
+                var dietCarbs = isDark ? Lighten(secondary, 0.10) : Darken(secondary, 0.18);
+                var dietFat = isDark ? Lighten(accent, 0.08) : Darken(accent, 0.12);
+                var dietTrack = isDark
+                    ? Blend(dashboardCardBackground, Colors.White, 0.10)
+                    : Blend(dashboardCardBackground, Colors.Black, 0.09);
+                var dietTargetRange = Color.FromRgba(
+                    dietProtein.Red,
+                    dietProtein.Green,
+                    dietProtein.Blue,
+                    isDark ? 0.30f : 0.20f);
+                var dietChipActive = dietProtein;
+                var dietChipActiveText = ChooseReadableEnhanced(dietChipActive, Colors.White, Colors.Black);
+                var dietChipInactiveBackground = Color.FromRgba(
+                    dietProtein.Red,
+                    dietProtein.Green,
+                    dietProtein.Blue,
+                    isDark ? 0.22f : 0.12f);
+                var dietChipInactiveText = Color.FromRgba(
+                    secondaryText.Red,
+                    secondaryText.Green,
+                    secondaryText.Blue,
+                    isDark ? 0.92f : 0.84f);
+                var dietActionSurface = Color.FromRgba(
+                    dietProtein.Red,
+                    dietProtein.Green,
+                    dietProtein.Blue,
+                    isDark ? 0.20f : 0.16f);
+                var dietCalorieProgress = Color.FromRgba(
+                    dietCarbs.Red,
+                    dietCarbs.Green,
+                    dietCarbs.Blue,
+                    isDark ? 0.62f : 0.58f);
+                var dietCalorieTargetRange = Color.FromRgba(
+                    dietProtein.Red,
+                    dietProtein.Green,
+                    dietProtein.Blue,
+                    isDark ? 0.88f : 0.82f);
+
+                app.Resources["DietStatsCarbsColor"] = dietCarbs;
+                app.Resources["DietStatsFatColor"] = dietFat;
+                app.Resources["DietStatsProteinColor"] = dietProtein;
+                app.Resources["DietStatsTrackColor"] = dietTrack;
+                app.Resources["DietStatsTargetRangeColor"] = dietTargetRange;
+                app.Resources["DietStatsTooltipBackgroundColor"] = dietProtein;
+                app.Resources["DietStatsTooltipTextColor"] = ChooseReadableEnhanced(dietProtein, Colors.White, Colors.Black);
+                app.Resources["DietStatsDateActiveBackgroundColor"] = dietProtein;
+                app.Resources["DietStatsDateTextColor"] = dietChipActiveText;
+                app.Resources["DietStatsChipActiveBackgroundColor"] = dietChipActive;
+                app.Resources["DietStatsChipActiveTextColor"] = dietChipActiveText;
+                app.Resources["DietStatsChipInactiveBackgroundColor"] = dietChipInactiveBackground;
+                app.Resources["DietStatsChipInactiveTextColor"] = dietChipInactiveText;
+                app.Resources["DietStatsActionSurfaceColor"] = dietActionSurface;
+                app.Resources["DietStatsCalorieProgressColor"] = dietCalorieProgress;
+                app.Resources["DietStatsCalorieTargetRangeColor"] = dietCalorieTargetRange;
+
                 var wizardHeaderStart = isDark ? Lighten(primary, 0.10) : Lighten(primary, 0.22);
                 var wizardHeaderEnd = isDark ? Lighten(tertiary, 0.08) : Lighten(tertiary, 0.16);
                 var wizardHeaderBrush = new LinearGradientBrush(
@@ -406,26 +477,47 @@ namespace Foodbook.Services
                 app.Resources["WizardHeaderEyebrowColor"] = Color.FromArgb("#EADFFF");
                 app.Resources["WizardHeaderSubtitleColor"] = Color.FromArgb("#EEE6FF");
                 app.Resources["WizardTrackInactiveColor"] = Color.FromArgb("#FFFFFF");
-                app.Resources["WizardSelectionBackgroundColor"] = isDark ? Color.FromArgb("#332A4A") : Color.FromArgb("#F4F0FF");
-                app.Resources["WizardOptionSurfaceColor"] = isDark ? Color.FromArgb("#27273A") : Colors.White;
-                app.Resources["WizardOptionSelectedSurfaceColor"] = isDark ? Color.FromArgb("#3A2D55") : Color.FromArgb("#F0EAFF");
-                app.Resources["WizardToggleContainerColor"] = isDark ? Color.FromArgb("#2A2A40") : Color.FromArgb("#F7F7FB");
-                app.Resources["WizardToggleSelectedColor"] = isDark ? Color.FromArgb("#282840") : Colors.White;
+                var wizardSelectionBackground = isDark ? Darken(secondary, 0.58) : Lighten(secondary, 0.68);
+                var wizardOptionSurface = isDark ? Darken(secondary, 0.64) : Colors.White;
+                var wizardOptionSelectedSurface = isDark ? Darken(tertiary, 0.54) : Lighten(tertiary, 0.72);
+                var wizardToggleContainer = isDark ? Darken(secondary, 0.68) : Lighten(secondary, 0.74);
+                var wizardToggleSelected = isDark ? Darken(tertiary, 0.60) : Colors.White;
+                var selectionAccentStrongBackground = Color.FromRgba(tertiary.Red, tertiary.Green, tertiary.Blue, isDark ? 0.40f : 0.24f);
+                var badgeAccentBackground = Color.FromRgba(tertiary.Red, tertiary.Green, tertiary.Blue, isDark ? 0.46f : 0.18f);
+                var badgeNeutralBackground = isDark
+                    ? Color.FromRgba(secondary.Red, secondary.Green, secondary.Blue, 0.30f)
+                    : Color.FromArgb("#F3F3F7");
+
+                app.Resources["WizardSelectionBackgroundColor"] = wizardSelectionBackground;
+                app.Resources["WizardOptionSurfaceColor"] = wizardOptionSurface;
+                app.Resources["WizardOptionSelectedSurfaceColor"] = wizardOptionSelectedSurface;
+                app.Resources["WizardToggleContainerColor"] = wizardToggleContainer;
+                app.Resources["WizardToggleSelectedColor"] = wizardToggleSelected;
                 app.Resources["SegmentedContainerColor"] = app.Resources["WizardToggleContainerColor"];
                 app.Resources["SegmentedSelectedColor"] = app.Resources["WizardToggleSelectedColor"];
-                app.Resources["SelectionAccentStrongBackgroundColor"] = isDark ? Color.FromArgb("#553A2D55") : Color.FromArgb("#22512BD4");
-                app.Resources["BadgeAccentBackgroundColor"] = isDark ? Color.FromArgb("#4A3A70") : Color.FromArgb("#ECE5FF");
-                app.Resources["BadgeNeutralBackgroundColor"] = isDark ? Color.FromArgb("#3A3A4D") : Color.FromArgb("#F3F3F7");
+                app.Resources["SelectionAccentStrongBackgroundColor"] = selectionAccentStrongBackground;
+                app.Resources["BadgeAccentBackgroundColor"] = badgeAccentBackground;
+                app.Resources["BadgeNeutralBackgroundColor"] = badgeNeutralBackground;
                 app.Resources["DisabledCardBackgroundColor"] = isDark ? Color.FromArgb("#4A4A4A") : Color.FromArgb("#F1F1F1");
 
                 // Overhaul page visual tokens (AddRecipe / IngredientForm)
-                var overhaulCardBackground = isDark ? Color.FromArgb("#282840") : Colors.White;
-                var overhaulCardStroke = isDark ? Color.FromArgb("#20FFFFFF") : Color.FromArgb("#22000000");
-                var overhaulSectionCaption = isDark ? Color.FromArgb("#80FFFFFF") : Color.FromArgb("#6B7280");
-                var overhaulFooterSurface = isDark ? Color.FromArgb("#232336") : Color.FromArgb("#F6F5FA");
-                var overhaulAccentSoft = Color.FromRgba(secondary.Red, secondary.Green, secondary.Blue, isDark ? 0.42f : 0.55f);
+                var overhaulCardBackground = isDark ? Darken(secondary, 0.56) : Lighten(secondary, 0.62);
+                var overhaulCardStroke = Color.FromRgba(tertiary.Red, tertiary.Green, tertiary.Blue, isDark ? 0.42f : 0.22f);
+                var overhaulSectionCaptionBase = isDark ? primaryText : secondaryText;
+                var overhaulSectionCaption = Color.FromRgba(
+                    overhaulSectionCaptionBase.Red,
+                    overhaulSectionCaptionBase.Green,
+                    overhaulSectionCaptionBase.Blue,
+                    isDark ? 0.84f : 0.76f);
+                var overhaulFooterSurface = isDark ? Darken(secondary, 0.64) : Lighten(secondary, 0.54);
+                var overhaulAccentSoft = Color.FromRgba(tertiary.Red, tertiary.Green, tertiary.Blue, isDark ? 0.36f : 0.24f);
                 var overhaulInfoBannerBackground = isDark ? Color.FromArgb("#1F3A33") : Color.FromArgb("#E9FFF5");
                 var overhaulInfoBannerStroke = isDark ? Color.FromArgb("#3D7C67") : Color.FromArgb("#7DD3B0");
+                var modernBorderColor = Color.FromRgba(tertiary.Red, tertiary.Green, tertiary.Blue, isDark ? 0.48f : 0.24f);
+                var modernPlaceholderColor = Color.FromRgba(secondaryText.Red, secondaryText.Green, secondaryText.Blue, isDark ? 0.78f : 0.68f);
+                var foodbookApplyButtonBackground = Color.FromRgba(tertiary.Red, tertiary.Green, tertiary.Blue, isDark ? 0.34f : 0.16f);
+                var foodbookApplyButtonBorder = Color.FromRgba(tertiary.Red, tertiary.Green, tertiary.Blue, isDark ? 0.60f : 0.30f);
+                var foodbookApplyButtonText = isDark ? Lighten(tertiary, 0.34) : Darken(tertiary, 0.08);
 
                 app.Resources["OverhaulCardBackgroundColor"] = overhaulCardBackground;
                 app.Resources["OverhaulCardStrokeColor"] = overhaulCardStroke;
@@ -434,11 +526,23 @@ namespace Foodbook.Services
                 app.Resources["OverhaulAccentSoftColor"] = overhaulAccentSoft;
                 app.Resources["OverhaulInfoBannerBackgroundColor"] = overhaulInfoBannerBackground;
                 app.Resources["OverhaulInfoBannerStrokeColor"] = overhaulInfoBannerStroke;
+                app.Resources["ModernBorderColor"] = modernBorderColor;
+                app.Resources["ModernBorderColorDark"] = modernBorderColor;
+                app.Resources["ModernPlaceholderColor"] = modernPlaceholderColor;
+                app.Resources["FoodbookApplyButtonBackgroundColor"] = foodbookApplyButtonBackground;
+                app.Resources["FoodbookApplyButtonBorderColor"] = foodbookApplyButtonBorder;
+                app.Resources["FoodbookApplyButtonTextColor"] = foodbookApplyButtonText;
 
                 // Profile page visual tokens
-                var profileCardSurface = isDark ? Color.FromArgb("#282840") : Colors.White;
-                var profileCardStroke = isDark ? Color.FromArgb("#20FFFFFF") : Color.FromArgb("#22000000");
-                var profileSectionLabel = isDark ? Color.FromArgb("#80FFFFFF") : Color.FromArgb("#6B7280");
+                var profileCardSurface = isDark
+                    ? Darken(secondary, 0.68)
+                    : Lighten(secondary, 0.82);
+                var profileCardStroke = Color.FromRgba(primary.Red, primary.Green, primary.Blue, isDark ? 0.34f : 0.22f);
+                var profileSectionLabel = Color.FromRgba(
+                    secondaryText.Red,
+                    secondaryText.Green,
+                    secondaryText.Blue,
+                    isDark ? 0.82f : 0.74f);
                 var profilePlanRowBrush = new LinearGradientBrush(
                     new GradientStopCollection
                     {
@@ -447,9 +551,16 @@ namespace Foodbook.Services
                     },
                     new Point(0, 0),
                     new Point(1, 1));
-                var profilePlanRowBorder = Color.FromRgba(primary.Red, primary.Green, primary.Blue, isDark ? 0.40f : 0.32f);
-                var profilePlanActiveBg = Color.FromRgba(primary.Red, primary.Green, primary.Blue, isDark ? 0.30f : 0.20f);
+                var profilePlanRowBorder = Color.FromRgba(tertiary.Red, tertiary.Green, tertiary.Blue, isDark ? 0.46f : 0.30f);
+                var profilePlanActiveBg = Color.FromRgba(primary.Red, primary.Green, primary.Blue, isDark ? 0.34f : 0.22f);
                 var profilePlanActiveText = EnsureContrastEnhanced(ChooseReadableEnhanced(profilePlanActiveBg, Colors.White, Colors.Black), profilePlanActiveBg, RelativeLuminance(profilePlanActiveBg) > 0.45 ? Colors.Black : Colors.White);
+                var profilePlanSecondaryButtonBackground = Color.FromRgba(secondary.Red, secondary.Green, secondary.Blue, isDark ? 0.18f : 0.34f);
+                var profilePlanSecondaryButtonBorder = Color.FromRgba(tertiary.Red, tertiary.Green, tertiary.Blue, isDark ? 0.48f : 0.26f);
+                var profilePlanSecondaryButtonText = EnsureContrastEnhanced(
+                    ChooseReadableEnhanced(profilePlanSecondaryButtonBackground, Colors.White, Colors.Black),
+                    profilePlanSecondaryButtonBackground,
+                    RelativeLuminance(profilePlanSecondaryButtonBackground) > 0.45 ? Colors.Black : Colors.White);
+                var profilePlanDestructiveButtonText = isDark ? Color.FromArgb("#FF8A80") : Color.FromArgb("#C62828");
 
                 app.Resources["ProfileCardSurfaceColor"] = profileCardSurface;
                 app.Resources["ProfileCardStrokeColor"] = profileCardStroke;
@@ -458,12 +569,16 @@ namespace Foodbook.Services
                 app.Resources["ProfilePlanRowBorderColor"] = profilePlanRowBorder;
                 app.Resources["ProfilePlanActiveBadgeBackgroundColor"] = profilePlanActiveBg;
                 app.Resources["ProfilePlanActiveBadgeTextColor"] = profilePlanActiveText;
+                app.Resources["ProfilePlanSecondaryButtonBackgroundColor"] = profilePlanSecondaryButtonBackground;
+                app.Resources["ProfilePlanSecondaryButtonBorderColor"] = profilePlanSecondaryButtonBorder;
+                app.Resources["ProfilePlanSecondaryButtonTextColor"] = profilePlanSecondaryButtonText;
+                app.Resources["ProfilePlanDestructiveButtonTextColor"] = profilePlanDestructiveButtonText;
 
                 // Folder card colors (use translucent accents so the card feels subtle over page background)
                 // Restore translucency specifically for folder cards while page background remains opaque.
                 var folderBg = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 0.12);
                 var folderStroke = Color.FromRgba(primary.Red, primary.Green, primary.Blue, 0.32);
-                Color folderTextColor = frameTextColor;
+                var darkColorfulMode = isDark && _isColorfulBackgroundEnabled && !wallpaperEnabled;
 
                 if (wallpaperEnabled)
                 {
@@ -471,8 +586,6 @@ namespace Foodbook.Services
                     var opaqueSecondary = Color.FromRgb(secondary.Red, secondary.Green, secondary.Blue);
                     folderBg = opaqueSecondary;
                     folderStroke = isDark ? Lighten(opaqueSecondary, 0.18) : Darken(opaqueSecondary, 0.18);
-                    var candidateText = ChooseReadableEnhanced(opaqueSecondary, Colors.White, Color.FromArgb("#000000"));
-                    folderTextColor = EnsureContrastEnhanced(candidateText, opaqueSecondary, RelativeLuminance(opaqueSecondary) > 0.45 ? Colors.Black : Colors.White);
                 }
                 else
                 {
@@ -481,10 +594,38 @@ namespace Foodbook.Services
                          folderStroke = Color.FromArgb("#424242");
                      }
 
-                    var effectiveFolderBg = Color.FromRgb(folderBg.Red, folderBg.Green, folderBg.Blue);
-                    var candidateText = ChooseReadableEnhanced(effectiveFolderBg, Colors.White, Color.FromArgb("#000000"));
-                    folderTextColor = EnsureContrastEnhanced(candidateText, effectiveFolderBg, RelativeLuminance(effectiveFolderBg) > 0.45 ? Colors.Black : Colors.White);
+                    if (darkColorfulMode)
+                    {
+                        // Dark + colorful background theme overrides for folder readability.
+                        // "Same folder color + stronger border" themes.
+                        if (colorTheme is AppColorTheme.Bubblegum or AppColorTheme.Autumn or AppColorTheme.Forest or AppColorTheme.Nature or AppColorTheme.Default)
+                        {
+                            var folderBase = primary;
+                            folderBg = Color.FromRgba(folderBase.Red, folderBase.Green, folderBase.Blue, colorTheme == AppColorTheme.Bubblegum ? 0.30 : 0.28);
+                            folderStroke = Color.FromRgba(folderBase.Red, folderBase.Green, folderBase.Blue, colorTheme == AppColorTheme.Bubblegum ? 0.84 : 0.82);
+                        }
+                        // Sky: only sharpen folder (keep tone, emphasize edge).
+                        else if (colorTheme == AppColorTheme.Sky)
+                        {
+                            var folderBase = primary;
+                            folderBg = Color.FromRgba(folderBase.Red, folderBase.Green, folderBase.Blue, 0.16);
+                            folderStroke = Color.FromRgba(folderBase.Red, folderBase.Green, folderBase.Blue, 0.88);
+                        }
+                        // Mint/Navy/Vibrant/Sunset/Warm: use a different motif color for folder + clear border.
+                        else if (colorTheme is AppColorTheme.Mint or AppColorTheme.Navy or AppColorTheme.Vibrant or AppColorTheme.Sunset or AppColorTheme.Warm)
+                        {
+                            var folderBase = colorTheme == AppColorTheme.Mint
+                                ? Darken(tertiary, 0.18)
+                                : tertiary;
+
+                            folderBg = Color.FromRgba(folderBase.Red, folderBase.Green, folderBase.Blue, 0.34);
+                            folderStroke = Color.FromRgba(folderBase.Red, folderBase.Green, folderBase.Blue, 0.90);
+                        }
+                    }
                  }
+
+                // Keep folder text contrast deterministic per theme mode.
+                var folderTextColor = isDark ? Colors.White : Color.FromArgb("#1F1F1F");
 
                 app.Resources["FolderCardBackgroundColor"] = folderBg;
                 app.Resources["FolderCardStrokeColor"] = folderStroke;
@@ -621,8 +762,8 @@ namespace Foodbook.Services
                 [AppColorTheme.Forest] = new ThemeColors
                 {
                     Name = "Forest",
-                    PrimaryLight = Color.FromArgb("#1B5E20"), SecondaryLight = Color.FromArgb("#E8F5E9"), TertiaryLight = Color.FromArgb("#2E7D32"), AccentLight = Color.FromArgb("#388E3C"),
-                    PrimaryDark = Color.FromArgb("#66BB6A"), SecondaryDark = Color.FromArgb("#43A047"), TertiaryDark = Color.FromArgb("#388E3C"), AccentDark = Color.FromArgb("#81C784"),
+                    PrimaryLight = Color.FromArgb("#0c6106"), SecondaryLight = Color.FromArgb("#E8F5E9"), TertiaryLight = Color.FromArgb("#2E7D32"), AccentLight = Color.FromArgb("#388E3C"),
+                    PrimaryDark = Color.FromArgb("#609963"), SecondaryDark = Color.FromArgb("#37a63b"), TertiaryDark = Color.FromArgb("#388E3C"), AccentDark = Color.FromArgb("#81C784"),
                     PrimaryTextLight = Color.FromArgb("#1B5E20"), SecondaryTextLight = Color.FromArgb("#2E7D32"), PrimaryTextDark = Color.FromArgb("#E8F5E9"), SecondaryTextDark = Color.FromArgb("#C8E6C9")
                 },
                 [AppColorTheme.Autumn] = new ThemeColors
@@ -649,7 +790,7 @@ namespace Foodbook.Services
                 [AppColorTheme.Vibrant] = new ThemeColors
                 {
                     Name = "Vibrant",
-                    PrimaryLight = Color.FromArgb("#D32F2F"), SecondaryLight = Color.FromArgb("#FCE4EC"), TertiaryLight = Color.FromArgb("#B71C1C"), AccentLight = Color.FromArgb("#E91E63"),
+                    PrimaryLight = Color.FromArgb("#cf61a3"), SecondaryLight = Color.FromArgb("#FCE4EC"), TertiaryLight = Color.FromArgb("#b71c79"), AccentLight = Color.FromArgb("#E91E63"),
                     PrimaryDark = Color.FromArgb("#F48FB1"), SecondaryDark = Color.FromArgb("#EC407A"), TertiaryDark = Color.FromArgb("#AD1457"), AccentDark = Color.FromArgb("#F48FB1"),
                     PrimaryTextLight = Color.FromArgb("#B71C1C"), SecondaryTextLight = Color.FromArgb("#C2185B"), PrimaryTextDark = Color.FromArgb("#FCE4EC"), SecondaryTextDark = Color.FromArgb("#F8BBD9")
                 },
@@ -684,9 +825,9 @@ namespace Foodbook.Services
                 [AppColorTheme.Bubblegum] = new ThemeColors
                 {
                     Name = "Bubblegum",
-                    PrimaryLight = Color.FromArgb("#F48FB1"), SecondaryLight = Color.FromArgb("#E1F5FE"), TertiaryLight = Color.FromArgb("#F06292"), AccentLight = Color.FromArgb("#81D4FA"),
-                    PrimaryDark = Color.FromArgb("#F8BBD0"), SecondaryDark = Color.FromArgb("#4FC3F7"), TertiaryDark = Color.FromArgb("#EC407A"), AccentDark = Color.FromArgb("#29B6F6"),
-                    PrimaryTextLight = Color.FromArgb("#AD1457"), SecondaryTextLight = Color.FromArgb("#0288D1"), PrimaryTextDark = Color.FromArgb("#FCE4EC"), SecondaryTextDark = Color.FromArgb("#E1F5FE")
+                    PrimaryLight = Color.FromArgb("#f2acc4"), SecondaryLight = Color.FromArgb("#E1F5FE"), TertiaryLight = Color.FromArgb("#F06292"), AccentLight = Color.FromArgb("#a2defa"),
+                    PrimaryDark = Color.FromArgb("#fac5d7"), SecondaryDark = Color.FromArgb("#7fddfa"), TertiaryDark = Color.FromArgb("#ff6e9f"), AccentDark = Color.FromArgb("#6fcbfc"),
+                    PrimaryTextLight = Color.FromArgb("#AD1457"), SecondaryTextLight = Color.FromArgb("#009df2"), PrimaryTextDark = Color.FromArgb("#FCE4EC"), SecondaryTextDark = Color.FromArgb("#E1F5FE")
                 }
             };
         }
