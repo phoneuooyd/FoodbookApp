@@ -43,6 +43,30 @@ public class PlannerEditViewModel : INotifyPropertyChanged
         }
     }
 
+    private string _loadingStatus = T("LoadingStatus", "Loading...");
+    public string LoadingStatus
+    {
+        get => _loadingStatus;
+        set
+        {
+            if (_loadingStatus == value) return;
+            _loadingStatus = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private double _loadingProgress;
+    public double LoadingProgress
+    {
+        get => _loadingProgress;
+        set
+        {
+            if (Math.Abs(_loadingProgress - value) < 0.01) return;
+            _loadingProgress = value;
+            OnPropertyChanged();
+        }
+    }
+
     // Date properties - NO AUTO-RELOAD on change
     private DateTime _startDate = DateTime.Today;
     public DateTime StartDate
@@ -130,6 +154,8 @@ public class PlannerEditViewModel : INotifyPropertyChanged
         }
 
         IsLoading = true;
+        LoadingStatus = T("LoadingStatusPreparingData", "Preparing data...");
+        LoadingProgress = 0.1;
         _planId = planId;
 
         try
@@ -163,6 +189,8 @@ public class PlannerEditViewModel : INotifyPropertyChanged
             System.Diagnostics.Debug.WriteLine($"[PlannerEditVM]   Archived: {_currentPlan.IsArchived}");
 
             // Step 2: Load all recipes (for picker)
+            LoadingStatus = T("LoadingStatusLoadingRecipes", "Loading recipes...");
+            LoadingProgress = 0.25;
             var recipes = await _recipeService.GetRecipesAsync();
             Recipes.Clear();
             foreach (var recipe in recipes)
@@ -173,6 +201,8 @@ public class PlannerEditViewModel : INotifyPropertyChanged
 
             // Step 3: Load planned meals FOR THIS SPECIFIC PLAN ONLY
             // IMPORTANT: Use planId-based query, not date-based query
+            LoadingStatus = T("LoadingStatusLoadingPlannedMeals", "Loading planned meals...");
+            LoadingProgress = 0.5;
             var plannedMeals = await _plannerService.GetPlannedMealsAsync(planId);
             
             System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] Loaded {plannedMeals.Count} planned meals for plan {planId}:");
@@ -183,6 +213,8 @@ public class PlannerEditViewModel : INotifyPropertyChanged
             }
 
             // Step 4: Build days structure
+            LoadingStatus = T("LoadingStatusPreparingCalendar", "Preparing calendar...");
+            LoadingProgress = 0.7;
             Days.Clear();
 
             // Group meals by date
@@ -253,7 +285,10 @@ public class PlannerEditViewModel : INotifyPropertyChanged
             }
 
             // Ensure all days have the same number of meal slots (add empty slots if needed)
+            LoadingStatus = T("LoadingStatusFinalizing", "Finalizing...");
+            LoadingProgress = 0.9;
             AdjustMealsPerDayStructure();
+            LoadingProgress = 1.0;
 
             System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] ===== LOAD COMPLETE =====");
             System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] Final state:");
@@ -277,6 +312,8 @@ public class PlannerEditViewModel : INotifyPropertyChanged
         {
             // Turn off loading indicator immediately
             IsLoading = false;
+            LoadingStatus = T("LoadingStatus", "Loading...");
+            LoadingProgress = 0;
             System.Diagnostics.Debug.WriteLine("[PlannerEditVM] Loading indicator OFF");
         }
     }

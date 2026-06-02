@@ -5,10 +5,13 @@ using System.Windows.Input;
 using Foodbook.Models;
 using Foodbook.Services;
 using Foodbook.Views;
+using Foodbook.Views.Components;
 using FoodbookApp.Interfaces;
 using FoodbookApp.Localization;
 using Microsoft.Maui.Controls;
 using Microsoft.Extensions.DependencyInjection;
+using CommunityToolkit.Maui.Views;
+using CommunityToolkit.Maui.Extensions;
 
 namespace Foodbook.ViewModels;
 
@@ -209,24 +212,27 @@ public class PlannerListsViewModel : INotifyPropertyChanged
     {
         if (foodbook == null) return;
 
-        var startDateInput = await Shell.Current.DisplayPromptAsync(
-            T("ApplyFoodbookPromptTitle", "Apply Foodbook"),
-            T("ApplyFoodbookPromptMessage", "Enter start date (yyyy-MM-dd)"),
-            accept: T("Apply", "Apply"),
-            cancel: T("Cancel", "Cancel"),
-            initialValue: DateTime.Today.ToString("yyyy-MM-dd"));
-
-        if (startDateInput == null)
-            return;
-
-        if (!DateTime.TryParse(startDateInput, out var startDate))
+        var popup = new DatePickerPopup
         {
-            await Shell.Current.DisplayAlert(
-                T("ErrorTitle", "Error"),
-                T("InvalidDateFormatMessage", "Invalid date format."),
-                T("OK", "OK"));
+            TitleText = T("ApplyFoodbookPromptTitle", "Apply Foodbook"),
+            DateLabelText = T("ApplyFoodbookDateLabel", "Start date"),
+            ConfirmText = T("Apply", "Apply"),
+            CancelText = T("Cancel", "Cancel"),
+            SelectedDate = DateTime.Today
+        };
+
+        var host = Shell.Current?.CurrentPage ?? Application.Current?.MainPage;
+        if (host == null)
+        {
             return;
         }
+
+        await host.ShowPopupAsync(popup);
+        var selectedDate = await popup.ResultTask;
+        if (selectedDate == null)
+            return;
+
+        var startDate = selectedDate.Value;
 
         var endDate = startDate.Date.AddDays(Math.Max(1, foodbook.DurationDays) - 1);
         var hasOverlap = await _planService.HasOverlapAsync(startDate.Date, endDate);

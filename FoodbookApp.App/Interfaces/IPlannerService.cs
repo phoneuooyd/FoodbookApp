@@ -13,7 +13,9 @@ namespace FoodbookApp.Interfaces
         Task<List<PlannedMeal>> GetPlannedMealsAsync(Guid planId);
         Task<PlannedMeal?> GetPlannedMealAsync(Guid id);
         Task AddPlannedMealAsync(PlannedMeal meal);
+        Task AddPlannedMealsAsync(IEnumerable<PlannedMeal> meals);
         Task UpdatePlannedMealAsync(PlannedMeal meal);
         Task RemovePlannedMealAsync(Guid id);
+        Task RemovePlannedMealsAsync(IEnumerable<Guid> ids);
     }
 }

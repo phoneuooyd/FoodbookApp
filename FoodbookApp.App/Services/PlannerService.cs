@@ -70,6 +70,37 @@ namespace Foodbook.Services
             }
         }
 
+        public async Task AddPlannedMealsAsync(IEnumerable<PlannedMeal> meals)
+        {
+            var mealList = meals.ToList();
+            if (!mealList.Any()) return;
+
+            foreach (var meal in mealList)
+            {
+                if (meal.Id == Guid.Empty)
+                    meal.Id = Guid.NewGuid();
+            }
+
+            _context.PlannedMeals.AddRange(mealList);
+            await _context.SaveChangesAsync();
+
+            // Queue for sync (Insert)
+            if (_syncService != null)
+            {
+                foreach (var meal in mealList)
+                {
+                    try
+                    {
+                        await _syncService.QueueForSyncAsync(meal, SyncOperationType.Insert);
+                    }
+                    catch (Exception syncEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[PlannerService] Failed to queue sync: {syncEx.Message}");
+                    }
+                }
+            }
+        }
+
         public async Task UpdatePlannedMealAsync(PlannedMeal meal)
         {
             _context.PlannedMeals.Update(meal);
@@ -110,6 +141,36 @@ namespace Foodbook.Services
                     catch (Exception syncEx)
                     {
                         System.Diagnostics.Debug.WriteLine($"[PlannerService] Failed to queue sync: {syncEx.Message}");
+                    }
+                }
+            }
+        }
+
+        public async Task RemovePlannedMealsAsync(IEnumerable<Guid> ids)
+        {
+            var idList = ids.ToList();
+            if (!idList.Any()) return;
+
+            var meals = await _context.PlannedMeals.Where(pm => idList.Contains(pm.Id)).ToListAsync();
+            if (meals.Any())
+            {
+                _context.PlannedMeals.RemoveRange(meals);
+                await _context.SaveChangesAsync();
+
+                // Queue for sync (Delete)
+                if (_syncService != null)
+                {
+                    foreach (var meal in meals)
+                    {
+                        try
+                        {
+                            var deleteEntity = new PlannedMeal { Id = meal.Id };
+                            await _syncService.QueueForSyncAsync(deleteEntity, SyncOperationType.Delete);
+                        }
+                        catch (Exception syncEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[PlannerService] Failed to queue sync: {syncEx.Message}");
+                        }
                     }
                 }
             }

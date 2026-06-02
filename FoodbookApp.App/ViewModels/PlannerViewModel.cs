@@ -6,6 +6,7 @@ using Foodbook.Models;
 using FoodbookApp;
 using FoodbookApp.Interfaces;
 using FoodbookApp.Localization;
+using FoodbookApp.Utils;
 using Microsoft.Maui.Controls;
 
 namespace Foodbook.ViewModels;
@@ -29,6 +30,7 @@ public class PlannerViewModel : INotifyPropertyChanged
 
     private bool _isEditing;
     private Guid? _editingPlanId;
+    private bool _isSaveInProgress;
     
     // NEW: Flag to suppress auto-reload when user is actively editing
     private bool _suppressAutoReload = false;
@@ -47,6 +49,18 @@ public class PlannerViewModel : INotifyPropertyChanged
         {
             if (_isLoading == value) return;
             _isLoading = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private bool _isSaving;
+    public bool IsSaving
+    {
+        get => _isSaving;
+        set
+        {
+            if (_isSaving == value) return;
+            _isSaving = value;
             OnPropertyChanged();
         }
     }
@@ -156,6 +170,9 @@ public class PlannerViewModel : INotifyPropertyChanged
         DecreasePortionsCommand = new Command<PlannedMeal>(DecreasePortions);
         SaveCommand = new Command(async () =>
         {
+            if (_isSaveInProgress) return;
+            _isSaveInProgress = true;
+
             try 
             {
                 var plan = await SaveAsync();
@@ -190,6 +207,11 @@ public class PlannerViewModel : INotifyPropertyChanged
                     T("ErrorTitle", "Error"),
                     T("UnexpectedSaveErrorMessage", "An unexpected error occurred while saving."),
                     ButtonResources.OK);
+            }
+            finally
+            {
+                _isSaveInProgress = false;
+                IsSaving = false;
             }
         });
         CancelCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
@@ -779,6 +801,8 @@ public class PlannerViewModel : INotifyPropertyChanged
                 }
             }
 
+            IsSaving = true;
+
             Plan plan;
             if (_editingPlanId.HasValue)
             {
@@ -813,14 +837,17 @@ public class PlannerViewModel : INotifyPropertyChanged
             if (plan.Id != Guid.Empty)
             {
                 var existing = await _plannerService.GetPlannedMealsAsync(plan.Id);
-                foreach (var m in existing)
-                    await _plannerService.RemovePlannedMealAsync(m.Id);
+                if (existing.Any())
+                {
+                    await _plannerService.RemovePlannedMealsAsync(existing.Select(m => m.Id));
+                }
 
                 System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Removed {existing.Count} old meals");
             }
 
             // Add meals for current plan only
             int savedMealsCount = 0;
+            var mealsToAdd = new List<PlannedMeal>();
             foreach (var day in Days)
             {
                 foreach (var meal in day.Meals)
@@ -829,7 +856,7 @@ public class PlannerViewModel : INotifyPropertyChanged
                         meal.RecipeId = meal.Recipe.Id;
                     if (meal.RecipeId != Guid.Empty)
                     {
-                        await _plannerService.AddPlannedMealAsync(new PlannedMeal
+                        mealsToAdd.Add(new PlannedMeal
                         {
                             RecipeId = meal.RecipeId,
                             Date = meal.Date,
@@ -839,6 +866,11 @@ public class PlannerViewModel : INotifyPropertyChanged
                         savedMealsCount++;
                     }
                 }
+            }
+
+            if (mealsToAdd.Any())
+            {
+                await _plannerService.AddPlannedMealsAsync(mealsToAdd);
             }
 
             System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Saved {savedMealsCount} meals for plan {plan.Id}");
@@ -991,12 +1023,16 @@ public class PlannerViewModel : INotifyPropertyChanged
     {
         try
         {
+            var format = T("ShoppingListForPlannerFormat", "Shopping list: {0}");
+            var title = string.Format(format, plan.Title);
+
             var newShoppingPlan = new Plan
             {
                 StartDate = plan.StartDate,
                 EndDate = plan.EndDate,
                 Type = PlanType.ShoppingList,
-                IsArchived = false
+                IsArchived = false,
+                Title = title
             };
             await _planService.AddPlanAsync(newShoppingPlan);
             System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Created new shopping list plan with ID: {newShoppingPlan.Id}");
