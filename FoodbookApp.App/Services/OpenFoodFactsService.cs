@@ -15,7 +15,7 @@ public class OpenFoodFactsService : IOpenFoodFactsService
 
     public async Task<OpenFoodFactsProductResult?> GetProductByBarcodeAsync(string barcode)
     {
-        var url = $"https://world.openfoodfacts.org/api/v3.6/product/{Uri.EscapeDataString(barcode)}.json";
+        var url = $"https://world.openfoodfacts.net/api/v2/product/{Uri.EscapeDataString(barcode)}";
         System.Diagnostics.Debug.WriteLine($"[OpenFoodFactsService] GET {url}");
         try
         {
@@ -35,8 +35,10 @@ public class OpenFoodFactsService : IOpenFoodFactsService
             var content = await response.Content.ReadAsStringAsync();
             System.Diagnostics.Debug.WriteLine($"[OpenFoodFactsService] Body length={content.Length} for barcode={barcode}");
             var root = JObject.Parse(content);
-            var apiStatus = root["status"]?.Value<int>();
-            System.Diagnostics.Debug.WriteLine($"[OpenFoodFactsService] API status={apiStatus} for barcode={barcode}");
+
+            var statusRaw = root["status"]?.ToString();
+            int.TryParse(statusRaw, out var apiStatus);
+            System.Diagnostics.Debug.WriteLine($"[OpenFoodFactsService] API status_raw='{statusRaw}' parsed={apiStatus} for barcode={barcode}");
 
             if (apiStatus != 1)
             {
@@ -99,7 +101,7 @@ public class OpenFoodFactsService : IOpenFoodFactsService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[OpenFoodFactsService] EXCEPTION for barcode={barcode}: {ex.GetType().Name}: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[OpenFoodFactsService] EXCEPTION for barcode={barcode}: {ex}");
             return null;
         }
     }

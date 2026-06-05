@@ -308,7 +308,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
             NavigationPage.SetHasNavigationBar(scannerPage, false);
             await Shell.Current.Navigation.PushModalAsync(new NavigationPage(scannerPage));
 
-            var result = BarcodeScannerPage.LastResult;
+            var result = await scannerPage.ScannerTask;
             if (result != null)
             {
                 ApplyProductData(result);
