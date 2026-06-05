@@ -254,46 +254,15 @@
             </Grid>
         </Grid>
 
-        <Grid Grid.RowSpan="2"
-              IsVisible="{Binding IsLoading}"
-              BackgroundColor="#80000000"
-              ZIndex="10">
-            <Border HorizontalOptions="Center"
-                    VerticalOptions="Center"
-                    StrokeThickness="0"
-                    BackgroundColor="{DynamicResource FrameBackgroundColor}"
-                    StrokeShape="RoundRectangle 16"
-                    Padding="20"
-                    WidthRequest="260">
-                <VerticalStackLayout Spacing="8">
-                    <ActivityIndicator IsRunning="{Binding IsLoading}"
-                                       Color="{DynamicResource Primary}"
-                                       WidthRequest="36"
-                                       HeightRequest="36" />
-                    <Label Text="{Binding LoadingStatus, FallbackValue=Loading...}"
-                           FontSize="14"
-                           FontAttributes="Bold"
-                           TextColor="{DynamicResource FrameTextColor}"
-                           HorizontalTextAlignment="Center" />
-                    <ProgressBar Progress="{Binding LoadingProgress}"
-                                 ProgressColor="{DynamicResource Primary}"
-                                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
-                                 HeightRequest="6" />
-                    <Label FontSize="12"
-                           HorizontalTextAlignment="Center"
-                           TextColor="{DynamicResource Gray500}">
-                        <Label.Text>
-                            <MultiBinding StringFormat="{}{0:P0}">
-                                <Binding Path="LoadingProgress" />
-                            </MultiBinding>
-                        </Label.Text>
-                    </Label>
-                    <Label Text="{loc:Translate Resource=PlannerPageResources, Key=LoadingTip}"
-                           FontSize="12"
-                           TextColor="{DynamicResource Gray500}"
-                           HorizontalTextAlignment="Center" />
-                </VerticalStackLayout>
-            </Border>
-        </Grid>
+        <components:UniversalSpinnerComponent
+            Grid.RowSpan="2"
+            ZIndex="10"
+            IsLoading="{Binding IsLoading}"
+            IsSaving="{Binding IsSaving}"
+            LoadingStatus="{Binding LoadingStatus}"
+            LoadingProgress="{Binding LoadingProgress}"
+            ShowProgress="True"
+            ShowTip="True"
+            TipText="{loc:Translate Resource=PlannerPageResources, Key=LoadingTip}" />
     </Grid>
 </ContentPage>

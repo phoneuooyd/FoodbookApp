@@ -139,30 +139,10 @@
 
         </components:TabComponent>
 
-        <!-- Loading overlay (same design as PlannerPage) -->
-        <Grid Grid.RowSpan="2"
-              IsVisible="{Binding IsLoading}"
-              BackgroundColor="#80000000"
-              ZIndex="10">
-            <Border HorizontalOptions="Center"
-                    VerticalOptions="Center"
-                    StrokeThickness="0"
-                    BackgroundColor="{DynamicResource FrameBackgroundColor}"
-                    StrokeShape="RoundRectangle 16"
-                    Padding="20"
-                    WidthRequest="260">
-                <VerticalStackLayout Spacing="8">
-                    <ActivityIndicator IsRunning="{Binding IsLoading}"
-                                       Color="{DynamicResource Primary}"
-                                       WidthRequest="36"
-                                       HeightRequest="36" />
-                    <Label Text="Ładowanie..."
-                           FontSize="14"
-                           FontAttributes="Bold"
-                           TextColor="{DynamicResource FrameTextColor}"
-                           HorizontalTextAlignment="Center" />
-                </VerticalStackLayout>
-            </Border>
-        </Grid>
+        <components:UniversalSpinnerComponent
+            Grid.RowSpan="2"
+            ZIndex="10"
+            IsLoading="{Binding IsLoading}"
+            LoadingStatus="Ładowanie..." />
     </Grid>
 </ContentPage>
