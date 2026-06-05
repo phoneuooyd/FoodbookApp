@@ -7,8 +7,8 @@
   <data name="Title" xml:space="preserve"><value>Einkaufslisten</value></data>
   <data name="EmptyTitle" xml:space="preserve"><value>Keine Listen</value></data>
   <data name="EmptyHint" xml:space="preserve"><value>Liste im Planer erstellen</value></data>
-  <data name="DeleteConfirmTitle" xml:space="preserve"><value>Loschen</value></data>
-  <data name="DeleteConfirmMessage" xml:space="preserve"><value>Mochtest du diese Einkaufsliste wirklich dauerhaft loschen?</value></data>
+  <data name="DeleteConfirmTitle" xml:space="preserve"><value>Löschen</value></data>
+  <data name="DeleteConfirmMessage" xml:space="preserve"><value>Möchtest du diese Einkaufsliste wirklich dauerhaft löschen?</value></data>
   <data name="CreateListTitleFormat" xml:space="preserve"><value>Einkaufsliste ({0})</value></data>
   <data name="CreateListNamePromptTitle" xml:space="preserve"><value>Neue Einkaufsliste</value></data>
   <data name="CreateListNamePromptMessage" xml:space="preserve"><value>Name der Einkaufsliste eingeben</value></data>

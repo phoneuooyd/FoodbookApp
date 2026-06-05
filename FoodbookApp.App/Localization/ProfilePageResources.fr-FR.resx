@@ -101,8 +101,8 @@
   <data name="RegisterServiceMissingMessage" xml:space="preserve"><value>Service d'authentification introuvable.</value></data>
   <data name="PasswordsDoNotMatch" xml:space="preserve"><value>Les mots de passe ne correspondent pas.</value></data>
   <data name="RegisterInProgress" xml:space="preserve"><value>Inscription en cours...</value></data>
-  <data name="RegisterConfirmEmailMessage" xml:space="preserve"><value>Verifiez votre boite e-mail pour confirmer l'inscription.</value></data>
-  <data name="RegisterSuccessMessage" xml:space="preserve"><value>Le compte a ete cree.</value></data>
+  <data name="RegisterConfirmEmailMessage" xml:space="preserve"><value>Vérifiez votre boîte e-mail pour confirmer l'inscription.</value></data>
+  <data name="RegisterSuccessMessage" xml:space="preserve"><value>Le compte a été créé.</value></data>
   <data name="HeroRecipesCountLabel" xml:space="preserve"><value>Recettes</value></data>
   <data name="HeroPlansCountLabel" xml:space="preserve"><value>Plans</value></data>
   <data name="HeroListsCountLabel" xml:space="preserve"><value>Listes</value></data>

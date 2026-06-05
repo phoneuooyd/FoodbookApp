@@ -62,40 +62,40 @@
     <value>Witaj w FoodBook</value>
   </data>
   <data name="WelcomeMessage" xml:space="preserve">
-    <value>Skonfigurujmy Twoja aplikacje</value>
+    <value>Skonfigurujmy Twoją aplikację</value>
   </data>
   <data name="LanguageSection" xml:space="preserve">
-    <value>Wybierz jezyk</value>
+    <value>Wybierz język</value>
   </data>
   <data name="LanguageDescription" xml:space="preserve">
     <value>Wybierz jezyk interfejsu aplikacji</value>
   </data>
   <data name="IngredientsSection" xml:space="preserve">
-    <value>Podstawowe skladniki</value>
+    <value>Podstawowe składniki</value>
   </data>
   <data name="IngredientsDescription" xml:space="preserve">
-    <value>Czy chcesz zainstalowac zestaw podstawowych skladnikow na start?</value>
+    <value>Czy chcesz zainstalować zestaw podstawowych składników na start?</value>
   </data>
   <data name="IngredientsDetails" xml:space="preserve">
-    <value>Zostana dodane popularne skladniki jak jajka, mleko, maka itp. z informacjami odzywczymi. Zawsze mozesz dodac wlasne skladniki pozniej.</value>
+    <value>Zostaną dodane popularne składniki jak jajka, mleko, mąka itp. z informacjami odżywczymi. Zawsze możesz dodać własne składniki później.</value>
   </data>
   <data name="YesInstallIngredients" xml:space="preserve">
     <value>Tak, zainstaluj podstawowe skladniki</value>
   </data>
   <data name="NoInstallIngredients" xml:space="preserve">
-    <value>Nie, dodam wlasne</value>
+    <value>Nie, dodam własne</value>
   </data>
   <data name="CompleteSetupButton" xml:space="preserve">
-    <value>Zakoncz konfiguracje</value>
+    <value>Zakończ konfigurację</value>
   </data>
   <data name="StatusCompleting" xml:space="preserve">
-    <value>Konczenie konfiguracji...</value>
+    <value>Kończenie konfiguracji...</value>
   </data>
   <data name="StatusLanguage" xml:space="preserve">
-    <value>Preferencje jezykowe zapisane...</value>
+    <value>Preferencje językowe zapisane...</value>
   </data>
   <data name="StatusIngredients" xml:space="preserve">
-    <value>Instalowanie podstawowych skladnikow...</value>
+    <value>Instalowanie podstawowych składników...</value>
   </data>
   <data name="StatusFinalizing" xml:space="preserve">
     <value>Finalizowanie konfiguracji...</value>
@@ -104,6 +104,6 @@
     <value>Konfiguracja zakonczona!</value>
   </data>
   <data name="StatusError" xml:space="preserve">
-    <value>Konfiguracja zakonczona z pewnymi problemami, ale mozesz kontynuowac korzystanie z aplikacji.</value>
+    <value>Konfiguracja zakończona z pewnymi problemami, ale możesz kontynuować korzystanie z aplikacji.</value>
   </data>
 </root>

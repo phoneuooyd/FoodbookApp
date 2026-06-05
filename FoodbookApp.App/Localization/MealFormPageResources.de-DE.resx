@@ -7,7 +7,7 @@
   <data name="Title" xml:space="preserve"><value>Mahlzeit planen</value></data>
   <data name="NewMealTitle" xml:space="preserve"><value>Neue Mahlzeit</value></data>
   <data name="EditMealTitle" xml:space="preserve"><value>Mahlzeit bearbeiten</value></data>
-  <data name="AddMealButtonText" xml:space="preserve"><value>Mahlzeit hinzufugen</value></data>
-  <data name="SaveChangesButtonText" xml:space="preserve"><value>Anderungen speichern</value></data>
-  <data name="ValidationSelectRecipe" xml:space="preserve"><value>Wahlen Sie ein Rezept</value></data>
+  <data name="AddMealButtonText" xml:space="preserve"><value>Mahlzeit hinzufügen</value></data>
+  <data name="SaveChangesButtonText" xml:space="preserve"><value>Änderungen speichern</value></data>
+  <data name="ValidationSelectRecipe" xml:space="preserve"><value>Wählen Sie ein Rezept</value></data>
 </root>

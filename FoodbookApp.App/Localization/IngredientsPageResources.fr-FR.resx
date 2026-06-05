@@ -4,11 +4,11 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="Title" xml:space="preserve"><value>Ingredients</value></data>
-  <data name="SearchPlaceholder" xml:space="preserve"><value>Rechercher des ingredients...</value></data>
-  <data name="AddButton" xml:space="preserve"><value>Ajouter ingredient</value></data>
-  <data name="EmptyTitle" xml:space="preserve"><value>Aucun ingredient</value></data>
-  <data name="EmptyHint" xml:space="preserve"><value>Appuyer sur Ajouter ingredient</value></data>
+  <data name="Title" xml:space="preserve"><value>Ingrédients</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Rechercher des ingrédients...</value></data>
+  <data name="AddButton" xml:space="preserve"><value>Ajouter ingrédient</value></data>
+  <data name="EmptyTitle" xml:space="preserve"><value>Aucun ingrédient</value></data>
+  <data name="EmptyHint" xml:space="preserve"><value>Appuyer sur Ajouter ingrédient</value></data>
   <data name="EmptyIngredientsTitle" xml:space="preserve"><value>Aucun ingrédient</value></data>
   <data name="EmptyIngredientsMessage" xml:space="preserve"><value>Créer une liste d'ingrédients d'exemple ?</value></data>
   <data name="Yes" xml:space="preserve"><value>Oui</value></data>

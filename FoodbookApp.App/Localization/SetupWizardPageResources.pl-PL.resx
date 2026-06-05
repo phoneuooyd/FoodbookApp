@@ -65,37 +65,37 @@
     <value>Witaj w FoodBook</value>
   </data>
   <data name="HeaderSubtitle" xml:space="preserve">
-    <value>Skonfiguruj aplikacje w kilku szybkich krokach</value>
+    <value>Skonfiguruj aplikację w kilku szybkich krokach</value>
   </data>
   <data name="LanguageSectionTitle" xml:space="preserve">
-    <value>Wybierz jezyk</value>
+    <value>Wybierz język</value>
   </data>
   <data name="LanguageSectionDescription" xml:space="preserve">
     <value>Wybierz jezyk interfejsu aplikacji</value>
   </data>
   <data name="IngredientsSectionTitle" xml:space="preserve">
-    <value>Podstawowe skladniki</value>
+    <value>Podstawowe składniki</value>
   </data>
   <data name="IngredientsSectionQuestion" xml:space="preserve">
-    <value>Czy chcesz zainstalowac zestaw podstawowych skladnikow na poczatek?</value>
+    <value>Czy chcesz zainstalować zestaw podstawowych składników na początek?</value>
   </data>
   <data name="IngredientsSectionInfo" xml:space="preserve">
-    <value>Zostanie dodane kilkaset popularnych skladnikow jak jajka, mleko, maka, etc. z informacjami odzywczymi. Zawsze mozesz dodac wlasne skladniki pozniej.</value>
+    <value>Zostanie dodane kilkaset popularnych składników jak jajka, mleko, mąka, etc. z informacjami odżywczymi. Zawsze możesz dodać własne składniki później.</value>
   </data>
   <data name="IngredientsYes" xml:space="preserve">
     <value>Tak, zainstaluj ~250 podstawowych skladnikow</value>
   </data>
   <data name="IngredientsNo" xml:space="preserve">
-    <value>Nie, dodam wlasne</value>
+    <value>Nie, dodam własne</value>
   </data>
   <data name="CompleteSetupButton" xml:space="preserve">
-    <value>Zakoncz konfiguracje</value>
+    <value>Zakończ konfigurację</value>
   </data>
   <data name="WelcomeStepTitle" xml:space="preserve">
     <value>Szybka konfiguracja</value>
   </data>
   <data name="WelcomeStepDescription" xml:space="preserve">
-    <value>W kilku krokach ustawisz logowanie, plan i domyslne preferencje aplikacji.</value>
+    <value>W kilku krokach ustawisz logowanie, plan i domyślne preferencje aplikacji.</value>
   </data>
   <data name="StartSetupButton" xml:space="preserve">
     <value>Rozpocznij</value>
@@ -107,25 +107,25 @@
     <value>Konfiguracja konta</value>
   </data>
   <data name="LoginSectionDescription" xml:space="preserve">
-    <value>Zaloguj sie lub utworz konto, aby synchronizowac dane.</value>
+    <value>Zaloguj się lub utwórz konto, aby synchronizować dane.</value>
   </data>
   <data name="EmailPlaceholder" xml:space="preserve">
     <value>Email</value>
   </data>
   <data name="PasswordPlaceholder" xml:space="preserve">
-    <value>Haslo</value>
+    <value>Hasło</value>
   </data>
   <data name="ConfirmPasswordPlaceholder" xml:space="preserve">
-    <value>Potwierdz haslo</value>
+    <value>Potwierdź hasło</value>
   </data>
   <data name="LoginSubmitButton" xml:space="preserve">
-    <value>Zaloguj sie</value>
+    <value>Zaloguj się</value>
   </data>
   <data name="RegisterSubmitButton" xml:space="preserve">
-    <value>Utworz konto</value>
+    <value>Utwórz konto</value>
   </data>
   <data name="ToggleModeButton" xml:space="preserve">
-    <value>Przelacz tryb logowanie/rejestracja</value>
+    <value>Przełącz tryb logowania/rejestracji</value>
   </data>
   <data name="ContinueWithoutAccountButton" xml:space="preserve">
     <value>Kontynuuj bez konta</value>
@@ -134,13 +134,13 @@
     <value>Wybierz plan</value>
   </data>
   <data name="PlanSectionDescription" xml:space="preserve">
-    <value>Po zalogowaniu mozesz wybrac dowolny plan. Tryb goscia pozostawia tylko plan Free.</value>
+    <value>Po zalogowaniu możesz wybrać dowolny plan. Tryb gościa pozostawia tylko plan Free.</value>
   </data>
   <data name="FreePlanTitle" xml:space="preserve">
     <value>Free</value>
   </data>
   <data name="FreePlanDescription" xml:space="preserve">
-    <value>Podstawowe przepisy, planer i lista zakupow.</value>
+    <value>Podstawowe przepisy, planer i lista zakupów.</value>
   </data>
   <data name="ChooseFreePlanButton" xml:space="preserve">
     <value>Wybierz Free</value>
@@ -179,16 +179,16 @@
     <value>Czcionka</value>
   </data>
   <data name="GuestPlanLockedInfo" xml:space="preserve">
-    <value>Wybrano tryb goscia: plan Free jest ustawiony automatycznie, a Premium jest niedostepny bez konta.</value>
+    <value>Wybrano tryb gościa: plan Free jest ustawiony automatycznie, a Premium jest niedostępny bez konta.</value>
   </data>
   <data name="Step1Label" xml:space="preserve">
     <value>Konfigurator · Krok 1 z 5</value>
   </data>
   <data name="Step1Title" xml:space="preserve">
-    <value>Wybierz jezyk</value>
+    <value>Wybierz język</value>
   </data>
   <data name="Step1Subtitle" xml:space="preserve">
-    <value>W jakim jezyku chcesz korzystac z FoodBook?</value>
+    <value>W jakim języku chcesz korzystać z FoodBook?</value>
   </data>
   <data name="Step2Label" xml:space="preserve">
     <value>Konfigurator · Krok 2 z 5</value>
@@ -233,7 +233,7 @@
     <value>☀️ Jasny</value>
   </data>
   <data name="FreePlanBadge" xml:space="preserve">
-    <value>Bezplatny</value>
+    <value>Bezpłatny</value>
   </data>
   <data name="PremiumPlanBadge" xml:space="preserve">
     <value>✨ Polecany</value>
@@ -242,16 +242,16 @@
     <value>0 zl / zawsze</value>
   </data>
   <data name="PremiumPlanPrice" xml:space="preserve">
-    <value>9,99 zl / miesiac</value>
+    <value>9,99 zł / miesiąc</value>
   </data>
   <data name="FreeFeature1" xml:space="preserve"><value>✓ Przepisy bez limitu</value></data>
-  <data name="FreeFeature2" xml:space="preserve"><value>✓ Planer posilkow (3 aktywne)</value></data>
-  <data name="FreeFeature3" xml:space="preserve"><value>✓ Lista zakupow</value></data>
-  <data name="FreeFeature4" xml:space="preserve"><value>✓ Import przepisow z internetu</value></data>
+  <data name="FreeFeature2" xml:space="preserve"><value>✓ Planer posiłków (3 aktywne)</value></data>
+  <data name="FreeFeature3" xml:space="preserve"><value>✓ Lista zakupów</value></data>
+  <data name="FreeFeature4" xml:space="preserve"><value>✓ Import przepisów z internetu</value></data>
   <data name="PremiumFeature1" xml:space="preserve"><value>✓ Wszystko z planu Free</value></data>
-  <data name="PremiumFeature2" xml:space="preserve"><value>✓ AI planer posilkow</value></data>
+  <data name="PremiumFeature2" xml:space="preserve"><value>✓ AI planer posiłków</value></data>
   <data name="PremiumFeature3" xml:space="preserve"><value>✓ AI agent przepisow</value></data>
-  <data name="PremiumFeature4" xml:space="preserve"><value>✓ Szablony tygodniowe i miesieczne</value></data>
-  <data name="PremiumFeature5" xml:space="preserve"><value>✓ Archiwum planow bez limitu</value></data>
-  <data name="PremiumFeature6" xml:space="preserve"><value>✓ Premium paczki przepisow</value></data>
+  <data name="PremiumFeature4" xml:space="preserve"><value>✓ Szablony tygodniowe i miesięczne</value></data>
+  <data name="PremiumFeature5" xml:space="preserve"><value>✓ Archiwum planów bez limitu</value></data>
+  <data name="PremiumFeature6" xml:space="preserve"><value>✓ Premium paczki przepisów</value></data>
 </root>

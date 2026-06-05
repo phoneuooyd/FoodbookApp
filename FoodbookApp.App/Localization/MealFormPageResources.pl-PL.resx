@@ -16,13 +16,13 @@
     <value>Zaplanuj posiłek</value>
   </data>
   <data name="NewMealTitle" xml:space="preserve">
-    <value>Nowy posilek</value>
+    <value>Nowy posiłek</value>
   </data>
   <data name="EditMealTitle" xml:space="preserve">
-    <value>Edytuj posilek</value>
+    <value>Edytuj posiłek</value>
   </data>
   <data name="AddMealButtonText" xml:space="preserve">
-    <value>Dodaj posilek</value>
+    <value>Dodaj posiłek</value>
   </data>
   <data name="SaveChangesButtonText" xml:space="preserve">
     <value>Zapisz zmiany</value>

@@ -4,17 +4,17 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="Title" xml:space="preserve"><value>Ubersicht</value></data>
+  <data name="Title" xml:space="preserve"><value>Übersicht</value></data>
   <data name="Welcome" xml:space="preserve"><value>Willkommen bei Foodbook</value></data>
   <data name="Subtitle" xml:space="preserve"><value>Dein personlicher Kochassistent</value></data>
   <data name="Recipes" xml:space="preserve"><value>Rezepte</value></data>
   <data name="SavedRecipes" xml:space="preserve"><value>Gespeicherte Rezepte</value></data>
-  <data name="Plans" xml:space="preserve"><value>Plane</value></data>
+  <data name="Plans" xml:space="preserve"><value>Pläne</value></data>
   <data name="ActiveLists" xml:space="preserve"><value>Aktive Listen</value></data>
   <data name="PlannedMealsHeader" xml:space="preserve"><value>Geplante Mahlzeiten</value></data>
-  <data name="ClickRecipeHint" xml:space="preserve"><value>Tippe ein Rezept an fur Zutaten</value></data>
-  <data name="PlannedMealsOpenStatsHint" xml:space="preserve"><value>Tippe hier, um Ernahrungsstatistiken zu offnen</value></data>
-  <data name="NutritionStatsHeader" xml:space="preserve"><value>Ernahrungsstatistiken</value></data>
+  <data name="ClickRecipeHint" xml:space="preserve"><value>Tippe ein Rezept an für Zutaten</value></data>
+  <data name="PlannedMealsOpenStatsHint" xml:space="preserve"><value>Tippe hier, um Ernährungsstatistiken zu öffnen</value></data>
+  <data name="NutritionStatsHeader" xml:space="preserve"><value>Ernährungsstatistiken</value></data>
   <data name="Calories" xml:space="preserve"><value>Kalorien</value></data>
   <data name="Protein" xml:space="preserve"><value>Protein</value></data>
   <data name="Carbs" xml:space="preserve"><value>Kohlenhydrate</value></data>
@@ -22,11 +22,11 @@
   <data name="NoNutritionData" xml:space="preserve"><value>Keine Daten - plane Mahlzeiten</value></data>
   <data name="Archive" xml:space="preserve"><value>Archiv</value></data>
   <data name="InArchive" xml:space="preserve"><value>Im Archiv</value></data>
-  <data name="GoToArchive" xml:space="preserve"><value>Offnen</value></data>
+  <data name="GoToArchive" xml:space="preserve"><value>Öffnen</value></data>
   <data name="Settings" xml:space="preserve"><value>Einstellungen</value></data>
   <data name="Customize" xml:space="preserve"><value>Anpassen</value></data>
   <data name="ComingSoon" xml:space="preserve"><value>Bald</value></data>
-  <data name="GoToSettings" xml:space="preserve"><value>Offnen</value></data>
+  <data name="GoToSettings" xml:space="preserve"><value>Öffnen</value></data>
   <data name="ExitAppConfirmation" xml:space="preserve">
     <value>Möchten Sie die Anwendung schließen?</value>
   </data>
@@ -45,11 +45,11 @@
 	<data name="PortionsFormat" xml:space="preserve">
   <value>({0} Portionen)</value>
 </data>
-  <data name="StatsPeriodPickerTitle" xml:space="preserve"><value>Zeitraum fur Statistiken wahlen</value></data>
+  <data name="StatsPeriodPickerTitle" xml:space="preserve"><value>Zeitraum für Statistiken wählen</value></data>
   <data name="PlanOptionLabel" xml:space="preserve"><value>Plan</value></data>
-  <data name="NoPlansTitle" xml:space="preserve"><value>Keine Plane</value></data>
-  <data name="NoPlansMessage" xml:space="preserve"><value>Keine verfugbaren Plane zur Auswahl.</value></data>
-  <data name="PlanPickerTitle" xml:space="preserve"><value>Plan auswahlen</value></data>
+  <data name="NoPlansTitle" xml:space="preserve"><value>Keine Pläne</value></data>
+  <data name="NoPlansMessage" xml:space="preserve"><value>Keine verfügbaren Pläne zur Auswahl.</value></data>
+  <data name="PlanPickerTitle" xml:space="preserve"><value>Plan auswählen</value></data>
   <data name="CustomDateStartTitle" xml:space="preserve"><value>Startdatum</value></data>
   <data name="CustomDateStartPrompt" xml:space="preserve"><value>Startdatum eingeben (dd.mm.yyyy):</value></data>
   <data name="CustomDateStartPlaceholder" xml:space="preserve"><value>z.B. 01.01.2024</value></data>
@@ -59,19 +59,19 @@
   <data name="CustomDateRangeSetTitle" xml:space="preserve"><value>Zeitraum gesetzt</value></data>
   <data name="CustomDateRangeSetMessageFormat" xml:space="preserve"><value>Filter gesetzt auf:{0}{1} - {2}</value></data>
   <data name="ErrorTitle" xml:space="preserve"><value>Fehler</value></data>
-  <data name="CustomDateRangeInvalidOrderMessage" xml:space="preserve"><value>Enddatum muss grosser oder gleich dem Startdatum sein.</value></data>
-  <data name="CustomDateRangeInvalidEndFormatMessage" xml:space="preserve"><value>Ungultiges Enddatumformat. Verwende dd.mm.yyyy.</value></data>
-  <data name="CustomDateRangeInvalidStartFormatMessage" xml:space="preserve"><value>Ungultiges Startdatumformat. Verwende dd.mm.yyyy.</value></data>
+  <data name="CustomDateRangeInvalidOrderMessage" xml:space="preserve"><value>Enddatum muss größer oder gleich dem Startdatum sein.</value></data>
+  <data name="CustomDateRangeInvalidEndFormatMessage" xml:space="preserve"><value>Ungültiges Enddatumformat. Verwende dd.mm.yyyy.</value></data>
+  <data name="CustomDateRangeInvalidStartFormatMessage" xml:space="preserve"><value>Ungültiges Startdatumformat. Verwende dd.mm.yyyy.</value></data>
   <data name="CustomDateRangeGeneralErrorMessage" xml:space="preserve"><value>Beim Setzen des Datumsbereichs ist ein Fehler aufgetreten.</value></data>
   <data name="RecipeIngredientsLoadErrorMessage" xml:space="preserve"><value>Rezept konnte nicht geladen werden.</value></data>
   <data name="RecipeDetailsLoadErrorMessage" xml:space="preserve"><value>Rezeptdetails konnten nicht geladen werden.</value></data>
   <data name="IngredientsSectionTitle" xml:space="preserve"><value>ZUTATEN</value></data>
   <data name="IngredientsSectionEmpty" xml:space="preserve"><value>Keine Zutaten definiert.</value></data>
   <data name="InstructionsSectionTitle" xml:space="preserve"><value>ZUBEREITUNG</value></data>
-  <data name="PlannedMealsPeriodPickerTitle" xml:space="preserve"><value>Zeitraum fur geplante Mahlzeiten wahlen</value></data>
+  <data name="PlannedMealsPeriodPickerTitle" xml:space="preserve"><value>Zeitraum für geplante Mahlzeiten wählen</value></data>
   <data name="PlannedMealsStartDateTitle" xml:space="preserve"><value>Startdatum</value></data>
   <data name="PlannedMealsStartDatePrompt" xml:space="preserve"><value>Startdatum eingeben (dd.mm.yyyy):</value></data>
   <data name="PlannedMealsEndDateTitle" xml:space="preserve"><value>Enddatum</value></data>
   <data name="PlannedMealsEndDatePrompt" xml:space="preserve"><value>Enddatum eingeben (dd.mm.yyyy):</value></data>
-  <data name="PlannedMealsInvalidOrderMessage" xml:space="preserve"><value>Enddatum muss grosser oder gleich dem Startdatum sein.</value></data>
+  <data name="PlannedMealsInvalidOrderMessage" xml:space="preserve"><value>Enddatum muss größer oder gleich dem Startdatum sein.</value></data>
 </root>

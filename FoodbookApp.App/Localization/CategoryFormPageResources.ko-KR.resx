@@ -59,36 +59,36 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="NewFolderTitle" xml:space="preserve">
-    <value>? ??</value>
+    <value>새 폴더</value>
   </data>
   <data name="EditFolderTitle" xml:space="preserve">
-    <value>?? ??</value>
+    <value>폴더 편집</value>
   </data>
   <data name="FolderName" xml:space="preserve">
-    <value>?? ??</value>
+    <value>폴더 이름</value>
   </data>
   <data name="FolderNamePlaceholder" xml:space="preserve">
-    <value>?? ??? ?????</value>
+    <value>폴더 이름을 입력하세요</value>
   </data>
   <data name="Description" xml:space="preserve">
-    <value>?? (????)</value>
+    <value>설명 (선택사항)</value>
   </data>
   <data name="DescriptionPlaceholder" xml:space="preserve">
-    <value>?? ??? ?????</value>
+    <value>설명을 입력하세요</value>
   </data>
   <data name="Cancel" xml:space="preserve">
-    <value>??</value>
+    <value>취소</value>
   </data>
   <data name="Save" xml:space="preserve">
-    <value>??</value>
+    <value>저장</value>
   </data>
   <data name="Create" xml:space="preserve">
-    <value>???</value>
+    <value>만들기</value>
   </data>
   <data name="EditFolder" xml:space="preserve">
-    <value>?? ??</value>
+    <value>폴더 편집</value>
   </data>
   <data name="NewFolder" xml:space="preserve">
-    <value>? ??</value>
+    <value>새 폴더</value>
   </data>
 </root>
