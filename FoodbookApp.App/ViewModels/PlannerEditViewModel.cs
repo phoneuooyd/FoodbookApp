@@ -18,6 +18,9 @@ public class PlannerEditViewModel : INotifyPropertyChanged
     private readonly IPlannerService _plannerService;
     private readonly IRecipeService _recipeService;
     private readonly IPlanService _planService;
+    private readonly FoodbookApp.Interfaces.ILocalizationService? _localizationService;
+    private string _loadingStatusKey = "LoadingStatus";
+    private string _loadingStatusFallback = "Loading...";
 
     // Core data collections
     public ObservableCollection<Recipe> Recipes { get; } = new();
@@ -43,7 +46,7 @@ public class PlannerEditViewModel : INotifyPropertyChanged
         }
     }
 
-    private string _loadingStatus = T("LoadingStatus", "Loading...");
+    private string _loadingStatus = "Loading...";
     public string LoadingStatus
     {
         get => _loadingStatus;
@@ -127,11 +130,15 @@ public class PlannerEditViewModel : INotifyPropertyChanged
     public PlannerEditViewModel(
         IPlannerService plannerService,
         IRecipeService recipeService,
-        IPlanService planService)
+        IPlanService planService,
+        FoodbookApp.Interfaces.ILocalizationService? localizationService = null)
     {
         _plannerService = plannerService ?? throw new ArgumentNullException(nameof(plannerService));
         _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
         _planService = planService ?? throw new ArgumentNullException(nameof(planService));
+        _localizationService = localizationService;
+
+        _loadingStatus = ResolveLoadingStatus(_loadingStatusKey, _loadingStatusFallback);
 
         AddMealCommand = new Command<PlannerDay>(AddMeal);
         RemoveMealCommand = new Command<PlannedMeal>(RemoveMeal);
@@ -139,6 +146,33 @@ public class PlannerEditViewModel : INotifyPropertyChanged
         DecreasePortionsCommand = new Command<PlannedMeal>(DecreasePortions);
         SaveCommand = new Command(async () => await SaveAsync());
         CancelCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
+
+        if (_localizationService != null)
+        {
+            _localizationService.CultureChanged += OnCultureChanged;
+        }
+    }
+
+    private void OnCultureChanged(object? sender, EventArgs e)
+    {
+        LoadingStatus = ResolveLoadingStatus(_loadingStatusKey, _loadingStatusFallback);
+    }
+
+    private string ResolveLoadingStatus(string key, string fallback)
+    {
+        if (_localizationService != null)
+        {
+            var viaService = _localizationService.GetString("PlannerPageResources", key);
+            if (!string.IsNullOrEmpty(viaService)) return viaService;
+        }
+        return PlannerPageResources.ResourceManager.GetString(key, PlannerPageResources.Culture) ?? fallback;
+    }
+
+    private void SetLoadingStatus(string key, string fallback)
+    {
+        _loadingStatusKey = key;
+        _loadingStatusFallback = fallback;
+        LoadingStatus = ResolveLoadingStatus(key, fallback);
     }
 
     /// <summary>
@@ -150,7 +184,7 @@ public class PlannerEditViewModel : INotifyPropertyChanged
         // IsLoading may already be true (set before navigation in PlannerListsViewModel)
         // to show spinner immediately on tap. We proceed with loading regardless.
         IsLoading = true;
-        LoadingStatus = T("LoadingStatusPreparingData", "Preparing data...");
+        SetLoadingStatus("LoadingStatusPreparingData", "Preparing data...");
         LoadingProgress = 0.1;
         _planId = planId;
 
@@ -186,7 +220,7 @@ public class PlannerEditViewModel : INotifyPropertyChanged
             System.Diagnostics.Debug.WriteLine($"[PlannerEditVM]   Archived: {_currentPlan.IsArchived}");
 
             // Step 2: Load all recipes (for picker)
-            LoadingStatus = T("LoadingStatusLoadingRecipes", "Loading recipes...");
+            SetLoadingStatus("LoadingStatusLoadingRecipes", "Loading recipes...");
             LoadingProgress = 0.25;
             var recipes = await _recipeService.GetRecipesAsync();
             Recipes.Clear();
@@ -198,7 +232,7 @@ public class PlannerEditViewModel : INotifyPropertyChanged
 
             // Step 3: Load planned meals FOR THIS SPECIFIC PLAN ONLY
             // IMPORTANT: Use planId-based query, not date-based query
-            LoadingStatus = T("LoadingStatusLoadingPlannedMeals", "Loading planned meals...");
+            SetLoadingStatus("LoadingStatusLoadingPlannedMeals", "Loading planned meals...");
             LoadingProgress = 0.5;
             var plannedMeals = await _plannerService.GetPlannedMealsAsync(planId);
             
@@ -210,7 +244,7 @@ public class PlannerEditViewModel : INotifyPropertyChanged
             }
 
             // Step 4: Build days structure
-            LoadingStatus = T("LoadingStatusPreparingCalendar", "Preparing calendar...");
+            SetLoadingStatus("LoadingStatusPreparingCalendar", "Preparing calendar...");
             LoadingProgress = 0.7;
             Days.Clear();
 
@@ -282,7 +316,7 @@ public class PlannerEditViewModel : INotifyPropertyChanged
             }
 
             // Ensure all days have the same number of meal slots (add empty slots if needed)
-            LoadingStatus = T("LoadingStatusFinalizing", "Finalizing...");
+            SetLoadingStatus("LoadingStatusFinalizing", "Finalizing...");
             LoadingProgress = 0.9;
             AdjustMealsPerDayStructure();
             LoadingProgress = 1.0;
@@ -309,7 +343,7 @@ public class PlannerEditViewModel : INotifyPropertyChanged
         {
             // Turn off loading indicator immediately
             IsLoading = false;
-            LoadingStatus = T("LoadingStatus", "Loading...");
+            SetLoadingStatus("LoadingStatus", "Loading...");
             LoadingProgress = 0;
             System.Diagnostics.Debug.WriteLine("[PlannerEditVM] Loading indicator OFF");
         }

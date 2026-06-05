@@ -300,6 +300,11 @@
             <AutoGen>True</AutoGen>
             <DependentUpon>SettingsPageResources.resx</DependentUpon>
           </Compile>
+          <Compile Update="Localization\\UniversalSpinnerComponentResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>UniversalSpinnerComponentResources.resx</DependentUpon>
+          </Compile>
         </ItemGroup>
 
         <ItemGroup>
@@ -363,6 +368,15 @@
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
+          <EmbeddedResource Update="Localization\\UniversalSpinnerComponentResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>UniversalSpinnerComponentResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
+          <EmbeddedResource Update="Localization\\UniversalSpinnerComponentResources.en.resx" />
+          <EmbeddedResource Update="Localization\\UniversalSpinnerComponentResources.de-DE.resx" />
+          <EmbeddedResource Update="Localization\\UniversalSpinnerComponentResources.fr-FR.resx" />
+          <EmbeddedResource Update="Localization\\UniversalSpinnerComponentResources.es-ES.resx" />
+          <EmbeddedResource Update="Localization\\UniversalSpinnerComponentResources.ko-KR.resx" />
         </ItemGroup>
 
 	<ItemGroup>

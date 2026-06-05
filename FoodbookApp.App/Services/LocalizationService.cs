@@ -75,6 +75,7 @@ public class LocalizationService : ILocalizationService
         UnitResources.Culture = culture;
         FilterSortPopupResources.Culture = culture;
         FolderResources.Culture = culture;
+        UniversalSpinnerComponentResources.Culture = culture;
 
         System.Diagnostics.Debug.WriteLine($"[LocalizationService] Culture changed to: {culture.Name} (requested: '{cultureName}')");
         CultureChanged?.Invoke(this, EventArgs.Empty);
