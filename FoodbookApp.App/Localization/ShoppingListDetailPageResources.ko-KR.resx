@@ -4,15 +4,15 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="Title" xml:space="preserve"><value>Shopping list details</value></data>
-  <data name="ToBuy" xml:space="preserve"><value>To buy</value></data>
-  <data name="NameHeader" xml:space="preserve"><value>Ingredient</value></data>
-  <data name="QuantityHeader" xml:space="preserve"><value>Qty</value></data>
-  <data name="UnitHeader" xml:space="preserve"><value>Unit</value></data>
-  <data name="ActionsHeader" xml:space="preserve"><value>Actions</value></data>
-  <data name="AddItem" xml:space="preserve"><value>Add item</value></data>
-  <data name="Collected" xml:space="preserve"><value>Collected</value></data>
-  <data name="NoCollected" xml:space="preserve"><value>No collected</value></data>
+  <data name="Title" xml:space="preserve"><value>쇼핑 목록 상세</value></data>
+  <data name="ToBuy" xml:space="preserve"><value>구매할 항목</value></data>
+  <data name="NameHeader" xml:space="preserve"><value>재료</value></data>
+  <data name="QuantityHeader" xml:space="preserve"><value>수량</value></data>
+  <data name="UnitHeader" xml:space="preserve"><value>단위</value></data>
+  <data name="ActionsHeader" xml:space="preserve"><value>작업</value></data>
+  <data name="AddItem" xml:space="preserve"><value>항목 추가</value></data>
+  <data name="Collected" xml:space="preserve"><value>수집됨</value></data>
+  <data name="NoCollected" xml:space="preserve"><value>미수집</value></data>
   <data name="LoadErrorTitle" xml:space="preserve"><value>오류</value></data>
   <data name="LoadErrorMessage" xml:space="preserve"><value>쇼핑 목록을 불러올 수 없습니다.</value></data>
   <data name="UnsavedChangesConfirmTitle" xml:space="preserve"><value>확인</value></data>
