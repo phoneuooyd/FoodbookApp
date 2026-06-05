@@ -83,7 +83,6 @@ public partial class UniversalSpinnerComponent : ContentView
     public UniversalSpinnerComponent()
     {
         InitializeComponent();
-        Unloaded += OnUnloaded;
     }
 
     private static void OnStateChanged(BindableObject bindable, object oldValue, object newValue)
@@ -92,12 +91,5 @@ public partial class UniversalSpinnerComponent : ContentView
         {
             self.SpinnerVisible = self.IsLoading || self.IsSaving;
         }
-    }
-
-    private void OnUnloaded(object? sender, EventArgs e)
-    {
-        IsLoading = false;
-        IsSaving = false;
-        BindingContext = null;
     }
 }

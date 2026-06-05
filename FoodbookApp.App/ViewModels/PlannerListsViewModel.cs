@@ -102,6 +102,9 @@ public class PlannerListsViewModel : INotifyPropertyChanged
                 this.IsLoading = true;
                 System.Diagnostics.Debug.WriteLine($"[PlannerListsVM] IsLoading=true SET on PlannerListsVM BEFORE navigation");
 
+                // Yield to UI thread to ensure spinner renders before navigation starts
+                await Task.Delay(16);
+
                 // Resolve PlannerEditViewModel from DI
                 var editVM = FoodbookApp.MauiProgram.ServiceProvider?.GetService<PlannerEditViewModel>();
                     if (editVM != null)
