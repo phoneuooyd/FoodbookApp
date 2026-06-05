@@ -147,12 +147,8 @@ public class PlannerEditViewModel : INotifyPropertyChanged
     /// </summary>
     public async Task LoadPlanForEditAsync(Guid planId)
     {
-        if (IsLoading)
-        {
-            System.Diagnostics.Debug.WriteLine("[PlannerEditVM] Already loading, skipping");
-            return;
-        }
-
+        // IsLoading may already be true (set before navigation in PlannerListsViewModel)
+        // to show spinner immediately on tap. We proceed with loading regardless.
         IsLoading = true;
         LoadingStatus = T("LoadingStatusPreparingData", "Preparing data...");
         LoadingProgress = 0.1;
@@ -161,6 +157,7 @@ public class PlannerEditViewModel : INotifyPropertyChanged
         try
         {
             System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] ===== LOADING PLAN {planId} FOR EDIT =====");
+            System.Diagnostics.Debug.WriteLine($"[PlannerEditVM] IsLoading was already {IsLoading} before this method (should be true if set before nav)");
 
             // Step 1: Load plan metadata
             _currentPlan = await _planService.GetPlanAsync(planId);

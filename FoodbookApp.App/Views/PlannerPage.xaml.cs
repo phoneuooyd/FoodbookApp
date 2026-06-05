@@ -65,7 +65,8 @@ namespace Foodbook.Views
         {
             base.OnAppearing();
             
-            System.Diagnostics.Debug.WriteLine($"[PlannerPage] OnAppearing - ViewModel type: {_viewModel.GetType().Name}, PlanId={_planId}, _pendingPlanId={_pendingPlanId}");
+            bool vmIsLoading = _viewModel is PlannerEditViewModel evm ? evm.IsLoading : _viewModel is PlannerViewModel nvm ? nvm.IsLoading : false;
+            System.Diagnostics.Debug.WriteLine($"[PlannerPage] OnAppearing - ViewModel type: {_viewModel.GetType().Name}, PlanId={_planId}, _pendingPlanId={_pendingPlanId}, IsLoading={vmIsLoading}");
             
             // Initialize theme and font handling
             _themeHelper.Initialize();
@@ -105,6 +106,7 @@ namespace Foodbook.Views
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine($"[PlannerPage] ? Error loading plan: {ex.Message}");
+                        editVM.IsLoading = false;
                     }
                 }
                 else if (_hasEverLoaded)

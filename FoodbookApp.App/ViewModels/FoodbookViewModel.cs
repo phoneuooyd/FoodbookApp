@@ -63,7 +63,12 @@ public class FoodbookViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(CtaCommand));
 
             if (_selectedTabIndex == 1)
-                _ = EnsureDaysLoadedAsync();
+            {
+                if (!_daysLoaded && !IsLoading)
+                {
+                    _ = LoadDaysAsync();
+                }
+            }
         }
     }
 
@@ -184,7 +189,7 @@ public class FoodbookViewModel : INotifyPropertyChanged
             }
 
             if (SelectedTabIndex == 1)
-                await EnsureDaysLoadedAsync();
+                EnsureDaysLoaded();
         }
         catch (Exception ex)
         {
@@ -244,14 +249,34 @@ public class FoodbookViewModel : INotifyPropertyChanged
 
     private async Task GoToDishesAsync()
     {
-        await EnsureDaysLoadedAsync();
+        await LoadDaysAsync();
         SelectedTabIndex = 1;
     }
 
-    private Task EnsureDaysLoadedAsync()
+    private async Task LoadDaysAsync()
+    {
+        if (_daysLoaded || IsLoading)
+            return;
+
+        IsLoading = true;
+        try
+        {
+            EnsureDaysLoaded();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[FoodbookVM] LoadDaysAsync error: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void EnsureDaysLoaded()
     {
         if (_daysLoaded)
-            return Task.CompletedTask;
+            return;
 
         try
         {
@@ -264,10 +289,8 @@ public class FoodbookViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[FoodbookVM] EnsureDaysLoadedAsync error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[FoodbookVM] EnsureDaysLoaded error: {ex.Message}");
         }
-
-        return Task.CompletedTask;
     }
 
     private void BuildEmptyDays()
@@ -433,7 +456,7 @@ public class FoodbookViewModel : INotifyPropertyChanged
 
             IsSaving = true;
 
-            await EnsureDaysLoadedAsync();
+            EnsureDaysLoaded();
 
             Plan plan;
             if (_editingPlanId.HasValue)

@@ -98,18 +98,26 @@ public class PlannerListsViewModel : INotifyPropertyChanged
             {
                 System.Diagnostics.Debug.WriteLine($"[PlannerListsVM] EDITING existing plan {p.Id}");
 
+                // Show loading overlay on THIS page BEFORE navigation
+                this.IsLoading = true;
+                System.Diagnostics.Debug.WriteLine($"[PlannerListsVM] IsLoading=true SET on PlannerListsVM BEFORE navigation");
+
                 // Resolve PlannerEditViewModel from DI
                 var editVM = FoodbookApp.MauiProgram.ServiceProvider?.GetService<PlannerEditViewModel>();
-                if (editVM != null)
-                {
-                    var page = new PlannerPage(editVM)
+                    if (editVM != null)
                     {
-                        // Set the PlanId property for QueryProperty
-                        PlanId = p.Id.ToString()
-                    };
+                        var page = new PlannerPage(editVM)
+                        {
+                            // Set the PlanId property for QueryProperty
+                            PlanId = p.Id.ToString()
+                        };
 
-                    await Shell.Current.Navigation.PushAsync(page);
-                }
+                        await Shell.Current.Navigation.PushAsync(page);
+
+                        // Navigation complete — PlannerPage is now visible; clear our loading overlay
+                        this.IsLoading = false;
+                        System.Diagnostics.Debug.WriteLine("[PlannerListsVM] IsLoading=false (navigation to PlannerPage complete)");
+                    }
                 else
                 {
                     System.Diagnostics.Debug.WriteLine("[PlannerListsVM] Failed to resolve PlannerEditViewModel");

@@ -22,6 +22,12 @@ public partial class PlannerListsPage : ContentPage, ITabLoadable
         _themeHelper.Initialize();
         if (BindingContext is PlannerListsViewModel vm)
         {
+            // Clear loading state left from navigation to PlannerPage (edit mode)
+            if (vm.IsLoading)
+            {
+                vm.IsLoading = false;
+                System.Diagnostics.Debug.WriteLine("[PlannerListsPage] Cleared IsLoading from previous navigation (edit mode)");
+            }
             await vm.LoadPlansAsync();
         }
     }
