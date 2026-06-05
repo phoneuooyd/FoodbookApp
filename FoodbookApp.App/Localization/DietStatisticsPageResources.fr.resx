@@ -42,4 +42,10 @@
   <data name="AddMealPopupSaveError" xml:space="preserve"><value>Impossible d'enregistrer l'entrée du repas.</value></data>
   <data name="NoMealsPlaceholder" xml:space="preserve"><value>Aucun repas</value></data>
   <data name="NutritionCardTitle" xml:space="preserve"><value>Valeurs nutritionnelles</value></data>
+  <data name="AddMealPopupProteinLabel" xml:space="preserve"><value>Protéines (g)</value></data>
+  <data name="AddMealPopupFatLabel" xml:space="preserve"><value>Lipides (g)</value></data>
+  <data name="AddMealPopupCarbsLabel" xml:space="preserve"><value>Glucides (g)</value></data>
+  <data name="AddMealPopupProteinPlaceholder" xml:space="preserve"><value>ex. 30</value></data>
+  <data name="AddMealPopupFatPlaceholder" xml:space="preserve"><value>ex. 15</value></data>
+  <data name="AddMealPopupCarbsPlaceholder" xml:space="preserve"><value>ex. 40</value></data>
 </root>

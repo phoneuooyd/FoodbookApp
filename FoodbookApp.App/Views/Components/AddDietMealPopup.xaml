@@ -76,7 +76,64 @@
                            FontSize="14"
                            TextColor="{DynamicResource PrimaryText}"
                            PlaceholderColor="{DynamicResource SecondaryText}"
-                          Placeholder="{loc:Translate Resource=DietStatisticsPageResources, Key=AddMealPopupCaloriesPlaceholder}"
+                           Placeholder="{loc:Translate Resource=DietStatisticsPageResources, Key=AddMealPopupCaloriesPlaceholder}"
+                           Keyboard="Numeric"
+                           ReturnType="Next" />
+                </Border>
+
+                <Label Text="{loc:Translate Resource=DietStatisticsPageResources, Key=AddMealPopupProteinLabel}"
+                       FontSize="12"
+                       FontAttributes="Bold"
+                       TextColor="{DynamicResource PrimaryText}" />
+                <Border StrokeThickness="1"
+                        Stroke="{AppThemeBinding Light=#D8D8E3, Dark=#4A4A62}"
+                        BackgroundColor="{AppThemeBinding Light=#F0F0F5, Dark=#2A2A40}"
+                        StrokeShape="RoundRectangle 10"
+                        Padding="8,4">
+                    <Entry x:Name="ProteinEntry"
+                           BackgroundColor="Transparent"
+                           FontSize="14"
+                           TextColor="{DynamicResource PrimaryText}"
+                           PlaceholderColor="{DynamicResource SecondaryText}"
+                           Placeholder="{loc:Translate Resource=DietStatisticsPageResources, Key=AddMealPopupProteinPlaceholder}"
+                           Keyboard="Numeric"
+                           ReturnType="Next" />
+                </Border>
+
+                <Label Text="{loc:Translate Resource=DietStatisticsPageResources, Key=AddMealPopupFatLabel}"
+                       FontSize="12"
+                       FontAttributes="Bold"
+                       TextColor="{DynamicResource PrimaryText}" />
+                <Border StrokeThickness="1"
+                        Stroke="{AppThemeBinding Light=#D8D8E3, Dark=#4A4A62}"
+                        BackgroundColor="{AppThemeBinding Light=#F0F0F5, Dark=#2A2A40}"
+                        StrokeShape="RoundRectangle 10"
+                        Padding="8,4">
+                    <Entry x:Name="FatEntry"
+                           BackgroundColor="Transparent"
+                           FontSize="14"
+                           TextColor="{DynamicResource PrimaryText}"
+                           PlaceholderColor="{DynamicResource SecondaryText}"
+                           Placeholder="{loc:Translate Resource=DietStatisticsPageResources, Key=AddMealPopupFatPlaceholder}"
+                           Keyboard="Numeric"
+                           ReturnType="Next" />
+                </Border>
+
+                <Label Text="{loc:Translate Resource=DietStatisticsPageResources, Key=AddMealPopupCarbsLabel}"
+                       FontSize="12"
+                       FontAttributes="Bold"
+                       TextColor="{DynamicResource PrimaryText}" />
+                <Border StrokeThickness="1"
+                        Stroke="{AppThemeBinding Light=#D8D8E3, Dark=#4A4A62}"
+                        BackgroundColor="{AppThemeBinding Light=#F0F0F5, Dark=#2A2A40}"
+                        StrokeShape="RoundRectangle 10"
+                        Padding="8,4">
+                    <Entry x:Name="CarbsEntry"
+                           BackgroundColor="Transparent"
+                           FontSize="14"
+                           TextColor="{DynamicResource PrimaryText}"
+                           PlaceholderColor="{DynamicResource SecondaryText}"
+                           Placeholder="{loc:Translate Resource=DietStatisticsPageResources, Key=AddMealPopupCarbsPlaceholder}"
                            Keyboard="Numeric"
                            ReturnType="Done" />
                 </Border>

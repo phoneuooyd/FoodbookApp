@@ -42,4 +42,10 @@
   <data name="AddMealPopupSaveError" xml:space="preserve"><value>Could not save the meal entry.</value></data>
   <data name="NoMealsPlaceholder" xml:space="preserve"><value>No meals logged</value></data>
   <data name="NutritionCardTitle" xml:space="preserve"><value>Nutritional values</value></data>
+  <data name="AddMealPopupProteinLabel" xml:space="preserve"><value>Protein (g)</value></data>
+  <data name="AddMealPopupFatLabel" xml:space="preserve"><value>Fat (g)</value></data>
+  <data name="AddMealPopupCarbsLabel" xml:space="preserve"><value>Carbs (g)</value></data>
+  <data name="AddMealPopupProteinPlaceholder" xml:space="preserve"><value>e.g. 30</value></data>
+  <data name="AddMealPopupFatPlaceholder" xml:space="preserve"><value>e.g. 15</value></data>
+  <data name="AddMealPopupCarbsPlaceholder" xml:space="preserve"><value>e.g. 40</value></data>
 </root>

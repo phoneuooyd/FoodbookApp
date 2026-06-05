@@ -42,4 +42,10 @@
   <data name="AddMealPopupSaveError" xml:space="preserve"><value>Der Mahlzeiteintrag konnte nicht gespeichert werden.</value></data>
   <data name="NoMealsPlaceholder" xml:space="preserve"><value>Keine Mahlzeiten</value></data>
   <data name="NutritionCardTitle" xml:space="preserve"><value>Nährwerte</value></data>
+  <data name="AddMealPopupProteinLabel" xml:space="preserve"><value>Protein (g)</value></data>
+  <data name="AddMealPopupFatLabel" xml:space="preserve"><value>Fett (g)</value></data>
+  <data name="AddMealPopupCarbsLabel" xml:space="preserve"><value>Kohlenhydrate (g)</value></data>
+  <data name="AddMealPopupProteinPlaceholder" xml:space="preserve"><value>z.B. 30</value></data>
+  <data name="AddMealPopupFatPlaceholder" xml:space="preserve"><value>z.B. 15</value></data>
+  <data name="AddMealPopupCarbsPlaceholder" xml:space="preserve"><value>z.B. 40</value></data>
 </root>

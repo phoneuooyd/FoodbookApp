@@ -42,4 +42,10 @@
   <data name="AddMealPopupSaveError" xml:space="preserve"><value>No se pudo guardar la comida.</value></data>
   <data name="NoMealsPlaceholder" xml:space="preserve"><value>Sin comidas registradas</value></data>
   <data name="NutritionCardTitle" xml:space="preserve"><value>Valores nutricionales</value></data>
+  <data name="AddMealPopupProteinLabel" xml:space="preserve"><value>Proteína (g)</value></data>
+  <data name="AddMealPopupFatLabel" xml:space="preserve"><value>Grasa (g)</value></data>
+  <data name="AddMealPopupCarbsLabel" xml:space="preserve"><value>Carbohidratos (g)</value></data>
+  <data name="AddMealPopupProteinPlaceholder" xml:space="preserve"><value>ej. 30</value></data>
+  <data name="AddMealPopupFatPlaceholder" xml:space="preserve"><value>ej. 15</value></data>
+  <data name="AddMealPopupCarbsPlaceholder" xml:space="preserve"><value>ej. 40</value></data>
 </root>

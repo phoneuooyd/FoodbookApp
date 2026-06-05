@@ -1285,15 +1285,19 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
                 return;
             }
 
+            var protein = TryParseOptionalDouble(popupResult.Protein);
+            var fat = TryParseOptionalDouble(popupResult.Fat);
+            var carbs = TryParseOptionalDouble(popupResult.Carbs);
+
             var meals = _preferencesService.GetDietStatisticsMeals().ToList();
             meals.Add(new DietStatisticsMealDto
             {
                 Date = targetDate.Date,
                 Name = name.Trim(),
                 Calories = calories,
-                Carbs = 0,
-                Fat = 0,
-                Protein = 0,
+                Carbs = carbs ?? 0,
+                Fat = fat ?? 0,
+                Protein = protein ?? 0,
                 CreatedAt = DateTime.UtcNow
             });
 
@@ -1312,6 +1316,20 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
 
     private void OnOpenMealDetail(MealSlotViewModel? _)
     {
+    }
+
+    private static double? TryParseOptionalDouble(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return null;
+
+        if (double.TryParse(text, NumberStyles.Float, CultureInfo.CurrentCulture, out var result) ||
+            double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out result))
+        {
+            return result >= 0 ? result : null;
+        }
+
+        return null;
     }
 
     private async void OnCultureChanged(object? sender, EventArgs e)

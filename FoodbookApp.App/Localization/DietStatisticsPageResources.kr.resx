@@ -42,4 +42,10 @@
   <data name="AddMealPopupSaveError" xml:space="preserve"><value>식사 항목을 저장할 수 없습니다.</value></data>
   <data name="NoMealsPlaceholder" xml:space="preserve"><value>기록된 식사 없음</value></data>
   <data name="NutritionCardTitle" xml:space="preserve"><value>영양 정보</value></data>
+  <data name="AddMealPopupProteinLabel" xml:space="preserve"><value>단백질 (g)</value></data>
+  <data name="AddMealPopupFatLabel" xml:space="preserve"><value>지방 (g)</value></data>
+  <data name="AddMealPopupCarbsLabel" xml:space="preserve"><value>탄수화물 (g)</value></data>
+  <data name="AddMealPopupProteinPlaceholder" xml:space="preserve"><value>예: 30</value></data>
+  <data name="AddMealPopupFatPlaceholder" xml:space="preserve"><value>예: 15</value></data>
+  <data name="AddMealPopupCarbsPlaceholder" xml:space="preserve"><value>예: 40</value></data>
 </root>
