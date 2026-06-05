@@ -41,6 +41,11 @@
 	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>pl</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>pl</string>
 	<key>CFBundleDisplayName</key>
+	<string>Foodbook App</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Foodbook needs camera access to scan barcodes and fetch product nutritional information from OpenFoodFacts.</string>
 </dict>
 </plist>

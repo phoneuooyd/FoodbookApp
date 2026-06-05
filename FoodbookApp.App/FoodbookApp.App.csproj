@@ -180,6 +180,7 @@
 		<PackageReference Include="Sharpnado.TaskMonitor" Version="1.1.0" />
 		<PackageReference Include="SQLitePCLRaw.core" Version="3.0.2" />
 		<PackageReference Include="Supabase" Version="1.1.1" />
+		<PackageReference Include="ZXing.Net.Maui.Controls" Version="0.6.0" />
 	</ItemGroup>
 
         <ItemGroup>

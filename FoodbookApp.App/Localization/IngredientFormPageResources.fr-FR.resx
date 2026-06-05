@@ -44,4 +44,15 @@
   <data name="ValidationUnitWeightPositive" xml:space="preserve"><value>Le poids unitaire doit être supérieur à zéro</value></data>
   <data name="ValidationGeneralError" xml:space="preserve"><value>Erreur de validation</value></data>
   <data name="SaveIngredientErrorMessageFormat" xml:space="preserve"><value>Impossible d'enregistrer l'ingrédient : {0}</value></data>
+  <data name="ScannerButton" xml:space="preserve"><value>Scanner le code-barres</value></data>
+  <data name="ScannerTitle" xml:space="preserve"><value>Scanner de code-barres</value></data>
+  <data name="ScannerStatusWaiting" xml:space="preserve"><value>En attente du code-barres...</value></data>
+  <data name="ScannerStatusDetected" xml:space="preserve"><value>Code-barres détecté : {0}</value></data>
+  <data name="ScannerStatusFetching" xml:space="preserve"><value>Récupération des données produit...</value></data>
+  <data name="ScannerStatusNotFound" xml:space="preserve"><value>Produit introuvable dans OpenFoodFacts</value></data>
+  <data name="ScannerFetchError" xml:space="preserve"><value>Erreur lors de la récupération des données</value></data>
+  <data name="ScannerCameraError" xml:space="preserve"><value>Scanner indisponible</value></data>
+  <data name="ScannerNotSupported" xml:space="preserve"><value>Le scan de code-barres n'est pas pris en charge sur cet appareil</value></data>
+  <data name="ScannerNoPermission" xml:space="preserve"><value>Permission caméra refusée</value></data>
+  <data name="ScannerAddButton" xml:space="preserve"><value>Ajouter l'ingrédient depuis le code-barres</value></data>
 </root>

@@ -139,4 +139,37 @@
   <data name="SaveIngredientErrorMessageFormat" xml:space="preserve">
     <value>Could not save ingredient: {0}</value>
   </data>
+  <data name="ScannerButton" xml:space="preserve">
+    <value>Scan barcode</value>
+  </data>
+  <data name="ScannerTitle" xml:space="preserve">
+    <value>Scan Barcode</value>
+  </data>
+  <data name="ScannerStatusWaiting" xml:space="preserve">
+    <value>Waiting for barcode...</value>
+  </data>
+  <data name="ScannerStatusDetected" xml:space="preserve">
+    <value>Barcode detected: {0}</value>
+  </data>
+  <data name="ScannerStatusFetching" xml:space="preserve">
+    <value>Fetching product data...</value>
+  </data>
+  <data name="ScannerStatusNotFound" xml:space="preserve">
+    <value>Product not found in OpenFoodFacts</value>
+  </data>
+  <data name="ScannerFetchError" xml:space="preserve">
+    <value>Error fetching product data</value>
+  </data>
+  <data name="ScannerCameraError" xml:space="preserve">
+    <value>Scanner unavailable</value>
+  </data>
+  <data name="ScannerNotSupported" xml:space="preserve">
+    <value>Barcode scanning is not supported on this device</value>
+  </data>
+  <data name="ScannerNoPermission" xml:space="preserve">
+    <value>Camera permission denied</value>
+  </data>
+  <data name="ScannerAddButton" xml:space="preserve">
+    <value>Add ingredient from barcode</value>
+  </data>
 </root>

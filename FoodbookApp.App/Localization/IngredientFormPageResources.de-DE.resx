@@ -44,4 +44,15 @@
   <data name="ValidationUnitWeightPositive" xml:space="preserve"><value>Einheitsgewicht muss grĂ¶Ăźer als null sein</value></data>
   <data name="ValidationGeneralError" xml:space="preserve"><value>Validierungsfehler</value></data>
   <data name="SaveIngredientErrorMessageFormat" xml:space="preserve"><value>Zutat konnte nicht gespeichert werden: {0}</value></data>
+  <data name="ScannerButton" xml:space="preserve"><value>Barcode scannen</value></data>
+  <data name="ScannerTitle" xml:space="preserve"><value>Barcode-Scanner</value></data>
+  <data name="ScannerStatusWaiting" xml:space="preserve"><value>Warte auf Barcode...</value></data>
+  <data name="ScannerStatusDetected" xml:space="preserve"><value>Barcode erkannt: {0}</value></data>
+  <data name="ScannerStatusFetching" xml:space="preserve"><value>Produktdaten werden abgerufen...</value></data>
+  <data name="ScannerStatusNotFound" xml:space="preserve"><value>Produkt nicht in OpenFoodFacts gefunden</value></data>
+  <data name="ScannerFetchError" xml:space="preserve"><value>Fehler beim Abrufen der Produktdaten</value></data>
+  <data name="ScannerCameraError" xml:space="preserve"><value>Scanner nicht verfĂĽgbar</value></data>
+  <data name="ScannerNotSupported" xml:space="preserve"><value>Barcode-Scannen wird auf diesem GerĂ¤t nicht unterstĂĽtzt</value></data>
+  <data name="ScannerNoPermission" xml:space="preserve"><value>Kameraerlaubnis verweigert</value></data>
+  <data name="ScannerAddButton" xml:space="preserve"><value>Zutat aus Barcode hinzufĂĽgen</value></data>
 </root>

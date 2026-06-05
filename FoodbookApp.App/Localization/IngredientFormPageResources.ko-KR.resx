@@ -44,4 +44,15 @@
   <data name="ValidationUnitWeightPositive" xml:space="preserve"><value>단위 중량은 0보다 커야 합니다</value></data>
   <data name="ValidationGeneralError" xml:space="preserve"><value>유효성 검사 오류</value></data>
   <data name="SaveIngredientErrorMessageFormat" xml:space="preserve"><value>재료를 저장할 수 없습니다: {0}</value></data>
+  <data name="ScannerButton" xml:space="preserve"><value>바코드 스캔</value></data>
+  <data name="ScannerTitle" xml:space="preserve"><value>바코드 스캐너</value></data>
+  <data name="ScannerStatusWaiting" xml:space="preserve"><value>바코드 기다리는 중...</value></data>
+  <data name="ScannerStatusDetected" xml:space="preserve"><value>바코드 감지됨: {0}</value></data>
+  <data name="ScannerStatusFetching" xml:space="preserve"><value>제품 데이터 가져오는 중...</value></data>
+  <data name="ScannerStatusNotFound" xml:space="preserve"><value>OpenFoodFacts에서 제품을 찾을 수 없습니다</value></data>
+  <data name="ScannerFetchError" xml:space="preserve"><value>제품 데이터 가져오기 오류</value></data>
+  <data name="ScannerCameraError" xml:space="preserve"><value>스캐너를 사용할 수 없음</value></data>
+  <data name="ScannerNotSupported" xml:space="preserve"><value>이 기기에서는 바코드 스캔이 지원되지 않습니다</value></data>
+  <data name="ScannerNoPermission" xml:space="preserve"><value>카메라 권한 거부됨</value></data>
+  <data name="ScannerAddButton" xml:space="preserve"><value>바코드에서 재료 추가</value></data>
 </root>

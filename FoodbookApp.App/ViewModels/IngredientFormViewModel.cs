@@ -12,12 +12,15 @@ using Foodbook.Services;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Foodbook.Views;
+using FoodbookApp;
 
 namespace Foodbook.ViewModels;
 
 public class IngredientFormViewModel : INotifyPropertyChanged
 {
     private readonly IIngredientService _service;
+    private readonly IOpenFoodFactsService _openFoodFactsService;
     private Guid _itemId = Guid.Empty;
     private Guid? _loadedRecipeId = null; // preserve RecipeId when editing
 
@@ -139,13 +142,20 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
     public ICommand VerifyNutritionCommand { get; }
+    public ICommand OpenScannerCommand { get; }
 
-    public IngredientFormViewModel(IIngredientService service)
+    public IngredientFormViewModel(IIngredientService service) : this(service, null!)
+    {
+    }
+
+    public IngredientFormViewModel(IIngredientService service, IOpenFoodFactsService openFoodFactsService)
     {
         _service = service;
+        _openFoodFactsService = openFoodFactsService;
         SaveCommand = new Command(async () => await SaveAsync(), CanSave);
         CancelCommand = new Command(async () => await CancelAsync());
         VerifyNutritionCommand = new Command(async () => await VerifyNutritionAsync(), () => !string.IsNullOrWhiteSpace(Name) && !IsVerifying);
+        OpenScannerCommand = new Command(async () => await OpenScannerAsync());
         SelectTabCommand = new Command<object>(SelectTab);
         ValidateInput();
     }
@@ -275,6 +285,65 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 ex.Message);
             System.Diagnostics.Debug.WriteLine($"Error in LoadAsync: {ex.Message}");
         }
+    }
+
+    private async Task OpenScannerAsync()
+    {
+        try
+        {
+            if (DeviceInfo.Platform == DevicePlatform.WinUI)
+            {
+                var msg = I("ScannerNotSupported", "Barcode scanning is not supported on this device");
+                await Shell.Current.DisplayAlert(
+                    I("ScannerCameraError", "Scanner unavailable"),
+                    msg,
+                    ButtonResources.OK);
+                return;
+            }
+
+            BarcodeScannerPage.LastResult = null;
+            var sp = MauiProgram.ServiceProvider;
+            if (sp == null) return;
+            var scannerPage = sp.GetRequiredService<BarcodeScannerPage>();
+            NavigationPage.SetHasNavigationBar(scannerPage, false);
+            await Shell.Current.Navigation.PushModalAsync(new NavigationPage(scannerPage));
+
+            var result = BarcodeScannerPage.LastResult;
+            if (result != null)
+            {
+                ApplyProductData(result);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IngredientFormViewModel] OpenScannerAsync error: {ex.Message}");
+        }
+    }
+
+    private void ApplyProductData(OpenFoodFactsProductResult product)
+    {
+        _suppressDirtyTracking = true;
+
+        if (!string.IsNullOrWhiteSpace(product.Name))
+            Name = product.Name;
+
+        Quantity = "100";
+        SelectedUnit = Unit.Gram;
+
+        if (product.Calories100g >= 0)
+            Calories = product.Calories100g.ToString("F1");
+        if (product.Protein100g >= 0)
+            Protein = product.Protein100g.ToString("F1");
+        if (product.Fat100g >= 0)
+            Fat = product.Fat100g.ToString("F1");
+        if (product.Carbs100g >= 0)
+            Carbs = product.Carbs100g.ToString("F1");
+
+        _suppressDirtyTracking = false;
+        ValidateInput();
+        MarkDirty();
+
+        System.Diagnostics.Debug.WriteLine($"[IngredientFormViewModel] Product data applied from barcode: {product.Name}");
     }
 
     /// <summary>

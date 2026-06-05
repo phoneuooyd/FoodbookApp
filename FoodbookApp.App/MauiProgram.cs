@@ -17,6 +17,7 @@ using Foodbook.Views.Components;
 using FoodbookApp.Services.Supabase;
 using FoodbookApp.Services;
 using FoodbookApp.Services.Subscription;
+using ZXing.Net.Maui.Controls;
 
 namespace FoodbookApp
 {
@@ -30,6 +31,7 @@ namespace FoodbookApp
             builder
                 .UseMauiApp<App>()
                 .UseMauiCommunityToolkit()
+                .UseBarcodeReader()
                 .UseSharpnadoCollectionView(loggerEnable: false) // ? Initialize Sharpnado CollectionView with drag-and-drop support
                 .ConfigureFonts(fonts =>
                 {
@@ -72,6 +74,11 @@ namespace FoodbookApp
             builder.Services.AddSingleton<IClock, SystemClock>();
             builder.Services.AddScoped<ISubscriptionManagementService, MockSubscriptionManagementService>();
             builder.Services.AddScoped<IIngredientService, IngredientService>();
+            builder.Services.AddScoped<IOpenFoodFactsService>(sp =>
+            {
+                var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+                return new OpenFoodFactsService(client);
+            });
             builder.Services.AddScoped<IFolderService, FolderService>();
             builder.Services.AddScoped<IRecipeLabelService, RecipeLabelService>();
             builder.Services.AddSingleton<ILocalizationService, LocalizationService>();
@@ -190,6 +197,7 @@ namespace FoodbookApp
             builder.Services.AddTransient<Foodbook.Views.ManageLabelsPage>();
             builder.Services.AddTransient<IngredientsPage>();
             builder.Services.AddScoped<IngredientFormPage>();
+            builder.Services.AddTransient<BarcodeScannerPage>();
             builder.Services.AddTransient<PlannerPage>();
             builder.Services.AddScoped<PlannerListsPage>();
             builder.Services.AddScoped<MealFormPage>();
