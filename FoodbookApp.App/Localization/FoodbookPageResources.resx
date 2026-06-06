@@ -26,4 +26,6 @@
   <data name="SaveSuccessMessageFormat" xml:space="preserve"><value>Foodbook "{0}" has been saved.</value></data>
   <data name="SaveErrorTitle" xml:space="preserve"><value>Error</value></data>
   <data name="SaveErrorMessage" xml:space="preserve"><value>Could not save Foodbook.</value></data>
+  <data name="LoadingTitle" xml:space="preserve"><value>Loading...</value></data>
+  <data name="LoadingHint" xml:space="preserve"><value>Preparing your data</value></data>
 </root>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.Maui.Controls"
+             xmlns:resources="clr-namespace:FoodbookApp.Localization"
+             x:Class="Foodbook.Views.BarcodeScannerPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="Black">
+    <Grid>
+        <zxing:CameraBarcodeReaderView x:Name="ScannerView"
+                                       HorizontalOptions="Fill"
+                                       VerticalOptions="Fill" />
+
+        <Button x:Name="TorchButton"
+                Text="💡"
+                Clicked="OnTorchClicked"
+                FontSize="20"
+                WidthRequest="44"
+                HeightRequest="44"
+                HorizontalOptions="End"
+                VerticalOptions="Start"
+                Margin="0,60,20,0"
+                BackgroundColor="#88000000"
+                CornerRadius="22"
+                Padding="0" />
+
+        <VerticalStackLayout VerticalOptions="End" Padding="20,0,20,40" Spacing="12">
+            <Border BackgroundColor="#CC000000" StrokeThickness="0" StrokeShape="RoundRectangle 14" Padding="16,12">
+                <Label x:Name="StatusLabel" FontSize="15" TextColor="White" HorizontalTextAlignment="Center" />
+            </Border>
+
+            <Button x:Name="AddProductButton"
+                    IsEnabled="False"
+                    Clicked="OnAddProductClicked"
+                    HeightRequest="50"
+                    CornerRadius="14"
+                    BackgroundColor="{DynamicResource Primary}"
+                    TextColor="White"
+                    FontAttributes="Bold" />
+
+            <Button x:Name="CancelButton"
+                    Clicked="OnCancelClicked"
+                    HeightRequest="44"
+                    CornerRadius="12"
+                    BackgroundColor="Transparent"
+                    BorderColor="#666666"
+                    BorderWidth="1.5"
+                    TextColor="White" />
+        </VerticalStackLayout>
+
+        <Border HorizontalOptions="Center" VerticalOptions="Start" Margin="0,115,0,0" BackgroundColor="#CC000000" StrokeThickness="0" StrokeShape="RoundRectangle 10" Padding="14,8">
+            <Label x:Name="DetectedCodeLabel" Text="" FontSize="13" TextColor="#AAAAAA" HorizontalTextAlignment="Center" />
+        </Border>
+    </Grid>
+</ContentPage>

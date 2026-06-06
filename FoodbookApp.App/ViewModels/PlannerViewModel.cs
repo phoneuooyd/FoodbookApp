@@ -6,6 +6,7 @@ using Foodbook.Models;
 using FoodbookApp;
 using FoodbookApp.Interfaces;
 using FoodbookApp.Localization;
+using FoodbookApp.Utils;
 using Microsoft.Maui.Controls;
 
 namespace Foodbook.ViewModels;
@@ -15,6 +16,9 @@ public class PlannerViewModel : INotifyPropertyChanged
     private readonly IPlannerService _plannerService;
     private readonly IRecipeService _recipeService;
     private readonly IPlanService _planService;
+    private readonly FoodbookApp.Interfaces.ILocalizationService? _localizationService;
+    private string _loadingStatusKey = "LoadingStatus";
+    private string _loadingStatusFallback = "Loading...";
 
     public ObservableCollection<Recipe> Recipes { get; } = new();
     public ObservableCollection<PlannerDay> Days { get; } = new();
@@ -29,6 +33,7 @@ public class PlannerViewModel : INotifyPropertyChanged
 
     private bool _isEditing;
     private Guid? _editingPlanId;
+    private bool _isSaveInProgress;
     
     // NEW: Flag to suppress auto-reload when user is actively editing
     private bool _suppressAutoReload = false;
@@ -51,7 +56,19 @@ public class PlannerViewModel : INotifyPropertyChanged
         }
     }
 
-    private string _loadingStatus = T("LoadingStatus", "Loading...");
+    private bool _isSaving;
+    public bool IsSaving
+    {
+        get => _isSaving;
+        set
+        {
+            if (_isSaving == value) return;
+            _isSaving = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private string _loadingStatus = "Loading...";
     public string LoadingStatus
     {
         get => _loadingStatus;
@@ -144,11 +161,15 @@ public class PlannerViewModel : INotifyPropertyChanged
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
 
-    public PlannerViewModel(IPlannerService plannerService, IRecipeService recipeService, IPlanService planService)
+    public PlannerViewModel(IPlannerService plannerService, IRecipeService recipeService, IPlanService planService,
+        FoodbookApp.Interfaces.ILocalizationService? localizationService = null)
     {
         _plannerService = plannerService ?? throw new ArgumentNullException(nameof(plannerService));
         _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
         _planService = planService ?? throw new ArgumentNullException(nameof(planService));
+        _localizationService = localizationService;
+
+        _loadingStatus = ResolveLoadingStatus(_loadingStatusKey, _loadingStatusFallback);
 
         AddMealCommand = new Command<PlannerDay>(AddMeal);
         RemoveMealCommand = new Command<PlannedMeal>(RemoveMeal);
@@ -156,6 +177,9 @@ public class PlannerViewModel : INotifyPropertyChanged
         DecreasePortionsCommand = new Command<PlannedMeal>(DecreasePortions);
         SaveCommand = new Command(async () =>
         {
+            if (_isSaveInProgress) return;
+            _isSaveInProgress = true;
+
             try 
             {
                 var plan = await SaveAsync();
@@ -191,8 +215,40 @@ public class PlannerViewModel : INotifyPropertyChanged
                     T("UnexpectedSaveErrorMessage", "An unexpected error occurred while saving."),
                     ButtonResources.OK);
             }
+            finally
+            {
+                _isSaveInProgress = false;
+                IsSaving = false;
+            }
         });
         CancelCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
+
+        if (_localizationService != null)
+        {
+            _localizationService.CultureChanged += OnCultureChanged;
+        }
+    }
+
+    private void OnCultureChanged(object? sender, EventArgs e)
+    {
+        LoadingStatus = ResolveLoadingStatus(_loadingStatusKey, _loadingStatusFallback);
+    }
+
+    private string ResolveLoadingStatus(string key, string fallback)
+    {
+        if (_localizationService != null)
+        {
+            var viaService = _localizationService.GetString("PlannerPageResources", key);
+            if (!string.IsNullOrEmpty(viaService)) return viaService;
+        }
+        return PlannerPageResources.ResourceManager.GetString(key, PlannerPageResources.Culture) ?? fallback;
+    }
+
+    private void SetLoadingStatus(string key, string fallback)
+    {
+        _loadingStatusKey = key;
+        _loadingStatusFallback = fallback;
+        LoadingStatus = ResolveLoadingStatus(key, fallback);
     }
 
     /// <summary>
@@ -337,7 +393,7 @@ public class PlannerViewModel : INotifyPropertyChanged
             System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] LoadAsync started - forceReload={forceReload}, isEditing={IsEditing}");
             
             // Etap 1: Czyszczenie danych
-            LoadingStatus = T("LoadingStatusPreparingData", "Preparing data...");
+            SetLoadingStatus("LoadingStatusPreparingData", "Preparing data...");
             LoadingProgress = 0.1;
             await Task.Delay(50);
 
@@ -345,7 +401,7 @@ public class PlannerViewModel : INotifyPropertyChanged
             Recipes.Clear();
 
             // Etap 2: Ładowanie przepisów
-            LoadingStatus = T("LoadingStatusLoadingRecipes", "Loading recipes...");
+            SetLoadingStatus("LoadingStatusLoadingRecipes", "Loading recipes...");
             LoadingProgress = 0.2;
             await Task.Delay(50);
 
@@ -366,7 +422,7 @@ public class PlannerViewModel : INotifyPropertyChanged
             }
 
             // Etap 3: Ładowanie istniejących posiłków
-            LoadingStatus = T("LoadingStatusLoadingPlannedMeals", "Loading planned meals...");
+            SetLoadingStatus("LoadingStatusLoadingPlannedMeals", "Loading planned meals...");
             LoadingProgress = 0.5;
             await Task.Delay(50);
 
@@ -385,7 +441,7 @@ public class PlannerViewModel : INotifyPropertyChanged
             }
             
             // Etap 4: Tworzenie dni planera
-            LoadingStatus = T("LoadingStatusPreparingCalendar", "Preparing calendar...");
+            SetLoadingStatus("LoadingStatusPreparingCalendar", "Preparing calendar...");
             LoadingProgress = 0.7;
             await Task.Delay(50);
 
@@ -425,7 +481,7 @@ public class PlannerViewModel : INotifyPropertyChanged
             }
 
             // Etap 5: Finalizacja
-            LoadingStatus = T("LoadingStatusFinalizing", "Finalizing...");
+            SetLoadingStatus("LoadingStatusFinalizing", "Finalizing...");
             LoadingProgress = 0.9;
             await Task.Delay(50);
 
@@ -454,7 +510,7 @@ public class PlannerViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            LoadingStatus = T("LoadingStatusError", "Error loading data");
+            SetLoadingStatus("LoadingStatusError", "Error loading data");
             System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Error loading planner data: {ex.Message}");
             
             await Shell.Current.DisplayAlert(
@@ -465,7 +521,7 @@ public class PlannerViewModel : INotifyPropertyChanged
         finally
         {
             IsLoading = false;
-            LoadingStatus = T("LoadingStatus", "Loading...");
+            SetLoadingStatus("LoadingStatus", "Loading...");
             LoadingProgress = 0;
         }
     }
@@ -779,6 +835,8 @@ public class PlannerViewModel : INotifyPropertyChanged
                 }
             }
 
+            IsSaving = true;
+
             Plan plan;
             if (_editingPlanId.HasValue)
             {
@@ -813,14 +871,17 @@ public class PlannerViewModel : INotifyPropertyChanged
             if (plan.Id != Guid.Empty)
             {
                 var existing = await _plannerService.GetPlannedMealsAsync(plan.Id);
-                foreach (var m in existing)
-                    await _plannerService.RemovePlannedMealAsync(m.Id);
+                if (existing.Any())
+                {
+                    await _plannerService.RemovePlannedMealsAsync(existing.Select(m => m.Id));
+                }
 
                 System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Removed {existing.Count} old meals");
             }
 
             // Add meals for current plan only
             int savedMealsCount = 0;
+            var mealsToAdd = new List<PlannedMeal>();
             foreach (var day in Days)
             {
                 foreach (var meal in day.Meals)
@@ -829,7 +890,7 @@ public class PlannerViewModel : INotifyPropertyChanged
                         meal.RecipeId = meal.Recipe.Id;
                     if (meal.RecipeId != Guid.Empty)
                     {
-                        await _plannerService.AddPlannedMealAsync(new PlannedMeal
+                        mealsToAdd.Add(new PlannedMeal
                         {
                             RecipeId = meal.RecipeId,
                             Date = meal.Date,
@@ -839,6 +900,11 @@ public class PlannerViewModel : INotifyPropertyChanged
                         savedMealsCount++;
                     }
                 }
+            }
+
+            if (mealsToAdd.Any())
+            {
+                await _plannerService.AddPlannedMealsAsync(mealsToAdd);
             }
 
             System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Saved {savedMealsCount} meals for plan {plan.Id}");
@@ -991,12 +1057,16 @@ public class PlannerViewModel : INotifyPropertyChanged
     {
         try
         {
+            var format = T("ShoppingListForPlannerFormat", "Shopping list: {0}");
+            var title = string.Format(format, plan.Title);
+
             var newShoppingPlan = new Plan
             {
                 StartDate = plan.StartDate,
                 EndDate = plan.EndDate,
                 Type = PlanType.ShoppingList,
-                IsArchived = false
+                IsArchived = false,
+                Title = title
             };
             await _planService.AddPlanAsync(newShoppingPlan);
             System.Diagnostics.Debug.WriteLine($"[PlannerViewModel] Created new shopping list plan with ID: {newShoppingPlan.Id}");

@@ -64,7 +64,10 @@
                                 <Border Style="{StaticResource OverhaulCard}">
                                     <VerticalStackLayout Spacing="6">
                                         <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=NameLabel}" Style="{StaticResource FieldLabel}" />
-                                        <Entry Placeholder="{loc:Translate Resource=IngredientFormPageResources, Key=NamePlaceholder}" Text="{Binding Name}" Focused="OnInputFocused" Unfocused="OnInputUnfocused" Style="{StaticResource ModernEntry}" />
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                            <Entry Grid.Column="0" Placeholder="{loc:Translate Resource=IngredientFormPageResources, Key=NamePlaceholder}" Text="{Binding Name}" Focused="OnInputFocused" Unfocused="OnInputUnfocused" Style="{StaticResource ModernEntry}" />
+                                            <ImageButton Grid.Column="1" Source="barcode_scanner.png" Command="{Binding OpenScannerCommand}" WidthRequest="36" HeightRequest="36" VerticalOptions="Center" BackgroundColor="Transparent" Padding="4" />
+                                        </Grid>
                                     </VerticalStackLayout>
                                 </Border>
 

@@ -42,6 +42,8 @@
 
                 <components:MealSlotListComponent Data="{Binding MealSlotListData}"
                                                  AddMealCommand="{Binding AddMealCommand}"
+                                                 EditMealCommand="{Binding EditMealCommand}"
+                                                 DeleteMealCommand="{Binding DeleteMealCommand}"
                                                  OpenMealDetailCommand="{Binding OpenMealDetailCommand}" />
             </VerticalStackLayout>
         </ScrollView>

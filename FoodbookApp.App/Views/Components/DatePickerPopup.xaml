@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<mct:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+           xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+           xmlns:mct="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui"
+           x:Class="Foodbook.Views.Components.DatePickerPopup"
+           x:Name="ThisPopup"
+           CanBeDismissedByTappingOutsideOfPopup="True"
+           Padding="0"
+           Margin="0">
+    <Border BackgroundColor="{DynamicResource PopupBackgroundColor}"
+            StrokeShape="RoundRectangle 16"
+            StrokeThickness="1"
+            Stroke="{DynamicResource Secondary}"
+            MinimumWidthRequest="320"
+            MaximumWidthRequest="520">
+        <Grid RowDefinitions="Auto,Auto,Auto" Padding="16" RowSpacing="14">
+            <Label x:Name="TitleLabel"
+                   Grid.Row="0"
+                   FontSize="20"
+                   FontAttributes="Bold"
+                   TextColor="{DynamicResource ShellTitleColor}"
+                   HorizontalTextAlignment="Center" />
+
+            <VerticalStackLayout Grid.Row="1" Spacing="8">
+                <Label x:Name="DateLabel"
+                       FontSize="13"
+                       FontAttributes="Bold"
+                       TextColor="{DynamicResource Primary}" />
+                <Border StrokeShape="RoundRectangle 12"
+                        StrokeThickness="1.5"
+                        Stroke="{DynamicResource Secondary}"
+                        BackgroundColor="{DynamicResource FrameBackgroundColor}"
+                        Padding="10,6">
+                    <DatePicker x:Name="DatePicker"
+                                Format="d"
+                                FontSize="16"
+                                TextColor="{DynamicResource FrameTextColor}"
+                                BackgroundColor="Transparent" />
+                </Border>
+            </VerticalStackLayout>
+
+            <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Button x:Name="CancelButton"
+                        Grid.Column="0"
+                        FontAttributes="Bold"
+                        BackgroundColor="Transparent"
+                        TextColor="{DynamicResource ShellTitleColor}" />
+                <Button x:Name="ConfirmButton"
+                        Grid.Column="1"
+                        FontAttributes="Bold"
+                        BackgroundColor="{DynamicResource Primary}"
+                        TextColor="{DynamicResource ButtonPrimaryText}" />
+            </Grid>
+        </Grid>
+    </Border>
+</mct:Popup>

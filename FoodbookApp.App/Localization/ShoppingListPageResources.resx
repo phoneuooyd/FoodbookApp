@@ -30,6 +30,15 @@
   <data name="CreateListTitleFormat" xml:space="preserve">
     <value>Shopping List ({0})</value>
   </data>
+  <data name="CreateListNamePromptTitle" xml:space="preserve">
+    <value>New shopping list</value>
+  </data>
+  <data name="CreateListNamePromptMessage" xml:space="preserve">
+    <value>Enter shopping list name</value>
+  </data>
+  <data name="CreateListNamePromptAccept" xml:space="preserve">
+    <value>Create</value>
+  </data>
   <data name="CreateListErrorTitle" xml:space="preserve">
     <value>Error</value>
   </data>

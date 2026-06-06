@@ -44,4 +44,15 @@
   <data name="ValidationUnitWeightPositive" xml:space="preserve"><value>El peso unitario debe ser mayor que cero</value></data>
   <data name="ValidationGeneralError" xml:space="preserve"><value>Error de validacion</value></data>
   <data name="SaveIngredientErrorMessageFormat" xml:space="preserve"><value>No se pudo guardar el ingrediente: {0}</value></data>
+  <data name="ScannerButton" xml:space="preserve"><value>Escanear cÃ³digo de barras</value></data>
+  <data name="ScannerTitle" xml:space="preserve"><value>EscÃ¡ner de cÃ³digos de barras</value></data>
+  <data name="ScannerStatusWaiting" xml:space="preserve"><value>Esperando cÃ³digo de barras...</value></data>
+  <data name="ScannerStatusDetected" xml:space="preserve"><value>CÃ³digo de barras detectado: {0}</value></data>
+  <data name="ScannerStatusFetching" xml:space="preserve"><value>Obteniendo datos del producto...</value></data>
+  <data name="ScannerStatusNotFound" xml:space="preserve"><value>Producto no encontrado en OpenFoodFacts</value></data>
+  <data name="ScannerFetchError" xml:space="preserve"><value>Error al obtener datos del producto</value></data>
+  <data name="ScannerCameraError" xml:space="preserve"><value>EscÃ¡ner no disponible</value></data>
+  <data name="ScannerNotSupported" xml:space="preserve"><value>El escaneo de cÃ³digos de barras no es compatible en este dispositivo</value></data>
+  <data name="ScannerNoPermission" xml:space="preserve"><value>Permiso de cÃ¡mara denegado</value></data>
+  <data name="ScannerAddButton" xml:space="preserve"><value>AÃ±adir ingrediente desde cÃ³digo de barras</value></data>
 </root>

@@ -130,13 +130,13 @@
     <value>Speichern</value>
   </data>
   <data name="SaveChanges" xml:space="preserve">
-    <value>Anderungen speichern</value>
+    <value>Änderungen speichern</value>
   </data>
   <data name="AddRecipe" xml:space="preserve">
-    <value>Rezept hinzufugen</value>
+    <value>Rezept hinzufügen</value>
   </data>
   <data name="AddIngredient" xml:space="preserve">
-    <value>Zutat hinzufugen</value>
+    <value>Zutat hinzufügen</value>
   </data>
   <data name="NewRecipe" xml:space="preserve">
     <value>Neues Rezept</value>
@@ -151,6 +151,6 @@
     <value>Zutat bearbeiten</value>
   </data>
   <data name="Cancel" xml:space="preserve">
-    <value>Zuruck</value>
+    <value>Zurück</value>
   </data>
 </root>

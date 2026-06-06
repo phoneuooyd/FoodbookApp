@@ -118,10 +118,10 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="EmptyTitle" xml:space="preserve">
-    <value>Brak planow</value>
+    <value>Brak planów</value>
   </data>
   <data name="EmptyHint" xml:space="preserve">
-    <value>Utworz nowy plan przyciskiem +</value>
+    <value>Utwórz nowy plan przyciskiem +</value>
   </data>
   <data name="PlannerTitle" xml:space="preserve">
     <value>Plany</value>

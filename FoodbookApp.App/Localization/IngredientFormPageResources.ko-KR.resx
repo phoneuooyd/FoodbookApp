@@ -4,23 +4,23 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="Title" xml:space="preserve"><value>Ingredient</value></data>
-  <data name="BasicInfoTab" xml:space="preserve"><value>Basic info</value></data>
-  <data name="NutritionTab" xml:space="preserve"><value>Nutrition</value></data>
-  <data name="BasicInfoHeader" xml:space="preserve"><value>Basic info</value></data>
-  <data name="NameLabel" xml:space="preserve"><value>Ingredient name *</value></data>
-  <data name="NamePlaceholder" xml:space="preserve"><value>Enter name</value></data>
-  <data name="QuantityLabel" xml:space="preserve"><value>Quantity *</value></data>
-  <data name="UnitLabel" xml:space="preserve"><value>Unit *</value></data>
-  <data name="UnitPickerTitle" xml:space="preserve"><value>Unit</value></data>
-  <data name="NutritionHeader" xml:space="preserve"><value>Nutrition</value></data>
-  <data name="VerifyLabel" xml:space="preserve"><value>Verify with OpenFoodFacts:</value></data>
-  <data name="VerifyButton" xml:space="preserve"><value>Verify</value></data>
-  <data name="InfoLabel" xml:space="preserve"><value>Info</value></data>
-  <data name="CaloriesLabel" xml:space="preserve"><value>Calories</value></data>
-  <data name="ProteinLabel" xml:space="preserve"><value>Protein (g)</value></data>
-  <data name="FatLabel" xml:space="preserve"><value>Fat (g)</value></data>
-  <data name="CarbsLabel" xml:space="preserve"><value>Carbs (g)</value></data>
+  <data name="Title" xml:space="preserve"><value>재료</value></data>
+  <data name="BasicInfoTab" xml:space="preserve"><value>기본 정보</value></data>
+  <data name="NutritionTab" xml:space="preserve"><value>영양 정보</value></data>
+  <data name="BasicInfoHeader" xml:space="preserve"><value>기본 정보</value></data>
+  <data name="NameLabel" xml:space="preserve"><value>재료 이름 *</value></data>
+  <data name="NamePlaceholder" xml:space="preserve"><value>이름 입력</value></data>
+  <data name="QuantityLabel" xml:space="preserve"><value>수량 *</value></data>
+  <data name="UnitLabel" xml:space="preserve"><value>단위 *</value></data>
+  <data name="UnitPickerTitle" xml:space="preserve"><value>단위</value></data>
+  <data name="NutritionHeader" xml:space="preserve"><value>영양 정보</value></data>
+  <data name="VerifyLabel" xml:space="preserve"><value>OpenFoodFacts로 확인:</value></data>
+  <data name="VerifyButton" xml:space="preserve"><value>확인</value></data>
+  <data name="InfoLabel" xml:space="preserve"><value>정보</value></data>
+  <data name="CaloriesLabel" xml:space="preserve"><value>칼로리</value></data>
+  <data name="ProteinLabel" xml:space="preserve"><value>단백질 (g)</value></data>
+  <data name="FatLabel" xml:space="preserve"><value>지방 (g)</value></data>
+  <data name="CarbsLabel" xml:space="preserve"><value>탄수화물 (g)</value></data>
   <data name="RecipeInfoPartOfRecipe" xml:space="preserve"><value>이 재료는 레시피의 일부입니다</value></data>
   <data name="LoadIngredientErrorMessageFormat" xml:space="preserve"><value>재료를 불러오는 중 오류: {0}</value></data>
   <data name="VerifyNameRequiredStatus" xml:space="preserve"><value>검증 전에 재료 이름을 입력하세요</value></data>
@@ -44,4 +44,15 @@
   <data name="ValidationUnitWeightPositive" xml:space="preserve"><value>단위 중량은 0보다 커야 합니다</value></data>
   <data name="ValidationGeneralError" xml:space="preserve"><value>유효성 검사 오류</value></data>
   <data name="SaveIngredientErrorMessageFormat" xml:space="preserve"><value>재료를 저장할 수 없습니다: {0}</value></data>
+  <data name="ScannerButton" xml:space="preserve"><value>바코드 스캔</value></data>
+  <data name="ScannerTitle" xml:space="preserve"><value>바코드 스캐너</value></data>
+  <data name="ScannerStatusWaiting" xml:space="preserve"><value>바코드 기다리는 중...</value></data>
+  <data name="ScannerStatusDetected" xml:space="preserve"><value>바코드 감지됨: {0}</value></data>
+  <data name="ScannerStatusFetching" xml:space="preserve"><value>제품 데이터 가져오는 중...</value></data>
+  <data name="ScannerStatusNotFound" xml:space="preserve"><value>OpenFoodFacts에서 제품을 찾을 수 없습니다</value></data>
+  <data name="ScannerFetchError" xml:space="preserve"><value>제품 데이터 가져오기 오류</value></data>
+  <data name="ScannerCameraError" xml:space="preserve"><value>스캐너를 사용할 수 없음</value></data>
+  <data name="ScannerNotSupported" xml:space="preserve"><value>이 기기에서는 바코드 스캔이 지원되지 않습니다</value></data>
+  <data name="ScannerNoPermission" xml:space="preserve"><value>카메라 권한 거부됨</value></data>
+  <data name="ScannerAddButton" xml:space="preserve"><value>바코드에서 재료 추가</value></data>
 </root>

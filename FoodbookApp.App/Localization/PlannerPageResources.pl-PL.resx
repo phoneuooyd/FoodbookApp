@@ -144,6 +144,9 @@
   <data name="SavePlan" xml:space="preserve">
     <value>Zapisz plan</value>
   </data>
+  <data name="ShoppingListForPlannerFormat" xml:space="preserve">
+    <value>Lista zakupów: {0}</value>
+  </data>
   <data name="CalorieShort" xml:space="preserve">
     <value>⚡ kcal</value>
   </data>

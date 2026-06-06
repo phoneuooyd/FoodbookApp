@@ -139,5 +139,9 @@
 
         </components:TabComponent>
 
+        <components:UniversalSpinnerComponent
+            Grid.RowSpan="2"
+            ZIndex="10"
+            IsLoading="{Binding IsLoading}" />
     </Grid>
 </ContentPage>

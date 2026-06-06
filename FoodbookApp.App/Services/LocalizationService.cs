@@ -44,6 +44,13 @@ public class LocalizationService : ILocalizationService
             }
         }
 
+        // Map two-letter ISO names to the specific cultures used in resx files
+        if (culture.Name == "pl") culture = CultureInfo.GetCultureInfo("pl-PL");
+        else if (culture.Name == "de") culture = CultureInfo.GetCultureInfo("de-DE");
+        else if (culture.Name == "es") culture = CultureInfo.GetCultureInfo("es-ES");
+        else if (culture.Name == "fr") culture = CultureInfo.GetCultureInfo("fr-FR");
+        else if (culture.Name == "ko") culture = CultureInfo.GetCultureInfo("ko-KR");
+
         Thread.CurrentThread.CurrentCulture = culture;
         Thread.CurrentThread.CurrentUICulture = culture;
         CultureInfo.DefaultThreadCurrentCulture = culture;
@@ -68,6 +75,7 @@ public class LocalizationService : ILocalizationService
         UnitResources.Culture = culture;
         FilterSortPopupResources.Culture = culture;
         FolderResources.Culture = culture;
+        UniversalSpinnerComponentResources.Culture = culture;
 
         System.Diagnostics.Debug.WriteLine($"[LocalizationService] Culture changed to: {culture.Name} (requested: '{cultureName}')");
         CultureChanged?.Invoke(this, EventArgs.Empty);

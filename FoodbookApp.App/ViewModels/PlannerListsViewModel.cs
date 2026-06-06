@@ -5,10 +5,13 @@ using System.Windows.Input;
 using Foodbook.Models;
 using Foodbook.Services;
 using Foodbook.Views;
+using Foodbook.Views.Components;
 using FoodbookApp.Interfaces;
 using FoodbookApp.Localization;
 using Microsoft.Maui.Controls;
 using Microsoft.Extensions.DependencyInjection;
+using CommunityToolkit.Maui.Views;
+using CommunityToolkit.Maui.Extensions;
 
 namespace Foodbook.ViewModels;
 
@@ -95,18 +98,29 @@ public class PlannerListsViewModel : INotifyPropertyChanged
             {
                 System.Diagnostics.Debug.WriteLine($"[PlannerListsVM] EDITING existing plan {p.Id}");
 
+                // Show loading overlay on THIS page BEFORE navigation
+                this.IsLoading = true;
+                System.Diagnostics.Debug.WriteLine($"[PlannerListsVM] IsLoading=true SET on PlannerListsVM BEFORE navigation");
+
+                // Yield to UI thread to ensure spinner renders before navigation starts
+                await Task.Delay(16);
+
                 // Resolve PlannerEditViewModel from DI
                 var editVM = FoodbookApp.MauiProgram.ServiceProvider?.GetService<PlannerEditViewModel>();
-                if (editVM != null)
-                {
-                    var page = new PlannerPage(editVM)
+                    if (editVM != null)
                     {
-                        // Set the PlanId property for QueryProperty
-                        PlanId = p.Id.ToString()
-                    };
+                        var page = new PlannerPage(editVM)
+                        {
+                            // Set the PlanId property for QueryProperty
+                            PlanId = p.Id.ToString()
+                        };
 
-                    await Shell.Current.Navigation.PushAsync(page);
-                }
+                        await Shell.Current.Navigation.PushAsync(page);
+
+                        // Navigation complete — PlannerPage is now visible; clear our loading overlay
+                        this.IsLoading = false;
+                        System.Diagnostics.Debug.WriteLine("[PlannerListsVM] IsLoading=false (navigation to PlannerPage complete)");
+                    }
                 else
                 {
                     System.Diagnostics.Debug.WriteLine("[PlannerListsVM] Failed to resolve PlannerEditViewModel");
@@ -209,24 +223,27 @@ public class PlannerListsViewModel : INotifyPropertyChanged
     {
         if (foodbook == null) return;
 
-        var startDateInput = await Shell.Current.DisplayPromptAsync(
-            T("ApplyFoodbookPromptTitle", "Apply Foodbook"),
-            T("ApplyFoodbookPromptMessage", "Enter start date (yyyy-MM-dd)"),
-            accept: T("Apply", "Apply"),
-            cancel: T("Cancel", "Cancel"),
-            initialValue: DateTime.Today.ToString("yyyy-MM-dd"));
-
-        if (startDateInput == null)
-            return;
-
-        if (!DateTime.TryParse(startDateInput, out var startDate))
+        var popup = new DatePickerPopup
         {
-            await Shell.Current.DisplayAlert(
-                T("ErrorTitle", "Error"),
-                T("InvalidDateFormatMessage", "Invalid date format."),
-                T("OK", "OK"));
+            TitleText = T("ApplyFoodbookPromptTitle", "Apply Foodbook"),
+            DateLabelText = T("ApplyFoodbookDateLabel", "Start date"),
+            ConfirmText = T("Apply", "Apply"),
+            CancelText = T("Cancel", "Cancel"),
+            SelectedDate = DateTime.Today
+        };
+
+        var host = Shell.Current?.CurrentPage ?? Application.Current?.MainPage;
+        if (host == null)
+        {
             return;
         }
+
+        await host.ShowPopupAsync(popup);
+        var selectedDate = await popup.ResultTask;
+        if (selectedDate == null)
+            return;
+
+        var startDate = selectedDate.Value;
 
         var endDate = startDate.Date.AddDays(Math.Max(1, foodbook.DurationDays) - 1);
         var hasOverlap = await _planService.HasOverlapAsync(startDate.Date, endDate);

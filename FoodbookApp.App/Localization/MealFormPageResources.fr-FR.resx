@@ -9,5 +9,5 @@
   <data name="EditMealTitle" xml:space="preserve"><value>Modifier le repas</value></data>
   <data name="AddMealButtonText" xml:space="preserve"><value>Ajouter le repas</value></data>
   <data name="SaveChangesButtonText" xml:space="preserve"><value>Enregistrer les modifications</value></data>
-  <data name="ValidationSelectRecipe" xml:space="preserve"><value>Selectionnez une recette</value></data>
+  <data name="ValidationSelectRecipe" xml:space="preserve"><value>Sélectionnez une recette</value></data>
 </root>

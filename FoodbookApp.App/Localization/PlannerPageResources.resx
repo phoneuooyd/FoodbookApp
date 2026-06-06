@@ -138,6 +138,9 @@
   <data name="Save" xml:space="preserve">
     <value>Save</value>
   </data>
+  <data name="ShoppingListForPlannerFormat" xml:space="preserve">
+    <value>Shopping list: {0}</value>
+  </data>
   <data name="SelectRecipePlaceholder" xml:space="preserve">
     <value>Select recipe...</value>
   </data>

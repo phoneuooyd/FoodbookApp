@@ -74,22 +74,6 @@
         </Grid>
 
         <Grid Grid.Row="1">
-            <!-- Loading -->
-            <Grid IsVisible="{Binding IsLoading}" VerticalOptions="Center" HorizontalOptions="Center" Padding="40"
-                  RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="20">
-                <ActivityIndicator Grid.Row="0" IsRunning="{Binding IsLoading}" Color="{DynamicResource Primary}" WidthRequest="60" HeightRequest="60" />
-                <Label Grid.Row="1" Text="{Binding LoadingStatus}" FontSize="16" FontAttributes="Bold" HorizontalTextAlignment="Center" TextColor="{DynamicResource Primary}" />
-                <ProgressBar Grid.Row="2" Progress="{Binding LoadingProgress}" ProgressColor="{DynamicResource Primary}" BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" HeightRequest="6" WidthRequest="300" HorizontalOptions="Center" />
-                <Label Grid.Row="3" FontSize="14" HorizontalTextAlignment="Center" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}">
-                    <Label.Text>
-                        <MultiBinding StringFormat="{}{0:P0}">
-                            <Binding Path="LoadingProgress" />
-                        </MultiBinding>
-                    </Label.Text>
-                </Label>
-                <Label Grid.Row="4" FontSize="12" HorizontalTextAlignment="Center" TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}" Margin="0,10,0,0" Text="{loc:Translate Resource=PlannerPageResources, Key=LoadingTip}" />
-            </Grid>
-
             <!-- Content -->
             <Grid IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
                   RowDefinitions="Auto,Auto,*,Auto">
@@ -269,5 +253,16 @@
                 </Border>
             </Grid>
         </Grid>
+
+        <components:UniversalSpinnerComponent
+            Grid.RowSpan="2"
+            ZIndex="10"
+            IsLoading="{Binding IsLoading}"
+            IsSaving="{Binding IsSaving}"
+            LoadingStatus="{Binding LoadingStatus}"
+            LoadingProgress="{Binding LoadingProgress}"
+            ShowProgress="True"
+            ShowTip="True"
+            TipText="{loc:Translate Resource=PlannerPageResources, Key=LoadingTip}" />
     </Grid>
 </ContentPage>

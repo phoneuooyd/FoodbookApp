@@ -19,6 +19,7 @@ public class FoodbookViewModel : INotifyPropertyChanged
 
     private Guid? _editingPlanId;
     private bool _isLoading;
+    private bool _isSaving;
     private int _selectedTabIndex;
     private string _name = string.Empty;
     private string _emoji = "??";
@@ -44,6 +45,12 @@ public class FoodbookViewModel : INotifyPropertyChanged
         set { if (_isLoading == value) return; _isLoading = value; OnPropertyChanged(); }
     }
 
+    public bool IsSaving
+    {
+        get => _isSaving;
+        set { if (_isSaving == value) return; _isSaving = value; OnPropertyChanged(); }
+    }
+
     public int SelectedTabIndex
     {
         get => _selectedTabIndex;
@@ -56,7 +63,12 @@ public class FoodbookViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(CtaCommand));
 
             if (_selectedTabIndex == 1)
-                _ = EnsureDaysLoadedAsync();
+            {
+                if (!_daysLoaded && !IsLoading)
+                {
+                    _ = LoadDaysAsync();
+                }
+            }
         }
     }
 
@@ -177,7 +189,7 @@ public class FoodbookViewModel : INotifyPropertyChanged
             }
 
             if (SelectedTabIndex == 1)
-                await EnsureDaysLoadedAsync();
+                EnsureDaysLoaded();
         }
         catch (Exception ex)
         {
@@ -237,14 +249,34 @@ public class FoodbookViewModel : INotifyPropertyChanged
 
     private async Task GoToDishesAsync()
     {
-        await EnsureDaysLoadedAsync();
+        await LoadDaysAsync();
         SelectedTabIndex = 1;
     }
 
-    private Task EnsureDaysLoadedAsync()
+    private async Task LoadDaysAsync()
+    {
+        if (_daysLoaded || IsLoading)
+            return;
+
+        IsLoading = true;
+        try
+        {
+            EnsureDaysLoaded();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[FoodbookVM] LoadDaysAsync error: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void EnsureDaysLoaded()
     {
         if (_daysLoaded)
-            return Task.CompletedTask;
+            return;
 
         try
         {
@@ -257,10 +289,8 @@ public class FoodbookViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[FoodbookVM] EnsureDaysLoadedAsync error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[FoodbookVM] EnsureDaysLoaded error: {ex.Message}");
         }
-
-        return Task.CompletedTask;
     }
 
     private void BuildEmptyDays()
@@ -411,6 +441,9 @@ public class FoodbookViewModel : INotifyPropertyChanged
     {
         try
         {
+            if (IsSaving)
+                return;
+
             if (string.IsNullOrWhiteSpace(Name))
             {
                 SelectedTabIndex = 0;
@@ -421,7 +454,9 @@ public class FoodbookViewModel : INotifyPropertyChanged
                 return;
             }
 
-            await EnsureDaysLoadedAsync();
+            IsSaving = true;
+
+            EnsureDaysLoaded();
 
             Plan plan;
             if (_editingPlanId.HasValue)
@@ -435,8 +470,10 @@ public class FoodbookViewModel : INotifyPropertyChanged
                 await _planService.UpdatePlanAsync(plan);
 
                 var existingMeals = await _plannerService.GetPlannedMealsAsync(plan.Id);
-                foreach (var meal in existingMeals)
-                    await _plannerService.RemovePlannedMealAsync(meal.Id);
+                if (existingMeals.Any())
+                {
+                    await _plannerService.RemovePlannedMealsAsync(existingMeals.Select(m => m.Id));
+                }
             }
             else
             {
@@ -455,6 +492,7 @@ public class FoodbookViewModel : INotifyPropertyChanged
             }
 
             int saved = 0;
+            var mealsToAdd = new List<PlannedMeal>();
             foreach (var day in Days)
             {
                 foreach (var meal in day.Meals)
@@ -463,7 +501,7 @@ public class FoodbookViewModel : INotifyPropertyChanged
                         meal.RecipeId = meal.Recipe.Id;
                     if (meal.RecipeId != Guid.Empty)
                     {
-                        await _plannerService.AddPlannedMealAsync(new PlannedMeal
+                        mealsToAdd.Add(new PlannedMeal
                         {
                             RecipeId = meal.RecipeId,
                             Date = meal.Date,
@@ -473,6 +511,11 @@ public class FoodbookViewModel : INotifyPropertyChanged
                         saved++;
                     }
                 }
+            }
+
+            if (mealsToAdd.Any())
+            {
+                await _plannerService.AddPlannedMealsAsync(mealsToAdd);
             }
 
             System.Diagnostics.Debug.WriteLine($"[FoodbookVM] Saved {saved} meals for foodbook {plan.Id}");
@@ -501,6 +544,10 @@ public class FoodbookViewModel : INotifyPropertyChanged
                 L("SaveErrorTitle", "Error"),
                 L("SaveErrorMessage", "Could not save Foodbook."),
                 ButtonResources.OK);
+        }
+        finally
+        {
+            IsSaving = false;
         }
     }
 

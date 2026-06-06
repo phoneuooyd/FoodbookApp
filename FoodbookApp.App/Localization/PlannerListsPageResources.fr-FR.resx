@@ -121,7 +121,7 @@
     <value>Aucun plan</value>
   </data>
   <data name="EmptyHint" xml:space="preserve">
-    <value>Creez un nouveau plan avec le bouton +</value>
+    <value>Créez un nouveau plan avec le bouton +</value>
   </data>
   <data name="PlannerTitle" xml:space="preserve">
     <value>Planificateurs</value>

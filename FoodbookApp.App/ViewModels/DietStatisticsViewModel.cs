@@ -136,8 +136,8 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
     private readonly IPreferencesService _preferencesService;
     private readonly Func<Task> _planChangedHandler;
 
-    private FilterMode _selectedFilter = FilterMode.Week;
-    private DateTime _filterStartDate = DateTime.Today.AddDays(-6);
+    private FilterMode _selectedFilter = FilterMode.Day;
+    private DateTime _filterStartDate = DateTime.Today;
     private DateTime _filterEndDate = DateTime.Today;
     private Plan? _selectedPlan;
     private double _consumedCalories;
@@ -189,6 +189,8 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
         SelectFilterCommand = new Command<FilterMode>(async mode => await SelectFilterAsync(mode));
         SelectPlanCommand = new Command<Plan>(async plan => await SelectPlanAsync(plan));
         AddMealCommand = new Command<MealSlotViewModel>(async item => await AddManualMealAsync(item));
+        EditMealCommand = new Command<MealSlotViewModel>(async item => await EditManualMealAsync(item));
+        DeleteMealCommand = new Command<MealSlotViewModel>(async item => await DeleteManualMealAsync(item));
         OpenMealDetailCommand = new Command<MealSlotViewModel>(OnOpenMealDetail);
         SelectCustomRangeCommand = new Command(async () => await SelectCustomRangeAsync());
         OpenCalorieSettingsCommand = new Command(async () => await OpenCalorieSettingsAsync());
@@ -674,6 +676,16 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
     public ICommand AddMealCommand { get; }
 
     /// <summary>
+    /// Command for editing a manual meal.
+    /// </summary>
+    public ICommand EditMealCommand { get; }
+
+    /// <summary>
+    /// Command for deleting a manual meal.
+    /// </summary>
+    public ICommand DeleteMealCommand { get; }
+
+    /// <summary>
     /// Command for opening meal details.
     /// </summary>
     public ICommand OpenMealDetailCommand { get; }
@@ -862,6 +874,7 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
                 totalProtein += recipe.Protein * portionMultiplier;
             }
 
+            System.Diagnostics.Debug.WriteLine($"[DietStatisticsViewModel] LoadAsync — {manualMeals.Count} manual meals in range, allManualMeals={allManualMeals.Count}");
             foreach (var manualMeal in manualMeals)
             {
                 totalCalories += manualMeal.Calories;
@@ -874,6 +887,7 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
             ConsumedCarbs = Math.Round(totalCarbs, 1);
             ConsumedFat = Math.Round(totalFat, 1);
             ConsumedProtein = Math.Round(totalProtein, 1);
+            System.Diagnostics.Debug.WriteLine($"[DietStatisticsViewModel] LoadAsync — totals set: cal={ConsumedCalories} carbs={ConsumedCarbs} fat={ConsumedFat} protein={ConsumedProtein}");
 
             double macroTotal = totalCarbs + totalFat + totalProtein;
             if (macroTotal > 0)
@@ -1238,34 +1252,120 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
 
     private async Task AddManualMealAsync(MealSlotViewModel? sourceMeal)
     {
+        _ = sourceMeal;
+        await ShowAddOrEditMealPopupAsync(null);
+    }
+
+    private async Task EditManualMealAsync(MealSlotViewModel? slot)
+    {
+        if (slot == null || !slot.IsManualMeal)
+        {
+            return;
+        }
+
+        var allMeals = _preferencesService.GetDietStatisticsMeals();
+        DietStatisticsMealDto? meal = null;
+        if (slot.ManualMealId.HasValue)
+        {
+            meal = allMeals.FirstOrDefault(m => m.Id == slot.ManualMealId.Value);
+        }
+
+        if (meal == null)
+        {
+            System.Diagnostics.Debug.WriteLine($"[DietStatisticsViewModel] EditManualMealAsync — manual meal not found (id={slot.ManualMealId})");
+            return;
+        }
+
+        await ShowAddOrEditMealPopupAsync(meal);
+    }
+
+    private async Task DeleteManualMealAsync(MealSlotViewModel? slot)
+    {
+        if (slot == null || !slot.IsManualMeal || !slot.ManualMealId.HasValue)
+        {
+            return;
+        }
+
         var page = Application.Current?.MainPage;
         if (page == null)
         {
             return;
         }
 
-        _ = sourceMeal;
-        var targetDate = DateTime.Today;
+        try
+        {
+            var confirmTitle = _localizationService.GetString("DietStatisticsPageResources", "DeleteManualMealConfirmTitle");
+            var confirmMessage = _localizationService.GetString("DietStatisticsPageResources", "DeleteManualMealConfirmMessage");
+            var deleteText = _localizationService.GetString("DietStatisticsPageResources", "DeleteManualMealConfirmDelete");
+            var cancelText = _localizationService.GetString("DietStatisticsPageResources", "DeleteManualMealConfirmCancel");
+
+            var confirmed = await page.DisplayAlert(confirmTitle, confirmMessage, deleteText, cancelText);
+            if (!confirmed)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DietStatisticsViewModel] DeleteManualMealAsync — cancelled by user (id={slot.ManualMealId})");
+                return;
+            }
+
+            var meals = _preferencesService.GetDietStatisticsMeals().ToList();
+            var removed = meals.RemoveAll(m => m.Id == slot.ManualMealId.Value);
+            System.Diagnostics.Debug.WriteLine($"[DietStatisticsViewModel] DeleteManualMealAsync — removed {removed} meals (id={slot.ManualMealId})");
+
+            if (removed > 0)
+            {
+                _preferencesService.SaveDietStatisticsMeals(meals);
+                await LoadAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[DietStatisticsViewModel] DeleteManualMealAsync error: {ex.Message}");
+        }
+    }
+
+    private async Task ShowAddOrEditMealPopupAsync(DietStatisticsMealDto? editing)
+    {
+        var page = Application.Current?.MainPage;
+        if (page == null)
+        {
+            return;
+        }
+
+        var isEdit = editing != null;
+        var logTag = isEdit ? "EditManualMealAsync" : "AddManualMealAsync";
 
         try
         {
-            var popup = new AddDietMealPopup();
+            var popup = new AddDietMealPopup(editing)
+            {
+                PopupTitle = isEdit
+                    ? _localizationService.GetString("DietStatisticsPageResources", "EditMealPopupTitle")
+                    : _localizationService.GetString("DietStatisticsPageResources", "AddMealPopupTitle")
+            };
 
             var showTask = page.ShowPopupAsync(popup);
             await Task.WhenAny(showTask, popup.ResultTask);
+            if (!popup.ResultTask.IsCompleted)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DietStatisticsViewModel] {logTag} — popup dismissed (back/outside)");
+                await showTask;
+                return;
+            }
             var popupResult = await popup.ResultTask;
             await showTask;
             if (popupResult == null)
             {
+                System.Diagnostics.Debug.WriteLine($"[DietStatisticsViewModel] {logTag} — popup cancelled (Cancel button)");
                 return;
             }
+
+            System.Diagnostics.Debug.WriteLine($"[DietStatisticsViewModel] {logTag} — popupResult: id='{popupResult.MealId}' name='{popupResult.MealName}' cal='{popupResult.Calories}' pro='{popupResult.Protein}' fat='{popupResult.Fat}' carbs='{popupResult.Carbs}' weight='{popupResult.Weight}'");
 
             var name = popupResult.MealName?.Trim();
 
             if (string.IsNullOrWhiteSpace(name))
             {
                 await page.DisplayAlert(
-                    _localizationService.GetString("DietStatisticsPageResources", "AddMealPopupTitle"),
+                    popup.PopupTitle,
                     _localizationService.GetString("DietStatisticsPageResources", "AddMealPopupInvalidName"),
                     "OK");
                 return;
@@ -1278,33 +1378,103 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
                  !double.TryParse(caloriesText, NumberStyles.Float, CultureInfo.InvariantCulture, out calories)) ||
                 calories < 0)
             {
+                System.Diagnostics.Debug.WriteLine($"[DietStatisticsViewModel] {logTag} — invalid calories: '{caloriesText}'");
                 await page.DisplayAlert(
-                    _localizationService.GetString("DietStatisticsPageResources", "AddMealPopupTitle"),
+                    popup.PopupTitle,
                     _localizationService.GetString("DietStatisticsPageResources", "AddMealPopupInvalidCalories"),
                     "OK");
                 return;
             }
 
-            var meals = _preferencesService.GetDietStatisticsMeals().ToList();
-            meals.Add(new DietStatisticsMealDto
+            var weightText = popupResult.Weight ?? "100";
+            if (!double.TryParse(weightText, NumberStyles.Float, CultureInfo.CurrentCulture, out var weight) &&
+                !double.TryParse(weightText, NumberStyles.Float, CultureInfo.InvariantCulture, out weight))
             {
-                Date = targetDate.Date,
-                Name = name.Trim(),
-                Calories = calories,
-                Carbs = 0,
-                Fat = 0,
-                Protein = 0,
-                CreatedAt = DateTime.UtcNow
-            });
+                weight = 100;
+            }
+            if (weight <= 0) weight = 100;
+
+            var protein = TryParseOptionalDouble(popupResult.Protein);
+            var fat = TryParseOptionalDouble(popupResult.Fat);
+            var carbs = TryParseOptionalDouble(popupResult.Carbs);
+
+            var multiplier = weight / 100.0;
+            var finalCalories = calories * multiplier;
+            var finalProtein = (protein ?? 0) * multiplier;
+            var finalFat = (fat ?? 0) * multiplier;
+            var finalCarbs = (carbs ?? 0) * multiplier;
+
+            System.Diagnostics.Debug.WriteLine($"[DietStatisticsViewModel] {logTag} — multiplier={multiplier} final: cal={finalCalories} pro={finalProtein} fat={finalFat} carbs={finalCarbs}");
+
+            var meals = _preferencesService.GetDietStatisticsMeals().ToList();
+
+            if (isEdit && popupResult.MealId.HasValue)
+            {
+                var existingIndex = meals.FindIndex(m => m.Id == popupResult.MealId.Value);
+                if (existingIndex >= 0)
+                {
+                    var existing = meals[existingIndex];
+                    meals[existingIndex] = new DietStatisticsMealDto
+                    {
+                        Id = existing.Id,
+                        Date = existing.Date,
+                        Name = name.Trim(),
+                        Calories = finalCalories,
+                        Carbs = finalCarbs,
+                        Fat = finalFat,
+                        Protein = finalProtein,
+                        Weight = weight,
+                        CreatedAt = existing.CreatedAt,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+                    System.Diagnostics.Debug.WriteLine($"[DietStatisticsViewModel] {logTag} — updated meal id='{existing.Id}' cal={finalCalories} total meals={meals.Count}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DietStatisticsViewModel] {logTag} — meal to update not found, inserting as new (id={popupResult.MealId})");
+                    meals.Add(new DietStatisticsMealDto
+                    {
+                        Date = editing!.Date,
+                        Name = name.Trim(),
+                        Calories = finalCalories,
+                        Carbs = finalCarbs,
+                        Fat = finalFat,
+                        Protein = finalProtein,
+                        Weight = weight,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+            }
+            else
+            {
+                meals.Add(new DietStatisticsMealDto
+                {
+                    Date = DateTime.Today.Date,
+                    Name = name.Trim(),
+                    Calories = finalCalories,
+                    Carbs = finalCarbs,
+                    Fat = finalFat,
+                    Protein = finalProtein,
+                    Weight = weight,
+                    CreatedAt = DateTime.UtcNow
+                });
+                System.Diagnostics.Debug.WriteLine($"[DietStatisticsViewModel] {logTag} — added new meal total meals={meals.Count}");
+            }
 
             _preferencesService.SaveDietStatisticsMeals(meals);
+
+            System.Diagnostics.Debug.WriteLine($"[DietStatisticsViewModel] {logTag} — calling LoadAsync");
             await LoadAsync();
+            System.Diagnostics.Debug.WriteLine($"[DietStatisticsViewModel] {logTag} — LoadAsync completed");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[DietStatisticsViewModel] AddManualMealAsync error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[DietStatisticsViewModel] {logTag} error: {ex.Message}");
+            var errorTitle = isEdit
+                ? _localizationService.GetString("DietStatisticsPageResources", "EditMealPopupTitle")
+                : _localizationService.GetString("DietStatisticsPageResources", "AddMealPopupTitle");
             await page.DisplayAlert(
-                _localizationService.GetString("DietStatisticsPageResources", "AddMealPopupTitle"),
+                errorTitle,
                 _localizationService.GetString("DietStatisticsPageResources", "AddMealPopupSaveError"),
                 "OK");
         }
@@ -1312,6 +1482,20 @@ public class DietStatisticsViewModel : INotifyPropertyChanged
 
     private void OnOpenMealDetail(MealSlotViewModel? _)
     {
+    }
+
+    private static double? TryParseOptionalDouble(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return null;
+
+        if (double.TryParse(text, NumberStyles.Float, CultureInfo.CurrentCulture, out var result) ||
+            double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out result))
+        {
+            return result >= 0 ? result : null;
+        }
+
+        return null;
     }
 
     private async void OnCultureChanged(object? sender, EventArgs e)

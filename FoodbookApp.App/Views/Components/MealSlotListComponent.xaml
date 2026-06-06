@@ -70,10 +70,10 @@
                             Padding="12,10"
                             Margin="0,0,0,8">
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding Source={x:Reference MealListRoot}, Path=OpenMealDetailCommand}"
+                            <TapGestureRecognizer Command="{Binding Source={x:Reference MealListRoot}, Path=EditMealCommand}"
                                                   CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
-                        <Grid ColumnDefinitions="Auto,*,Auto"
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto"
                               ColumnSpacing="10">
                             <Label Text="•"
                                    FontSize="18"
@@ -106,6 +106,23 @@
                                        TextColor="{DynamicResource SecondaryText}"
                                        HorizontalTextAlignment="End" />
                             </VerticalStackLayout>
+                            <Button Grid.Column="3"
+                                    Text="✕"
+                                    FontSize="14"
+                                    FontAttributes="Bold"
+                                    WidthRequest="32"
+                                    HeightRequest="32"
+                                    CornerRadius="16"
+                                    Padding="0"
+                                    BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A2C2C}"
+                                    TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}"
+                                    BorderColor="{AppThemeBinding Light=#FFCCCC, Dark=#664444}"
+                                    BorderWidth="1"
+                                    VerticalOptions="Center"
+                                    HorizontalOptions="Center"
+                                    IsVisible="{Binding IsManualMeal}"
+                                    Command="{Binding Source={x:Reference MealListRoot}, Path=DeleteMealCommand}"
+                                    CommandParameter="{Binding .}" />
                         </Grid>
                     </Border>
                 </DataTemplate>

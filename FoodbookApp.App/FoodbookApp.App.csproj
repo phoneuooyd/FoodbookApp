@@ -85,11 +85,12 @@
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android|AnyCPU'">
 	  <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
 	  <AndroidUseAapt2>True</AndroidUseAapt2>
-	  <AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
+	  <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
 	  <AndroidKeyStore>False</AndroidKeyStore>
 	  <EmbedAssembliesIntoApk>False</EmbedAssembliesIntoApk>
 	  <DebugSymbols>true</DebugSymbols>
 	  <AndroidIncludeDebugSymbols>true</AndroidIncludeDebugSymbols>
+	  <AndroidPackageFormat>aab</AndroidPackageFormat>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-windows10.0.19041.0|AnyCPU'">
 	  <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
@@ -97,8 +98,8 @@
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android|AnyCPU'">
 	  <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
 	  <AndroidUseAapt2>True</AndroidUseAapt2>
-	  <AndroidPackageFormat>apk</AndroidPackageFormat>
-	  <AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
+	  <AndroidPackageFormat>aab</AndroidPackageFormat>
+	  <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
 	  <AndroidKeyStore>False</AndroidKeyStore>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-windows10.0.19041.0|AnyCPU'">
@@ -179,6 +180,7 @@
 		<PackageReference Include="Sharpnado.TaskMonitor" Version="1.1.0" />
 		<PackageReference Include="SQLitePCLRaw.core" Version="3.0.2" />
 		<PackageReference Include="Supabase" Version="1.1.1" />
+		<PackageReference Include="ZXing.Net.Maui.Controls" Version="0.6.0" />
 	</ItemGroup>
 
         <ItemGroup>
@@ -299,6 +301,11 @@
             <AutoGen>True</AutoGen>
             <DependentUpon>SettingsPageResources.resx</DependentUpon>
           </Compile>
+          <Compile Update="Localization\\UniversalSpinnerComponentResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>UniversalSpinnerComponentResources.resx</DependentUpon>
+          </Compile>
         </ItemGroup>
 
         <ItemGroup>
@@ -362,6 +369,15 @@
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
           </EmbeddedResource>
+          <EmbeddedResource Update="Localization\\UniversalSpinnerComponentResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>UniversalSpinnerComponentResources.Designer.cs</LastGenOutput>
+          </EmbeddedResource>
+          <EmbeddedResource Update="Localization\\UniversalSpinnerComponentResources.en.resx" />
+          <EmbeddedResource Update="Localization\\UniversalSpinnerComponentResources.de-DE.resx" />
+          <EmbeddedResource Update="Localization\\UniversalSpinnerComponentResources.fr-FR.resx" />
+          <EmbeddedResource Update="Localization\\UniversalSpinnerComponentResources.es-ES.resx" />
+          <EmbeddedResource Update="Localization\\UniversalSpinnerComponentResources.ko-KR.resx" />
         </ItemGroup>
 
 	<ItemGroup>
@@ -372,6 +388,9 @@
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Views\Components\DialogBasePopup.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Components\DatePickerPopup.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Views\Components\FloatingActionButtonComponent.xaml">

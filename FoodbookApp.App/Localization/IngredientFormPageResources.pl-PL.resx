@@ -139,4 +139,37 @@
   <data name="SaveIngredientErrorMessageFormat" xml:space="preserve">
     <value>Nie udało się zapisać składnika: {0}</value>
   </data>
+  <data name="ScannerButton" xml:space="preserve">
+    <value>Skanuj kod kreskowy</value>
+  </data>
+  <data name="ScannerTitle" xml:space="preserve">
+    <value>Skaner kodów kreskowych</value>
+  </data>
+  <data name="ScannerStatusWaiting" xml:space="preserve">
+    <value>Czekam na kod kreskowy...</value>
+  </data>
+  <data name="ScannerStatusDetected" xml:space="preserve">
+    <value>Wykryto kod: {0}</value>
+  </data>
+  <data name="ScannerStatusFetching" xml:space="preserve">
+    <value>Pobieranie danych produktu...</value>
+  </data>
+  <data name="ScannerStatusNotFound" xml:space="preserve">
+    <value>Nie znaleziono produktu w OpenFoodFacts</value>
+  </data>
+  <data name="ScannerFetchError" xml:space="preserve">
+    <value>Błąd pobierania danych produktu</value>
+  </data>
+  <data name="ScannerCameraError" xml:space="preserve">
+    <value>Skaner niedostępny</value>
+  </data>
+  <data name="ScannerNotSupported" xml:space="preserve">
+    <value>Skanowanie kodów kreskowych nie jest wspierane na tym urządzeniu</value>
+  </data>
+  <data name="ScannerNoPermission" xml:space="preserve">
+    <value>Brak uprawnień do aparatu</value>
+  </data>
+  <data name="ScannerAddButton" xml:space="preserve">
+    <value>Dodaj składnik z kodu kreskowego</value>
+  </data>
 </root>

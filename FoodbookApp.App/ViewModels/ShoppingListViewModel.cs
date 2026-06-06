@@ -4,6 +4,7 @@ using Foodbook.Models;
 using Foodbook.Views;
 using FoodbookApp.Interfaces;
 using FoodbookApp.Localization;
+using FoodbookApp.Utils;
 using Microsoft.Maui.Controls;
 using Foodbook.Services;
 
@@ -57,7 +58,15 @@ public class ShoppingListViewModel
         var plans = await _planService.GetPlansAsync();
         // Show only non-archived shopping list plans
         foreach (var p in plans.Where(pl => !pl.IsArchived && pl.Type == PlanType.ShoppingList).OrderByDescending(pl => pl.StartDate))
+        {
+            if (string.IsNullOrWhiteSpace(p.Title))
+            {
+                p.Title = ShoppingListTitleHelper.BuildDefaultTitle(p.StartDate, p.EndDate);
+                await _planService.UpdatePlanAsync(p);
+            }
+
             Plans.Add(p);
+        }
     }
 
     private async Task OpenPlanAsync(Plan? plan)
@@ -94,8 +103,7 @@ public class ShoppingListViewModel
             System.Diagnostics.Debug.WriteLine("[ShoppingListVM] Creating new empty shopping list");
 
             var today = DateTime.Today;
-
-            var defaultTitle = T("CreateListDefaultName", "Shopping List");
+            var defaultTitle = ShoppingListTitleHelper.BuildDefaultTitle(today, today);
             var providedTitle = await Shell.Current.DisplayPromptAsync(
                 T("CreateListNamePromptTitle", "New shopping list"),
                 T("CreateListNamePromptMessage", "Enter shopping list name"),
