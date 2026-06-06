@@ -240,9 +240,11 @@ public class DietStatisticsViewModelTests
             localizationService.Object,
             preferencesService.Object);
 
+        // Default filter is day, so switch to week explicitly to validate week scaling.
+        sut.SelectFilterCommand.Execute(Foodbook.ViewModels.FilterMode.Week);
         await sut.LoadAsync();
 
-        // Default filter is week => 7 days.
+        // Week filter => 7 days.
         sut.GoalCalories.Should().Be(14000);
 
         sut.SelectFilterCommand.Execute(Foodbook.ViewModels.FilterMode.Month);
