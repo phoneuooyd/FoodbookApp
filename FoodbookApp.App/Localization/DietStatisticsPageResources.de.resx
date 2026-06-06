@@ -48,4 +48,13 @@
   <data name="AddMealPopupProteinPlaceholder" xml:space="preserve"><value>z.B. 30</value></data>
   <data name="AddMealPopupFatPlaceholder" xml:space="preserve"><value>z.B. 15</value></data>
   <data name="AddMealPopupCarbsPlaceholder" xml:space="preserve"><value>z.B. 40</value></data>
+  <data name="AddMealPopupWeightLabel" xml:space="preserve"><value>Gewicht (g)</value></data>
+  <data name="AddMealPopupWeightPlaceholder" xml:space="preserve"><value>z.B. 100</value></data>
+  <data name="AddMealPopupScannerTooltip" xml:space="preserve"><value>Barcode scannen</value></data>
+  <data name="AddMealPopupMacrosPer100gHint" xml:space="preserve"><value>Nährwerte pro 100 g — Gesamtmenge durch Gewicht angepasst</value></data>
+  <data name="EditMealPopupTitle" xml:space="preserve"><value>Mahlzeit bearbeiten</value></data>
+  <data name="DeleteManualMealConfirmTitle" xml:space="preserve"><value>Mahlzeit löschen</value></data>
+  <data name="DeleteManualMealConfirmMessage" xml:space="preserve"><value>Diesen Mahlzeiteintrag löschen?</value></data>
+  <data name="DeleteManualMealConfirmDelete" xml:space="preserve"><value>Löschen</value></data>
+  <data name="DeleteManualMealConfirmCancel" xml:space="preserve"><value>Abbrechen</value></data>
 </root>

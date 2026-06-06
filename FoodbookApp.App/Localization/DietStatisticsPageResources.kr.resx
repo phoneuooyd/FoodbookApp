@@ -48,4 +48,13 @@
   <data name="AddMealPopupProteinPlaceholder" xml:space="preserve"><value>예: 30</value></data>
   <data name="AddMealPopupFatPlaceholder" xml:space="preserve"><value>예: 15</value></data>
   <data name="AddMealPopupCarbsPlaceholder" xml:space="preserve"><value>예: 40</value></data>
+  <data name="AddMealPopupWeightLabel" xml:space="preserve"><value>중량 (g)</value></data>
+  <data name="AddMealPopupWeightPlaceholder" xml:space="preserve"><value>예: 100</value></data>
+  <data name="AddMealPopupScannerTooltip" xml:space="preserve"><value>바코드 스캔</value></data>
+  <data name="AddMealPopupMacrosPer100gHint" xml:space="preserve"><value>100g당 영양소 — 총량은 중량으로 조정됨</value></data>
+  <data name="EditMealPopupTitle" xml:space="preserve"><value>식사 편집</value></data>
+  <data name="DeleteManualMealConfirmTitle" xml:space="preserve"><value>식사 삭제</value></data>
+  <data name="DeleteManualMealConfirmMessage" xml:space="preserve"><value>이 식사 항목을 삭제할까요?</value></data>
+  <data name="DeleteManualMealConfirmDelete" xml:space="preserve"><value>삭제</value></data>
+  <data name="DeleteManualMealConfirmCancel" xml:space="preserve"><value>취소</value></data>
 </root>

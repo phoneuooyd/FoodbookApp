@@ -48,4 +48,13 @@
   <data name="AddMealPopupProteinPlaceholder" xml:space="preserve"><value>e.g. 30</value></data>
   <data name="AddMealPopupFatPlaceholder" xml:space="preserve"><value>e.g. 15</value></data>
   <data name="AddMealPopupCarbsPlaceholder" xml:space="preserve"><value>e.g. 40</value></data>
+  <data name="AddMealPopupWeightLabel" xml:space="preserve"><value>Weight (g)</value></data>
+  <data name="AddMealPopupWeightPlaceholder" xml:space="preserve"><value>e.g. 100</value></data>
+  <data name="AddMealPopupScannerTooltip" xml:space="preserve"><value>Scan barcode</value></data>
+  <data name="AddMealPopupMacrosPer100gHint" xml:space="preserve"><value>Nutrition per 100 g — total adjusted by weight</value></data>
+  <data name="EditMealPopupTitle" xml:space="preserve"><value>Edit meal</value></data>
+  <data name="DeleteManualMealConfirmTitle" xml:space="preserve"><value>Delete meal</value></data>
+  <data name="DeleteManualMealConfirmMessage" xml:space="preserve"><value>Delete this meal entry?</value></data>
+  <data name="DeleteManualMealConfirmDelete" xml:space="preserve"><value>Delete</value></data>
+  <data name="DeleteManualMealConfirmCancel" xml:space="preserve"><value>Cancel</value></data>
 </root>

@@ -19,6 +19,12 @@ public partial class MealSlotListComponent : ContentView
     public static readonly BindableProperty OpenMealDetailCommandProperty =
         BindableProperty.Create(nameof(OpenMealDetailCommand), typeof(ICommand), typeof(MealSlotListComponent));
 
+    public static readonly BindableProperty EditMealCommandProperty =
+        BindableProperty.Create(nameof(EditMealCommand), typeof(ICommand), typeof(MealSlotListComponent));
+
+    public static readonly BindableProperty DeleteMealCommandProperty =
+        BindableProperty.Create(nameof(DeleteMealCommand), typeof(ICommand), typeof(MealSlotListComponent));
+
     public MealSlotListComponent()
     {
         InitializeComponent();
@@ -40,6 +46,18 @@ public partial class MealSlotListComponent : ContentView
     {
         get => (ICommand?)GetValue(OpenMealDetailCommandProperty);
         set => SetValue(OpenMealDetailCommandProperty, value);
+    }
+
+    public ICommand? EditMealCommand
+    {
+        get => (ICommand?)GetValue(EditMealCommandProperty);
+        set => SetValue(EditMealCommandProperty, value);
+    }
+
+    public ICommand? DeleteMealCommand
+    {
+        get => (ICommand?)GetValue(DeleteMealCommandProperty);
+        set => SetValue(DeleteMealCommandProperty, value);
     }
 
     public bool IsEmpty => Data.IsEmpty;

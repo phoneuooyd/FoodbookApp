@@ -30,4 +30,7 @@ public sealed class DietStatisticsMealDto
 
     [JsonPropertyName("updated_at")]
     public DateTime? UpdatedAt { get; set; }
+
+    [JsonPropertyName("weight")]
+    public double Weight { get; set; } = 100;
 }
