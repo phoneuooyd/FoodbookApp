@@ -1042,21 +1042,29 @@ namespace Foodbook.Views
                 manageLabelsVm.SetSelectedLabelIds(currentSelectedIds);
 
                 var managePage = new ManageLabelsPage(manageLabelsVm);
-                await Shell.Current.Navigation.PushModalAsync(managePage);
 
-                // Po zamknięciu modala zaktualizuj SelectedLabels
+                // FIX: PushModalAsync czeka tylko na animację otwarcia, nie na zamknięcie.
+                // Subskrybujemy Disappearing aby złapać każdą drogę dismissalu (Gotowe, ✕, back, system).
+                var dismissed = new TaskCompletionSource<bool>();
+                void OnManageLabelsDisappearing(object? s, EventArgs ev)
+                {
+                    managePage.Disappearing -= OnManageLabelsDisappearing;
+                    dismissed.TrySetResult(true);
+                }
+                managePage.Disappearing += OnManageLabelsDisappearing;
+
+                await Shell.Current.Navigation.PushModalAsync(managePage);
+                await dismissed.Task;
+
                 if (ViewModel != null)
                 {
-                    var updatedLabels = manageLabelsVm.SelectedLabels.ToList();
-                    ViewModel.SelectedLabels = new ObservableCollection<RecipeLabel>(updatedLabels);
+                    // Odśwież listę dostępnych etykiet (user mógł dodać nowe w modalu)
+                    await ViewModel.LoadAvailableLabelsAsync();
 
-                    // WYMUŚ ODŚWIEŻENIE CollectionView – bug MAUI z wiązaniem po modalu
-                    var collectionView = this.FindByName<CollectionView>("LabelsCollectionView");
-                    if (collectionView != null)
-                    {
-                        collectionView.ItemsSource = null;
-                        collectionView.ItemsSource = ViewModel.SelectedLabels;
-                    }
+                    // In-place mutation: zachowuje istniejące handlery CollectionChanged i bindingi.
+                    ViewModel.SelectedLabels.Clear();
+                    foreach (var label in manageLabelsVm.SelectedLabels)
+                        ViewModel.SelectedLabels.Add(label);
                 }
             }
             catch (Exception ex)

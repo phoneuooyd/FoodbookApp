@@ -15,6 +15,8 @@ namespace Foodbook.Converters
             {
                 return fontSize switch
                 {
+                    AppFontSize.ExtraSmall => "Extra Small (8pt)",
+                    AppFontSize.VerySmall => "Very Small (11pt)",
                     AppFontSize.Small => "Small (13pt)",
                     AppFontSize.Default => "Default (16pt)",
                     AppFontSize.Large => "Large (20pt)",
