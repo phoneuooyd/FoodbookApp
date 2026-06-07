@@ -49,6 +49,8 @@ namespace Foodbook.Models
         /// </summary>
         public string FontSizeDisplayName => FontSize switch
         {
+            AppFontSize.ExtraSmall => "Extra Small",
+            AppFontSize.VerySmall => "Very Small",
             AppFontSize.Small => "Small",
             AppFontSize.Default => "Default",
             AppFontSize.Large => "Large",
@@ -93,6 +95,8 @@ namespace Foodbook.Models
         /// </summary>
         public double PlatformFontSize => FontSize switch
         {
+            AppFontSize.ExtraSmall => 8,
+            AppFontSize.VerySmall => 11,
             AppFontSize.Small => 13,
             AppFontSize.Default => 16,
             AppFontSize.Large => 20,

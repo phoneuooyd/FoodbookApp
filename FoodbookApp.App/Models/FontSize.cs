@@ -6,6 +6,16 @@ namespace Foodbook.Models
     public enum AppFontSize
     {
         /// <summary>
+        /// Extra small font size (8pt) for very compact displays
+        /// </summary>
+        ExtraSmall,
+
+        /// <summary>
+        /// Very small font size (11pt) for compact displays
+        /// </summary>
+        VerySmall,
+
+        /// <summary>
         /// Small font size (12-14pt) for compact displays
         /// </summary>
         Small,
