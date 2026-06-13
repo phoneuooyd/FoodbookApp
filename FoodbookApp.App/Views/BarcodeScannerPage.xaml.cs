@@ -13,6 +13,8 @@ public partial class BarcodeScannerPage : ContentPage
     private bool _isProcessing;
     private string _lastDetectedCode = string.Empty;
     private bool _isTorchOn;
+    private List<CameraInfo> _availableCameras = new();
+    private int _currentCameraIndex;
 
     public static OpenFoodFactsProductResult? LastResult { get; set; }
     public Task<OpenFoodFactsProductResult?> ScannerTask => _tcs.Task;
@@ -47,19 +49,24 @@ public partial class BarcodeScannerPage : ContentPage
     {
         try
         {
-            var cameras = await ScannerView.GetAvailableCameras();
-            System.Diagnostics.Debug.WriteLine($"[BarcodeScanner] Available cameras ({cameras.Count}):");
-            for (int i = 0; i < cameras.Count; i++)
+            _availableCameras = (await ScannerView.GetAvailableCameras()).ToList();
+            System.Diagnostics.Debug.WriteLine($"[BarcodeScanner] Available cameras ({_availableCameras.Count}):");
+            for (int i = 0; i < _availableCameras.Count; i++)
             {
-                var cam = cameras[i];
+                var cam = _availableCameras[i];
                 System.Diagnostics.Debug.WriteLine($"  [{i}] {cam.Name} | DeviceId={cam.DeviceId} | Location={cam.Location}");
             }
 
-            if (cameras.Count > 1)
+            if (_availableCameras.Count > 0)
             {
-                ScannerView.SelectedCamera = cameras[0];
-                System.Diagnostics.Debug.WriteLine($"[BarcodeScanner] Using camera: {cameras[0].Name}");
+                var rear = _availableCameras.FirstOrDefault(c => c.Location == CameraLocation.Rear);
+                _currentCameraIndex = rear != null ? _availableCameras.IndexOf(rear) : 0;
+                ScannerView.SelectedCamera = _availableCameras[_currentCameraIndex];
+                System.Diagnostics.Debug.WriteLine($"[BarcodeScanner] Using camera [{_currentCameraIndex}]: {_availableCameras[_currentCameraIndex].Name}");
             }
+
+            MainThread.BeginInvokeOnMainThread(() =>
+                SwitchCameraButton.IsVisible = _availableCameras.Count > 1);
         }
         catch (Exception ex)
         {
@@ -178,6 +185,30 @@ public partial class BarcodeScannerPage : ContentPage
         {
             _isTorchOn = false;
             System.Diagnostics.Debug.WriteLine($"[BarcodeScanner] Torch failed: {ex.Message}");
+        }
+    }
+
+    private async void OnSwitchCameraClicked(object? sender, EventArgs e)
+    {
+        if (_availableCameras.Count < 2)
+            return;
+
+        try
+        {
+            _currentCameraIndex = (_currentCameraIndex + 1) % _availableCameras.Count;
+            ScannerView.SelectedCamera = _availableCameras[_currentCameraIndex];
+            var cam = _availableCameras[_currentCameraIndex];
+
+            System.Diagnostics.Debug.WriteLine($"[BarcodeScanner] Switched to camera [{_currentCameraIndex}]: {cam.Name} (Location={cam.Location})");
+
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                StatusLabel.Text = string.Format(R("ScannerCameraSwitched", "Camera: {0}"), cam.Name);
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[BarcodeScanner] Camera switch failed: {ex.Message}");
         }
     }
 

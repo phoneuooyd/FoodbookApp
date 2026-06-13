@@ -172,4 +172,7 @@
   <data name="ScannerAddButton" xml:space="preserve">
     <value>Add ingredient from barcode</value>
   </data>
+  <data name="ScannerCameraSwitched" xml:space="preserve">
+    <value>Camera: {0}</value>
+  </data>
 </root>
