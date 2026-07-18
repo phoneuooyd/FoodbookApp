@@ -35,7 +35,7 @@
 
 		<!-- Versions -->
 		<ApplicationDisplayVersion>1.8</ApplicationDisplayVersion>
-		<ApplicationVersion>9</ApplicationVersion>
+		<ApplicationVersion>10</ApplicationVersion>
 
 		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
 		<WindowsPackageType>None</WindowsPackageType>
@@ -93,17 +93,17 @@
 	  <AndroidPackageFormat>aab</AndroidPackageFormat>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-windows10.0.19041.0|AnyCPU'">
-	  <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
+	  <ApplicationDisplayVersion>1.0.3</ApplicationDisplayVersion>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android|AnyCPU'">
-	  <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
+	  <ApplicationDisplayVersion>1.0.3</ApplicationDisplayVersion>
 	  <AndroidUseAapt2>True</AndroidUseAapt2>
 	  <AndroidPackageFormat>aab</AndroidPackageFormat>
 	  <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
 	  <AndroidKeyStore>False</AndroidKeyStore>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-windows10.0.19041.0|AnyCPU'">
-	  <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
+	  <ApplicationDisplayVersion>1.0.3</ApplicationDisplayVersion>
 	</PropertyGroup>
 
 	<!-- Ensure Debug.WriteLine calls are preserved in Release builds by defining DEBUG for Release -->
