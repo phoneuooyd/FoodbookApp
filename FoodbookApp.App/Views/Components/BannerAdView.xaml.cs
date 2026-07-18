@@ -76,15 +76,6 @@ public partial class BannerAdView : ContentView
     {
         try
         {
-            AdUnitId = Placement switch
-            {
-                AdBannerPlacement.Login => AdUnitIds.LoginBanner,
-                AdBannerPlacement.Loading => AdUnitIds.LoadingBanner,
-                _ => AdUnitIds.HomeBanner
-            };
-
-            ApplyReservedHeight();
-
             var visibility = FoodbookApp.MauiProgram.ServiceProvider?.GetService<IAdVisibilityService>();
             var shouldShow = visibility is not null && Placement switch
             {
@@ -93,8 +84,20 @@ public partial class BannerAdView : ContentView
                 _ => await visibility.ShouldShowHomeBannerAsync()
             };
 
+            if (shouldShow)
+            {
+                AdUnitId = Placement switch
+                {
+                    AdBannerPlacement.Login => AdUnitIds.LoginBanner,
+                    AdBannerPlacement.Loading => AdUnitIds.LoadingBanner,
+                    _ => AdUnitIds.HomeBanner
+                };
+                ApplyReservedHeight();
+            }
+
             IsVisible = shouldShow;
             Panel.IsVisible = shouldShow;
+            AdControl.IsVisible = shouldShow;
         }
         catch (Exception ex)
         {

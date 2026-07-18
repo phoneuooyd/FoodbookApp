@@ -21,6 +21,7 @@ public sealed class AdPolicyService : IAdPolicyService
 
     public int RecipeInterstitialThreshold => 3;
     public int IngredientInterstitialThreshold => 5;
+    public int PlanInterstitialThreshold => 3;
 
     public bool CanShowInterstitial(DateTime nowUtc)
     {
@@ -38,6 +39,9 @@ public sealed class AdPolicyService : IAdPolicyService
 
     public bool ShouldShowIngredientInterstitial(int ingredientManualSaveCounter, DateTime nowUtc)
         => ingredientManualSaveCounter >= IngredientInterstitialThreshold && CanShowInterstitial(nowUtc);
+
+    public bool ShouldShowPlanInterstitial(int planManualSaveCounter, DateTime nowUtc)
+        => planManualSaveCounter >= PlanInterstitialThreshold && CanShowInterstitial(nowUtc);
 
     public void MarkInterstitialShown(DateTime nowUtc)
         => _preferences.SetLastInterstitialShownUtc(nowUtc);

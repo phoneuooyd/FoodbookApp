@@ -7,6 +7,7 @@ public sealed class AdPreferencesService : IAdPreferencesService
     private const string SupportDeveloperKey = "SupportDeveloper";
     private const string RecipeManualSaveCounterKey = "RecipeManualSaveCounter";
     private const string IngredientManualSaveCounterKey = "IngredientManualSaveCounter";
+    private const string PlanManualSaveCounterKey = "PlanManualSaveCounter";
     private const string LastInterstitialShownUtcKey = "LastInterstitialShownUtc";
 
     private readonly IAdPreferencesStorage _storage;
@@ -27,6 +28,10 @@ public sealed class AdPreferencesService : IAdPreferencesService
     public int GetIngredientManualSaveCounter() => Math.Max(0, _storage.GetInt(IngredientManualSaveCounterKey, 0));
 
     public void SetIngredientManualSaveCounter(int value) => _storage.SetInt(IngredientManualSaveCounterKey, Math.Max(0, value));
+
+    public int GetPlanManualSaveCounter() => Math.Max(0, _storage.GetInt(PlanManualSaveCounterKey, 0));
+
+    public void SetPlanManualSaveCounter(int value) => _storage.SetInt(PlanManualSaveCounterKey, Math.Max(0, value));
 
     public DateTime? GetLastInterstitialShownUtc()
     {

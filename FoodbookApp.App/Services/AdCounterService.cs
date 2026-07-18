@@ -86,6 +86,36 @@ public sealed class AdCounterService : IAdCounterService
         }
     }
 
+    public async Task RecordManualPlanSaveAsync()
+    {
+        await _gate.WaitAsync();
+        try
+        {
+            var counter = _preferences.GetPlanManualSaveCounter() + 1;
+            _preferences.SetPlanManualSaveCounter(counter);
+
+            if (!_policy.ShouldShowPlanInterstitial(counter, _clock.UtcNow))
+            {
+                return;
+            }
+
+            if (!await _visibility.ShouldShowInterstitialAsync())
+            {
+                return;
+            }
+
+            if (await TryShowInterstitialWithoutThrowingAsync())
+            {
+                _preferences.SetPlanManualSaveCounter(0);
+                _policy.MarkInterstitialShown(_clock.UtcNow);
+            }
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     private async Task<bool> TryShowInterstitialWithoutThrowingAsync()
     {
         try

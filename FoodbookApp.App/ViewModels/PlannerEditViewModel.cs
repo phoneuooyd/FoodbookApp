@@ -18,6 +18,7 @@ public class PlannerEditViewModel : INotifyPropertyChanged
     private readonly IPlannerService _plannerService;
     private readonly IRecipeService _recipeService;
     private readonly IPlanService _planService;
+    private readonly IAdCounterService _adCounterService;
     private readonly FoodbookApp.Interfaces.ILocalizationService? _localizationService;
     private string _loadingStatusKey = "LoadingStatus";
     private string _loadingStatusFallback = "Loading...";
@@ -131,11 +132,13 @@ public class PlannerEditViewModel : INotifyPropertyChanged
         IPlannerService plannerService,
         IRecipeService recipeService,
         IPlanService planService,
+        IAdCounterService adCounterService,
         FoodbookApp.Interfaces.ILocalizationService? localizationService = null)
     {
         _plannerService = plannerService ?? throw new ArgumentNullException(nameof(plannerService));
         _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
         _planService = planService ?? throw new ArgumentNullException(nameof(planService));
+        _adCounterService = adCounterService ?? throw new ArgumentNullException(nameof(adCounterService));
         _localizationService = localizationService;
 
         _loadingStatus = ResolveLoadingStatus(_loadingStatusKey, _loadingStatusFallback);
@@ -613,6 +616,7 @@ public class PlannerEditViewModel : INotifyPropertyChanged
 
             // Navigate back
             await Shell.Current.GoToAsync("..");
+            await _adCounterService.RecordManualPlanSaveAsync();
         }
         catch (Exception ex)
         {

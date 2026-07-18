@@ -778,6 +778,7 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     {
         public Task RecordManualRecipeSaveAsync() => Task.CompletedTask;
         public Task RecordManualIngredientSaveAsync() => Task.CompletedTask;
+        public Task RecordManualPlanSaveAsync() => Task.CompletedTask;
     }
 
     private sealed class NullAdService : IAdService

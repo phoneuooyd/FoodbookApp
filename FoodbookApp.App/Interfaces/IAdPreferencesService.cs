@@ -10,6 +10,8 @@ public interface IAdPreferencesService
 
     int GetIngredientManualSaveCounter();
     void SetIngredientManualSaveCounter(int value);
+    int GetPlanManualSaveCounter();
+    void SetPlanManualSaveCounter(int value);
 
     DateTime? GetLastInterstitialShownUtc();
     void SetLastInterstitialShownUtc(DateTime utcValue);
