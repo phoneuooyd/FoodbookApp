@@ -131,4 +131,6 @@
   <data name="DeduplicateErrorTitle" xml:space="preserve"><value>Fehler</value></data>
   <data name="PremiumRequiredTitle" xml:space="preserve"><value>Premium</value></data>
   <data name="PremiumRequiredMessage" xml:space="preserve"><value>Diese Option ist nur für Premium-Benutzer verfügbar.</value></data>
+  <data name="SupportDeveloperOption" xml:space="preserve"><value>Entwickler unterstützen</value></data>
+  <data name="SupportDeveloperDescription" xml:space="preserve"><value>Anzeigen einblenden, um die App-Entwicklung zu unterstützen</value></data>
 </root>

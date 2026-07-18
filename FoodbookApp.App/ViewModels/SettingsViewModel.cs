@@ -18,6 +18,7 @@ public partial class SettingsViewModel : INotifyPropertyChanged
     private readonly IDatabaseService _databaseService;
     private readonly IDeduplicationService _deduplicationService;
     private readonly IFeatureAccessService _featureAccessService;
+    private readonly IAdPreferencesService _adPreferencesService;
 
     // Tabs management
     private int _selectedTabIndex;
@@ -305,6 +306,20 @@ public partial class SettingsViewModel : INotifyPropertyChanged
         }
     }
 
+    private bool _supportDeveloper;
+    public bool SupportDeveloper
+    {
+        get => _supportDeveloper;
+        set
+        {
+            if (_supportDeveloper == value) return;
+            _supportDeveloper = value;
+            OnPropertyChanged(nameof(SupportDeveloper));
+            _adPreferencesService.SetSupportDeveloper(value);
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] SupportDeveloper changed to: {value}");
+        }
+    }
+
     private AppFontFamily _selectedFontFamily;
     public AppFontFamily SelectedFontFamily
     {
@@ -368,7 +383,7 @@ public partial class SettingsViewModel : INotifyPropertyChanged
     public ICommand FactoryResetCommand { get; }
     public ICommand DeduplicateIngredientsCommand { get; }
 
-    public SettingsViewModel(LocalizationResourceManager locManager, IPreferencesService preferencesService, IThemeService themeService, IFontService fontService, IDatabaseService databaseService, IDeduplicationService deduplicationService, IFeatureAccessService featureAccessService)
+    public SettingsViewModel(LocalizationResourceManager locManager, IPreferencesService preferencesService, IThemeService themeService, IFontService fontService, IDatabaseService databaseService, IDeduplicationService deduplicationService, IFeatureAccessService featureAccessService, IAdPreferencesService adPreferencesService)
     {
         _locManager = locManager;
         _preferencesService = preferencesService;
@@ -377,6 +392,7 @@ public partial class SettingsViewModel : INotifyPropertyChanged
         _databaseService = databaseService;
         _deduplicationService = deduplicationService;
         _featureAccessService = featureAccessService;
+        _adPreferencesService = adPreferencesService;
         _isPremiumUser = string.Equals(_preferencesService.GetPlanChoice(), "Premium", StringComparison.OrdinalIgnoreCase);
         _canUseWallpaperBackground = _isPremiumUser;
         
@@ -435,6 +451,7 @@ public partial class SettingsViewModel : INotifyPropertyChanged
         _selectedColorTheme = LoadSelectedColorTheme();
         _isColorfulBackgroundEnabled = LoadColorfulBackgroundSetting();
         _isWallpaperBackgroundEnabled = LoadWallpaperBackgroundSetting();
+        _supportDeveloper = _adPreferencesService.GetSupportDeveloper();
         
         // Initialize wallpaper availability for initial color theme
         _isWallpaperAvailable = _themeService.IsWallpaperAvailableFor(_selectedColorTheme);

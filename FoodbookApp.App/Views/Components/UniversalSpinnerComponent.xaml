@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:components="clr-namespace:Foodbook.Views.Components"
              x:Class="Foodbook.Views.Components.UniversalSpinnerComponent"
              x:Name="SpinnerRoot">
     <Grid IsVisible="{Binding SpinnerVisible, Source={x:Reference SpinnerRoot}}"
           BackgroundColor="#80000000"
-          ZIndex="10">
+          ZIndex="10"
+          RowDefinitions="*,Auto">
         <Border HorizontalOptions="Center"
                 VerticalOptions="Center"
+                Grid.RowSpan="2"
                 StrokeThickness="0"
                 BackgroundColor="{DynamicResource FrameBackgroundColor}"
                 StrokeShape="RoundRectangle 16"
@@ -45,5 +48,12 @@
                        IsVisible="{Binding ShowTip, Source={x:Reference SpinnerRoot}}" />
             </VerticalStackLayout>
         </Border>
+
+        <components:BannerAdView x:Name="LoadingBanner"
+                                 Grid.Row="1"
+                                 Placement="Loading"
+                                 PreferredHeight="78"
+                                 MaxHeightRatio="0.15"
+                                 Margin="16,0,16,18" />
     </Grid>
 </ContentView>

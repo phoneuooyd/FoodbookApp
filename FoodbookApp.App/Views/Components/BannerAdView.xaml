@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:admob="clr-namespace:Plugin.AdMob;assembly=Plugin.AdMob"
+             x:Class="Foodbook.Views.Components.BannerAdView"
+             x:Name="Root"
+             IsVisible="False">
+    <Border x:Name="Panel"
+            BackgroundColor="{DynamicResource DashboardCardBackgroundColor}"
+            Stroke="{DynamicResource DashboardCardStrokeColor}"
+            StrokeThickness="1"
+            StrokeShape="RoundRectangle 18"
+            Padding="0"
+            Margin="0,0,0,14">
+        <admob:BannerAd x:Name="AdControl"
+                         AdUnitId="{Binding Source={x:Reference Root}, Path=AdUnitId}"
+                         HorizontalOptions="Fill"
+                         VerticalOptions="Fill" />
+    </Border>
+</ContentView>

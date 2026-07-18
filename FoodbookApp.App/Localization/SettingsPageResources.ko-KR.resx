@@ -354,4 +354,6 @@
   <data name="DeduplicateErrorTitle" xml:space="preserve"><value>오류</value></data>
   <data name="PremiumRequiredTitle" xml:space="preserve"><value>프리미엄</value></data>
   <data name="PremiumRequiredMessage" xml:space="preserve"><value>이 옵션은 프리미엄 사용자만 사용할 수 있습니다.</value></data>
+  <data name="SupportDeveloperOption" xml:space="preserve"><value>개발자 지원</value></data>
+  <data name="SupportDeveloperDescription" xml:space="preserve"><value>앱 개발을 지원하기 위해 광고 표시</value></data>
 </root>

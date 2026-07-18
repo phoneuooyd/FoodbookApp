@@ -263,6 +263,7 @@
             LoadingProgress="{Binding LoadingProgress}"
             ShowProgress="True"
             ShowTip="True"
+            ShowAdBanner="True"
             TipText="{loc:Translate Resource=PlannerPageResources, Key=LoadingTip}" />
     </Grid>
 </ContentPage>

@@ -34,6 +34,10 @@ public partial class UniversalSpinnerComponent : ContentView
     public static readonly BindableProperty TipTextProperty =
         BindableProperty.Create(nameof(TipText), typeof(string), typeof(UniversalSpinnerComponent), string.Empty);
 
+    public static readonly BindableProperty ShowAdBannerProperty =
+        BindableProperty.Create(nameof(ShowAdBanner), typeof(bool), typeof(UniversalSpinnerComponent), false,
+            propertyChanged: OnStateChanged);
+
     public bool IsLoading
     {
         get => (bool)GetValue(IsLoadingProperty);
@@ -78,6 +82,12 @@ public partial class UniversalSpinnerComponent : ContentView
     {
         get => (string)GetValue(TipTextProperty);
         set => SetValue(TipTextProperty, value);
+    }
+
+    public bool ShowAdBanner
+    {
+        get => (bool)GetValue(ShowAdBannerProperty);
+        set => SetValue(ShowAdBannerProperty, value);
     }
 
     public bool SpinnerVisible
@@ -145,6 +155,7 @@ public partial class UniversalSpinnerComponent : ContentView
         if (bindable is not UniversalSpinnerComponent self) return;
 
         self.SpinnerVisible = self.IsLoading || self.IsSaving;
+        self.RefreshLoadingBanner();
 
         if (self._statusExplicitlySet) return;
 
@@ -174,6 +185,17 @@ public partial class UniversalSpinnerComponent : ContentView
                 self._settingInternally = false;
             }
         }
+    }
+
+    private void RefreshLoadingBanner()
+    {
+        if (!SpinnerVisible || !ShowAdBanner)
+        {
+            LoadingBanner.IsVisible = false;
+            return;
+        }
+
+        MainThread.BeginInvokeOnMainThread(async () => await LoadingBanner.RefreshVisibilityAsync());
     }
 
     private static void OnLoadingStatusChanged(BindableObject bindable, object oldValue, object newValue)

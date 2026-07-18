@@ -21,6 +21,8 @@ public class IngredientFormViewModel : INotifyPropertyChanged
 {
     private readonly IIngredientService _service;
     private readonly IOpenFoodFactsService _openFoodFactsService;
+    private readonly IAdCounterService _adCounterService;
+    private readonly IAdService _adService;
     private Guid _itemId = Guid.Empty;
     private Guid? _loadedRecipeId = null; // preserve RecipeId when editing
 
@@ -148,10 +150,12 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     {
     }
 
-    public IngredientFormViewModel(IIngredientService service, IOpenFoodFactsService openFoodFactsService)
+    public IngredientFormViewModel(IIngredientService service, IOpenFoodFactsService openFoodFactsService, IAdCounterService? adCounterService = null, IAdService? adService = null)
     {
         _service = service;
         _openFoodFactsService = openFoodFactsService;
+        _adCounterService = adCounterService ?? new NullAdCounterService();
+        _adService = adService ?? new NullAdService();
         SaveCommand = new Command(async () => await SaveAsync(), CanSave);
         CancelCommand = new Command(async () => await CancelAsync());
         VerifyNutritionCommand = new Command(async () => await VerifyNutritionAsync(), () => !string.IsNullOrWhiteSpace(Name) && !IsVerifying);
@@ -634,6 +638,9 @@ public class IngredientFormViewModel : INotifyPropertyChanged
                 Reset();
                 System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Form reset after adding new ingredient and navigation complete");
             }
+
+            await _adCounterService.RecordManualIngredientSaveAsync();
+            TryShowInterstitial();
         }
         catch (Exception ex)
         {
@@ -750,5 +757,35 @@ public class IngredientFormViewModel : INotifyPropertyChanged
         if (_suppressDirtyTracking) return;
         _isDirty = true;
         System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Form marked as dirty");
+    }
+
+    private void TryShowInterstitial()
+    {
+        MainThread.BeginInvokeOnMainThread(async () =>
+        {
+            try
+            {
+                await _adService.TryShowInterstitialAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AdMob] Interstitial failed: {ex.Message}");
+            }
+        });
+    }
+
+    private sealed class NullAdCounterService : IAdCounterService
+    {
+        public Task RecordManualRecipeSaveAsync() => Task.CompletedTask;
+        public Task RecordManualIngredientSaveAsync() => Task.CompletedTask;
+    }
+
+    private sealed class NullAdService : IAdService
+    {
+        public bool IsAdLoaded => false;
+        public event EventHandler? InterstitialAdLoaded { add { } remove { } }
+        public Task InitializeAsync() => Task.CompletedTask;
+        public void PreloadInterstitial() { }
+        public Task<bool> TryShowInterstitialAsync() => Task.FromResult(false);
     }
 }

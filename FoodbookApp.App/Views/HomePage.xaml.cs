@@ -43,6 +43,8 @@ public partial class HomePage : ContentPage, ITabLoadable
 
         if (ViewModel != null)
         {
+            await HomeAdBanner.RefreshVisibilityAsync();
+
             if (_hasLoadedOnce)
             {
                 try
@@ -295,6 +297,7 @@ public partial class HomePage : ContentPage, ITabLoadable
 
             if (ViewModel != null)
             {
+                await HomeAdBanner.RefreshVisibilityAsync();
                 await ViewModel.LoadAsync();
             }
         }

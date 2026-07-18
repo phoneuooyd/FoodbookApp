@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using Foodbook.Data;
 using Foodbook.Services;
@@ -9,16 +9,17 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http;
 using CommunityToolkit.Maui;
 using FoodbookApp.Interfaces;
-using Sharpnado.CollectionView; // ? Sharpnado CollectionView namespace
+using Sharpnado.CollectionView;
 using Supabase;
 using Microsoft.IdentityModel.Tokens;
 using FoodbookApp.Services.Auth;
-using Foodbook.Views.Components;
 using FoodbookApp.Services.Supabase;
 using FoodbookApp.Services;
 using FoodbookApp.Services.Subscription;
 using ZXing.Net.Maui.Controls;
-
+using Foodbook.Views.Components;
+using Plugin.AdMob;
+using Plugin.AdMob.Configuration;
 namespace FoodbookApp
 {
     public static class MauiProgram
@@ -28,11 +29,17 @@ namespace FoodbookApp
         {
             System.Diagnostics.Debug.WriteLine("[MauiProgram] CreateMauiApp start");
             var builder = MauiApp.CreateBuilder();
+            // Configure Plugin.AdMob - use test ad unit IDs in DEBUG builds
+#if DEBUG
+            AdConfig.UseTestAdUnitIds = true;
+#endif
+
             builder
                 .UseMauiApp<App>()
+                .UseAdMob()
                 .UseMauiCommunityToolkit()
                 .UseBarcodeReader()
-                .UseSharpnadoCollectionView(loggerEnable: false) // ? Initialize Sharpnado CollectionView with drag-and-drop support
+                .UseSharpnadoCollectionView(loggerEnable: false)
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -87,6 +94,12 @@ namespace FoodbookApp
             builder.Services.AddSingleton<IThemeService, ThemeService>();
             builder.Services.AddSingleton<IFontService, FontService>();
             builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
+            builder.Services.AddSingleton<IAdPreferencesStorage, MauiAdPreferencesStorage>();
+            builder.Services.AddSingleton<IAdPreferencesService, AdPreferencesService>();
+            builder.Services.AddSingleton<IAdVisibilityService, AdVisibilityService>();
+            builder.Services.AddSingleton<IAdPolicyService, AdPolicyService>();
+            builder.Services.AddSingleton<IAdService, AdService>();
+            builder.Services.AddSingleton<IAdCounterService, AdCounterService>();
 
             // Rejestracja serwisu AI z wykorzystaniem nowego HttpClient
             builder.Services.AddScoped<IAIService>(sp => 

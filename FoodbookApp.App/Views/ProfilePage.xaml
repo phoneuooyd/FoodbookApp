@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:FoodbookApp.Localization"
              xmlns:svc="clr-namespace:Foodbook.Services"
+             xmlns:components="clr-namespace:Foodbook.Views.Components"
              x:Class="Foodbook.Views.ProfilePage"
              x:Name="RootPage"
              Title="{x:Static loc:ProfilePageResources.Title}"
@@ -153,6 +154,10 @@
 
                             <Button Text="{x:Static loc:ProfilePageResources.LoginButton}" StyleClass="Primary" Clicked="OnProfileFetchJwtClicked" />
                             <Button Text="{x:Static loc:ProfilePageResources.RegisterButton}" StyleClass="Secondary" Clicked="OnRegisterClicked" />
+                            <components:BannerAdView Placement="Login"
+                                                     PreferredHeight="64"
+                                                     MaxHeightRatio="0.08"
+                                                     Margin="0,16,0,0" />
                         </VerticalStackLayout>
                     </Border>
 

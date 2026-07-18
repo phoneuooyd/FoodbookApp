@@ -255,8 +255,10 @@ namespace Foodbook.ViewModels
         private readonly IRecipeService _recipeService;
         private readonly IIngredientService _ingredientService;
         private readonly RecipeImporter _importer;
+        private readonly IAdCounterService _adCounterService;
+        private readonly IAdService _adService;
 
-        public AddRecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService, RecipeImporter importer, IFolderService folderService, IDatabaseService? databaseService = null, IRecipeLabelService? labelService = null)
+        public AddRecipeViewModel(IRecipeService recipeService, IIngredientService ingredientService, RecipeImporter importer, IFolderService folderService, IDatabaseService? databaseService = null, IRecipeLabelService? labelService = null, IAdCounterService? adCounterService = null, IAdService? adService = null)
         {
             _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
             _ingredientService = ingredientService ?? throw new ArgumentNullException(nameof(ingredientService));
@@ -265,6 +267,8 @@ namespace Foodbook.ViewModels
 
             _databaseService = databaseService ?? ResolveDatabaseService() ?? new NullDatabaseService();
             _labelService = labelService ?? ResolveLabelService() ?? new NullLabelService();
+            _adCounterService = adCounterService ?? ResolveAdCounterService() ?? new NullAdCounterService();
+            _adService = adService ?? ResolveAdService() ?? new NullAdService();
 
             AddIngredientCommand = new Command(AddIngredient);
             RemoveIngredientCommand = new Command<Ingredient>(RemoveIngredient);
@@ -360,6 +364,30 @@ namespace Foodbook.ViewModels
             }
         }
 
+        private IAdCounterService? ResolveAdCounterService()
+        {
+            try
+            {
+                return Application.Current?.Handler?.MauiContext?.Services?.GetService<IAdCounterService>();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private IAdService? ResolveAdService()
+        {
+            try
+            {
+                return Application.Current?.Handler?.MauiContext?.Services?.GetService<IAdService>();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         private static IPreferencesService? ResolvePreferencesService()
         {
             try
@@ -432,6 +460,21 @@ namespace Foodbook.ViewModels
             public Task<List<RecipeLabel>> GetAllAsync(CancellationToken ct = default) => Task.FromResult(new List<RecipeLabel>());
             public Task<RecipeLabel?> GetByIdAsync(Guid id, CancellationToken ct = default) => Task.FromResult<RecipeLabel?>(null);
             public Task<RecipeLabel> UpdateAsync(RecipeLabel label, CancellationToken ct = default) => Task.FromResult(label);
+        }
+
+        private sealed class NullAdCounterService : IAdCounterService
+        {
+            public Task RecordManualRecipeSaveAsync() => Task.CompletedTask;
+            public Task RecordManualIngredientSaveAsync() => Task.CompletedTask;
+        }
+
+        private sealed class NullAdService : IAdService
+        {
+            public bool IsAdLoaded => false;
+            public event EventHandler? InterstitialAdLoaded { add { } remove { } }
+            public Task InitializeAsync() => Task.CompletedTask;
+            public void PreloadInterstitial() { }
+            public Task<bool> TryShowInterstitialAsync() => Task.FromResult(false);
         }
 
         public async Task LoadAvailableFoldersAsync()
@@ -1271,6 +1314,9 @@ namespace Foodbook.ViewModels
                 // Zawsze wróć do grida po zapisie
                 System.Diagnostics.Debug.WriteLine("🔙 Navigating back");
                 await Shell.Current.GoToAsync("..", false);
+
+                await _adCounterService.RecordManualRecipeSaveAsync();
+                TryShowInterstitial();
             }
             catch (Exception ex)
             {
@@ -1294,6 +1340,21 @@ namespace Foodbook.ViewModels
                     T("SaveRecipeErrorMessageFormat", "Save error: {0}"),
                     ex.Message);
             }
+        }
+
+        private void TryShowInterstitial()
+        {
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                try
+                {
+                    await _adService.TryShowInterstitialAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AdMob] Interstitial failed: {ex.Message}");
+                }
+            });
         }
 
         private static string T(string key, string fallback)

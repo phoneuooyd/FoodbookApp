@@ -363,4 +363,6 @@
   <data name="DeduplicateErrorTitle" xml:space="preserve"><value>Error</value></data>
   <data name="PremiumRequiredTitle" xml:space="preserve"><value>Premium</value></data>
   <data name="PremiumRequiredMessage" xml:space="preserve"><value>This option is available only for Premium users.</value></data>
+  <data name="SupportDeveloperOption" xml:space="preserve"><value>Support developer</value></data>
+  <data name="SupportDeveloperDescription" xml:space="preserve"><value>Show ads to support the app development</value></data>
 </root>

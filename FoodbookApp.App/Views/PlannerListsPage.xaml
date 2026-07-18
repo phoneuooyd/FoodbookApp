@@ -142,6 +142,7 @@
         <components:UniversalSpinnerComponent
             Grid.RowSpan="2"
             ZIndex="10"
-            IsLoading="{Binding IsLoading}" />
+            IsLoading="{Binding IsLoading}"
+            ShowAdBanner="True" />
     </Grid>
 </ContentPage>

@@ -128,4 +128,6 @@
   <data name="DeduplicateErrorTitle" xml:space="preserve"><value>Erreur</value></data>
   <data name="PremiumRequiredTitle" xml:space="preserve"><value>Premium</value></data>
   <data name="PremiumRequiredMessage" xml:space="preserve"><value>Cette option est disponible uniquement pour les utilisateurs Premium.</value></data>
+  <data name="SupportDeveloperOption" xml:space="preserve"><value>Soutenir le développeur</value></data>
+  <data name="SupportDeveloperDescription" xml:space="preserve"><value>Afficher des pubs pour soutenir le développement de l'application</value></data>
 </root>

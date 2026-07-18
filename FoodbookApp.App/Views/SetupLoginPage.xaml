@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:Foodbook.Services"
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
+             xmlns:components="clr-namespace:Foodbook.Views.Components"
              x:Class="Foodbook.Views.SetupLoginPage"
              x:DataType="vm:SetupLoginViewModel">
 
@@ -56,6 +57,11 @@
                     Command="{Binding ToggleModeCommand}"
                     BackgroundColor="Transparent"
                     TextColor="{DynamicResource Primary}" />
+
+            <components:BannerAdView Placement="Login"
+                                     PreferredHeight="64"
+                                     MaxHeightRatio="0.08"
+                                     Margin="0,16,0,0" />
 
             <Button Text="{loc:Translate Resource=SetupWizardPageResources, Key=ContinueWithoutAccountButton}"
                     Command="{Binding ContinueWithoutAccountCommand}"

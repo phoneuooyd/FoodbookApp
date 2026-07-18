@@ -5,6 +5,7 @@
              xmlns:vm="clr-namespace:Foodbook.ViewModels"
              xmlns:models="clr-namespace:Foodbook.Models"
              xmlns:converters="clr-namespace:Foodbook.Converters"
+             xmlns:controls="clr-namespace:Foodbook.Views.Components"
              x:Class="Foodbook.Views.HomePage"
              x:Name="HomePageView"
              x:DataType="vm:HomeViewModel"
@@ -485,6 +486,11 @@
                         </HorizontalStackLayout>
                     </VerticalStackLayout>
                 </Border>
+
+                <controls:BannerAdView x:Name="HomeAdBanner"
+                                       Placement="Home"
+                                       PreferredHeight="72"
+                                       MaxHeightRatio="0.08" />
 
                 <Grid ColumnDefinitions="*,*"
                       ColumnSpacing="12"

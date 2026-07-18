@@ -2,6 +2,7 @@
 <mct:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
            xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
            xmlns:mct="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui"
+           xmlns:components="clr-namespace:Foodbook.Views.Components"
            x:Class="Foodbook.Views.Components.RegisterPopup"
            x:Name="ThisPopup"
            CanBeDismissedByTappingOutsideOfPopup="True"
@@ -77,6 +78,11 @@
                     <Label x:Name="StatusLabel"
                            FontSize="12"
                            TextColor="{DynamicResource SecondaryText}" />
+
+                    <components:BannerAdView Placement="Login"
+                                             PreferredHeight="64"
+                                             MaxHeightRatio="0.08"
+                                             Margin="0,16,0,0" />
                 </VerticalStackLayout>
             </ScrollView>
 
