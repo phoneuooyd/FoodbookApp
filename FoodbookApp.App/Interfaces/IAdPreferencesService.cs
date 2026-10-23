@@ -12,6 +12,10 @@ public interface IAdPreferencesService
     void SetIngredientManualSaveCounter(int value);
     int GetPlanManualSaveCounter();
     void SetPlanManualSaveCounter(int value);
+    int GetFoodbookManualSaveCounter();
+    void SetFoodbookManualSaveCounter(int value);
+    int GetShoppingListManualSaveCounter();
+    void SetShoppingListManualSaveCounter(int value);
 
     DateTime? GetLastInterstitialShownUtc();
     void SetLastInterstitialShownUtc(DateTime utcValue);

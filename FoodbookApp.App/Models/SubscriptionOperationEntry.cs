@@ -29,6 +29,23 @@ public class SubscriptionOperationEntry
     public DateTime? LastAttemptUtc { get; set; }
 
     public DateTime? CompletedUtc { get; set; }
+
+    public string? PaymentProvider { get; set; }
+
+    [MaxLength(200)]
+    public string? ProviderProductId { get; set; }
+
+    [MaxLength(500)]
+    public string? PurchaseToken { get; set; }
+
+    public DateTime? PurchaseTimeUtc { get; set; }
+
+    public DateTime? ExpiryTimeUtc { get; set; }
+
+    public bool IsAcknowledged { get; set; }
+
+    [MaxLength(50)]
+    public string? LastProviderStatus { get; set; }
 }
 
 public enum SubscriptionOperationStatus

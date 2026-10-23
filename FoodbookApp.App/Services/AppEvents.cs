@@ -5,6 +5,30 @@ namespace Foodbook.Services;
 /// </summary>
 public static class AppEvents
 {
+    public static event Func<Task>? AdPreferencesChangedAsync;
+
+    public static async Task RaiseAdPreferencesChangedAsync()
+    {
+        if (AdPreferencesChangedAsync != null)
+        {
+            try
+            {
+                var handlers = AdPreferencesChangedAsync.GetInvocationList().Cast<Func<Task>>();
+                var tasks = handlers.Select(handler => handler.Invoke());
+                await Task.WhenAll(tasks);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in AppEvents.RaiseAdPreferencesChangedAsync: {ex.Message}");
+            }
+        }
+    }
+
+    public static void RaiseAdPreferencesChanged()
+    {
+        _ = RaiseAdPreferencesChangedAsync();
+    }
+
     // ? NEW: Queue for recipe-saved events that occur before subscribers are ready
     private static readonly int PendingRecipeSavedEventsLimit = 100;
     private static Queue<Guid> _pendingRecipeSavedEvents = new();

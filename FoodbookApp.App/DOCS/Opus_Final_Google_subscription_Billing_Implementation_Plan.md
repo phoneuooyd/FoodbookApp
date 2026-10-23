@@ -1,3 +1,5 @@
+Tak. Poniżej masz poprawioną wersję planu — zachowuję jego strukturę i poziom szczegółowości, ale usuwam elementy niezgodne z Twoją aktualną architekturą: niepotrzebne kolumny w `users`, błędne sekrety, stare założenia dotyczące Billing Library, brak realnego uwzględnienia istniejących `subscription_purchases` i `subscription_events` oraz kilka problemów z flow zmiany planu.
+
 # Opus Final — Google Play Subscription Billing Implementation Plan
 
 ## FoodbookApp · .NET MAUI · Supabase Backend
@@ -6,17 +8,63 @@
 
 ## 1. Streszczenie wykonawcze
 
-Niniejszy plan opisuje pełną implementację subskrypcji Google Play Billing w aplikacji FoodbookApp (.NET MAUI) z weryfikacją po stronie serwera (Supabase Edge Functions). Celem jest zastąpienie obecnego `MockSubscriptionManagementService` prawdziwą integracją z Google Play, zachowując istniejącą architekturę (`ISubscriptionManagementService`, `FeatureAccessService`, `SubscriptionOperationEntry`, `ProfilePage.xaml.cs`).
+Niniejszy plan opisuje pełną implementację subskrypcji Google Play Billing w aplikacji FoodbookApp (.NET MAUI) z weryfikacją po stronie serwera za pomocą Supabase Edge Functions.
+
+Celem jest zastąpienie obecnego `MockSubscriptionManagementService` prawdziwą integracją z Google Play, zachowując istniejącą architekturę:
+
+```text
+ISubscriptionManagementService
+        ↓
+FeatureAccessService
+        ↓
+ProfilePage.xaml.cs
+```
+
+oraz istniejący mechanizm `SubscriptionOperationEntry`.
+
+Architektura ma wykorzystywać:
+
+* Google Play Billing po stronie aplikacji Android,
+* Google Play Developer API po stronie backendu,
+* Supabase Edge Functions jako backend weryfikujący zakupy,
+* `subscription_purchases` jako tabelę przechowującą stan i dane zakupów,
+* `subscription_events` jako tabelę historii zdarzeń,
+* `users` jako tabelę aktualnego stanu uprawnień użytkownika,
+* Google Play Real-Time Developer Notifications (RTDN) do synchronizacji lifecycle subskrypcji.
 
 ### Source of Truth
 
-| Aspekt | Obecny mock | Google Play Billing |
-|--------|------------|-------------------|
-| Kto decyduje o premium? | Aplikacja sama | Google Play → backend weryfikuje → Supabase |
-| Skąd pochodzi PurchaseToken? | Brak | Google Play BillingClient |
-| Kto aktualizuje `users.IsPremium`? | `MockSubscriptionManagementService` bezpośrednio | Supabase Edge Function po weryfikacji z Google API |
-| Acknowledge | Brak | Wymagany — bez niego Google anuluje zakup po 3 dniach |
-| Lifecycle (renew/cancel/expire) | Brak | RTDN (Real-Time Developer Notifications) → webhook |
+| Aspekt                                     | Obecny mock                                      | Google Play Billing                                |
+| ------------------------------------------ | ------------------------------------------------ | -------------------------------------------------- |
+| Kto decyduje o premium?                    | Aplikacja sama                                   | Google Play → backend weryfikuje → Supabase        |
+| Skąd pochodzi PurchaseToken?               | Brak                                             | Google Play BillingClient                          |
+| Kto weryfikuje zakup?                      | Brak                                             | Supabase Edge Function + Google Play Developer API |
+| Kto aktualizuje `users.IsPremium`?         | `MockSubscriptionManagementService` bezpośrednio | Supabase Edge Functions po pozytywnej weryfikacji  |
+| Gdzie przechowywany jest purchase token?   | Brak                                             | `subscription_purchases`                           |
+| Gdzie przechowywana jest historia eventów? | Brak                                             | `subscription_events`                              |
+| Acknowledge                                | Brak                                             | Backend po pozytywnej weryfikacji                  |
+| Lifecycle (renew/cancel/expire)            | Brak                                             | Google Play RTDN → Pub/Sub → `handle-rtdn`         |
+| Aktualny dostęp użytkownika                | Mock                                             | `users.is_premium` + `premium_to`                  |
+
+### Główna zasada architektoniczna
+
+Tabela `users` przechowuje **aktualny, zdenormalizowany stan dostępu użytkownika**.
+
+Tabela `subscription_purchases` przechowuje **konkretne subskrypcje i dane zakupów Google Play**.
+
+Tabela `subscription_events` przechowuje **historię zdarzeń i zmian stanu**.
+
+Nie należy dodawać do `users` kolumn takich jak:
+
+```text
+google_purchase_token
+google_product_id
+google_order_id
+subscription_state
+auto_renewing
+```
+
+ponieważ dane te należą do modelu subskrypcji i są już przechowywane w dedykowanych tabelach.
 
 ---
 
@@ -24,7 +72,7 @@ Niniejszy plan opisuje pełną implementację subskrypcji Google Play Billing w 
 
 ### 2.1 Flow subskrypcji (mock)
 
-```
+```text
 User klika "Kup Premium" w ProfilePage
     ↓
 ProfilePage.xaml.cs → ExecuteSubscriptionActionAsync()
@@ -33,48 +81,82 @@ ISubscriptionManagementService.ChangePlanAsync(targetPlan)
     ↓
 MockSubscriptionManagementService:
   1. Tworzy SubscriptionOperationEntry (Pending)
-  2. UpsertSupabaseUserPlanAsync() → bezpośrednio zapisuje do tabeli `users`:
+  2. Bezpośrednio zapisuje do tabeli users:
      - IsPremium = true/false
      - PremiumFrom = now
      - PremiumTo = now + 1month / 1year
-     - UserType = 0 (free) / 1 (premium)
+     - UserType = 0 / 1
   3. Zapisuje snapshot do SecureStorage
   4. Oznacza operację jako Completed
     ↓
 ProfilePage → HandleSubscriptionActionResultAsync()
   - SaveSubscriptionPlanChoice() do Preferences
-  - FeatureAccessService.RefreshAccessAsync() → odczytuje `users` z Supabase
-  - RefreshSubscriptionSectionAsync() → aktualizuje UI
+  - FeatureAccessService.RefreshAccessAsync()
+  - RefreshSubscriptionSectionAsync()
 ```
 
 ### 2.2 Kluczowe pliki
 
-| Plik | Rola |
-|------|------|
-| `Interfaces/ISubscriptionManagementService.cs` | Kontrakt: `ChangePlanAsync`, `CancelSubscriptionAsync`, `GetPendingOperationAsync`, `ResumePendingOperationAsync` |
-| `Services/Subscription/MockSubscriptionManagementService.cs` | Obecna implementacja — bezpośredni upsert do Supabase, bez weryfikacji płatności |
-| `Services/Subscription/PaymentProviderSubscriptionManagementService.cs` | **Stub** — `NotSupportedException` — tu trafi implementacja Google Play |
-| `Services/Subscription/SupabaseEdgeSubscriptionManagementService.cs` | **Stub** — przeznaczony na wrapper do Edge Functions |
-| `Services/FeatureAccessService.cs` | Odczytuje `users` z Supabase → buduje `FeatureAccessSnapshot` → decyduje o uprawnieniach |
-| `Views/ProfilePage.xaml.cs` | UI subskrypcji: buttony, pending operations, plan details |
-| `Views/ProfilePage.xaml` | Layout XAML z sekcjami: PlanDetailsView, PendingSubscriptionCard, przyciski zmiany planu |
-| `Models/SubscriptionOperationEntry.cs` | Entity: `Id`, `AccountId`, `TargetPlan`, `Status`, `IdempotencyKey`, `RetryCount`, `LastError`, itd. |
-| `Models/SubscriptionPlan.cs` | Enum: `Free`, `PremiumMonthly`, `PremiumYearly` |
-| `Models/SubscriptionActionResult.cs` | Wynik akcji: `Success`, `CurrentPlan`, `ActionState`, `OperationId`, `UiMessage` |
-| `Models/SubscriptionPendingOperation.cs` | DTO pendingowej operacji dla UI |
-| `Models/SubscriptionActionState.cs` | Enum: `Completed`, `Pending`, `Failed` |
-| `MauiProgram.cs` | DI — obecnie rejestruje `MockSubscriptionManagementService` jako `ISubscriptionManagementService` |
+| Plik                                                                    | Rola                                                                                                              |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `Interfaces/ISubscriptionManagementService.cs`                          | Kontrakt: `ChangePlanAsync`, `CancelSubscriptionAsync`, `GetPendingOperationAsync`, `ResumePendingOperationAsync` |
+| `Services/Subscription/MockSubscriptionManagementService.cs`            | Obecna implementacja testowa                                                                                      |
+| `Services/Subscription/PaymentProviderSubscriptionManagementService.cs` | Implementacja Google Play Billing                                                                                 |
+| `Services/Subscription/SupabaseEdgeSubscriptionManagementService.cs`    | Opcjonalny wrapper do wywoływania Edge Functions                                                                  |
+| `Services/FeatureAccessService.cs`                                      | Odczytuje `users` i buduje `FeatureAccessSnapshot`                                                                |
+| `Views/ProfilePage.xaml.cs`                                             | UI subskrypcji i wykonywanie operacji                                                                             |
+| `Views/ProfilePage.xaml`                                                | Layout UI                                                                                                         |
+| `Models/SubscriptionOperationEntry.cs`                                  | Lokalna/operacyjna reprezentacja pending operacji                                                                 |
+| `Models/SubscriptionPlan.cs`                                            | Enum: `Free`, `PremiumMonthly`, `PremiumYearly`                                                                   |
+| `Models/SubscriptionActionResult.cs`                                    | Wynik operacji subskrypcji                                                                                        |
+| `Models/SubscriptionPendingOperation.cs`                                | DTO pendingowej operacji                                                                                          |
+| `Models/SubscriptionActionState.cs`                                     | `Completed`, `Pending`, `Failed`                                                                                  |
+| `MauiProgram.cs`                                                        | Rejestracja implementacji DI                                                                                      |
 
 ### 2.3 Tabela `users` w Supabase
 
+Aktualny schemat:
+
 ```sql
--- Obecne kolumny związane z subskrypcją:
-id          UUID PRIMARY KEY  -- = auth.users.id
-email       TEXT
-is_premium  BOOLEAN DEFAULT false
-premium_from TIMESTAMPTZ
-premium_to  TIMESTAMPTZ
-user_type   INTEGER DEFAULT 0  -- 0=free, 1=premium
+create table public.users (
+  id uuid not null,
+  email text null,
+  registration_date timestamp with time zone null default now(),
+  user_type integer null default 0,
+  is_premium boolean null default false,
+  premium_from timestamp with time zone null,
+  premium_to timestamp with time zone null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  ad_unlocks_json jsonb null default '[]'::jsonb,
+  plan_count_this_month integer null default 0,
+  active_lists_count integer null default 0,
+  test_placeholder boolean null default false,
+
+  constraint users_pkey primary key (id),
+  constraint users_id_fkey
+    foreign key (id)
+    references auth.users (id)
+    on delete cascade
+);
+```
+
+### Kolumny związane z premium
+
+```text
+is_premium
+premium_from
+premium_to
+user_type
+```
+
+Te kolumny są wystarczające do przechowywania aktualnego dostępu użytkownika.
+
+Nie należy dodawać do `users` danych specyficznych dla Google Play, jeśli istnieją już tabele:
+
+```text
+subscription_purchases
+subscription_events
 ```
 
 ---
@@ -83,97 +165,170 @@ user_type   INTEGER DEFAULT 0  -- 0=free, 1=premium
 
 ### 3.1 Docelowy flow zakupu
 
-```
+```text
 ┌───────────────────────────────────────────────────────────┐
 │  APLIKACJA (.NET MAUI / Android)                          │
 │                                                           │
 │  1. User klika "Kup Premium Monthly/Yearly"               │
 │     ↓                                                     │
-│  2. GooglePlaySubscriptionManagementService                │
+│  2. PaymentProviderSubscriptionManagementService          │
 │     .ChangePlanAsync(targetPlan)                          │
 │     ↓                                                     │
-│  3. BillingClient.LaunchBillingFlow()                     │
+│  3. Google Play BillingClient                             │
+│     → pobranie ProductDetails                             │
+│     ↓                                                     │
+│  4. BillingClient.LaunchBillingFlow()                     │
 │     → Google Play purchase sheet                          │
 │     ↓                                                     │
-│  4. OnPurchasesUpdated callback                           │
-│     → otrzymuje Purchase z PurchaseToken                  │
+│  5. OnPurchasesUpdated callback                           │
+│     → otrzymuje Purchase + PurchaseToken                  │
 │     ↓                                                     │
-│  5. Wysyłka do Supabase Edge Function:                    │
-│     POST /verify-play-purchase                            │
-│     Body: { supabaseUserId, productId, purchaseToken,     │
-│             packageName }                                 │
+│  6. Zapisanie SubscriptionOperationEntry jako Pending     │
+│     ↓                                                     │
+│  7. POST do Supabase Edge Function                        │
+│     /verify-play-purchase                                  │
+│     {                                                     │
+│       productId,                                          │
+│       purchaseToken,                                      │
+│       packageName                                         │
+│     }                                                     │
 └───────────────────────────────────────────────────────────┘
                          ↓
 ┌───────────────────────────────────────────────────────────┐
 │  SUPABASE EDGE FUNCTION: verify-play-purchase             │
 │                                                           │
-│  1. Walidacja inputu                                      │
-│  2. Google Play Developer API:                            │
-│     purchases.subscriptionsv2.get(purchaseToken)          │
-│  3. Weryfikacja:                                          │
-│     - subscriptionState === SUBSCRIPTION_STATE_ACTIVE     │
-│     - expiryTime > now                                    │
-│  4. Acknowledge jeśli acknowledgementState !== ACKNOWLEDGED│
-│  5. Mapowanie productId → SubscriptionPlan                │
-│  6. UPDATE users SET:                                     │
-│     is_premium = true,                                    │
-│     premium_from = startTime,                             │
-│     premium_to = expiryTime,                              │
-│     user_type = 1,                                        │
-│     google_purchase_token = token,                        │
-│     google_product_id = productId                         │
-│  7. Response: { isValid, plan, premiumFrom, premiumTo }   │
+│  1. Walidacja requestu                                    │
+│  2. Identyfikacja użytkownika z JWT                       │
+│  3. Google Play Developer API:                            │
+│     subscriptionsv2.get(purchaseToken)                    │
+│                                                           │
+│  4. Weryfikacja:                                          │
+│     - packageName                                         │
+│     - productId                                           │
+│     - subscriptionState                                   │
+│     - expiryTime                                          │
+│                                                           │
+│  5. Acknowledge jeśli wymagane                            │
+│                                                           │
+│  6. Upsert do subscription_purchases                      │
+│                                                           │
+│  7. Zapisanie subscription_events                         │
+│                                                           │
+│  8. Aktualizacja users:                                   │
+│     - is_premium                                          │
+│     - premium_from                                        │
+│     - premium_to                                          │
+│     - user_type                                           │
+│                                                           │
+│  9. Response:                                             │
+│     {                                                     │
+│       isValid,                                            │
+│       plan,                                               │
+│       premiumFrom,                                        │
+│       premiumTo                                           │
+│     }                                                     │
 └───────────────────────────────────────────────────────────┘
                          ↓
 ┌───────────────────────────────────────────────────────────┐
 │  APLIKACJA                                                │
 │                                                           │
-│  6. Edge Function → sukces                                │
-│     → Oznacz SubscriptionOperationEntry jako Completed    │
-│     → FeatureAccessService.RefreshAccessAsync()           │
-│     → UI: "Premium aktywne"                               │
+│  10. Edge Function → sukces                               │
+│      → SubscriptionOperationEntry → Completed             │
+│      → FeatureAccessService.RefreshAccessAsync()           │
+│      → UI: "Premium aktywne"                              │
 │                                                           │
-│  7. Edge Function → błąd / timeout                        │
-│     → Oznacz jako Pending + zapisz PurchaseToken          │
-│     → ResumePendingOperationAsync() po reconnect          │
+│  11. Edge Function → timeout / błąd sieci                 │
+│      → Operation → Pending                                │
+│      → PurchaseToken pozostaje zapisany                    │
+│      → retry po reconnect / ponownym uruchomieniu           │
 └───────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 Flow anulowania
+### 3.2 Flow zmiany planu
 
+Zmiana planu z miesięcznego na roczny lub odwrotnie powinna wykorzystywać mechanizm zmiany istniejącej subskrypcji Google Play.
+
+```text
+User posiada Premium Monthly
+    ↓
+Kliknie "Przejdź na Premium Yearly"
+    ↓
+Aplikacja pobiera aktywny PurchaseToken
+    ↓
+Google Play BillingClient:
+    SubscriptionUpdateParams
+    + stary PurchaseToken
+    + nowy ProductDetails / offerToken
+    ↓
+Google Play wykonuje zmianę subskrypcji
+    ↓
+Aplikacja otrzymuje nowy Purchase
+    ↓
+POST /verify-play-purchase
+    ↓
+Backend weryfikuje nowy token
+    ↓
+subscription_purchases zostaje zaktualizowane
+subscription_events otrzymuje event
+users zostaje zaktualizowane
 ```
+
+Nie należy traktować zmiany planu jako zwykłego, niezależnego nowego zakupu.
+
+### 3.3 Flow anulowania
+
+```text
 User klika "Anuluj subskrypcję"
     ↓
 CancelSubscriptionAsync()
     ↓
-Android: Intent do Google Play Manage Subscriptions
-    (deep link: https://play.google.com/store/account/subscriptions
-     ?sku=PRODUCT_ID&package=PACKAGE_NAME)
+Aplikacja otwiera Google Play Manage Subscriptions
     ↓
-Google Play pozwala anulować
+User anuluje auto-renewal
     ↓
-(Opcja A — RTDN webhook) Google wysyła event → Edge Function → users update
-(Opcja B — polling) App odpytuje sync-play-subscription na start → refresh
+Google Play:
+    - subskrypcja pozostaje aktywna do expiryTime
+    - auto-renew zostaje wyłączony
+    ↓
+Google Play wysyła RTDN
+    ↓
+Pub/Sub
+    ↓
+handle-rtdn
+    ↓
+Backend pobiera aktualny stan z Google Play API
+    ↓
+subscription_purchases zostaje zaktualizowane
+subscription_events otrzymuje event
+users pozostaje premium do premium_to
 ```
 
-### 3.3 Flow przywracania zakupów (restore)
+Po anulowaniu auto-renewal użytkownik nie powinien natychmiast tracić premium. Premium pozostaje aktywne do końca opłaconego okresu.
 
-```
-User reinstaluje aplikację / nowe urządzenie
+### 3.4 Flow przywracania zakupów (restore)
+
+```text
+User reinstaluje aplikację / używa nowego urządzenia
     ↓
-OnAppearing → TryAutoResumePendingOperationAsync()
+Aplikacja uruchamia BillingClient
     ↓
-BillingClient.QueryPurchasesAsync(SUBS)
+QueryPurchasesAsync(SUBS)
     ↓
-Dla każdego aktywnego Purchase:
-    POST /sync-play-subscription
-    Body: { supabaseUserId, packageName, purchases[] }
+Google Play zwraca aktywne zakupy
     ↓
-Edge Function weryfikuje wszystkie tokeny z Google
-    → wybiera najlepszą aktywną subskrypcję
-    → update users
+Dla każdego Purchase:
+    POST /verify-play-purchase
     ↓
-RefreshAccessAsync() → UI update
+Backend:
+    - weryfikuje token
+    - sprawdza packageName
+    - sprawdza productId
+    - pobiera aktualny stan z Google Play
+    ↓
+subscription_purchases zostaje zaktualizowane
+users zostaje zaktualizowane
+    ↓
+FeatureAccessService.RefreshAccessAsync()
 ```
 
 ---
@@ -182,529 +337,1074 @@ RefreshAccessAsync() → UI update
 
 ### Krok 1: Konfiguracja Google Play Console
 
-**Gdzie**: Google Play Console → twoja aplikacja
+**Gdzie**: Google Play Console → Twoja aplikacja
 
-**Czynności**:
-1. Przejdź do **Monetize → Products → Subscriptions**
-2. Utwórz 2 subskrypcje:
+### Subskrypcje
 
-| Product ID | Nazwa | Okres | Cena sugerowana |
-|-----------|-------|-------|-----------------|
-| `foodbook_premium_monthly` | Foodbook Premium Miesięczny | 1 miesiąc | ~19.99 PLN |
-| `foodbook_premium_yearly` | Foodbook Premium Roczny | 12 miesięcy | ~149.99 PLN |
+Utwórz dwa produkty subskrypcyjne:
 
-3. Dla każdej subskrypcji skonfiguruj:
-   - Base plan (auto-renewing)
-   - Offer (opcjonalnie: free trial, introductory price)
-   - Grace period: 7 dni (zalecane)
-   - Resubscribe: włącz
+| Product ID                 | Nazwa                       | Okres     |
+| -------------------------- | --------------------------- | --------- |
+| `foodbook_premium_monthly` | Foodbook Premium Miesięczny | 1 miesiąc |
+| `foodbook_premium_yearly`  | Foodbook Premium Roczny     | 1 rok     |
 
-4. Dodaj **License testers**: Settings → License testing → dodaj email testowy
-5. Opublikuj aplikację na **Internal testing track** (wymagane do testowania billing)
+Każda subskrypcja powinna mieć:
+
+```text
+Base plan:
+    AUTO_RENEWING
+```
+
+Zalecana konfiguracja:
+
+```text
+Grace period:
+    7 dni
+
+Resubscribe:
+    włączone
+```
+
+Oferta free trial lub introductory pricing jest opcjonalna i może zostać dodana później.
+
+### License testers
+
+Dodaj konto testowe w:
+
+```text
+Google Play Console
+→ Settings
+→ License testing
+```
+
+### Internal testing
+
+Aplikacja musi być dostępna przez odpowiedni track testowy Google Play, aby testować rzeczywiste Google Play Billing.
+
+Rekomendowana kolejność:
+
+```text
+Internal testing
+    ↓
+tester dodany jako license tester
+    ↓
+tester instaluje aplikację z Google Play
+    ↓
+testuje zakup
+```
+
+Nie należy zakładać, że zwykłe uruchomienie aplikacji bezpośrednio z Visual Studio będzie równoważne pełnemu środowisku Google Play Billing.
+
+---
 
 ### Krok 2: Konfiguracja Google Cloud + Service Account
 
-**Cel**: Supabase Edge Functions muszą mieć dostęp do Google Play Developer API
+**Cel**: Supabase Edge Functions muszą mieć dostęp do Google Play Developer API.
 
-1. Google Cloud Console → Projekt powiązany z Google Play Console
-2. Włącz **Google Play Android Developer API**
-3. Utwórz **Service Account**:
-   - IAM & Admin → Service Accounts → Create
-   - Nadaj rolę: `roles/androidpublisher.appEditor` (lub custom)
-   - Utwórz klucz JSON → pobierz
-4. Google Play Console → Settings → API Access:
-   - Połącz z projektem GCP
-   - Nadaj Service Account uprawnienia: **View financial data**, **Manage orders and subscriptions**
+#### 1. Włącz API
 
-**Wynik**: Plik JSON klucza service account → trafi jako secret do Supabase
+W projekcie Google Cloud:
 
-### Krok 3: Mapowanie Product ID → SubscriptionPlan
+```text
+Google Play Android Developer API
+```
 
-**Plik**: `Constants/BillingConstants.cs` (NOWY)
+musi być włączone.
+
+Projekt:
+
+```text
+foodbook-497815
+```
+
+#### 2. Service Account
+
+Utwórz Service Account w:
+
+```text
+Google Cloud Console
+→ IAM & Admin
+→ Service Accounts
+```
+
+Utwórz klucz JSON.
+
+Cały JSON trafi do Supabase jako:
+
+```text
+GOOGLE_SERVICE_ACCOUNT_JSON
+```
+
+#### 3. Google Play Console
+
+W:
+
+```text
+Google Play Console
+→ Settings
+→ Developer account
+→ API access
+```
+
+połącz odpowiedni projekt Google Cloud i nadaj Service Account odpowiednie uprawnienia do aplikacji.
+
+Service Account musi mieć uprawnienia umożliwiające wykonywanie operacji związanych z subskrypcjami i zakupami.
+
+Minimalny zakres uprawnień powinien być zgodny z operacjami wykonywanymi przez Edge Functions:
+
+```text
+- odczyt subskrypcji
+- acknowledge zakupów
+```
+
+Nie należy nadawać większych uprawnień niż potrzebne.
+
+---
+
+### Krok 3: Konfiguracja Supabase Secrets
+
+W Supabase Edge Functions używane są następujące sekrety:
+
+```text
+GOOGLE_SERVICE_ACCOUNT_JSON
+```
+
+Cały JSON klucza Service Account.
+
+```text
+SERVICE_ROLE_KEY
+```
+
+Supabase Service Role Key.
+
+```text
+FOODBOOK_RTDN_SECRET
+```
+
+Długi, losowy sekret zabezpieczający endpoint RTDN.
+
+Przykład endpointu RTDN:
+
+```text
+https://gscbdvezastxpyndkauh.supabase.co/functions/v1/handle-rtdn?secret=<FOODBOOK_RTDN_SECRET>
+```
+
+Wartość sekretu nie powinna być przechowywana w kodzie aplikacji.
+
+Package name nie jest sekretem:
+
+```text
+com.ppapps.foodbookapp
+```
+
+Może być stałą w kodzie.
+
+---
+
+### Krok 4: Konfiguracja Google Play RTDN
+
+Istniejący topic:
+
+```text
+projects/foodbook-497815/topics/foodbook-play-notifications
+```
+
+jest używany przez Google Play do publikowania Real-Time Developer Notifications.
+
+Do tego topicu należy utworzyć push subscription.
+
+Przykład:
+
+```text
+Subscription ID:
+foodbook-rtdn-push
+```
+
+Delivery type:
+
+```text
+Push
+```
+
+Push endpoint:
+
+```text
+https://gscbdvezastxpyndkauh.supabase.co/functions/v1/handle-rtdn?secret=<FOODBOOK_RTDN_SECRET>
+```
+
+Architektura:
+
+```text
+Google Play
+    ↓
+Pub/Sub Topic
+foodbook-play-notifications
+    ↓
+Pub/Sub Push Subscription
+foodbook-rtdn-push
+    ↓ HTTP POST
+Supabase Edge Function
+handle-rtdn
+```
+
+Nie należy tworzyć drugiego topicu, jeśli istniejący topic jest już skonfigurowany w Google Play Console.
+
+### Odpowiedzialność RTDN
+
+RTDN informuje backend, że coś się zmieniło.
+
+RTDN nie powinien być traktowany jako pełne źródło danych o subskrypcji.
+
+Po otrzymaniu RTDN:
+
+```text
+1. Decode notification
+2. Odczytaj purchaseToken
+3. Odczytaj notificationType
+4. Pobierz aktualny stan z Google Play Developer API
+5. Zaktualizuj subscription_purchases
+6. Zapisz subscription_events
+7. Zaktualizuj users
+```
+
+---
+
+### Krok 5: Mapowanie Product ID → SubscriptionPlan
+
+**Plik**:
+
+```text
+Constants/BillingConstants.cs
+```
 
 ```csharp
 namespace FoodbookApp.Constants;
 
 public static class BillingConstants
 {
-    /// <summary>
-    /// Package name aplikacji w Google Play.
-    /// </summary>
-    public const string PackageName = "com.takis.foodbook"; // <- Twój package name
+    public const string PackageName = "com.ppapps.foodbookapp";
 
-    /// <summary>
-    /// Google Play Product ID → SubscriptionPlan mapping.
-    /// </summary>
-    public static readonly Dictionary<string, SubscriptionPlan> ProductPlanMap = new()
-    {
-        ["foodbook_premium_monthly"] = SubscriptionPlan.PremiumMonthly,
-        ["foodbook_premium_yearly"] = SubscriptionPlan.PremiumYearly
-    };
+    public const string MonthlyProductId =
+        "foodbook_premium_monthly";
 
-    /// <summary>
-    /// SubscriptionPlan → Google Play Product ID mapping.
-    /// </summary>
-    public static readonly Dictionary<SubscriptionPlan, string> PlanProductMap = new()
-    {
-        [SubscriptionPlan.PremiumMonthly] = "foodbook_premium_monthly",
-        [SubscriptionPlan.PremiumYearly] = "foodbook_premium_yearly"
-    };
+    public const string YearlyProductId =
+        "foodbook_premium_yearly";
 
-    /// <summary>
-    /// Supabase Edge Function endpoints.
-    /// </summary>
-    public const string VerifyPurchaseEndpoint = "verify-play-purchase";
-    public const string SyncSubscriptionEndpoint = "sync-play-subscription";
+    public static readonly Dictionary<string, SubscriptionPlan>
+        ProductPlanMap = new()
+        {
+            [MonthlyProductId] =
+                SubscriptionPlan.PremiumMonthly,
+
+            [YearlyProductId] =
+                SubscriptionPlan.PremiumYearly
+        };
+
+    public static readonly Dictionary<SubscriptionPlan, string>
+        PlanProductMap = new()
+        {
+            [SubscriptionPlan.PremiumMonthly] =
+                MonthlyProductId,
+
+            [SubscriptionPlan.PremiumYearly] =
+                YearlyProductId
+        };
+
+    public const string VerifyPurchaseEndpoint =
+        "verify-purchase";
+
+    public const string SyncSubscriptionEndpoint =
+        "sync-play-subscription";
 }
 ```
 
-### Krok 4: Rozszerzenie modelu SubscriptionOperationEntry
+Nazwa endpointu musi odpowiadać rzeczywistej nazwie wdrożonej Edge Function.
 
-**Plik**: `Models/SubscriptionOperationEntry.cs` (MODYFIKACJA)
+---
 
-Dodaj pola przechowujące dane Google Play (na wypadek retry):
+### Krok 6: Weryfikacja istniejących tabel Supabase
 
-```csharp
-// === Nowe pola provider ===
+Przed implementacją Edge Functions agent musi sprawdzić rzeczywisty schemat:
 
-/// <summary>
-/// Nazwa providera płatności (np. "GooglePlay", "AppStore").
-/// </summary>
-public string? PaymentProvider { get; set; }
-
-/// <summary>
-/// Google Play Product ID (np. "foodbook_premium_monthly").
-/// </summary>
-public string? ProviderProductId { get; set; }
-
-/// <summary>
-/// Google Play Purchase Token — dowód zakupu, potrzebny do weryfikacji.
-/// </summary>
-public string? PurchaseToken { get; set; }
-
-/// <summary>
-/// Czas zakupu (UTC) zgłoszony przez Google.
-/// </summary>
-public DateTime? PurchaseTimeUtc { get; set; }
-
-/// <summary>
-/// Czas wygaśnięcia subskrypcji (UTC) zgłoszony przez Google.
-/// </summary>
-public DateTime? ExpiryTimeUtc { get; set; }
-
-/// <summary>
-/// Czy zakup został acknowledged po stronie Google.
-/// </summary>
-public bool IsAcknowledged { get; set; }
-
-/// <summary>
-/// Ostatni status z Google (np. "SUBSCRIPTION_STATE_ACTIVE").
-/// </summary>
-public string? LastProviderStatus { get; set; }
+```text
+subscription_purchases
+subscription_events
 ```
 
-**EF Migration**: Dodaj migrację po zmianie modelu.
+Nie wolno zakładać nazw kolumn na podstawie planu.
 
-### Krok 5: NuGet — Google Play Billing Library
+Agent powinien uzyskać:
 
-**Plik**: `FoodbookApp.App.csproj` (MODYFIKACJA)
+```sql
+CREATE TABLE subscription_purchases ...
+```
+
+oraz:
+
+```sql
+CREATE TABLE subscription_events ...
+```
+
+i dopasować do nich kod.
+
+Jeśli istniejące tabele są wystarczające, nie należy ich przebudowywać bez potrzeby.
+
+### Odpowiedzialność `subscription_purchases`
+
+Tabela powinna przechowywać dane związane z konkretną subskrypcją Google Play, np.:
+
+```text
+user_id
+purchase_token
+product_id
+package_name
+order_id
+subscription_state
+start_time
+expiry_time
+auto_renewing
+acknowledgement_state
+last_verified_at
+```
+
+Dokładne nazwy zależą od rzeczywistego schematu tabeli.
+
+### Odpowiedzialność `subscription_events`
+
+Tabela powinna przechowywać historię zdarzeń, np.:
+
+```text
+purchase_verified
+subscription_renewed
+subscription_canceled
+subscription_expired
+subscription_revoked
+subscription_in_grace_period
+subscription_on_hold
+```
+
+Każdy event powinien być możliwie idempotentny.
+
+---
+
+### Krok 7: NuGet — Google Play Billing Library
+
+Należy użyć aktualnej stabilnej wersji bindingu kompatybilnej z aktualnym target frameworkiem projektu .NET MAUI.
+
+Nie należy bezrefleksyjnie używać:
+
+```text
+7.1.1
+```
+
+z pierwotnego planu, ponieważ jest to starsza wersja.
+
+Należy:
+
+```text
+1. Sprawdzić aktualną stabilną wersję NuGet bindingu
+2. Sprawdzić kompatybilność z target frameworkiem
+3. Dodać PackageReference tylko dla Androida
+4. Zbudować projekt
+5. Sprawdzić API konkretnej wersji bindingu
+```
+
+Przykładowo:
 
 ```xml
-<!-- Google Play Billing Client v7 for Android -->
 <ItemGroup Condition="$(TargetFramework.Contains('android'))">
-  <PackageReference Include="Xamarin.Android.Google.BillingClient"
-                    Version="7.1.1" />
+  <PackageReference
+      Include="Xamarin.Android.Google.BillingClient"
+      Version="AKTUALNA_KOMPATYBILNA_WERSJA" />
 </ItemGroup>
 ```
 
-> **Uwaga**: Wersja `7.1.1` (lub najnowsza stabilna). Upewnij się, że `net10.0-android` target jest skonfigurowany.
+Agent nie powinien kopiować API z dokumentacji innej wersji Billing Library bez sprawdzenia rzeczywistego API dostępnego w zainstalowanym bindingu.
 
-### Krok 6: Implementacja GooglePlaySubscriptionManagementService
+---
 
-**Plik**: `Services/Subscription/PaymentProviderSubscriptionManagementService.cs` (PRZEPISANIE)
+### Krok 8: Implementacja `PaymentProviderSubscriptionManagementService`
 
-To jest **główny serwis** — implementacja `ISubscriptionManagementService` dla Androida.
+**Plik**:
+
+```text
+Services/Subscription/PaymentProviderSubscriptionManagementService.cs
+```
+
+Implementacja:
 
 ```csharp
-// Pseudokod struktury — pełna implementacja poniżej
-
 public sealed class PaymentProviderSubscriptionManagementService
     : ISubscriptionManagementService
+```
+
+### Injected dependencies
+
+W zależności od istniejącej architektury:
+
+```text
+- Supabase client / REST client
+- IAccountService
+- FeatureAccessService lub mechanizm refreshu
+- ISecureStorageAdapter
+- IClock
+- ILogger
+```
+
+Nie należy dodawać nowych abstrakcji, jeśli istnieją już odpowiedniki w projekcie.
+
+---
+
+### `ChangePlanAsync`
+
+```text
+ChangePlanAsync(targetPlan)
+```
+
+#### Jeśli targetPlan == Free
+
+Wywołaj:
+
+```text
+CancelSubscriptionAsync()
+```
+
+lub otwórz Google Play Manage Subscriptions.
+
+Nie należy programmatically ustawiać `users.is_premium = false` natychmiast po kliknięciu anulowania.
+
+---
+
+#### Jeśli użytkownik nie ma aktywnej subskrypcji
+
+```text
+1. Map targetPlan → productId
+2. Połącz BillingClient
+3. Pobierz ProductDetails
+4. Pobierz właściwy offerToken
+5. Utwórz BillingFlowParams
+6. Uruchom LaunchBillingFlow
+7. Odbierz Purchase
+8. Zapisz SubscriptionOperationEntry jako Pending
+9. Wyślij purchaseToken do verify-purchase
+10. Oczekuj na pozytywną weryfikację
+11. Oznacz operację jako Completed
+12. RefreshAccessAsync()
+```
+
+---
+
+#### Jeśli użytkownik zmienia aktywny plan
+
+Przykład:
+
+```text
+PremiumMonthly
+        ↓
+PremiumYearly
+```
+
+Należy:
+
+```text
+1. Pobrać aktywny purchaseToken
+2. Pobrać ProductDetails nowego planu
+3. Utworzyć SubscriptionUpdateParams
+4. Przekazać stary purchaseToken
+5. Uruchomić billing flow z parametrami zmiany subskrypcji
+6. Odebrać nowy Purchase
+7. Wysłać nowy token do verify-purchase
+8. Backend zweryfikuje aktualny stan
+9. Zaktualizować subscription_purchases
+10. Zapisać event
+11. Zaktualizować users
+```
+
+Nie należy traktować zmiany planu jako dwóch niezależnych subskrypcji.
+
+---
+
+### BillingClient lifecycle
+
+```text
+EnsureBillingClientConnectedAsync()
+```
+
+Powinna:
+
+```text
+1. Utworzyć BillingClient
+2. Ustawić PurchasesUpdatedListener
+3. Włączyć wymagane pending purchases zgodnie z wersją Billing Library
+4. Uruchomić StartConnection
+5. Oczekiwać na OnBillingSetupFinished
+6. Obsłużyć BillingResponseCode
+```
+
+Wersja Billing Library może wymagać konkretnego API dla `EnablePendingPurchases`.
+
+Agent musi używać API faktycznie dostępnego w zainstalowanej wersji bindingu.
+
+---
+
+### Google Play purchase flow
+
+```text
+LaunchPurchaseFlowAsync(productId)
+```
+
+Flow:
+
+```text
+1. QueryProductDetailsAsync
+2. Znajdź odpowiedni ProductDetails
+3. Znajdź odpowiedni offerToken
+4. Utwórz ProductDetailsParams
+5. Utwórz BillingFlowParams
+6. LaunchBillingFlow
+7. Oczekuj na OnPurchasesUpdated
+```
+
+Nie należy hardkodować ceny w aplikacji.
+
+Ceny powinny pochodzić z:
+
+```text
+ProductDetails
+```
+
+Google Play jest źródłem aktualnej ceny i waluty.
+
+---
+
+### PurchasesUpdated callback
+
+```text
+OnPurchasesUpdated(
+    BillingResult result,
+    IList<Purchase>? purchases)
+```
+
+Obsługa:
+
+```text
+OK
+    ↓
+Purchase otrzymany
+    ↓
+PurchaseToken zapisany
+    ↓
+weryfikacja backendowa
+```
+
+```text
+USER_CANCELED
+    ↓
+brak operacji
+```
+
+```text
+inne błędy
+    ↓
+Pending lub Failed
+zgodnie z retry policy
+```
+
+---
+
+### Backend verification
+
+```text
+VerifyPurchaseWithBackendAsync(
+    productId,
+    purchaseToken,
+    packageName)
+```
+
+Request:
+
+```json
 {
-    // Injected dependencies:
-    //   AppDbContext, IAccountService, SupabaseRestClient,
-    //   ISecureStorageAdapter, IClock, ILogger
-
-    // === Internal state ===
-    private BillingClient? _billingClient;
-    private TaskCompletionSource<Purchase?>? _purchaseTcs;
-
-    // ---- ISubscriptionManagementService ----
-
-    public async Task<SubscriptionActionResult> ChangePlanAsync(
-        SubscriptionPlan targetPlan, CancellationToken ct)
-    {
-        // 1. Jeśli targetPlan == Free → CancelSubscriptionAsync()
-        // 2. Mapuj targetPlan → productId via BillingConstants
-        // 3. EnsureBillingClientConnected()
-        // 4. QueryProductDetailsAsync(productId, SUBS)
-        // 5. LaunchBillingFlow() → czekaj na OnPurchasesUpdated
-        // 6. Po Purchase:
-        //    a) Utwórz SubscriptionOperationEntry (Pending)
-        //       z PurchaseToken, ProviderProductId
-        //    b) POST /verify-play-purchase → Supabase Edge Function
-        //    c) Sukces → Completed + RefreshSnapshot
-        //    d) Błąd → Pending (retry later)
-    }
-
-    public async Task<SubscriptionActionResult> CancelSubscriptionAsync(
-        CancellationToken ct)
-    {
-        // 1. Otwórz deep link do Google Play Manage Subscriptions
-        //    URL: "https://play.google.com/store/account/subscriptions
-        //          ?sku=PRODUCT_ID&package=PACKAGE_NAME"
-        // 2. AbandonOpenOperations()
-        // 3. Sync z Edge Function → odśwież status
-    }
-
-    public async Task<SubscriptionPendingOperation?> GetPendingOperationAsync(
-        CancellationToken ct)
-    {
-        // Identyczny z MockSubscriptionManagementService
-    }
-
-    public async Task<SubscriptionActionResult> ResumePendingOperationAsync(
-        CancellationToken ct)
-    {
-        // 1. Pobierz ostatnią otwartą operację z DB
-        // 2. Jeśli ma PurchaseToken → POST /verify-play-purchase
-        // 3. Jeśli brak tokenu → QueryPurchasesAsync() + sync
-        // 4. Sukces → Completed, Błąd → re-Pending
-    }
+  "productId": "foodbook_premium_monthly",
+  "purchaseToken": "...",
+  "packageName": "com.ppapps.foodbookapp"
 }
 ```
 
-#### Kluczowe metody wewnętrzne:
+Użytkownik powinien być identyfikowany na backendzie na podstawie JWT Supabase, a nie na podstawie dowolnego `supabaseUserId` przesłanego przez klienta.
 
-```csharp
-// --- BillingClient lifecycle ---
+Jeżeli istniejąca architektura wymaga przesyłania user ID, backend musi zweryfikować, że odpowiada on użytkownikowi z JWT.
 
-private async Task<bool> EnsureBillingClientConnectedAsync()
-{
-    // Inicjalizuj BillingClient jeśli null
-    // .SetListener(purchasesUpdatedListener)
-    // .EnablePendingPurchases(OneTimeProducts + PrepaidPlans)
-    // StartConnection → czekaj na OnBillingSetupFinished
-}
+Request powinien zawierać:
 
-// --- Google Play purchase flow ---
-
-private async Task<Purchase?> LaunchPurchaseFlowAsync(
-    string productId, CancellationToken ct)
-{
-    // 1. QueryProductDetailsAsync(productId, BillingClient.ProductType.Subs)
-    // 2. BillingFlowParams z offerToken
-    // 3. LaunchBillingFlow(activity, params)
-    // 4. Czekaj na _purchaseTcs.Task (ustawiony w OnPurchasesUpdated)
-}
-
-// --- PurchasesUpdatedListener callback ---
-
-internal void OnPurchasesUpdated(BillingResult result, IList<Purchase>? purchases)
-{
-    // Jeśli OK + purchases != null:
-    //   _purchaseTcs?.TrySetResult(purchases.FirstOrDefault())
-    // Jeśli UserCancelled:
-    //   _purchaseTcs?.TrySetResult(null)
-    // Inaczej:
-    //   _purchaseTcs?.TrySetException(...)
-}
-
-// --- Backend verification ---
-
-private async Task<VerifyPurchaseResponse> VerifyPurchaseWithBackendAsync(
-    string supabaseUserId,
-    string productId,
-    string purchaseToken,
-    CancellationToken ct)
-{
-    // POST do Supabase Edge Function /verify-play-purchase
-    // Body: JSON { supabaseUserId, productId, purchaseToken, packageName }
-    // Headers: Authorization: Bearer <supabase_anon_key>
-    // Response: { isValid, plan, premiumFrom, premiumTo, acknowledged, message }
-}
-
-// --- Restore / sync ---
-
-private async Task SyncAllPurchasesAsync(
-    string supabaseUserId, CancellationToken ct)
-{
-    // 1. QueryPurchasesAsync(SUBS)
-    // 2. Collect all active Purchase tokens
-    // 3. POST /sync-play-subscription
-    //    Body: { supabaseUserId, packageName, purchases[] }
-    // 4. Odśwież snapshot
-}
+```http
+Authorization: Bearer <supabase_access_token>
 ```
 
-### Krok 7: Aktualizacja DI (MauiProgram.cs)
+Nie należy wysyłać:
 
-**Plik**: `MauiProgram.cs` (MODYFIKACJA)
+```text
+SERVICE_ROLE_KEY
+```
+
+do aplikacji mobilnej.
+
+---
+
+### Backend verification flow
+
+```text
+1. Supabase Edge Function otrzymuje request
+2. Waliduje JWT użytkownika
+3. Waliduje productId
+4. Waliduje purchaseToken
+5. Waliduje packageName
+6. Tworzy OAuth access token dla Google API
+7. Wywołuje subscriptionsv2.get
+8. Weryfikuje packageName
+9. Weryfikuje productId
+10. Odczytuje aktualny subscriptionState
+11. Odczytuje expiryTime
+12. Acknowledge jeśli wymagane
+13. Upsert subscription_purchases
+14. Zapisuje subscription_events
+15. Aktualizuje users
+16. Zwraca wynik do aplikacji
+```
+
+---
+
+### Aktualizacja `users`
+
+Dla aktywnej subskrypcji:
+
+```text
+is_premium = true
+premium_from = startTime
+premium_to = expiryTime
+user_type = 1
+```
+
+Dla wygasłej lub revoked subskrypcji:
+
+```text
+is_premium = false
+premium_to = expiryTime
+user_type = 0
+```
+
+Nie należy aktualizować premium wyłącznie na podstawie informacji przesłanej przez aplikację.
+
+---
+
+## 9. Edge Functions
+
+### 9.1 `verify-purchase`
+
+Cel:
+
+```text
+Weryfikacja pojedynczego zakupu.
+```
+
+Wołana przez:
+
+```text
+Aplikację po zakupie
+Aplikację podczas restore
+Aplikację podczas retry pending operation
+```
+
+Flow:
+
+```text
+Mobile App
+    ↓
+verify-purchase
+    ↓
+Google Play Developer API
+    ↓
+weryfikacja PurchaseToken
+    ↓
+acknowledge
+    ↓
+subscription_purchases
+subscription_events
+users
+```
+
+---
+
+### 9.2 `handle-rtdn`
+
+Cel:
+
+```text
+Obsługa lifecycle subskrypcji.
+```
+
+Wołana przez:
+
+```text
+Google Play
+    ↓
+Pub/Sub
+    ↓
+HTTP Push
+```
+
+Endpoint:
+
+```text
+https://gscbdvezastxpyndkauh.supabase.co/functions/v1/handle-rtdn?secret=<FOODBOOK_RTDN_SECRET>
+```
+
+Flow:
+
+```text
+1. Sprawdź secret
+2. Odbierz Pub/Sub envelope
+3. Odczytaj message.data
+4. Zdekoduj Base64
+5. Odczytaj DeveloperNotification
+6. Odczytaj purchaseToken
+7. Zapisz event idempotentnie
+8. Pobierz aktualny stan z Google Play API
+9. Zaktualizuj subscription_purchases
+10. Zaktualizuj users
+11. Zwróć HTTP 200
+```
+
+### Ważne
+
+RTDN nie powinien aktualizować `users` wyłącznie na podstawie `notificationType`.
+
+Przykład:
+
+```text
+SUBSCRIPTION_CANCELED
+```
+
+nie oznacza automatycznie:
+
+```text
+is_premium = false
+```
+
+Subskrypcja może być nadal aktywna do:
+
+```text
+expiryTime
+```
+
+Dlatego po RTDN backend powinien pobrać aktualny stan subskrypcji z Google Play Developer API.
+
+---
+
+### 9.3 `sync-play-subscription`
+
+Ta funkcja jest opcjonalna.
+
+Może zostać dodana, jeśli aplikacja wymaga osobnego endpointu do synchronizacji wielu tokenów.
+
+MVP może działać bez niej:
+
+```text
+QueryPurchasesAsync
+    ↓
+verify-purchase dla każdego tokena
+```
+
+Osobna funkcja `sync-play-subscription` może zostać dodana później, gdy będzie realnie potrzebna.
+
+---
+
+## 10. Aktualizacja DI (MauiProgram.cs)
 
 ```csharp
-// Rejestracja ISubscriptionManagementService per platform:
-
 #if ANDROID
-    builder.Services.AddScoped<ISubscriptionManagementService,
-        PaymentProviderSubscriptionManagementService>();
+
+builder.Services.AddScoped<
+    ISubscriptionManagementService,
+    PaymentProviderSubscriptionManagementService>();
+
 #else
-    // iOS/Windows/inne — stub lub MockSubscriptionManagementService
-    builder.Services.AddScoped<ISubscriptionManagementService,
-        MockSubscriptionManagementService>();
+
+builder.Services.AddScoped<
+    ISubscriptionManagementService,
+    MockSubscriptionManagementService>();
+
 #endif
 ```
 
-### Krok 8: Aktualizacja UI (ProfilePage.xaml / ProfilePage.xaml.cs)
+Należy zachować istniejący kontrakt:
 
-**Minimalne zmiany** — dzięki `ISubscriptionManagementService` abstraction.
-
-#### ProfilePage.xaml.cs — zmiany:
-
-```csharp
-// 1. OnSwitchToMonthlyClicked / OnSwitchToYearlyClicked
-//    → Bez zmian! Dalej wołają ChangePlanAsync(targetPlan)
-
-// 2. OnCancelSubscriptionClicked
-//    → Bez zmian! CancelSubscriptionAsync() w Google Play
-//      implementation otwiera Manage Subscriptions deep link
-
-// 3. BuildCurrentPlanUi()
-//    → Opcjonalnie: dodaj ceny z Google Play ProductDetails
-//    → Dzisiaj hardkodowane "TBD / month" i "TBD / year"
-//    → Po integracji: ceny pobrane z Google Play w lokalnej walucie
+```text
+ISubscriptionManagementService
 ```
 
-#### ProfilePage.xaml — opcjonalne zmiany:
+Dzięki temu:
 
-```xml
-<!-- Opcjonalnie: zmień tekst CancelSubscriptionButton na Androidzie -->
-<!-- "Zarządzaj subskrypcją w Google Play" zamiast "Anuluj" -->
-
-<!-- Opcjonalnie: dodaj wskaźnik weryfikacji -->
-<!-- Np. "Weryfikacja zakupu..." podczas POST do Edge Function -->
+```text
+ProfilePage
+FeatureAccessService
 ```
 
-### Krok 9: Migracja EF Core
+nie muszą znać szczegółów Google Play Billing.
 
-```bash
-# Po dodaniu nowych pól do SubscriptionOperationEntry:
-dotnet ef migrations add AddGooglePlayBillingFields \
-    --project FoodbookApp.App \
-    --startup-project FoodbookApp.App
+---
+
+## 11. Aktualizacja UI
+
+### ProfilePage.xaml.cs
+
+Minimalne zmiany.
+
+Obecny flow:
+
+```text
+ProfilePage
+    ↓
+ISubscriptionManagementService
+    ↓
+ChangePlanAsync
+```
+
+może pozostać bez zmian.
+
+Należy jedynie upewnić się, że UI poprawnie obsługuje:
+
+```text
+Completed
+Pending
+Failed
+```
+
+### Po zakupie
+
+```text
+Pending
+    ↓
+"Trwa weryfikacja zakupu..."
+```
+
+```text
+Completed
+    ↓
+"Premium aktywne"
+```
+
+```text
+Failed
+    ↓
+"Nie udało się zweryfikować zakupu"
+```
+
+### Cancel
+
+Tekst przycisku może brzmieć:
+
+```text
+Zarządzaj subskrypcją w Google Play
+```
+
+ponieważ aplikacja nie anuluje subskrypcji bezpośrednio.
+
+---
+
+## 12. `SubscriptionOperationEntry`
+
+Model powinien przechowywać dane potrzebne do retry lokalnej operacji.
+
+Rekomendowane pola:
+
+```text
+Id
+AccountId
+TargetPlan
+Status
+IdempotencyKey
+RetryCount
+LastError
+CreatedAt
+UpdatedAt
+```
+
+Dodatkowo dane Google Play:
+
+```text
+PaymentProvider
+ProviderProductId
+PurchaseToken
+PurchaseTimeUtc
+ExpiryTimeUtc
+IsAcknowledged
+LastProviderStatus
+```
+
+### Ważne
+
+PurchaseToken jest wrażliwą informacją operacyjną.
+
+Nie należy:
+
+```text
+- logować go w plaintext
+- wysyłać go do analityki
+- umieszczać go w publicznych logach
+```
+
+Może być przechowywany w bazie operacji pending, jeśli jest to potrzebne do retry.
+
+Docelowe dane historyczne i zakupowe powinny znajdować się w:
+
+```text
+subscription_purchases
+subscription_events
 ```
 
 ---
 
-## 5. Supabase Edge Functions (szczegóły)
+## 13. Acknowledge — strategia
 
-> Pełna specyfikacja Edge Functions znajduje się w osobnym pliku:
-> **`supabase_edge_functions.md`**
+### Decyzja: Acknowledge po stronie backendu
 
-### 5.1 Lista Edge Functions
+Flow:
 
-| Function | Cel | Wołana przez |
-|----------|-----|-------------|
-| `verify-play-purchase` | Weryfikacja pojedynczego zakupu + acknowledge + update `users` | Aplikacja po zakupie / resume |
-| `sync-play-subscription` | Batch sync wszystkich aktywnych subskrypcji | Aplikacja na starcie / restore |
-
-### 5.2 Sekrety Supabase
-
-```bash
-supabase secrets set GOOGLE_SERVICE_ACCOUNT_JSON='<cały JSON klucza SA>'
-supabase secrets set GOOGLE_PACKAGE_NAME='com.takis.foodbook'
-supabase secrets set SUPABASE_SERVICE_ROLE_KEY='<service-role key>'
-```
-
----
-
-## 6. Produkty Google Play — konfiguracja
-
-### 6.1 Subskrypcje
-
-```yaml
-Subscription 1:
-  product_id: "foodbook_premium_monthly"
-  name: "Foodbook Premium Miesięczny"
-  description: "Pełny dostęp do AI, planów, szablonów"
-  base_plan:
-    billing_period: P1M  # 1 miesiąc
-    renewal_type: AUTO_RENEWING
-    price: 19.99 PLN  # lub inną kwotę
-  grace_period: 7 days
-  resubscribe: enabled
-
-Subscription 2:
-  product_id: "foodbook_premium_yearly"
-  name: "Foodbook Premium Roczny"
-  description: "Pełny dostęp — oszczędzasz ~25%"
-  base_plan:
-    billing_period: P1Y  # 12 miesięcy
-    renewal_type: AUTO_RENEWING
-    price: 149.99 PLN  # lub inną kwotę
-  grace_period: 7 days
-  resubscribe: enabled
-```
-
-### 6.2 Mapowanie do SubscriptionPlan
-
-```
-foodbook_premium_monthly  →  SubscriptionPlan.PremiumMonthly
-foodbook_premium_yearly   →  SubscriptionPlan.PremiumYearly
-(brak aktywnej subskrypcji) →  SubscriptionPlan.Free
-```
-
----
-
-## 7. Tabela `users` — rozszerzenie schematu
-
-```sql
--- Nowe kolumny do dodania (migration):
-ALTER TABLE users ADD COLUMN IF NOT EXISTS google_purchase_token TEXT;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS google_product_id TEXT;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS google_order_id TEXT;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_state TEXT;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS auto_renewing BOOLEAN DEFAULT false;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_updated_at TIMESTAMPTZ;
-```
-
-### Kolumny po migracji
-
-| Kolumna | Typ | Opis |
-|---------|-----|------|
-| `is_premium` | BOOLEAN | Czy user ma aktywną subskrypcję |
-| `premium_from` | TIMESTAMPTZ | Początek bieżącego okresu |
-| `premium_to` | TIMESTAMPTZ | Koniec bieżącego okresu (expiry) |
-| `user_type` | INTEGER | 0=free, 1=premium |
-| `google_purchase_token` | TEXT | Ostatni PurchaseToken z Google |
-| `google_product_id` | TEXT | `foodbook_premium_monthly` / `yearly` |
-| `google_order_id` | TEXT | Identyfikator transakcji Google |
-| `subscription_state` | TEXT | Stan subskrypcji z Google API |
-| `auto_renewing` | BOOLEAN | Czy auto-renew aktywny |
-| `subscription_updated_at` | TIMESTAMPTZ | Kiedy ostatnio Edge Function zaktualizowała |
-
----
-
-## 8. Acknowledge — strategia
-
-### Decyzja: Acknowledge w Edge Function (serwer-side)
-
-**Dlaczego server-side**:
-- Bezpieczniejszy — klient nie może sfałszować acknowledge
-- Google zaleca server-side acknowledge dla subscriptions
-- Edge Function już ma Service Account z uprawnieniami
-
-**Flow**:
-```
+```text
 Edge Function:
-  1. Verify purchase → isValid
-  2. Check acknowledgementState
-  3. Jeśli NOT_ACKNOWLEDGED:
-     → purchases.subscriptions.acknowledge(token)
-  4. Update users
-  5. Response: { acknowledged: true }
+    ↓
+Google Play API:
+    subscriptionsv2.get
+    ↓
+sprawdź acknowledgement state
+    ↓
+jeśli wymagane:
+    acknowledge purchase
+    ↓
+zapisz zakup
+    ↓
+zaktualizuj users
 ```
 
-**Fallback**: Jeśli Edge Function nie może acknowledge (np. problem z SA):
-- Zwróć `{ isValid: true, acknowledged: false }`
-- Aplikacja może użyć `BillingClient.AcknowledgePurchase()` jako fallback
-- **Ważne**: Google daje 3 dni na acknowledge — po tym anuluje zakup
+Backend powinien być głównym miejscem wykonywania acknowledge.
+
+Jeżeli acknowledge zakończy się błędem:
+
+```text
+- nie należy udawać pełnego sukcesu
+- zakup może zostać zapisany jako zweryfikowany
+- należy zachować możliwość retry acknowledge
+- należy monitorować błąd
+```
+
+Aplikacja może mieć fallback do BillingClient acknowledge, jeśli jest to wymagane przez konkretny flow i wersję Billing Library, ale nie należy traktować tego jako podstawowej ścieżki.
 
 ---
 
-## 9. RTDN (Real-Time Developer Notifications) — Faza 2
+## 14. RTDN — Real-Time Developer Notifications
 
-> **To jest osobny etap** — można wdrożyć po uruchomieniu podstawowego billing.
+RTDN jest częścią głównego systemu lifecycle.
 
-### Cel
-Automatyczne reagowanie na eventy lifecycle subskrypcji:
-- `SUBSCRIPTION_RENEWED` → przedłuż `premium_to`
-- `SUBSCRIPTION_CANCELED` → oznacz `auto_renewing = false`
-- `SUBSCRIPTION_EXPIRED` → `is_premium = false`
-- `SUBSCRIPTION_IN_GRACE_PERIOD` → zachowaj premium, wyślij notyfikację
-- `SUBSCRIPTION_REVOKED` → natychmiast `is_premium = false`
+### Architektura
 
-### Architektura RTDN
-
+```text
+Google Play
+    ↓
+Pub/Sub Topic
+foodbook-play-notifications
+    ↓
+Push Subscription
+foodbook-rtdn-push
+    ↓
+HTTP POST
+    ↓
+handle-rtdn
+    ↓
+Google Play Developer API
+    ↓
+subscription_purchases
+subscription_events
+users
 ```
-Google Play → Cloud Pub/Sub → Push endpoint (Supabase Edge Function)
-                                      ↓
-                              handle-rtdn Edge Function
-                                      ↓
-                              Update tabeli `users`
+
+### Obsługiwane scenariusze
+
+```text
+SUBSCRIPTION_RECOVERED
+SUBSCRIPTION_RENEWED
+SUBSCRIPTION_CANCELED
+SUBSCRIPTION_PURCHASED
+SUBSCRIPTION_ON_HOLD
+SUBSCRIPTION_IN_GRACE_PERIOD
+SUBSCRIPTION_RESTARTED
+SUBSCRIPTION_PRICE_CHANGE_CONFIRMED
+SUBSCRIPTION_DEFERRED
+SUBSCRIPTION_PAUSED
+SUBSCRIPTION_PAUSE_SCHEDULE_CHANGED
+SUBSCRIPTION_EXPIRED
+SUBSCRIPTION_REVOKED
 ```
 
-### Edge Function: `handle-rtdn` (Faza 2)
+Dokładne mapowanie musi być zgodne z aktualną dokumentacją Google Play RTDN.
 
-```typescript
-// POST /handle-rtdn
-// Body: { message: { data: base64(DeveloperNotification) } }
-// → Decode → sprawdź subscriptionNotification.notificationType
-// → purchases.subscriptionsv2.get(token)
-// → Update users
+### Ogólna zasada
+
+Każdy RTDN:
+
+```text
+1. Jest eventem
+2. Powinien być zapisany idempotentnie
+3. Powinien doprowadzić do odczytania aktualnego stanu Google Play
+4. Powinien zaktualizować lokalny model
 ```
 
 ---
 
-## 10. Diagram sekwencji — pełny flow zakupu
+## 15. Diagram sekwencji — pełny flow zakupu
 
-```
+```text
 ┌──────┐    ┌──────────────────────┐    ┌───────────────┐    ┌──────────────┐    ┌──────────┐
 │ User │    │  FoodbookApp         │    │ Google Play   │    │ Edge Function│    │ Supabase │
-│      │    │  (PaymentProvider    │    │ BillingClient │    │ verify-play  │    │  users   │
-│      │    │   SubscriptionMgmt) │    │               │    │  -purchase   │    │          │
+│      │    │  PaymentProvider     │    │ BillingClient │    │ verify       │    │          │
 └──┬───┘    └──────────┬───────────┘    └───────┬───────┘    └──────┬───────┘    └────┬─────┘
    │                   │                        │                   │                 │
    │ "Kup Monthly"     │                        │                   │                 │
    │──────────────────>│                        │                   │                 │
    │                   │ QueryProductDetails    │                   │                 │
    │                   │───────────────────────>│                   │                 │
-   │                   │   ProductDetails       │                   │                 │
+   │                   │ ProductDetails         │                   │                 │
    │                   │<───────────────────────│                   │                 │
    │                   │ LaunchBillingFlow      │                   │                 │
    │                   │───────────────────────>│                   │                 │
-   │                   │                        │ Purchase Sheet    │                 │
    │<───────────────────────────────────────────│                   │                 │
    │ Potwierdź zakup   │                        │                   │                 │
    │──────────────────────────────────────────->│                   │                 │
    │                   │ OnPurchasesUpdated     │                   │                 │
    │                   │<───────────────────────│                   │                 │
-   │                   │ (Purchase + Token)     │                   │                 │
+   │                   │ Purchase + Token       │                   │                 │
    │                   │                        │                   │                 │
-   │                   │ Zapisz operację (Pending)                  │                 │
-   │                   │───────┐                │                   │                 │
-   │                   │       │ DB             │                   │                 │
-   │                   │<──────┘                │                   │                 │
+   │                   │ Operation → Pending    │                   │                 │
    │                   │                        │                   │                 │
-   │                   │ POST /verify-play-purchase                 │                 │
+   │                   │ POST /verify-purchase  │                   │                 │
    │                   │───────────────────────────────────────────>│                 │
    │                   │                        │                   │ Google API      │
    │                   │                        │                   │ verify token    │
    │                   │                        │                   │────────────────>│
-   │                   │                        │                   │ (via Google)    │
    │                   │                        │                   │                 │
    │                   │                        │                   │ acknowledge     │
    │                   │                        │                   │────────────────>│
-   │                   │                        │                   │ (via Google)    │
+   │                   │                        │                   │                 │
+   │                   │                        │                   │ UPDATE purchase │
+   │                   │                        │                   │────────────────>│
    │                   │                        │                   │                 │
    │                   │                        │                   │ UPDATE users    │
    │                   │                        │                   │────────────────>│
-   │                   │                        │                   │   is_premium    │
-   │                   │                        │                   │   = true        │
-   │                   │                        │                   │<────────────────│
+   │                   │                        │                   │                 │
    │                   │   { isValid: true }    │                   │                 │
    │                   │<───────────────────────────────────────────│                 │
    │                   │                        │                   │                 │
-   │                   │ Operacja → Completed   │                   │                 │
+   │                   │ Operation → Completed  │                   │                 │
    │                   │ RefreshAccessAsync()   │                   │                 │
    │ "Premium aktywne" │                        │                   │                 │
    │<──────────────────│                        │                   │                 │
@@ -712,120 +1412,355 @@ Google Play → Cloud Pub/Sub → Push endpoint (Supabase Edge Function)
 
 ---
 
-## 11. Obsługa błędów i edge cases
+## 16. Diagram lifecycle — RTDN
 
-### 11.1 Scenariusze błędów
-
-| Scenariusz | Zachowanie aplikacji |
-|-----------|---------------------|
-| Google Play niedostępny | BillingClient init fail → alert użytkownika, Pending |
-| Zakup OK, ale Edge Function timeout | Operacja → Pending + zachowaj PurchaseToken → retry |
-| Edge Function: token invalid | Operacja → Failed, alert: "Weryfikacja nie powiodła się" |
-| Edge Function: Google API error | Response 500 → retry later |
-| Brak internetu po zakupie | Operacja → Pending, auto-resume przy OnAppearing |
-| User anulował purchase sheet | `OnPurchasesUpdated` z `UserCancelled` → brak operacji |
-| 3-day acknowledge deadline | Edge Function ack → jeśli fail, klient ack fallback |
-| Reinstall / nowe urządzenie | QueryPurchasesAsync → sync-play-subscription |
-
-### 11.2 Retry logic
-
-```csharp
-// MaxRetryCount = 5 (zachowane z MockSubscriptionManagementService)
-// Retry: po każdym fail zwiększ RetryCount
-// Po MaxRetryCount → Status = Failed
-// User może ręcznie wznowić z PendingSubscriptionCard
+```text
+Google Play
+    │
+    │ Subscription renewed / canceled / expired
+    ↓
+Pub/Sub Topic
+    │
+    ↓
+Push Subscription
+    │
+    │ HTTP POST
+    ↓
+handle-rtdn
+    │
+    ├── Decode notification
+    │
+    ├── Extract purchaseToken
+    │
+    ├── Check idempotency
+    │
+    ├── Call Google Play API
+    │
+    ├── Update subscription_purchases
+    │
+    ├── Insert subscription_events
+    │
+    └── Update users
 ```
 
 ---
 
-## 12. Testowanie
+## 17. Obsługa błędów i edge cases
 
-### 12.1 Checklist testowy
+### 17.1 Scenariusze błędów
 
-| # | Test | Oczekiwany wynik |
-|---|------|-----------------|
-| 1 | Zakup monthly (license tester) | `users.is_premium = true`, `premium_to = +1month`, UI → Premium |
-| 2 | Zakup yearly (license tester) | `users.is_premium = true`, `premium_to = +1year`, UI → Premium |
-| 3 | Zakup → brak internetu po purchase | Operacja Pending, token zapisany, resume po reconnect |
-| 4 | Resume pending operation | Edge Function weryfikuje, operacja → Completed |
-| 5 | Cancel w Google Play | Deep link otwiera się, po powrocie sync → status cancel |
-| 6 | Reinstall → restore | QueryPurchases → sync → users update → Premium |
-| 7 | Wygasła subskrypcja | `is_premium = false` (via sync lub RTDN) |
-| 8 | Podwójny zakup (idempotency) | Edge Function sprawdza existing token → nie duplikuje |
-| 9 | Mock na Windows/iOS | `MockSubscriptionManagementService` działa jak dziś |
+| Scenariusz                      | Zachowanie aplikacji                       |
+| ------------------------------- | ------------------------------------------ |
+| Google Play niedostępny         | BillingClient error → alert użytkownika    |
+| Zakup OK, Edge Function timeout | Pending + zachowanie PurchaseToken + retry |
+| Token invalid                   | Failed + brak premium                      |
+| Google API error                | Pending / retry                            |
+| Brak internetu po zakupie       | Pending                                    |
+| User anulował purchase sheet    | Brak operacji                              |
+| Acknowledge failure             | Retry backendowy                           |
+| Reinstall                       | QueryPurchases + verify                    |
+| Subscription expired            | RTDN / sync → `is_premium = false`         |
+| Subscription canceled           | Premium pozostaje do `expiryTime`          |
+| Subscription renewed            | Nowy `expiryTime` → update                 |
+| Subscription revoked            | Natychmiastowe odebranie dostępu           |
+| Duplicate RTDN                  | Idempotentne pominięcie                    |
+| Duplicate purchase verification | Idempotentny upsert                        |
 
-### 12.2 Komendy build
+---
 
-```bash
-# Android (z billing):
-dotnet build -f net10.0-android
+### 17.2 Retry logic
 
-# Windows (mock):
-dotnet build -f net10.0-windows10.0.22000.0
+```text
+MaxRetryCount = 5
+```
+
+Przy błędzie tymczasowym:
+
+```text
+RetryCount++
+Status = Pending
+LastError = ...
+```
+
+Po przekroczeniu limitu:
+
+```text
+Status = Failed
+```
+
+Należy jednak rozróżnić:
+
+```text
+Błąd tymczasowy:
+    timeout
+    network
+    Google API unavailable
+
+Błąd permanentny:
+    invalid token
+    wrong package name
+    invalid product ID
+```
+
+Błędy permanentne nie powinny być bez końca retryowane.
+
+---
+
+## 18. Idempotency
+
+Weryfikacja zakupu musi być idempotentna.
+
+Ten sam request:
+
+```text
+purchaseToken = X
+```
+
+może zostać wysłany więcej niż raz.
+
+Backend powinien:
+
+```text
+1. Rozpoznać istniejący purchase token
+2. Ponownie pobrać aktualny stan z Google Play
+3. Zaktualizować istniejący rekord
+4. Nie tworzyć duplikatów
+```
+
+RTDN również może zostać dostarczony ponownie.
+
+Dlatego:
+
+```text
+subscription_events
+```
+
+powinna mieć mechanizm zapobiegania duplikatom.
+
+---
+
+## 19. Testowanie
+
+### 19.1 Checklist testowy
+
+| #  | Test                                     | Oczekiwany wynik                             |
+| -- | ---------------------------------------- | -------------------------------------------- |
+| 1  | Zakup monthly                            | `users.is_premium = true`                    |
+| 2  | Zakup yearly                             | `users.is_premium = true`                    |
+| 3  | PurchaseToken weryfikowany przez backend | `subscription_purchases` updated             |
+| 4  | Acknowledge                              | Google Play pokazuje zakup jako acknowledged |
+| 5  | Zakup → brak internetu                   | Operation Pending                            |
+| 6  | Retry pending                            | Operation Completed                          |
+| 7  | Restore po reinstalacji                  | Premium odzyskane                            |
+| 8  | Monthly → Yearly                         | Google Play zmienia subskrypcję              |
+| 9  | Yearly → Monthly                         | Google Play zmienia subskrypcję              |
+| 10 | Cancel                                   | Auto-renew wyłączony, premium do expiry      |
+| 11 | Renewal                                  | `premium_to` przedłużone                     |
+| 12 | Expiry                                   | `is_premium = false`                         |
+| 13 | RTDN                                     | Event odebrany przez Pub/Sub                 |
+| 14 | Duplicate RTDN                           | Brak duplikatu                               |
+| 15 | Duplicate verification                   | Brak duplikatu                               |
+| 16 | Invalid token                            | Brak premium                                 |
+| 17 | Wrong package name                       | Request odrzucony                            |
+| 18 | Wrong product ID                         | Request odrzucony                            |
+| 19 | Mock na Windows/iOS                      | Mock działa jak wcześniej                    |
+
+---
+
+## 20. Kolejność wdrażania
+
+### Faza 1 — Backend i Google Play
+
+```text
+1. Google Play Console:
+   ├── utworzenie subscription monthly
+   ├── utworzenie subscription yearly
+   ├── base plans
+   └── license tester
+
+2. Google Cloud:
+   ├── Android Publisher API
+   ├── Service Account
+   └── Service Account access in Play Console
+
+3. Supabase:
+   ├── secrets
+   ├── verify-purchase
+   └── handle-rtdn
+
+4. Pub/Sub:
+   └── push subscription do handle-rtdn
+```
+
+### Faza 2 — Weryfikacja backendu
+
+Przed implementacją aplikacji należy przetestować:
+
+```text
+verify-purchase
+```
+
+i:
+
+```text
+handle-rtdn
+```
+
+z rzeczywistym lub testowym zakupem.
+
+Sprawdzić:
+
+```text
+- Google API authentication
+- purchase verification
+- acknowledge
+- subscription_purchases
+- subscription_events
+- users
+```
+
+### Faza 3 — Aplikacja Android
+
+```text
+1. BillingConstants.cs
+2. Billing Library
+3. BillingClient lifecycle
+4. ProductDetails
+5. Purchase flow
+6. PurchaseToken
+7. verify-purchase
+8. Pending operations
+9. Retry
+10. Restore
+11. Change plan
+12. Cancel
+```
+
+### Faza 4 — DI i UI
+
+```text
+1. Podmiana Mock → PaymentProvider
+2. Test ProfilePage
+3. Test FeatureAccessService
+4. Test Pending UI
+5. Test błędów
+```
+
+### Faza 5 — Lifecycle i stabilizacja
+
+```text
+1. RTDN
+2. Renewal
+3. Cancel
+4. Expire
+5. Revoke
+6. Grace period
+7. On hold
+8. Idempotency
+9. Retry
+10. Monitoring
 ```
 
 ---
 
-## 13. Kolejność wdrażania (fazy)
+## 21. Pliki do modyfikacji — podsumowanie
 
-### Faza 1 — MVP Billing (ten plan)
-1. ✅ Google Play Console: subskrypcje + service account
-2. ✅ Supabase secrets + Edge Functions deploy
-3. ✅ `BillingConstants.cs` — product ID mapping
-4. ✅ `SubscriptionOperationEntry` — nowe pola
-5. ✅ NuGet: `Xamarin.Android.Google.BillingClient`
-6. ✅ `PaymentProviderSubscriptionManagementService` — pełna implementacja
-7. ✅ `MauiProgram.cs` — DI per platform
-8. ✅ EF Core migration
-9. ✅ Tabela `users` — nowe kolumny
-10. ✅ Testy z license tester
-
-### Faza 2 — Lifecycle (RTDN)
-- Cloud Pub/Sub setup
-- `handle-rtdn` Edge Function
-- Auto-expire, grace period, renew, revoke
-
-### Faza 3 — Ceny dynamiczne
-- Pobieranie cen z Google Play ProductDetails
-- Wyświetlanie w UI w lokalnej walucie
-- Free trial / introductory offers
-
-### Faza 4 — iOS (opcjonalnie)
-- StoreKit 2 integracja
-- App Store Server Notifications v2
-- `AppleSubscriptionManagementService`
+| Plik                                                                    | Akcja                             | Opis                                |
+| ----------------------------------------------------------------------- | --------------------------------- | ----------------------------------- |
+| `Constants/BillingConstants.cs`                                         | **NOWY**                          | Package name i mapowanie Product ID |
+| `Models/SubscriptionOperationEntry.cs`                                  | **MODYFIKACJA**                   | Dane potrzebne do pending/retry     |
+| `FoodbookApp.App.csproj`                                                | **MODYFIKACJA**                   | Google Play Billing binding         |
+| `Services/Subscription/PaymentProviderSubscriptionManagementService.cs` | **PRZEPISANIE**                   | Integracja BillingClient            |
+| `MauiProgram.cs`                                                        | **MODYFIKACJA**                   | DI per platform                     |
+| `Views/ProfilePage.xaml`                                                | **OPCJONALNA MODYFIKACJA**        | Teksty i statusy                    |
+| `Views/ProfilePage.xaml.cs`                                             | **MINIMALNA MODYFIKACJA**         | Obsługa statusów                    |
+| `supabase/functions/verify-purchase/`                                   | **NOWY / AKTUALIZACJA**           | Weryfikacja + acknowledge           |
+| `supabase/functions/handle-rtdn/`                                       | **NOWY / AKTUALIZACJA**           | RTDN lifecycle                      |
+| `supabase/functions/sync-play-subscription/`                            | **OPCJONALNY**                    | Batch sync                          |
+| `subscription_purchases`                                                | **WERYFIKACJA SCHEMATU**          | Dane zakupów                        |
+| `subscription_events`                                                   | **WERYFIKACJA SCHEMATU**          | Historia eventów                    |
+| `users`                                                                 | **BEZ KONIECZNOŚCI ROZSZERZANIA** | Aktualny stan premium               |
 
 ---
 
-## 14. Pliki do modyfikacji — podsumowanie
+## 22. Decyzje architektoniczne — podsumowanie
 
-| Plik | Akcja | Opis |
-|------|-------|------|
-| `Constants/BillingConstants.cs` | **NOWY** | Product ID mapping, endpoints |
-| `Models/SubscriptionOperationEntry.cs` | **MODYFIKACJA** | +7 pól: PurchaseToken, ProviderProductId, etc. |
-| `FoodbookApp.App.csproj` | **MODYFIKACJA** | +NuGet `Xamarin.Android.Google.BillingClient` |
-| `Services/Subscription/PaymentProviderSubscriptionManagementService.cs` | **PRZEPISANIE** | Pełna implementacja Google Play Billing |
-| `MauiProgram.cs` | **MODYFIKACJA** | DI: Android → PaymentProvider, inne → Mock |
-| `Views/ProfilePage.xaml` | **OPCJONALNA MODYFIKACJA** | Tekst cancel button na Androidzie |
-| `Views/ProfilePage.xaml.cs` | **MINIMALNA MODYFIKACJA** | Opcjonalnie: dynamiczne ceny, cancel deep link |
-| `supabase/functions/verify-play-purchase/` | **NOWY** | Edge Function — weryfikacja + acknowledge |
-| `supabase/functions/sync-play-subscription/` | **NOWY** | Edge Function — batch sync |
-| Supabase SQL migration | **NOWY** | Nowe kolumny w `users` |
-
----
-
-## 15. Decyzje architektoniczne — podsumowanie
-
-| Decyzja | Wybór | Uzasadnienie |
-|---------|-------|-------------|
-| Backend weryfikacji | Supabase Edge Functions (Deno) | Już używasz Supabase, brak potrzeby na osobny serwer |
-| Acknowledge strategy | Server-side (Edge Function) | Bezpieczniejsze, Google zaleca |
-| Source of truth dla premium | Supabase `users` (aktualizowane przez Edge Function) | Centralne źródło, `FeatureAccessService` czyta stamtąd |
-| Typ subskrypcji w Google Play | Auto-renewing subscriptions | Standard dla mobile SaaS |
-| Cancel flow | Deep link do Google Play | Google wymaga — nie można cancelować programmatycznie |
-| Inne platformy | Mock (stub) | Android-only w Fazie 1 |
-| RTDN | Faza 2 (osobny etap) | Nie blokuje MVP |
+| Decyzja                                | Wybór                                               | Uzasadnienie                                          |
+| -------------------------------------- | --------------------------------------------------- | ----------------------------------------------------- |
+| Backend weryfikacji                    | Supabase Edge Functions                             | Istniejący backend                                    |
+| Google API authentication              | Service Account                                     | Serwerowa weryfikacja                                 |
+| Source of truth dla aktualnego dostępu | `users`                                             | FeatureAccessService już korzysta z tego modelu       |
+| Source of truth dla zakupów            | Google Play + `subscription_purchases`              | Dane zakupowe nie powinny być w `users`               |
+| Source of truth dla lifecycle          | Google Play Developer API                           | RTDN informuje o zmianie, API dostarcza aktualny stan |
+| Historia eventów                       | `subscription_events`                               | Audyt i idempotency                                   |
+| Acknowledge                            | Backend                                             | Centralna i bezpieczna obsługa                        |
+| Typ subskrypcji                        | Auto-renewing subscriptions                         | Standardowy model SaaS                                |
+| Cancel flow                            | Google Play Manage Subscriptions                    | Użytkownik zarządza auto-renewal w Google Play        |
+| Aktualizacja po cancel                 | RTDN + API verification                             | Premium pozostaje do expiry                           |
+| Restore                                | BillingClient QueryPurchases + backend verification | Obsługa reinstalacji i nowych urządzeń                |
+| Zmiana planu                           | Google Play Subscription Update Flow                | Nie tworzyć niezależnej drugiej subskrypcji           |
+| RTDN                                   | Włączone od początku                                | Automatyczna synchronizacja lifecycle                 |
+| Inne platformy                         | Mock / stub                                         | Android-only w Fazie 1                                |
+| `users`                                | Bez Google-specific columns                         | Dane zakupowe są w dedykowanych tabelach              |
+| Idempotency                            | Wymagana                                            | Retry i duplicate RTDN są normalne                    |
+| Package name                           | `com.ppapps.foodbookapp`                            | Rzeczywisty package aplikacji                         |
 
 ---
 
-> **Ten plan jest gotowy do implementacji.** Architektura FoodbookApp jest bardzo dobrze przygotowana — `ISubscriptionManagementService` abstraction pozwala na podmianę implementacji bez zmian w UI/FeatureAccessService.
+## 23. Instrukcje dla agenta implementującego
+
+Przed napisaniem kodu agent musi:
+
+```text
+1. Przeanalizować istniejący ISubscriptionManagementService.
+2. Przeanalizować istniejący MockSubscriptionManagementService.
+3. Przeanalizować PaymentProviderSubscriptionManagementService.
+4. Przeanalizować SubscriptionOperationEntry.
+5. Przeanalizować ProfilePage.xaml.cs.
+6. Przeanalizować MauiProgram.cs.
+7. Sprawdzić rzeczywisty target framework projektu.
+8. Sprawdzić aktualną wersję .NET MAUI.
+9. Sprawdzić istniejącą wersję Android Billing bindingu.
+10. Sprawdzić rzeczywisty schemat subscription_purchases.
+11. Sprawdzić rzeczywisty schemat subscription_events.
+12. Nie zmieniać users bez uzasadnienia.
+13. Nie dodawać Google-specific columns do users, jeśli dane mogą być przechowywane w istniejących tabelach.
+14. Nie używać SERVICE_ROLE_KEY w aplikacji mobilnej.
+15. Nie hardkodować sekretów w aplikacji.
+16. Nie hardkodować cen.
+17. Nie zakładać API Billing Library bez sprawdzenia wersji bindingu.
+18. Nie implementować zmiany planu jako niezależnego drugiego zakupu.
+19. Nie odbierać premium natychmiast po anulowaniu auto-renew.
+20. Implementować idempotency dla verification i RTDN.
+```
+
+Agent powinien implementować rozwiązanie etapami:
+
+```text
+1. Najpierw analiza istniejącego kodu.
+2. Następnie lista konkretnych zmian.
+3. Następnie implementacja backendu.
+4. Następnie implementacja BillingClient.
+5. Następnie integracja z istniejącym interface.
+6. Następnie testy i poprawki kompilacji.
+```
+
+Nie należy tworzyć całkowicie nowej architektury obok istniejącej.
+
+Celem jest:
+
+```text
+Istniejący UI
+        ↓
+Istniejący interface
+        ↓
+Nowa implementacja Google Play Billing
+        ↓
+Supabase Edge Functions
+        ↓
+Google Play Developer API
+```
+
+---
+
+> **Ten plan jest gotowy do implementacji, ale agent musi najpierw przeanalizować rzeczywisty kod projektu i rzeczywisty schemat tabel Supabase. Nie wolno implementować go na podstawie pseudokodu bez dopasowania do istniejących klas, metod, wersji NuGet i nazw kolumn.**

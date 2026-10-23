@@ -79,7 +79,11 @@ namespace FoodbookApp
             builder.Services.AddScoped<IFeatureAccessService, FeatureAccessService>();
             builder.Services.AddSingleton<ISecureStorageAdapter, SecureStorageAdapter>();
             builder.Services.AddSingleton<IClock, SystemClock>();
+#if ANDROID
+            builder.Services.AddScoped<ISubscriptionManagementService, PaymentProviderSubscriptionManagementService>();
+#else
             builder.Services.AddScoped<ISubscriptionManagementService, MockSubscriptionManagementService>();
+#endif
             builder.Services.AddScoped<IIngredientService, IngredientService>();
             builder.Services.AddScoped<IOpenFoodFactsService>(sp =>
             {

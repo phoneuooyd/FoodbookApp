@@ -16,6 +16,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
 {
     private readonly IShoppingListService _shoppingListService;
     private readonly IPlanService _planService;
+    private readonly IAdCounterService _adCounterService;
     private Guid _currentPlanId;
     private Ingredient? _itemBeingDragged;
     
@@ -75,10 +76,11 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
     // Event raised when save completes successfully so page can navigate back
     public event Func<Task>? SaveCompletedAsync;
 
-    public ShoppingListDetailViewModel(IShoppingListService shoppingListService, IPlanService planService)
+    public ShoppingListDetailViewModel(IShoppingListService shoppingListService, IPlanService planService, IAdCounterService adCounterService)
     {
         _shoppingListService = shoppingListService;
         _planService = planService;
+        _adCounterService = adCounterService;
 
         AddItemCommand = new Command(AddItem);
         RemoveItemCommand = new Command<Ingredient>(RemoveItem);
@@ -825,6 +827,7 @@ public class ShoppingListDetailViewModel : INotifyPropertyChanged, IHasUnsavedCh
             }
             
             System.Diagnostics.Debug.WriteLine("[ShoppingListDetailVM] ========== SAVE OPERATION COMPLETED SUCCESSFULLY ==========");
+            await _adCounterService.RecordManualShoppingListSaveAsync();
         }
         catch (Exception ex)
         {

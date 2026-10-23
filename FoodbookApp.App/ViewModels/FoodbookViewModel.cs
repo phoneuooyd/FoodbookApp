@@ -16,6 +16,7 @@ public class FoodbookViewModel : INotifyPropertyChanged
     private readonly IRecipeService _recipeService;
     private readonly IPlanService _planService;
     private readonly ILocalizationService _localizationService;
+    private readonly IAdCounterService _adCounterService;
 
     private Guid? _editingPlanId;
     private bool _isLoading;
@@ -131,12 +132,13 @@ public class FoodbookViewModel : INotifyPropertyChanged
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
 
-    public FoodbookViewModel(IPlannerService plannerService, IRecipeService recipeService, IPlanService planService, ILocalizationService localizationService)
+    public FoodbookViewModel(IPlannerService plannerService, IRecipeService recipeService, IPlanService planService, ILocalizationService localizationService, IAdCounterService adCounterService)
     {
         _plannerService = plannerService;
         _recipeService = recipeService;
         _planService = planService;
         _localizationService = localizationService;
+        _adCounterService = adCounterService;
 
         _localizationService.CultureChanged += OnCultureChanged;
 
@@ -528,6 +530,7 @@ public class FoodbookViewModel : INotifyPropertyChanged
                 string.Format(savedTemplate, plan.Title),
                 ButtonResources.OK);
             await Shell.Current.GoToAsync("..");
+            await _adCounterService.RecordManualFoodbookSaveAsync();
         }
         catch (PlanLimitExceededException ex)
         {

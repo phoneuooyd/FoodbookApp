@@ -1,0 +1,8 @@
+{
+  "name": "handle-rtdn",
+  "version": "1.0.0",
+  "exports": "./index.ts",
+  "imports": {
+    "std/": "https://deno.land/std@0.224.0/"
+  }
+}

@@ -1,5 +1,6 @@
 using FoodbookApp.Interfaces;
 using FoodbookApp.Services;
+using Foodbook.Services;
 using Plugin.AdMob;
 
 namespace Foodbook.Views.Components;
@@ -55,6 +56,19 @@ public partial class BannerAdView : ContentView
         AdControl.OnAdLoaded += OnAdLoaded;
         AdControl.OnAdFailedToLoad += OnAdFailedToLoad;
         Loaded += async (_, _) => await RefreshVisibilityAsync();
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnLoaded(object? sender, EventArgs e)
+    {
+        AppEvents.AdPreferencesChangedAsync -= RefreshVisibilityAsync;
+        AppEvents.AdPreferencesChangedAsync += RefreshVisibilityAsync;
+    }
+
+    private void OnUnloaded(object? sender, EventArgs e)
+    {
+        AppEvents.AdPreferencesChangedAsync -= RefreshVisibilityAsync;
     }
 
     private void OnAdLoaded(object? sender, EventArgs e)
@@ -98,6 +112,13 @@ public partial class BannerAdView : ContentView
             IsVisible = shouldShow;
             Panel.IsVisible = shouldShow;
             AdControl.IsVisible = shouldShow;
+
+            if (!shouldShow)
+            {
+                AdUnitId = string.Empty;
+                HeightRequest = 0;
+                Panel.HeightRequest = 0;
+            }
         }
         catch (Exception ex)
         {

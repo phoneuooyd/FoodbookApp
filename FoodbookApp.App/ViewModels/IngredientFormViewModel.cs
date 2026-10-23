@@ -22,7 +22,6 @@ public class IngredientFormViewModel : INotifyPropertyChanged
     private readonly IIngredientService _service;
     private readonly IOpenFoodFactsService _openFoodFactsService;
     private readonly IAdCounterService _adCounterService;
-    private readonly IAdService _adService;
     private Guid _itemId = Guid.Empty;
     private Guid? _loadedRecipeId = null; // preserve RecipeId when editing
 
@@ -155,7 +154,6 @@ public class IngredientFormViewModel : INotifyPropertyChanged
         _service = service;
         _openFoodFactsService = openFoodFactsService;
         _adCounterService = adCounterService ?? new NullAdCounterService();
-        _adService = adService ?? new NullAdService();
         SaveCommand = new Command(async () => await SaveAsync(), CanSave);
         CancelCommand = new Command(async () => await CancelAsync());
         VerifyNutritionCommand = new Command(async () => await VerifyNutritionAsync(), () => !string.IsNullOrWhiteSpace(Name) && !IsVerifying);
@@ -640,7 +638,6 @@ public class IngredientFormViewModel : INotifyPropertyChanged
             }
 
             await _adCounterService.RecordManualIngredientSaveAsync();
-            TryShowInterstitial();
         }
         catch (Exception ex)
         {
@@ -759,34 +756,13 @@ public class IngredientFormViewModel : INotifyPropertyChanged
         System.Diagnostics.Debug.WriteLine("[IngredientFormViewModel] Form marked as dirty");
     }
 
-    private void TryShowInterstitial()
-    {
-        MainThread.BeginInvokeOnMainThread(async () =>
-        {
-            try
-            {
-                await _adService.TryShowInterstitialAsync();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[AdMob] Interstitial failed: {ex.Message}");
-            }
-        });
-    }
-
     private sealed class NullAdCounterService : IAdCounterService
     {
         public Task RecordManualRecipeSaveAsync() => Task.CompletedTask;
         public Task RecordManualIngredientSaveAsync() => Task.CompletedTask;
         public Task RecordManualPlanSaveAsync() => Task.CompletedTask;
+        public Task RecordManualFoodbookSaveAsync() => Task.CompletedTask;
+        public Task RecordManualShoppingListSaveAsync() => Task.CompletedTask;
     }
 
-    private sealed class NullAdService : IAdService
-    {
-        public bool IsAdLoaded => false;
-        public event EventHandler? InterstitialAdLoaded { add { } remove { } }
-        public Task InitializeAsync() => Task.CompletedTask;
-        public void PreloadInterstitial() { }
-        public Task<bool> TryShowInterstitialAsync() => Task.FromResult(false);
-    }
 }

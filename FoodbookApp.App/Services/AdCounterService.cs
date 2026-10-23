@@ -27,74 +27,50 @@ public sealed class AdCounterService : IAdCounterService
     }
 
     public async Task RecordManualRecipeSaveAsync()
-    {
-        await _gate.WaitAsync();
-        try
-        {
-            var counter = _preferences.GetRecipeManualSaveCounter() + 1;
-            _preferences.SetRecipeManualSaveCounter(counter);
-
-            if (!_policy.ShouldShowRecipeInterstitial(counter, _clock.UtcNow))
-            {
-                return;
-            }
-
-            if (!await _visibility.ShouldShowInterstitialAsync())
-            {
-                return;
-            }
-
-            if (await TryShowInterstitialWithoutThrowingAsync())
-            {
-                _preferences.SetRecipeManualSaveCounter(0);
-                _policy.MarkInterstitialShown(_clock.UtcNow);
-            }
-        }
-        finally
-        {
-            _gate.Release();
-        }
-    }
+        => await RecordManualSaveAsync(
+            _preferences.GetRecipeManualSaveCounter,
+            _preferences.SetRecipeManualSaveCounter,
+            counter => _policy.ShouldShowRecipeInterstitial(counter, _clock.UtcNow));
 
     public async Task RecordManualIngredientSaveAsync()
-    {
-        await _gate.WaitAsync();
-        try
-        {
-            var counter = _preferences.GetIngredientManualSaveCounter() + 1;
-            _preferences.SetIngredientManualSaveCounter(counter);
-
-            if (!_policy.ShouldShowIngredientInterstitial(counter, _clock.UtcNow))
-            {
-                return;
-            }
-
-            if (!await _visibility.ShouldShowInterstitialAsync())
-            {
-                return;
-            }
-
-            if (await TryShowInterstitialWithoutThrowingAsync())
-            {
-                _preferences.SetIngredientManualSaveCounter(0);
-                _policy.MarkInterstitialShown(_clock.UtcNow);
-            }
-        }
-        finally
-        {
-            _gate.Release();
-        }
-    }
+        => await RecordManualSaveAsync(
+            _preferences.GetIngredientManualSaveCounter,
+            _preferences.SetIngredientManualSaveCounter,
+            counter => _policy.ShouldShowIngredientInterstitial(counter, _clock.UtcNow));
 
     public async Task RecordManualPlanSaveAsync()
+        => await RecordManualSaveAsync(
+            _preferences.GetPlanManualSaveCounter,
+            _preferences.SetPlanManualSaveCounter,
+            counter => _policy.ShouldShowPlanInterstitial(counter, _clock.UtcNow));
+
+    public async Task RecordManualFoodbookSaveAsync()
+        => await RecordManualSaveAsync(
+            _preferences.GetFoodbookManualSaveCounter,
+            _preferences.SetFoodbookManualSaveCounter,
+            counter => _policy.ShouldShowFoodbookInterstitial(counter, _clock.UtcNow));
+
+    public async Task RecordManualShoppingListSaveAsync()
+        => await RecordManualSaveAsync(
+            _preferences.GetShoppingListManualSaveCounter,
+            _preferences.SetShoppingListManualSaveCounter,
+            counter => _policy.ShouldShowShoppingListInterstitial(counter, _clock.UtcNow));
+
+    private async Task RecordManualSaveAsync(
+        Func<int> getCounter,
+        Action<int> setCounter,
+        Func<int, bool> shouldShowWhenSupportIsDisabled)
     {
         await _gate.WaitAsync();
         try
         {
-            var counter = _preferences.GetPlanManualSaveCounter() + 1;
-            _preferences.SetPlanManualSaveCounter(counter);
+            var counter = getCounter() + 1;
+            setCounter(counter);
 
-            if (!_policy.ShouldShowPlanInterstitial(counter, _clock.UtcNow))
+            var shouldShow = _preferences.GetSupportDeveloper()
+                || shouldShowWhenSupportIsDisabled(counter);
+
+            if (!shouldShow)
             {
                 return;
             }
@@ -106,7 +82,7 @@ public sealed class AdCounterService : IAdCounterService
 
             if (await TryShowInterstitialWithoutThrowingAsync())
             {
-                _preferences.SetPlanManualSaveCounter(0);
+                setCounter(0);
                 _policy.MarkInterstitialShown(_clock.UtcNow);
             }
         }
