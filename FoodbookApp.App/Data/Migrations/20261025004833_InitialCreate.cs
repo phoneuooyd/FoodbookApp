@@ -62,6 +62,9 @@ namespace FoodbookApp.Migrations
                     Type = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 0),
                     LinkedShoppingListPlanId = table.Column<Guid>(type: "TEXT", nullable: true),
                     Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    AccentColor = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    Emoji = table.Column<string>(type: "TEXT", maxLength: 8, nullable: true),
+                    DurationDays = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 7),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
@@ -78,11 +81,40 @@ namespace FoodbookApp.Migrations
                     Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     ColorHex = table.Column<string>(type: "TEXT", maxLength: 9, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true)
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsSelected = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_RecipeLabels", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SubscriptionOperations",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    AccountId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    TargetPlan = table.Column<int>(type: "INTEGER", nullable: false),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false),
+                    IdempotencyKey = table.Column<string>(type: "TEXT", maxLength: 120, nullable: false),
+                    RetryCount = table.Column<int>(type: "INTEGER", nullable: false),
+                    LastError = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    CreatedUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    LastAttemptUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    CompletedUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    PaymentProvider = table.Column<string>(type: "TEXT", nullable: true),
+                    ProviderProductId = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    PurchaseToken = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    PurchaseTimeUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    ExpiryTimeUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsAcknowledged = table.Column<bool>(type: "INTEGER", nullable: false),
+                    LastProviderStatus = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SubscriptionOperations", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -339,6 +371,27 @@ namespace FoodbookApp.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_SubscriptionOperations_AccountId",
+                table: "SubscriptionOperations",
+                column: "AccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SubscriptionOperations_AccountId_Status",
+                table: "SubscriptionOperations",
+                columns: new[] { "AccountId", "Status" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SubscriptionOperations_IdempotencyKey",
+                table: "SubscriptionOperations",
+                column: "IdempotencyKey",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SubscriptionOperations_Processing",
+                table: "SubscriptionOperations",
+                columns: new[] { "Status", "UpdatedUtc" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_SyncQueue_AccountId",
                 table: "SyncQueue",
                 column: "AccountId");
@@ -384,6 +437,9 @@ namespace FoodbookApp.Migrations
 
             migrationBuilder.DropTable(
                 name: "ShoppingListItems");
+
+            migrationBuilder.DropTable(
+                name: "SubscriptionOperations");
 
             migrationBuilder.DropTable(
                 name: "SyncQueue");

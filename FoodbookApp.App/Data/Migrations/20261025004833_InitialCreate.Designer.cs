@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FoodbookApp.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260126193304_InitialCreate")]
+    [Migration("20261025004833_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -151,7 +151,20 @@ namespace FoodbookApp.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("AccentColor")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("DurationDays")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(7);
+
+                    b.Property<string>("Emoji")
+                        .HasMaxLength(8)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("EndDate")
@@ -277,6 +290,9 @@ namespace FoodbookApp.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("IsSelected")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -331,6 +347,87 @@ namespace FoodbookApp.Migrations
                         .HasDatabaseName("IX_ShoppingListItems_PlanId_IngredientName_Unit");
 
                     b.ToTable("ShoppingListItems");
+                });
+
+            modelBuilder.Entity("Foodbook.Models.SubscriptionOperationEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("CompletedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ExpiryTimeUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IdempotencyKey")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsAcknowledged")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("LastAttemptUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastProviderStatus")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PaymentProvider")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ProviderProductId")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("PurchaseTimeUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PurchaseToken")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("TargetPlan")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("UpdatedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId")
+                        .HasDatabaseName("IX_SubscriptionOperations_AccountId");
+
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique()
+                        .HasDatabaseName("IX_SubscriptionOperations_IdempotencyKey");
+
+                    b.HasIndex("AccountId", "Status")
+                        .HasDatabaseName("IX_SubscriptionOperations_AccountId_Status");
+
+                    b.HasIndex("Status", "UpdatedUtc")
+                        .HasDatabaseName("IX_SubscriptionOperations_Processing");
+
+                    b.ToTable("SubscriptionOperations");
                 });
 
             modelBuilder.Entity("Foodbook.Models.SyncQueueEntry", b =>
@@ -504,7 +601,7 @@ namespace FoodbookApp.Migrations
 
             modelBuilder.Entity("Foodbook.Models.PlannedMeal", b =>
                 {
-                    b.HasOne("Foodbook.Models.Plan", null)
+                    b.HasOne("Foodbook.Models.Plan", "Plan")
                         .WithMany()
                         .HasForeignKey("PlanId")
                         .OnDelete(DeleteBehavior.Cascade);
@@ -514,6 +611,8 @@ namespace FoodbookApp.Migrations
                         .HasForeignKey("RecipeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Plan");
 
                     b.Navigation("Recipe");
                 });

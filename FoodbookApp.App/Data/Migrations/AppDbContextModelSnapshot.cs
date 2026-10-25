@@ -361,16 +361,40 @@ namespace FoodbookApp.Migrations
                     b.Property<DateTime>("CreatedUtc")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("ExpiryTimeUtc")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("IdempotencyKey")
                         .IsRequired()
                         .HasMaxLength(120)
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsAcknowledged")
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("LastAttemptUtc")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("LastError")
                         .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastProviderStatus")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PaymentProvider")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ProviderProductId")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("PurchaseTimeUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PurchaseToken")
+                        .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("RetryCount")

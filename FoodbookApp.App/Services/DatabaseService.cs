@@ -161,16 +161,17 @@ namespace Foodbook.Services
                 var missing = await MigrateAndValidateAsync().ConfigureAwait(false);
 
                 if (missing.Count > 0)
-                    Log($"ERROR: Schema incomplete after migration. Missing: {string.Join(", ", missing)}");
-                else
-                    Log("Schema OK  all required tables present");
-
-                // DbSeeded now strictly means "seed/setup completed" (Rule K3.2)
-                if (!isSeeded)
                 {
-                    Preferences.Set(DbSeededKey, true);
-                    Log("InitializeAsync SET DbSeeded=true (seed/setup completed)");
+                    // Do not let the app continue with a partially-created database.
+                    // Previously this was only logged, after which pages attempted to
+                    // query missing tables and the setup flow marked the database as
+                    // initialized anyway.
+                    var message = $"Database schema is incomplete after migration. Missing: {string.Join(", ", missing)}";
+                    Log($"ERROR: {message}");
+                    throw new InvalidOperationException(message);
                 }
+
+                Log("Schema OK  all required tables present");
 
                 // Persist current schema version based on applied EF migrations count
                 using (var scope = _services.CreateScope())

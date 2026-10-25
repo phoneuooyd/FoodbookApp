@@ -64,7 +64,9 @@ public sealed class PaymentProviderSubscriptionManagementService : ISubscription
     {
         ct.ThrowIfCancellationRequested();
         await RecoverStaleInProgressOperationsAsync(ct);
+#if ANDROID
         await TryRestorePurchasesAsync(ct);
+#endif
 
         var account = await GetActiveAccountOrThrowAsync(ct);
 
@@ -110,6 +112,7 @@ public sealed class PaymentProviderSubscriptionManagementService : ISubscription
         try
         {
             string? existingPurchaseToken = null;
+#if ANDROID
             try
             {
                 var client = await EnsureBillingClientAsync(ct);
@@ -119,6 +122,7 @@ public sealed class PaymentProviderSubscriptionManagementService : ISubscription
             {
                 // Non-critical: plan change will create a new independent subscription
             }
+#endif
 
             var purchaseResult = await LaunchGooglePlayPurchaseFlowAsync(productId, ct, existingPurchaseToken);
 
