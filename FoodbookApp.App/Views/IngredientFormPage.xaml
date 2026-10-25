@@ -93,8 +93,8 @@
 
                                 <Border Style="{StaticResource OverhaulCard}">
                                     <VerticalStackLayout Spacing="6">
-                                        <Label Text="Waga 1 sztuki [g]" Style="{StaticResource FieldLabel}" />
-                                        <Entry Placeholder="np. 60" Keyboard="Numeric" Text="{Binding UnitWeight}" HorizontalTextAlignment="Center" Focused="OnInputFocused" Unfocused="OnInputUnfocused" Style="{StaticResource ModernEntry}" />
+                                        <Label Text="{loc:Translate Resource=IngredientFormPageResources, Key=UnitWeightLabel}" Style="{StaticResource FieldLabel}" />
+                                        <Entry Placeholder="{loc:Translate Resource=IngredientFormPageResources, Key=UnitWeightPlaceholder}" Keyboard="Numeric" Text="{Binding UnitWeight}" HorizontalTextAlignment="Center" Focused="OnInputFocused" Unfocused="OnInputUnfocused" Style="{StaticResource ModernEntry}" />
                                     </VerticalStackLayout>
                                 </Border>
 

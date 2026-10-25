@@ -37,6 +37,12 @@
   <data name="UnitLabel" xml:space="preserve">
     <value>Jednostka *</value>
   </data>
+  <data name="UnitWeightLabel" xml:space="preserve">
+    <value>Waga 1 sztuki [g]</value>
+  </data>
+  <data name="UnitWeightPlaceholder" xml:space="preserve">
+    <value>np. 60</value>
+  </data>
   <data name="UnitPickerTitle" xml:space="preserve">
     <value>Jednostka</value>
   </data>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Foodbook.Services"
              xmlns:resources="clr-namespace:FoodbookApp.Localization"
              x:Class="Foodbook.Views.ManageLabelsPage"
              BackgroundColor="#88000000"
@@ -23,7 +24,7 @@
                         Padding="16,14">
                     <Grid ColumnDefinitions="*,40">
                         <Label Grid.Column="0"
-                               Text="Etykiety"
+                               Text="{loc:Translate Resource=ManageLabelsPageResources, Key=Title}"
                                FontFamily="NunitoBold"
                                FontSize="18"
                                FontAttributes="Bold"
@@ -49,7 +50,7 @@
 
                         <!-- TOOLBAR -->
                         <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,12">
-                            <Label Text="Zarządzaj etykietami"
+                            <Label Text="{loc:Translate Resource=ManageLabelsPageResources, Key=ManageDescription}"
                                    FontFamily="NunitoRegular"
                                    FontSize="12"
                                    TextColor="{DynamicResource SecondaryText}"
@@ -82,21 +83,21 @@
                                 Padding="14,12"
                                 Margin="0,0,0,14">
                             <VerticalStackLayout Spacing="10">
-                                <Label Text="Nowa etykieta"
+                                <Label Text="{loc:Translate Resource=ManageLabelsPageResources, Key=NewLabelTitle}"
                                        FontFamily="NunitoBold"
                                        FontSize="13"
                                        FontAttributes="Bold"
                                        TextColor="{DynamicResource FrameTextColor}" />
 
                                 <VerticalStackLayout Spacing="4">
-                                    <Label Text="Nazwa" FontFamily="NunitoRegular" FontSize="11" TextColor="{DynamicResource SecondaryText}" />
+                                    <Label Text="{loc:Translate Resource=ManageLabelsPageResources, Key=NameLabel}" FontFamily="NunitoRegular" FontSize="11" TextColor="{DynamicResource SecondaryText}" />
                                     <Border BackgroundColor="{DynamicResource DashboardCardBackgroundColor}" StrokeThickness="0" StrokeShape="RoundRectangle 10" Padding="12,0">
-                                        <Entry Text="{Binding NewLabelName}" Placeholder="Nazwa etykiety" PlaceholderColor="{DynamicResource ModernPlaceholderColor}" TextColor="{DynamicResource FrameTextColor}" FontFamily="NunitoRegular" FontSize="14" HeightRequest="44" BackgroundColor="Transparent" />
+                                        <Entry Text="{Binding NewLabelName}" Placeholder="{loc:Translate Resource=ManageLabelsPageResources, Key=NamePlaceholder}" PlaceholderColor="{DynamicResource ModernPlaceholderColor}" TextColor="{DynamicResource FrameTextColor}" FontFamily="NunitoRegular" FontSize="14" HeightRequest="44" BackgroundColor="Transparent" />
                                     </Border>
                                 </VerticalStackLayout>
 
                                 <VerticalStackLayout Spacing="4">
-                                    <Label Text="Kolor (hex)" FontFamily="NunitoRegular" FontSize="11" TextColor="{DynamicResource SecondaryText}" />
+                                    <Label Text="{loc:Translate Resource=ManageLabelsPageResources, Key=ColorLabel}" FontFamily="NunitoRegular" FontSize="11" TextColor="{DynamicResource SecondaryText}" />
                                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                                         <Border BackgroundColor="{DynamicResource DashboardCardBackgroundColor}" StrokeThickness="0" StrokeShape="RoundRectangle 10" Padding="12,0">
                                             <Entry Text="{Binding NewLabelColorHex}" Placeholder="#8B72FF" PlaceholderColor="{DynamicResource ModernPlaceholderColor}" TextColor="{DynamicResource FrameTextColor}" FontFamily="NunitoRegular" FontSize="14" HeightRequest="44" BackgroundColor="Transparent" />
@@ -106,7 +107,7 @@
                                 </VerticalStackLayout>
 
                                 <HorizontalStackLayout Spacing="8" Margin="0,2,0,0">
-                                    <Label Text="Szybki wybór:" FontFamily="NunitoRegular" FontSize="11" TextColor="{DynamicResource SecondaryText}" VerticalOptions="Center" />
+                                    <Label Text="{loc:Translate Resource=ManageLabelsPageResources, Key=QuickSelectLabel}" FontFamily="NunitoRegular" FontSize="11" TextColor="{DynamicResource SecondaryText}" VerticalOptions="Center" />
                                     <Border WidthRequest="26" HeightRequest="26" BackgroundColor="#EF4444" StrokeThickness="0" StrokeShape="RoundRectangle 13">
                                         <Border.GestureRecognizers>
                                             <TapGestureRecognizer Command="{Binding SetColorCommand}" CommandParameter="#EF4444" />
@@ -146,20 +147,20 @@
                                         <Border.GestureRecognizers>
                                             <TapGestureRecognizer Command="{Binding CancelAddFormCommand}" />
                                         </Border.GestureRecognizers>
-                                        <Label Text="Anuluj" TextColor="{DynamicResource Primary}" FontFamily="NunitoBold" FontSize="13" HorizontalOptions="Center" VerticalOptions="Center" />
+                                        <Label Text="{loc:Translate Resource=ManageLabelsPageResources, Key=CancelButton}" TextColor="{DynamicResource Primary}" FontFamily="NunitoBold" FontSize="13" HorizontalOptions="Center" VerticalOptions="Center" />
                                     </Border>
                                     <Border Grid.Column="1" BackgroundColor="{DynamicResource Primary}" StrokeThickness="0" StrokeShape="RoundRectangle 10" HeightRequest="40">
                                         <Border.GestureRecognizers>
                                             <TapGestureRecognizer Command="{Binding SaveNewLabelCommand}" />
                                         </Border.GestureRecognizers>
-                                        <Label Text="Dodaj" TextColor="{DynamicResource AppHeroTitleTextColor}" FontFamily="NunitoBold" FontSize="13" HorizontalOptions="Center" VerticalOptions="Center" />
+                                        <Label Text="{loc:Translate Resource=ManageLabelsPageResources, Key=AddButton}" TextColor="{DynamicResource AppHeroTitleTextColor}" FontFamily="NunitoBold" FontSize="13" HorizontalOptions="Center" VerticalOptions="Center" />
                                     </Border>
                                 </Grid>
                             </VerticalStackLayout>
                         </Border>
 
                         <!-- EMPTY STATE -->
-                        <Label Text="Brak etykiet. Dodaj pierwszą!"
+                        <Label Text="{loc:Translate Resource=ManageLabelsPageResources, Key=EmptyState}"
                                IsVisible="{Binding IsEmpty}"
                                FontFamily="NunitoRegular"
                                FontSize="13"
@@ -211,15 +212,15 @@
                                                 StrokeShape="RoundRectangle 12"
                                                 IsVisible="{Binding IsEditing}">
                                             <VerticalStackLayout Spacing="8">
-                                                <Label Text="Edytuj etykietę" FontFamily="NunitoBold" FontSize="12" TextColor="{DynamicResource FrameTextColor}" />
+                                                <Label Text="{loc:Translate Resource=ManageLabelsPageResources, Key=EditLabelTitle}" FontFamily="NunitoBold" FontSize="12" TextColor="{DynamicResource FrameTextColor}" />
                                                 <VerticalStackLayout Spacing="4">
-                                                    <Label Text="Nazwa" FontFamily="NunitoRegular" FontSize="10" TextColor="{DynamicResource SecondaryText}" />
+                                                    <Label Text="{loc:Translate Resource=ManageLabelsPageResources, Key=NameLabel}" FontFamily="NunitoRegular" FontSize="10" TextColor="{DynamicResource SecondaryText}" />
                                                     <Border BackgroundColor="{DynamicResource DashboardCardBackgroundColor}" StrokeThickness="0" StrokeShape="RoundRectangle 8" Padding="10,0">
-                                                        <Entry Text="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditingName}" Placeholder="Nazwa" PlaceholderColor="{DynamicResource ModernPlaceholderColor}" TextColor="{DynamicResource FrameTextColor}" FontFamily="NunitoRegular" FontSize="13" HeightRequest="40" BackgroundColor="Transparent" />
+                                                        <Entry Text="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditingName}" Placeholder="{loc:Translate Resource=ManageLabelsPageResources, Key=NamePlaceholderShort}" PlaceholderColor="{DynamicResource ModernPlaceholderColor}" TextColor="{DynamicResource FrameTextColor}" FontFamily="NunitoRegular" FontSize="13" HeightRequest="40" BackgroundColor="Transparent" />
                                                     </Border>
                                                 </VerticalStackLayout>
                                                 <VerticalStackLayout Spacing="4">
-                                                    <Label Text="Kolor (hex)" FontFamily="NunitoRegular" FontSize="10" TextColor="{DynamicResource SecondaryText}" />
+                                                    <Label Text="{loc:Translate Resource=ManageLabelsPageResources, Key=ColorLabel}" FontFamily="NunitoRegular" FontSize="10" TextColor="{DynamicResource SecondaryText}" />
                                                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
                                                         <Border BackgroundColor="{DynamicResource DashboardCardBackgroundColor}" StrokeThickness="0" StrokeShape="RoundRectangle 8" Padding="10,0">
                                                             <Entry Text="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditingColorHex}" Placeholder="#8B72FF" PlaceholderColor="{DynamicResource ModernPlaceholderColor}" TextColor="{DynamicResource FrameTextColor}" FontFamily="NunitoRegular" FontSize="13" HeightRequest="40" BackgroundColor="Transparent" />
@@ -265,13 +266,13 @@
                                                         <Border.GestureRecognizers>
                                                             <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CancelEditCommand}" />
                                                         </Border.GestureRecognizers>
-                                                        <Label Text="Anuluj" TextColor="{DynamicResource Primary}" FontFamily="NunitoBold" FontSize="12" HorizontalOptions="Center" VerticalOptions="Center" />
+                                                        <Label Text="{loc:Translate Resource=ManageLabelsPageResources, Key=CancelButton}" TextColor="{DynamicResource Primary}" FontFamily="NunitoBold" FontSize="12" HorizontalOptions="Center" VerticalOptions="Center" />
                                                     </Border>
                                                     <Border BackgroundColor="{DynamicResource Primary}" StrokeThickness="0" StrokeShape="RoundRectangle 8" HeightRequest="36">
                                                         <Border.GestureRecognizers>
                                                             <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SaveEditCommand}" />
                                                         </Border.GestureRecognizers>
-                                                        <Label Text="Zapisz" TextColor="{DynamicResource AppHeroTitleTextColor}" FontFamily="NunitoBold" FontSize="12" HorizontalOptions="Center" VerticalOptions="Center" />
+                                                        <Label Text="{loc:Translate Resource=ManageLabelsPageResources, Key=SaveButton}" TextColor="{DynamicResource AppHeroTitleTextColor}" FontFamily="NunitoBold" FontSize="12" HorizontalOptions="Center" VerticalOptions="Center" />
                                                     </Border>
                                                 </Grid>
                                             </VerticalStackLayout>
@@ -297,7 +298,7 @@
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding CloseCommand}" />
                         </Border.GestureRecognizers>
-                        <Label Text="Gotowe"
+                        <Label Text="{loc:Translate Resource=ManageLabelsPageResources, Key=DoneButton}"
                                TextColor="{DynamicResource AppHeroTitleTextColor}"
                                FontFamily="NunitoBold"
                                FontSize="15"

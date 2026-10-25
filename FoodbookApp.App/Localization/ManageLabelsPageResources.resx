@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Title" xml:space="preserve"><value>Labels</value></data>
+  <data name="ManageDescription" xml:space="preserve"><value>Manage labels</value></data>
+  <data name="NewLabelTitle" xml:space="preserve"><value>New label</value></data>
+  <data name="EditLabelTitle" xml:space="preserve"><value>Edit label</value></data>
+  <data name="NameLabel" xml:space="preserve"><value>Name</value></data>
+  <data name="NamePlaceholder" xml:space="preserve"><value>Label name</value></data>
+  <data name="NamePlaceholderShort" xml:space="preserve"><value>Name</value></data>
+  <data name="ColorLabel" xml:space="preserve"><value>Color (hex)</value></data>
+  <data name="QuickSelectLabel" xml:space="preserve"><value>Quick select:</value></data>
+  <data name="CancelButton" xml:space="preserve"><value>Cancel</value></data>
+  <data name="AddButton" xml:space="preserve"><value>Add</value></data>
+  <data name="SaveButton" xml:space="preserve"><value>Save</value></data>
+  <data name="DoneButton" xml:space="preserve"><value>Done</value></data>
+  <data name="EmptyState" xml:space="preserve"><value>No labels. Add the first one!</value></data>
+</root>

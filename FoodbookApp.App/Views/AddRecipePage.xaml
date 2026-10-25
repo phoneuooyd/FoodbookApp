@@ -98,8 +98,8 @@
                                                     <Label Text="2️⃣" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
                                                 </Border>
                                                 <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
-                                                    <Label Text="wpisz ilość porcji" FontSize="15" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" />
-                                                    <Label Text="Ta wartość przeliczy składniki i kalorie do jednej porcji." FontSize="12" TextColor="{DynamicResource SecondaryText}" />
+                                                    <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=ServingCountTitle}" FontSize="15" FontAttributes="Bold" TextColor="{DynamicResource FrameTextColor}" />
+                                                    <Label Text="{loc:Translate Resource=AddRecipePageResources, Key=ServingCountDescription}" FontSize="12" TextColor="{DynamicResource SecondaryText}" />
                                                 </VerticalStackLayout>
                                                 <Switch Grid.Column="2"
                                                         VerticalOptions="Center"

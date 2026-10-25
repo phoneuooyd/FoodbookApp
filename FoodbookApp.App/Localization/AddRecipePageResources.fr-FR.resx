@@ -12,6 +12,8 @@
   <data name="Manual" xml:space="preserve"><value>Manuel</value></data>
   <data name="FromLink" xml:space="preserve"><value>Depuis lien</value></data>
   <data name="ImportHeader" xml:space="preserve"><value>Importer d'Internet</value></data>
+  <data name="ServingCountTitle" xml:space="preserve"><value>Entrez le nombre de portions</value></data>
+  <data name="ServingCountDescription" xml:space="preserve"><value>Cette valeur recalcule les ingrédients et les calories pour une portion.</value></data>
   <data name="UrlLabel" xml:space="preserve"><value>URL de la recette *</value></data>
   <data name="UrlPlaceholder" xml:space="preserve"><value>Coller le lien de recette</value></data>
   <data name="ImportButton" xml:space="preserve"><value>Importer la recette</value></data>

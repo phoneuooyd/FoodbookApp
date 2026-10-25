@@ -141,6 +141,12 @@
   <data name="ImportHeader" xml:space="preserve">
     <value>인터넷에서 가져오기</value>
   </data>
+  <data name="ServingCountTitle" xml:space="preserve">
+    <value>인분 수 입력</value>
+  </data>
+  <data name="ServingCountDescription" xml:space="preserve">
+    <value>이 값은 재료와 칼로리를 1인분 기준으로 다시 계산합니다.</value>
+  </data>
   <data name="UrlLabel" xml:space="preserve">
     <value>레시피 URL *</value>
   </data>

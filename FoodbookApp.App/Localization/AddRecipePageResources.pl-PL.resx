@@ -141,6 +141,12 @@
   <data name="ImportHeader" xml:space="preserve">
     <value>Import z internetu</value>
   </data>
+  <data name="ServingCountTitle" xml:space="preserve">
+    <value>Wpisz ilość porcji</value>
+  </data>
+  <data name="ServingCountDescription" xml:space="preserve">
+    <value>Ta wartość przeliczy składniki i kalorie do jednej porcji.</value>
+  </data>
   <data name="UrlLabel" xml:space="preserve">
     <value>URL przepisu *</value>
   </data>
