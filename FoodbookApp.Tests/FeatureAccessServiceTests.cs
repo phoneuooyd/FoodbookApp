@@ -45,6 +45,34 @@ public class FeatureAccessServiceTests
     }
 
     [Fact]
+    public void IsFeatureAllowed_ShouldDenyPremiumAfterExpiration()
+    {
+        var now = new DateTime(2026, 3, 24, 9, 0, 0, DateTimeKind.Utc);
+        var snapshot = new FeatureAccessSnapshot
+        {
+            IsPremiumUser = true,
+            PremiumFromUtc = now.AddMonths(-3),
+            PremiumToUtc = now
+        };
+
+        snapshot.IsFeatureAllowed(PremiumFeature.AiRecipeCreation, now).Should().BeFalse();
+    }
+
+    [Fact]
+    public void IsFeatureAllowed_ShouldDenyPremiumBeforeStart()
+    {
+        var now = new DateTime(2026, 3, 24, 9, 0, 0, DateTimeKind.Utc);
+        var snapshot = new FeatureAccessSnapshot
+        {
+            IsPremiumUser = true,
+            PremiumFromUtc = now.AddMinutes(1),
+            PremiumToUtc = now.AddMonths(3)
+        };
+
+        snapshot.IsFeatureAllowed(PremiumFeature.AiRecipeCreation, now).Should().BeFalse();
+    }
+
+    [Fact]
     public async Task CanUsePremiumFeatureAsync_ShouldUseMemoryCacheUntilTtlExpires()
     {
         var fakeClock = new FakeClock(new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc));

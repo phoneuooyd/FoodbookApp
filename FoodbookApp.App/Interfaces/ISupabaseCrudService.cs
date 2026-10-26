@@ -72,6 +72,9 @@ public interface ISupabaseCrudService
     // UserPreferences (ORM-based via sync queue)
     Task<UserPreferencesDto?> GetUserPreferencesAsync(Guid userId, CancellationToken ct = default);
     Task<UserPreferencesDto> UpsertUserPreferencesAsync(UserPreferencesDto preferences, CancellationToken ct = default);
+
+    // One-time premium trial for authenticated users
+    Task<DateTime?> EnsureFreePremiumTrialAsync(CancellationToken ct = default);
     
     // Bulk fetch all cloud data for sync operations
     Task<CloudDataSnapshot> FetchAllCloudDataAsync(CancellationToken ct = default);

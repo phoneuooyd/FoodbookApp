@@ -86,6 +86,7 @@
                 </Grid>
 
                 <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=PremiumPlanPrice}" FontSize="22" FontAttributes="Bold" TextColor="{DynamicResource Primary}" />
+                <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=PremiumTrialInfo}" FontSize="13" TextColor="{DynamicResource Primary}" />
 
                 <VerticalStackLayout Spacing="4">
                     <Label Text="{loc:Translate Resource=SetupWizardPageResources, Key=PremiumFeature1}" FontSize="13" />

@@ -10,7 +10,7 @@ public sealed class FeatureAccessSnapshot
 
     public bool IsFeatureAllowed(PremiumFeature feature, DateTime utcNow)
     {
-        if (IsPremiumUser)
+        if (IsPremiumUser && IsPremiumActive(utcNow))
         {
             return true;
         }
@@ -26,7 +26,7 @@ public sealed class FeatureAccessSnapshot
 
     public bool CanCreatePlan(DateTime utcNow)
     {
-        if (IsPremiumUser)
+        if (IsPremiumUser && IsPremiumActive(utcNow))
         {
             return true;
         }
@@ -37,6 +37,18 @@ public sealed class FeatureAccessSnapshot
         }
 
         return Limits.MonthlyPlanCreationsUsed < Limits.MonthlyPlanCreationLimit.Value;
+    }
+
+    public DateTime? PremiumFromUtc { get; set; }
+    public DateTime? PremiumToUtc { get; set; }
+
+    public bool IsPremiumActive(DateTime utcNow)
+    {
+        var from = PremiumFromUtc?.ToUniversalTime();
+        var to = PremiumToUtc?.ToUniversalTime();
+
+        return (!from.HasValue || from.Value <= utcNow) &&
+               (!to.HasValue || to.Value > utcNow);
     }
 }
 

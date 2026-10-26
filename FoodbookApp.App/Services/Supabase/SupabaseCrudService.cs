@@ -4,6 +4,7 @@ using Foodbook.Models;
 using Foodbook.Models.DTOs;
 using FoodbookApp.Interfaces;
 using FoodbookApp.Services.Auth;
+using FoodbookApp.Services.Subscription;
 
 namespace FoodbookApp.Services.Supabase;
 
@@ -753,6 +754,52 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
 
     #region UserPreferences (ORM)
 
+    public async Task<DateTime?> EnsureFreePremiumTrialAsync(CancellationToken ct = default)
+    {
+        await EnsureAuthenticatedAsync();
+
+        var userId = await GetCurrentUserIdAsync();
+        if (!Guid.TryParse(userId, out var userGuid))
+        {
+            return null;
+        }
+
+        var existing = (await _restClient.GetAsync<SupabaseUserSubscriptionRow>(
+            "users", $"id=eq.{userGuid}&limit=1", ct)).FirstOrDefault();
+
+        // premium_from/premium_to are also the durable marker that the trial was
+        // already granted. This prevents re-granting it after expiration.
+        if (existing is not null &&
+            (existing.IsPremium || existing.PremiumFrom.HasValue || existing.PremiumTo.HasValue))
+        {
+            return existing.PremiumTo;
+        }
+
+        var startedAtUtc = DateTime.UtcNow;
+        var expiresAtUtc = SupabaseEdgeSubscriptionManagementService
+            .GetFreePremiumTrialExpirationUtc(startedAtUtc);
+        var payload = new SupabaseUserSubscriptionPayload
+        {
+            Id = userGuid,
+            IsPremium = true,
+            PremiumFrom = startedAtUtc,
+            PremiumTo = expiresAtUtc,
+            UserType = 1,
+            UpdatedAt = startedAtUtc
+        };
+
+        if (existing is null)
+        {
+            await _restClient.InsertAsync("users", payload, ct);
+        }
+        else
+        {
+            await _restClient.UpdateAsync("users", userGuid, payload, ct);
+        }
+
+        return expiresAtUtc;
+    }
+
     public async Task<UserPreferencesDto?> GetUserPreferencesAsync(Guid userId, CancellationToken ct = default)
     {
         await EnsureAuthenticatedAsync();
@@ -1080,6 +1127,18 @@ public sealed class SupabaseCrudService : ISupabaseCrudService
         
         try
         {
+            if (string.Equals(_preferencesService.GetPlanChoice(), "Premium", StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    await EnsureFreePremiumTrialAsync(ct);
+                }
+                catch (Exception trialEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SupabaseCrudService] Premium trial retry failed: {trialEx.Message}");
+                }
+            }
+
             // Fetch all data in parallel for efficiency
             var foldersTask = GetFoldersAsync(ct);
             var recipesTask = GetRecipesAsync(ct);
@@ -1159,4 +1218,22 @@ public class UserPreferencesPayload
     public string? language { get; set; }
     public DateTime? created_at { get; set; }
     public DateTime? updated_at { get; set; }
+}
+
+internal sealed class SupabaseUserSubscriptionRow
+{
+    public Guid Id { get; set; }
+    public bool IsPremium { get; set; }
+    public DateTime? PremiumFrom { get; set; }
+    public DateTime? PremiumTo { get; set; }
+}
+
+internal sealed class SupabaseUserSubscriptionPayload
+{
+    public Guid Id { get; set; }
+    public bool IsPremium { get; set; }
+    public DateTime PremiumFrom { get; set; }
+    public DateTime PremiumTo { get; set; }
+    public int UserType { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }

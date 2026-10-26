@@ -34,8 +34,9 @@
   <data name="LightModeOption" xml:space="preserve"><value>☀️ Clair</value></data>
   <data name="FreePlanBadge" xml:space="preserve"><value>Gratuit</value></data>
   <data name="PremiumPlanBadge" xml:space="preserve"><value>✨ Recommandé</value></data>
-  <data name="FreePlanPrice" xml:space="preserve"><value>0 zł / à vie</value></data>
-  <data name="PremiumPlanPrice" xml:space="preserve"><value>9,99 zł / mois</value></data>
+  <data name="FreePlanPrice" xml:space="preserve"><value>0 € / à vie</value></data>
+  <data name="PremiumPlanPrice" xml:space="preserve"><value>2,30 € / mois</value></data>
+  <data name="PremiumTrialInfo" xml:space="preserve"><value>Les 3 premiers mois de Premium sont gratuits.</value></data>
   <data name="FreeFeature1" xml:space="preserve"><value>✓ Recettes illimitées</value></data>
   <data name="FreeFeature2" xml:space="preserve"><value>✓ Planificateur de repas (3 actifs)</value></data>
   <data name="FreeFeature3" xml:space="preserve"><value>✓ Liste de courses</value></data>

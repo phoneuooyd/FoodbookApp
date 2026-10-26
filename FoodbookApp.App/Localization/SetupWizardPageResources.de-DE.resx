@@ -42,8 +42,9 @@
   <data name="ContinueWithoutAccountButton" xml:space="preserve"><value>Ohne Konto fortfahren</value></data>
   <data name="FreePlanBadge" xml:space="preserve"><value>Kostenlos</value></data>
   <data name="PremiumPlanBadge" xml:space="preserve"><value>✨ Empfohlen</value></data>
-  <data name="FreePlanPrice" xml:space="preserve"><value>0 zł / für immer</value></data>
-  <data name="PremiumPlanPrice" xml:space="preserve"><value>9,99 zł / Monat</value></data>
+  <data name="FreePlanPrice" xml:space="preserve"><value>0 € / für immer</value></data>
+  <data name="PremiumPlanPrice" xml:space="preserve"><value>2,30 € / Monat</value></data>
+  <data name="PremiumTrialInfo" xml:space="preserve"><value>Die ersten 3 Monate Premium sind kostenlos.</value></data>
   <data name="FreeFeature1" xml:space="preserve"><value>✓ Unbegrenzte Rezepte</value></data>
   <data name="FreeFeature2" xml:space="preserve"><value>✓ Mahlzeitenplaner (3 aktiv)</value></data>
   <data name="FreeFeature3" xml:space="preserve"><value>✓ Einkaufsliste</value></data>

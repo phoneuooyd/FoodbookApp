@@ -239,10 +239,13 @@
     <value>✨ Polecany</value>
   </data>
   <data name="FreePlanPrice" xml:space="preserve">
-    <value>0 zl / zawsze</value>
+    <value>0 zł / zawsze</value>
   </data>
   <data name="PremiumPlanPrice" xml:space="preserve">
     <value>9,99 zł / miesiąc</value>
+  </data>
+  <data name="PremiumTrialInfo" xml:space="preserve">
+    <value>Pierwsze 3 miesiące Premium są bezpłatne.</value>
   </data>
   <data name="FreeFeature1" xml:space="preserve"><value>✓ Przepisy bez limitu</value></data>
   <data name="FreeFeature2" xml:space="preserve"><value>✓ Planer posiłków (3 aktywne)</value></data>

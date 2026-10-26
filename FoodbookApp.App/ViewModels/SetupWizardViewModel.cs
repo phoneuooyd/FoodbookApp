@@ -19,6 +19,7 @@ public class SetupWizardViewModel : INotifyPropertyChanged
     private readonly LocalizationResourceManager _localizationManager;
     private readonly IThemeService _themeService;
     private readonly IFontService _fontService;
+    private readonly ISupabaseCrudService _supabaseCrudService;
 
     private LanguageOption _selectedLanguage;
     private bool _installBasicIngredients = true;
@@ -36,13 +37,15 @@ public class SetupWizardViewModel : INotifyPropertyChanged
         LocalizationResourceManager localizationManager,
         IThemeService themeService,
         IFontService fontService,
-        SetupLoginViewModel setupLoginViewModel)
+        SetupLoginViewModel setupLoginViewModel,
+        ISupabaseCrudService supabaseCrudService)
     {
         _preferencesService = preferencesService ?? throw new ArgumentNullException(nameof(preferencesService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _localizationManager = localizationManager ?? throw new ArgumentNullException(nameof(localizationManager));
         _themeService = themeService ?? throw new ArgumentNullException(nameof(themeService));
         _fontService = fontService ?? throw new ArgumentNullException(nameof(fontService));
+        _supabaseCrudService = supabaseCrudService ?? throw new ArgumentNullException(nameof(supabaseCrudService));
 
         LoginViewModel = setupLoginViewModel ?? throw new ArgumentNullException(nameof(setupLoginViewModel));
         LoginViewModel.LoginStepCompleted += (_, args) =>
@@ -457,6 +460,19 @@ public class SetupWizardViewModel : INotifyPropertyChanged
             _preferencesService.SaveTheme(SelectedTheme);
             _preferencesService.SaveFontFamily(SelectedFontFamily);
             _preferencesService.SaveInstallBasicIngredients(InstallBasicIngredients);
+
+            if (string.Equals(SelectedPlanChoice, "Premium", StringComparison.OrdinalIgnoreCase) && !IsGuestMode)
+            {
+                try
+                {
+                    await _supabaseCrudService.EnsureFreePremiumTrialAsync();
+                }
+                catch (Exception ex)
+                {
+                    // Setup can finish offline; the next authenticated sync can retry the trial.
+                    System.Diagnostics.Debug.WriteLine($"[SetupWizardViewModel] Premium trial activation failed: {ex.Message}");
+                }
+            }
 
             if (InstallBasicIngredients)
             {

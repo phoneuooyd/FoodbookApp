@@ -81,8 +81,9 @@
   <data name="LightModeOption" xml:space="preserve"><value>☀️ Claro</value></data>
   <data name="FreePlanBadge" xml:space="preserve"><value>Gratis</value></data>
   <data name="PremiumPlanBadge" xml:space="preserve"><value>✨ Recomendado</value></data>
-  <data name="FreePlanPrice" xml:space="preserve"><value>0 zł / para siempre</value></data>
-  <data name="PremiumPlanPrice" xml:space="preserve"><value>9,99 zł / mes</value></data>
+  <data name="FreePlanPrice" xml:space="preserve"><value>0 € / para siempre</value></data>
+  <data name="PremiumPlanPrice" xml:space="preserve"><value>2,30 € / mes</value></data>
+  <data name="PremiumTrialInfo" xml:space="preserve"><value>Los primeros 3 meses de Premium son gratis.</value></data>
   <data name="FreeFeature1" xml:space="preserve"><value>✓ Recetas ilimitadas</value></data>
   <data name="FreeFeature2" xml:space="preserve"><value>✓ Planificador de comidas (3 activos)</value></data>
   <data name="FreeFeature3" xml:space="preserve"><value>✓ Lista de la compra</value></data>

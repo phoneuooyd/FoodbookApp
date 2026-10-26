@@ -318,12 +318,16 @@ public sealed class FeatureAccessService : IFeatureAccessService
 
         public FeatureAccessSnapshot ToSnapshot(DateTime utcNow)
         {
-            var isPremiumActive = IsPremium && (!PremiumTo.HasValue || PremiumTo.Value > utcNow);
+            var isPremiumActive = IsPremium &&
+                (!PremiumFrom.HasValue || PremiumFrom.Value <= utcNow) &&
+                (!PremiumTo.HasValue || PremiumTo.Value > utcNow);
             var monthStartUtc = new DateTime(utcNow.Year, utcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
             return new FeatureAccessSnapshot
             {
                 IsPremiumUser = isPremiumActive,
+                PremiumFromUtc = PremiumFrom?.ToUniversalTime(),
+                PremiumToUtc = PremiumTo?.ToUniversalTime(),
                 Limits = new FeatureUsageLimits
                 {
                     MonthlyPlanCreationLimit = isPremiumActive ? null : 4,

@@ -223,10 +223,13 @@
     <value>✨ Recommended</value>
   </data>
   <data name="FreePlanPrice" xml:space="preserve">
-    <value>0 PLN / forever</value>
+    <value>0 $ / forever</value>
   </data>
   <data name="PremiumPlanPrice" xml:space="preserve">
-    <value>9.99 PLN / month</value>
+    <value>$2.50 / month</value>
+  </data>
+  <data name="PremiumTrialInfo" xml:space="preserve">
+    <value>First 3 months of Premium are free.</value>
   </data>
   <data name="FreeFeature1" xml:space="preserve">
     <value>✓ Unlimited recipes</value>

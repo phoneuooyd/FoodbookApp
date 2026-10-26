@@ -47,8 +47,9 @@
   <data name="LightModeOption" xml:space="preserve"><value>☀️ 라이트</value></data>
   <data name="FreePlanBadge" xml:space="preserve"><value>무료</value></data>
   <data name="PremiumPlanBadge" xml:space="preserve"><value>✨ 추천</value></data>
-  <data name="FreePlanPrice" xml:space="preserve"><value>0 zł / 영구</value></data>
-  <data name="PremiumPlanPrice" xml:space="preserve"><value>9,99 zł / 월</value></data>
+  <data name="FreePlanPrice" xml:space="preserve"><value>₩0 / 영구</value></data>
+  <data name="PremiumPlanPrice" xml:space="preserve"><value>약 ₩3,900 / 월</value></data>
+  <data name="PremiumTrialInfo" xml:space="preserve"><value>Premium 첫 3개월은 무료입니다.</value></data>
   <data name="FreeFeature1" xml:space="preserve"><value>✓ 무제한 레시피</value></data>
   <data name="FreeFeature2" xml:space="preserve"><value>✓ 식사 계획기 (3개 활성)</value></data>
   <data name="FreeFeature3" xml:space="preserve"><value>✓ 쇼핑 리스트</value></data>
