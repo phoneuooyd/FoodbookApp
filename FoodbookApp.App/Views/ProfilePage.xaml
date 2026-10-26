@@ -241,7 +241,8 @@
                                     StyleClass="Secondary"
                                     BackgroundColor="{DynamicResource ProfilePlanSecondaryButtonBackgroundColor}"
                                     BorderColor="{DynamicResource ProfilePlanSecondaryButtonBorderColor}"
-                                    TextColor="{DynamicResource ProfilePlanSecondaryButtonTextColor}" />
+                                    TextColor="{DynamicResource ProfilePlanSecondaryButtonTextColor}"
+                                    Clicked="OnSwitchToFreeClicked" />
                         </VerticalStackLayout>
                     </Border>
 

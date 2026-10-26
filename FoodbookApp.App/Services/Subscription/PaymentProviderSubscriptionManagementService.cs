@@ -74,12 +74,15 @@ public sealed class PaymentProviderSubscriptionManagementService : ISubscription
         {
             await AbandonOpenOperationsAsync(account.Id, "User requested free plan via cancel.", ct);
             OpenGooglePlayManageSubscriptions();
+            var currentPlan = await GetCurrentPlanFromSnapshotAsync();
             return new SubscriptionActionResult
             {
                 Success = true,
-                CurrentPlan = SubscriptionPlan.Free,
-                ActionState = SubscriptionActionState.Completed,
-                UiMessage = "Otworzono strone zarzadzania subskrypcja w Google Play."
+                // Cancelling is completed by Google Play. Do not show/save Free
+                // before Google confirms that the current subscription ended.
+                CurrentPlan = currentPlan,
+                ActionState = SubscriptionActionState.Pending,
+                UiMessage = "Otworzono stronę zarządzania subskrypcją w Google Play. Plan zmieni się na Free po anulowaniu i odświeżeniu statusu."
             };
         }
 
@@ -144,7 +147,9 @@ public sealed class PaymentProviderSubscriptionManagementService : ISubscription
                     Success = false,
                     CurrentPlan = await GetCurrentPlanFromSnapshotAsync(),
                     ActionState = SubscriptionActionState.Failed,
-                    UiMessage = $"Blad zakupu: {purchaseResult.ErrorMessage}"
+                    UiMessage = GetBillingAvailabilityMessage(
+                                    new InvalidOperationException(purchaseResult.ErrorMessage ?? string.Empty))
+                                ?? $"Błąd zakupu: {purchaseResult.ErrorMessage}"
                 };
             }
 
@@ -179,14 +184,27 @@ public sealed class PaymentProviderSubscriptionManagementService : ISubscription
         }
         catch (Exception ex)
         {
+            var billingMessage = GetBillingAvailabilityMessage(ex);
             return new SubscriptionActionResult
             {
                 Success = false,
                 CurrentPlan = await GetCurrentPlanFromSnapshotAsync(),
                 ActionState = SubscriptionActionState.Failed,
-                UiMessage = $"Nie oczekiwany blad: {ex.Message}"
+                UiMessage = billingMessage ?? $"Nieoczekiwany błąd: {ex.Message}"
             };
         }
+    }
+
+    private static string? GetBillingAvailabilityMessage(Exception exception)
+    {
+        var message = exception.ToString();
+        if (!message.Contains("BillingUnavailable", StringComparison.OrdinalIgnoreCase) &&
+            !message.Contains("billing API version is less than 3", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return "Google Play Billing nie jest dostępny na tym urządzeniu. Użyj emulatora z obrazem systemu Google Play albo fizycznego urządzenia z aktualnym Sklepem Google Play. Aplikację płatną testuj po instalacji z Google Play (test wewnętrzny), a nie z samego debuggera.";
     }
 
     public async Task<SubscriptionActionResult> CancelSubscriptionAsync(CancellationToken ct)
@@ -578,6 +596,20 @@ public sealed class PaymentProviderSubscriptionManagementService : ISubscription
         try
         {
             var result = await client.QueryProductDetailsAsync(queryParams).WaitAsync(timeoutCts.Token);
+
+            // ProductDetailsAsync can complete successfully at the Task level
+            // while Google Play returns a billing error in the result object.
+            // Surface that real cause instead of reporting a misleading
+            // "product not found" error.
+            var billingResult = result?.GetType().GetProperty("BillingResult")?.GetValue(result);
+            var responseCode = billingResult?.GetType().GetProperty("ResponseCode")?.GetValue(billingResult);
+            if (responseCode != null && !string.Equals(responseCode.ToString(), "Ok", StringComparison.OrdinalIgnoreCase))
+            {
+                var debugMessage = billingResult.GetType().GetProperty("DebugMessage")?.GetValue(billingResult)?.ToString();
+                throw new InvalidOperationException(
+                    $"Google Play Billing ({responseCode}): {debugMessage}");
+            }
+
             return ExtractFirstProductDetail(result);
         }
         catch (OperationCanceledException)
@@ -796,6 +828,8 @@ public sealed class PaymentProviderSubscriptionManagementService : ISubscription
         public void OnBillingServiceDisconnected()
         {
             System.Diagnostics.Debug.WriteLine("[PaymentProvider] Billing service disconnected");
+            _tcs.TrySetException(new InvalidOperationException(
+                "Usługa Google Play Billing jest niedostępna. Sprawdź, czy aplikacja została zainstalowana z Google Play i czy urządzenie ma aktywne usługi Google Play."));
         }
 
         public void OnBillingSetupFinished(BillingResult billingResult)
@@ -803,7 +837,8 @@ public sealed class PaymentProviderSubscriptionManagementService : ISubscription
             if (billingResult.ResponseCode == BillingResponseCode.Ok)
                 _tcs.TrySetResult(true);
             else
-                _tcs.TrySetException(new InvalidOperationException($"Billing setup failed: {billingResult.ResponseCode}"));
+                _tcs.TrySetException(new InvalidOperationException(
+                    $"Google Play Billing: {billingResult.ResponseCode}. {billingResult.DebugMessage}"));
         }
     }
 

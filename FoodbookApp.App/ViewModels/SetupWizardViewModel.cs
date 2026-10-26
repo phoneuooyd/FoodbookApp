@@ -27,7 +27,9 @@ public class SetupWizardViewModel : INotifyPropertyChanged
     private string _statusMessage = string.Empty;
     private SetupWizardStep _currentStep = SetupWizardStep.Language;
     private bool _isGuestMode;
-    private string _selectedPlanChoice = string.Empty;
+    // Free is the safe default. Premium is selected explicitly and activates
+    // the three-month server-side trial; it must not start Google Play Billing.
+    private string _selectedPlanChoice = "Free";
     private AppTheme _selectedTheme;
     private AppFontFamily _selectedFontFamily;
 
